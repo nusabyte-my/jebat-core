@@ -4,14 +4,14 @@ JEBAT REST API
 FastAPI-based REST API for JEBAT AI Assistant.
 
 Endpoints:
+- GET  /api/v1/health              - Health check
 - GET  /api/v1/status              - System status
-- POST /api/v1/chat/completions    - Chat with JEBAT
+- GET  /api/v1/metrics             - System metrics
+- GET  /api/v1/models              - List models (OpenAI-compatible, used by Zed)
+- POST /api/v1/chat/completions    - Chat completions (OpenAI-compatible, used by Zed)
 - GET  /api/v1/memories            - List memories
 - POST /api/v1/memories            - Store memory
 - GET  /api/v1/agents              - List agents
-- POST /api/v1/agents/:id/execute  - Execute agent
-- GET  /api/v1/metrics             - System metrics
-- GET  /api/v1/health              - Health check
 """
 
 import logging
@@ -86,6 +86,34 @@ class ChatResponse(BaseModel):
     thinking_steps: int
     execution_time: float
     user_id: Optional[str]
+
+
+class OpenAIMessage(BaseModel):
+    """OpenAI-compatible message"""
+
+    role: str
+    content: str
+
+
+class OpenAIChatRequest(BaseModel):
+    """OpenAI-compatible chat completion request (used by Zed)"""
+
+    model: str = "jebat-pro"
+    messages: List[OpenAIMessage]
+    stream: Optional[bool] = False
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = None
+
+
+class OpenAIChatResponse(BaseModel):
+    """OpenAI-compatible chat completion response"""
+
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: List[Dict[str, Any]]
+    usage: Dict[str, int]
 
 
 class MemoryStoreRequest(BaseModel):
@@ -294,52 +322,6 @@ async def get_metrics():
     }
 
 
-@app.post("/api/v1/chat/completions", response_model=ChatResponse, tags=["Chat"])
-async def chat_completion(request: ChatRequest):
-    """
-    Chat with JEBAT.
-
-    Processes a user message through Ultra-Think and returns a response.
-    """
-    if not jebat_components.get("ultra_think"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Ultra-Think not initialized",
-        )
-
-    try:
-        from jebat.features.ultra_think import ThinkingMode
-
-        # Map mode string to ThinkingMode
-        try:
-            thinking_mode = ThinkingMode(request.mode.lower())
-        except ValueError:
-            thinking_mode = ThinkingMode.DELIBERATE
-
-        # Run thinking session
-        result = await jebat_components["ultra_think"].think(
-            problem=request.message,
-            mode=thinking_mode,
-            user_id=request.user_id,
-            timeout=request.timeout,
-        )
-
-        return ChatResponse(
-            response=result.conclusion,
-            confidence=result.confidence,
-            thinking_steps=len(result.reasoning_steps),
-            execution_time=result.execution_time,
-            user_id=request.user_id,
-        )
-
-    except Exception as e:
-        logger.error(f"Chat completion error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
-
 @app.get("/api/v1/memories", response_model=List[MemoryResponse], tags=["Memory"])
 async def list_memories(
     user_id: str = Query(..., description="User identifier"),
@@ -429,6 +411,99 @@ async def store_memory(request: MemoryStoreRequest):
 
     except Exception as e:
         logger.error(f"Store memory error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@app.get("/api/v1/models", tags=["OpenAI Compatible"])
+async def list_models():
+    """
+    List available models (OpenAI-compatible).
+
+    Zed calls this endpoint to discover available models.
+    """
+    return {
+        "object": "list",
+        "data": [
+            {"id": "jebat-pro", "object": "model", "owned_by": "jebat"},
+            {"id": "jebat-fast", "object": "model", "owned_by": "jebat"},
+            {"id": "jebat-deep", "object": "model", "owned_by": "jebat"},
+        ],
+    }
+
+
+@app.post("/api/v1/chat/completions", tags=["OpenAI Compatible"])
+async def openai_chat_completion(request: OpenAIChatRequest):
+    """
+    OpenAI-compatible chat completions endpoint.
+
+    This is the primary endpoint used by Zed editor.
+    Accepts standard OpenAI request format and returns OpenAI-compatible response.
+    """
+    import time
+    import uuid
+
+    if not jebat_components.get("ultra_think"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Ultra-Think not initialized",
+        )
+
+    try:
+        from jebat.features.ultra_think import ThinkingMode
+
+        # Extract the last user message as the prompt
+        user_messages = [m for m in request.messages if m.role == "user"]
+        if not user_messages:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No user message provided",
+            )
+        prompt = user_messages[-1].content
+
+        # Map model name to thinking mode
+        mode_map = {
+            "jebat-fast": ThinkingMode.FAST,
+            "jebat-pro": ThinkingMode.DELIBERATE,
+            "jebat-deep": ThinkingMode.DEEP,
+        }
+        thinking_mode = mode_map.get(request.model, ThinkingMode.DELIBERATE)
+
+        # Run thinking session
+        result = await jebat_components["ultra_think"].think(
+            problem=prompt,
+            mode=thinking_mode,
+            timeout=60,
+        )
+
+        return {
+            "id": f"chatcmpl-{uuid.uuid4().hex[:8]}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": result.conclusion,
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": len(prompt.split()),
+                "completion_tokens": len(result.conclusion.split()),
+                "total_tokens": len(prompt.split()) + len(result.conclusion.split()),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"OpenAI chat completion error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),

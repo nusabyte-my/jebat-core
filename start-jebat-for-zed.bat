@@ -23,6 +23,19 @@ if %ERRORLEVEL% neq 0 (
 echo [OK] Docker is running
 echo.
 
+REM Auto-create .env from .env.example if missing
+if not exist .env (
+    if exist .env.example (
+        echo [INFO] Creating .env from .env.example...
+        copy .env.example .env >nul
+        echo [OK] .env created. Edit it to set your API keys if needed.
+        echo.
+    ) else (
+        echo [WARNING] No .env or .env.example found. Proceeding with defaults.
+        echo.
+    )
+)
+
 REM Check if JEBAT API is already running
 docker ps | findstr jebat-api >nul 2>&1
 if %ERRORLEVEL% equ 0 (

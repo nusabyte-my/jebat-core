@@ -1,20 +1,31 @@
 {
-  "ai": {
-    "providers": {
-      "jebat": {
-        "name": "JEBAT AI",
-        "type": "openai-compatible",
-        "api_url": "http://localhost:8000/api/v1",
-        "api_key": "jebat-local-key",
-        "models": {
-          "chat": "jebat-pro",
-          "completion": "jebat-fast"
+  "language_models": {
+    "openai": {
+      "api_url": "http://localhost:8000/api/v1",
+      "available_models": [
+        {
+          "name": "jebat-pro",
+          "display_name": "JEBAT Pro",
+          "max_tokens": 8192
+        },
+        {
+          "name": "jebat-fast",
+          "display_name": "JEBAT Fast",
+          "max_tokens": 4096
+        },
+        {
+          "name": "jebat-deep",
+          "display_name": "JEBAT Deep",
+          "max_tokens": 16384
         }
-      }
-    },
-    "default_provider": "jebat"
+      ]
+    }
   },
-  "features": {
-    "inline_completion_provider": "jebat"
+  "assistant": {
+    "default_model": {
+      "provider": "openai",
+      "model": "jebat-pro"
+    },
+    "version": "2"
   }
 }
