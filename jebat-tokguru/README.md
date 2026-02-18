@@ -1,6 +1,8 @@
-# 🗡️ JEBAT Awesome Skills
+# 🗡️ JEBAT Tok Guru
 
-**Universal Skill Catalog for JEBAT Platform**
+**"Tok Guru" = Respected Master/Teacher (Malay)**
+
+Universal Skill Catalog for JEBAT Platform
 
 864+ AI-powered skills for development, security, data, business, and more.
 
@@ -22,10 +24,10 @@
 
 ```bash
 # Install all skills
-npx jebat-skills
+npx jebat-tokguru
 
 # Or clone manually
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.jebat/skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.jebat/skills
 ```
 
 ---
@@ -36,26 +38,26 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.jebat/skill
 
 ```bash
 # Universal installation (default: ~/.jebat/skills)
-npx jebat-skills
+npx jebat-tokguru
 
 # IDE-specific installation
-npx jebat-skills --vscode
-npx jebat-skills --zed
-npx jebat-skills --cursor
-npx jebat-skills --claude
-npx jebat-skills --gemini
-npx jebat-skills --path ./my-skills
+npx jebat-tokguru --vscode
+npx jebat-tokguru --zed
+npx jebat-tokguru --cursor
+npx jebat-tokguru --claude
+npx jebat-tokguru --gemini
+npx jebat-tokguru --path ./my-skills
 ```
 
 ### Option 2: Git Clone
 
 ```bash
 # Universal
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.jebat/skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.jebat/skills
 
 # IDE-specific
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.vscode/jebat-skills
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.config/zed/jebat-skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.vscode/jebat-tokguru
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.config/zed/jebat-tokguru
 ```
 
 ### Option 3: JEBAT CLI
@@ -64,7 +66,7 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.config/zed/
 # Using JEBAT CLI
 jebat skills install
 jebat skills install --category development
-jebat skills install python-expert
+jebat skills install typescript-expert
 ```
 
 ---
@@ -167,7 +169,7 @@ jebat skills install python-expert
 | `code-review-workflow` | Code review process | All |
 | `deployment-workflow` | Deployment automation | All |
 
-### 🛠️ JEBAT Native Skills (67 skills)
+### 🗡️ JEBAT Native (67 skills)
 
 | Skill | Description | IDE Support |
 |-------|-------------|-------------|
@@ -186,10 +188,10 @@ jebat skills install python-expert
 
 ```bash
 # Install skills for VSCode
-npx jebat-skills --vscode
+npx jebat-tokguru --vscode
 
 # Or manually
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.vscode/jebat-skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.vscode/jebat-tokguru
 ```
 
 **Configuration** (`.vscode/mcp.json`):
@@ -200,7 +202,7 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.vscode/jeba
       "jebat": {
         "command": "python",
         "args": ["-m", "jebat.mcp.server"],
-        "skills_path": "~/.vscode/jebat-skills"
+        "skills_path": "~/.vscode/jebat-tokguru"
       }
     }
   }
@@ -215,17 +217,17 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.vscode/jeba
 
 ```bash
 # Install skills for Zed
-npx jebat-skills --zed
+npx jebat-tokguru --zed
 
 # Or manually
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.config/zed/jebat-skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.config/zed/jebat-tokguru
 ```
 
 **Configuration** (`~/.config/zed/settings.json`):
 ```json
 {
   "jebat": {
-    "skills_path": "~/.config/zed/jebat-skills",
+    "skills_path": "~/.config/zed/jebat-tokguru",
     "auto_load": true,
     "enabled_skills": ["all"]
   }
@@ -240,17 +242,17 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.config/zed/
 
 ```bash
 # Install skills for Cursor
-npx jebat-skills --cursor
+npx jebat-tokguru --cursor
 
 # Or manually
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.cursor/jebat-skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.cursor/jebat-tokguru
 ```
 
 **Configuration** (`.cursor/mcp.json`):
 ```json
 {
   "jebat": {
-    "skills_path": "~/.cursor/jebat-skills",
+    "skills_path": "~/.cursor/jebat-tokguru",
     "enabled": true
   }
 }
@@ -264,10 +266,10 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.cursor/jeba
 
 ```bash
 # Install skills for Claude
-npx jebat-skills --claude
+npx jebat-tokguru --claude
 
 # Or manually
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.claude/skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.claude/skills
 ```
 
 **Usage**: `/skill-name` or `@skill-name`
@@ -278,10 +280,10 @@ git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.claude/skil
 
 ```bash
 # Install skills for Gemini
-npx jebat-skills --gemini
+npx jebat-tokguru --gemini
 
 # Or manually
-git clone https://github.com/nusabyte-my/jebat-awesome-skills.git ~/.gemini/skills
+git clone https://github.com/nusabyte-my/jebat-tokguru.git ~/.gemini/skills
 ```
 
 **Usage**: Reference in prompts
@@ -462,8 +464,8 @@ jebat skills validate
 
 ## 🔗 Links
 
-- **GitHub**: https://github.com/nusabyte-my/jebat-awesome-skills
-- **Documentation**: https://jebat.online/docs/skills
+- **GitHub**: https://github.com/nusabyte-my/jebat-tokguru
+- **Documentation**: https://jebat.online/docs/tokguru
 - **Skill Index**: https://jebat.online/skills-index.json
 - **Catalog**: https://jebat.online/CATALOG.md
 
@@ -475,4 +477,4 @@ MIT License - See LICENSE file
 
 ---
 
-**🗡️ "Equip yourself with the best skills."**
+**🗡️ "Belajar dari Tok Guru, menjadi master." (Learn from the Master, become a master.)**

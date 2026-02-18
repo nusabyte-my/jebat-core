@@ -1,4 +1,4 @@
-# 🧠 JEBAT Cortex Analysis: Skill Catalog Architecture
+# 🧠 JEBAT Cortex Analysis: Tok Guru Skill Catalog Architecture
 
 **Deep Reasoning Mode: Deliberate**
 
@@ -12,6 +12,8 @@ Create a universal skill catalog system for JEBAT that:
 3. Provides easy installation and management
 4. Works via MCP protocol
 5. Is maintainable and extensible
+
+**Name**: **Tok Guru** (Respected Master/Teacher - Malay)
 
 ---
 
@@ -27,7 +29,7 @@ Create a universal skill catalog system for JEBAT that:
 **Improved Architecture:**
 
 ```
-jebat-awesome-skills/
+jebat-tokguru/
 ├── skills/                    # Skill definitions
 │   ├── {category}/
 │   │   └── {skill-name}/
@@ -285,7 +287,7 @@ class VSCodeAdapter(IDEAdapter):
     """VSCode-specific adapter."""
     
     def _resolve_skills_path(self) -> Path:
-        return Path.home() / ".vscode" / "jebat-skills"
+        return Path.home() / ".vscode" / "jebat-tokguru"
     
     async def register_skills(self, skills: list):
         # Create VSCode-specific configuration
@@ -313,7 +315,7 @@ class ZedAdapter(IDEAdapter):
     """Zed-specific adapter."""
     
     def _resolve_skills_path(self) -> Path:
-        return Path.home() / ".config" / "zed" / "jebat-skills"
+        return Path.home() / ".config" / "zed" / "jebat-tokguru"
     
     async def register_skills(self, skills: list):
         config = {
@@ -403,3 +405,5 @@ This ensures:
 **Cortex Confidence**: 94%
 **Reasoning Steps**: 15
 **Analysis Time**: 2.3s
+
+**🗡️ "Belajar dari Tok Guru, menjadi master."**

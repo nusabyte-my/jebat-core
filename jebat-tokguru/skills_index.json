@@ -1,7 +1,8 @@
 {
   "version": "1.0.0",
-  "total_skills": 864,
+  "name": "jebat-tokguru",
   "last_updated": "2026-02-18",
+  "total_skills": 864,
   "categories": {
     "architecture": 45,
     "business": 78,
@@ -58,7 +59,13 @@
       "name": "docker-expert",
       "description": "Docker containerization, multi-stage builds, and optimization",
       "category": "infrastructure",
-      "tags": ["docker", "containers", "devops", "deployment", "infrastructure"],
+      "tags": [
+        "docker",
+        "containers",
+        "devops",
+        "deployment",
+        "infrastructure"
+      ],
       "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
       "path": "skills/infrastructure/docker-expert/SKILL.md"
     },
@@ -75,42 +82,72 @@
     {
       "name": "web-wizard",
       "description": "Full-stack web development skills",
-      "skills": ["typescript-expert", "react-patterns", "nodejs-expert", "frontend-master", "graphql-expert"]
+      "skills": [
+        "typescript-expert",
+        "react-patterns",
+        "nodejs-expert",
+        "frontend-master",
+        "graphql-expert"
+      ]
     },
     {
       "name": "security-engineer",
       "description": "Application security skills",
-      "skills": ["api-security-best-practices", "pentest-web", "security-audit", "owasp-top-10", "auth-expert"]
+      "skills": [
+        "api-security-best-practices",
+        "pentest-web",
+        "security-audit",
+        "owasp-top-10",
+        "auth-expert"
+      ]
     },
     {
       "name": "data-scientist",
       "description": "Data science and AI skills",
-      "skills": ["rag-engineer", "ml-ops", "data-pipeline", "embedding-expert", "prompt-engineer"]
+      "skills": [
+        "rag-engineer",
+        "ml-ops",
+        "data-pipeline",
+        "embedding-expert",
+        "prompt-engineer"
+      ]
     },
     {
       "name": "devops-engineer",
       "description": "DevOps and infrastructure skills",
-      "skills": ["docker-expert", "kubernetes-expert", "ci-cd-pipelines", "terraform-expert", "aws-serverless"]
+      "skills": [
+        "docker-expert",
+        "kubernetes-expert",
+        "ci-cd-pipelines",
+        "terraform-expert",
+        "aws-serverless"
+      ]
     },
     {
       "name": "fullstack-developer",
       "description": "Full-stack development skills",
-      "skills": ["typescript-expert", "react-patterns", "nodejs-expert", "database-designer", "fullstack-lead"]
+      "skills": [
+        "typescript-expert",
+        "react-patterns",
+        "nodejs-expert",
+        "database-designer",
+        "fullstack-lead"
+      ]
     }
   ],
   "ide_integration": {
     "vscode": {
-      "path": "~/.vscode/jebat-skills",
+      "path": "~/.vscode/jebat-tokguru",
       "invoke": "@skill-name",
       "config": ".vscode/mcp.json"
     },
     "zed": {
-      "path": "~/.config/zed/jebat-skills",
+      "path": "~/.config/zed/jebat-tokguru",
       "invoke": "@skill-name",
       "config": "~/.config/zed/settings.json"
     },
     "cursor": {
-      "path": "~/.cursor/jebat-skills",
+      "path": "~/.cursor/jebat-tokguru",
       "invoke": "@skill-name",
       "config": ".cursor/mcp.json"
     },
