@@ -1,0 +1,11 @@
+{
+  "projectType": "python",
+  "autoDetected": true,
+  "features": {
+    "ultraThink": true,
+    "codeGeneration": true,
+    "codeReview": true,
+    "debugging": true
+  },
+  "paths": {}
+}

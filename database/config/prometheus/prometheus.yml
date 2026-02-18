@@ -1,0 +1,151 @@
+```# ==================== JEBAT AI System - Prometheus Configuration ====================
+# Version: 1.0.0
+# Collects metrics from all JEBAT services and infrastructure
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'jebat-cluster'
+    environment: 'development'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # ==================== Prometheus Self-Monitoring ====================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # ==================== JEBAT Application Metrics ====================
+  - job_name: 'jebat-app'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'jebat-app'
+
+  # ==================== PostgreSQL Exporter ====================
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'postgres-db'
+
+  # ==================== Redis Exporter ====================
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'redis-cache'
+
+  # ==================== Node Exporter (System Metrics) ====================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'docker-host'
+
+  # ==================== cAdvisor (Container Metrics) ====================
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'docker-containers'
+
+  # ==================== JEBat MCP Protocol Server ====================
+  - job_name: 'jebat-mcp'
+    static_configs:
+      - targets: ['host.docker.internal:18789']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'mcp-server'
+
+  # ==================== JEBat WebSocket Gateway ====================
+  - job_name: 'jebat-websocket'
+    static_configs:
+      - targets: ['host.docker.internal:8001']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'websocket-gateway'
+
+  # ==================== Qdrant Vector Database ====================
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'qdrant-vector-db'
+
+  # ==================== Grafana (optional) ====================
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'grafana-dashboard'
+
+# ==================== Storage Configuration ====================
+# Store metrics for 200 hours (just over 8 days)
+storage:
+  tsdb:
+    path: /prometheus
+    retention:
+      time: 200h
+
+# ==================== Tracing Configuration (optional) ====================
+# tracing:
+#   endpoint: "localhost:4318"
+#   client_type: "grpc"
+
+# ==================== Query Configuration ====================
+# Enable recording rules for better performance
+# query_log_file: /prometheus/query.log
+
+# ==================== Web Configuration ====================
+# web:
+#   listen_address: 0.0.0.0:9090
+#   enable_lifecycle: true

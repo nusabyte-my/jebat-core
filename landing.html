@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT - AI Platform & Development Assistant</title>
+    <meta name="description" content="JEBAT - The Complete AI-Powered Development Ecosystem with Ultra-Think Reasoning, Eternal Memory, and Multi-Domain Agents">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            --gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ==================== Navigation ==================== */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--secondary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        /* ==================== Hero Section ==================== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 80px;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 1;
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .hero h1 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 0.8s ease 0.4s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: var(--light);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==================== Stats Section ==================== */
+        .stats {
+            padding: 4rem 0;
+            background: var(--dark-light);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        /* ==================== Features Section ==================== */
+        .features {
+            padding: 8rem 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: var(--gray);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--dark-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .feature-description {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--light);
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* ==================== Products Section ==================== */
+        .products {
+            padding: 8rem 0;
+            background: var(--dark-light);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .product-card {
+            background: var(--dark);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: scale(1.02);
+        }
+
+        .product-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .product-icon {
+            font-size: 3rem;
+        }
+
+        .product-name {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .product-codename {
+            color: var(--primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .product-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-dev {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent);
+        }
+
+        .status-planned {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        /* ==================== Roadmap Section ==================== */
+        .roadmap {
+            padding: 8rem 0;
+        }
+
+        .roadmap-timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        .roadmap-item {
+            display: flex;
+            justify-content: flex-end;
+            padding: 1.5rem 0;
+            position: relative;
+        }
+
+        .roadmap-item:nth-child(odd) {
+            justify-content: flex-start;
+        }
+
+        .roadmap-content {
+            background: var(--dark-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .roadmap-item:nth-child(odd) .roadmap-content {
+            margin-right: 3rem;
+        }
+
+        .roadmap-item:nth-child(even) .roadmap-content {
+            margin-left: 3rem;
+        }
+
+        .roadmap-dot {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 3px solid var(--dark);
+        }
+
+        .roadmap-quarter {
+            font-size: 0.875rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .roadmap-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .roadmap-list {
+            list-style: none;
+        }
+
+        .roadmap-list li {
+            font-size: 0.875rem;
+            color: var(--gray);
+            padding: 0.25rem 0;
+        }
+
+        /* ==================== Code Section ==================== */
+        .code-section {
+            padding: 8rem 0;
+            background: var(--dark-light);
+        }
+
+        .code-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .code-preview {
+            background: #0d1117;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ff5f56; }
+        .code-dot:nth-child(2) { background: #ffbd2e; }
+        .code-dot:nth-child(3) { background: #27ca40; }
+
+        .code-body {
+            padding: 1.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .code-keyword { color: #ff7b72; }
+        .code-function { color: #d2a8ff; }
+        .code-string { color: #a5d6ff; }
+        .code-comment { color: #8b949e; }
+        .code-class { color: #ffa657; }
+
+        /* ==================== CTA Section ==================== */
+        .cta {
+            padding: 8rem 0;
+            text-align: center;
+        }
+
+        .cta-box {
+            background: var(--gradient-primary);
+            border-radius: 32px;
+            padding: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .cta-text {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .btn-white {
+            background: var(--white);
+            color: var(--primary);
+        }
+
+        .btn-white:hover {
+            background: var(--light);
+        }
+
+        /* ==================== Footer ==================== */
+        footer {
+            background: var(--dark-light);
+            padding: 4rem 0 2rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand p {
+            color: var(--gray);
+            margin: 1rem 0;
+        }
+
+        .footer-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        /* ==================== Responsive ==================== */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .features-grid,
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .code-container {
+                grid-template-columns: 1fr;
+            }
+
+            .roadmap-timeline::before {
+                left: 20px;
+            }
+
+            .roadmap-item,
+            .roadmap-item:nth-child(odd) {
+                justify-content: flex-start;
+                padding-left: 50px;
+            }
+
+            .roadmap-item:nth-child(odd) .roadmap-content,
+            .roadmap-item:nth-child(even) .roadmap-content {
+                margin: 0;
+            }
+
+            .roadmap-dot {
+                left: 20px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="#" class="logo">
+                <span class="logo-icon">🗡️</span>
+                JEBAT
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#docs">Docs</a></li>
+            </ul>
+            <a href="https://github.com/nusabyte-my/jebat-core" class="nav-cta">Get Started →</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="hero-content">
+                <span class="hero-badge">🚀 Version 2.0 Now Available</span>
+                <h1>
+                    The Complete AI-Powered<br>
+                    <span>Development Ecosystem</span>
+                </h1>
+                <p>
+                    JEBAT combines Ultra-Think reasoning, eternal memory, and multi-domain agents
+                    to create the most advanced AI development assistant ever built.
+                </p>
+                <div class="hero-buttons">
+                    <a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-primary">
+                        ⭐ Star on GitHub
+                    </a>
+                    <a href="#docs" class="btn btn-secondary">
+                        📚 Read Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Memory Layers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Thinking Modes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">Domain Skills</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Possibilities</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">✨ Features</span>
+                <h2 class="section-title">Powerful Capabilities</h2>
+                <p class="section-subtitle">
+                    Built with cutting-edge AI technology to supercharge your development workflow
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3 class="feature-title">JEBAT Cortex</h3>
+                    <p class="feature-description">
+                        Deep reasoning engine with multiple thinking modes for complex problem-solving
+                    </p>
+                    <ul class="feature-list">
+                        <li>Deliberate Mode (Analytical)</li>
+                        <li>Creative Mode (Generative)</li>
+                        <li>Critical Mode (Evaluation)</li>
+                        <li>Strategic Mode (Planning)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">♾️</div>
+                    <h3 class="feature-title">JEBAT Continuum</h3>
+                    <p class="feature-description">
+                        Continuous processing loop with context preservation and iterative refinement
+                    </p>
+                    <ul class="feature-list">
+                        <li>Perpetual Execution</li>
+                        <li>Context Preservation</li>
+                        <li>Iterative Improvement</li>
+                        <li>Auto-Recovery</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗄️</div>
+                    <h3 class="feature-title">Eternal Memory</h3>
+                    <p class="feature-description">
+                        5-layer memory system with heat-based consolidation and importance scoring
+                    </p>
+                    <ul class="feature-list">
+                        <li>Sensory Buffer (M0)</li>
+                        <li>Episodic Memory (M1)</li>
+                        <li>Semantic Memory (M2)</li>
+                        <li>Conceptual Memory (M3)</li>
+                        <li>Procedural Memory (M4)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">Multi-Agent System</h3>
+                    <p class="feature-description">
+                        Coordinate multiple specialized AI agents for complex tasks
+                    </p>
+                    <ul class="feature-list">
+                        <li>Agent Orchestration</li>
+                        <li>Task Distribution</li>
+                        <li>Parallel Execution</li>
+                        <li>Result Aggregation</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3 class="feature-title">DevAssistant</h3>
+                    <p class="feature-description">
+                        Interactive development assistant with code generation and review
+                    </p>
+                    <ul class="feature-list">
+                        <li>Code Generation</li>
+                        <li>Project Scaffolding</li>
+                        <li>Git Integration</li>
+                        <li>Test Running</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3 class="feature-title">Sentinel Security</h3>
+                    <p class="feature-description">
+                        Built-in security layer with audit logging and threat detection
+                    </p>
+                    <ul class="feature-list">
+                        <li>Audit Logging</li>
+                        <li>Access Control</li>
+                        <li>Threat Detection</li>
+                        <li>Compliance Checks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products" id="products">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">🏛️ Product Family</span>
+                <h2 class="section-title">Choose Your Assistant</h2>
+                <p class="section-subtitle">
+                    Specialized AI agents for different domains and use cases
+                </p>
+            </div>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-header">
+                        <span class="product-icon">🗡️</span>
+                        <div>
+                            <div class="product-name">JEBAT Core</div>
+                            <div class="product-codename">Hang Jebat</div>
+                        </div>
+                        <span class="product-status status-active">✓ Active</span>
+                    </div>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                        Main AI platform with Cortex reasoning, Continuum processing, and eternal memory
+                    </p>
+                    <ul class="feature-list">
+                        <li>5-Layer Memory System</li>
+                        <li>Cortex Ultra-Think</li>
+                        <li>Continuum Ultra-Loop</li>
+                        <li>Multi-Agent Orchestration</li>
+                    </ul>
+                </div>
+                <div class="product-card">
+                    <div class="product-header">
+                        <span class="product-icon">💻</span>
+                        <div>
+                            <div class="product-name">JEBAT Dev</div>
+                            <div class="product-codename">Pandai</div>
+                        </div>
+                        <span class="product-status status-active">✓ Active</span>
+                    </div>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                        Interactive development assistant with code generation and project scaffolding
+                    </p>
+                    <ul class="feature-list">
+                        <li>Interactive CLI</li>
+                        <li>Code Generation</li>
+                        <li>Git Integration</li>
+                        <li>Test Running</li>
+                    </ul>
+                </div>
+                <div class="product-card">
+                    <div class="product-header">
+                        <span class="product-icon">🤖</span>
+                        <div>
+                            <div class="product-name">AGENTIX</div>
+                            <div class="product-codename">Agentix</div>
+                        </div>
+                        <span class="product-status status-active">✓ Active</span>
+                    </div>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                        Multi-domain conversational agent with mode switching capabilities
+                    </p>
+                    <ul class="feature-list">
+                        <li>Social Media Content</li>
+                        <li>Web Content Generation</li>
+                        <li>Network Analysis</li>
+                        <li>Cybersecurity Assessment</li>
+                    </ul>
+                </div>
+                <div class="product-card">
+                    <div class="product-header">
+                        <span class="product-icon">🛡️</span>
+                        <div>
+                            <div class="product-name">JEBAT Security</div>
+                            <div class="product-codename">Keris</div>
+                        </div>
+                        <span class="product-status status-dev">🔄 Dev</span>
+                    </div>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                        AI-powered penetration testing and vulnerability assessment
+                    </p>
+                    <ul class="feature-list">
+                        <li>Vulnerability Scanning</li>
+                        <li>Exploit Generation</li>
+                        <li>Security Auditing</li>
+                        <li>Compliance Checking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Section -->
+    <section class="code-section">
+        <div class="container">
+            <div class="code-container">
+                <div>
+                    <span class="section-label">💻 Developer Experience</span>
+                    <h2 class="section-title" style="margin-bottom: 1.5rem;">
+                        Built for Developers,<br>by Developers
+                    </h2>
+                    <p style="color: var(--gray); font-size: 1.125rem; margin-bottom: 2rem;">
+                        Simple, intuitive APIs that integrate seamlessly into your workflow.
+                        Get started in minutes, not hours.
+                    </p>
+                    <a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-primary">
+                        View Full Documentation →
+                    </a>
+                </div>
+                <div class="code-preview">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <div class="code-dot"></div>
+                            <div class="code-dot"></div>
+                            <div class="code-dot"></div>
+                        </div>
+                        <span style="color: var(--gray); font-size: 0.875rem;">example.py</span>
+                    </div>
+                    <div class="code-body">
+<pre><code><span class="code-keyword">from</span> jebat.features.cortex <span class="code-keyword">import</span> Cortex
+<span class="code-keyword">from</span> jebat_dev.brain <span class="code-keyword">import</span> DevBrain
+
+<span class="code-comment"># Initialize Cortex reasoning engine</span>
+cortex = Cortex(max_thoughts=<span class="code-string">20</span>)
+
+<span class="code-comment"># Deep reasoning on complex problems</span>
+result = <span class="code-keyword">await</span> cortex.think(
+    problem=<span class="code-string">"Optimize database queries"</span>,
+    mode=ThinkingMode.DELIBERATE,
+)
+
+<span class="code-comment"># Use DevAssistant for code generation</span>
+brain = DevBrain()
+<span class="code-keyword">await</span> brain.execute_task(
+    task_type=<span class="code-string">"scaffold"</span>,
+    project_name=<span class="code-string">"myapp"</span>,
+    project_type=<span class="code-string">"python_package"</span>,
+)</pre></code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roadmap Section -->
+    <section class="roadmap" id="roadmap">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">🗺️ Roadmap</span>
+                <h2 class="section-title">What's Coming Next</h2>
+                <p class="section-subtitle">
+                    Exciting features and improvements in development
+                </p>
+            </div>
+            <div class="roadmap-timeline">
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <div class="roadmap-quarter">Q1 2026 (Current)</div>
+                        <h3 class="roadmap-title">Foundation Release</h3>
+                        <ul class="roadmap-list">
+                            <li>✓ JEBAT Core Platform</li>
+                            <li>✓ JEBAT DevAssistant</li>
+                            <li>✓ AGENTIX Multi-Domain</li>
+                            <li>✓ Interactive CLI</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <div class="roadmap-quarter">Q2 2026</div>
+                        <h3 class="roadmap-title">ML & Database Integration</h3>
+                        <ul class="roadmap-list">
+                            <li>Machine Learning Skills</li>
+                            <li>Database Connectivity Agents</li>
+                            <li>JEBAT Security (Keris) Alpha</li>
+                            <li>Enhanced Cortex Integration</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <div class="roadmap-quarter">Q3 2026</div>
+                        <h3 class="roadmap-title">Orchestration & Monitoring</h3>
+                        <ul class="roadmap-list">
+                            <li>Advanced Workflow Orchestration</li>
+                            <li>Real-time Monitoring Dashboard</li>
+                            <li>JEBAT Nexus Bot Framework</li>
+                            <li>Multi-Channel Deployment</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-dot"></div>
+                    <div class="roadmap-content">
+                        <div class="roadmap-quarter">Q4 2026</div>
+                        <h3 class="roadmap-title">Production Ready</h3>
+                        <ul class="roadmap-list">
+                            <li>Docker Containerization</li>
+                            <li>Cloud Deployment Guides</li>
+                            <li>Performance Optimization</li>
+                            <li>Unified Dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-box">
+                <div class="cta-content">
+                    <h2 class="cta-title">Ready to Get Started?</h2>
+                    <p class="cta-text">
+                        Join thousands of developers using JEBAT to build better software faster.
+                    </p>
+                    <a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-white">
+                        ⭐ Star on GitHub — It's Free!
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <span class="logo-icon">🗡️</span>
+                        JEBAT
+                    </a>
+                    <p>
+                        The Complete AI-Powered Development Ecosystem.
+                        Built with honor and precision.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="footer-title">Products</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">JEBAT Core</a></li>
+                        <li><a href="#">JEBAT Dev</a></li>
+                        <li><a href="#">AGENTIX</a></li>
+                        <li><a href="#">JEBAT Security</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Examples</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Community</h4>
+                    <ul class="footer-links">
+                        <li><a href="https://github.com/nusabyte-my/jebat-core">GitHub</a></li>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">Twitter</a></li>
+                        <li><a href="#">LinkedIn</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NUSABYTE. Built with 🗡️ by the JEBAT Team.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.feature-card, .product-card, .roadmap-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
