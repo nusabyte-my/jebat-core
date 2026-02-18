@@ -1,0 +1,31 @@
+{
+  "name": "jebat-skills",
+  "version": "1.0.0",
+  "description": "JEBAT Awesome Skills - Universal Skill Catalog",
+  "bin": {
+    "jebat-skills": "./bin/install.js"
+  },
+  "scripts": {
+    "install": "node bin/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusabyte-my/jebat-awesome-skills.git"
+  },
+  "keywords": [
+    "jebat",
+    "skills",
+    "ai",
+    "ide",
+    "vscode",
+    "zed",
+    "cursor",
+    "mcp"
+  ],
+  "author": "JEBAT Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nusabyte-my/jebat-awesome-skills/issues"
+  },
+  "homepage": "https://github.com/nusabyte-my/jebat-awesome-skills#readme"
+}
