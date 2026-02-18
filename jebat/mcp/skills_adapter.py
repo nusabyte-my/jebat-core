@@ -1,12 +1,12 @@
 """
 🗡️ JEBAT MCP - Skills Adapter
 
-Load and integrate JEBAT Awesome Skills via MCP.
+Load and integrate JEBAT Tok Guru skills via MCP.
 
 Usage:
     from jebat.mcp.skills_adapter import SkillsAdapter
 
-    adapter = SkillsAdapter(skills_path="~/.jebat/skills")
+    adapter = SkillsAdapter(skills_path="~/.jebat/tokguru")
     await adapter.load_skills()
     await adapter.use_skill("typescript-expert", context)
 """

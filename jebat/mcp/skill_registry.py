@@ -105,7 +105,7 @@ class SkillRegistry:
             skills_path: Path to skills directory
             auto_load: Auto-load skills on init
         """
-        self.skills_path = Path(skills_path or "~/.jebat/skills").expanduser()
+        self.skills_path = Path(skills_path or "~/.jebat/tokguru").expanduser()
         self.skills: Dict[str, Skill] = {}
         self.categories: Dict[str, List[str]] = {}
         self.bundles: Dict[str, List[str]] = {}
