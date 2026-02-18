@@ -1,0 +1,37 @@
+name: JEBAT
+type: stdio
+executable: python
+args:
+  - -m
+  - jebat.mcp.server
+working_dir: ${project_root}
+env:
+  JEBAT_MODE: trae_integration
+  JEBAT_CONTEXT: full
+  JEBAT_LOG_LEVEL: info
+
+features:
+  code_generation: true
+  code_review: true
+  auto_complete: true
+  chat_assistant: true
+  test_generation: true
+  debugging: true
+  project_scaffold: true
+
+settings:
+  temperature: 0.7
+  max_tokens: 4096
+  context_window: 8192
+  stream_responses: true
+
+security:
+  require_confirmation:
+    - file.write
+    - file.delete
+    - git.push
+  allowed_paths:
+    - ${project_root}
+  blocked_commands:
+    - rm -rf
+    - sudo

@@ -1,0 +1,46 @@
+{
+  "mcp_servers": {
+    "jebat": {
+      "enabled": true,
+      "module": "jebat.mcp.server",
+      "config": {
+        "python_version": "3.11",
+        "virtualenv": "${VIRTUAL_ENV}",
+        "features": {
+          "intellisense": true,
+          "refactoring": true,
+          "debugging": true,
+          "profiling": true,
+          "testing": true,
+          "code_generation": true
+        },
+        "python_specific": {
+          "type_hints": true,
+          "docstrings": true,
+          "pep8_check": true,
+          "testing": {
+            "framework": "pytest",
+            "auto_generate": true,
+            "coverage_check": true
+          },
+          "linting": {
+            "enabled": true,
+            "tools": ["flake8", "pylint", "black", "mypy"]
+          },
+          "debugging": {
+            "breakpoints": true,
+            "watch_variables": true,
+            "call_stack": true
+          }
+        }
+      }
+    }
+  },
+
+  "python": {
+    "ai_assistant": "jebat",
+    "auto_import": true,
+    "smart_completion": true,
+    "inlay_hints": true
+  }
+}

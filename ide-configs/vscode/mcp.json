@@ -1,0 +1,73 @@
+{
+  "mcp": {
+    "servers": {
+      "jebat": {
+        "command": "python",
+        "args": ["-m", "jebat.mcp.server"],
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JEBAT_API_KEY": "${env:JEBAT_API_KEY}",
+          "JEBAT_MODE": "assistant",
+          "JEBAT_LOG_LEVEL": "info"
+        },
+        "capabilities": [
+          "code.read",
+          "code.write",
+          "code.generate",
+          "code.review",
+          "project.scaffold",
+          "git.operation",
+          "test.run",
+          "debug.analyze"
+        ],
+        "timeout": 30,
+        "retry": true
+      }
+    },
+    "settings": {
+      "autoStart": true,
+      "showStatus": true,
+      "inlineSuggestions": true,
+      "chatEnabled": true
+    }
+  },
+
+  "jebat": {
+    "enabled": true,
+    "features": {
+      "autocomplete": true,
+      "inlineEdit": true,
+      "codeReview": true,
+      "testGeneration": true,
+      "debugHelper": true
+    },
+    "context": {
+      "includeFiles": [
+        "**/*.py",
+        "**/*.js",
+        "**/*.ts",
+        "**/*.jsx",
+        "**/*.tsx",
+        "**/*.java",
+        "**/*.go",
+        "**/*.rs"
+      ],
+      "excludeFiles": [
+        "node_modules/**",
+        ".git/**",
+        "**/__pycache__/**",
+        "**/*.min.js",
+        "**/dist/**",
+        "**/build/**"
+      ],
+      "maxContextFiles": 50,
+      "maxFileSize": "1MB"
+    },
+    "suggestions": {
+      "enabled": true,
+      "triggerOnTyping": true,
+      "triggerDelay": 500,
+      "maxSuggestions": 3
+    }
+  }
+}
