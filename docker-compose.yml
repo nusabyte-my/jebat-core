@@ -1,262 +1,152 @@
-# ==================== JEBAT AI System - Docker Compose Configuration ====================
-# Version: 1.0.0
-# This file orchestrates all database and infrastructure services for the Enhanced JEBAT System
+# JEBAT AI Assistant - Docker Compose
+# Complete stack with database, cache, and monitoring
 
-version: '3.9'
+version: "3.8"
 
 services:
-  # ==================== PostgreSQL + TimescaleDB ====================
-  postgres:
-    image: timescale/timescaledb:pg15-latest
-    container_name: jebat-postgres
-    hostname: postgres
+  # JEBAT API Service
+  jebat-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-api
     restart: unless-stopped
-
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-jebat}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jebat_secure_password}
-      POSTGRES_DB: ${POSTGRES_DB:-jebat_db}
-      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
-      PGDATA: /var/lib/postgresql/data/pgdata
-
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD:-jebat_password}@postgres:5432/jebat_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d:ro
-      - ./database/schema:/schemas:ro
-
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jebat} -d ${POSTGRES_DB:-jebat_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-    networks:
-      - jebat-network
-
-    command:
-      - "postgres"
-      - "-c"
-      - "shared_buffers=256MB"
-      - "-c"
-      - "max_connections=200"
-      - "-c"
-      - "work_mem=4MB"
-      - "-c"
-      - "maintenance_work_mem=64MB"
-      - "-c"
-      - "checkpoint_completion_target=0.9"
-      - "-c"
-      - "wal_buffers=16MB"
-      - "-c"
-      - "default_statistics_target=100"
-      - "-c"
-      - "random_page_cost=1.1"
-      - "-c"
-      - "effective_io_concurrency=200"
-      - "-c"
-      - "work_mem=4MB"
-      - "-c"
-      - "min_wal_size=1GB"
-      - "-c"
-      - "max_wal_size=4GB"
-      - "-c"
-      - "max_worker_processes=8"
-      - "-c"
-      - "max_parallel_workers_per_gather=4"
-      - "-c"
-      - "max_parallel_workers=8"
-      - "-c"
-      - "jit=on"
-
-  # ==================== Redis (Caching & Queue Layer) ====================
-  redis:
-    image: redis:7-alpine
-    container_name: jebat-redis
-    hostname: redis
-    restart: unless-stopped
-
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secure_password}
-
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-
-    volumes:
-      - redis_data:/data
-      - ./database/config/redis.conf:/usr/local/etc/redis/redis.conf:ro
-
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
-
-    networks:
-      - jebat-network
-
-    command: >
-      redis-server
-      /usr/local/etc/redis/redis.conf
-      --requirepass ${REDIS_PASSWORD:-redis_secure_password}
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 900 1
-      --save 300 10
-      --save 60 10000
-      --appendonly yes
-      --appendfsync everysec
-      --tcp-keepalive 60
-
-  # ==================== Qdrant (Vector Database) ====================
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: jebat-qdrant
-    hostname: qdrant
-    restart: unless-stopped
-
-    environment:
-      QDRANT__SERVICE__GRPC_PORT: 6334
-      QDRANT__LOG_LEVEL: INFO
-
-    ports:
-      - "${QDRANT_HTTP_PORT:-6333}:6333"
-      - "${QDRANT_GRPC_PORT:-6334}:6334"
-
-    volumes:
-      - qdrant_data:/qdrant/storage
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-    networks:
-      - jebat-network
-
-  # ==================== Redis Commander (Redis UI) ====================
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: jebat-redis-commander
-    hostname: redis-commander
-    restart: unless-stopped
-
-    environment:
-      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redis_secure_password}
-
-    ports:
-      - "${REDIS_COMMANDER_PORT:-8081}:8081"
-
-    depends_on:
-      redis:
-        condition: service_healthy
-
-    networks:
-      - jebat-network
-
-  # ==================== PgAdmin (PostgreSQL UI) ====================
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: jebat-pgadmin
-    hostname: pgadmin
-    restart: unless-stopped
-
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@jebat.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_secure_password}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-
+      - jebat_data:/app/data
+      - ./config:/app/config:ro
     depends_on:
       postgres:
         condition: service_healthy
-
+      redis:
+        condition: service_started
     networks:
       - jebat-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # ==================== Grafana (Monitoring Dashboard) ====================
-  grafana:
-    image: grafana/grafana:latest
-    container_name: jebat-grafana
-    hostname: grafana
+  # JEBAT Ultra-Loop Worker
+  jebat-loop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-loop
     restart: unless-stopped
-
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin_secure_password}
-      GF_INSTALL_PLUGINS: grafana-piechart-panel
-      GF_USERS_ALLOW_SIGN_UP: 'false'
-
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
-
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD:-jebat_password}@postgres:5432/jebat_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
     volumes:
-      - grafana_data:/var/lib/grafana
-      - ./database/config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./database/config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-
+      - jebat_data:/app/data
+      - ./config:/app/config:ro
     depends_on:
       - postgres
       - redis
-
     networks:
       - jebat-network
+    command: ["python", "-m", "jebat.cli.launch", "loop", "start"]
 
-  # ==================== Prometheus (Metrics Collection) ====================
+  # PostgreSQL Database with TimescaleDB
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    container_name: jebat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jebat_db
+      POSTGRES_USER: jebat
+      POSTGRES_PASSWORD: ${JEBAT_DB_PASSWORD:-jebat_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - jebat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jebat -d jebat_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: jebat-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - jebat-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus Monitoring
   prometheus:
     image: prom/prometheus:latest
     container_name: jebat-prometheus
-    hostname: prometheus
     restart: unless-stopped
-
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-
     volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-      - ./database/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
     networks:
       - jebat-network
+    depends_on:
+      - jebat-api
 
-# ==================== Networks ====================
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: jebat-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${JEBAT_GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - jebat-network
+    depends_on:
+      - prometheus
+
 networks:
   jebat-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
 
-# ==================== Volumes ====================
 volumes:
+  jebat_data:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
-  qdrant_data:
-    driver: local
-  pgadmin_data:
-    driver: local
-  grafana_data:
-    driver: local
   prometheus_data:
-    driver: local
+  grafana_data:

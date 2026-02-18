@@ -1,0 +1,32 @@
+{
+  "models": [
+    {
+      "title": "JEBAT Pro",
+      "provider": "openai-compatible",
+      "model": "jebat-pro",
+      "apiBase": "http://localhost:8000/api/v1",
+      "apiKey": "jebat-local-key"
+    },
+    {
+      "title": "JEBAT Fast",
+      "provider": "openai-compatible",
+      "model": "jebat-fast",
+      "apiBase": "http://localhost:8000/api/v1",
+      "apiKey": "jebat-local-key"
+    },
+    {
+      "title": "JEBAT Deep",
+      "provider": "openai-compatible",
+      "model": "jebat-deep",
+      "apiBase": "http://localhost:8000/api/v1",
+      "apiKey": "jebat-local-key"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "JEBAT Fast",
+    "provider": "openai-compatible",
+    "model": "jebat-fast",
+    "apiBase": "http://localhost:8000/api/v1",
+    "apiKey": "jebat-local-key"
+  }
+}

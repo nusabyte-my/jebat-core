@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT Code Assistant - AI Pair Programmer</title>
+    <meta name="description" content="AI-powered code generation, review, and debugging">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10a37f;
+            --secondary: #6366f1;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --dark-lighter: #334155;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            overflow: hidden;
+        }
+
+        .app {
+            display: grid;
+            grid-template-rows: 50px 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: var(--dark-light);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .language-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            color: var(--light);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: rgba(255,255,255,0.05);
+            color: var(--light);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            overflow: hidden;
+        }
+
+        /* Code Editor Area */
+        .editor-area {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .editor-tabs {
+            display: flex;
+            background: var(--dark-light);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0.5rem 1rem 0;
+            gap: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--dark);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .editor-container {
+            flex: 1;
+            background: #0d1117;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .line-numbers {
+            padding: 1rem 0.5rem;
+            background: #0d1117;
+            color: var(--gray);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            text-align: right;
+            user-select: none;
+            min-width: 50px;
+        }
+
+        .code-editor {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            color: var(--light);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            border: none;
+            outline: none;
+            resize: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        /* AI Assistant Panel */
+        .assistant-panel {
+            background: var(--dark-light);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.25rem;
+        }
+
+        .message.ai {
+            .message-avatar {
+                background: linear-gradient(135deg, var(--primary), var(--secondary));
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+
+            .message-avatar {
+                background: rgba(255,255,255,0.1);
+            }
+
+            .message-content {
+                background: var(--primary);
+                border-radius: 12px 12px 0 12px;
+            }
+        }
+
+        .message-content {
+            background: rgba(255,255,255,0.05);
+            padding: 0.75rem;
+            border-radius: 12px 12px 12px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            max-width: 85%;
+        }
+
+        .message-content pre {
+            background: rgba(0,0,0,0.3);
+            padding: 0.75rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 4px;
+            color: var(--gray);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--light);
+        }
+
+        .input-container {
+            padding: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--light);
+            font-size: 0.9rem;
+            resize: none;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+        }
+
+        .send-btn {
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .quick-action {
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .quick-action-desc {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        /* Welcome Screen */
+        .welcome {
+            position: absolute;
+            inset: 0;
+            background: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .welcome.hidden {
+            display: none;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome h1 {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .welcome p {
+            color: var(--gray);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #ff7b72; }
+        .function { color: #d2a8ff; }
+        .string { color: #a5d6ff; }
+        .comment { color: #8b949e; }
+        .number { color: #79c0ff; }
+        .class { color: #ffa657; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <span class="logo-icon">💻</span>
+                JEBAT Code Assistant
+            </div>
+            <div class="header-actions">
+                <select class="language-select" id="languageSelect">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="react">React</option>
+                    <option value="nodejs">Node.js</option>
+                    <option value="html">HTML/CSS</option>
+                    <option value="sql">SQL</option>
+                    <option value="rust">Rust</option>
+                    <option value="go">Go</option>
+                </select>
+                <button class="btn">📋 Copy</button>
+                <button class="btn btn-primary">▶️ Run</button>
+            </div>
+        </header>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <!-- Editor Area -->
+            <div class="editor-area">
+                <div class="editor-tabs">
+                    <div class="tab active">main.js</div>
+                    <div class="tab">utils.js</div>
+                    <div class="tab">styles.css</div>
+                </div>
+                <div class="editor-container">
+                    <div class="line-numbers" id="lineNumbers">1</div>
+                    <textarea class="code-editor" id="codeEditor" placeholder="// Start coding or ask AI for help...
+// Try: 'Create a function to sort an array'
+// Try: 'Explain this code'
+// Try: 'Find bugs in this code'" spellcheck="false"></textarea>
+                </div>
+            </div>
+
+            <!-- AI Assistant Panel -->
+            <div class="assistant-panel">
+                <div class="panel-header">
+                    <span class="panel-title">🤖 AI Assistant</span>
+                    <button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Clear</button>
+                </div>
+
+                <div class="chat-container" id="chatContainer">
+                    <div class="message ai">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <div>Hi! I'm your AI pair programmer. I can help you:</div>
+                            <div style="margin-top: 0.5rem;">
+                                • Write new code<br>
+                                • Debug issues<br>
+                                • Explain code<br>
+                                • Refactor & optimize<br>
+                                • Add comments<br>
+                                • Write tests
+                            </div>
+                            <div style="margin-top: 0.5rem;">What would you like to work on?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="action-grid">
+                        <div class="quick-action" onclick="quickAction('explain')">
+                            <div class="quick-action-title">📖 Explain Code</div>
+                            <div class="quick-action-desc">Understand any code</div>
+                        </div>
+                        <div class="quick-action" onclick="quickAction('debug')">
+                            <div class="quick-action-title">🐛 Find Bugs</div>
+                            <div class="quick-action-desc">Detect issues</div>
+                        </div>
+                        <div class="quick-action" onclick="quickAction('optimize')">
+                            <div class="quick-action-title">⚡ Optimize</div>
+                            <div class="quick-action-desc">Improve performance</div>
+                        </div>
+                        <div class="quick-action" onclick="quickAction('test')">
+                            <div class="quick-action-title">✅ Write Tests</div>
+                            <div class="quick-action-desc">Generate test cases</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea
+                            class="chat-input"
+                            id="chatInput"
+                            placeholder="Ask AI to write, explain, or debug code..."
+                            rows="1"
+                        ></textarea>
+                        <button class="send-btn" onclick="sendMessage()">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome Screen -->
+        <div class="welcome" id="welcome">
+            <div class="welcome-content">
+                <div class="welcome-icon">💻</div>
+                <h1>Code Assistant</h1>
+                <p>Your AI pair programmer is ready to help. Select a language and start coding!</p>
+                <button class="btn btn-primary" onclick="document.getElementById('welcome').classList.add('hidden')">
+                    Start Coding →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update line numbers
+        const editor = document.getElementById('codeEditor');
+        const lineNumbers = document.getElementById('lineNumbers');
+
+        editor.addEventListener('input', updateLineNumbers);
+        editor.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = editor.scrollTop;
+        });
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+
+            // Simulate AI response
+            setTimeout(() => {
+                const response = generateResponse(message);
+                addMessage(response, false);
+            }, 1000);
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-content">
+                    <div>${content}</div>
+                    ${!isUser ? `
+                        <div class="message-actions">
+                            <button class="action-btn" onclick="copyCode(this)">📋 Copy</button>
+                            <button class="action-btn" onclick="insertCode(this)">💻 Insert</button>
+                            <button class="action-btn" onclick="regenerate(this)">🔄 Regenerate</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Generate AI response
+        function generateResponse(message) {
+            const lowerMessage = message.toLowerCase();
+
+            if (lowerMessage.includes('sort') || lowerMessage.includes('array')) {
+                return `Here's a function to sort an array:
+
+<pre><code class="language-javascript">function sortArray(arr, ascending = true) {
+  return [...arr].sort((a, b) => {
+    return ascending ? a - b : b - a;
+  });
+}
+
+// Usage
+const numbers = [5, 2, 8, 1, 9];
+const sorted = sortArray(numbers);
+console.log(sorted); // [1, 2, 5, 8, 9]</code></pre>
+
+This function:
+• Creates a copy of the array (doesn't mutate original)
+• Supports ascending/descending order
+• Works with numbers
+
+Want me to add support for strings or objects?`;
+            }
+
+            if (lowerMessage.includes('fetch') || lowerMessage.includes('api')) {
+                return `Here's a modern API fetch function:
+
+<pre><code class="language-javascript">async function fetchData(url, options = {}) {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(\`HTTP error! status: \${response.status}\`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
+  }
+}
+
+// Usage
+const data = await fetchData('https://api.example.com/data');</code></pre>
+
+Features:
+• Error handling
+• JSON parsing
+• Custom headers
+• Reusable
+
+Need authentication or POST requests?`;
+            }
+
+            if (lowerMessage.includes('bug') || lowerMessage.includes('debug') || lowerMessage.includes('error')) {
+                return `I'd be happy to help debug! Please share the code you're having trouble with.
+
+In the meantime, here are common issues to check:
+
+1. **Syntax Errors** - Missing brackets, semicolons
+2. **Undefined Variables** - Check variable scope
+3. **Async Issues** - Missing await keywords
+4. **Type Errors** - Wrong data types
+5. **Null References** - Check for null/undefined
+
+Paste your code and I'll find the specific issue! 🔍`;
+            }
+
+            // Default response
+            return `I can help with that! Here's what I suggest:
+
+**Approach:**
+1. Understand the requirements
+2. Plan the implementation
+3. Write clean, maintainable code
+4. Add error handling
+5. Test thoroughly
+
+Could you provide more details about:
+• What you're trying to build?
+• Any specific requirements?
+• Current code (if any)?
+
+This helps me give you the best solution! 💡`;
+        }
+
+        // Quick actions
+        function quickAction(type) {
+            const actions = {
+                'explain': 'Explain what this code does and how it works',
+                'debug': 'Find and fix any bugs or issues in this code',
+                'optimize': 'Optimize this code for better performance',
+                'test': 'Write comprehensive test cases for this code'
+            };
+
+            const code = editor.value;
+            if (!code.trim()) {
+                addMessage('Please enter some code first!', true);
+                return;
+            }
+
+            addMessage(`${actions[type]}:\n\n<pre><code>${code.substring(0, 500)}${code.length > 500 ? '...' : ''}</code></pre>`, true);
+
+            setTimeout(() => {
+                const response = `Analyzing your code...\n\n**Analysis Complete!**\n\nI've reviewed your code and here's what I found:\n\n✅ **Good Practices:**\n• Clear variable names\n• Proper structure\n\n💡 **Suggestions:**\n• Add error handling\n• Consider edge cases\n• Add comments for complex logic\n\nWant me to implement these improvements?`;
+                addMessage(response, false);
+            }, 1500);
+        }
+
+        // Copy code
+        function copyCode(btn) {
+            const code = btn.closest('.message-content').querySelector('pre')?.innerText;
+            if (code) {
+                navigator.clipboard.writeText(code);
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            }
+        }
+
+        // Insert code
+        function insertCode(btn) {
+            const code = btn.closest('.message-content').querySelector('pre')?.innerText;
+            if (code) {
+                editor.value += (editor.value ? '\n\n' : '') + code;
+                updateLineNumbers();
+            }
+        }
+
+        // Regenerate
+        function regenerate(btn) {
+            const lastUserMessage = Array.from(document.querySelectorAll('.message.user')).pop();
+            if (lastUserMessage) {
+                const message = lastUserMessage.querySelector('.message-content').innerText;
+                setTimeout(() => {
+                    addMessage('Here\'s an alternative approach:\n\n' + generateResponse(message), false);
+                }, 1000);
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && document.activeElement.id === 'chatInput') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

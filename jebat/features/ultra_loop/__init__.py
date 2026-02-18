@@ -4,6 +4,20 @@ JEBAT Ultra-Loop
 Continuous processing and learning system.
 """
 
-from .ultra_loop import LoopContext, LoopMetrics, LoopPhase, UltraLoop
+from .database_repository import UltraLoopRepository
+from .ultra_loop import (
+    LoopContext,
+    LoopMetrics,
+    LoopPhase,
+    UltraLoop,
+    create_ultra_loop,
+)
 
-__all__ = ["UltraLoop", "LoopPhase", "LoopContext", "LoopMetrics"]
+__all__ = [
+    "UltraLoop",
+    "LoopPhase",
+    "LoopContext",
+    "LoopMetrics",
+    "create_ultra_loop",
+    "UltraLoopRepository",
+]

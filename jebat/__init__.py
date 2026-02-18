@@ -19,9 +19,8 @@ from jebat.core.decision import DecisionEngine
 from jebat.core.memory import Memory, MemoryLayer, MemoryManager
 
 # Database
-from jebat.database import DatabaseManager
+from jebat.database import DatabaseManager, RepositoryManager
 from jebat.database.models import get_db_models
-from jebat.database.repositories import Repository
 from jebat.features.sentinel import Sentinel
 
 # Features
@@ -64,7 +63,7 @@ __all__ = [
     "WebhookSystem",
     # Database
     "DatabaseManager",
-    "Repository",
+    "RepositoryManager",
     # Skills
     "SkillRegistry",
     "BaseSkill",

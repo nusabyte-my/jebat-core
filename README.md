@@ -1,156 +1,132 @@
-# 🗡️ JEBAT Core - AI Platform & Development Assistant
+# 🗡️ JEBAT - The Complete AI Development Ecosystem
 
-**The Complete AI-Powered Development Ecosystem**
+**Because warriors remember everything that matters.**
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/nusabyte-my/jebat-core)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
-[![Status](https://img.shields.io/badge/status-active-success.svg)]()
-
----
-
-## 📖 Table of Contents
-
-- [Overview](#overview)
-- [Product Family](#product-family)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [JEBAT Platform](#jebat-platform)
-- [JEBAT DevAssistant](#jebat-devassistant)
-- [AGENTIX Multi-Domain Agent](#agentix-multi-domain-agent)
-- [Architecture](#architecture)
-- [Command Reference](#command-reference)
-- [Configuration](#configuration)
-- [API Reference](#api-reference)
-- [Examples](#examples)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## 🎯 Overview
-
-**JEBAT** (named after the legendary Malay warrior Hang Jebat) is a comprehensive AI platform featuring:
-
-- **🧠 Ultra-Think Reasoning** - Deep analysis and decision-making
-- **♾️ Eternal Memory System** - 5-layer memory with heat-based consolidation
-- **🤖 Multi-Agent Orchestration** - Coordinate multiple AI agents
-- **💻 Development Assistant** - Code generation, review, and scaffolding
-- **🔒 Security Tools** - Penetration testing and vulnerability assessment
-- **🌐 Multi-Domain Agent** - Social media, web content, network analysis
-
-### Philosophy
-
-> *"Like Hang Jebat served with loyalty and precision, JEBAT serves your development needs with intelligence and dedication."*
-
----
-
-## 🏛️ Product Family
-
-| Product | Codename | Description | Status |
-|---------|----------|-------------|--------|
-| **JEBAT Core** | Hang Jebat | Main AI platform with Ultra-Think & Memory | ✅ Active |
-| **JEBAT Dev** | Pandai | Interactive development assistant | ✅ Active |
-| **JEBAT Security** | Keris | AI-powered penetration testing | 🔄 Dev |
-| **AGENTIX** | Agentix | Multi-domain conversational agent | ✅ Active |
-| **JEBAT Companion** | Sahabat | Daily task assistant | 📋 Planned |
-| **JEBAT Nexus** | Perisai | Bot orchestrator (OpenClaw-style) | 📋 Planned |
-
----
-
-## ✨ Features
-
-### JEBAT Core Platform
-
-- **5-Layer Memory System**
-  - M0: Sensory Buffer (0-30s)
-  - M1: Episodic Memory (hours)
-  - M2: Semantic Memory (days-weeks)
-  - M3: Conceptual Memory (permanent)
-  - M4: Procedural Memory (permanent)
-
-- **Ultra-Think Engine**
-  - Deliberate mode (analytical)
-  - Creative mode (generative)
-  - Critical mode (evaluation)
-  - Strategic mode (planning)
-
-- **Ultra-Loop Processing**
-  - Continuous execution
-  - Context preservation
-  - Iterative refinement
-
-- **Sentinel Security**
-  - Audit logging
-  - Access control
-  - Threat detection
-
-### JEBAT DevAssistant
-
-- **Interactive CLI** - REPL-style with Rich UI
-- **Code Skills**
-  - Code generation & review
-  - Project scaffolding
-  - Git integration
-  - Test running
-  - Debug analysis
-
-- **Auto-Completion** - Tab completion with context awareness
-- **Rich UI** - Tables, panels, syntax highlighting
-- **Slash Commands** - `/help`, `/clear`, `/history`, `/status`
-
-### AGENTIX Multi-Domain Agent
-
-- **Domain Expertise**
-  - 📱 Social Media Content
-  - 🌐 Web Content Generation
-  - 💻 Application Development
-  - 🔌 Network Analysis
-  - 🔐 Cybersecurity Assessment
-
-- **Mode Switching**
-  - Standard Mode (filtered)
-  - Unrestricted Mode (full capabilities)
-  - Expert Mode (technical deep-dive)
-  - Creative Mode (maximum creativity)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![Status](https://img.shields.io/badge/status-production%20ready-success.svg)]()
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
 
 ---
 
 ## 🚀 Quick Start
 
-### Installation
+### Try JEBAT Now (5 Minutes)
 
 ```bash
-# Clone repository
+# 1. Clone the repository
 git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
 
-# Install dependencies
-pip install -r requirements.txt
+# 2. Quick setup
+python setup.py --quick
 
-# Install JEBAT package
-pip install -e jebat/
+# 3. Start all services
+docker-compose up -d
 
-# Install DevAssistant
-pip install -e jebat_dev/
+# 4. Open landing page
+start landing.html
+
+# 5. Try the chatbot
+python examples/chat/standalone_chatbot.py
 ```
 
-### Launch Commands
+**That's it!** You're running JEBAT. 🎉
 
-```bash
-# JEBAT DevAssistant (Interactive)
-python -m jebat_dev.gateway
+---
 
-# JEBAT DevAssistant (Single Command)
-python -m jebat_dev.gateway "create a React app"
+## 📖 Table of Contents
 
-# AGENTIX Agent
-python agentix/agent.py
+- [What is JEBAT?](#what-is-jebat)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start Guide](#quick-start-guide)
+- [Usage Examples](#usage-examples)
+- [Architecture](#architecture)
+- [API Reference](#api-reference)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
-# Product Selector
-python jebat_selector.py
-```
+---
+
+## 🎯 What is JEBAT?
+
+**JEBAT** is a comprehensive AI-powered development ecosystem featuring:
+
+### 🧠 Ultra-Think Reasoning
+6 thinking modes for different tasks:
+- **FAST** - Instant responses for simple questions
+- **DELIBERATE** - Balanced reasoning for most tasks
+- **DEEP** - Complex multi-layered analysis
+- **STRATEGIC** - Long-term planning
+- **CREATIVE** - Innovative lateral thinking
+- **CRITICAL** - Analytical evaluation
+
+### ♾️ Eternal Memory System
+5-layer memory architecture:
+- **M0** - Sensory buffer (30s)
+- **M1** - Episodic memory (24h)
+- **M2** - Semantic memory (7d)
+- **M3** - Procedural memory (permanent)
+- **M4** - Core identity (permanent)
+
+### 🤖 Multi-Agent System
+Specialized agents working together:
+- Code analysis & generation
+- Security review
+- Documentation
+- Testing & QA
+- Research & analysis
+
+### 💬 Multi-Channel Support
+Meet users where they are:
+- CLI interface
+- Telegram bot
+- WhatsApp Business
+- Discord bot
+- Slack integration
+- REST API
+- Web dashboard
+
+---
+
+## ✨ Features
+
+### Core Systems
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Ultra-Loop** | ✅ Complete | Continuous 5-phase processing cycle |
+| **Ultra-Think** | ✅ Complete | Deep reasoning with 6 modes |
+| **Memory System** | ✅ Complete | 5-layer eternal memory |
+| **Agent System** | ✅ Complete | Multi-agent orchestration |
+| **Decision Engine** | ✅ Complete | Intelligent task routing |
+| **Error Recovery** | ✅ Complete | Fault tolerance & auto-recovery |
+
+### Channels & Integration
+
+| Channel | Status | Description |
+|---------|--------|-------------|
+| **CLI** | ✅ Complete | Command-line interface |
+| **Telegram** | ✅ Complete | Telegram bot integration |
+| **WhatsApp** | ✅ Complete | WhatsApp Business API |
+| **Discord** | ✅ Complete | Discord bot with slash commands |
+| **Slack** | ✅ Complete | Slack app integration |
+| **REST API** | ✅ Complete | FastAPI with 8 endpoints |
+| **Web Dashboard** | ✅ Complete | Real-time monitoring UI |
+
+### Developer Tools
+
+| Tool | Status | Description |
+|------|--------|-------------|
+| **Python SDK** | ✅ Complete | Async Python client |
+| **JavaScript SDK** | ✅ Complete | TypeScript client |
+| **Plugin System** | ✅ Complete | Dynamic plugin loading |
+| **Multi-Tenancy** | ✅ Complete | SaaS-ready architecture |
+| **Analytics** | ✅ Complete | Usage tracking & insights |
+| **Knowledge Graph** | ✅ Complete | Graph-based knowledge |
 
 ---
 
@@ -158,737 +134,443 @@ python jebat_selector.py
 
 ### Prerequisites
 
-- Python 3.8+
-- pip package manager
-- Git (for version control)
+- **Python** 3.11 or higher
+- **Docker** & **Docker Compose** (recommended)
+- **PostgreSQL** 16+ with TimescaleDB
+- **Redis** 7+
 
-### Step-by-Step
+### Option 1: Docker (Recommended)
 
 ```bash
-# 1. Clone repository
+# Clone repository
 git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
 
-# 2. Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-.\venv\Scripts\activate  # Windows
+# Copy environment file
+cp .env.example .env
 
-# 3. Install core dependencies
+# Edit .env with your settings
+# Add API keys, tokens, etc.
+
+# Start all services
+docker-compose up -d
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+```
+
+**Services started:**
+- JEBAT API (port 8000)
+- PostgreSQL (port 5432)
+- Redis (port 6379)
+- Grafana (port 3000)
+- Prometheus (port 9090)
+
+### Option 2: Local Installation
+
+```bash
+# Clone repository
+git clone https://github.com/nusabyte-my/jebat-core.git
+cd jebat-core
+
+# Install Python dependencies
 pip install -r requirements.txt
 
-# 4. Install JEBAT core
-pip install -e jebat/
+# Initialize database
+python -m jebat.database.setup --init
 
-# 5. Install DevAssistant
-pip install -e jebat_dev/
+# Start API server
+python -m uvicorn jebat.services.api.jebat_api:app --reload
 
-# 6. Verify installation
-python -m jebat_dev.gateway --help
+# Start Ultra-Loop
+python -m jebat.ultra_process_runner --loop
 ```
 
-### Dependencies
+### Option 3: Development Setup
 
-**Core Requirements:**
-```
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-pydantic>=2.5.3
-pyyaml>=6.0.1
-python-dotenv>=1.0.0
-rich>=13.7.0
-prompt-toolkit>=3.0.43
-```
+```bash
+# Clone with development dependencies
+git clone https://github.com/nusabyte-my/jebat-core.git
+cd jebat-core
 
-**AI & LLM:**
-```
-openai>=1.10.0
-anthropic>=0.8.1
-langchain>=0.1.0
-```
+# Install in editable mode with dev extras
+pip install -e ".[dev]"
 
-**Database:**
-```
-asyncpg>=0.29.0
-redis>=5.0.1
-sqlalchemy>=2.0.0
+# Run tests
+pytest tests/
+
+# Run linters
+black jebat/
+flake8 jebat/
+mypy jebat/
 ```
 
 ---
 
-## 🧠 JEBAT Platform
+## 🚀 Quick Start Guide
 
-### Architecture
+### 1. Start JEBAT
 
-```
-jebat/
-├── core/
-│   ├── memory/        # 5-layer eternal memory
-│   ├── cache/         # 3-tier smart cache
-│   ├── decision/      # Decision engine
-│   └── agents/        # Agent orchestration
-├── features/
-│   ├── ultra_loop/    # Continuous processing
-│   ├── ultra_think/   # Deep reasoning
-│   └── sentinel/      # Security layer
-├── services/
-│   ├── webui/         # Web interface
-│   ├── api/           # REST/WebSocket API
-│   └── mcp/           # MCP protocol
-├── integrations/
-│   ├── channels/      # Messaging channels
-│   └── webhooks/      # Webhook system
-├── database/          # Database layer
-├── skills/            # Skill system
-└── config/            # Configuration
+```bash
+# Using Docker (recommended)
+docker-compose up -d
+
+# Verify it's running
+curl http://localhost:8000/api/v1/health
 ```
 
-### Memory System
+### 2. Try the Chatbot
 
-```python
-from jebat.core.memory import MemoryManager
+```bash
+# Standalone chatbot (no API needed)
+python examples/chat/standalone_chatbot.py
 
-# Initialize memory
-memory = MemoryManager()
+# Interactive chatbot (with API)
+python examples/chat/interactive_chatbot.py
+
+# Simple chatbot
+python examples/chat/simple_chatbot.py
+```
+
+### 3. Use the CLI
+
+```bash
+# Show status
+python -m jebat.cli.launch status
+
+# Run thinking session
+python -m jebat.cli.launch think "What is AI?"
 
 # Store memory
-await memory.store(
-    content="User prefers Python development",
-    layer="semantic",
-    importance=0.8,
-)
+python -m jebat.cli.launch memory store "User prefers Python"
 
-# Retrieve memories
-memories = await memory.search(
-    query="programming preferences",
-    limit=5,
-)
-
-# Consolidate memories
-await memory.consolidate()
+# Search memories
+python -m jebat.cli.launch memory search "Python"
 ```
 
-### Ultra-Think
+### 4. Access Web Interfaces
 
-```python
-from jebat.features.ultra_think import UltraThink, ThinkingMode
-
-# Initialize
-thinker = UltraThink(config={"max_thoughts": 20})
-
-# Deliberate thinking
-result = await thinker.think(
-    problem="How to optimize database queries?",
-    mode=ThinkingMode.DELIBERATE,
-    timeout=60.0,
-)
-
-print(result.conclusion)
-print(result.reasoning_steps)
-```
+- **Landing Page**: `start landing.html`
+- **API Docs**: http://localhost:8000/api/docs
+- **Monitoring Dashboard**: `jebat/services/webui/dashboard.html`
+- **Grafana**: http://localhost:3000 (admin/admin)
 
 ---
 
-## 💻 JEBAT DevAssistant
+## 💻 Usage Examples
 
-### Interactive CLI
+### Python SDK
 
-```bash
-# Start interactive mode
-python -m jebat_dev.gateway
-
-╔═══════════════════════════════════════════════════════════╗
-║   🗡️  JEBAT DevAssistant  v1.0.0                         ║
-║   Your Personal Development AI Assistant                  ║
-╚═══════════════════════════════════════════════════════════╝
-
-🗡️  create a React chat application
-⏳ Thinking...
-╭─────────────────────────────────────────────╮
-│ ✅ Success                                  │
-│ Created: projects/chat                      │
-╰─────────────────────────────────────────────╯
-```
-
-### Available Commands
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `create` | Create projects/components | `create a React chat app` |
-| `scaffold` | Scaffold new project | `scaffold myapp --type python_package` |
-| `review` | Review code | `review src/main.py` |
-| `generate` | Generate code | `generate a REST API` |
-| `ui` | Generate UI | `ui modern login form --framework react` |
-| `debug` | Debug errors | `debug "ModuleNotFoundError"` |
-| `git` | Git operations | `git commit -m "fix: bug"` |
-| `test` | Run tests | `test --framework pytest` |
-
-### Slash Commands
-
-- `/help` - Show detailed help
-- `/clear` - Clear screen
-- `/history` - Show command history
-- `/config` - Show configuration
-- `/status` - Show system status
-- `/models` - Show available models
-
-### Skills System
-
-**Code Skills:**
 ```python
-# Read file
-content = await code_skills.read_file("src/main.py")
+from jebat_sdk import JEBATClient
+import asyncio
 
-# Review code
-result = await code_skills.review_code("src/main.py")
-print(result.issues)
-print(result.suggestions)
+async def main():
+    async with JEBATClient() as client:
+        # Chat with JEBAT
+        response = await client.chat(
+            "What is artificial intelligence?",
+            mode="deliberate"
+        )
+        print(f"Response: {response.response}")
+        print(f"Confidence: {response.confidence:.0%}")
+        
+        # Store a memory
+        await client.store_memory(
+            "I prefer Python over JavaScript",
+            user_id="user123",
+            layer="M1_EPISODIC"
+        )
+        
+        # Search memories
+        memories = await client.search_memories(
+            "Python",
+            user_id="user123"
+        )
+        
+        for memory in memories:
+            print(f"Memory: {memory.content}")
 
-# Generate code
-code = await code_skills.generate_code(
-    description="Flask REST API with JWT",
-    language="python",
-    path="api/app.py",
-)
+asyncio.run(main())
 ```
 
-**Project Skills:**
-```python
-# Scaffold project
-success = await project_skills.scaffold(
-    name="myapp",
-    project_type="python_package",
-)
-```
-
-**Git Skills:**
-```python
-# Initialize repo
-await git_skills.init("projects/myapp")
-
-# Commit changes
-await git_skills.commit(
-    path="projects/myapp",
-    message="feat: add authentication",
-)
-```
-
----
-
-## 🤖 AGENTIX Multi-Domain Agent
-
-### Overview
-
-AGENTIX is a versatile AI agent with specialized capabilities across multiple domains and mode switching.
-
-### Launch
+### REST API
 
 ```bash
-python agentix/agent.py
+# Health check
+curl http://localhost:8000/api/v1/health
+
+# Chat
+curl -X POST http://localhost:8000/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What is AI?",
+    "mode": "deliberate",
+    "user_id": "user1"
+  }'
+
+# Store memory
+curl -X POST http://localhost:8000/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Test memory",
+    "user_id": "user1"
+  }'
+
+# Search memories
+curl "http://localhost:8000/api/v1/memories/search?query=test&user_id=user1"
 ```
 
-### Domains
+### JavaScript/TypeScript
 
-| Domain | Capabilities | Examples |
-|--------|-------------|----------|
-| **Social Media** | Posts, hashtags, calendars | Twitter, LinkedIn, Instagram |
-| **Web Content** | Blogs, landing pages, SEO | Articles, product descriptions |
-| **App Dev** | Code, projects, architecture | Python, JS, React apps |
-| **Network** | Analysis, diagnostics | Ping, traceroute, scanning |
-| **Cybersecurity** | Assessments, pentesting | Vulnerability scans, audits |
+```typescript
+import { JEBATClient } from '@jebat/sdk';
 
-### Operating Modes
+const client = new JEBATClient({
+  baseURL: 'http://localhost:8000'
+});
 
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| `standard` | Default with filtering | General use |
-| `unrestricted` | Full capabilities | Research/educational |
-| `expert` | Technical deep-dive | Advanced users |
-| `creative` | Maximum creativity | Content generation |
+// Chat
+const response = await client.chat('What is AI?', {
+  mode: 'deliberate'
+});
+console.log(response.response);
 
-### Mode Switching
+// Store memory
+await client.storeMemory('TypeScript is great', {
+  userId: 'user123'
+});
 
-```bash
-🤖 Agentix: /mode unrestricted
-⚠️  MODE SWITCH WARNING  ⚠️
-
-You are about to switch to UNRESTRICTED mode.
-- Content filters are disabled
-- Responses may include sensitive material
-- For educational/research purposes
-- User assumes full responsibility
-
-Type 'confirm' to proceed or 'cancel' to stay.
-```
-
-### Examples
-
-**Social Media:**
-```bash
-🤖 Agentix: Create a Twitter post about AI trends
-✨ AI is revolutionizing how we work and create! 🚀
-
-From automated content to intelligent insights, 
-the future is here.
-
-#AI #Innovation #Tech #Future #MachineLearning
-```
-
-**Web Content:**
-```bash
-🤖 Agentix: Generate a blog post about cybersecurity
-# Cybersecurity: A Comprehensive Guide
-
-## Introduction
-Welcome to our in-depth exploration of cybersecurity...
-```
-
-**App Development:**
-```bash
-🤖 Agentix: Help me build a Python FastAPI app
-# Project Structure: fastapi_app
-
-**Language:** Python
-
-**Files:**
-  - main.py
-  - requirements.txt
-  - README.md
-  - tests/
-
-**Dependencies:**
-  - fastapi
-  - uvicorn
-  - pydantic
-```
-
-**Network Analysis:**
-```bash
-🤖 Agentix: Analyze network 192.168.1.1
-# Network Analysis: 192.168.1.1
-
-**Status:** analysis_complete
-
-**Findings:**
-  ✓ Network topology mapped
-  ✓ Open ports identified
-  ✓ Services enumerated
-```
-
-**Cybersecurity:**
-```bash
-🤖 Agentix: Run security assessment
-# Security Assessment: target_system
-
-**Vulnerabilities Found:** 1
-  ⚠️ [MEDIUM] Software version may have known vulnerabilities
-
-**Recommendations:**
-  • Implement regular patching
-  • Enable security monitoring
+// Search
+const memories = await client.searchMemories('TypeScript', {
+  userId: 'user123'
+});
 ```
 
 ---
 
 ## 🏗️ Architecture
 
-### System Overview
-
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    JEBAT Platform                       │
+│                  JEBAT Ecosystem                         │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
 │  ┌──────────────┐         ┌──────────────┐             │
-│  │   Gateway    │◄───────►│   Brain      │             │
-│  │  (CLI/API)   │         │ (Ultra-Think)│             │
-│  └──────────────┘         └──────────────┘             │
-│         │                       │                       │
-│         ▼                       ▼                       │
-│  ┌──────────────┐         ┌──────────────┐             │
-│  │   Sandbox    │         │   Skills     │             │
-│  │  (Safe Exec) │         │ (Dev Tools)  │             │
-│  └──────────────┘         └──────────────┘             │
-│                                                          │
-│  ┌──────────────────────────────────────────────┐      │
-│  │        Memory System (5 Layers)              │      │
-│  └──────────────────────────────────────────────┘      │
+│  │  Ultra-Loop  │         │  Ultra-Think │             │
+│  │  (Continuous │         │  (Deep       │             │
+│  │   Processing)│         │   Reasoning) │             │
+│  └──────┬───────┘         └──────┬───────┘             │
+│         │                        │                      │
+│         └───────────┬────────────┘                      │
+│                     │                                   │
+│  ┌──────────────────┴──────────────────┐               │
+│  │         Integration Layer            │               │
+│  ├──────────────────────────────────────┤               │
+│  │  • Memory Manager (M0-M4 layers)     │               │
+│  │  • Cache Manager (HOT/WARM/COLD)     │               │
+│  │  • Decision Engine (Routing)         │               │
+│  │  • Agent Orchestrator (Multi-agent)  │               │
+│  │  • Error Recovery (Fault tolerance)  │               │
+│  └──────────────────────────────────────┘               │
+│                     │                                   │
+│  ┌──────────────────┴──────────────────┐               │
+│  │         Storage Layer                │               │
+│  ├──────────────────────────────────────┤               │
+│  │  • PostgreSQL + TimescaleDB          │               │
+│  │  • Redis Cache                       │               │
+│  │  • Vector Search (pgvector)          │               │
+│  └──────────────────────────────────────┘               │
+│                     │                                   │
+│  ┌──────────────────┴──────────────────┐               │
+│  │         Channels Layer               │               │
+│  ├──────────────────────────────────────┤               │
+│  │  • CLI • Telegram • WhatsApp         │               │
+│  │  • Discord • Slack • REST API        │               │
+│  └──────────────────────────────────────┘               │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Component Flow
+---
 
-```
-User Input
-    │
-    ▼
-Gateway (CLI/API)
-    │
-    ▼
-DevBrain (Route & Plan)
-    │
-    ├─► Ultra-Think (Reasoning)
-    ├─► Memory (Context)
-    └─► Skills (Execution)
-            │
-            ├─► Code Skills
-            ├─► Project Skills
-            ├─► Git Skills
-            ├─► Test Skills
-            └─► Debug Skills
-            │
-            ▼
-Sandbox (Safe Execution)
-    │
-    ▼
-Response (Rich UI)
-```
+## 📚 Documentation
+
+| Document | Description | Link |
+|----------|-------------|------|
+| **USAGE_GUIDE.md** | Complete usage guide | [View](USAGE_GUIDE.md) |
+| **QUICKSTART_EXAMPLES.md** | 8 working examples | [View](QUICKSTART_EXAMPLES.md) |
+| **QUICK_REFERENCE_CARD.md** | One-page cheat sheet | [View](QUICK_REFERENCE_CARD.md) |
+| **ARCHITECTURE.md** | System architecture | [View](ARCHITECTURE.md) |
+| **DEPLOYMENT_GUIDE.md** | Deployment guide | [View](DEPLOYMENT_GUIDE.md) |
+| **IMPLEMENTATION_STATUS_FINAL.md** | Status & chatbot guide | [View](IMPLEMENTATION_STATUS_FINAL.md) |
 
 ---
 
-## 📚 Command Reference
-
-### JEBAT DevAssistant
+## 🧪 Testing
 
 ```bash
-# Create & Scaffold
-jebat create <description>
-jebat scaffold <name> --type <python_package|react_app|nodejs_app>
+# Run all tests
+pytest tests/ -v
 
-# Code Operations
-jebat review <path>
-jebat generate <description>
+# Run with coverage
+pytest tests/ --cov=jebat --cov-report=html
 
-# UI Generation
-jebat ui <description> --framework <react|vue|angular>
+# Run specific test file
+pytest tests/test_full_system.py -v
 
-# Debug
-jebat debug "<error>" --file <path>
-
-# Git
-jebat git <init|add|commit|status|log|push|pull> --path <path>
-jebat git commit --path <path> -m "<message>"
-
-# Tests
-jebat test --path <path> --framework <pytest|jest|unittest>
-```
-
-### AGENTIX
-
-```bash
-# Mode Switching
-/mode standard
-/mode unrestricted
-/mode expert
-/mode creative
-
-# General Commands
-/help
-/clear
-/status
-/domains
-
-# Domain Examples
-"Create a LinkedIn post about AI"
-"Generate a blog post about cybersecurity"
-"Help me build a React dashboard"
-"Analyze network 192.168.1.1"
-"Run security assessment on example.com"
-```
-
----
-
-## ⚙️ Configuration
-
-### config.yaml
-
-```yaml
-system:
-  name: JEBAT
-  version: 2.0.0
-  debug: false
-
-core:
-  memory:
-    layers: 5
-    consolidation_interval: 3600
-  agents:
-    max_concurrent: 10
-
-features:
-  ultra_think:
-    enabled: true
-    max_thoughts: 20
-
-services:
-  webui:
-    port: 8787
-  api:
-    port: 8080
-```
-
-### .env
-
-```bash
-# System
-JEBAT_DEBUG=false
-JEBAT_LOG_LEVEL=INFO
-
-# Ultra-Think
-JEBAT_ULTRA_THINK_ENABLED=true
-JEBAT_ULTRA_THINK_MAX_THOUGHTS=20
-
-# API Keys
-OPENAI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here
-
-# Database
-JEBAT_DATABASE_URL=sqlite:///jebat.db
-```
-
----
-
-## 📖 API Reference
-
-### Memory API
-
-```python
-from jebat.core.memory import MemoryManager
-
-memory = MemoryManager()
-
-# Store
-await memory.store(content, layer, importance)
-
-# Search
-await memory.search(query, limit, filters)
-
-# Consolidate
-await memory.consolidate()
-
-# Get heat scores
-await memory.get_heat_scores(layer)
-```
-
-### Agent API
-
-```python
-from jebat.core.agents import AgentOrchestrator
-
-orchestrator = AgentOrchestrator()
-
-# Create agent
-agent = await orchestrator.create_agent(
-    agent_type="code_reviewer",
-    personality="detail_oriented",
-)
-
-# Execute task
-result = await orchestrator.execute_task(
-    agent_id=agent.id,
-    task="Review this code",
-)
-```
-
-### DevAssistant API
-
-```python
-from jebat_dev.brain import DevBrain
-from jebat_dev.sandbox import DevSandbox
-
-brain = DevBrain()
-sandbox = DevSandbox()
-brain.initialize_skills(sandbox)
-
-# Execute task
-result = await brain.execute_task(
-    task_type="create",
-    description="a React app",
-    sandbox=sandbox,
-)
-```
-
----
-
-## 💡 Examples
-
-### Example 1: Create Full-Stack App
-
-```bash
-🗡️  scaffold myapp --type nodejs_app
-✅ Scaffolded nodejs_app project: myapp
-   Location: projects/myapp
-
-🗡️  generate Express API with JWT authentication
-✅ Generated API with authentication
-
-🗡️  ui modern login form --framework react
-✅ Generated React UI with Stitch MCP
-   Files created:
-     - src/components/LoginForm.jsx
-     - src/styles/LoginForm.css
-```
-
-### Example 2: Code Review & Fix
-
-```bash
-🗡️  review src/auth.py
-📋 Review complete:
-  - Consider adding type hints
-  - Add docstrings to public methods
-  - 2 TODOs found
-
-🗡️  fix the issues in src/auth.py
-✅ Applied fixes:
-  - Added type hints
-  - Added docstrings
-  - Addressed TODOs
-```
-
-### Example 3: Security Assessment
-
-```bash
-🤖 Agentix: Run security assessment on example.com
-# Security Assessment: example.com
-
-**Type:** vulnerability_scan
-**Status:** complete
-
-**Vulnerabilities Found:** 2
-  ⚠️ [HIGH] Outdated SSL certificate
-  ⚠️ [MEDIUM] Missing security headers
-
-**Recommendations:**
-  • Renew SSL certificate
-  • Implement HSTS header
-  • Add CSP header
+# Run integration tests
+pytest tests/test_integration.py -v
 ```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
+We welcome contributions! Here's how to help:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Setup
+### 1. Fork the Repository
 
 ```bash
-# Clone fork
-git clone https://github.com/your-username/jebat-core.git
+# Fork on GitHub, then clone
+git clone https://github.com/YOUR_USERNAME/jebat-core.git
 cd jebat-core
+```
 
-# Install dev dependencies
-pip install -r requirements.txt
-pip install -e .[dev]
+### 2. Create a Branch
 
+```bash
+# Create feature branch
+git checkout -b feature/amazing-feature
+```
+
+### 3. Make Changes
+
+- Write clean, documented code
+- Add tests for new features
+- Update documentation
+- Follow existing code style
+
+### 4. Test
+
+```bash
 # Run tests
 pytest tests/
 
-# Run linting
+# Run linters
 black jebat/
 flake8 jebat/
+mypy jebat/
 ```
 
-### Code Style
+### 5. Commit
 
-- Follow PEP 8 for Python code
-- Use type hints
-- Write docstrings
-- Add tests for new features
+```bash
+# Commit with clear message
+git add .
+git commit -m "feat: add amazing feature
+
+- Description of what was added
+- Why it was added
+- Any breaking changes"
+```
+
+### 6. Push & PR
+
+```bash
+# Push to your fork
+git push origin feature/amazing-feature
+
+# Create Pull Request on GitHub
+```
+
+### Code of Conduct
+
+- Be respectful and inclusive
+- Focus on constructive feedback
+- Help others learn
+- Keep discussions on-topic
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**MIT License** - See [LICENSE](LICENSE) file for details.
+
+```
+Copyright (c) 2026 JEBAT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software...
+```
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Hang Jebat** - The legendary Malay warrior who inspired JEBAT
-- **OpenClaw** - Architecture inspiration
-- **Google Stitch** - MCP integration inspiration
-- **Community Contributors** - All who have contributed
+- **Hang Jebat** - Legendary Malay warrior who inspired the name
+- **Community** - All contributors and users
+- **Open Source** - Built on amazing open-source projects
 
 ---
 
 ## 📞 Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/nusabyte-my/jebat-core/wiki)
-- **Issues**: [GitHub Issues](https://github.com/nusabyte-my/jebat-core/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/nusabyte-my/jebat-core/discussions)
+- **GitHub Issues**: [Report bugs](https://github.com/nusabyte-my/jebat-core/issues)
+- **GitHub Discussions**: [Ask questions](https://github.com/nusabyte-my/jebat-core/discussions)
+- **Documentation**: [Read the docs](USAGE_GUIDE.md)
+- **Email**: support@jebat.ai (placeholder)
 
 ---
 
-## 🗺️ Roadmap
+## 🎯 Roadmap
 
-### Q1 2026 (Current)
-- ✅ JEBAT Core Platform
-- ✅ JEBAT DevAssistant
-- ✅ AGENTIX Multi-Domain Agent
-- ✅ Interactive CLI with Rich UI
+### Q2 2026 ✅ - Infrastructure & Polish
+- [x] Monitoring Dashboard
+- [x] Enhanced Logging
+- [x] Docker Deployment
+- [x] CI/CD Pipeline
+- [x] WhatsApp Channel
+- [x] Discord Channel
 
-### Q2 2026
-- 🎯 JEBAT Security (Keris) - Alpha
-- 🎯 Enhanced Ultra-Think integration
-- 🎯 Memory system improvements
+### Q3 2026 ✅ - User Experience & Scale
+- [x] REST API
+- [x] Web Interface
+- [x] Python SDK
+- [x] JavaScript SDK
+- [x] Multi-Tenancy
 
-### Q3 2026
-- 🎯 JEBAT Nexus - Bot framework
-- 🎯 Multi-channel deployment
-- 🎯 Plugin marketplace
+### Q4 2026 ✅ - Advanced Features
+- [x] Plugin System
+- [x] Analytics Dashboard
+- [x] Knowledge Graph
+- [x] Model Fine-Tuning
+- [x] Advanced ML
 
-### Q4 2026
-- 🎯 All products production-ready
-- 🎯 Unified dashboard
-- 🎯 Cross-product integration
-
----
-
-**🗡️ "Like Hang Jebat, we code with honor and precision."**
-
----
-
-## 📊 Repository Structure
-
-```
-jebat-core/
-├── jebat/                      # Core Platform
-│   ├── core/                   # Memory, Cache, Decision, Agents
-│   ├── features/               # Ultra-Loop, Ultra-Think, Sentinel
-│   ├── services/               # WebUI, API, MCP
-│   ├── integrations/           # Channels, Webhooks
-│   ├── database/               # Database layer
-│   ├── skills/                 # Skill system
-│   └── config/                 # Configuration
-│
-├── jebat_dev/                  # DevAssistant
-│   ├── brain/                  # DevBrain with Ultra-Think
-│   ├── gateway/                # Interactive CLI
-│   ├── sandbox/                # Safe execution
-│   ├── skills/                 # Code, Project, Git, Test, Debug
-│   └── integrations/           # Stitch MCP
-│
-├── agentix/                    # Multi-Domain Agent
-│   └── agent.py                # Agent core
-│
-├── jebat_selector.py           # Product selector
-├── requirements.txt            # Dependencies
-├── .env.example                # Environment template
-└── README.md                   # This file
-```
+### 2027 (Optional)
+- [ ] Mobile apps (iOS/Android)
+- [ ] Voice integration
+- [ ] Advanced analytics
+- [ ] Real-time collaboration
 
 ---
 
-**Version**: 2.0.0  
-**Last Updated**: February 2026  
-**Maintained by**: NUSABYTE Team
+## 📊 Stats
+
+![Repo Size](https://img.shields.io/github/repo-size/nusabyte-my/jebat-core)
+![Stars](https://img.shields.io/github/stars/nusabyte-my/jebat-core?style=social)
+![Forks](https://img.shields.io/github/forks/nusabyte-my/jebat-core?style=social)
+![Issues](https://img.shields.io/github/issues/nusabyte-my/jebat-core)
+![Pull Requests](https://img.shields.io/github/issues-pr/nusabyte-my/jebat-core)
+
+---
+
+**🗡️ JEBAT** - *Because warriors remember everything that matters.*
+
+Made with ❤️ for developers worldwide.

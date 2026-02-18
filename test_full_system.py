@@ -86,10 +86,14 @@ class FullSystemIntegrationTest:
         result = IntegrationTestResult("Ultra-Loop Integration")
 
         try:
-            from jebat.cache.smart_cache import CacheManager
-            from jebat.decision_engine.engine import DecisionEngine
-            from jebat.memory_system.core.memory_manager import MemoryManager
-            from jebat.ultra_loop import LoopPhase, UltraLoop, create_ultra_loop
+            from jebat.core.cache.smart_cache import CacheManager
+            from jebat.core.decision.engine import DecisionEngine
+            from jebat.core.memory.manager import MemoryManager
+            from jebat.features.ultra_loop import (
+                LoopPhase,
+                UltraLoop,
+                create_ultra_loop,
+            )
 
             # Initialize components
             memory_manager = MemoryManager()
@@ -163,9 +167,13 @@ class FullSystemIntegrationTest:
         result = IntegrationTestResult("Ultra-Think Integration")
 
         try:
-            from jebat.decision_engine.engine import DecisionEngine
-            from jebat.memory_system.core.memory_manager import MemoryManager
-            from jebat.ultra_think import ThinkingMode, UltraThink, create_ultra_think
+            from jebat.core.decision.engine import DecisionEngine
+            from jebat.core.memory.manager import MemoryManager
+            from jebat.features.ultra_think import (
+                ThinkingMode,
+                UltraThink,
+                create_ultra_think,
+            )
 
             # Initialize components
             memory_manager = MemoryManager()
@@ -240,8 +248,16 @@ class FullSystemIntegrationTest:
         result = IntegrationTestResult("Combined Workflow")
 
         try:
-            from jebat.ultra_loop import LoopPhase, UltraLoop, create_ultra_loop
-            from jebat.ultra_think import ThinkingMode, UltraThink, create_ultra_think
+            from jebat.features.ultra_loop import (
+                LoopPhase,
+                UltraLoop,
+                create_ultra_loop,
+            )
+            from jebat.features.ultra_think import (
+                ThinkingMode,
+                UltraThink,
+                create_ultra_think,
+            )
 
             # Initialize both systems
             ultra_loop = await create_ultra_loop(
@@ -308,7 +324,7 @@ class FullSystemIntegrationTest:
         result = IntegrationTestResult("Error Handling")
 
         try:
-            from jebat.ultra_think import ThinkingMode, create_ultra_think
+            from jebat.features.ultra_think import ThinkingMode, create_ultra_think
 
             ultra_think = await create_ultra_think(
                 config={"max_thoughts": 5, "enable_reflection": False}
@@ -359,8 +375,8 @@ class FullSystemIntegrationTest:
         result = IntegrationTestResult("Performance")
 
         try:
-            from jebat.ultra_loop import create_ultra_loop
-            from jebat.ultra_think import ThinkingMode, create_ultra_think
+            from jebat.features.ultra_loop import create_ultra_loop
+            from jebat.features.ultra_think import ThinkingMode, create_ultra_think
 
             # Test Ultra-Loop performance
             ultra_loop = await create_ultra_loop(

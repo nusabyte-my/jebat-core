@@ -18,11 +18,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, Optional
 
-import aioredis
 import asyncpg
-from aioredis import ConnectionPool as RedisPool
-from aioredis import Redis
+import redis.asyncio as redis
 from asyncpg import Connection, Pool
+from redis.asyncio import Redis
+from redis.asyncio.connection import ConnectionPool as RedisPool
 
 # Configure logging
 logger = logging.getLogger(__name__)

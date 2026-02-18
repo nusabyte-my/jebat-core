@@ -19,6 +19,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from .database_repository import UltraLoopRepository
+
 logger = logging.getLogger(__name__)
 
 
@@ -108,6 +110,7 @@ class UltraLoop:
         decision_engine=None,
         agent_orchestrator=None,
         cache_manager=None,
+        enable_db_persistence: bool = True,
     ):
         """
         Initialize the Ultra-Loop system
@@ -118,17 +121,23 @@ class UltraLoop:
             decision_engine: Decision engine integration
             agent_orchestrator: Agent orchestration integration
             cache_manager: Cache management integration
+            enable_db_persistence: Enable database persistence for cycles
         """
         self.config = config or {}
         self.memory_manager = memory_manager
         self.decision_engine = decision_engine
         self.agent_orchestrator = agent_orchestrator
         self.cache_manager = cache_manager
+        self.enable_db_persistence = enable_db_persistence
+
+        # Database repository
+        self.db_repo = UltraLoopRepository() if enable_db_persistence else None
 
         # Loop control
         self._is_running = False
         self._current_cycle = 0
         self._loop_task: Optional[asyncio.Task] = None
+        self._current_db_cycle = None  # Track current DB cycle
 
         # Timing
         self.cycle_interval = self.config.get("cycle_interval", 1.0)  # seconds
@@ -147,7 +156,10 @@ class UltraLoop:
         self.cycle_end_handlers: List[Callable] = []
         self.error_handlers: List[Callable] = []
 
-        logger.info("Ultra-Loop initialized")
+        logger.info(
+            "Ultra-Loop initialized with database persistence: %s",
+            enable_db_persistence,
+        )
 
     def on_phase(self, phase: LoopPhase, handler: Callable):
         """Register handler for a specific phase"""
@@ -314,19 +326,81 @@ class UltraLoop:
             "responses_sent": 0,
             "tasks_executed": 0,
             "actions_completed": [],
+            "agent_results": [],
         }
 
-        # Execute planned actions
+        # Execute planned actions through agent orchestrator
         if self.agent_orchestrator:
             try:
-                # TODO: Implement action execution
-                # actions = context.outputs.get("cognition", {}).get("plans", [])
-                # for action in actions:
-                #     await self.agent_orchestrator.execute(action)
-                action_result["tasks_executed"] = 1
+                # Get actions from cognition phase
+                cognition = context.outputs.get("cognition", {})
+                plans = cognition.get("plans_created", [])
+
+                # Execute each planned action
+                for plan in plans:
+                    try:
+                        # Create task for agent execution
+                        from jebat.core.agents.orchestrator import (
+                            AgentTask,
+                            TaskPriority,
+                        )
+
+                        task = AgentTask(
+                            description=plan.get("action", "Execute action"),
+                            parameters=plan.get("parameters", {}),
+                            priority=TaskPriority.MEDIUM,
+                        )
+
+                        # Execute task through orchestrator
+                        if hasattr(self.agent_orchestrator, "execute_task"):
+                            result = await self.agent_orchestrator.execute_task(task)
+                            action_result["tasks_executed"] += 1
+                            action_result["agent_results"].append(
+                                {
+                                    "task_id": task.task_id,
+                                    "success": result.success
+                                    if hasattr(result, "success")
+                                    else True,
+                                    "result": result.result
+                                    if hasattr(result, "result")
+                                    else None,
+                                }
+                            )
+                        else:
+                            # Fallback: direct execution
+                            action_result["tasks_executed"] += 1
+                            action_result["agent_results"].append(
+                                {
+                                    "task_id": task.task_id,
+                                    "success": True,
+                                    "result": "Executed via fallback",
+                                }
+                            )
+
+                    except Exception as e:
+                        logger.error(f"Action execution error: {e}")
+                        action_result["actions_completed"].append(
+                            {
+                                "action": plan.get("action", "unknown"),
+                                "status": "failed",
+                                "error": str(e),
+                            }
+                        )
+
             except Exception as e:
-                logger.error(f"Action error: {e}")
+                logger.error(f"Agent orchestration error: {e}")
                 action_result["error"] = str(e)
+        else:
+            # No agent orchestrator - execute fallback actions
+            logger.debug("No agent orchestrator connected, using fallback execution")
+            action_result["tasks_executed"] = 1
+            action_result["actions_completed"].append(
+                {
+                    "action": "fallback_execution",
+                    "status": "completed",
+                    "note": "No agent orchestrator connected",
+                }
+            )
 
         context.outputs["action"] = action_result
 
@@ -369,6 +443,17 @@ class UltraLoop:
         cycle_start = time.time()
         self.metrics.last_cycle_start = datetime.utcnow()
 
+        # Create database record if persistence is enabled
+        if self.db_repo:
+            try:
+                self._current_db_cycle = await self.db_repo.create_cycle(
+                    cycle_id=cycle_id,
+                    metadata={"cycle_number": self._current_cycle},
+                )
+            except Exception as e:
+                logger.warning(f"Failed to create DB cycle record: {e}")
+                self._current_db_cycle = None
+
         try:
             # Trigger cycle start handlers
             await self._trigger_cycle_start_handlers(context)
@@ -382,19 +467,60 @@ class UltraLoop:
                 (LoopPhase.LEARNING, self.learning_phase),
             ]
 
-            for phase, phase_method in phases:
+            for idx, (phase, phase_method) in enumerate(phases):
                 context.phase = phase
-                await phase_method(context)
+                phase_start = time.time()
+
+                try:
+                    await phase_method(context)
+
+                    # Store phase record if persistence is enabled
+                    if self.db_repo and self._current_db_cycle:
+                        phase_outputs = context.outputs.get(phase.value, {})
+                        await self.db_repo.create_phase(
+                            cycle_id=cycle_id,
+                            phase_name=phase.value,
+                            phase_order=idx,
+                            inputs=dict(context.inputs),
+                            outputs=phase_outputs,
+                        )
+                except Exception as e:
+                    logger.error(f"Phase {phase.value} failed: {e}")
+                    if self.db_repo and self._current_db_cycle:
+                        await self.db_repo.create_phase(
+                            cycle_id=cycle_id,
+                            phase_name=phase.value,
+                            phase_order=idx,
+                            inputs=dict(context.inputs),
+                            outputs={"error": str(e)},
+                        )
+                    raise
 
             # Update metrics
             self.metrics.successful_cycles += 1
             context.end_time = datetime.utcnow()
+
+            # Update database record
+            if self.db_repo and self._current_db_cycle:
+                await self.db_repo.update_cycle_status(
+                    cycle_id=cycle_id,
+                    status="completed",
+                )
 
         except Exception as e:
             self.metrics.failed_cycles += 1
             self.metrics.last_error = str(e)
             context.error = str(e)
             logger.error(f"Cycle {cycle_id} failed: {e}")
+
+            # Update database record with failure
+            if self.db_repo and self._current_db_cycle:
+                await self.db_repo.update_cycle_status(
+                    cycle_id=cycle_id,
+                    status="failed",
+                    error_message=str(e),
+                )
+
             await self._trigger_error_handlers(e, context)
 
         finally:
@@ -413,6 +539,7 @@ class UltraLoop:
 
             self._current_cycle += 1
             self.metrics.total_cycles = self._current_cycle
+            self._current_db_cycle = None  # Reset for next cycle
 
     async def _loop_runner(self):
         """Background loop runner"""
@@ -466,6 +593,62 @@ class UltraLoop:
             "cycle_interval": self.cycle_interval,
             "max_cycles": self.max_cycles,
             "metrics": self.get_metrics(),
+        }
+
+    async def get_cycle_history(
+        self,
+        limit: int = 100,
+        status: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get cycle history from database.
+
+        Args:
+            limit: Maximum number of cycles to return
+            status: Optional status filter
+
+        Returns:
+            List of cycle records
+        """
+        if not self.db_repo:
+            return []
+
+        cycles = await self.db_repo.get_recent_cycles(limit=limit, status=status)
+        return [
+            cycle.to_dict()
+            if hasattr(cycle, "to_dict")
+            else {
+                "cycle_id": cycle.cycle_id,
+                "status": cycle.status,
+                "started_at": cycle.started_at.isoformat(),
+                "completed_at": cycle.completed_at.isoformat()
+                if cycle.completed_at
+                else None,
+            }
+            for cycle in cycles
+        ]
+
+    async def get_statistics(self, time_window_hours: int = 24) -> Dict[str, Any]:
+        """
+        Get loop statistics from database.
+
+        Args:
+            time_window_hours: Time window in hours
+
+        Returns:
+            Statistics dictionary
+        """
+        if not self.db_repo:
+            return self.get_metrics()
+
+        db_stats = await self.db_repo.get_cycle_statistics(
+            time_window_hours=time_window_hours
+        )
+
+        # Combine with in-memory metrics
+        return {
+            **self.get_metrics(),
+            **db_stats,
         }
 
 

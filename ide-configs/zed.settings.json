@@ -1,0 +1,20 @@
+{
+  "ai": {
+    "providers": {
+      "jebat": {
+        "name": "JEBAT AI",
+        "type": "openai-compatible",
+        "api_url": "http://localhost:8000/api/v1",
+        "api_key": "jebat-local-key",
+        "models": {
+          "chat": "jebat-pro",
+          "completion": "jebat-fast"
+        }
+      }
+    },
+    "default_provider": "jebat"
+  },
+  "features": {
+    "inline_completion_provider": "jebat"
+  }
+}

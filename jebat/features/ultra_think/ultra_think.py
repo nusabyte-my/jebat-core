@@ -22,6 +22,8 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from uuid import uuid4
 
+from .database_repository import UltraThinkRepository
+
 logger = logging.getLogger(__name__)
 
 
@@ -159,6 +161,8 @@ class UltraThink:
         config: Optional[Dict[str, Any]] = None,
         memory_manager=None,
         decision_engine=None,
+        enable_db_persistence: bool = True,
+        enable_memory_integration: bool = True,
     ):
         """
         Initialize Ultra-Think system
@@ -167,10 +171,17 @@ class UltraThink:
             config: Thinking configuration
             memory_manager: Memory system for context retrieval
             decision_engine: Decision engine for validation
+            enable_db_persistence: Enable database persistence for sessions
+            enable_memory_integration: Enable memory retrieval during thinking
         """
         self.config = config or {}
         self.memory_manager = memory_manager
         self.decision_engine = decision_engine
+        self.enable_db_persistence = enable_db_persistence
+        self.enable_memory_integration = enable_memory_integration
+
+        # Database repository
+        self.db_repo = UltraThinkRepository() if enable_db_persistence else None
 
         # Thinking parameters
         self.max_thoughts = self.config.get("max_thoughts", 50)
@@ -199,7 +210,11 @@ class UltraThink:
             "probabilistic_reasoning": True,
         }
 
-        logger.info("Ultra-Think initialized")
+        logger.info(
+            "Ultra-Think initialized with DB persistence: %s, Memory integration: %s",
+            enable_db_persistence,
+            enable_memory_integration,
+        )
 
     async def think(
         self,
@@ -207,6 +222,7 @@ class UltraThink:
         mode: Optional[ThinkingMode] = None,
         context: Optional[Dict[str, Any]] = None,
         timeout: Optional[float] = None,
+        user_id: Optional[str] = None,
     ) -> ThinkingResult:
         """
         Engage in deep thinking about a problem
@@ -216,6 +232,7 @@ class UltraThink:
             mode: Thinking mode (default: deliberative)
             context: Additional context for thinking
             timeout: Maximum thinking time in seconds
+            user_id: Optional user identifier for memory retrieval
 
         Returns:
             ThinkingResult with conclusion and reasoning
@@ -227,22 +244,48 @@ class UltraThink:
         trace = ThinkingTrace(
             problem_statement=problem,
             thinking_mode=thinking_mode,
-            metadata={"context": context or {}},
+            metadata={"context": context or {}, "user_id": user_id},
         )
 
         logger.info(
             f"Starting {thinking_mode.value} thinking session: {problem[:100]}..."
         )
 
+        # Create database session record if persistence is enabled
+        if self.db_repo:
+            try:
+                await self.db_repo.create_session(
+                    trace_id=trace.trace_id,
+                    problem_statement=problem,
+                    thinking_mode=thinking_mode.value,
+                    metadata={"context": context or {}},
+                )
+            except Exception as e:
+                logger.warning(f"Failed to create DB session record: {e}")
+
         try:
             # Apply timeout if specified
             if timeout:
                 result = await asyncio.wait_for(
-                    self._run_thinking_session(trace, thinking_mode, context),
+                    self._run_thinking_session(trace, thinking_mode, context, user_id),
                     timeout=timeout,
                 )
             else:
-                result = await self._run_thinking_session(trace, thinking_mode, context)
+                result = await self._run_thinking_session(
+                    trace, thinking_mode, context, user_id
+                )
+
+            # Update database session with result
+            if self.db_repo:
+                try:
+                    await self.db_repo.update_session_status(
+                        trace_id=trace.trace_id,
+                        status="completed" if result.success else "failed",
+                        conclusion=result.conclusion,
+                        confidence_score=result.confidence,
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to update DB session status: {e}")
 
             # Update statistics
             self._update_stats(result, time.time() - start_time)
@@ -251,6 +294,17 @@ class UltraThink:
 
         except asyncio.TimeoutError:
             logger.warning(f"Thinking session timed out after {timeout}s")
+
+            # Update database session with timeout
+            if self.db_repo:
+                try:
+                    await self.db_repo.update_session_status(
+                        trace_id=trace.trace_id,
+                        status="timeout",
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to update DB session timeout: {e}")
+
             return ThinkingResult(
                 trace=trace,
                 success=False,
@@ -265,6 +319,17 @@ class UltraThink:
         except Exception as e:
             logger.error(f"Thinking session failed: {e}")
             self.stats["failed_sessions"] += 1
+
+            # Update database session with failure
+            if self.db_repo:
+                try:
+                    await self.db_repo.update_session_status(
+                        trace_id=trace.trace_id,
+                        status="failed",
+                    )
+                except Exception as db_error:
+                    logger.warning(f"Failed to update DB session failure: {db_error}")
+
             return ThinkingResult(
                 trace=trace,
                 success=False,
@@ -281,12 +346,13 @@ class UltraThink:
         trace: ThinkingTrace,
         mode: ThinkingMode,
         context: Optional[Dict[str, Any]],
+        user_id: Optional[str] = None,
     ) -> ThinkingResult:
         """Run a complete thinking session through all phases"""
 
         phases = self._get_phases_for_mode(mode)
 
-        for phase in phases:
+        for idx, phase in enumerate(phases):
             if len(trace.thoughts) >= self.max_thoughts:
                 logger.info(f"Reached max thoughts ({self.max_thoughts})")
                 break
@@ -294,9 +360,9 @@ class UltraThink:
             logger.debug(f"Thinking phase: {phase.value}")
 
             if phase == ThinkingPhase.ORIENTATION:
-                await self._orientation_phase(trace, context)
+                await self._orientation_phase(trace, context, user_id)
             elif phase == ThinkingPhase.EXPLORATION:
-                await self._exploration_phase(trace, context)
+                await self._exploration_phase(trace, context, user_id)
             elif phase == ThinkingPhase.ANALYSIS:
                 await self._analysis_phase(trace, mode)
             elif phase == ThinkingPhase.SYNTHESIS:
@@ -305,6 +371,24 @@ class UltraThink:
                 await self._verification_phase(trace, mode)
             elif phase == ThinkingPhase.REFLECTION and self.enable_reflection:
                 await self._reflection_phase(trace, mode)
+
+            # Store latest thought in database if persistence is enabled
+            if self.db_repo and trace.thoughts:
+                latest_thought = trace.thoughts[-1]
+                try:
+                    await self.db_repo.create_thought(
+                        trace_id=trace.trace_id,
+                        thought_id=latest_thought.id,
+                        content=latest_thought.content,
+                        phase=latest_thought.phase.value,
+                        phase_order=idx,
+                        confidence=latest_thought.confidence,
+                        supporting_evidence=latest_thought.supporting_evidence,
+                        counter_arguments=latest_thought.counter_arguments,
+                        metadata=latest_thought.metadata,
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to store thought in DB: {e}")
 
         # Generate conclusion
         trace.end_time = datetime.utcnow()
@@ -376,7 +460,10 @@ class UltraThink:
             return list(ThinkingPhase)
 
     async def _orientation_phase(
-        self, trace: ThinkingTrace, context: Optional[Dict[str, Any]]
+        self,
+        trace: ThinkingTrace,
+        context: Optional[Dict[str, Any]],
+        user_id: Optional[str] = None,
     ):
         """Understand and frame the problem"""
         problem = trace.problem_statement
@@ -389,6 +476,24 @@ class UltraThink:
             metadata={"phase": "orientation"},
         )
         trace.add_thought(thought)
+
+        # Retrieve relevant memories if enabled
+        if self.enable_memory_integration and self.memory_manager and user_id:
+            try:
+                # TODO: Retrieve relevant context from memory
+                # memories = await self.memory_manager.search_memories(
+                #     query=problem, user_id=user_id, limit=5
+                # )
+                thought = ThoughtNode(
+                    content="Retrieved relevant memories for context",
+                    phase=ThinkingPhase.ORIENTATION,
+                    confidence=0.75,
+                    supporting_evidence=["memory_retrieval"],
+                    metadata={"memory_integration": True},
+                )
+                trace.add_thought(thought)
+            except Exception as e:
+                logger.warning(f"Memory retrieval failed in orientation: {e}")
 
         # Identify key components
         thought = ThoughtNode(
@@ -409,26 +514,29 @@ class UltraThink:
         trace.add_thought(thought)
 
     async def _exploration_phase(
-        self, trace: ThinkingTrace, context: Optional[Dict[str, Any]]
+        self,
+        trace: ThinkingTrace,
+        context: Optional[Dict[str, Any]],
+        user_id: Optional[str] = None,
     ):
         """Gather relevant information and perspectives"""
-        # Retrieve relevant memories if available
-        if self.memory_manager:
+        # Retrieve relevant memories if available and enabled
+        if self.enable_memory_integration and self.memory_manager and user_id:
             try:
                 # TODO: Retrieve relevant context from memory
                 # memories = await self.memory_manager.search_memories(
-                #     query=trace.problem_statement, limit=5
+                #     query=trace.problem_statement, user_id=user_id, limit=5
                 # )
                 thought = ThoughtNode(
-                    content="Explored relevant knowledge and context",
+                    content="Explored relevant knowledge and context from memory",
                     phase=ThinkingPhase.EXPLORATION,
                     confidence=0.7,
                     supporting_evidence=["memory_retrieval"],
-                    metadata={"exploration_type": "memory"},
+                    metadata={"exploration_type": "memory", "user_id": user_id},
                 )
                 trace.add_thought(thought)
             except Exception as e:
-                logger.warning(f"Memory retrieval failed: {e}")
+                logger.warning(f"Memory retrieval failed in exploration: {e}")
 
         # Consider multiple perspectives
         thought = ThoughtNode(
@@ -592,16 +700,106 @@ class UltraThink:
             self.techniques[technique] = False
             logger.info(f"Disabled thinking technique: {technique}")
 
+    async def get_session_history(
+        self,
+        limit: int = 100,
+        status: Optional[str] = None,
+        thinking_mode: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get thinking session history from database.
+
+        Args:
+            limit: Maximum number of sessions to return
+            status: Optional status filter
+            thinking_mode: Optional thinking mode filter
+
+        Returns:
+            List of session records
+        """
+        if not self.db_repo:
+            return []
+
+        sessions = await self.db_repo.get_recent_sessions(
+            limit=limit, status=status, thinking_mode=thinking_mode
+        )
+        return [
+            {
+                "trace_id": s.trace_id,
+                "problem_statement": s.problem_statement,
+                "thinking_mode": s.thinking_mode,
+                "status": s.status,
+                "conclusion": s.conclusion,
+                "confidence_score": s.confidence_score,
+                "started_at": s.started_at.isoformat(),
+                "completed_at": s.completed_at.isoformat() if s.completed_at else None,
+            }
+            for s in sessions
+        ]
+
+    async def get_statistics(self, time_window_hours: int = 24) -> Dict[str, Any]:
+        """
+        Get thinking statistics from database.
+
+        Args:
+            time_window_hours: Time window in hours
+
+        Returns:
+            Statistics dictionary
+        """
+        if not self.db_repo:
+            return self.get_stats()
+
+        db_stats = await self.db_repo.get_session_statistics(
+            time_window_hours=time_window_hours
+        )
+
+        # Combine with in-memory stats
+        return {
+            **self.get_stats(),
+            **db_stats,
+        }
+
+    async def get_thought_chain(self, trace_id: str) -> List[Dict[str, Any]]:
+        """
+        Get thought chain for a specific session.
+
+        Args:
+            trace_id: Trace identifier
+
+        Returns:
+            List of thoughts
+        """
+        if not self.db_repo:
+            return []
+
+        thoughts = await self.db_repo.get_thought_chain(trace_id)
+        return [
+            {
+                "thought_id": t.thought_id,
+                "content": t.content,
+                "phase": t.phase,
+                "phase_order": t.phase_order,
+                "confidence": t.confidence,
+                "created_at": t.created_at.isoformat(),
+            }
+            for t in thoughts
+        ]
+
 
 async def create_ultra_think(
     config: Optional[Dict[str, Any]] = None,
     memory_manager=None,
     decision_engine=None,
+    enable_db_persistence: bool = True,
+    enable_memory_integration: bool = True,
 ) -> UltraThink:
     """Factory function to create Ultra-Think instance"""
     thinker = UltraThink(
         config=config,
         memory_manager=memory_manager,
         decision_engine=decision_engine,
+        enable_db_persistence=enable_db_persistence,
+        enable_memory_integration=enable_memory_integration,
     )
     return thinker

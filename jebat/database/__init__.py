@@ -6,6 +6,6 @@ Database connection management, models, and repositories.
 
 from .connection_manager import DatabaseManager
 from .models import get_db_models
-from .repositories import Repository
+from .repositories import RepositoryManager
 
-__all__ = ["DatabaseManager", "Repository", "get_db_models"]
+__all__ = ["DatabaseManager", "RepositoryManager", "get_db_models"]

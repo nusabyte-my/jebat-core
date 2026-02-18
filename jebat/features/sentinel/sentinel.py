@@ -41,12 +41,15 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
-from ..database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
-from ..database.models import SecurityEvent, SecurityPolicy, AuditLog, User
-from ..decision_engine.engine import DecisionEngine
-from ..error_recovery.system import ErrorRecoverySystem
-from ..cache.cache_manager import CacheManager
-from ..skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
+from jebat.database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
+from jebat.database.models import SecurityEvent, SecurityPolicy, AuditLog, User
+from jebat.core.decision.engine import DecisionEngine
+try:
+    from jebat.error_recovery.system import ErrorRecoverySystem
+except ImportError:
+    ErrorRecoverySystem = None
+from jebat.core.cache.smart_cache import CacheManager
+from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -274,17 +277,10 @@ class SecurityAnalyzeSkill(BaseSkill):
             description="Validate input for malicious patterns",
             enabled=True,
         ),
-        SkillCapability(
-            name="policy_enforcement",
-            description="Enforce security policies",
-            enabled=True,
-        ),
-        SkillCapability(
-            name="risk_assessment",
-            description="Calculate comprehensive risk scores",
-            enabled=True,
-        ),
     ]
+
+
+# End of Sentinel class
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
@@ -307,8 +303,8 @@ class SecurityAnalyzeSkill(BaseSkill):
         self.is_trained = False
 
         # Baseline data for anomaly detection
-        self.request_rate_baseline: deque = deque(maxlen=100, maxlen=100)
-        self.response_time_baseline: deque = deque(maxlen=100, maxlen=100)
+        self.request_rate_baseline: deque = deque(maxlen=100)
+        self.response_time_baseline: deque = deque(maxlen=100)
 
         # Security metrics
         self.metrics = SecurityMetrics()
@@ -881,8 +877,8 @@ class SecurityAnalyzeSkill(BaseSkill):
                             SecurityEventType.THREAT_BLOCKED,
                             SecurityEventType.DATA_EXFILTRATION_ATTEMPT,
                         ],
+                        "created_at__gte": one_hour_ago,
                     },
-                    "created_at__gte": one_hour_ago,
                     limit=100,
                 )
 
@@ -1009,8 +1005,8 @@ class SecurityAnalyzeSkill(BaseSkill):
                         anomaly_score.baseline = q2  # Median (approximate)
                         anomaly_score.deviation = iqr
 
-                            # Add to indicators
-                            anomaly_score.indicators.append(f"IQR upper bound: {q3 + 1.5 * iqr:.2f}")
+                        # Add to indicators
+                        anomaly_score.indicators.append(f"IQR upper bound: {q3 + 1.5 * iqr:.2f}")
 
             # Geographic anomaly detection
             if context.ip_address:
@@ -1980,13 +1976,13 @@ class SentinelSecuritySystem:
 
 async def example_usage():
     """Example usage of Sentinel Security System."""
-    from ..database.repositories import (
+    from jebat.database.repositories import (
         SecurityEventRepository,
         SecurityPolicyRepository,
         AuditLogRepository,
         UserRepository,
     )
-    from ..database.models import AsyncSessionLocal
+    from jebat.database.models import AsyncSessionLocal
 
     # Create mock repositories (in production, these would be real)
     async with AsyncSessionLocal() as session:
@@ -2043,19 +2039,6 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(example_usage())
-```path/to/Dev\jebat\sentinel\sentinel.py
-# ==================== JEBAT AI System - Sentinel Security System ====================
-# Version: 1.0.0
-# Hidden security layer for threat detection, anomaly detection, and automated response
-#
-# This module provides:
-# - Security event detection and logging
-# - Anomaly detection in user behavior using ML and statistical analysis
-# - Automated threat response mechanisms
-# - Security policy enforcement and rule engine
-# - Audit logging and compliance tracking
-# - Integration with database (security_events, security_policies tables)
-# - Integration with Decision Engine for security-related routing
 # - Integration with Error Recovery for security-related issues
 # - Hidden security layer for sophisticated threat detection
 # - Security metrics and monitoring
@@ -2087,12 +2070,15 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
-from ..database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
-from ..database.models import SecurityEvent, SecurityPolicy, AuditLog, User
-from ..decision_engine.engine import DecisionEngine
-from ..error_recovery.system import ErrorRecoverySystem
-from ..cache.cache_manager import CacheManager
-from ..skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
+from jebat.database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
+from jebat.database.models import SecurityEvent, SecurityPolicy, AuditLog, User
+from jebat.core.decision.engine import DecisionEngine
+try:
+    from jebat.error_recovery.system import ErrorRecoverySystem
+except ImportError:
+    ErrorRecoverySystem = None
+from jebat.core.cache.smart_cache import CacheManager
+from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -2300,5 +2286,11 @@ class SecurityAnalyzeSkill(BaseSkill):
             description="Validate input for malicious patterns",
             enabled=True,
         ),
-        SkillCapability(
-            name="policy_en
+            ]
+
+
+# End of Sentinel class
+
+
+# Alias for compatibility
+Sentinel = SentinelSecuritySystem

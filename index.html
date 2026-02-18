@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JEBAT - Complete AI Platform</title>
+        <meta
+            name="description"
+            content="AI Chat, Web Builder, Pentesting, and more - All in one platform"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --primary: #6366f1;
+                --secondary: #10a37f;
+                --accent: #f59e0b;
+                --danger: #ef4444;
+                --purple: #a855f7;
+                --pink: #ec4899;
+                --cyan: #06b6d4;
+
+                --dark: #0f172a;
+                --dark-light: #1e293b;
+                --dark-lighter: #334155;
+                --gray: #64748b;
+                --gray-light: #94a3b8;
+                --light: #f1f5f9;
+                --white: #ffffff;
+
+                --gradient-primary: linear-gradient(
+                    135deg,
+                    #6366f1 0%,
+                    #10a37f 100%
+                );
+                --gradient-secondary: linear-gradient(
+                    135deg,
+                    #a855f7 0%,
+                    #ec4899 100%
+                );
+                --gradient-danger: linear-gradient(
+                    135deg,
+                    #ef4444 0%,
+                    #f59e0b 100%
+                );
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--dark);
+                color: var(--light);
+                line-height: 1.6;
+                overflow-x: hidden;
+            }
+
+            /* Navigation */
+            nav {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                background: rgba(15, 23, 42, 0.9);
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                z-index: 1000;
+                padding: 1rem 0;
+            }
+
+            .nav-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+                font-weight: 900;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                text-decoration: none;
+            }
+
+            .logo-icon {
+                font-size: 2rem;
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 2rem;
+                list-style: none;
+                align-items: center;
+            }
+
+            .nav-links a {
+                color: var(--gray-light);
+                text-decoration: none;
+                font-weight: 500;
+                transition: color 0.3s;
+            }
+
+            .nav-links a:hover {
+                color: var(--white);
+            }
+
+            .nav-cta {
+                background: var(--gradient-primary);
+                color: var(--white);
+                padding: 0.75rem 1.5rem;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s;
+            }
+
+            .nav-cta:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            }
+
+            /* Hero Section */
+            .hero {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                padding-top: 80px;
+                background:
+                    radial-gradient(
+                        circle at 20% 50%,
+                        rgba(99, 102, 241, 0.15) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        circle at 80% 80%,
+                        rgba(16, 163, 127, 0.15) 0%,
+                        transparent 50%
+                    );
+            }
+
+            .hero-content {
+                text-align: center;
+                max-width: 1000px;
+                z-index: 1;
+            }
+
+            .hero-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 50px;
+                padding: 0.5rem 1.25rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: var(--primary);
+                margin-bottom: 2rem;
+            }
+
+            .hero h1 {
+                font-size: clamp(2.5rem, 6vw, 5rem);
+                font-weight: 900;
+                line-height: 1.1;
+                margin-bottom: 1.5rem;
+            }
+
+            .gradient-text {
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .hero p {
+                font-size: clamp(1.1rem, 2vw, 1.35rem);
+                color: var(--gray-light);
+                max-width: 700px;
+                margin: 0 auto 2.5rem;
+                line-height: 1.8;
+            }
+
+            .hero-buttons {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-bottom: 3rem;
+            }
+
+            .btn {
+                padding: 1rem 2rem;
+                border-radius: 12px;
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.3s;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+                cursor: pointer;
+                border: none;
+                font-size: 1rem;
+            }
+
+            .btn-primary {
+                background: var(--gradient-primary);
+                color: var(--white);
+                box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 40px rgba(99, 102, 241, 0.5);
+            }
+
+            .btn-secondary {
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--light);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.1);
+                transform: translateY(-3px);
+            }
+
+            /* Products Grid */
+            .products {
+                padding: 8rem 0;
+            }
+
+            .section-header {
+                text-align: center;
+                margin-bottom: 4rem;
+            }
+
+            .section-label {
+                display: inline-block;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 50px;
+                padding: 0.5rem 1.25rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: var(--primary);
+                margin-bottom: 1rem;
+            }
+
+            .section-title {
+                font-size: clamp(2rem, 4vw, 3rem);
+                font-weight: 800;
+                margin-bottom: 1rem;
+            }
+
+            .section-subtitle {
+                color: var(--gray-light);
+                font-size: 1.125rem;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .products-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 2rem;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            .product-card {
+                background: var(--dark-light);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 24px;
+                padding: 2.5rem;
+                transition: all 0.4s;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .product-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: var(--gradient-primary);
+                transform: scaleX(0);
+                transition: transform 0.4s;
+            }
+
+            .product-card:hover {
+                transform: translateY(-8px);
+                border-color: rgba(99, 102, 241, 0.3);
+            }
+
+            .product-card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .product-icon {
+                font-size: 3rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .product-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+            }
+
+            .product-desc {
+                color: var(--gray-light);
+                margin-bottom: 1.5rem;
+                line-height: 1.7;
+            }
+
+            .product-features {
+                list-style: none;
+                margin-bottom: 2rem;
+            }
+
+            .product-features li {
+                padding: 0.6rem 0;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: var(--light);
+            }
+
+            .product-features li::before {
+                content: "✓";
+                color: var(--success);
+                font-weight: 700;
+            }
+
+            .product-actions {
+                display: flex;
+                gap: 0.75rem;
+            }
+
+            .btn-sm {
+                padding: 0.6rem 1.25rem;
+                font-size: 0.9rem;
+                border-radius: 8px;
+            }
+
+            /* API Settings Modal */
+            .modal {
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.95);
+                backdrop-filter: blur(10px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            }
+
+            .modal.active {
+                display: flex;
+            }
+
+            .modal-content {
+                background: var(--dark-light);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 24px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .modal-header {
+                padding: 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .modal-title {
+                font-size: 1.25rem;
+                font-weight: 700;
+            }
+
+            .modal-close {
+                background: none;
+                border: none;
+                color: var(--gray);
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+            }
+
+            .api-group {
+                margin-bottom: 1.5rem;
+            }
+
+            .api-group-title {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--gray-light);
+                margin-bottom: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .api-item {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .api-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75rem;
+            }
+
+            .api-name {
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .api-badge {
+                padding: 0.2rem 0.5rem;
+                border-radius: 12px;
+                font-size: 0.7rem;
+                font-weight: 600;
+            }
+
+            .badge-free {
+                background: rgba(16, 185, 129, 0.2);
+                color: var(--success);
+            }
+
+            .badge-paid {
+                background: rgba(99, 102, 241, 0.2);
+                color: var(--primary);
+            }
+
+            .api-input {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 0.75rem;
+                color: var(--light);
+                font-size: 0.9rem;
+                font-family: "Fira Code", monospace;
+            }
+
+            .api-input:focus {
+                outline: none;
+                border-color: var(--primary);
+            }
+
+            /* Footer */
+            footer {
+                background: var(--dark-light);
+                padding: 4rem 0 2rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .footer-grid {
+                display: grid;
+                grid-template-columns: 2fr repeat(3, 1fr);
+                gap: 3rem;
+                margin-bottom: 3rem;
+                max-width: 1400px;
+                margin-left: auto;
+                margin-right: auto;
+                padding: 0 2rem;
+            }
+
+            .footer-brand p {
+                color: var(--gray);
+                margin: 1rem 0;
+                line-height: 1.8;
+            }
+
+            .footer-title {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+            }
+
+            .footer-links {
+                list-style: none;
+            }
+
+            .footer-links li {
+                margin-bottom: 0.75rem;
+            }
+
+            .footer-links a {
+                color: var(--gray);
+                text-decoration: none;
+                transition: color 0.3s;
+            }
+
+            .footer-links a:hover {
+                color: var(--primary);
+            }
+
+            .footer-bottom {
+                text-align: center;
+                padding-top: 2rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                color: var(--gray);
+                font-size: 0.875rem;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .nav-links {
+                    display: none;
+                }
+
+                .products-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .footer-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Navigation -->
+        <nav>
+            <div class="nav-container">
+                <a href="#" class="logo">
+                    <span class="logo-icon">🗡️</span>
+                    JEBAT
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#products">Products</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#docs">Docs</a></li>
+                </ul>
+                <button class="nav-cta" onclick="openSettings()">
+                    ⚙️ API Settings
+                </button>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <span class="hero-badge">🚀 Complete AI Platform</span>
+                <h1>
+                    <span class="gradient-text">Build, Chat, Secure</span><br />
+                    Everything in One Platform
+                </h1>
+                <p>
+                    JEBAT combines AI Chat, Web Builder, Pentesting Tools, and
+                    more into one powerful platform. Choose your AI model, bring
+                    your own API key, or use our free options.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#products" class="btn btn-primary">
+                        🎯 Explore Products
+                    </a>
+                    <button class="btn btn-secondary" onclick="openSettings()">
+                        🔑 Get API Keys
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section class="products" id="products">
+            <div class="section-header">
+                <span class="section-label">✨ Products</span>
+                <h2 class="section-title">Complete AI Suite</h2>
+                <p class="section-subtitle">
+                    Everything you need to build, create, and secure with AI
+                </p>
+            </div>
+
+            <div class="products-grid">
+                <!-- AI Chat -->
+                <div class="product-card">
+                    <div class="product-icon">💬</div>
+                    <h3 class="product-title">AI Chat</h3>
+                    <p class="product-desc">
+                        ChatGPT-style interface with multiple AI models. Choose
+                        from 7 different models or bring your own API key.
+                    </p>
+                    <ul class="product-features">
+                        <li>7 AI Models (Free & Paid)</li>
+                        <li>Ultra-Think Deep Reasoning</li>
+                        <li>Code Syntax Highlighting</li>
+                        <li>Chat History & Export</li>
+                        <li>Bring Your Own API Key</li>
+                    </ul>
+                    <div class="product-actions">
+                        <a
+                            href="jebat/services/webui/index.html?mode=chat"
+                            class="btn btn-primary btn-sm"
+                            >Launch Chat →</a
+                        >
+                    </div>
+                </div>
+
+                <!-- AI Builder -->
+                <div class="product-card">
+                    <div class="product-icon">🛠️</div>
+                    <h3 class="product-title">AI Builder</h3>
+                    <p class="product-desc">
+                        Build websites from natural language. Describe your idea
+                        and watch AI create it instantly with live preview.
+                    </p>
+                    <ul class="product-features">
+                        <li>Natural Language Building</li>
+                        <li>6 Project Templates</li>
+                        <li>Live Preview</li>
+                        <li>Code Export</li>
+                        <li>Responsive Design</li>
+                    </ul>
+                    <div class="product-actions">
+                        <a
+                            href="jebat/services/webui/index.html?mode=builder"
+                            class="btn btn-primary btn-sm"
+                            >Launch Builder →</a
+                        >
+                    </div>
+                </div>
+
+                <!-- Immersive Builder -->
+                <div class="product-card">
+                    <div class="product-icon">🎨</div>
+                    <h3 class="product-title">Immersive Builder</h3>
+                    <p class="product-desc">
+                        Next-gen visual builder with AI assistance. Drag, drop,
+                        and chat to create stunning websites.
+                    </p>
+                    <ul class="product-features">
+                        <li>Visual Drag & Drop</li>
+                        <li>AI Design Assistant</li>
+                        <li>Infinite Canvas</li>
+                        <li>Real-time Preview</li>
+                        <li>Design System Generator</li>
+                    </ul>
+                    <div class="product-actions">
+                        <a
+                            href="jebat/services/webui/immersive_builder.html"
+                            class="btn btn-primary btn-sm"
+                            >Launch Pro →</a
+                        >
+                    </div>
+                </div>
+
+                <!-- AI Pentest -->
+                <div class="product-card">
+                    <div class="product-icon">🛡️</div>
+                    <h3 class="product-title">AI Pentest</h3>
+                    <p class="product-desc">
+                        Sentinel CLI-style AI-powered security testing. Find
+                        vulnerabilities with intelligent scanning.
+                    </p>
+                    <ul class="product-features">
+                        <li>AI Vulnerability Scanning</li>
+                        <li>Network Analysis</li>
+                        <li>Web App Testing</li>
+                        <li>Security Reports</li>
+                        <li>Compliance Checking</li>
+                    </ul>
+                    <div class="product-actions">
+                        <a
+                            href="jebat/services/webui/ai_pentest.html"
+                            class="btn btn-primary btn-sm"
+                            >Launch Pentest →</a
+                        >
+                    </div>
+                </div>
+
+                <!-- Code Assistant -->
+                <div class="product-card">
+                    <div class="product-icon">💻</div>
+                    <h3 class="product-title">Code Assistant</h3>
+                    <p class="product-desc">
+                        AI pair programmer that helps you write better code
+                        faster. Supports 50+ languages.
+                    </p>
+                    <ul class="product-features">
+                        <li>Code Generation</li>
+                        <li>Bug Detection & Fix</li>
+                        <li>Refactoring Suggestions</li>
+                        <li>Auto-Documentation</li>
+                        <li>50+ Languages</li>
+                    </ul>
+                    <div class="product-actions">
+                        <a
+                            href="jebat/services/webui/code_assistant.html"
+                            class="btn btn-primary btn-sm"
+                            >Launch Assistant →</a
+                        >
+                    </div>
+                </div>
+
+                <!-- Analytics -->
+                <div class="product-card">
+                    <div class="product-icon">📊</div>
+                    <h3 class="product-title">Analytics</h3>
+                    <p class="product-desc">
+                        Real-time analytics dashboard for your AI usage. Track
+                        costs, performance, and insights.
+                    </p>
+                    <ul class="product-features">
+                        <li>Usage Tracking</li>
+                        <li>Cost Management</li>
+                        <li>Performance Metrics</li>
+                        <li>Model Comparison</li>
+                        <li>API Monitoring</li>
+                    </ul>
+                    <div class="product-actions">
+                        <a
+                            href="jebat/services/webui/analytics.html"
+                            class="btn btn-primary btn-sm"
+                            >View Analytics →</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Settings Modal -->
+        <div class="modal" id="apiModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">⚙️ API Settings</h3>
+                    <button class="modal-close" onclick="closeSettings()">
+                        ×
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="api-group">
+                        <div class="api-group-title">
+                            Free AI Models (No API Key Required)
+                        </div>
+
+                        <div class="api-item">
+                            <div class="api-header">
+                                <div class="api-name">
+                                    🦙 Mistral AI
+                                    <span class="api-badge badge-free"
+                                        >FREE</span
+                                    >
+                                </div>
+                            </div>
+                            <p
+                                style="
+                                    font-size: 0.85rem;
+                                    color: var(--gray);
+                                    margin-bottom: 0.75rem;
+                                "
+                            >
+                                Open-weight models with excellent performance
+                            </p>
+                            <select class="api-input" id="mistralModel">
+                                <option value="mistral-tiny">
+                                    Mistral Tiny (Fastest)
+                                </option>
+                                <option value="mistral-small">
+                                    Mistral Small
+                                </option>
+                                <option value="mistral-medium" selected>
+                                    Mistral Medium (Recommended)
+                                </option>
+                                <option value="mistral-large">
+                                    Mistral Large (Most Powerful)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="api-item">
+                            <div class="api-header">
+                                <div class="api-name">
+                                    🤗 Hugging Face
+                                    <span class="api-badge badge-free"
+                                        >FREE</span
+                                    >
+                                </div>
+                            </div>
+                            <p
+                                style="
+                                    font-size: 0.85rem;
+                                    color: var(--gray);
+                                    margin-bottom: 0.75rem;
+                                "
+                            >
+                                Access to thousands of open-source models
+                            </p>
+                            <input
+                                type="text"
+                                class="api-input"
+                                placeholder="HF_TOKEN (optional for higher limits)"
+                                id="hfToken"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="api-group">
+                        <div class="api-group-title">
+                            Premium AI Models (API Key Required)
+                        </div>
+
+                        <div class="api-item">
+                            <div class="api-header">
+                                <div class="api-name">
+                                    🔮 OpenAI
+                                    <span class="api-badge badge-paid"
+                                        >PAID</span
+                                    >
+                                </div>
+                            </div>
+                            <p
+                                style="
+                                    font-size: 0.85rem;
+                                    color: var(--gray);
+                                    margin-bottom: 0.75rem;
+                                "
+                            >
+                                GPT-4, GPT-3.5-Turbo
+                            </p>
+                            <input
+                                type="password"
+                                class="api-input"
+                                placeholder="sk-..."
+                                id="openaiKey"
+                            />
+                        </div>
+
+                        <div class="api-item">
+                            <div class="api-header">
+                                <div class="api-name">
+                                    🤖 Anthropic
+                                    <span class="api-badge badge-paid"
+                                        >PAID</span
+                                    >
+                                </div>
+                            </div>
+                            <p
+                                style="
+                                    font-size: 0.85rem;
+                                    color: var(--gray);
+                                    margin-bottom: 0.75rem;
+                                "
+                            >
+                                Claude 3, Claude 2
+                            </p>
+                            <input
+                                type="password"
+                                class="api-input"
+                                placeholder="sk-ant-..."
+                                id="anthropicKey"
+                            />
+                        </div>
+
+                        <div class="api-item">
+                            <div class="api-header">
+                                <div class="api-name">
+                                    🌊 Google
+                                    <span class="api-badge badge-paid"
+                                        >PAID</span
+                                    >
+                                </div>
+                            </div>
+                            <p
+                                style="
+                                    font-size: 0.85rem;
+                                    color: var(--gray);
+                                    margin-bottom: 0.75rem;
+                                "
+                            >
+                                Gemini Pro, Gemini Ultra
+                            </p>
+                            <input
+                                type="password"
+                                class="api-input"
+                                placeholder="AIza..."
+                                id="googleKey"
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="saveSettings()"
+                        style="width: 100%"
+                    >
+                        💾 Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <span class="logo-icon">🗡️</span>
+                        JEBAT
+                    </a>
+                    <p>
+                        The complete AI-powered development ecosystem with
+                        Ultra-Think reasoning, eternal memory, and multi-domain
+                        agents.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="footer-title">Products</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">AI Chat</a></li>
+                        <li><a href="#">AI Builder</a></li>
+                        <li><a href="#">Immersive Builder</a></li>
+                        <li><a href="#">AI Pentest</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Examples</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>
+                    &copy; 2026 JEBAT. Open source under MIT License. Built with
+                    ❤️ for developers.
+                </p>
+            </div>
+        </footer>
+
+        <script>
+            // Modal functions
+            function openSettings() {
+                document.getElementById("apiModal").classList.add("active");
+                loadSettings();
+            }
+
+            function closeSettings() {
+                document.getElementById("apiModal").classList.remove("active");
+            }
+
+            // Close modal on outside click
+            document
+                .getElementById("apiModal")
+                .addEventListener("click", (e) => {
+                    if (e.target.id === "apiModal") {
+                        closeSettings();
+                    }
+                });
+
+            // Save settings to localStorage
+            function saveSettings() {
+                const settings = {
+                    mistralModel: document.getElementById("mistralModel").value,
+                    hfToken: document.getElementById("hfToken").value,
+                    openaiKey: document.getElementById("openaiKey").value,
+                    anthropicKey: document.getElementById("anthropicKey").value,
+                    googleKey: document.getElementById("googleKey").value,
+                };
+
+                localStorage.setItem(
+                    "jebat_api_settings",
+                    JSON.stringify(settings),
+                );
+
+                // Show success message
+                alert("✅ Settings saved successfully!");
+                closeSettings();
+            }
+
+            // Load settings from localStorage
+            function loadSettings() {
+                const saved = localStorage.getItem("jebat_api_settings");
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    document.getElementById("mistralModel").value =
+                        settings.mistralModel || "mistral-medium";
+                    document.getElementById("hfToken").value =
+                        settings.hfToken || "";
+                    document.getElementById("openaiKey").value =
+                        settings.openaiKey || "";
+                    document.getElementById("anthropicKey").value =
+                        settings.anthropicKey || "";
+                    document.getElementById("googleKey").value =
+                        settings.googleKey || "";
+                }
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    closeSettings();
+                }
+            });
+
+            // Check URL params for mode
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get("mode");
+            if (mode) {
+                setTimeout(() => {
+                    window.location.href = `jebat/services/webui/index.html?mode=${mode}`;
+                }, 100);
+            }
+        </script>
+    </body>
+</html>

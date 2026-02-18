@@ -18,6 +18,10 @@ from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from typing import Any, Dict, List, Optional
 
+import sqlalchemy
+
+# Remove unused import
+# import sqlalchemy
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -30,9 +34,15 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ENUM, INET, UUID, array
-from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -40,6 +50,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 from sqlalchemy.sql import func as sql_func
+from sqlalchemy.types import ARRAY
 from sqlalchemy.types import ARRAY as SQLArray
 
 # ==================== Base and Engine Setup ====================
@@ -69,7 +80,7 @@ engine = create_async_engine(
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
     engine,
-    class_=AsyncAttrs,
+    class_=AsyncSession,
     expire_on_commit=False,
     autoflush=False,
 )
@@ -178,7 +189,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     settings: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -239,7 +250,7 @@ class MemoryM0(Base):
     )
     session_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     heat_score: Mapped[float] = mapped_column(Float, default=100.0)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
@@ -250,7 +261,7 @@ class MemoryM0(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now() + func.cast("5 minutes", sqlalchemy.interval),
+        server_default=func.now() + text("NOW() + INTERVAL '5 minutes'"),
     )
 
     # Relationships
@@ -287,7 +298,7 @@ class MemoryM1(Base):
     embedding: Mapped[Optional[List[float]]] = mapped_column(
         ARRAY(Float, dimensions=1536)
     )
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     heat_score: Mapped[float] = mapped_column(Float, default=80.0)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
@@ -298,7 +309,7 @@ class MemoryM1(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now() + func.cast("24 hours", sqlalchemy.interval),
+        server_default=func.now() + text("NOW() + INTERVAL '24 hours'"),
     )
 
     # Relationships
@@ -334,7 +345,7 @@ class MemoryM2(Base):
     embedding: Mapped[Optional[List[float]]] = mapped_column(
         ARRAY(Float, dimensions=1536)
     )
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     heat_score: Mapped[float] = mapped_column(Float, default=60.0)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
@@ -345,7 +356,7 @@ class MemoryM2(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now() + func.cast("7 days", sqlalchemy.interval),
+        server_default=func.now() + text("NOW() + INTERVAL '7 days'"),
     )
     compressed: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
 
@@ -383,7 +394,7 @@ class MemoryM3(Base):
     embedding: Mapped[Optional[List[float]]] = mapped_column(
         ARRAY(Float, dimensions=1536)
     )
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     heat_score: Mapped[float] = mapped_column(Float, default=40.0)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
@@ -394,7 +405,7 @@ class MemoryM3(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now() + func.cast("90 days", sqlalchemy.interval),
+        server_default=func.now() + text("NOW() + INTERVAL '90 days'"),
     )
     compressed: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
     tags: Mapped[List[str]] = mapped_column(SQLArray(String), default=lambda: [])
@@ -434,7 +445,7 @@ class MemoryM4(Base):
     embedding: Mapped[Optional[List[float]]] = mapped_column(
         ARRAY(Float, dimensions=1536)
     )
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     heat_score: Mapped[float] = mapped_column(Float, default=20.0)
     access_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
@@ -551,7 +562,7 @@ class AgentPerformance(Base):
         String(50), nullable=False
     )  # 'execution_time', 'success_rate', 'error_count', 'memory_usage', 'cpu_usage'
     metric_value: Mapped[float] = mapped_column(Float, nullable=False)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
@@ -786,7 +797,7 @@ class CircuitBreaker(Base):
     )
     open_timeout_seconds: Mapped[int] = mapped_column(Integer, default=60)
     half_open_max_calls: Mapped[int] = mapped_column(Integer, default=3)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -922,7 +933,7 @@ class WebSocketConnection(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     last_pong_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
 
     # Relationships
     user: Mapped["User"] = relationship(back_populates="websocket_connections")
@@ -1096,7 +1107,7 @@ class SecurityEvent(Base):
     ip_address: Mapped[Optional[str]] = mapped_column(INET)
     user_agent: Mapped[Optional[str]] = mapped_column(Text)
     description: Mapped[Optional[str]] = mapped_column(Text)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     resolved_by: Mapped[Optional[UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
@@ -1176,7 +1187,7 @@ class AuditLog(Base):
     new_values: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON)
     ip_address: Mapped[Optional[str]] = mapped_column(INET)
     user_agent: Mapped[Optional[str]] = mapped_column(Text)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
@@ -1248,7 +1259,7 @@ class AgentSkill(Base):
     )
     proficiency_level: Mapped[int] = mapped_column(Integer, default=50)  # 0-100
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -1297,6 +1308,190 @@ class SkillExecution(Base):
     agent: Mapped["Agent"] = relationship(back_populates="skill_executions")
     task: Mapped[Optional["Task"]] = relationship(back_populates="skill_executions")
     user: Mapped[Optional["User"]] = relationship(back_populates="skill_executions")
+
+
+# ==================== Ultra-Loop System Models ====================
+
+
+class UltraLoopCycle(Base):
+    """Ultra-Loop cycle execution record"""
+
+    __tablename__ = "ultra_loop_cycles"
+
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4()
+    )
+    cycle_id: Mapped[str] = mapped_column(
+        String(100), nullable=False, index=True, unique=True
+    )
+    user_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="running"
+    )  # running, completed, failed
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    error_message: Mapped[Optional[str]] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    user: Mapped[Optional["User"]] = relationship(back_populates="ultra_loop_cycles")
+    phases: Mapped[List["UltraLoopPhase"]] = relationship(
+        back_populates="cycle", cascade="all, delete-orphan"
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_ultra_loop_cycles_status", "status"),
+        Index("idx_ultra_loop_cycles_started", "started_at"),
+    )
+
+
+class UltraLoopPhase(Base):
+    """Ultra-Loop phase execution record"""
+
+    __tablename__ = "ultra_loop_phases"
+
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4()
+    )
+    cycle_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ultra_loop_cycles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    phase_name: Mapped[str] = mapped_column(
+        String(50), nullable=False, index=True
+    )  # perception, cognition, memory, action, learning
+    phase_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="completed"
+    )  # running, completed, failed
+    inputs: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    outputs: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    error_message: Mapped[Optional[str]] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    duration_ms: Mapped[Optional[int]] = mapped_column(Integer)
+
+    # Relationships
+    cycle: Mapped["UltraLoopCycle"] = relationship(back_populates="phases")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_ultra_loop_phases_cycle", "cycle_id"),
+        Index("idx_ultra_loop_phases_name", "phase_name"),
+        Index("idx_ultra_loop_phases_started", "started_at"),
+    )
+
+
+# Add relationship to User model
+User.ultra_loop_cycles = relationship(
+    "UltraLoopCycle", back_populates="user", cascade="all, delete-orphan"
+)
+
+
+# ==================== Ultra-Think System Models ====================
+
+
+class UltraLoopThinkSession(Base):
+    """Ultra-Think thinking session record"""
+
+    __tablename__ = "ultra_loop_think_sessions"
+
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4()
+    )
+    trace_id: Mapped[str] = mapped_column(
+        String(100), nullable=False, index=True, unique=True
+    )
+    user_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    problem_statement: Mapped[str] = mapped_column(Text, nullable=False)
+    thinking_mode: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="running"
+    )  # running, completed, failed, timeout
+    conclusion: Mapped[Optional[str]] = mapped_column(Text)
+    confidence_score: Mapped[Optional[float]] = mapped_column(Float)
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Relationships
+    user: Mapped[Optional["User"]] = relationship(
+        back_populates="ultra_loop_think_sessions"
+    )
+    thoughts: Mapped[List["UltraLoopThought"]] = relationship(
+        back_populates="session", cascade="all, delete-orphan"
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_ultra_loop_think_status", "status"),
+        Index("idx_ultra_loop_think_mode", "thinking_mode"),
+        Index("idx_ultra_loop_think_started", "started_at"),
+    )
+
+
+class UltraLoopThought(Base):
+    """Ultra-Think thought record"""
+
+    __tablename__ = "ultra_loop_thoughts"
+
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4()
+    )
+    thought_id: Mapped[str] = mapped_column(
+        String(100), nullable=False, index=True, unique=True
+    )
+    session_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ultra_loop_think_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    phase: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    phase_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, default=0.5)
+    supporting_evidence: Mapped[List[str]] = mapped_column(JSON, default=lambda: [])
+    counter_arguments: Mapped[List[str]] = mapped_column(JSON, default=lambda: [])
+    custom_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+    # Relationships
+    session: Mapped["UltraLoopThinkSession"] = relationship(back_populates="thoughts")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_ultra_loop_thoughts_session", "session_id"),
+        Index("idx_ultra_loop_thoughts_phase", "phase"),
+        Index("idx_ultra_loop_thoughts_order", "phase_order"),
+    )
+
+
+# Add relationship to User model
+User.ultra_loop_think_sessions = relationship(
+    "UltraLoopThinkSession", back_populates="user", cascade="all, delete-orphan"
+)
 
 
 # ==================== Database Session Helper ====================
@@ -1383,3 +1578,40 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(example_usage())
+
+
+def get_db_models():
+    """Return list of all database models for table creation."""
+    return [
+        User,
+        MemoryM0,
+        MemoryM1,
+        MemoryM2,
+        MemoryM3,
+        MemoryM4,
+        Agent,
+        AgentPerformance,
+        Task,
+        DecisionRule,
+        DecisionLog,
+        ErrorTracking,
+        CircuitBreaker,
+        DeadLetterQueue,
+        CacheEntry,
+        CacheMetrics,
+        WebSocketConnection,
+        WebSocketMessage,
+        MCPOperation,
+        Model,
+        ModelUsage,
+        SecurityEvent,
+        SecurityPolicy,
+        AuditLog,
+        Skill,
+        AgentSkill,
+        SkillExecution,
+        UltraLoopCycle,
+        UltraLoopPhase,
+        UltraLoopThinkSession,
+        UltraLoopThought,
+    ]

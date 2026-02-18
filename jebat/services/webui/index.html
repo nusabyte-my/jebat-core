@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JEBAT AI Studio</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --primary: #6366f1;
+                --dark: #0f172a;
+                --dark-light: #1e293b;
+                --gray: #64748b;
+                --light: #f1f5f9;
+                --white: #ffffff;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--dark);
+                color: var(--light);
+                overflow: hidden;
+            }
+
+            /* Minimal Header */
+            header {
+                height: 50px;
+                background: var(--dark-light);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .logo {
+                font-size: 1.1rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .logo-icon {
+                font-size: 1.25rem;
+            }
+
+            .header-actions {
+                display: flex;
+                gap: 0.75rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                font-size: 0.875rem;
+                font-weight: 500;
+                cursor: pointer;
+                border: none;
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--light);
+                transition: all 0.2s;
+            }
+
+            .btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .btn-active {
+                background: var(--primary);
+                color: var(--white);
+            }
+
+            /* Main Content */
+            main {
+                height: calc(100vh - 50px);
+                display: flex;
+            }
+
+            /* Component Containers */
+            .component {
+                flex: 1;
+                display: none;
+            }
+
+            .component.active {
+                display: block;
+            }
+
+            iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+
+            /* Welcome Screen */
+            .welcome {
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.98);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+            }
+
+            .welcome.hidden {
+                display: none;
+            }
+
+            .welcome-content {
+                text-align: center;
+                max-width: 500px;
+                padding: 2rem;
+            }
+
+            .welcome-icon {
+                font-size: 4rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .welcome h1 {
+                font-size: 2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .welcome p {
+                color: var(--gray);
+                margin-bottom: 2rem;
+                line-height: 1.6;
+            }
+
+            .welcome-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+
+            .welcome-btn {
+                padding: 1rem;
+                border-radius: 8px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: rgba(255, 255, 255, 0.02);
+                color: var(--light);
+                transition: all 0.2s;
+            }
+
+            .welcome-btn:hover {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.2);
+                transform: translateY(-2px);
+            }
+
+            .welcome-footer {
+                margin-top: 2rem;
+                padding-top: 2rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                font-size: 0.875rem;
+                color: var(--gray);
+            }
+
+            .kbd {
+                display: inline-block;
+                padding: 0.2rem 0.5rem;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+                font-family: monospace;
+                font-size: 0.8rem;
+                margin: 0 0.25rem;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Welcome Screen -->
+        <div class="welcome" id="welcome">
+            <div class="welcome-content">
+                <div class="welcome-icon">🗡️</div>
+                <h1>JEBAT AI Studio</h1>
+                <p>Choose your AI tool</p>
+
+                <div class="welcome-actions">
+                    <button class="welcome-btn" onclick="selectMode('chat')">
+                        💬 AI Chat
+                        <div
+                            style="
+                                font-size: 0.75rem;
+                                font-weight: 400;
+                                margin-top: 0.5rem;
+                                opacity: 0.7;
+                            "
+                        >
+                            Chat with multiple AI models
+                        </div>
+                    </button>
+                    <button class="welcome-btn" onclick="selectMode('builder')">
+                        🛠️ AI Builder
+                        <div
+                            style="
+                                font-size: 0.75rem;
+                                font-weight: 400;
+                                margin-top: 0.5rem;
+                                opacity: 0.7;
+                            "
+                        >
+                            Build projects from ideas
+                        </div>
+                    </button>
+                </div>
+
+                <div class="welcome-footer">
+                    Press <span class="kbd">1</span> for Chat or
+                    <span class="kbd">2</span> for Builder
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <span class="logo-icon">🗡️</span>
+                <span id="appTitle">AI Studio</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="showWelcome()">🏠 Home</button>
+                <button class="btn" onclick="openLanding()">🌐 Website</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Chat Component -->
+            <div class="component" id="chatComponent">
+                <iframe src="ai_chat.html"></iframe>
+            </div>
+
+            <!-- Builder Component -->
+            <div class="component" id="builderComponent">
+                <iframe src="ai_builder.html"></iframe>
+            </div>
+        </main>
+
+        <script>
+            // Initialize
+            document.addEventListener("DOMContentLoaded", () => {
+                // Show welcome if not set
+                if (!localStorage.getItem("jebat_mode")) {
+                    document
+                        .getElementById("welcome")
+                        .classList.remove("hidden");
+                } else {
+                    // Load last used mode
+                    const lastMode = localStorage.getItem("jebat_mode");
+                    selectMode(lastMode);
+                }
+
+                // Keyboard shortcuts
+                document.addEventListener("keydown", (e) => {
+                    if (
+                        e.target.tagName === "INPUT" ||
+                        e.target.tagName === "TEXTAREA"
+                    )
+                        return;
+
+                    if (e.key === "1") selectMode("chat");
+                    if (e.key === "2") selectMode("builder");
+                    if (e.key === "Escape") showWelcome();
+                });
+            });
+
+            // Select mode
+            function selectMode(mode) {
+                // Hide welcome
+                document.getElementById("welcome").classList.add("hidden");
+
+                // Save preference
+                localStorage.setItem("jebat_mode", mode);
+
+                // Update components
+                document
+                    .getElementById("chatComponent")
+                    .classList.toggle("active", mode === "chat");
+                document
+                    .getElementById("builderComponent")
+                    .classList.toggle("active", mode === "builder");
+
+                // Update title
+                document.getElementById("appTitle").textContent =
+                    mode === "chat" ? "AI Chat" : "AI Builder";
+            }
+
+            // Show welcome
+            function showWelcome() {
+                document.getElementById("welcome").classList.remove("hidden");
+            }
+
+            // Open landing page
+            function openLanding() {
+                window.open("../landing.html", "_blank");
+            }
+        </script>
+    </body>
+</html>

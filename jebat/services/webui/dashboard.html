@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT - Monitoring Dashboard</title>
+    <style>
+        :root {
+            --primary: #3B82F6;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --dark: #1F2937;
+            --light: #F3F4F6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .status-card {
+            flex: 1;
+            min-width: 200px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .status-card h3 {
+            font-size: 0.9rem;
+            color: #6B7280;
+            margin-bottom: 10px;
+        }
+
+        .status-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .status-card .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status.healthy {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status.error {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--light);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #6B7280;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .chart-container {
+            height: 200px;
+            margin-top: 20px;
+        }
+
+        .log-container {
+            background: var(--dark);
+            color: #10B981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2563EB;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.danger:hover {
+            background: #DC2626;
+        }
+
+        .refresh-indicator {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #6B7280;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🗡️ JEBAT - Monitoring Dashboard</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-card">
+                <h3>System Status</h3>
+                <div class="value" id="system-status">-</div>
+                <span class="status healthy" id="health-status">Checking...</span>
+            </div>
+            <div class="status-card">
+                <h3>Ultra-Loop Cycles</h3>
+                <div class="value" id="loop-cycles">-</div>
+                <div style="margin-top: 5px; font-size: 0.85rem; color: #6B7280;">
+                    Success Rate: <span id="loop-success-rate">-</span>
+                </div>
+            </div>
+            <div class="status-card">
+                <h3>Think Sessions</h3>
+                <div class="value" id="think-sessions">-</div>
+                <div style="margin-top: 5px; font-size: 0.85rem; color: #6B7280;">
+                    Avg Thoughts: <span id="avg-thoughts">-</span>
+                </div>
+            </div>
+            <div class="status-card">
+                <h3>Uptime</h3>
+                <div class="value" id="uptime">-</div>
+                <div style="margin-top: 5px; font-size: 0.85rem; color: #6B7280;">
+                    Last refresh: <span id="last-refresh">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Ultra-Loop Metrics -->
+            <div class="panel">
+                <h2>Ultra-Loop Metrics</h2>
+                <div class="metric">
+                    <span class="metric-label">Total Cycles</span>
+                    <span class="metric-value" id="loop-total">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Successful Cycles</span>
+                    <span class="metric-value" id="loop-successful">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Failed Cycles</span>
+                    <span class="metric-value" id="loop-failed">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Avg Cycle Time</span>
+                    <span class="metric-value" id="loop-avg-time">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Last Cycle Time</span>
+                    <span class="metric-value" id="loop-last-time">-</span>
+                </div>
+            </div>
+
+            <!-- Ultra-Think Metrics -->
+            <div class="panel">
+                <h2>Ultra-Think Metrics</h2>
+                <div class="metric">
+                    <span class="metric-label">Total Sessions</span>
+                    <span class="metric-value" id="think-total">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Successful Sessions</span>
+                    <span class="metric-value" id="think-successful">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total Thoughts</span>
+                    <span class="metric-value" id="think-thoughts">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Avg Thoughts/Session</span>
+                    <span class="metric-value" id="think-avg">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Avg Execution Time</span>
+                    <span class="metric-value" id="think-avg-time">-</span>
+                </div>
+            </div>
+
+            <!-- Memory System -->
+            <div class="panel">
+                <h2>Memory System</h2>
+                <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value" id="memory-status">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Layers</span>
+                    <span class="metric-value" id="memory-layers">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Consolidation</span>
+                    <span class="metric-value" id="memory-consolidation">-</span>
+                </div>
+            </div>
+
+            <!-- System Logs -->
+            <div class="panel">
+                <h2>System Logs</h2>
+                <div class="log-container" id="log-container">
+                    <div class="log-entry">[SYSTEM] Dashboard initialized...</div>
+                </div>
+                <div class="actions">
+                    <button onclick="refreshData()">Refresh Now</button>
+                    <button class="danger" onclick="clearLogs()">Clear Logs</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="refresh-indicator">
+            Auto-refresh: <span id="auto-refresh-status">Enabled</span> (every 5 seconds)
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        const REFRESH_INTERVAL = 5000; // 5 seconds
+
+        // State
+        let autoRefresh = true;
+        let logs = [];
+
+        // Utility functions
+        function addLog(message, type = 'INFO') {
+            const timestamp = new Date().toISOString();
+            const entry = `[${timestamp}] [${type}] ${message}`;
+            logs.push(entry);
+
+            const container = document.getElementById('log-container');
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.textContent = entry;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogs() {
+            logs = [];
+            document.getElementById('log-container').innerHTML = '<div class="log-entry">[SYSTEM] Logs cleared</div>';
+        }
+
+        async function fetchJSON(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                addLog(`Failed to fetch ${url}: ${error.message}`, 'ERROR');
+                return null;
+            }
+        }
+
+        async function refreshData() {
+            addLog('Refreshing data...');
+
+            // Fetch health
+            const health = await fetchJSON(`${API_BASE}/api/v1/health`);
+            if (health) {
+                const statusEl = document.getElementById('health-status');
+                if (health.healthy) {
+                    statusEl.textContent = 'Healthy';
+                    statusEl.className = 'status healthy';
+                    document.getElementById('system-status').textContent = 'Operational';
+                } else {
+                    statusEl.textContent = 'Unhealthy';
+                    statusEl.className = 'status error';
+                    document.getElementById('system-status').textContent = 'Degraded';
+                }
+                addLog(`Health check: ${health.healthy ? 'OK' : 'FAIL'}`);
+            }
+
+            // Fetch status
+            const status = await fetchJSON(`${API_BASE}/api/v1/status`);
+            if (status) {
+                document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
+                addLog('Status updated');
+            }
+
+            // Fetch metrics
+            const metrics = await fetchJSON(`${API_BASE}/api/v1/metrics`);
+            if (metrics) {
+                // Ultra-Loop metrics
+                const loop = metrics.ultra_loop || {};
+                document.getElementById('loop-cycles').textContent = loop.total_cycles || 0;
+                document.getElementById('loop-total').textContent = loop.total_cycles || 0;
+                document.getElementById('loop-successful').textContent = loop.successful_cycles || 0;
+                document.getElementById('loop-failed').textContent = loop.failed_cycles || 0;
+                document.getElementById('loop-avg-time').textContent = (loop.avg_cycle_time || 0).toFixed(3) + 's';
+                document.getElementById('loop-last-time').textContent = (loop.last_cycle_time || 0).toFixed(3) + 's';
+
+                const successRate = loop.total_cycles > 0
+                    ? ((loop.successful_cycles / loop.total_cycles) * 100).toFixed(1) + '%'
+                    : '0%';
+                document.getElementById('loop-success-rate').textContent = successRate;
+
+                // Ultra-Think metrics
+                const think = metrics.ultra_think || {};
+                document.getElementById('think-sessions').textContent = think.total_sessions || 0;
+                document.getElementById('think-total').textContent = think.total_sessions || 0;
+                document.getElementById('think-successful').textContent = think.successful_sessions || 0;
+                document.getElementById('think-thoughts').textContent = think.total_thoughts || 0;
+                document.getElementById('think-avg').textContent = (think.avg_thoughts_per_session || 0).toFixed(1);
+                document.getElementById('think-avg-time').textContent = (think.avg_execution_time || 0).toFixed(2) + 's';
+                document.getElementById('avg-thoughts').textContent = (think.avg_thoughts_per_session || 0).toFixed(1);
+
+                // Memory metrics
+                const memory = metrics.memory || {};
+                document.getElementById('memory-status').textContent = memory.status || 'Unknown';
+                document.getElementById('memory-layers').textContent = memory.layers || '-';
+
+                addLog('Metrics updated');
+            }
+
+            // Update uptime
+            if (!window.startTime) window.startTime = Date.now();
+            const uptime = Math.floor((Date.now() - window.startTime) / 1000);
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            const seconds = uptime % 60;
+            document.getElementById('uptime').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('Dashboard loaded');
+            refreshData();
+
+            // Auto-refresh
+            setInterval(() => {
+                if (autoRefresh) {
+                    refreshData();
+                }
+            }, REFRESH_INTERVAL);
+        });
+    </script>
+</body>
+</html>
