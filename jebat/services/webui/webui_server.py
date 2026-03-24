@@ -7,6 +7,7 @@ A reliable web interface for JEBAT AI Assistant.
 import asyncio
 import json
 import logging
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -87,20 +88,40 @@ ACTIVE_CHANNELS: Dict[str, Any] = {}
 CHANNEL_TASKS: Dict[str, asyncio.Task] = {}
 STATE_LOCK = asyncio.Lock()
 STATE_LOADED = False
-DATA_DIR = Path("/app/data/webui") if Path("/app/data").exists() else REPO_ROOT / ".webui_state"
-CHANNEL_STATE_PATH = DATA_DIR / "channel_connections.json"
-CHANNEL_SECRET_PATH = DATA_DIR / "channel_secrets.json"
-WORKSTATION_STATE_PATH = DATA_DIR / "workstation_connections.json"
-RUNTIME_STATE_PATH = DATA_DIR / "runtime_overrides.json"
-PROVIDER_AUTH_PATH = DATA_DIR / "provider_auth.json"
+DATA_DIR: Optional[Path] = None
 
 
 def _now_iso() -> str:
     return datetime.utcnow().isoformat()
 
 
+def _resolve_data_dir() -> Path:
+    candidates = [
+        Path("/app/data/webui"),
+        REPO_ROOT / ".webui_state",
+        Path(tempfile.gettempdir()) / "jebat_webui_state",
+    ]
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_test"
+            probe.write_text("ok")
+            probe.unlink(missing_ok=True)
+            return candidate
+        except Exception:
+            continue
+    raise RuntimeError("no writable webui state directory available")
+
+
+def _data_path(filename: str) -> Path:
+    global DATA_DIR
+    if DATA_DIR is None:
+        DATA_DIR = _resolve_data_dir()
+    return DATA_DIR / filename
+
+
 def _ensure_data_dir() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _data_path(".init")
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -132,12 +153,12 @@ def _provider_env_targets(provider: str) -> list[str]:
 
 
 def _read_provider_auth_store() -> Dict[str, str]:
-    data = _read_json(PROVIDER_AUTH_PATH, {})
+    data = _read_json(_data_path("provider_auth.json"), {})
     return data if isinstance(data, dict) else {}
 
 
 def _write_provider_auth_store(store: Dict[str, str]) -> None:
-    _write_json(PROVIDER_AUTH_PATH, store, chmod_600=True)
+    _write_json(_data_path("provider_auth.json"), store, chmod_600=True)
 
 
 def _sanitize_channel_state(channel: str, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -241,25 +262,25 @@ async def _ensure_connection_state() -> None:
     async with STATE_LOCK:
         if STATE_LOADED:
             return
-        CHANNEL_CONNECTIONS.update(_read_json(CHANNEL_STATE_PATH, {}))
-        CHANNEL_SECRETS.update(_read_json(CHANNEL_SECRET_PATH, {}))
-        WORKSTATION_CONNECTIONS.update(_read_json(WORKSTATION_STATE_PATH, {}))
-        RUNTIME_OVERRIDES.update(_read_json(RUNTIME_STATE_PATH, {"provider": None, "model": None}))
+        CHANNEL_CONNECTIONS.update(_read_json(_data_path("channel_connections.json"), {}))
+        CHANNEL_SECRETS.update(_read_json(_data_path("channel_secrets.json"), {}))
+        WORKSTATION_CONNECTIONS.update(_read_json(_data_path("workstation_connections.json"), {}))
+        RUNTIME_OVERRIDES.update(_read_json(_data_path("runtime_overrides.json"), {"provider": None, "model": None}))
         STATE_LOADED = True
         await _reactivate_saved_channels()
 
 
 async def _persist_channel_state() -> None:
-    _write_json(CHANNEL_STATE_PATH, CHANNEL_CONNECTIONS)
-    _write_json(CHANNEL_SECRET_PATH, CHANNEL_SECRETS, chmod_600=True)
+    _write_json(_data_path("channel_connections.json"), CHANNEL_CONNECTIONS)
+    _write_json(_data_path("channel_secrets.json"), CHANNEL_SECRETS, chmod_600=True)
 
 
 def _persist_workstation_state() -> None:
-    _write_json(WORKSTATION_STATE_PATH, WORKSTATION_CONNECTIONS)
+    _write_json(_data_path("workstation_connections.json"), WORKSTATION_CONNECTIONS)
 
 
 def _persist_runtime_state() -> None:
-    _write_json(RUNTIME_STATE_PATH, RUNTIME_OVERRIDES)
+    _write_json(_data_path("runtime_overrides.json"), RUNTIME_OVERRIDES)
 
 
 async def _reactivate_saved_channels() -> None:
