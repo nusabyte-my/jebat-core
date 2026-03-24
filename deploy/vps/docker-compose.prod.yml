@@ -1,0 +1,75 @@
+services:
+  caddy:
+    image: caddy:2
+    container_name: jebat-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/vps/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - jebat-api
+    networks:
+      - jebat-public
+
+  jebat-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-api
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      JEBAT_API_ENABLED: "true"
+      JEBAT_API_HOST: 0.0.0.0
+      JEBAT_API_PORT: 8000
+      JEBAT_WEBUI_ENABLED: "false"
+      JEBAT_DATABASE_ENABLED: "false"
+      JEBAT_DATABASE_TYPE: sqlite
+      JEBAT_DATABASE_URL: sqlite:///app/data/jebat.db
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - jebat_data:/app/data
+      - ./config:/app/config:ro
+    depends_on:
+      - redis
+    networks:
+      - jebat-public
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: jebat-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - jebat-public
+
+networks:
+  jebat-public:
+    driver: bridge
+
+volumes:
+  jebat_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

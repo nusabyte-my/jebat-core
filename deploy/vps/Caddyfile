@@ -1,0 +1,9 @@
+jebat.online {
+  encode zstd gzip
+
+  reverse_proxy jebat-api:8000
+}
+
+www.jebat.online {
+  redir https://jebat.online{uri}
+}
