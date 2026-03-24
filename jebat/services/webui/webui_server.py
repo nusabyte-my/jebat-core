@@ -1266,6 +1266,13 @@ function agentRole(name){
 function skillMetaBlock(skill){
   return `<div class="mini-card" style="margin-top:14px"><strong>${escapeHtml(skill.category || 'skill')}</strong><span>Path: <code>${escapeHtml(skill.path || 'unknown')}</code></span></div>`;
 }
+function defaultWorkstationPayload(type){
+  if(type === 'cli') return {workstation:'cli', path:'~/.local/bin/jebat-cli', notes:'local cli station', ssh_host:'', ssh_user:'', deploy_path:''};
+  if(type === 'openclaw') return {workstation:'openclaw', path:'~/.openclaw', notes:'local openclaw runtime', ssh_host:'', ssh_user:'', deploy_path:''};
+  if(type === 'vscode') return {workstation:'vscode', path:'~/.config/Code/User', notes:'local vscode profile', ssh_host:'', ssh_user:'', deploy_path:''};
+  if(type === 'vps') return {workstation:'vps', path:'jebat.online', notes:'live production node', ssh_host:'jebat.online', ssh_user:'root', deploy_path:'/root/jebat-core'};
+  return {workstation:type, path:'', notes:'', ssh_host:'', ssh_user:'', deploy_path:''};
+}
 function skillForgeDrawer(skill){
   return `<p>${escapeHtml(skill?.description || '')}</p>
   <div class="mini-card" style="margin-top:14px">
@@ -1357,7 +1364,18 @@ function renderChannels(){
   <section class="layout"><article class="wide-card"><div class="card-label">Channel bridge</div><h3>Store channel connection</h3><form class="control-form" id="channelForm"><div class="control-grid"><select class="select" name="channel">${(channelState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="field1" placeholder="Primary token / id"></div><div class="control-grid"><input class="input" name="field2" placeholder="Secondary value"><input class="input" name="field3" placeholder="Third value"></div><button class="btn primary" type="submit">Save channel intent</button></form><ul class="list" style="margin-top:14px">${available}</ul></article><article class="wide-card"><div class="card-label">Connection state</div><h3>Shell-known channel links</h3><ul class="list">${connected}</ul></article></section>`;
 }
 function renderWorkstation(){
-  const cards = (runtime.workspace.stations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('');
+  const cards = (workstationState?.available || []).map(item => {
+    const saved = workstationState?.connections?.[item.id] || {};
+    const label = item.id === 'vps' ? 'Create live link' : 'Create connection';
+    const note = item.id === 'cli'
+      ? 'Best for local terminal control.'
+      : item.id === 'openclaw'
+      ? 'Best for dashboard and runtime control.'
+      : item.id === 'vscode'
+      ? 'Best for editor-driven workflows.'
+      : 'Best for remote host operations.';
+    return `<article class="grid-card"><div class="card-label">${escapeHtml(saved.status || 'ready')}</div><h3>${escapeHtml(item.label)}</h3><p>${escapeHtml(note)}</p><div class="mini-card" style="margin-top:14px"><strong>Default target</strong><span><code>${escapeHtml(item.path)}</code></span></div><div class="toolbar-inline" style="margin-top:14px"><button class="btn primary" data-workstation-create="${escapeHtml(item.id)}">${escapeHtml(label)}</button>${saved.path || saved.ssh_host ? `<button class="ghost-btn" data-workstation-copy="${escapeHtml(item.id === 'vps' ? `ssh ${(saved.ssh_user || 'root')}@${saved.ssh_host || saved.path}` : saved.path || item.path)}">Copy preset</button>` : ''}</div></article>`;
+  }).join('');
   const connected = Object.entries(workstationState?.connections || {}).map(([name, item]) => {
     const remote = item.ssh_host ? ` / ${item.ssh_user || 'root'}@${item.ssh_host}` : '';
     const deploy = item.deploy_path ? ` / deploy ${item.deploy_path}` : '';
@@ -1471,6 +1489,14 @@ function bindDynamicUI(){
   }
   if(workstationType){ workstationType.onchange = syncWorkstationFields; syncWorkstationFields(); }
   if(workstationForm){workstationForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(workstationForm); await fetch('/webui/api/workstations/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({workstation: fd.get('workstation'), path: fd.get('path'), notes: fd.get('notes'), ssh_host: fd.get('ssh_host'), ssh_user: fd.get('ssh_user'), deploy_path: fd.get('deploy_path')})}); workstationState = await fetch('/webui/api/workstations/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('workstation'); };}
+  document.querySelectorAll('[data-workstation-create]').forEach(btn => btn.onclick = async () => {
+    const payload = defaultWorkstationPayload(btn.dataset.workstationCreate || '');
+    await fetch('/webui/api/workstations/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    workstationState = await fetch('/webui/api/workstations/connect').then(r => r.json());
+    runtime = await fetch('/webui/api/runtime').then(r => r.json());
+    renderStatusStrip();
+    renderSection('workstation');
+  });
   document.querySelectorAll('[data-workstation-copy]').forEach(btn => btn.onclick = async () => {
     const text = btn.dataset.workstationCopy || '';
     try{
