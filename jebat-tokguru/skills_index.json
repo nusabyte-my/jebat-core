@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "name": "jebat-tokguru",
   "last_updated": "2026-02-18",
-  "total_skills": 867,
+  "total_skills": 868,
   "categories": {
     "architecture": 45,
     "business": 78,
@@ -11,7 +11,7 @@
     "security": 89,
     "testing": 68,
     "infrastructure": 98,
-    "workflow": 54,
+    "workflow": 55,
     "jebat-native": 67
   },
   "skills": [
@@ -108,6 +108,14 @@
       "tags": ["test", "verification", "regression", "validation", "debugging"],
       "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
       "path": "skills/testing/test/SKILL.md"
+    },
+    {
+      "name": "skill-forge",
+      "description": "Generate a new skill from a simple prompt, then run an enhancer pass to tighten trigger rules, workflow, and output quality",
+      "category": "workflow",
+      "tags": ["skill", "prompt", "generator", "enhancer", "workflow"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/workflow/skill-forge/SKILL.md"
     }
   ],
   "bundles": [
