@@ -4,7 +4,7 @@ JEBAT WebUI Launcher
 Launch the immersive web interface for JEBAT.
 
 Usage:
-    py -m jebat.webui [--host 0.0.0.0] [--port 8787]
+    python -m jebat.services.webui.launch [--host 0.0.0.0] [--port 8787]
 """
 
 import argparse
@@ -19,7 +19,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from jebat.webui.webui_server import webui_router
+from jebat.services.webui.webui_server import webui_router
 
 # Set up logging
 logging.basicConfig(
@@ -90,7 +90,7 @@ def main():
     logger.info("=" * 70)
 
     uvicorn.run(
-        "jebat.webui.launch:app",
+        "jebat.services.webui.launch:app",
         host=args.host,
         port=args.port,
         log_level="info",

@@ -8,6 +8,7 @@ This is the minimal production path for hosting `jebat-core` on `jebat.online`.
 - SSH key already present: `~/.ssh/id_ed25519_jebat`
 - helper command: `jebat-vps-ssh`
 - production deploy files in `deploy/vps/`
+- nginx site template: `deploy/vps/nginx.jebat.online.conf`
 
 ## Your Public Key
 
@@ -63,13 +64,24 @@ bash deploy/vps/bootstrap.sh
 
 ## Stack
 
-- `caddy` terminates HTTPS for `jebat.online`
-- `jebat-webui` serves the site on internal port `8787`
-- `jebat-api` serves the API on internal port `8000`
+- `jebat-webui` serves on `127.0.0.1:8787`
+- `jebat-api` serves on `127.0.0.1:8000`
 - `redis` supports runtime caching
+- existing VPS `nginx` should front `jebat.online`
+
+## Nginx
+
+Install the provided site config on the VPS:
+
+```bash
+cp deploy/vps/nginx.jebat.online.conf /etc/nginx/sites-available/jebat.online
+ln -sf /etc/nginx/sites-available/jebat.online /etc/nginx/sites-enabled/jebat.online
+nginx -t
+systemctl reload nginx
+```
 
 ## Notes
 
 - This production path uses SQLite first to keep the VPS setup simple.
 - The existing root `docker-compose.yml` is heavier and includes monitoring and Postgres. Use it later if needed.
-- Caddy will obtain TLS automatically once DNS points to the VPS and ports `80/443` are open.
+- This VPS already has Nginx listening on `80/443`, so JEBAT should integrate behind Nginx instead of binding those ports directly.
