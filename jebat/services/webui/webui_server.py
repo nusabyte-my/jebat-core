@@ -48,6 +48,14 @@ class ThinkRequest(BaseModel):
     timeout: Optional[float] = 30.0
 
 
+class RuntimeControlRequest(BaseModel):
+    provider: Optional[str] = None
+    model: Optional[str] = None
+
+
+RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
+
+
 # ==================== Routes ====================
 
 
@@ -146,6 +154,28 @@ async def get_status():
 async def get_console_meta():
     """Return UI metadata grounded in repo assets."""
     return _console_meta()
+
+
+@webui_router.get("/webui/api/runtime")
+async def get_runtime():
+    """Return live runtime info for the WebUI shell."""
+    return _runtime_state()
+
+
+@webui_router.post("/webui/api/runtime")
+async def update_runtime(payload: RuntimeControlRequest):
+    """Set a preferred provider/model override for the live WebUI shell."""
+    status_items = _runtime_state()["providers"]["available"]
+    allowed = {item["provider"] for item in status_items}
+    provider = (payload.provider or "").strip().lower() or None
+    model = (payload.model or "").strip() or None
+
+    if provider and provider not in allowed:
+        raise HTTPException(status_code=400, detail=f"unknown provider: {provider}")
+
+    RUNTIME_OVERRIDES["provider"] = provider
+    RUNTIME_OVERRIDES["model"] = model
+    return _runtime_state()
 
 
 @webui_router.post("/webui/api/chat")
@@ -476,6 +506,40 @@ def _console_meta() -> dict[str, Any]:
     }
 
 
+def _runtime_state() -> dict[str, Any]:
+    from jebat.llm import list_provider_auth_status, load_llm_config, select_best_provider
+
+    config = load_llm_config()
+    available = [
+        {
+            "provider": item.provider,
+            "configured": item.configured,
+            "env_vars": list(item.env_vars),
+            "notes": item.notes,
+        }
+        for item in list_provider_auth_status()
+    ]
+    effective_provider = (
+        RUNTIME_OVERRIDES["provider"]
+        or select_best_provider(config.provider, config.fallback_providers)
+    )
+    effective_model = RUNTIME_OVERRIDES["model"] or config.model
+    meta = _console_meta()
+    return {
+        "provider": {
+            "configured": config.provider,
+            "effective": effective_provider,
+            "model": effective_model,
+            "fallbacks": list(config.fallback_providers),
+            "override": dict(RUNTIME_OVERRIDES),
+        },
+        "providers": {"available": available},
+        "workspace": {"stations": meta["workstations"], "integrations": meta["integrations"]},
+        "channels": meta["channels"],
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
 # HTML templates (simplified for reliability)
 def _home_html():
     return """<!DOCTYPE html>
@@ -483,119 +547,151 @@ def _home_html():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JEBATCore Operations</title>
+<title>JEBATCore Console</title>
 <style>
-:root{--bg:#070b0d;--bg2:#0d1316;--panel:rgba(17,23,27,.88);--panel-soft:rgba(15,20,24,.72);--line:#243037;--line-strong:#3a4950;--text:#e7ecef;--muted:#8a9aa3;--accent:#ff5f57;--accent-2:#ff8d6b;--ok:#2ad18b;--warn:#f7b955}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.16),transparent 26%),radial-gradient(circle at right,rgba(247,185,85,.1),transparent 18%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}
-a{text-decoration:none;color:inherit}
-.shell{max-width:1320px;margin:0 auto;padding:24px}
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;background:var(--panel);border:1px solid var(--line);border-radius:22px;backdrop-filter:blur(18px);position:sticky;top:18px;z-index:20}
-.brand{display:flex;gap:16px;align-items:center}
-.brand-mark{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#9f2f2a);display:grid;place-items:center;font-weight:800;letter-spacing:.08em;box-shadow:0 0 40px rgba(255,95,87,.25)}
-.brand-copy small{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px}
-.brand-copy strong{display:block;font-size:22px;letter-spacing:.06em}
-.nav{display:flex;gap:10px;flex-wrap:wrap}
-.nav a{padding:10px 14px;border:1px solid var(--line);border-radius:999px;color:var(--muted);transition:.2s ease}
-.nav a:hover{border-color:var(--line-strong);color:var(--text);background:rgba(255,255,255,.03)}
-.hero{display:grid;grid-template-columns:1.25fr .95fr;gap:22px;margin:24px 0}
-.hero-main,.hero-side,.card,.brief,.metric{background:var(--panel);border:1px solid var(--line);border-radius:26px;backdrop-filter:blur(14px)}
-.hero-main{padding:34px;position:relative;overflow:hidden}
-.hero-main:before{content:"";position:absolute;inset:auto -10% -30% auto;width:340px;height:340px;background:radial-gradient(circle,rgba(255,95,87,.18),transparent 62%)}
-.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,95,87,.08);border:1px solid rgba(255,95,87,.22);border-radius:999px;color:#ffc8c3;font-size:12px;text-transform:uppercase;letter-spacing:.14em}
-.hero h1{font-size:clamp(42px,6vw,72px);line-height:.94;max-width:9ch;margin:20px 0 18px}
-.hero p{max-width:52ch;color:var(--muted);font-size:17px;line-height:1.7}
-.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.btn{padding:14px 18px;border-radius:14px;font-weight:700;letter-spacing:.02em}
-.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#111}
-.btn-secondary{border:1px solid var(--line-strong);background:rgba(255,255,255,.03)}
-.hero-side{padding:24px;display:grid;gap:14px}
-.metric{padding:18px 18px 16px;border-radius:18px;background:var(--panel-soft)}
-.metric label{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px}
-.metric strong{display:block;font-size:28px;margin-bottom:6px}
-.metric span{color:var(--muted);font-size:13px;line-height:1.5}
-.board{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.card{padding:22px;min-height:220px;position:relative;overflow:hidden}
-.card:after{content:"";position:absolute;inset:auto -20px -30px auto;width:140px;height:140px;background:radial-gradient(circle,rgba(255,95,87,.12),transparent 68%)}
-.card h3,.brief h3{font-size:18px;margin-bottom:10px}
-.card p,.brief p,.brief li{color:var(--muted);line-height:1.65;font-size:14px}
-.chip{display:inline-flex;padding:6px 10px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ffc8c3;background:rgba(255,95,87,.06);margin-bottom:14px}
-.brief{padding:24px}
-.brief ul{list-style:none;display:grid;gap:12px;margin-top:14px}
-.brief li{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
-.footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 22px;margin-top:24px;background:var(--panel);border:1px solid var(--line);border-radius:22px;color:var(--muted)}
-.status{display:flex;gap:18px;flex-wrap:wrap}
-.status span{display:inline-flex;align-items:center;gap:10px}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 18px rgba(42,209,139,.45)}
-@media (max-width:980px){.hero,.board{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+:root{--bg:#070b0d;--bg2:#0d1316;--sidebar:#0d1215;--panel:rgba(17,23,27,.88);--panel-soft:rgba(15,20,24,.72);--line:#243037;--line-strong:#3a4950;--text:#e7ecef;--muted:#8a9aa3;--accent:#ff5f57;--accent-2:#ff8d6b;--ok:#2ad18b;--warn:#f7b955}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.16),transparent 26%),radial-gradient(circle at right,rgba(247,185,85,.1),transparent 18%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}
+button,input,select{font:inherit}a{text-decoration:none;color:inherit}
+.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}.sidebar{padding:22px 18px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(7,11,13,.96),rgba(13,18,21,.92));position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;gap:14px;align-items:center;padding:8px 8px 22px}.brand-mark{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#9f2f2a);display:grid;place-items:center;font-weight:800;letter-spacing:.08em;box-shadow:0 0 40px rgba(255,95,87,.25)}.brand-copy small{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px}.brand-copy strong{display:block;font-size:22px;letter-spacing:.06em}
+.sidebar-section{padding:14px 8px 8px}.sidebar-section label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px}
+.nav-list{display:grid;gap:6px}.nav-item{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:1px solid transparent;border-radius:14px;color:var(--muted);cursor:pointer;transition:.18s ease}.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--text)}.nav-meta{font-size:11px;color:#ffb9b2}
+.mini-card{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin:8px 0}.mini-card strong{display:block;font-size:16px}.mini-card span{display:block;color:var(--muted);font-size:13px;line-height:1.6;margin-top:6px}
+.content{padding:22px 24px 28px;overflow:auto}.toolbar{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px}.status-strip,.hero,.grid-card,.wide-card,.table-card{background:var(--panel);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(14px)}
+.status-strip{display:flex;gap:16px;flex-wrap:wrap;padding:16px 18px}.status-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted)}.dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 18px rgba(42,209,139,.45)}
+.hero{padding:28px;position:relative;overflow:hidden;margin-bottom:18px}.hero:before{content:"";position:absolute;inset:auto -8% -28% auto;width:340px;height:340px;background:radial-gradient(circle,rgba(255,95,87,.18),transparent 62%)}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,95,87,.08);border:1px solid rgba(255,95,87,.22);border-radius:999px;color:#ffc8c3;font-size:12px;text-transform:uppercase;letter-spacing:.14em}.hero h1{font-size:clamp(32px,4vw,58px);line-height:.96;max-width:11ch;margin:18px 0 14px}.hero p{max-width:60ch;color:var(--muted);font-size:16px;line-height:1.75}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.btn{padding:12px 16px;border-radius:14px;font-weight:700;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer}.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#111;border:none}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.stack{display:grid;gap:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid-card,.wide-card,.table-card{padding:22px}.card-label{display:inline-flex;padding:6px 10px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ffc8c3;background:rgba(255,95,87,.06);margin-bottom:14px}.grid-card h3,.wide-card h3,.table-card h3{font-size:18px;margin-bottom:10px}.grid-card p,.wide-card p,.table-card p,.table-card li{color:var(--muted);line-height:1.65;font-size:14px}
+.kv{display:grid;gap:12px}.kv-item{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}.kv-item label{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.kv-item strong{display:block;font-size:22px}
+.control-form{display:grid;gap:12px}.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,.select{width:100%;padding:12px 14px;background:#0f1518;border:1px solid var(--line);border-radius:14px;color:var(--text)}
+.list{list-style:none;display:grid;gap:10px;margin-top:12px}.list li{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.list strong{display:block;color:var(--text)}
+.table{display:grid;gap:10px}.row{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.row.head{background:transparent;border:none;padding:0;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.empty{color:var(--muted);padding:22px;border:1px dashed var(--line);border-radius:16px}
+@media (max-width:1080px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}.layout,.grid,.control-grid{grid-template-columns:1fr}.content{padding:18px}}
 </style>
 </head>
 <body>
-<div class="shell">
-<header class="topbar">
-<div class="brand">
-<div class="brand-mark">J</div>
-<div class="brand-copy"><small>Red Team Operations Console</small><strong>JEBATCore</strong></div>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><div class="brand-mark">J</div><div class="brand-copy"><small>OpenClaw x Hermes Console</small><strong>JEBATCore</strong></div></div>
+<div class="sidebar-section">
+<label>Navigation</label>
+<div class="nav-list" id="navList"></div>
 </div>
-<nav class="nav">
-<a href="/webui/">Overview</a>
-<a href="/webui/chat">Chat</a>
-<a href="/webui/dashboard">Board</a>
-<a href="/webui/memory">Memory</a>
-<a href="/webui/agents">Agents</a>
-<a href="/webui/skills">Skills</a>
-<a href="/webui/doctor">Doctor</a>
-<a href="/webui/control">Control</a>
-<a href="/webui/channels">Channels</a>
-<a href="/webui/workstation">Workstation</a>
-<a href="/webui/integrations">Integrations</a>
-<a href="/webui/learning">Learning</a>
-</nav>
-</header>
-<section class="hero">
-<article class="hero-main">
-<div class="eyebrow">Live operator surface</div>
-<h1>Run a sharper offensive workflow without losing control.</h1>
-<p>JEBATCore gives you one surface for reasoning, memory, routing, and task execution. The interface is tuned like an operations room: quick reads, low noise, and the right next move always visible.</p>
-<div class="cta">
-<a class="btn btn-primary" href="/webui/chat">Open Live Session</a>
-<a class="btn btn-secondary" href="/webui/dashboard">Inspect Systems</a>
-<a class="btn btn-secondary" href="/webui/memory">Review Memory</a>
+<div class="sidebar-section">
+<label>Runtime</label>
+<div class="mini-card"><strong id="effectiveProvider">Loading</strong><span id="providerMeta">Checking provider path and live model selection.</span></div>
+<div class="mini-card"><strong id="workspaceState">Workspace Ready</strong><span id="workspaceMeta">CLI, OpenClaw, VS Code, and VPS surfaces available.</span></div>
 </div>
-</article>
-<aside class="hero-side">
-<div class="metric"><label>Mission State</label><strong>Green</strong><span>WebUI, API, memory plane, and decision flow online.</span></div>
-<div class="metric"><label>Thinking Modes</label><strong>6 active</strong><span>Fast, deliberate, deep, strategic, creative, and critical routing.</span></div>
-<div class="metric"><label>Operator Pattern</label><strong>Capture first</strong><span>Context, risks, constraints, then action. No blind execution.</span></div>
+<div class="sidebar-section">
+<label>Jump</label>
+<div class="nav-list">
+<a class="nav-item" href="/webui/chat"><span>Live chat</span><span class="nav-meta">run</span></a>
+<a class="nav-item" href="/webui/dashboard"><span>System board</span><span class="nav-meta">health</span></a>
+<a class="nav-item" href="/webui/memory"><span>Memory map</span><span class="nav-meta">layers</span></a>
+</div>
+</div>
 </aside>
-</section>
-<section class="board">
-<div class="grid">
-<article class="card"><div class="chip">Session</div><h3>Live reasoning with visible confidence</h3><p>Chat runs as an operator console, not a novelty chatbot. Mode selection, response confidence, and reasoning traces stay exposed so you can verify the model instead of trusting vibes.</p></article>
-<article class="card"><div class="chip">Memory</div><h3>Layered recall for durable context</h3><p>Short-term signals, episodic events, semantic facts, conceptual models, and procedures stay separated so the agent can remember aggressively without flattening everything into noise.</p></article>
-<article class="card"><div class="chip">Routing</div><h3>Multi-provider fallback without dead air</h3><p>When a model is exhausted or unavailable, JEBATCore selects the next available provider path and keeps the session moving with minimal operator friction.</p></article>
-<article class="card"><div class="chip">Ops</div><h3>One board for health, drift, and readiness</h3><p>The dashboard and doctor flow are aligned. You can see whether the surface is ready before you start a deep run, instead of discovering provider failure halfway through a task.</p></article>
+<main class="content">
+<div class="toolbar"><div class="status-strip" id="statusStrip"></div></div>
+<section id="view"></section>
+</main>
 </div>
-<aside class="brief">
-<h3>Operator Brief</h3>
-<p>The interface is intentionally biased toward red-team cadence: concise status, visible tool readiness, fast movement into chat, and enough structure to support multi-step work without clutter.</p>
-<ul>
-<li>Use <strong>/webui/chat</strong> for active tasks and mode switching.</li>
-<li>Use <strong>/webui/dashboard</strong> to confirm health before longer sessions.</li>
-<li>Use <strong>/webui/memory</strong> to inspect what the system is retaining.</li>
-</ul>
-</aside>
-</section>
-<footer class="footer">
-<div class="status">
-<span><i class="dot"></i>Ultra-Think online</span>
-<span><i class="dot"></i>Memory online</span>
-<span><i class="dot"></i>Routing online</span>
-</div>
-<div>JEBATCore / Operations Surface</div>
-</footer>
-</div>
+<script>
+const sections = [
+  {id:'overview', label:'Overview', meta:'surface'},
+  {id:'control', label:'Control', meta:'router'},
+  {id:'doctor', label:'Doctor', meta:'health'},
+  {id:'channels', label:'Channels', meta:'adapters'},
+  {id:'workstation', label:'Workstation', meta:'connect'},
+  {id:'integrations', label:'Integrations', meta:'bundle'},
+  {id:'agents', label:'Agents', meta:'roles'},
+  {id:'skills', label:'Skills', meta:'toolkit'},
+  {id:'learning', label:'Learning', meta:'adaptive'}
+];
+let consoleMeta = null;
+let runtime = null;
+function escapeHtml(value){return String(value??'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function navMarkup(active){return sections.map(item => `<button class="nav-item ${item.id===active?'active':''}" data-section="${item.id}"><span>${item.label}</span><span class="nav-meta">${item.meta}</span></button>`).join('');}
+function setHash(section){history.replaceState(null,'',`#${section}`);}
+function currentSection(){const id=location.hash.replace('#','');return sections.some(s=>s.id===id)?id:'overview';}
+function renderStatusStrip(){
+  const pills = [
+    ['Provider', runtime?.provider?.effective || 'unknown'],
+    ['Model', runtime?.provider?.model || 'unknown'],
+    ['OpenClaw Agents', String(consoleMeta?.openclaw?.agent_names?.length || 0)],
+    ['Skill Count', String(consoleMeta?.skills?.count || 0)]
+  ];
+  document.getElementById('statusStrip').innerHTML = pills.map(([k,v]) => `<div class="status-pill"><i class="dot"></i><span>${escapeHtml(k)}: ${escapeHtml(v)}</span></div>`).join('');
+  document.getElementById('effectiveProvider').textContent = runtime?.provider?.effective || 'Unknown';
+  document.getElementById('providerMeta').textContent = `Configured ${runtime?.provider?.configured || 'unknown'} / model ${runtime?.provider?.model || 'unknown'}`;
+  document.getElementById('workspaceMeta').textContent = `${(runtime?.workspace?.stations || []).length} workstations and ${(runtime?.workspace?.integrations || []).length} integration points detected.`;
+}
+function renderOverview(){
+  return `<section class="hero"><div class="eyebrow">Interactive operator shell</div><h1>Run the stack from one control surface.</h1><p>This is the integrated JEBATCore shell: OpenClaw-aligned control, Hermes capture posture, live provider awareness, workstation visibility, channel inventory, and skill learning in one place.</p><div class="hero-actions"><a class="btn primary" href="/webui/chat">Open live chat</a><button class="btn" data-section-jump="doctor">Run doctor view</button><button class="btn" data-section-jump="workstation">Review workstations</button></div></section>
+  <section class="layout"><div class="stack"><div class="grid">
+  <article class="grid-card"><div class="card-label">Channels</div><h3>Connected surfaces</h3><p>${(consoleMeta.channels||[]).length} adapters detected from the repo, with OpenClaw template channels layered on top.</p></article>
+  <article class="grid-card"><div class="card-label">Workstations</div><h3>Operator stations</h3><p>${(runtime.workspace.stations||[]).length} work surfaces available across CLI, OpenClaw, VS Code, and VPS.</p></article>
+  <article class="grid-card"><div class="card-label">Skills</div><h3>TokGuru + OpenClaw Hermes</h3><p>${consoleMeta.skills.count} skills loaded, including the OpenClaw Hermes operating mode excerpt.</p></article>
+  <article class="grid-card"><div class="card-label">Learning</div><h3>Adaptive modules</h3><p>${consoleMeta.learning.modules.length} learning modules are already wired in the repo for recommendation and skill improvement.</p></article>
+  </div></div>
+  <div class="stack">
+    <article class="wide-card"><div class="card-label">Provider control</div><h3>Live runtime state</h3><div class="kv"><div class="kv-item"><label>Configured provider</label><strong>${escapeHtml(runtime.provider.configured)}</strong></div><div class="kv-item"><label>Effective provider</label><strong>${escapeHtml(runtime.provider.effective)}</strong></div><div class="kv-item"><label>Effective model</label><strong>${escapeHtml(runtime.provider.model)}</strong></div></div></article>
+    <article class="wide-card"><div class="card-label">OpenClaw</div><h3>Active control pattern</h3><p>Primary model: ${escapeHtml(consoleMeta.openclaw.primary_model || 'unknown')}</p><p>Fallbacks: ${escapeHtml((consoleMeta.openclaw.fallback_models || []).join(', '))}</p></article>
+  </div></section>`;
+}
+function renderDoctor(){
+  const providerRows = (runtime.providers.available||[]).map(item => `<div class="row"><div>${escapeHtml(item.provider)}</div><div>${item.configured?'configured':'missing'}</div><div>${escapeHtml(item.notes)}</div></div>`).join('');
+  return `<section class="hero"><div class="eyebrow">Health posture</div><h1>Check the stack before a long run.</h1><p>The doctor view merges provider auth, model selection, and workstation readiness so you can see degradation before it hurts the session.</p></section>
+  <section class="table-card"><div class="card-label">Providers</div><h3>Provider readiness</h3><div class="table"><div class="row head"><div>Provider</div><div>Status</div><div>Notes</div></div>${providerRows}</div></section>`;
+}
+function renderControl(){
+  const options = (runtime.providers.available||[]).map(item => `<option value="${escapeHtml(item.provider)}" ${item.provider===runtime.provider.effective?'selected':''}>${escapeHtml(item.provider)}</option>`).join('');
+  return `<section class="hero"><div class="eyebrow">Live controls</div><h1>Switch runtime preference without leaving the console.</h1><p>These controls update the live WebUI shell preference for provider and model. They do not rewrite your repo config, but they do change the active preference shown across the shell.</p></section>
+  <section class="layout"><article class="wide-card"><div class="card-label">Provider override</div><h3>Runtime control</h3><form class="control-form" id="runtimeForm"><div class="control-grid"><select class="select" name="provider">${options}</select><input class="input" type="text" name="model" value="${escapeHtml(runtime.provider.model)}" placeholder="Model override"></div><button class="btn primary" type="submit">Apply runtime override</button></form></article>
+  <article class="wide-card"><div class="card-label">Workspace state</div><h3>Current surfaces</h3><ul class="list">${(runtime.workspace.stations||[]).map(item => `<li><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.path)} / ${escapeHtml(item.state)}</span></li>`).join('')}</ul></article></section>`;
+}
+function renderChannels(){
+  return `<section class="hero"><div class="eyebrow">Message surfaces</div><h1>Channels from repo and OpenClaw runtime.</h1><p>The shell is reading actual adapters from <code>jebat/integrations/channels</code> and channel declarations from the OpenClaw template.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Repo adapters</div><h3>Detected channel modules</h3><ul class="list">${(consoleMeta.channels||[]).map(name => `<li><strong>${escapeHtml(name)}</strong><span>Discovered in repo channel integrations.</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">OpenClaw template</div><h3>Configured channels</h3><ul class="list">${(consoleMeta.openclaw.channel_names||[]).map(name => `<li><strong>${escapeHtml(name)}</strong><span>Enabled in the OpenClaw bundle template.</span></li>`).join('') || '<li><strong>None</strong><span>No template channels configured.</span></li>'}</ul></article></section>`;
+}
+function renderWorkstation(){
+  return `<section class="hero"><div class="eyebrow">Connection layer</div><h1>Workstation surfaces, aligned in one shell.</h1><p>Use this view to track the places JEBATCore is meant to run: local CLI, OpenClaw runtime, VS Code, and the live VPS deployment.</p></section><section class="grid">${(runtime.workspace.stations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
+}
+function renderIntegrations(){
+  return `<section class="hero"><div class="eyebrow">Versioned connections</div><h1>Integration assets grounded in the repo.</h1><p>This is the repo-backed integration layer, not UI filler. It shows the OpenClaw bundle and the docs that support MCP and IDE workflows.</p></section><section class="grid">${(runtime.workspace.integrations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
+}
+function renderAgents(){
+  return `<section class="hero"><div class="eyebrow">Role map</div><h1>Hermes and OpenClaw-style agent roles.</h1><p>The shell surfaces the roles from the OpenClaw bundle and keeps Hermes visible as an operating mode rather than burying it in a prompt.</p></section><section class="grid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Agent</div><h3>${escapeHtml(name)}</h3><p>Visible from the OpenClaw bundle agent list.</p></article>`).join('')}</section>`;
+}
+function renderSkills(){
+  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>TokGuru skills with OpenClaw Hermes included.</h1><p>These cards are built from the live skill registry. They represent the actual loaded skills the runtime can refer to.</p></section><section class="grid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p></article>`).join('')}</section>`;
+}
+function renderLearning(){
+  return `<section class="hero"><div class="eyebrow">Adaptive layer</div><h1>Skill learning from repo modules and OpenClaw guidance.</h1><p>Continuum and cortex modules are surfaced here so the operator can see where recommendation and improvement logic already lives in the codebase.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Learning modules</div><h3>Adaptive code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">OpenClaw Hermes</div><h3>Imported skill guidance</h3><p>${escapeHtml(consoleMeta.skills.openclaw_excerpt || 'Unavailable')}</p></article></section>`;
+}
+function renderSection(section){
+  const view = document.getElementById('view');
+  document.getElementById('navList').innerHTML = navMarkup(section);
+  const renderers = {overview:renderOverview,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning};
+  view.innerHTML = renderers[section] ? renderers[section]() : renderOverview();
+  bindDynamicUI();
+}
+function bindDynamicUI(){
+  document.querySelectorAll('[data-section]').forEach(btn => btn.onclick = () => { setHash(btn.dataset.section); renderSection(btn.dataset.section); });
+  document.querySelectorAll('[data-section-jump]').forEach(btn => btn.onclick = () => { setHash(btn.dataset.sectionJump); renderSection(btn.dataset.sectionJump); });
+  const form = document.getElementById('runtimeForm');
+  if(form){form.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(form); const payload = {provider: fd.get('provider'), model: fd.get('model')}; const res = await fetch('/webui/api/runtime', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); runtime = await res.json(); renderStatusStrip(); renderSection('control'); };}
+}
+async function boot(){
+  const [metaRes, runtimeRes] = await Promise.all([fetch('/webui/api/console-meta'), fetch('/webui/api/runtime')]);
+  consoleMeta = await metaRes.json();
+  runtime = await runtimeRes.json();
+  renderStatusStrip();
+  renderSection(currentSection());
+}
+window.addEventListener('hashchange', () => renderSection(currentSection()));
+boot();
+</script>
 </body>
 </html>"""
 
