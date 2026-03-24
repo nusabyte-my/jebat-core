@@ -52,10 +52,10 @@ On the VPS:
 ```bash
 git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
-cp deploy/vps/.env.production.example .env.production
+cp deploy/vps/.env.production.example deploy/vps/.env.production
 ```
 
-Fill in `.env.production`, then start:
+Fill in `deploy/vps/.env.production`, then start:
 
 ```bash
 bash deploy/vps/bootstrap.sh
