@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from jebat.cli.jebat_cli import JEBATCLI
 from jebat.llm.auth import list_provider_auth_status
 from jebat.llm.history import ChatHistoryStore
 from jebat.llm.project_context import build_project_context
@@ -106,3 +107,23 @@ def test_build_skill_prompt_can_pin_hermes_agent() -> None:
     names = [skill.name for skill in selected]
     assert names == ["hermes-agent"]
     assert "Skill: hermes-agent" in prompt
+
+
+def test_doctor_reports_configured_provider(monkeypatch) -> None:
+    import asyncio
+    from jebat.llm.config import JebatLLMConfig
+
+    cli = JEBATCLI()
+    lines: list[str] = []
+    cli.print = lambda message, style="": lines.append(str(message))
+
+    monkeypatch.setattr(
+        "jebat.cli.jebat_cli.load_llm_config",
+        lambda: JebatLLMConfig(provider="local", model="echo", fallback_providers=("local",)),
+    )
+
+    asyncio.run(cli.cmd_doctor())
+
+    output = "\n".join(lines)
+    assert "Configured Provider: local" in output
+    assert "Best Available Provider: local" in output

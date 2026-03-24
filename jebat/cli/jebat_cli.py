@@ -20,6 +20,8 @@ import asyncio
 import json
 import uuid
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -494,6 +496,51 @@ class JEBATCLI:
         provider = select_best_provider(config.provider, config.fallback_providers)
         self.print(provider)
 
+    async def cmd_doctor(self, probe: bool = False):
+        """Run a lightweight health check for the configured LLM stack."""
+        config = load_llm_config()
+        best_provider = select_best_provider(config.provider, config.fallback_providers)
+        auth_items = list_provider_auth_status()
+
+        self.print("\nJEBAT Doctor", "bold blue")
+        self.print(f"  Configured Provider: {config.provider}")
+        self.print(f"  Configured Model: {config.model}")
+        self.print(f"  Best Available Provider: {best_provider}")
+
+        configured = [item.provider for item in auth_items if item.configured]
+        missing = [item.provider for item in auth_items if not item.configured]
+        self.print(f"  Configured Auth: {', '.join(configured) if configured else 'none'}")
+        if missing:
+            self.print(f"  Missing Auth: {', '.join(missing)}", "yellow")
+
+        ollama_item = next((item for item in auth_items if item.provider == "ollama"), None)
+        if ollama_item and ollama_item.configured:
+            ok, detail = self._check_ollama(config.ollama_host)
+            style = "green" if ok else "red"
+            self.print(f"  Ollama: {detail}", style)
+
+        if probe:
+            response, used_provider = await generate_with_failover(
+                config=config,
+                prompt="Reply with OK.",
+                system_prompt="You are a health check. Reply with OK only.",
+            )
+            snippet = " ".join(response.strip().split())[:120]
+            self.print(f"  Probe Provider: {used_provider}", "green")
+            self.print(f"  Probe Response: {snippet}", "green")
+
+    def _check_ollama(self, host: str) -> tuple[bool, str]:
+        """Check whether the local Ollama HTTP API responds."""
+        target = f"{host.rstrip('/')}/api/tags"
+        try:
+            with urllib.request.urlopen(target, timeout=3) as response:
+                payload = json.load(response)
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            return False, f"offline ({exc})"
+
+        models = payload.get("models", [])
+        return True, f"online ({len(models)} models)"
+
     async def cmd_skills_list(self, category: str | None = None):
         """List available JEBAT skills."""
         registry = build_skill_registry()
@@ -617,6 +664,8 @@ async def main():
     llm_auth_parser = subparsers.add_parser("llm-auth", help="Show provider authentication status")
     llm_auth_parser.add_argument("--missing-only", action="store_true", help="Show only missing provider auth")
     subparsers.add_parser("llm-best-provider", help="Show the best configured provider")
+    doctor_parser = subparsers.add_parser("doctor", help="Check LLM/provider health")
+    doctor_parser.add_argument("--probe", action="store_true", help="Send a real test prompt using the configured provider flow")
     subparsers.add_parser("mode-guide", help="Print the local JEBAT assistant guide path")
 
     skills_parser = subparsers.add_parser("skills", help="Inspect JEBAT TokGuru skills")
@@ -695,6 +744,9 @@ async def main():
 
         elif args.command == "llm-best-provider":
             await cli.cmd_llm_best_provider()
+
+        elif args.command == "doctor":
+            await cli.cmd_doctor(args.probe)
 
         elif args.command == "mode-guide":
             await cli.cmd_mode_guide()
