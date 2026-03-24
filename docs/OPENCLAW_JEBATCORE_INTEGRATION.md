@@ -1,12 +1,12 @@
 # OpenClaw JEBATCore Integration
 
-This document records the local OpenClaw runtime alignment for JEBATCore.
+This document records the local OpenClaw runtime alignment for JEBATCore and the repo-packaged export bundle.
 
 ## Runtime Identity
 
 The live OpenClaw workspace is configured to present the main agent as `JEBATCore` with Hermes operating behavior.
 
-Current local runtime pieces:
+Current live runtime pieces:
 
 - OpenClaw config: `~/.openclaw/openclaw.json`
 - Workspace identity: `~/.openclaw/workspace/IDENTITY.md`
@@ -14,7 +14,14 @@ Current local runtime pieces:
   - `~/.openclaw/workspace/BOOTSTRAP.md`
   - `~/.openclaw/workspace/SOUL.md`
   - `~/.openclaw/workspace/AGENTS.md`
-  - `~/.openclaw/workspace/ORCHESTRA.md`
+- `~/.openclaw/workspace/ORCHESTRA.md`
+
+Versioned repo bundle:
+
+- `integrations/openclaw/openclaw.template.json`
+- `integrations/openclaw/.env.example`
+- `integrations/openclaw/workspace/`
+- `scripts/export_openclaw_jebatcore.py`
 
 ## Agent Layout
 
@@ -50,4 +57,14 @@ Patched source files in the local OpenClaw repo:
 
 ## Important Note
 
-Those UI changes are source-level changes in the local OpenClaw repo and still require a UI build/deploy step to affect the served dashboard bundle.
+Those UI changes are source-level changes in the local OpenClaw repo. The local UI bundle has already been rebuilt, but the source still lives outside this repo.
+
+## Export Workflow
+
+To refresh the repo bundle from the live local OpenClaw runtime:
+
+```bash
+python3 scripts/export_openclaw_jebatcore.py
+```
+
+This keeps `jebat-core` as the versioned source of the JEBATCore/OpenClaw operating setup without committing local secrets or unrelated runtime state.
