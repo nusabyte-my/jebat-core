@@ -1223,6 +1223,33 @@ Then self-enhance the result by:
 
 Return the final improved skill only.`
 };
+function buildSkillForgePrompt(idea){
+  const cleanIdea = (idea || '').trim() || '[skill idea]';
+  return `Create a new core AI skill for: ${cleanIdea}
+
+Requirements:
+- turn the idea into a practical reusable core skill
+- keep it concise and high-signal
+- define clear trigger conditions
+- define the workflow step by step
+- include response defaults
+- include one realistic example usage
+
+Then enhance the skill by:
+- removing fluff
+- tightening trigger rules
+- making the workflow deterministic where useful
+- reducing overlap with general assistant behavior
+- improving the example so it matches real usage
+
+Return the final improved skill only in this structure:
+1. Skill name
+2. Description
+3. When to use
+4. Workflow
+5. Response defaults
+6. Example usage`;
+}
 function openDrawer(title, body){
   document.getElementById('drawerContent').innerHTML = `<h3>${escapeHtml(title)}</h3>${body}`;
   document.getElementById('drawerBackdrop').classList.add('open');
@@ -1231,6 +1258,17 @@ function closeDrawer(){ document.getElementById('drawerBackdrop').classList.remo
 function escapeHtml(value){return String(value??'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 function skillForgeDrawer(skill){
   return `<p>${escapeHtml(skill?.description || '')}</p>
+  <div class="mini-card" style="margin-top:14px">
+    <strong>Core Skill Enhancer</strong>
+    <span>Give one simple idea. The shell expands it into a stronger core-skill prompt for JEBAT.</span>
+    <textarea id="skillForgeIdeaDrawer" class="input" style="min-height:90px;margin-top:12px;resize:vertical" placeholder="Example: summarize product feedback into bug reports and feature requests"></textarea>
+    <div class="toolbar-inline" style="margin-top:12px">
+      <button class="btn primary" data-skillforge-generate="drawer">Enhance to core skill</button>
+      <button class="ghost-btn" data-skillforge-send-generated="drawer">Send enhanced prompt</button>
+      <button class="ghost-btn" data-skillforge-copy-generated="drawer">Copy enhanced prompt</button>
+    </div>
+    <pre id="skillForgeOutputDrawer" style="margin-top:12px">${escapeHtml(buildSkillForgePrompt(''))}</pre>
+  </div>
   <div class="toolbar-inline" style="margin-top:14px">
     <button class="btn primary" data-skillforge-copy="combined">Use this prompt</button>
     <button class="ghost-btn" data-skillforge-copy="base">Copy base</button>
@@ -1325,7 +1363,7 @@ function renderAgents(){
   return `<section class="hero"><div class="eyebrow">Cell topology</div><h1>Hermes and OpenClaw roles as visible operator cells.</h1><p>The shell exposes the OpenClaw role map while keeping Hermes visible as an explicit mode, not buried in prompt text or hidden routing.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.openclaw.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Cell</div><h3>${escapeHtml(name)}</h3><p>Visible from the OpenClaw bundle agent list.</p><button class="ghost-btn" data-agent="${escapeHtml(name)}">Details</button></article>`).join('')}</div></section>`;
 }
 function renderSkills(){
-  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>Hermes skills, OpenClaw skills, and operator tooling in one plane.</h1><p>These cards are built from the live skill registry so the console shows the actual skill surfaces the runtime can route into, including webfetch, search, test, and the new skill-forge prompt generator with enhancer flow.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.skills.top||[]).length} featured skills</span></span></div><div class="grid" id="skillGrid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p><div class="toolbar-inline" style="margin-top:14px">${skill.name === 'skill-forge' ? `<button class="btn primary" data-skillforge-open-chat="combined">Use prompt</button>` : ''}<button class="ghost-btn" data-skill="${escapeHtml(skill.name)}">Details</button></div></article>`).join('')}</div></section>`;
+  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>Hermes skills, OpenClaw skills, and operator tooling in one plane.</h1><p>These cards are built from the live skill registry so the console shows the actual skill surfaces the runtime can route into, including webfetch, search, test, and the new skill-forge prompt generator with enhancer flow.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.skills.top||[]).length} featured skills</span></span></div><div class="grid" id="skillGrid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.name === 'skill-forge' ? 'core skill enhancer' : skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p>${skill.name === 'skill-forge' ? `<textarea id="skillForgeIdeaCard" class="input" style="min-height:84px;margin-top:14px;resize:vertical" placeholder="Describe a simple skill idea"></textarea><pre id="skillForgeOutputCard" style="margin-top:12px">${escapeHtml(buildSkillForgePrompt(''))}</pre><div class="toolbar-inline" style="margin-top:14px"><button class="btn primary" data-skillforge-generate="card">Enhance prompt</button><button class="ghost-btn" data-skillforge-send-generated="card">Use in chat</button><button class="ghost-btn" data-skillforge-copy-generated="card">Copy</button><button class="ghost-btn" data-skill="${escapeHtml(skill.name)}">Details</button></div>` : `<div class="toolbar-inline" style="margin-top:14px"><button class="ghost-btn" data-skill="${escapeHtml(skill.name)}">Details</button></div>`}</article>`).join('')}</div></section>`;
 }
 function renderLearning(){
   return `<section class="hero"><div class="eyebrow">Learning loop</div><h1>Adaptive reasoning and skill evolution.</h1><p>Continuum and cortex modules stay visible here so the operator can see exactly where recommendation and improvement logic already exists in the repo.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Adaptive modules</div><h3>Learning code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">Hermes import</div><h3>Imported guidance</h3><p>${escapeHtml(consoleMeta.skills.openclaw_excerpt || 'Unavailable')}</p></article></section>`;
@@ -1439,6 +1477,50 @@ function bindDynamicUI(){
     const input = document.getElementById('shellChatInput');
     if(input){
       input.value = text;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  });
+  function skillForgeElements(scope){
+    if(scope === 'drawer'){
+      return {
+        idea: document.getElementById('skillForgeIdeaDrawer'),
+        out: document.getElementById('skillForgeOutputDrawer'),
+      };
+    }
+    return {
+      idea: document.getElementById('skillForgeIdeaCard'),
+      out: document.getElementById('skillForgeOutputCard'),
+    };
+  }
+  function syncSkillForge(scope){
+    const els = skillForgeElements(scope);
+    if(!els.idea || !els.out) return '';
+    const prompt = buildSkillForgePrompt(els.idea.value);
+    els.out.textContent = prompt;
+    return prompt;
+  }
+  document.querySelectorAll('[data-skillforge-generate]').forEach(btn => btn.onclick = () => {
+    syncSkillForge(btn.dataset.skillforgeGenerate);
+  });
+  document.querySelectorAll('[data-skillforge-copy-generated]').forEach(btn => btn.onclick = async () => {
+    const prompt = syncSkillForge(btn.dataset.skillforgeCopyGenerated);
+    try{
+      await navigator.clipboard.writeText(prompt);
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = 'Copy enhanced prompt'; }, 1200);
+    }catch(e){
+      openDrawer('Copy failed', `<p>Clipboard access failed. Copy the prompt below manually.</p><pre>${escapeHtml(prompt)}</pre>`);
+    }
+  });
+  document.querySelectorAll('[data-skillforge-send-generated]').forEach(btn => btn.onclick = () => {
+    const prompt = syncSkillForge(btn.dataset.skillforgeSendGenerated);
+    closeDrawer();
+    setHash('livechat');
+    renderSection('livechat');
+    const input = document.getElementById('shellChatInput');
+    if(input){
+      input.value = prompt;
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
     }
