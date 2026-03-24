@@ -2,7 +2,7 @@ services:
   jebat-api:
     build:
       context: ../..
-    dockerfile: Dockerfile
+      dockerfile: Dockerfile
       target: production
     container_name: jebat-api
     restart: unless-stopped
@@ -43,7 +43,7 @@ services:
   jebat-webui:
     build:
       context: ../..
-    dockerfile: Dockerfile
+      dockerfile: Dockerfile
       target: production
     container_name: jebat-webui
     restart: unless-stopped
