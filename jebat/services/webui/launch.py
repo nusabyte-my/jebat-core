@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from jebat.services.webui.webui_server import webui_router
 
@@ -49,6 +50,12 @@ app.include_router(webui_router)
 
 # Also mount at root for convenience
 app.include_router(webui_router, prefix="")
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    """Redirect the bare host to the WebUI entrypoint."""
+    return RedirectResponse(url="/webui/", status_code=307)
 
 
 @app.get("/health")
