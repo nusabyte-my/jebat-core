@@ -986,10 +986,10 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <div class="sidebar-section">
 <label>Shell Shortcuts</label>
 <div class="nav-list">
-<button class="nav-item" data-section="livechat"><span>Live chat</span><span class="nav-meta">run</span></button>
-<button class="nav-item" data-section="control"><span>Runtime</span><span class="nav-meta">route</span></button>
-<button class="nav-item" data-section="channels"><span>Channels</span><span class="nav-meta">wire</span></button>
-<button class="nav-item" data-section="workstation"><span>Stations</span><span class="nav-meta">ops</span></button>
+<a class="nav-item" href="#livechat" data-section="livechat"><span>Live chat</span><span class="nav-meta">run</span></a>
+<a class="nav-item" href="#control" data-section="control"><span>Runtime</span><span class="nav-meta">route</span></a>
+<a class="nav-item" href="#channels" data-section="channels"><span>Channels</span><span class="nav-meta">wire</span></a>
+<a class="nav-item" href="#workstation" data-section="workstation"><span>Stations</span><span class="nav-meta">ops</span></a>
 </div>
 </div>
 </aside>
@@ -1025,7 +1025,7 @@ function closeDrawer(){ document.getElementById('drawerBackdrop').classList.remo
 function escapeHtml(value){return String(value??'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 function navMarkup(active){
   const filter = (document.getElementById('navFilter')?.value || '').toLowerCase();
-  return sections.filter(item => !filter || item.label.toLowerCase().includes(filter) || item.meta.toLowerCase().includes(filter)).map(item => `<button class="nav-item ${item.id===active?'active':''}" data-section="${item.id}"><span>${item.label}</span><span class="nav-meta">${item.meta}</span></button>`).join('');
+  return sections.filter(item => !filter || item.label.toLowerCase().includes(filter) || item.meta.toLowerCase().includes(filter)).map(item => `<a class="nav-item ${item.id===active?'active':''}" href="#${item.id}" data-section="${item.id}"><span>${item.label}</span><span class="nav-meta">${item.meta}</span></a>`).join('');
 }
 function setHash(section){history.replaceState(null,'',`#${section}`);}
 function currentSection(){const id=location.hash.replace('#','');return sections.some(s=>s.id===id)?id:'overview';}
