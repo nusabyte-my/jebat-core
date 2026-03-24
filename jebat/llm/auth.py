@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,6 +10,7 @@ def _provider_auth_store() -> dict[str, str]:
     candidates = [
         Path("/app/data/webui/provider_auth.json"),
         Path(__file__).resolve().parents[2] / ".webui_state" / "provider_auth.json",
+        Path(tempfile.gettempdir()) / "jebat_webui_state" / "provider_auth.json",
     ]
     for path in candidates:
         if not path.exists():
