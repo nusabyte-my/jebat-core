@@ -926,7 +926,15 @@ def _console_meta() -> dict[str, Any]:
 
         registry = build_skill_registry(skill_root)
         all_skills = registry.get_all_skills()
-        featured_names = ["hermes-agent", "webfetch", "search", "test", "python-patterns", "docker-expert"]
+        featured_names = [
+            "hermes-agent",
+            "skill-forge",
+            "webfetch",
+            "search",
+            "test",
+            "python-patterns",
+            "docker-expert",
+        ]
         featured_skills = []
         seen_featured = set()
         for name in featured_names:
@@ -935,12 +943,12 @@ def _console_meta() -> dict[str, Any]:
                 featured_skills.append(summarize_skill(skill))
                 seen_featured.add(skill.name)
         for skill in all_skills:
-            if len(featured_skills) >= 6:
+            if len(featured_skills) >= 7:
                 break
             if skill.name in seen_featured:
                 continue
             featured_skills.append(summarize_skill(skill))
-        top_skills = featured_skills[:6]
+        top_skills = featured_skills[:7]
     except Exception:
         all_skills = []
         top_skills = []
@@ -1257,7 +1265,7 @@ function renderAgents(){
   return `<section class="hero"><div class="eyebrow">Cell topology</div><h1>Hermes and OpenClaw roles as visible operator cells.</h1><p>The shell exposes the OpenClaw role map while keeping Hermes visible as an explicit mode, not buried in prompt text or hidden routing.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.openclaw.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Cell</div><h3>${escapeHtml(name)}</h3><p>Visible from the OpenClaw bundle agent list.</p><button class="ghost-btn" data-agent="${escapeHtml(name)}">Details</button></article>`).join('')}</div></section>`;
 }
 function renderSkills(){
-  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>Hermes skills, OpenClaw skills, and operator tooling in one plane.</h1><p>These cards are built from the live skill registry so the console shows the actual skill surfaces the runtime can route into, including webfetch, search, and test.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.skills.top||[]).length} featured skills</span></span></div><div class="grid" id="skillGrid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p><button class="ghost-btn" data-skill="${escapeHtml(skill.name)}">Details</button></article>`).join('')}</div></section>`;
+  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>Hermes skills, OpenClaw skills, and operator tooling in one plane.</h1><p>These cards are built from the live skill registry so the console shows the actual skill surfaces the runtime can route into, including webfetch, search, test, and the new skill-forge prompt generator with enhancer flow.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.skills.top||[]).length} featured skills</span></span></div><div class="grid" id="skillGrid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p><button class="ghost-btn" data-skill="${escapeHtml(skill.name)}">Details</button></article>`).join('')}</div></section>`;
 }
 function renderLearning(){
   return `<section class="hero"><div class="eyebrow">Learning loop</div><h1>Adaptive reasoning and skill evolution.</h1><p>Continuum and cortex modules stay visible here so the operator can see exactly where recommendation and improvement logic already exists in the repo.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Adaptive modules</div><h3>Learning code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">Hermes import</div><h3>Imported guidance</h3><p>${escapeHtml(consoleMeta.skills.openclaw_excerpt || 'Unavailable')}</p></article></section>`;
