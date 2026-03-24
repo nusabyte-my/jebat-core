@@ -120,6 +120,72 @@ def _sanitize_channel_state(channel: str, state: Dict[str, Any]) -> Dict[str, An
     }
 
 
+def _provider_model_catalog() -> dict[str, dict[str, Any]]:
+    return {
+        "openai": {
+            "label": "OpenAI",
+            "supports_custom": False,
+            "models": [
+                "gpt-5.4",
+                "gpt-5.4-mini",
+                "gpt-5.3-codex",
+                "gpt-5.2",
+            ],
+        },
+        "google": {
+            "label": "Google",
+            "supports_custom": False,
+            "models": [
+                "gemini-3-flash-preview",
+                "gemini-3.1-pro-preview",
+                "gemini-2.5-pro",
+            ],
+        },
+        "anthropic": {
+            "label": "Anthropic",
+            "supports_custom": False,
+            "models": [
+                "claude-sonnet-4-5",
+                "claude-opus-4-1",
+                "claude-3-7-sonnet-latest",
+            ],
+        },
+        "openrouter": {
+            "label": "OpenRouter",
+            "supports_custom": True,
+            "models": [
+                "openai/gpt-5.4",
+                "anthropic/claude-sonnet-4-5",
+                "google/gemini-2.5-pro",
+            ],
+        },
+        "ollama": {
+            "label": "Ollama",
+            "supports_custom": True,
+            "models": [
+                "hermes3:8b",
+                "qwen2.5-coder:7b",
+                "hermes-sec-v2:latest",
+                "llama3:8b",
+            ],
+        },
+        "local": {
+            "label": "Local",
+            "supports_custom": False,
+            "models": ["local-echo"],
+        },
+    }
+
+
+def _default_model_for_provider(provider: str, configured_model: str) -> str:
+    catalog = _provider_model_catalog()
+    provider_entry = catalog.get(provider, {})
+    models = provider_entry.get("models", [])
+    if configured_model in models:
+        return configured_model
+    return models[0] if models else configured_model
+
+
 async def _ensure_connection_state() -> None:
     global STATE_LOADED
     if STATE_LOADED:
@@ -295,6 +361,12 @@ async def get_learning():
     return _get_learning_html()
 
 
+@webui_router.get("/webui/setup", response_class=HTMLResponse)
+async def get_setup():
+    """Serve setup guide page."""
+    return _get_setup_html()
+
+
 @webui_router.get("/webui/api/status")
 async def get_status():
     """Get system status"""
@@ -330,13 +402,25 @@ async def get_runtime():
 async def update_runtime(payload: RuntimeControlRequest):
     """Set a preferred provider/model override for the live WebUI shell."""
     await _ensure_connection_state()
-    status_items = _runtime_state()["providers"]["available"]
+    state = _runtime_state()
+    status_items = state["providers"]["available"]
+    catalog = state["providers"]["catalog"]
     allowed = {item["provider"] for item in status_items}
     provider = (payload.provider or "").strip().lower() or None
     model = (payload.model or "").strip() or None
 
     if provider and provider not in allowed:
         raise HTTPException(status_code=400, detail=f"unknown provider: {provider}")
+    if provider and provider in catalog:
+        provider_models = catalog[provider].get("models", [])
+        supports_custom = bool(catalog[provider].get("supports_custom"))
+        if model and not supports_custom and model not in provider_models:
+            raise HTTPException(
+                status_code=400,
+                detail=f"invalid model for provider {provider}: {model}",
+            )
+        if not model:
+            model = _default_model_for_provider(provider, state["provider"]["configured_model"])
 
     RUNTIME_OVERRIDES["provider"] = provider
     RUNTIME_OVERRIDES["model"] = model
@@ -674,6 +758,10 @@ def _get_learning_html():
     return HTMLResponse(content=_learning_html())
 
 
+def _get_setup_html():
+    return HTMLResponse(content=_setup_html())
+
+
 def _console_meta() -> dict[str, Any]:
     openclaw_template = REPO_ROOT / "integrations" / "openclaw" / "openclaw.template.json"
     openclaw_data = json.loads(openclaw_template.read_text()) if openclaw_template.exists() else {}
@@ -759,12 +847,16 @@ def _runtime_state() -> dict[str, Any]:
     from jebat.llm import list_provider_auth_status, load_llm_config, select_best_provider
 
     config = load_llm_config()
+    catalog = _provider_model_catalog()
     available = [
         {
             "provider": item.provider,
             "configured": item.configured,
             "env_vars": list(item.env_vars),
             "notes": item.notes,
+            "label": catalog.get(item.provider, {}).get("label", item.provider.title()),
+            "models": catalog.get(item.provider, {}).get("models", []),
+            "supports_custom": bool(catalog.get(item.provider, {}).get("supports_custom")),
         }
         for item in list_provider_auth_status()
     ]
@@ -772,17 +864,20 @@ def _runtime_state() -> dict[str, Any]:
         RUNTIME_OVERRIDES["provider"]
         or select_best_provider(config.provider, config.fallback_providers)
     )
-    effective_model = RUNTIME_OVERRIDES["model"] or config.model
+    configured_model = config.model
+    default_effective_model = _default_model_for_provider(effective_provider, configured_model)
+    effective_model = RUNTIME_OVERRIDES["model"] or default_effective_model
     meta = _console_meta()
     return {
         "provider": {
             "configured": config.provider,
+            "configured_model": configured_model,
             "effective": effective_provider,
             "model": effective_model,
             "fallbacks": list(config.fallback_providers),
             "override": dict(RUNTIME_OVERRIDES),
         },
-        "providers": {"available": available},
+        "providers": {"available": available, "catalog": catalog},
         "workspace": {"stations": meta["workstations"], "integrations": meta["integrations"]},
         "channels": meta["channels"],
         "channel_connections": CHANNEL_CONNECTIONS,
@@ -852,11 +947,12 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 .btn{padding:12px 16px;border-radius:14px;font-weight:700;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer}.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#111;border:none}
 .layout{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.stack{display:grid;gap:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid-card,.wide-card,.table-card{padding:22px}.card-label{display:inline-flex;padding:6px 10px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ffc8c3;background:rgba(255,95,87,.06);margin-bottom:14px}.grid-card h3,.wide-card h3,.table-card h3{font-size:18px;margin-bottom:10px}.grid-card p,.wide-card p,.table-card p,.table-card li{color:var(--muted);line-height:1.65;font-size:14px}
 .kv{display:grid;gap:12px}.kv-item{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}.kv-item label{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.kv-item strong{display:block;font-size:22px}
-.control-form{display:grid;gap:12px}.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,.select{width:100%;padding:12px 14px;background:#0f1518;border:1px solid var(--line);border-radius:14px;color:var(--text)}
+.control-form{display:grid;gap:12px}.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.control-grid.tight{grid-template-columns:repeat(3,minmax(0,1fr))}.input,.select{width:100%;padding:12px 14px;background:#0f1518;border:1px solid var(--line);border-radius:14px;color:var(--text)}
+.provider-stack{display:grid;gap:18px}.provider-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.provider-card{padding:16px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.02)}.provider-card.active{border-color:rgba(255,95,87,.42);background:linear-gradient(180deg,rgba(255,95,87,.08),rgba(255,255,255,.02))}.provider-card h4{font-size:16px;margin-bottom:8px}.provider-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}.chip.ok{color:#9ff0c4}.chip.warn{color:#ffd79d}.small-note{color:var(--muted);font-size:12px;line-height:1.6}.model-hint{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);color:var(--muted);font-size:13px;line-height:1.6}
 .list{list-style:none;display:grid;gap:10px;margin-top:12px}.list li{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.list strong{display:block;color:var(--text)}
 .table{display:grid;gap:10px}.row{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.row.head{background:transparent;border:none;padding:0;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase}.toolbar-inline{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}.ghost-btn{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer}.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:flex-end;z-index:50}.drawer-backdrop.open{display:flex}.drawer{width:min(520px,100%);height:100%;background:#0d1215;border-left:1px solid var(--line);padding:24px;overflow:auto}.drawer h3{font-size:24px;margin-bottom:10px}.drawer pre{white-space:pre-wrap;color:var(--muted);line-height:1.7;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}.chat-shell{display:grid;grid-template-rows:1fr auto;min-height:70vh}.chat-log{display:grid;gap:12px;max-height:60vh;overflow:auto;padding-right:4px}.chat-entry{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}.chat-entry.user{background:rgba(255,95,87,.08);border-color:rgba(255,95,87,.18)}.chat-entry strong{display:block;margin-bottom:6px}.chat-compose{display:grid;gap:12px;margin-top:14px}.chat-compose textarea{min-height:120px;resize:vertical;padding:14px;background:#0f1518;border:1px solid var(--line);border-radius:14px;color:var(--text)}.chat-meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
 .empty{color:var(--muted);padding:22px;border:1px dashed var(--line);border-radius:16px}
-@media (max-width:1080px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}.layout,.grid,.control-grid{grid-template-columns:1fr}.content{padding:18px}}
+@media (max-width:1080px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}.layout,.grid,.control-grid,.control-grid.tight,.provider-grid{grid-template-columns:1fr}.content{padding:18px}}
 </style>
 </head>
 <body>
@@ -899,7 +995,8 @@ const sections = [
   {id:'integrations', label:'Integrations', meta:'bundle'},
   {id:'agents', label:'Agents', meta:'roles'},
   {id:'skills', label:'Skills', meta:'toolkit'},
-  {id:'learning', label:'Learning', meta:'adaptive'}
+  {id:'learning', label:'Learning', meta:'adaptive'},
+  {id:'setup', label:'Setup', meta:'guide'}
 ];
 let consoleMeta = null;
 let runtime = null;
@@ -953,10 +1050,21 @@ function renderDoctor(){
   <section class="table-card"><div class="card-label">Providers</div><h3>Provider readiness</h3><div class="table"><div class="row head"><div>Provider</div><div>Status</div><div>Notes</div></div>${providerRows}</div></section>`;
 }
 function renderControl(){
-  const options = (runtime.providers.available||[]).map(item => `<option value="${escapeHtml(item.provider)}" ${item.provider===runtime.provider.effective?'selected':''}>${escapeHtml(item.provider)}</option>`).join('');
+  const selectedProvider = runtime.provider.effective;
+  const selectedCatalog = runtime.providers.catalog?.[selectedProvider] || {models:[], supports_custom:false};
+  const providerOptions = (runtime.providers.available||[]).map(item => `<option value="${escapeHtml(item.provider)}" ${item.provider===selectedProvider?'selected':''}>${escapeHtml(item.label || item.provider)}</option>`).join('');
+  const modelOptions = (selectedCatalog.models || []).map(model => `<option value="${escapeHtml(model)}" ${model===runtime.provider.model?'selected':''}>${escapeHtml(model)}</option>`).join('');
+  const providerCards = (runtime.providers.available||[]).map(item => {
+    const active = item.provider === selectedProvider ? 'active' : '';
+    const status = item.configured ? 'configured' : 'missing auth';
+    const models = (item.models || []).slice(0, 3).join(', ') || 'No catalog';
+    return `<article class="provider-card ${active}"><div class="card-label">${escapeHtml(item.label || item.provider)}</div><h4>${escapeHtml(item.provider)}</h4><div class="provider-meta"><span class="chip ${item.configured?'ok':'warn'}">${escapeHtml(status)}</span><span class="chip">${escapeHtml((item.models || []).length)} models</span></div><p class="small-note">${escapeHtml(item.notes || 'No provider notes')}</p><p class="small-note" style="margin-top:10px">Suggested: ${escapeHtml(models)}</p></article>`;
+  }).join('');
+  const fallbacks = (runtime.provider.fallbacks || []).map(item => `<span class="chip">${escapeHtml(item)}</span>`).join('') || '<span class="chip">none</span>';
   return `<section class="hero"><div class="eyebrow">Live controls</div><h1>Switch runtime preference without leaving the console.</h1><p>These controls update the live WebUI shell preference for provider and model. They do not rewrite your repo config, but they do change the active preference shown across the shell.</p></section>
-  <section class="layout"><article class="wide-card"><div class="card-label">Provider override</div><h3>Runtime control</h3><form class="control-form" id="runtimeForm"><div class="control-grid"><select class="select" name="provider">${options}</select><input class="input" type="text" name="model" value="${escapeHtml(runtime.provider.model)}" placeholder="Model override"></div><button class="btn primary" type="submit">Apply runtime override</button></form></article>
-  <article class="wide-card"><div class="card-label">Workspace state</div><h3>Current surfaces</h3><ul class="list">${(runtime.workspace.stations||[]).map(item => `<li><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.path)} / ${escapeHtml(item.state)}</span></li>`).join('')}</ul></article></section>`;
+  <section class="layout"><div class="provider-stack"><article class="wide-card"><div class="card-label">Provider override</div><h3>Runtime control</h3><form class="control-form" id="runtimeForm"><div class="control-grid tight"><select class="select" id="runtimeProvider" name="provider">${providerOptions}</select><select class="select" id="runtimeModel" name="model">${modelOptions}</select><input class="input" id="runtimeCustomModel" type="text" placeholder="Custom model id"></div><div class="model-hint" id="runtimeModelHint">Choose a provider first. Model choices are filtered to that provider, and custom models are only enabled where the provider supports them.</div><div class="provider-meta"><span class="chip">Configured: ${escapeHtml(runtime.provider.configured)}</span><span class="chip">Effective: ${escapeHtml(runtime.provider.effective)}</span><span class="chip">Model: ${escapeHtml(runtime.provider.model)}</span></div><button class="btn primary" type="submit">Apply runtime override</button></form></article><article class="wide-card"><div class="card-label">Routing posture</div><h3>Fallback chain</h3><div class="provider-meta">${fallbacks}</div><p class="small-note">The shell override changes the active preference for this live console. Repo config and environment stay intact.</p></article></div>
+  <article class="wide-card"><div class="card-label">Provider map</div><h3>Available providers and model tracks</h3><div class="provider-grid">${providerCards}</div></article></section>
+  <section class="wide-card"><div class="card-label">Workspace state</div><h3>Current surfaces</h3><ul class="list">${(runtime.workspace.stations||[]).map(item => `<li><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.path)} / ${escapeHtml(item.state)}</span></li>`).join('')}</ul></section>`;
 }
 function renderChannels(){
   const available = (channelState?.available || []).map(item => `<li><strong>${escapeHtml(item.label)}</strong><span>Required: ${escapeHtml(item.required.join(', '))}</span></li>`).join('');
@@ -981,10 +1089,14 @@ function renderSkills(){
 function renderLearning(){
   return `<section class="hero"><div class="eyebrow">Adaptive layer</div><h1>Skill learning from repo modules and OpenClaw guidance.</h1><p>Continuum and cortex modules are surfaced here so the operator can see where recommendation and improvement logic already lives in the codebase.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Learning modules</div><h3>Adaptive code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">OpenClaw Hermes</div><h3>Imported skill guidance</h3><p>${escapeHtml(consoleMeta.skills.openclaw_excerpt || 'Unavailable')}</p></article></section>`;
 }
+function renderSetup(){
+  return `<section class="hero"><div class="eyebrow">Easy setup</div><h1>Connect channels and workstations without guesswork.</h1><p>This page mirrors the versioned setup guide and gives you one clean reference for Telegram, WhatsApp, Discord, Slack, CLI, OpenClaw, VS Code, and VPS setup.</p><div class="hero-actions"><a class="btn primary" href="/webui/channels">Open channels</a><a class="btn" href="/webui/workstation">Open workstation</a><a class="btn" href="https://github.com/nusabyte-my/jebat-core/blob/main/docs/SETUP_CHANNELS_AND_WORKSTATIONS.md" target="_blank" rel="noreferrer">Open repo guide</a></div></section>
+  <section class="layout"><article class="wide-card"><div class="card-label">Channels</div><h3>Messaging setup</h3><ul class="list"><li><strong>Telegram</strong><span>Needs `bot_token` from `@BotFather`.</span></li><li><strong>WhatsApp</strong><span>Needs `phone_number_id`, `access_token`, `verify_token` from Meta.</span></li><li><strong>Discord</strong><span>Needs `bot_token`, `guild_id`.</span></li><li><strong>Slack</strong><span>Needs `bot_token`, `app_token`.</span></li></ul></article><article class="wide-card"><div class="card-label">Workstations</div><h3>Operator stations</h3><ul class="list"><li><strong>CLI</strong><span>Suggested path: `~/.local/bin/jebat-cli`</span></li><li><strong>OpenClaw</strong><span>Suggested path: `~/.openclaw`</span></li><li><strong>VS Code</strong><span>Suggested path: `~/.config/Code/User`</span></li><li><strong>VPS</strong><span>Suggested host: `jebat.online` or your SSH target.</span></li></ul></article></section>`;
+}
 function renderSection(section){
   const view = document.getElementById('view');
   document.getElementById('navList').innerHTML = navMarkup(section);
-  const renderers = {overview:renderOverview,livechat:renderLiveChat,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning};
+  const renderers = {overview:renderOverview,livechat:renderLiveChat,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning,setup:renderSetup};
   view.innerHTML = renderers[section] ? renderers[section]() : renderOverview();
   bindDynamicUI();
 }
@@ -994,7 +1106,25 @@ function bindDynamicUI(){
   const navFilter = document.getElementById('navFilter');
   if(navFilter){navFilter.oninput = () => { document.getElementById('navList').innerHTML = navMarkup(currentSection()); bindDynamicUI(); }; }
   const form = document.getElementById('runtimeForm');
-  if(form){form.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(form); const payload = {provider: fd.get('provider'), model: fd.get('model')}; const res = await fetch('/webui/api/runtime', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); runtime = await res.json(); renderStatusStrip(); renderSection('control'); };}
+  const providerSelect = document.getElementById('runtimeProvider');
+  const modelSelect = document.getElementById('runtimeModel');
+  const customModelInput = document.getElementById('runtimeCustomModel');
+  const modelHint = document.getElementById('runtimeModelHint');
+  function syncRuntimeModelUI(){
+    if(!providerSelect || !modelSelect || !customModelInput || !modelHint || !runtime) return;
+    const provider = providerSelect.value;
+    const catalog = runtime.providers.catalog?.[provider] || {models:[], supports_custom:false};
+    const currentValue = runtime.provider.effective === provider ? runtime.provider.model : (catalog.models?.[0] || '');
+    modelSelect.innerHTML = (catalog.models || []).map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`).join('');
+    if(catalog.models?.includes(currentValue)){ modelSelect.value = currentValue; }
+    customModelInput.value = catalog.models?.includes(currentValue) ? '' : currentValue;
+    customModelInput.style.display = catalog.supports_custom ? '' : 'none';
+    modelHint.textContent = catalog.supports_custom
+      ? `Showing curated ${provider} models. You can also enter a custom model id if your ${provider} runtime exposes one.`
+      : `Model choices are locked to the ${provider} catalog so the selector only shows valid matches.`;
+  }
+  if(providerSelect){ providerSelect.onchange = syncRuntimeModelUI; syncRuntimeModelUI(); }
+  if(form){form.onsubmit = async (event) => { event.preventDefault(); const provider = providerSelect?.value || ''; const supportsCustom = !!(runtime?.providers?.catalog?.[provider]?.supports_custom); const selectedModel = supportsCustom && customModelInput?.value.trim() ? customModelInput.value.trim() : (modelSelect?.value || ''); const payload = {provider, model: selectedModel}; const res = await fetch('/webui/api/runtime', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); runtime = await res.json(); renderStatusStrip(); renderSection('control'); };}
   const channelForm = document.getElementById('channelForm');
   if(channelForm){channelForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(channelForm); const channel = fd.get('channel'); const available = (channelState?.available || []).find(item => item.id === channel); const required = available?.required || []; const values = [fd.get('field1'), fd.get('field2'), fd.get('field3')]; const config = {}; required.forEach((key, idx) => config[key] = values[idx] || ''); const res = await fetch('/webui/api/channels/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({channel, config})}); channelState = await fetch('/webui/api/channels/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('channels'); };}
   const workstationForm = document.getElementById('workstationForm');
@@ -1615,3 +1745,33 @@ def _learning_html():
 <section class="grid" style="margin-top:18px">
 <article class="grid-card" style="grid-column:1/-1"><h3>OpenClaw Hermes skill excerpt</h3><pre>{excerpt}</pre></article>
 </section></div></body></html>"""
+
+
+def _setup_html():
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JEBATCore Setup Guide</title>
+<style>
+:root{--bg:#06090b;--bg2:#10161a;--panel:#11181c;--line:#263138;--text:#e6ecef;--muted:#8a9aa2;--accent:#ff5f57}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.12),transparent 22%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}
+.shell{max-width:1200px;margin:0 auto;padding:24px}.top,.hero,.panel{background:rgba(15,20,24,.88);border:1px solid var(--line);border-radius:22px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px}
+.nav{display:flex;gap:10px;flex-wrap:wrap}.nav a{padding:10px 14px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;background:rgba(255,255,255,.03)}.hero{padding:24px;margin:22px 0}.hero h1{font-size:40px;margin:10px 0 14px}.hero p,.panel li,.panel span{color:var(--muted);line-height:1.7}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{padding:22px}.panel ul{list-style:none;display:grid;gap:12px}.panel li{padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}.panel strong{display:block;color:var(--text)}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Operator guide</small><h2>Setup</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/channels">Channels</a><a href="/webui/workstation">Workstation</a><a href="/webui/control">Control</a></nav></header>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Easy setup</small><h1>Connect channels and workstations in one pass.</h1><p>Use this page when you need the shortest path to a working Telegram bot, WhatsApp integration, Discord/Slack channel, or an operator workstation entry.</p></section>
+<section class="grid">
+<article class="panel"><h3>Channels</h3><ul><li><strong>Telegram</strong><span>Needs `bot_token` from `@BotFather`.</span></li><li><strong>WhatsApp</strong><span>Needs `phone_number_id`, `access_token`, `verify_token` from Meta.</span></li><li><strong>Discord</strong><span>Needs `bot_token`, `guild_id`.</span></li><li><strong>Slack</strong><span>Needs `bot_token`, `app_token`.</span></li></ul></article>
+<article class="panel"><h3>Workstations</h3><ul><li><strong>CLI</strong><span>`~/.local/bin/jebat-cli`</span></li><li><strong>OpenClaw</strong><span>`~/.openclaw`</span></li><li><strong>VS Code</strong><span>`~/.config/Code/User`</span></li><li><strong>VPS</strong><span>`jebat.online` or your SSH host</span></li></ul></article>
+</section>
+</div>
+</body>
+</html>"""
