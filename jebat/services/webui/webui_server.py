@@ -24,6 +24,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Router for WebUI
 webui_router = APIRouter(tags=["webui"])
@@ -99,6 +100,30 @@ async def get_control():
     return _get_control_html()
 
 
+@webui_router.get("/webui/channels", response_class=HTMLResponse)
+async def get_channels():
+    """Serve channel overview."""
+    return _get_channels_html()
+
+
+@webui_router.get("/webui/workstation", response_class=HTMLResponse)
+async def get_workstation():
+    """Serve workstation connection page."""
+    return _get_workstation_html()
+
+
+@webui_router.get("/webui/integrations", response_class=HTMLResponse)
+async def get_integrations():
+    """Serve integrations page."""
+    return _get_integrations_html()
+
+
+@webui_router.get("/webui/learning", response_class=HTMLResponse)
+async def get_learning():
+    """Serve skill learning page."""
+    return _get_learning_html()
+
+
 @webui_router.get("/webui/api/status")
 async def get_status():
     """Get system status"""
@@ -115,6 +140,12 @@ async def get_status():
         },
         "active_connections": len(active_connections),
     }
+
+
+@webui_router.get("/webui/api/console-meta")
+async def get_console_meta():
+    """Return UI metadata grounded in repo assets."""
+    return _console_meta()
 
 
 @webui_router.post("/webui/api/chat")
@@ -348,6 +379,103 @@ def _get_control_html():
     return HTMLResponse(content=_control_html())
 
 
+def _get_channels_html():
+    return HTMLResponse(content=_channels_html())
+
+
+def _get_workstation_html():
+    return HTMLResponse(content=_workstation_html())
+
+
+def _get_integrations_html():
+    return HTMLResponse(content=_integrations_html())
+
+
+def _get_learning_html():
+    return HTMLResponse(content=_learning_html())
+
+
+def _console_meta() -> dict[str, Any]:
+    openclaw_template = REPO_ROOT / "integrations" / "openclaw" / "openclaw.template.json"
+    openclaw_data = json.loads(openclaw_template.read_text()) if openclaw_template.exists() else {}
+
+    channel_dir = REPO_ROOT / "jebat" / "integrations" / "channels"
+    available_channels = sorted(
+        path.stem for path in channel_dir.glob("*.py") if path.stem != "__init__"
+    )
+
+    skill_root = REPO_ROOT / "jebat-tokguru"
+    try:
+        from jebat.llm.skills import build_skill_registry, summarize_skill
+
+        registry = build_skill_registry(skill_root)
+        all_skills = registry.get_all_skills()
+        top_skills = [summarize_skill(skill) for skill in all_skills[:6]]
+    except Exception:
+        all_skills = []
+        top_skills = []
+
+    openclaw_skill_path = (
+        REPO_ROOT
+        / "integrations"
+        / "openclaw"
+        / "workspace"
+        / "skills"
+        / "hermes-agent"
+        / "SKILL.md"
+    )
+    openclaw_skill_excerpt = ""
+    if openclaw_skill_path.exists():
+        openclaw_skill_excerpt = "\n".join(
+            line.strip()
+            for line in openclaw_skill_path.read_text().splitlines()
+            if line.strip() and not line.startswith("---")
+        )[:280]
+
+    return {
+        "openclaw": {
+            "gateway_port": openclaw_data.get("gateway", {}).get("port"),
+            "channel_names": sorted((openclaw_data.get("channels") or {}).keys()),
+            "agent_names": [
+                item.get("identity", {}).get("name", item.get("id"))
+                for item in openclaw_data.get("agents", {}).get("list", [])
+            ],
+            "primary_model": openclaw_data.get("agents", {})
+            .get("defaults", {})
+            .get("model", {})
+            .get("primary"),
+            "fallback_models": openclaw_data.get("agents", {})
+            .get("defaults", {})
+            .get("model", {})
+            .get("fallbacks", []),
+        },
+        "channels": available_channels,
+        "workstations": [
+            {"name": "CLI", "path": "~/.local/bin/jebat-cli", "state": "ready"},
+            {"name": "OpenClaw", "path": "~/.openclaw", "state": "ready"},
+            {"name": "VS Code", "path": "~/.config/Code/User", "state": "ready"},
+            {"name": "VPS", "path": "jebat.online", "state": "live"},
+        ],
+        "integrations": [
+            {"name": "OpenClaw Bundle", "path": "integrations/openclaw", "state": "versioned"},
+            {"name": "MCP Guide", "path": "docs/MCP_INTEGRATION_GUIDE.md", "state": "available"},
+            {"name": "IDE Guide", "path": "docs/IDE_INTEGRATION_GUIDE.md", "state": "available"},
+        ],
+        "skills": {
+            "count": len(all_skills),
+            "top": top_skills,
+            "openclaw_excerpt": openclaw_skill_excerpt,
+        },
+        "learning": {
+            "modules": [
+                "jebat/continuum/skill_learning.py",
+                "jebat/cortex/intelligent_skill.py",
+                "jebat/cortex/skill_recommender.py",
+            ]
+        },
+    }
+
+
 # HTML templates (simplified for reliability)
 def _home_html():
     return """<!DOCTYPE html>
@@ -419,6 +547,10 @@ a{text-decoration:none;color:inherit}
 <a href="/webui/skills">Skills</a>
 <a href="/webui/doctor">Doctor</a>
 <a href="/webui/control">Control</a>
+<a href="/webui/channels">Channels</a>
+<a href="/webui/workstation">Workstation</a>
+<a href="/webui/integrations">Integrations</a>
+<a href="/webui/learning">Learning</a>
 </nav>
 </header>
 <section class="hero">
@@ -946,3 +1078,103 @@ body{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(c
 </div>
 </body>
 </html>"""
+
+
+def _channels_html():
+    meta = _console_meta()
+    available = "".join(
+        f"<li><strong>{name.title()}</strong><span>Channel adapter discovered from jebat/integrations/channels.</span></li>"
+        for name in meta["channels"]
+    )
+    configured = "".join(
+        f"<li><strong>{name}</strong><span>Configured in OpenClaw template.</span></li>"
+        for name in meta["openclaw"]["channel_names"]
+    )
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JEBATCore Channels</title>
+<style>
+:root{{--bg:#06090b;--bg2:#10161a;--panel:#11181c;--line:#263138;--text:#e6ecef;--muted:#8a9aa2;--accent:#ff5f57}}
+*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.12),transparent 22%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}}
+.shell{{max-width:1280px;margin:0 auto;padding:24px}}.top,.panel,.hero{{background:rgba(15,20,24,.88);border:1px solid var(--line);border-radius:22px}}.top{{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px}}
+.nav{{display:flex;gap:10px;flex-wrap:wrap}}.nav a{{padding:10px 14px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;background:rgba(255,255,255,.03)}}.hero{{padding:24px;margin:22px 0}}.hero h1{{font-size:40px;margin:10px 0 14px}}.hero p,.panel p,.panel li,.panel span{{color:var(--muted);line-height:1.7}}
+.grid{{display:grid;grid-template-columns:1fr 1fr;gap:18px}}.panel{{padding:22px}}.panel ul{{list-style:none;display:grid;gap:10px;margin-top:14px}}.panel li{{padding:12px 14px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}}.panel strong{{display:block;color:var(--text)}}
+@media (max-width:900px){{.grid{{grid-template-columns:1fr}}}}
+</style></head><body><div class="shell">
+<header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Channel plane</small><h2>Channels</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/control">Control</a><a href="/webui/workstation">Workstation</a><a href="/webui/integrations">Integrations</a><a href="/webui/learning">Learning</a></nav></header>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Surface routing</small><h1>Operator channels and message surfaces.</h1><p>These entries are pulled from the repo’s channel adapters and OpenClaw template, so the menu reflects the actual surfaces you can wire into the runtime.</p></section>
+<section class="grid">
+<article class="panel"><h3>Available channel adapters</h3><ul>{available}</ul></article>
+<article class="panel"><h3>OpenClaw configured channels</h3><ul>{configured or '<li><strong>None</strong><span>No configured channels found in the template.</span></li>'}</ul><p style="margin-top:14px">Gateway port: <strong style="color:var(--text)">{meta["openclaw"]["gateway_port"]}</strong></p></article>
+</section></div></body></html>"""
+
+
+def _workstation_html():
+    meta = _console_meta()
+    cards = "".join(
+        f"<li><strong>{item['name']}</strong><span>{item['path']} / {item['state']}</span></li>"
+        for item in meta["workstations"]
+    )
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JEBATCore Workstation</title>
+<style>
+:root{{--bg:#06090b;--bg2:#10161a;--panel:#11181c;--line:#263138;--text:#e6ecef;--muted:#8a9aa2;--accent:#ff5f57;--ok:#2ad18b}}
+*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.12),transparent 22%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}}
+.shell{{max-width:1280px;margin:0 auto;padding:24px}}.top,.hero,.panel{{background:rgba(15,20,24,.88);border:1px solid var(--line);border-radius:22px}}.top{{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px}}
+.nav{{display:flex;gap:10px;flex-wrap:wrap}}.nav a{{padding:10px 14px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;background:rgba(255,255,255,.03)}}.hero{{padding:24px;margin:22px 0}}.hero h1{{font-size:40px;margin:10px 0 14px}}.hero p,.panel li,.panel span{{color:var(--muted);line-height:1.7}}
+.panel{{padding:22px}}.panel ul{{list-style:none;display:grid;gap:12px}}.panel li{{padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}}.panel strong{{display:block;color:var(--text)}}
+</style></head><body><div class="shell">
+<header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Operator environment</small><h2>Workstation</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/channels">Channels</a><a href="/webui/integrations">Integrations</a><a href="/webui/doctor">Doctor</a></nav></header>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Connection surface</small><h1>One console, multiple operating stations.</h1><p>JEBATCore now exposes the work surfaces you actually use: CLI, OpenClaw runtime, VS Code, and the live VPS deployment.</p></section>
+<article class="panel"><ul>{cards}</ul></article></div></body></html>"""
+
+
+def _integrations_html():
+    meta = _console_meta()
+    items = "".join(
+        f"<li><strong>{item['name']}</strong><span>{item['path']} / {item['state']}</span></li>"
+        for item in meta["integrations"]
+    )
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JEBATCore Integrations</title>
+<style>
+:root{{--bg:#06090b;--bg2:#10161a;--panel:#11181c;--line:#263138;--text:#e6ecef;--muted:#8a9aa2;--accent:#ff5f57}}
+*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(circle at top right,rgba(255,95,87,.12),transparent 22%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}}
+.shell{{max-width:1280px;margin:0 auto;padding:24px}}.top,.hero,.panel{{background:rgba(15,20,24,.88);border:1px solid var(--line);border-radius:22px}}.top{{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px}}
+.nav{{display:flex;gap:10px;flex-wrap:wrap}}.nav a{{padding:10px 14px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;background:rgba(255,255,255,.03)}}.hero{{padding:24px;margin:22px 0}}.hero h1{{font-size:40px;margin:10px 0 14px}}.hero p,.panel p,.panel li,.panel span{{color:var(--muted);line-height:1.7}}
+.panel{{padding:22px}}.panel ul{{list-style:none;display:grid;gap:12px}}.panel li{{padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}}.panel strong{{display:block;color:var(--text)}}
+</style></head><body><div class="shell">
+<header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Versioned connections</small><h2>Integrations</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/channels">Channels</a><a href="/webui/workstation">Workstation</a><a href="/webui/control">Control</a></nav></header>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Repo-grounded links</small><h1>Integration points that already exist in the repo.</h1><p>The page lists versioned integration assets, not aspirational ideas. That includes the OpenClaw bundle, MCP guide, and IDE integration docs already present in JEBATCore.</p></section>
+<article class="panel"><ul>{items}</ul></article></div></body></html>"""
+
+
+def _learning_html():
+    meta = _console_meta()
+    top_skills = "".join(
+        f"<li><strong>{skill['name']}</strong><span>{skill['category']} / {skill['description']}</span></li>"
+        for skill in meta["skills"]["top"]
+    )
+    learning_modules = "".join(
+        f"<li><strong>{Path(module).name}</strong><span>{module}</span></li>"
+        for module in meta["learning"]["modules"]
+    )
+    excerpt = meta["skills"]["openclaw_excerpt"] or "OpenClaw Hermes skill excerpt unavailable."
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JEBATCore Learning</title>
+<style>
+:root{{--bg:#06090b;--bg2:#10161a;--panel:#11181c;--line:#263138;--text:#e6ecef;--muted:#8a9aa2;--accent:#ff5f57}}
+*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.12),transparent 22%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}}
+.shell{{max-width:1280px;margin:0 auto;padding:24px}}.top,.hero,.grid-card{{background:rgba(15,20,24,.88);border:1px solid var(--line);border-radius:22px}}.top{{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px}}
+.nav{{display:flex;gap:10px;flex-wrap:wrap}}.nav a{{padding:10px 14px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;background:rgba(255,255,255,.03)}}.hero{{padding:24px;margin:22px 0}}.hero h1{{font-size:40px;margin:10px 0 14px}}.hero p,.grid-card p,.grid-card li,.grid-card span,pre{{color:var(--muted);line-height:1.7}}
+.grid{{display:grid;grid-template-columns:1fr 1fr;gap:18px}}.grid-card{{padding:22px}}.grid-card ul{{list-style:none;display:grid;gap:12px;margin-top:12px}}.grid-card li{{padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}}.grid-card strong{{display:block;color:var(--text)}}pre{{white-space:pre-wrap;background:rgba(255,255,255,.02);padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,.05)}}
+@media (max-width:900px){{.grid{{grid-template-columns:1fr}}}}
+</style></head><body><div class="shell">
+<header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Adaptive behavior</small><h2>Skill Learning</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/skills">Skills</a><a href="/webui/agents">Agents</a><a href="/webui/control">Control</a></nav></header>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Learning plane</small><h1>Use repo skills, and keep making them better.</h1><p>This surface ties together TokGuru skills, the OpenClaw Hermes skill, and the continuum/cortex learning modules already present in the codebase.</p></section>
+<section class="grid">
+<article class="grid-card"><h3>Top loaded skills</h3><p>Detected from the TokGuru registry. Current count: <strong style="color:var(--text)">{meta["skills"]["count"]}</strong></p><ul>{top_skills}</ul></article>
+<article class="grid-card"><h3>Learning modules</h3><p>These modules are already in the repo and form the basis for adaptive skill execution and recommendation.</p><ul>{learning_modules}</ul></article>
+</section>
+<section class="grid" style="margin-top:18px">
+<article class="grid-card" style="grid-column:1/-1"><h3>OpenClaw Hermes skill excerpt</h3><pre>{excerpt}</pre></article>
+</section></div></body></html>"""
