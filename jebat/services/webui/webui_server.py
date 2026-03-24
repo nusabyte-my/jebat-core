@@ -777,7 +777,21 @@ def _console_meta() -> dict[str, Any]:
 
         registry = build_skill_registry(skill_root)
         all_skills = registry.get_all_skills()
-        top_skills = [summarize_skill(skill) for skill in all_skills[:6]]
+        featured_names = ["hermes-agent", "webfetch", "search", "test", "python-patterns", "docker-expert"]
+        featured_skills = []
+        seen_featured = set()
+        for name in featured_names:
+            skill = registry.get_skill(name)
+            if skill:
+                featured_skills.append(summarize_skill(skill))
+                seen_featured.add(skill.name)
+        for skill in all_skills:
+            if len(featured_skills) >= 6:
+                break
+            if skill.name in seen_featured:
+                continue
+            featured_skills.append(summarize_skill(skill))
+        top_skills = featured_skills[:6]
     except Exception:
         all_skills = []
         top_skills = []
@@ -933,14 +947,14 @@ def _home_html():
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JEBATCore Console</title>
 <style>
-:root{--bg:#070b0d;--bg2:#0d1316;--sidebar:#0d1215;--panel:rgba(17,23,27,.88);--panel-soft:rgba(15,20,24,.72);--line:#243037;--line-strong:#3a4950;--text:#e7ecef;--muted:#8a9aa3;--accent:#ff5f57;--accent-2:#ff8d6b;--ok:#2ad18b;--warn:#f7b955}
+:root{--bg:#070b0d;--bg2:#0d1316;--sidebar:#0d1215;--panel:rgba(17,23,27,.88);--panel-soft:rgba(15,20,24,.72);--line:#243037;--line-strong:#3a4950;--text:#e7ecef;--muted:#8a9aa3;--accent:#ff5f57;--accent-2:#ff8d6b;--ok:#2ad18b;--warn:#f7b955;--mono:"JetBrains Mono","IBM Plex Mono","Cascadia Code","Fira Code","SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono",monospace}
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(255,95,87,.16),transparent 26%),radial-gradient(circle at right,rgba(247,185,85,.1),transparent 18%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}
 button,input,select{font:inherit}a{text-decoration:none;color:inherit}
-.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}.sidebar{padding:22px 18px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(7,11,13,.96),rgba(13,18,21,.92));position:sticky;top:0;height:100vh;overflow:auto}
+.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}.sidebar{padding:22px 18px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(7,11,13,.98),rgba(13,18,21,.94));position:sticky;top:0;height:100vh;overflow:auto;font-family:var(--mono);box-shadow:inset -1px 0 0 rgba(255,255,255,.02)}
 .brand{display:flex;gap:14px;align-items:center;padding:8px 8px 22px}.brand-mark{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#9f2f2a);display:grid;place-items:center;font-weight:800;letter-spacing:.08em;box-shadow:0 0 40px rgba(255,95,87,.25)}.brand-copy small{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px}.brand-copy strong{display:block;font-size:22px;letter-spacing:.06em}
-.sidebar-section{padding:14px 8px 8px}.sidebar-section label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px}
-.nav-list{display:grid;gap:6px}.nav-item{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:1px solid transparent;border-radius:14px;color:var(--muted);cursor:pointer;transition:.18s ease}.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--text)}.nav-meta{font-size:11px;color:#ffb9b2}
-.mini-card{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin:8px 0}.mini-card strong{display:block;font-size:16px}.mini-card span{display:block;color:var(--muted);font-size:13px;line-height:1.6;margin-top:6px}
+.sidebar-section{padding:14px 8px 8px}.sidebar-section label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.18em;margin-bottom:10px}
+.nav-list{display:grid;gap:6px}.nav-item{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:1px solid transparent;border-radius:14px;color:var(--muted);cursor:pointer;transition:.18s ease;font-family:var(--mono)}.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--text)}.nav-meta{font-size:11px;color:#ffb9b2;text-transform:uppercase;letter-spacing:.16em}
+.mini-card{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin:8px 0;font-family:var(--mono)}.mini-card strong{display:block;font-size:16px}.mini-card span{display:block;color:var(--muted);font-size:13px;line-height:1.6;margin-top:6px}
 .content{padding:22px 24px 28px;overflow:auto}.toolbar{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px}.status-strip,.hero,.grid-card,.wide-card,.table-card{background:var(--panel);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(14px)}
 .status-strip{display:flex;gap:16px;flex-wrap:wrap;padding:16px 18px}.status-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted)}.dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 18px rgba(42,209,139,.45)}
 .hero{padding:28px;position:relative;overflow:hidden;margin-bottom:18px}.hero:before{content:"";position:absolute;inset:auto -8% -28% auto;width:340px;height:340px;background:radial-gradient(circle,rgba(255,95,87,.18),transparent 62%)}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,95,87,.08);border:1px solid rgba(255,95,87,.22);border-radius:999px;color:#ffc8c3;font-size:12px;text-transform:uppercase;letter-spacing:.14em}.hero h1{font-size:clamp(32px,4vw,58px);line-height:.96;max-width:11ch;margin:18px 0 14px}.hero p{max-width:60ch;color:var(--muted);font-size:16px;line-height:1.75}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
@@ -970,11 +984,12 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <div class="mini-card"><strong id="workspaceState">Workspace Ready</strong><span id="workspaceMeta">CLI, OpenClaw, VS Code, and VPS surfaces available.</span></div>
 </div>
 <div class="sidebar-section">
-<label>Jump</label>
+<label>Shell Shortcuts</label>
 <div class="nav-list">
-<a class="nav-item" href="/webui/chat"><span>Live chat</span><span class="nav-meta">run</span></a>
-<a class="nav-item" href="/webui/dashboard"><span>System board</span><span class="nav-meta">health</span></a>
-<a class="nav-item" href="/webui/memory"><span>Memory map</span><span class="nav-meta">layers</span></a>
+<button class="nav-item" data-section="livechat"><span>Live chat</span><span class="nav-meta">run</span></button>
+<button class="nav-item" data-section="control"><span>Runtime</span><span class="nav-meta">route</span></button>
+<button class="nav-item" data-section="channels"><span>Channels</span><span class="nav-meta">wire</span></button>
+<button class="nav-item" data-section="workstation"><span>Stations</span><span class="nav-meta">ops</span></button>
 </div>
 </div>
 </aside>
@@ -1028,7 +1043,7 @@ function renderStatusStrip(){
   document.getElementById('workspaceMeta').textContent = `${(runtime?.workspace?.stations || []).length} workstations and ${(runtime?.workspace?.integrations || []).length} integration points detected.`;
 }
 function renderOverview(){
-  return `<section class="hero"><div class="eyebrow">Interactive operator shell</div><h1>Run the stack from one control surface.</h1><p>This is the integrated JEBATCore shell: OpenClaw-aligned control, Hermes capture posture, live provider awareness, workstation visibility, channel inventory, and skill learning in one place.</p><div class="hero-actions"><a class="btn primary" href="/webui/chat">Open live chat</a><button class="btn" data-section-jump="doctor">Run doctor view</button><button class="btn" data-section-jump="workstation">Review workstations</button></div></section>
+  return `<section class="hero"><div class="eyebrow">Interactive operator shell</div><h1>Run the stack from one control surface.</h1><p>This is the integrated JEBATCore shell: OpenClaw-aligned control, Hermes capture posture, live provider awareness, workstation visibility, channel inventory, and skill learning in one place.</p><div class="hero-actions"><button class="btn primary" data-section-jump="livechat">Open live chat</button><button class="btn" data-section-jump="doctor">Run doctor view</button><button class="btn" data-section-jump="workstation">Review workstations</button></div></section>
   <section class="layout"><div class="stack"><div class="grid">
   <article class="grid-card"><div class="card-label">Channels</div><h3>Connected surfaces</h3><p>${(consoleMeta.channels||[]).length} adapters detected from the repo, with OpenClaw template channels layered on top.</p></article>
   <article class="grid-card"><div class="card-label">Workstations</div><h3>Operator stations</h3><p>${(runtime.workspace.stations||[]).length} work surfaces available across CLI, OpenClaw, VS Code, and VPS.</p></article>

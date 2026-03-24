@@ -2,16 +2,16 @@
   "version": "1.0.0",
   "name": "jebat-tokguru",
   "last_updated": "2026-02-18",
-  "total_skills": 864,
+  "total_skills": 867,
   "categories": {
     "architecture": 45,
     "business": 78,
     "data-ai": 156,
     "development": 312,
     "security": 89,
-    "testing": 67,
+    "testing": 68,
     "infrastructure": 98,
-    "workflow": 52,
+    "workflow": 54,
     "jebat-native": 67
   },
   "skills": [
@@ -84,6 +84,30 @@
       "tags": ["jebat", "hermes", "agent", "multi-agent", "planning", "memory"],
       "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
       "path": "skills/jebat-native/hermes-agent/SKILL.md"
+    },
+    {
+      "name": "webfetch",
+      "description": "Fetch live web pages, inspect responses, extract relevant content, and summarize findings with links",
+      "category": "workflow",
+      "tags": ["web", "fetch", "research", "inspection", "http"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/workflow/webfetch/SKILL.md"
+    },
+    {
+      "name": "search",
+      "description": "Search local or remote sources quickly, narrow results, and surface the highest-signal matches for the task",
+      "category": "workflow",
+      "tags": ["search", "discovery", "triage", "navigation", "evidence"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/workflow/search/SKILL.md"
+    },
+    {
+      "name": "test",
+      "description": "Run focused verification, interpret failures, and prove the change with the smallest meaningful test surface",
+      "category": "testing",
+      "tags": ["test", "verification", "regression", "validation", "debugging"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/testing/test/SKILL.md"
     }
   ],
   "bundles": [
