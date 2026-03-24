@@ -1177,12 +1177,72 @@ let consoleMeta = null;
 let runtime = null;
 let channelState = null;
 let workstationState = null;
+const skillForgePrompts = {
+  base: `Create a new AI skill for: [skill idea]
+
+Goal:
+- Make it practical and reusable
+- Keep it concise
+- Include clear trigger conditions
+- Define the workflow step by step
+- Include response defaults
+- Add one short example usage
+
+Output format:
+1. Skill name
+2. Description
+3. When to use
+4. Workflow
+5. Response defaults
+6. Example usage`,
+  enhancer: `Enhance this skill draft.
+
+Improve it by:
+- removing fluff
+- tightening trigger rules
+- making the workflow more deterministic
+- reducing overlap with general assistant behavior
+- keeping only high-signal instructions
+- improving the example so it matches real usage
+
+Then return the improved final skill in the same structure.`,
+  combined: `Create a new AI skill for: [skill idea]
+
+Requirements:
+- concise and practical
+- clear trigger conditions
+- step-by-step workflow
+- response defaults
+- one realistic example
+
+Then self-enhance the result by:
+- removing vague wording
+- tightening trigger rules
+- simplifying the workflow
+- keeping only essential instructions
+
+Return the final improved skill only.`
+};
 function openDrawer(title, body){
   document.getElementById('drawerContent').innerHTML = `<h3>${escapeHtml(title)}</h3>${body}`;
   document.getElementById('drawerBackdrop').classList.add('open');
 }
 function closeDrawer(){ document.getElementById('drawerBackdrop').classList.remove('open'); }
 function escapeHtml(value){return String(value??'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function skillForgeDrawer(skill){
+  return `<p>${escapeHtml(skill?.description || '')}</p>
+  <div class="toolbar-inline" style="margin-top:14px">
+    <button class="btn primary" data-skillforge-copy="combined">Use this prompt</button>
+    <button class="ghost-btn" data-skillforge-copy="base">Copy base</button>
+    <button class="ghost-btn" data-skillforge-copy="enhancer">Copy enhancer</button>
+    <button class="ghost-btn" data-skillforge-open-chat="combined">Send to live chat</button>
+  </div>
+  <div class="provider-stack" style="margin-top:14px">
+    <div class="mini-card"><strong>Base prompt</strong><pre>${escapeHtml(skillForgePrompts.base)}</pre></div>
+    <div class="mini-card"><strong>Enhancer prompt</strong><pre>${escapeHtml(skillForgePrompts.enhancer)}</pre></div>
+    <div class="mini-card"><strong>One-shot prompt</strong><pre>${escapeHtml(skillForgePrompts.combined)}</pre></div>
+  </div>`;
+}
 function navMarkup(active){
   const filter = (document.getElementById('navFilter')?.value || '').toLowerCase();
   return sections.filter(item => !filter || item.label.toLowerCase().includes(filter) || item.meta.toLowerCase().includes(filter)).map(item => `<a class="nav-item ${item.id===active?'active':''}" href="#${item.id}" data-section="${item.id}"><span>${item.label}</span><span class="nav-meta">${item.meta}</span></a>`).join('');
@@ -1349,7 +1409,40 @@ function bindDynamicUI(){
   document.querySelectorAll('[data-agent]').forEach(btn => btn.onclick = () => { const name = btn.dataset.agent; openDrawer(name, `<p>OpenClaw bundle agent visible in the runtime template.</p><pre>${escapeHtml(JSON.stringify(consoleMeta.openclaw.agent_names, null, 2))}</pre>`); });
   const skillFilter = document.getElementById('skillFilter');
   if(skillFilter){skillFilter.oninput = () => { const q = skillFilter.value.toLowerCase(); document.querySelectorAll('#skillGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
-  document.querySelectorAll('[data-skill]').forEach(btn => btn.onclick = () => { const name = btn.dataset.skill; const skill = (consoleMeta.skills.top || []).find(item => item.name === name); openDrawer(name, `<p>${escapeHtml(skill?.description || '')}</p><pre>${escapeHtml(JSON.stringify(skill || {}, null, 2))}</pre>`); });
+  document.querySelectorAll('[data-skill]').forEach(btn => btn.onclick = () => {
+    const name = btn.dataset.skill;
+    const skill = (consoleMeta.skills.top || []).find(item => item.name === name);
+    if(name === 'skill-forge'){
+      openDrawer(name, skillForgeDrawer(skill));
+      bindDynamicUI();
+      return;
+    }
+    openDrawer(name, `<p>${escapeHtml(skill?.description || '')}</p><pre>${escapeHtml(JSON.stringify(skill || {}, null, 2))}</pre>`);
+  });
+  document.querySelectorAll('[data-skillforge-copy]').forEach(btn => btn.onclick = async () => {
+    const key = btn.dataset.skillforgeCopy;
+    const text = skillForgePrompts[key] || '';
+    try{
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = key === 'combined' ? 'Use this prompt' : `Copy ${key}`; }, 1200);
+    }catch(e){
+      openDrawer('Copy failed', `<p>Clipboard access failed. Copy the prompt below manually.</p><pre>${escapeHtml(text)}</pre>`);
+    }
+  });
+  document.querySelectorAll('[data-skillforge-open-chat]').forEach(btn => btn.onclick = () => {
+    const key = btn.dataset.skillforgeOpenChat;
+    const text = skillForgePrompts[key] || '';
+    closeDrawer();
+    setHash('livechat');
+    renderSection('livechat');
+    const input = document.getElementById('shellChatInput');
+    if(input){
+      input.value = text;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  });
   const close = document.getElementById('drawerClose');
   if(close){close.onclick = closeDrawer;}
   const backdrop = document.getElementById('drawerBackdrop');
