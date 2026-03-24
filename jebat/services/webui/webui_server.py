@@ -53,6 +53,12 @@ class RuntimeControlRequest(BaseModel):
     model: Optional[str] = None
 
 
+class ProviderAuthRequest(BaseModel):
+    provider: str
+    secret: Optional[str] = None
+    host: Optional[str] = None
+
+
 RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
 
 
@@ -65,6 +71,13 @@ class WorkstationConnectRequest(BaseModel):
     workstation: str
     path: Optional[str] = None
     notes: Optional[str] = None
+    ssh_host: Optional[str] = None
+    ssh_user: Optional[str] = None
+    deploy_path: Optional[str] = None
+
+
+class WorkstationActionRequest(BaseModel):
+    workstation: str
 
 
 CHANNEL_CONNECTIONS: Dict[str, Dict[str, Any]] = {}
@@ -79,6 +92,7 @@ CHANNEL_STATE_PATH = DATA_DIR / "channel_connections.json"
 CHANNEL_SECRET_PATH = DATA_DIR / "channel_secrets.json"
 WORKSTATION_STATE_PATH = DATA_DIR / "workstation_connections.json"
 RUNTIME_STATE_PATH = DATA_DIR / "runtime_overrides.json"
+PROVIDER_AUTH_PATH = DATA_DIR / "provider_auth.json"
 
 
 def _now_iso() -> str:
@@ -106,6 +120,26 @@ def _write_json(path: Path, payload: Any, chmod_600: bool = False) -> None:
         path.chmod(0o600)
 
 
+def _provider_env_targets(provider: str) -> list[str]:
+    mapping = {
+        "openai": ["OPENAI_API_KEY"],
+        "google": ["GOOGLE_API_KEY"],
+        "anthropic": ["ANTHROPIC_API_KEY"],
+        "openrouter": ["OPENROUTER_API_KEY"],
+        "ollama": ["OLLAMA_HOST"],
+    }
+    return mapping.get(provider, [])
+
+
+def _read_provider_auth_store() -> Dict[str, str]:
+    data = _read_json(PROVIDER_AUTH_PATH, {})
+    return data if isinstance(data, dict) else {}
+
+
+def _write_provider_auth_store(store: Dict[str, str]) -> None:
+    _write_json(PROVIDER_AUTH_PATH, store, chmod_600=True)
+
+
 def _sanitize_channel_state(channel: str, state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "channel": channel,
@@ -117,6 +151,20 @@ def _sanitize_channel_state(channel: str, state: Dict[str, Any]) -> Dict[str, An
         "active": state.get("active", False),
         "last_error": state.get("last_error"),
         "instructions": state.get("instructions"),
+    }
+
+
+def _sanitize_workstation_state(name: str, state: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "workstation": name,
+        "status": state.get("status", "unknown"),
+        "path": state.get("path"),
+        "notes": state.get("notes", ""),
+        "ssh_host": state.get("ssh_host"),
+        "ssh_user": state.get("ssh_user"),
+        "deploy_path": state.get("deploy_path"),
+        "updated_at": state.get("updated_at"),
+        "health": state.get("health"),
     }
 
 
@@ -428,6 +476,35 @@ async def update_runtime(payload: RuntimeControlRequest):
     return _runtime_state()
 
 
+@webui_router.post("/webui/api/provider-auth")
+async def update_provider_auth(payload: ProviderAuthRequest):
+    """Store provider auth or host data for the WebUI runtime."""
+    await _ensure_connection_state()
+    provider = payload.provider.strip().lower()
+    targets = _provider_env_targets(provider)
+    if not targets:
+        raise HTTPException(status_code=400, detail=f"provider does not support auth storage: {provider}")
+
+    store = _read_provider_auth_store()
+    if provider == "ollama":
+        value = (payload.host or payload.secret or "").strip()
+        if not value:
+            raise HTTPException(status_code=400, detail="missing host for ollama")
+        store["OLLAMA_HOST"] = value
+    else:
+        value = (payload.secret or "").strip()
+        if not value:
+            raise HTTPException(status_code=400, detail="missing API key")
+        store[targets[0]] = value
+    _write_provider_auth_store(store)
+    return {
+        "ok": True,
+        "provider": provider,
+        "configured_targets": targets,
+        "runtime": _runtime_state(),
+    }
+
+
 @webui_router.get("/webui/api/channels/connect")
 async def get_channel_connections():
     """Return channel connection status and requirements."""
@@ -483,7 +560,10 @@ async def get_workstation_connections():
     await _ensure_connection_state()
     return {
         "available": _workstation_catalog(),
-        "connections": WORKSTATION_CONNECTIONS,
+        "connections": {
+            name: _sanitize_workstation_state(name, state)
+            for name, state in WORKSTATION_CONNECTIONS.items()
+        },
         "timestamp": _now_iso(),
     }
 
@@ -497,17 +577,65 @@ async def connect_workstation(payload: WorkstationConnectRequest):
     if workstation not in catalog:
         raise HTTPException(status_code=400, detail=f"unknown workstation: {workstation}")
 
-    WORKSTATION_CONNECTIONS[workstation] = {
+    state = {
         "status": "connected" if payload.path else "pending",
         "path": payload.path or catalog[workstation]["path"],
         "notes": payload.notes or "",
+        "ssh_host": payload.ssh_host or "",
+        "ssh_user": payload.ssh_user or "",
+        "deploy_path": payload.deploy_path or "",
         "updated_at": _now_iso(),
     }
+    if workstation == "vps":
+        state["status"] = "connected" if (state["ssh_host"] or state["path"]) else "pending"
+    WORKSTATION_CONNECTIONS[workstation] = state
     _persist_workstation_state()
     return {
         "ok": True,
         "workstation": workstation,
-        "connection": WORKSTATION_CONNECTIONS[workstation],
+        "connection": _sanitize_workstation_state(workstation, WORKSTATION_CONNECTIONS[workstation]),
+    }
+
+
+@webui_router.post("/webui/api/workstations/check")
+async def check_workstation(payload: WorkstationActionRequest):
+    """Run a lightweight health check for a stored workstation profile."""
+    await _ensure_connection_state()
+    workstation = payload.workstation.strip().lower()
+    state = WORKSTATION_CONNECTIONS.get(workstation)
+    if not state:
+        raise HTTPException(status_code=404, detail=f"unknown workstation: {workstation}")
+
+    health: Dict[str, Any] = {"ok": False, "detail": "No health check available", "checked_at": _now_iso()}
+    if workstation == "vps":
+        target = state.get("ssh_host") or state.get("path") or ""
+        if target:
+            health = {
+                "ok": True,
+                "detail": f"Stored VPS target ready for operator use: {target}",
+                "checked_at": _now_iso(),
+            }
+        else:
+            health = {
+                "ok": False,
+                "detail": "Missing VPS host. Save ssh_host or path first.",
+                "checked_at": _now_iso(),
+            }
+    elif workstation in {"cli", "openclaw", "vscode"}:
+        target = state.get("path") or ""
+        health = {
+            "ok": bool(target),
+            "detail": f"Stored path: {target}" if target else "Missing path",
+            "checked_at": _now_iso(),
+        }
+
+    state["health"] = health
+    state["updated_at"] = _now_iso()
+    _persist_workstation_state()
+    return {
+        "ok": True,
+        "workstation": workstation,
+        "connection": _sanitize_workstation_state(workstation, state),
     }
 
 
@@ -931,10 +1059,10 @@ def _channel_catalog() -> list[dict[str, Any]]:
 
 def _workstation_catalog() -> list[dict[str, Any]]:
     return [
-        {"id": "cli", "label": "CLI", "path": "~/.local/bin/jebat-cli"},
-        {"id": "openclaw", "label": "OpenClaw", "path": "~/.openclaw"},
-        {"id": "vscode", "label": "VS Code", "path": "~/.config/Code/User"},
-        {"id": "vps", "label": "VPS", "path": "jebat.online"},
+        {"id": "cli", "label": "CLI", "path": "~/.local/bin/jebat-cli", "supports_remote": False},
+        {"id": "openclaw", "label": "OpenClaw", "path": "~/.openclaw", "supports_remote": False},
+        {"id": "vscode", "label": "VS Code", "path": "~/.config/Code/User", "supports_remote": False},
+        {"id": "vps", "label": "VPS", "path": "jebat.online", "supports_remote": True},
     ]
 
 
@@ -1079,8 +1207,9 @@ function renderControl(){
     return `<article class="provider-card ${active}"><div class="card-label">${escapeHtml(item.label || item.provider)}</div><h4>${escapeHtml(item.provider)}</h4><div class="provider-meta"><span class="chip ${item.configured?'ok':'warn'}">${escapeHtml(status)}</span><span class="chip">${escapeHtml((item.models || []).length)} models</span></div><p class="small-note">${escapeHtml(item.notes || 'No provider notes')}</p><p class="small-note" style="margin-top:10px">Suggested: ${escapeHtml(models)}</p></article>`;
   }).join('');
   const fallbacks = (runtime.provider.fallbacks || []).map(item => `<span class="chip">${escapeHtml(item)}</span>`).join('') || '<span class="chip">none</span>';
+  const authTargets = selectedProvider === 'ollama' ? 'OLLAMA_HOST' : ((runtime.providers.available || []).find(item => item.provider === selectedProvider)?.env_vars || []).join(', ');
   return `<section class="hero"><div class="eyebrow">Model lattice</div><h1>Route providers and models from one control grid.</h1><p>The shell keeps Hermes fast and OpenClaw stable by showing the active provider path, filtered model choices, and fallback order in a single runtime panel.</p></section>
-  <section class="layout"><div class="provider-stack"><article class="wide-card"><div class="card-label">Override rail</div><h3>Runtime control</h3><form class="control-form" id="runtimeForm"><div class="control-grid tight"><select class="select" id="runtimeProvider" name="provider">${providerOptions}</select><select class="select" id="runtimeModel" name="model">${modelOptions}</select><input class="input" id="runtimeCustomModel" type="text" placeholder="Custom model id"></div><div class="model-hint" id="runtimeModelHint">Choose a provider first. Model choices are filtered to that provider, and custom models are only enabled where the provider supports them.</div><div class="provider-meta"><span class="chip">Configured: ${escapeHtml(runtime.provider.configured)}</span><span class="chip">Effective: ${escapeHtml(runtime.provider.effective)}</span><span class="chip">Model: ${escapeHtml(runtime.provider.model)}</span></div><button class="btn primary" type="submit">Apply runtime override</button></form></article><article class="wide-card"><div class="card-label">Fallback rail</div><h3>Routing chain</h3><div class="provider-meta">${fallbacks}</div><p class="small-note">The shell override changes the active preference for this live console. Repo config and environment stay intact.</p></article></div>
+  <section class="layout"><div class="provider-stack"><article class="wide-card"><div class="card-label">Override rail</div><h3>Runtime control</h3><form class="control-form" id="runtimeForm"><div class="control-grid tight"><select class="select" id="runtimeProvider" name="provider">${providerOptions}</select><select class="select" id="runtimeModel" name="model">${modelOptions}</select><input class="input" id="runtimeCustomModel" type="text" placeholder="Custom model id"></div><div class="model-hint" id="runtimeModelHint">Choose a provider first. Model choices are filtered to that provider, and custom models are only enabled where the provider supports them.</div><div class="provider-meta"><span class="chip">Configured: ${escapeHtml(runtime.provider.configured)}</span><span class="chip">Effective: ${escapeHtml(runtime.provider.effective)}</span><span class="chip">Model: ${escapeHtml(runtime.provider.model)}</span></div><button class="btn primary" type="submit">Apply runtime override</button></form></article><article class="wide-card"><div class="card-label">Auth bridge</div><h3>Connect provider credentials</h3><form class="control-form" id="providerAuthForm"><div class="control-grid"><select class="select" id="authProvider" name="provider">${providerOptions}</select><input class="input" id="authSecret" name="secret" type="password" placeholder="API key or host"></div><div class="model-hint" id="providerAuthHint">Target env: ${escapeHtml(authTargets || 'n/a')}. For Ollama, enter the host such as <code>http://127.0.0.1:11434</code>.</div><button class="btn primary" type="submit">Save provider auth</button></form></article><article class="wide-card"><div class="card-label">Fallback rail</div><h3>Routing chain</h3><div class="provider-meta">${fallbacks}</div><p class="small-note">The shell override changes the active preference for this live console. Repo config and environment stay intact.</p></article></div>
   <article class="wide-card"><div class="card-label">Provider map</div><h3>Available provider tracks</h3><div class="provider-grid">${providerCards}</div></article></section>
   <section class="wide-card"><div class="card-label">Surface state</div><h3>Current stations</h3><ul class="list">${(runtime.workspace.stations||[]).map(item => `<li><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.path)} / ${escapeHtml(item.state)}</span></li>`).join('')}</ul></section>`;
 }
@@ -1092,8 +1221,13 @@ function renderChannels(){
 }
 function renderWorkstation(){
   const cards = (runtime.workspace.stations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('');
-  const connected = Object.entries(workstationState?.connections || {}).map(([name, item]) => `<li><strong>${escapeHtml(name)}</strong><span>${escapeHtml(item.status)} / ${escapeHtml(item.path || '')}</span></li>`).join('') || '<li><strong>None</strong><span>No workstation connections stored from the shell yet.</span></li>';
-  return `<section class="hero"><div class="eyebrow">Station mesh</div><h1>Align local and remote workstations in one shell.</h1><p>Track every operator surface JEBATCore is meant to use: local CLI, OpenClaw runtime, VS Code, and the live VPS deployment.</p></section><section class="layout"><div class="stack"><section class="grid">${cards}</section></div><article class="wide-card"><div class="card-label">Station link</div><h3>Store workstation connection</h3><form class="control-form" id="workstationForm"><select class="select" name="workstation">${(workstationState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="path" placeholder="Override path or host"><input class="input" name="notes" placeholder="Notes"><button class="btn primary" type="submit">Save workstation</button></form><ul class="list" style="margin-top:14px">${connected}</ul></article></section>`;
+  const connected = Object.entries(workstationState?.connections || {}).map(([name, item]) => {
+    const remote = item.ssh_host ? ` / ${item.ssh_user || 'root'}@${item.ssh_host}` : '';
+    const deploy = item.deploy_path ? ` / deploy ${item.deploy_path}` : '';
+    const health = item.health?.detail ? ` / ${item.health.detail}` : '';
+    return `<li><strong>${escapeHtml(name)}</strong><span>${escapeHtml(item.status)} / ${escapeHtml(item.path || '')}${escapeHtml(remote)}${escapeHtml(deploy)}${escapeHtml(health)}</span><div style="margin-top:10px"><button class="ghost-btn" data-workstation-check="${escapeHtml(name)}">Health check</button></div></li>`;
+  }).join('') || '<li><strong>None</strong><span>No workstation connections stored from the shell yet.</span></li>';
+  return `<section class="hero"><div class="eyebrow">Station mesh</div><h1>Align local and remote workstations in one shell.</h1><p>Track every operator surface JEBATCore is meant to use: local CLI, OpenClaw runtime, VS Code, and the live VPS deployment.</p></section><section class="layout"><div class="stack"><section class="grid">${cards}</section></div><article class="wide-card"><div class="card-label">Station link</div><h3>Store workstation connection</h3><form class="control-form" id="workstationForm"><select class="select" id="workstationType" name="workstation">${(workstationState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="path" placeholder="Override path or host"><input class="input" name="notes" placeholder="Notes"><div class="control-grid" id="workstationRemoteFields" style="display:none"><input class="input" name="ssh_host" placeholder="SSH host"><input class="input" name="ssh_user" placeholder="SSH user"></div><input class="input" id="workstationDeployPath" name="deploy_path" placeholder="Deploy path on remote host" style="display:none"><button class="btn primary" type="submit">Save workstation</button></form><ul class="list" style="margin-top:14px">${connected}</ul></article></section>`;
 }
 function renderIntegrations(){
   return `<section class="hero"><div class="eyebrow">Versioned connections</div><h1>Integration assets grounded in the repo.</h1><p>This is the repo-backed integration layer, not UI filler. It shows the OpenClaw bundle and the docs that support MCP and IDE workflows.</p></section><section class="grid">${(runtime.workspace.integrations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
@@ -1128,6 +1262,10 @@ function bindDynamicUI(){
   const modelSelect = document.getElementById('runtimeModel');
   const customModelInput = document.getElementById('runtimeCustomModel');
   const modelHint = document.getElementById('runtimeModelHint');
+  const providerAuthForm = document.getElementById('providerAuthForm');
+  const authProvider = document.getElementById('authProvider');
+  const authSecret = document.getElementById('authSecret');
+  const providerAuthHint = document.getElementById('providerAuthHint');
   function syncRuntimeModelUI(){
     if(!providerSelect || !modelSelect || !customModelInput || !modelHint || !runtime) return;
     const provider = providerSelect.value;
@@ -1142,11 +1280,39 @@ function bindDynamicUI(){
       : `Model choices are locked to the ${provider} catalog so the selector only shows valid matches.`;
   }
   if(providerSelect){ providerSelect.onchange = syncRuntimeModelUI; syncRuntimeModelUI(); }
-  if(form){form.onsubmit = async (event) => { event.preventDefault(); const provider = providerSelect?.value || ''; const supportsCustom = !!(runtime?.providers?.catalog?.[provider]?.supports_custom); const selectedModel = supportsCustom && customModelInput?.value.trim() ? customModelInput.value.trim() : (modelSelect?.value || ''); const payload = {provider, model: selectedModel}; const res = await fetch('/webui/api/runtime', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); runtime = await res.json(); renderStatusStrip(); renderSection('control'); };}
+  function syncProviderAuthUI(){
+    if(!authProvider || !authSecret || !providerAuthHint || !runtime) return;
+    const provider = authProvider.value;
+    const status = (runtime.providers.available || []).find(item => item.provider === provider);
+    const targets = (status?.env_vars || []).join(', ') || 'n/a';
+    authSecret.placeholder = provider === 'ollama' ? 'Ollama host' : 'API key';
+    providerAuthHint.innerHTML = provider === 'ollama'
+      ? 'Target env: <code>OLLAMA_HOST</code>. Enter the host such as <code>http://127.0.0.1:11434</code>.'
+      : `Target env: <code>${escapeHtml(targets)}</code>. Save an API key for the selected provider.`;
+  }
+  if(authProvider){ authProvider.onchange = syncProviderAuthUI; syncProviderAuthUI(); }
+  async function parseApiResponse(res){
+    const text = await res.text();
+    try { return JSON.parse(text); } catch { return {ok:false, error:text}; }
+  }
+  if(form){form.onsubmit = async (event) => { event.preventDefault(); const provider = providerSelect?.value || ''; const supportsCustom = !!(runtime?.providers?.catalog?.[provider]?.supports_custom); const selectedModel = supportsCustom && customModelInput?.value.trim() ? customModelInput.value.trim() : (modelSelect?.value || ''); const payload = {provider, model: selectedModel}; const res = await fetch('/webui/api/runtime', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); const data = await parseApiResponse(res); if(!res.ok){ alert(data.detail || data.error || 'Failed to update runtime'); return; } runtime = data; renderStatusStrip(); renderSection('control'); };}
+  if(providerAuthForm){providerAuthForm.onsubmit = async (event) => { event.preventDefault(); const provider = authProvider?.value || ''; const secret = authSecret?.value || ''; const payload = provider === 'ollama' ? {provider, host: secret} : {provider, secret}; const res = await fetch('/webui/api/provider-auth', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); const data = await parseApiResponse(res); if(!res.ok){ alert(data.detail || data.error || 'Failed to save provider auth'); return; } runtime = data.runtime; authSecret.value = ''; renderStatusStrip(); renderSection('control'); };}
   const channelForm = document.getElementById('channelForm');
   if(channelForm){channelForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(channelForm); const channel = fd.get('channel'); const available = (channelState?.available || []).find(item => item.id === channel); const required = available?.required || []; const values = [fd.get('field1'), fd.get('field2'), fd.get('field3')]; const config = {}; required.forEach((key, idx) => config[key] = values[idx] || ''); const res = await fetch('/webui/api/channels/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({channel, config})}); channelState = await fetch('/webui/api/channels/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('channels'); };}
   const workstationForm = document.getElementById('workstationForm');
-  if(workstationForm){workstationForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(workstationForm); await fetch('/webui/api/workstations/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({workstation: fd.get('workstation'), path: fd.get('path'), notes: fd.get('notes')})}); workstationState = await fetch('/webui/api/workstations/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('workstation'); };}
+  const workstationType = document.getElementById('workstationType');
+  const workstationRemoteFields = document.getElementById('workstationRemoteFields');
+  const workstationDeployPath = document.getElementById('workstationDeployPath');
+  function syncWorkstationFields(){
+    if(!workstationType || !workstationRemoteFields || !workstationDeployPath || !workstationState) return;
+    const selected = (workstationState.available || []).find(item => item.id === workstationType.value);
+    const isRemote = !!selected?.supports_remote;
+    workstationRemoteFields.style.display = isRemote ? '' : 'none';
+    workstationDeployPath.style.display = isRemote ? '' : 'none';
+  }
+  if(workstationType){ workstationType.onchange = syncWorkstationFields; syncWorkstationFields(); }
+  if(workstationForm){workstationForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(workstationForm); await fetch('/webui/api/workstations/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({workstation: fd.get('workstation'), path: fd.get('path'), notes: fd.get('notes'), ssh_host: fd.get('ssh_host'), ssh_user: fd.get('ssh_user'), deploy_path: fd.get('deploy_path')})}); workstationState = await fetch('/webui/api/workstations/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('workstation'); };}
+  document.querySelectorAll('[data-workstation-check]').forEach(btn => btn.onclick = async () => { await fetch('/webui/api/workstations/check', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({workstation: btn.dataset.workstationCheck})}); workstationState = await fetch('/webui/api/workstations/connect').then(r => r.json()); renderSection('workstation'); });
   const shellChatForm = document.getElementById('shellChatForm');
   if(shellChatForm){shellChatForm.onsubmit = async (event) => { event.preventDefault(); const input = document.getElementById('shellChatInput'); const mode = document.getElementById('shellChatMode'); const log = document.getElementById('shellChatLog'); const message = input.value.trim(); if(!message) return; log.insertAdjacentHTML('beforeend', `<div class="chat-entry user"><strong>You</strong><div>${escapeHtml(message)}</div></div>`); input.value=''; log.scrollTop = log.scrollHeight; const res = await fetch('/webui/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_id:'shell_user', message, thinking_mode: mode.value})}); const data = await res.json(); log.insertAdjacentHTML('beforeend', `<div class="chat-entry"><strong>JEBATCore</strong><div>${escapeHtml(data.response || data.error || 'No response')}</div></div>`); log.scrollTop = log.scrollHeight; };}
   const agentFilter = document.getElementById('agentFilter');

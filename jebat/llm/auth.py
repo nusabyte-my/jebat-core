@@ -2,6 +2,26 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def _provider_auth_store() -> dict[str, str]:
+    candidates = [
+        Path("/app/data/webui/provider_auth.json"),
+        Path(__file__).resolve().parents[2] / ".webui_state" / "provider_auth.json",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            import json
+
+            data = json.loads(path.read_text())
+            if isinstance(data, dict):
+                return {str(k): str(v) for k, v in data.items()}
+        except Exception:
+            continue
+    return {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +62,11 @@ def get_provider_secret(provider: str) -> str:
         value = os.getenv(env_name, "").strip()
         if value:
             return value
+    stored = _provider_auth_store()
+    for env_name in env_vars:
+        value = stored.get(env_name, "").strip()
+        if value:
+            return value
     raise RuntimeError(
         f"missing required environment variable for {provider_name}: one of {', '.join(env_vars)}"
     )
@@ -49,8 +74,11 @@ def get_provider_secret(provider: str) -> str:
 
 def list_provider_auth_status() -> list[ProviderAuthStatus]:
     statuses: list[ProviderAuthStatus] = []
+    stored = _provider_auth_store()
     for provider, env_vars in PROVIDER_ENV_MAP.items():
-        configured = True if not env_vars else any(os.getenv(name, "").strip() for name in env_vars)
+        configured = True if not env_vars else any(
+            os.getenv(name, "").strip() or stored.get(name, "").strip() for name in env_vars
+        )
         note = "Local fallback" if provider == "local" else "Configured" if configured else "Missing credentials"
         statuses.append(
             ProviderAuthStatus(
