@@ -69,6 +69,154 @@ class WorkstationConnectRequest(BaseModel):
 
 CHANNEL_CONNECTIONS: Dict[str, Dict[str, Any]] = {}
 WORKSTATION_CONNECTIONS: Dict[str, Dict[str, Any]] = {}
+CHANNEL_SECRETS: Dict[str, Dict[str, Any]] = {}
+ACTIVE_CHANNELS: Dict[str, Any] = {}
+CHANNEL_TASKS: Dict[str, asyncio.Task] = {}
+STATE_LOCK = asyncio.Lock()
+STATE_LOADED = False
+DATA_DIR = Path("/app/data/webui") if Path("/app/data").exists() else REPO_ROOT / ".webui_state"
+CHANNEL_STATE_PATH = DATA_DIR / "channel_connections.json"
+CHANNEL_SECRET_PATH = DATA_DIR / "channel_secrets.json"
+WORKSTATION_STATE_PATH = DATA_DIR / "workstation_connections.json"
+RUNTIME_STATE_PATH = DATA_DIR / "runtime_overrides.json"
+
+
+def _now_iso() -> str:
+    return datetime.utcnow().isoformat()
+
+
+def _ensure_data_dir() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _read_json(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        logger.exception("Failed to read JSON state: %s", path)
+        return default
+
+
+def _write_json(path: Path, payload: Any, chmod_600: bool = False) -> None:
+    _ensure_data_dir()
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+    if chmod_600:
+        path.chmod(0o600)
+
+
+def _sanitize_channel_state(channel: str, state: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "channel": channel,
+        "status": state.get("status", "unknown"),
+        "required": state.get("required", []),
+        "missing": state.get("missing", []),
+        "updated_at": state.get("updated_at"),
+        "config_keys": state.get("config_keys", []),
+        "active": state.get("active", False),
+        "last_error": state.get("last_error"),
+        "instructions": state.get("instructions"),
+    }
+
+
+async def _ensure_connection_state() -> None:
+    global STATE_LOADED
+    if STATE_LOADED:
+        return
+    async with STATE_LOCK:
+        if STATE_LOADED:
+            return
+        CHANNEL_CONNECTIONS.update(_read_json(CHANNEL_STATE_PATH, {}))
+        CHANNEL_SECRETS.update(_read_json(CHANNEL_SECRET_PATH, {}))
+        WORKSTATION_CONNECTIONS.update(_read_json(WORKSTATION_STATE_PATH, {}))
+        RUNTIME_OVERRIDES.update(_read_json(RUNTIME_STATE_PATH, {"provider": None, "model": None}))
+        STATE_LOADED = True
+        await _reactivate_saved_channels()
+
+
+async def _persist_channel_state() -> None:
+    _write_json(CHANNEL_STATE_PATH, CHANNEL_CONNECTIONS)
+    _write_json(CHANNEL_SECRET_PATH, CHANNEL_SECRETS, chmod_600=True)
+
+
+def _persist_workstation_state() -> None:
+    _write_json(WORKSTATION_STATE_PATH, WORKSTATION_CONNECTIONS)
+
+
+def _persist_runtime_state() -> None:
+    _write_json(RUNTIME_STATE_PATH, RUNTIME_OVERRIDES)
+
+
+async def _reactivate_saved_channels() -> None:
+    for channel, state in list(CHANNEL_CONNECTIONS.items()):
+        secret = CHANNEL_SECRETS.get(channel, {})
+        if state.get("status") in {"active", "configured", "starting"} and secret:
+            await _activate_channel(channel, secret, persist=False)
+
+
+async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool = True) -> Dict[str, Any]:
+    state = CHANNEL_CONNECTIONS.setdefault(channel, {})
+    state.setdefault("required", [])
+    state["config_keys"] = sorted(config.keys())
+    state["updated_at"] = _now_iso()
+    state["active"] = False
+    state["last_error"] = None
+
+    try:
+        if channel == "telegram":
+            from jebat.integrations.channels.telegram import create_telegram_channel
+
+            instance = await create_telegram_channel(bot_token=config["bot_token"])
+            await instance.start()
+            ACTIVE_CHANNELS[channel] = instance
+            state["status"] = "active"
+            state["active"] = True
+        elif channel == "whatsapp":
+            from jebat.integrations.channels.whatsapp import WhatsAppChannel
+
+            instance = WhatsAppChannel(
+                phone_number_id=config["phone_number_id"],
+                access_token=config["access_token"],
+                verify_token=config["verify_token"],
+            )
+            await instance.start()
+            ACTIVE_CHANNELS[channel] = instance
+            state["status"] = "active"
+            state["active"] = True
+        elif channel == "slack":
+            from jebat.integrations.channels.slack import SlackChannel
+
+            instance = SlackChannel(
+                bot_token=config["bot_token"],
+                signing_secret=config["signing_secret"],
+            )
+            await instance.start()
+            ACTIVE_CHANNELS[channel] = instance
+            state["status"] = "active"
+            state["active"] = True
+        elif channel == "discord":
+            from jebat.integrations.channels.discord import DiscordChannel
+
+            instance = DiscordChannel(bot_token=config["bot_token"])
+            task = asyncio.create_task(instance.start())
+            CHANNEL_TASKS[channel] = task
+            ACTIVE_CHANNELS[channel] = instance
+            state["status"] = "starting"
+            state["active"] = True
+        else:
+            state["status"] = "configured"
+        if persist:
+            await _persist_channel_state()
+        return _sanitize_channel_state(channel, state)
+    except Exception as exc:
+        logger.exception("Channel activation failed for %s", channel)
+        state["status"] = "error"
+        state["active"] = False
+        state["last_error"] = str(exc)
+        if persist:
+            await _persist_channel_state()
+        return _sanitize_channel_state(channel, state)
 
 
 # ==================== Routes ====================
@@ -174,12 +322,14 @@ async def get_console_meta():
 @webui_router.get("/webui/api/runtime")
 async def get_runtime():
     """Return live runtime info for the WebUI shell."""
+    await _ensure_connection_state()
     return _runtime_state()
 
 
 @webui_router.post("/webui/api/runtime")
 async def update_runtime(payload: RuntimeControlRequest):
     """Set a preferred provider/model override for the live WebUI shell."""
+    await _ensure_connection_state()
     status_items = _runtime_state()["providers"]["available"]
     allowed = {item["provider"] for item in status_items}
     provider = (payload.provider or "").strip().lower() or None
@@ -190,22 +340,28 @@ async def update_runtime(payload: RuntimeControlRequest):
 
     RUNTIME_OVERRIDES["provider"] = provider
     RUNTIME_OVERRIDES["model"] = model
+    _persist_runtime_state()
     return _runtime_state()
 
 
 @webui_router.get("/webui/api/channels/connect")
 async def get_channel_connections():
     """Return channel connection status and requirements."""
+    await _ensure_connection_state()
     return {
         "available": _channel_catalog(),
-        "connections": CHANNEL_CONNECTIONS,
-        "timestamp": datetime.utcnow().isoformat(),
+        "connections": {
+            name: _sanitize_channel_state(name, state)
+            for name, state in CHANNEL_CONNECTIONS.items()
+        },
+        "timestamp": _now_iso(),
     }
 
 
 @webui_router.post("/webui/api/channels/connect")
 async def connect_channel(payload: ChannelConnectRequest):
     """Store channel connection intent/config summary for the console."""
+    await _ensure_connection_state()
     catalog = {item["id"]: item for item in _channel_catalog()}
     channel = payload.channel.strip().lower()
     if channel not in catalog:
@@ -218,13 +374,21 @@ async def connect_channel(payload: ChannelConnectRequest):
         "status": status,
         "required": required,
         "missing": missing,
-        "updated_at": datetime.utcnow().isoformat(),
+        "updated_at": _now_iso(),
         "config_keys": sorted(payload.config.keys()),
+        "instructions": catalog[channel]["instructions"],
     }
+    CHANNEL_SECRETS[channel] = dict(payload.config)
+    await _persist_channel_state()
+    connection = (
+        await _activate_channel(channel, CHANNEL_SECRETS[channel])
+        if not missing
+        else _sanitize_channel_state(channel, CHANNEL_CONNECTIONS[channel])
+    )
     return {
         "ok": True,
         "channel": channel,
-        "connection": CHANNEL_CONNECTIONS[channel],
+        "connection": connection,
         "instructions": catalog[channel]["instructions"],
     }
 
@@ -232,16 +396,18 @@ async def connect_channel(payload: ChannelConnectRequest):
 @webui_router.get("/webui/api/workstations/connect")
 async def get_workstation_connections():
     """Return workstation connection status."""
+    await _ensure_connection_state()
     return {
         "available": _workstation_catalog(),
         "connections": WORKSTATION_CONNECTIONS,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": _now_iso(),
     }
 
 
 @webui_router.post("/webui/api/workstations/connect")
 async def connect_workstation(payload: WorkstationConnectRequest):
     """Store workstation connection intent/config summary for the console."""
+    await _ensure_connection_state()
     catalog = {item["id"]: item for item in _workstation_catalog()}
     workstation = payload.workstation.strip().lower()
     if workstation not in catalog:
@@ -251,8 +417,9 @@ async def connect_workstation(payload: WorkstationConnectRequest):
         "status": "connected" if payload.path else "pending",
         "path": payload.path or catalog[workstation]["path"],
         "notes": payload.notes or "",
-        "updated_at": datetime.utcnow().isoformat(),
+        "updated_at": _now_iso(),
     }
+    _persist_workstation_state()
     return {
         "ok": True,
         "workstation": workstation,
@@ -687,7 +854,7 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 .kv{display:grid;gap:12px}.kv-item{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}.kv-item label{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.kv-item strong{display:block;font-size:22px}
 .control-form{display:grid;gap:12px}.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,.select{width:100%;padding:12px 14px;background:#0f1518;border:1px solid var(--line);border-radius:14px;color:var(--text)}
 .list{list-style:none;display:grid;gap:10px;margin-top:12px}.list li{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.list strong{display:block;color:var(--text)}
-.table{display:grid;gap:10px}.row{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.row.head{background:transparent;border:none;padding:0;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.table{display:grid;gap:10px}.row{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.row.head{background:transparent;border:none;padding:0;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase}.toolbar-inline{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}.ghost-btn{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer}.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:flex-end;z-index:50}.drawer-backdrop.open{display:flex}.drawer{width:min(520px,100%);height:100%;background:#0d1215;border-left:1px solid var(--line);padding:24px;overflow:auto}.drawer h3{font-size:24px;margin-bottom:10px}.drawer pre{white-space:pre-wrap;color:var(--muted);line-height:1.7;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
 .empty{color:var(--muted);padding:22px;border:1px dashed var(--line);border-radius:16px}
 @media (max-width:1080px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}.layout,.grid,.control-grid{grid-template-columns:1fr}.content{padding:18px}}
 </style>
@@ -720,6 +887,7 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <section id="view"></section>
 </main>
 </div>
+<div class="drawer-backdrop" id="drawerBackdrop"><aside class="drawer"><button class="ghost-btn" id="drawerClose" style="margin-bottom:14px">Close</button><div id="drawerContent"></div></aside></div>
 <script>
 const sections = [
   {id:'overview', label:'Overview', meta:'surface'},
@@ -737,6 +905,11 @@ let consoleMeta = null;
 let runtime = null;
 let channelState = null;
 let workstationState = null;
+function openDrawer(title, body){
+  document.getElementById('drawerContent').innerHTML = `<h3>${escapeHtml(title)}</h3>${body}`;
+  document.getElementById('drawerBackdrop').classList.add('open');
+}
+function closeDrawer(){ document.getElementById('drawerBackdrop').classList.remove('open'); }
 function escapeHtml(value){return String(value??'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 function navMarkup(active){
   const filter = (document.getElementById('navFilter')?.value || '').toLowerCase();
@@ -800,10 +973,10 @@ function renderIntegrations(){
   return `<section class="hero"><div class="eyebrow">Versioned connections</div><h1>Integration assets grounded in the repo.</h1><p>This is the repo-backed integration layer, not UI filler. It shows the OpenClaw bundle and the docs that support MCP and IDE workflows.</p></section><section class="grid">${(runtime.workspace.integrations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
 }
 function renderAgents(){
-  return `<section class="hero"><div class="eyebrow">Role map</div><h1>Hermes and OpenClaw-style agent roles.</h1><p>The shell surfaces the roles from the OpenClaw bundle and keeps Hermes visible as an operating mode rather than burying it in a prompt.</p></section><section class="grid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Agent</div><h3>${escapeHtml(name)}</h3><p>Visible from the OpenClaw bundle agent list.</p></article>`).join('')}</section>`;
+  return `<section class="hero"><div class="eyebrow">Role map</div><h1>Hermes and OpenClaw-style agent roles.</h1><p>The shell surfaces the roles from the OpenClaw bundle and keeps Hermes visible as an operating mode rather than burying it in a prompt.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.openclaw.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Agent</div><h3>${escapeHtml(name)}</h3><p>Visible from the OpenClaw bundle agent list.</p><button class="ghost-btn" data-agent="${escapeHtml(name)}">Details</button></article>`).join('')}</div></section>`;
 }
 function renderSkills(){
-  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>TokGuru skills with OpenClaw Hermes included.</h1><p>These cards are built from the live skill registry. They represent the actual loaded skills the runtime can refer to.</p></section><section class="grid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p></article>`).join('')}</section>`;
+  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>TokGuru skills with OpenClaw Hermes included.</h1><p>These cards are built from the live skill registry. They represent the actual loaded skills the runtime can refer to.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.skills.top||[]).length} featured skills</span></span></div><div class="grid" id="skillGrid">${(consoleMeta.skills.top||[]).map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p><button class="ghost-btn" data-skill="${escapeHtml(skill.name)}">Details</button></article>`).join('')}</div></section>`;
 }
 function renderLearning(){
   return `<section class="hero"><div class="eyebrow">Adaptive layer</div><h1>Skill learning from repo modules and OpenClaw guidance.</h1><p>Continuum and cortex modules are surfaced here so the operator can see where recommendation and improvement logic already lives in the codebase.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Learning modules</div><h3>Adaptive code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">OpenClaw Hermes</div><h3>Imported skill guidance</h3><p>${escapeHtml(consoleMeta.skills.openclaw_excerpt || 'Unavailable')}</p></article></section>`;
@@ -826,6 +999,16 @@ function bindDynamicUI(){
   if(channelForm){channelForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(channelForm); const channel = fd.get('channel'); const available = (channelState?.available || []).find(item => item.id === channel); const required = available?.required || []; const values = [fd.get('field1'), fd.get('field2'), fd.get('field3')]; const config = {}; required.forEach((key, idx) => config[key] = values[idx] || ''); const res = await fetch('/webui/api/channels/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({channel, config})}); channelState = await fetch('/webui/api/channels/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('channels'); };}
   const workstationForm = document.getElementById('workstationForm');
   if(workstationForm){workstationForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(workstationForm); await fetch('/webui/api/workstations/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({workstation: fd.get('workstation'), path: fd.get('path'), notes: fd.get('notes')})}); workstationState = await fetch('/webui/api/workstations/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('workstation'); };}
+  const agentFilter = document.getElementById('agentFilter');
+  if(agentFilter){agentFilter.oninput = () => { const q = agentFilter.value.toLowerCase(); document.querySelectorAll('#agentGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
+  document.querySelectorAll('[data-agent]').forEach(btn => btn.onclick = () => { const name = btn.dataset.agent; openDrawer(name, `<p>OpenClaw bundle agent visible in the runtime template.</p><pre>${escapeHtml(JSON.stringify(consoleMeta.openclaw.agent_names, null, 2))}</pre>`); });
+  const skillFilter = document.getElementById('skillFilter');
+  if(skillFilter){skillFilter.oninput = () => { const q = skillFilter.value.toLowerCase(); document.querySelectorAll('#skillGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
+  document.querySelectorAll('[data-skill]').forEach(btn => btn.onclick = () => { const name = btn.dataset.skill; const skill = (consoleMeta.skills.top || []).find(item => item.name === name); openDrawer(name, `<p>${escapeHtml(skill?.description || '')}</p><pre>${escapeHtml(JSON.stringify(skill || {}, null, 2))}</pre>`); });
+  const close = document.getElementById('drawerClose');
+  if(close){close.onclick = closeDrawer;}
+  const backdrop = document.getElementById('drawerBackdrop');
+  if(backdrop){backdrop.onclick = (event) => { if(event.target === backdrop){ closeDrawer(); } };}
 }
 async function boot(){
   const [metaRes, runtimeRes, channelRes, workstationRes] = await Promise.all([fetch('/webui/api/console-meta'), fetch('/webui/api/runtime'), fetch('/webui/api/channels/connect'), fetch('/webui/api/workstations/connect')]);
