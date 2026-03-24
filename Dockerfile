@@ -19,10 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY requirements.txt requirements.prod.txt ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install production Python dependencies by default in the base image.
+RUN pip install --no-cache-dir -r requirements.prod.txt
 
 # Production stage
 FROM base as production
@@ -50,7 +50,7 @@ CMD ["uvicorn", "jebat.services.api.jebat_api:app", "--host", "0.0.0.0", "--port
 FROM base as development
 
 # Install development dependencies
-RUN pip install --no-cache-dir \
+RUN pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir \
     pytest \
     pytest-asyncio \
     black \
