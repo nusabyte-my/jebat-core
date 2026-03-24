@@ -27,10 +27,10 @@ services:
       - redis
     networks:
       - jebat-public
-      - sh4dow-net
+      - sh4dow-shared
     labels:
       - traefik.enable=true
-      - traefik.docker.network=sh4dow-net
+      - traefik.docker.network=sh4dow_sh4dow-net
       - traefik.http.routers.jebat-api.rule=(Host(`jebat.online`) || Host(`www.jebat.online`)) && PathPrefix(`/api`)
       - traefik.http.routers.jebat-api.priority=100
       - traefik.http.routers.jebat-api.entrypoints=websecure
@@ -75,10 +75,10 @@ services:
     command: ["python", "-m", "jebat.services.webui.launch", "--host", "0.0.0.0", "--port", "8787"]
     networks:
       - jebat-public
-      - sh4dow-net
+      - sh4dow-shared
     labels:
       - traefik.enable=true
-      - traefik.docker.network=sh4dow-net
+      - traefik.docker.network=sh4dow_sh4dow-net
       - traefik.http.routers.jebat-webui.rule=Host(`jebat.online`) || Host(`www.jebat.online`)
       - traefik.http.routers.jebat-webui.priority=10
       - traefik.http.routers.jebat-webui.entrypoints=websecure
@@ -112,8 +112,9 @@ services:
 networks:
   jebat-public:
     driver: bridge
-  sh4dow-net:
+  sh4dow-shared:
     external: true
+    name: sh4dow_sh4dow-net
 
 volumes:
   jebat_data:
