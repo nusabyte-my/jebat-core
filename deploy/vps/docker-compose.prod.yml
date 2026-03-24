@@ -11,7 +11,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - jebat-api
+      - jebat-webui
     networks:
       - jebat-public
 
@@ -48,6 +48,41 @@ services:
           "python",
           "-c",
           "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  jebat-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-webui
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      JEBAT_WEBUI_ENABLED: "true"
+      JEBAT_WEBUI_HOST: 0.0.0.0
+      JEBAT_WEBUI_PORT: 8787
+    volumes:
+      - jebat_data:/app/data
+      - ./config:/app/config:ro
+    depends_on:
+      - jebat-api
+    command: ["python", "-m", "jebat.services.webui.launch", "--host", "0.0.0.0", "--port", "8787"]
+    networks:
+      - jebat-public
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8787/health')",
         ]
       interval: 30s
       timeout: 10s

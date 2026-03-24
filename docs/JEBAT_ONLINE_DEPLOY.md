@@ -64,7 +64,8 @@ bash deploy/vps/bootstrap.sh
 ## Stack
 
 - `caddy` terminates HTTPS for `jebat.online`
-- `jebat-api` serves the app on internal port `8000`
+- `jebat-webui` serves the site on internal port `8787`
+- `jebat-api` serves the API on internal port `8000`
 - `redis` supports runtime caching
 
 ## Notes

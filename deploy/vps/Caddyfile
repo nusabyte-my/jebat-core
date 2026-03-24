@@ -1,7 +1,7 @@
 jebat.online {
   encode zstd gzip
 
-  reverse_proxy jebat-api:8000
+  reverse_proxy jebat-webui:8787
 }
 
 www.jebat.online {
