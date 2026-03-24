@@ -173,6 +173,12 @@ zed-extension install .
 
 ### **Method 1: Continue Extension** (Recommended)
 
+Project-start workflow:
+
+- read [VSCODE_JEBAT_HERMES_PROJECT_START.md](/home/humm1ngb1rd/workspace/ai/projects/jebat-core/docs/VSCODE_JEBAT_HERMES_PROJECT_START.md) before starting a new repo
+- use `hermes-agent` as the default anchor skill
+- capture the repo before implementation begins
+
 [Continue](https://continue.dev) is an open-source AI code assistant that supports custom providers.
 
 #### **Step 1: Install Continue**

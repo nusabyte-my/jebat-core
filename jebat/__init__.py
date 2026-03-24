@@ -12,32 +12,36 @@ __version__ = "2.0.0"
 __author__ = "JEBAT Team"
 __license__ = "MIT"
 
-# Core components
-from jebat.core.agents import AgentFactory, AgentOrchestrator
-from jebat.core.cache import CacheManager, SmartCache
-from jebat.core.decision import DecisionEngine
-from jebat.core.memory import Memory, MemoryLayer, MemoryManager
+try:
+    # Core components
+    from jebat.core.agents import AgentFactory, AgentOrchestrator
+    from jebat.core.cache import CacheManager, SmartCache
+    from jebat.core.decision import DecisionEngine
+    from jebat.core.memory import Memory, MemoryLayer, MemoryManager
 
-# Database
-from jebat.database import DatabaseManager, RepositoryManager
-from jebat.database.models import get_db_models
-from jebat.features.sentinel import Sentinel
+    # Database
+    from jebat.database import DatabaseManager, RepositoryManager
+    from jebat.database.models import get_db_models
+    from jebat.features.sentinel import Sentinel
 
-# Features
-from jebat.features.ultra_loop import UltraLoop
-from jebat.features.ultra_think import ThinkingMode, UltraThink
+    # Features
+    from jebat.features.ultra_loop import UltraLoop
+    from jebat.features.ultra_think import ThinkingMode, UltraThink
 
-# Integrations
-from jebat.integrations.channels import ChannelManager
-from jebat.integrations.webhooks import WebhookSystem
-from jebat.services.api import APIGateway
-from jebat.services.mcp import MCPProtocolServer
+    # Integrations
+    from jebat.integrations.channels import ChannelManager
+    from jebat.integrations.webhooks import WebhookSystem
+    from jebat.services.api import APIGateway
+    from jebat.services.mcp import MCPProtocolServer
 
-# Services
-from jebat.services.webui import webui_router
+    # Services
+    from jebat.services.webui import webui_router
 
-# Skills
-from jebat.skills import BaseSkill, SkillRegistry
+    # Skills
+    from jebat.skills import BaseSkill, SkillRegistry
+except Exception:
+    # Lightweight import mode for CLI/provider modules.
+    pass
 
 __all__ = [
     # Core

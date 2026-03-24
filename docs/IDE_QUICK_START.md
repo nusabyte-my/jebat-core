@@ -71,6 +71,8 @@ API Key: jebat-local-key (or set your own in .env)
 
 ### **Method 1: Continue Extension** (Easiest)
 
+Before starting a new project, use the capture-first playbook in [VSCODE_JEBAT_HERMES_PROJECT_START.md](/home/humm1ngb1rd/workspace/ai/projects/jebat-core/docs/VSCODE_JEBAT_HERMES_PROJECT_START.md).
+
 1. **Install Continue**
    - Extensions → Search "Continue" → Install
 

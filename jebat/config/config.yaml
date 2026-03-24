@@ -83,6 +83,20 @@ database:
   connection_string: "sqlite:///jebat.db"
   pool_size: 5
 
+llm:
+  provider: openai
+  model: gpt-5.4
+  temperature: 0.2
+  max_tokens: 1200
+  ollama_host: "http://127.0.0.1:11434"
+  fallback_providers:
+    - google
+    - anthropic
+    - openrouter
+    - ollama
+    - local
+  history_path: ".jebat/chat_history.jsonl"
+
 # Environment-specific overrides
 environment:
   dev:

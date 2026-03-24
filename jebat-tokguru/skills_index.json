@@ -76,6 +76,14 @@
       "tags": ["jebat", "cortex", "reasoning", "analysis", "native"],
       "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
       "path": "skills/jebat-native/cortex-reasoning/SKILL.md"
+    },
+    {
+      "name": "hermes-agent",
+      "description": "Personal multi-agent copilot for planning, execution, memory, and concise task routing",
+      "category": "jebat-native",
+      "tags": ["jebat", "hermes", "agent", "multi-agent", "planning", "memory"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/jebat-native/hermes-agent/SKILL.md"
     }
   ],
   "bundles": [

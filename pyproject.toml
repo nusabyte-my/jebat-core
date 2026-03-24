@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jebat-core"
+version = "2.0.0"
+description = "JEBAT AI assistant platform"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.26.0",
+  "openai>=1.10.0",
+  "pyyaml>=6.0.1",
+  "rich>=13.7.0",
+]
+
+[project.scripts]
+jebat = "jebat.cli.jebat_cli:run"
+
+[tool.setuptools.packages.find]
+include = ["jebat*"]

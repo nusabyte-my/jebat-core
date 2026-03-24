@@ -18,9 +18,23 @@ Usage:
 import argparse
 import asyncio
 import json
+import uuid
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
+from jebat.llm import (
+    build_skill_prompt,
+    build_skill_registry,
+    ChatHistoryStore,
+    build_project_context,
+    generate_with_failover,
+    list_provider_auth_status,
+    list_supported_providers,
+    load_llm_config,
+    select_best_provider,
+)
 
 # Rich for beautiful CLI output
 try:
@@ -306,6 +320,231 @@ class JEBATCLI:
             for key, value in settings.items():
                 self.print(f"    {key}: {value}")
 
+    async def cmd_chat(
+        self,
+        prompt: str,
+        provider_override: str | None = None,
+        model_override: str | None = None,
+        skill_names: list[str] | None = None,
+    ):
+        """Run chat completion via configured LLM provider."""
+        config = load_llm_config()
+        config = self._override_config(config, provider_override, model_override)
+        active_prompt, selected_skills = build_skill_prompt(
+            prompt,
+            requested_skills=skill_names,
+            auto_discover=not bool(skill_names),
+        )
+
+        self.print(f"\n  Provider: {config.provider}", "bold blue")
+        self.print(f"  Model: {config.model}", "cyan")
+        if selected_skills:
+            self.print(
+                f"  Skills: {', '.join(skill.name for skill in selected_skills)}",
+                "cyan",
+            )
+        response, used_provider = await generate_with_failover(
+            config=config,
+            prompt=active_prompt,
+            system_prompt=(
+                "You are JEBAT, a pragmatic multi-provider AI development assistant. "
+                "Use any provided JEBAT skills as operating guidance."
+            ),
+        )
+        if used_provider != config.provider:
+            self.print(f"  Fallback Used: {used_provider}", "yellow")
+        self.print("\n Response:", "bold green")
+        self.print(response)
+
+    async def cmd_chat_project(
+        self,
+        prompt: str,
+        project_path: str,
+        provider_override: str | None = None,
+        model_override: str | None = None,
+        skill_names: list[str] | None = None,
+    ):
+        """Run project-aware chat."""
+        config = self._override_config(load_llm_config(), provider_override, model_override)
+        project = build_project_context(project_path)
+        full_prompt = (
+            f"{prompt}\n\n"
+            f"Project context:\n{project.summary}"
+        )
+        full_prompt, selected_skills = build_skill_prompt(
+            full_prompt,
+            requested_skills=skill_names,
+            auto_discover=not bool(skill_names),
+        )
+        response, used_provider = await generate_with_failover(
+            config=config,
+            prompt=full_prompt,
+            system_prompt=(
+                "You are JEBAT, a project-aware AI development assistant. "
+                "Use the supplied repository context and any provided JEBAT skills."
+            ),
+        )
+        self.print(f"\n  Provider: {used_provider}", "bold blue")
+        self.print(f"  Model: {config.model}", "cyan")
+        if selected_skills:
+            self.print(
+                f"  Skills: {', '.join(skill.name for skill in selected_skills)}",
+                "cyan",
+            )
+        self.print("\n Response:", "bold green")
+        self.print(response)
+
+    async def cmd_chat_repl(
+        self,
+        provider_override: str | None = None,
+        model_override: str | None = None,
+        project_path: str | None = None,
+        session_id: str | None = None,
+        skill_names: list[str] | None = None,
+    ):
+        """Interactive REPL chat with history."""
+        config = self._override_config(load_llm_config(), provider_override, model_override)
+        history = ChatHistoryStore(config.history_path)
+        session = session_id or uuid.uuid4().hex[:12]
+        project_context = build_project_context(project_path or ".") if project_path else None
+        pinned_skills = skill_names or []
+        self.print(f"\n  REPL session: {session}", "bold blue")
+        self.print("  Type '/exit' to quit.\n", "cyan")
+        while True:
+            try:
+                user_input = input("jebat> ").strip()
+            except EOFError:
+                break
+            if not user_input:
+                continue
+            if user_input in {"/exit", "/quit"}:
+                break
+            prior_turns = history.load(session, limit=12)
+            transcript = []
+            for turn in prior_turns:
+                transcript.append(f"{turn.role}: {turn.content}")
+            if project_context:
+                transcript.append(f"project: {project_context.summary}")
+            transcript.append(f"user: {user_input}")
+            full_prompt = "\n".join(transcript)
+            active_prompt, selected_skills = build_skill_prompt(
+                full_prompt,
+                requested_skills=pinned_skills,
+                auto_discover=not bool(pinned_skills),
+            )
+            response, used_provider = await generate_with_failover(
+                config=config,
+                prompt=active_prompt,
+                system_prompt=(
+                    "You are JEBAT, continuing a CLI conversation with short but useful replies. "
+                    "Use provided JEBAT skills when they are present."
+                ),
+            )
+            history.append(session, "user", user_input)
+            history.append(session, "assistant", response)
+            if selected_skills:
+                self.print(
+                    f"[{used_provider}] skills={', '.join(skill.name for skill in selected_skills)}",
+                    "cyan",
+                )
+            self.print(f"[{used_provider}] {response}", "green")
+
+    async def cmd_llm_providers(self):
+        """Show supported providers."""
+        table = self._create_table("Provider", "Environment", "Notes")
+        for item in list_supported_providers():
+            table.add_row(item["name"], item["env"], item["notes"])
+        self.print(table)
+
+    async def cmd_llm_config(self):
+        """Show resolved LLM config."""
+        config = load_llm_config()
+        payload = {
+            "provider": config.provider,
+            "model": config.model,
+            "temperature": config.temperature,
+            "max_tokens": config.max_tokens,
+            "ollama_host": config.ollama_host,
+            "fallback_providers": list(config.fallback_providers),
+            "history_path": config.history_path,
+        }
+        self.print(json.dumps(payload, indent=2))
+
+    async def cmd_llm_auth(self, missing_only: bool = False):
+        """Show auth status for supported providers."""
+        table = self._create_table("Provider", "Configured", "Env Vars", "Notes")
+        items = list_provider_auth_status()
+        if missing_only:
+            items = [item for item in items if not item.configured]
+            if not items:
+                self.print("All major provider auth paths look configured.", "green")
+                return
+        for item in items:
+            table.add_row(
+                item.provider,
+                "yes" if item.configured else "no",
+                ", ".join(item.env_vars) if item.env_vars else "-",
+                item.notes,
+            )
+        self.print(table)
+
+    async def cmd_llm_best_provider(self):
+        """Show the best configured provider based on preference and fallbacks."""
+        config = load_llm_config()
+        provider = select_best_provider(config.provider, config.fallback_providers)
+        self.print(provider)
+
+    async def cmd_skills_list(self, category: str | None = None):
+        """List available JEBAT skills."""
+        registry = build_skill_registry()
+        skills = registry.get_skills_by_category(category) if category else registry.get_all_skills()
+        table = self._create_table("Skill", "Category", "Description")
+        for skill in sorted(skills, key=lambda item: item.name):
+            table.add_row(skill.name, skill.category, skill.description)
+        self.print(table)
+
+    async def cmd_skills_search(self, query: str):
+        """Search JEBAT skills."""
+        registry = build_skill_registry()
+        results = registry.search_skills(query)
+        table = self._create_table("Skill", "Category", "Description")
+        for skill in sorted(results, key=lambda item: item.name):
+            table.add_row(skill.name, skill.category, skill.description)
+        self.print(table)
+
+    async def cmd_skills_show(self, name: str):
+        """Show one JEBAT skill."""
+        registry = build_skill_registry()
+        skill = registry.get_skill(name)
+        if not skill:
+            self.print(f"Skill not found: {name}", "red")
+            return
+        payload = {
+            "name": skill.name,
+            "category": skill.category,
+            "description": skill.description,
+            "tags": skill.tags,
+            "path": skill.path,
+            "content": skill.content,
+        }
+        self.print(json.dumps(payload, indent=2))
+
+    async def cmd_mode_guide(self):
+        """Show the local JEBAT assistant guide path."""
+        guide_path = Path(__file__).resolve().parents[2] / "JEBAT_ASSISTANT_GUIDE.md"
+        self.print(str(guide_path))
+
+    def _override_config(self, config, provider_override: str | None, model_override: str | None):
+        return type(config)(
+            provider=provider_override or config.provider,
+            model=model_override or config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            ollama_host=config.ollama_host,
+            fallback_providers=config.fallback_providers,
+            history_path=config.history_path,
+        )
+
     def _create_table(self, *columns):
         """Create a table (Rich or fallback)"""
         if self.console:
@@ -373,6 +612,41 @@ async def main():
 
     # Config command
     subparsers.add_parser("config", help="Show configuration")
+    subparsers.add_parser("llm-providers", help="List supported LLM providers")
+    subparsers.add_parser("llm-config", help="Show resolved LLM configuration")
+    llm_auth_parser = subparsers.add_parser("llm-auth", help="Show provider authentication status")
+    llm_auth_parser.add_argument("--missing-only", action="store_true", help="Show only missing provider auth")
+    subparsers.add_parser("llm-best-provider", help="Show the best configured provider")
+    subparsers.add_parser("mode-guide", help="Print the local JEBAT assistant guide path")
+
+    skills_parser = subparsers.add_parser("skills", help="Inspect JEBAT TokGuru skills")
+    skills_subparsers = skills_parser.add_subparsers(dest="skills_command")
+    skills_list_parser = skills_subparsers.add_parser("list", help="List skills")
+    skills_list_parser.add_argument("--category", help="Filter skills by category")
+    skills_search_parser = skills_subparsers.add_parser("search", help="Search skills")
+    skills_search_parser.add_argument("query", help="Search query")
+    skills_show_parser = skills_subparsers.add_parser("show", help="Show one skill")
+    skills_show_parser.add_argument("name", help="Skill name")
+
+    chat_parser = subparsers.add_parser("chat", help="Chat with JEBAT using the configured LLM")
+    chat_parser.add_argument("prompt", help="Prompt to send")
+    chat_parser.add_argument("--provider", help="Override provider for this request")
+    chat_parser.add_argument("--model", help="Override model for this request")
+    chat_parser.add_argument("--skill", action="append", default=[], help="Force one or more JEBAT skills")
+
+    chat_project_parser = subparsers.add_parser("chat-project", help="Chat with JEBAT using current project context")
+    chat_project_parser.add_argument("prompt", help="Prompt to send")
+    chat_project_parser.add_argument("--project-path", default=".", help="Project path to summarize")
+    chat_project_parser.add_argument("--provider", help="Override provider for this request")
+    chat_project_parser.add_argument("--model", help="Override model for this request")
+    chat_project_parser.add_argument("--skill", action="append", default=[], help="Force one or more JEBAT skills")
+
+    repl_parser = subparsers.add_parser("chat-repl", help="Interactive chat session with history")
+    repl_parser.add_argument("--provider", help="Override provider for this session")
+    repl_parser.add_argument("--model", help="Override model for this session")
+    repl_parser.add_argument("--project-path", help="Optional project path for context")
+    repl_parser.add_argument("--session-id", help="Reuse an existing session id")
+    repl_parser.add_argument("--skill", action="append", default=[], help="Pin one or more JEBAT skills for the session")
 
     args = parser.parse_args()
 
@@ -410,6 +684,52 @@ async def main():
         elif args.command == "config":
             await cli.cmd_config()
 
+        elif args.command == "llm-providers":
+            await cli.cmd_llm_providers()
+
+        elif args.command == "llm-config":
+            await cli.cmd_llm_config()
+
+        elif args.command == "llm-auth":
+            await cli.cmd_llm_auth(args.missing_only)
+
+        elif args.command == "llm-best-provider":
+            await cli.cmd_llm_best_provider()
+
+        elif args.command == "mode-guide":
+            await cli.cmd_mode_guide()
+
+        elif args.command == "skills":
+            if args.skills_command == "list":
+                await cli.cmd_skills_list(args.category)
+            elif args.skills_command == "search":
+                await cli.cmd_skills_search(args.query)
+            elif args.skills_command == "show":
+                await cli.cmd_skills_show(args.name)
+            else:
+                skills_parser.print_help()
+
+        elif args.command == "chat":
+            await cli.cmd_chat(args.prompt, args.provider, args.model, args.skill)
+
+        elif args.command == "chat-project":
+            await cli.cmd_chat_project(
+                args.prompt,
+                args.project_path,
+                args.provider,
+                args.model,
+                args.skill,
+            )
+
+        elif args.command == "chat-repl":
+            await cli.cmd_chat_repl(
+                provider_override=args.provider,
+                model_override=args.model,
+                project_path=args.project_path,
+                session_id=args.session_id,
+                skill_names=args.skill,
+            )
+
         else:
             parser.print_help()
 
@@ -433,3 +753,8 @@ async def main():
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
+
+
+def run():
+    """Console script entry point."""
+    return asyncio.run(main())
