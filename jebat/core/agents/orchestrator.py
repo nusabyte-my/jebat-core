@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,11 @@ class AgentOrchestrator:
         self.task_queue: asyncio.Queue = asyncio.Queue()
         self._is_running = False
         self._processor_task: Optional[asyncio.Task] = None
-
+        
+        # Performance tracking for intelligent agent selection
+        self.agent_performance: Dict[str, Dict[str, Any]] = {}
+        self.task_history: List[Tuple[str, str, float, bool]] = []  # (task_id, agent_id, execution_time, success)
+        
         logger.info(f"AgentOrchestrator initialized (max={max_concurrent_tasks} tasks)")
 
     async def start(self):
@@ -128,6 +132,7 @@ class AgentOrchestrator:
         try:
             # Find appropriate agent
             agent = self._select_agent(task)
+            task.agent_id = agent  # Store selected agent ID in task
 
             # Execute task
             result = await self._run_task(agent, task)
@@ -141,23 +146,136 @@ class AgentOrchestrator:
                 agent_id=agent if agent else None,
             )
 
+            # Update agent performance metrics
+            if agent:
+                self._update_agent_performance(agent, task_result.execution_time, True)
+
         except Exception as e:
             task_result = TaskResult(
                 task_id=task.task_id,
                 success=False,
                 error=str(e),
                 execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                agent_id=task.agent_id if hasattr(task, 'agent_id') else None,
             )
+
+            # Update agent performance metrics for failed task
+            if hasattr(task, 'agent_id') and task.agent_id:
+                self._update_agent_performance(task.agent_id, task_result.execution_time, False)
 
         self.completed_tasks[task.task_id] = task_result
         if task.task_id in self.active_tasks:
             del self.active_tasks[task.task_id]
+        
+        # Add to task history for tracking
+        if hasattr(task, 'agent_id') and task.agent_id:
+            self.task_history.append((
+                task.task_id,
+                task.agent_id,
+                task_result.execution_time,
+                task_result.success
+            ))
+            
+            # Keep history limited to last 1000 entries
+            if len(self.task_history) > 1000:
+                self.task_history = self.task_history[-1000:]
 
     def _select_agent(self, task: AgentTask) -> Optional[str]:
-        """Select agent for task."""
+        """Select agent for task using intelligent selection based on capabilities and performance."""
         if not self.agents:
             return None
-        return next(iter(self.agents.keys()), None)
+        
+        # Get available agents
+        available_agents = list(self.agents.keys())
+        
+        # If only one agent, return it
+        if len(available_agents) == 1:
+            return available_agents[0]
+        
+        # Score each agent based on capabilities and performance
+        agent_scores = []
+        for agent_id in available_agents:
+            score = self._calculate_agent_score(agent_id, task)
+            agent_scores.append((agent_id, score))
+        
+        # Sort by score (descending) and return the best agent
+        agent_scores.sort(key=lambda x: x[1], reverse=True)
+        return agent_scores[0][0] if agent_scores else None
+    
+    def _calculate_agent_score(self, agent_id: str, task: AgentTask) -> float:
+        """Calculate score for agent based on capabilities and performance."""
+        agent_info = self.agents.get(agent_id, {})
+        if not agent_info:
+            return 0.0
+        
+        score = 0.0
+        
+        # Capability matching (40% of score)
+        task_capabilities_needed = self._extract_task_capabilities(task)
+        agent_capabilities = set(agent_info.get("capabilities", []))
+        if task_capabilities_needed:
+            capability_match = len(task_capabilities_needed.intersection(agent_capabilities)) / len(task_capabilities_needed)
+            score += capability_match * 0.4
+        else:
+            # If no specific capabilities needed, give base score
+            score += 0.2
+        
+        # Performance history (40% of score)
+        performance_score = self._get_agent_performance_score(agent_id)
+        score += performance_score * 0.4
+        
+        # Current load (20% of score) - prefer less busy agents
+        load_score = 1.0 - min(len([t for t in self.active_tasks.values() if t.agent_id == agent_id]) / 5.0, 1.0)
+        score += load_score * 0.2
+        
+        return score
+    
+    def _extract_task_capabilities(self, task: AgentTask) -> set:
+        """Extract required capabilities from task description or parameters."""
+        # Simple implementation - can be enhanced with NLP
+        capabilities = set()
+        
+        # Check task description for keywords
+        description_lower = task.description.lower()
+        if "analysis" in description_lower or "analyze" in description_lower:
+            capabilities.add("analysis")
+        if "creative" in description_lower or "create" in description_lower or "brainstorm" in description_lower:
+            capabilities.add("creation")
+        if "conversation" in description_lower or "chat" in description_lower or "talk" in description_lower:
+            capabilities.add("conversation")
+        if "research" in description_lower:
+            capabilities.add("research")
+        
+        # Check parameters for capability hints
+        params = task.parameters
+        if isinstance(params, dict):
+            if params.get("type") == "analytical" or params.get("analysis"):
+                capabilities.add("analysis")
+            if params.get("type") == "creative" or params.get("creative"):
+                capabilities.add("creation")
+            if params.get("type") == "conversational":
+                capabilities.add("conversation")
+        
+        return capabilities
+    
+    def _get_agent_performance_score(self, agent_id: str) -> float:
+        """Get performance score for agent based on history."""
+        if agent_id not in self.agent_performance:
+            # New agent - give neutral score
+            return 0.5
+        
+        perf = self.agent_performance[agent_id]
+        total_tasks = perf.get("total_tasks", 0)
+        if total_tasks == 0:
+            return 0.5
+        
+        success_rate = perf.get("successful_tasks", 0) / total_tasks
+        # Normalize execution time (lower is better, but we want to score higher for better performance)
+        avg_time = perf.get("avg_execution_time", 1.0)
+        time_score = max(0.0, 1.0 - (avg_time / 10.0))  # Assume 10s is slow
+        
+        # Combine success rate and time score
+        return (success_rate * 0.7) + (time_score * 0.3)
 
     async def _run_task(self, agent_id: Optional[str], task: AgentTask) -> Any:
         """Run task with agent."""
@@ -172,11 +290,45 @@ class AgentOrchestrator:
             for agent_id in self.agents.keys()
         }
 
+    def _update_agent_performance(self, agent_id: str, execution_time: float, success: bool):
+        """Update performance metrics for an agent."""
+        if agent_id not in self.agent_performance:
+            self.agent_performance[agent_id] = {
+                "total_tasks": 0,
+                "successful_tasks": 0,
+                "total_execution_time": 0.0,
+                "avg_execution_time": 0.0,
+            }
+        
+        perf = self.agent_performance[agent_id]
+        perf["total_tasks"] += 1
+        if success:
+            perf["successful_tasks"] += 1
+        perf["total_execution_time"] += execution_time
+        perf["avg_execution_time"] = perf["total_execution_time"] / perf["total_tasks"]
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get orchestrator statistics."""
-        return {
+        base_stats = {
             "agents": len(self.agents),
             "active_tasks": len(self.active_tasks),
             "completed_tasks": len(self.completed_tasks),
             "is_running": self._is_running,
         }
+        
+        # Add performance monitoring stats
+        performance_stats = {
+            "agent_performance": {
+                agent_id: {
+                    "total_tasks": perf["total_tasks"],
+                    "success_rate": perf["successful_tasks"] / perf["total_tasks"] if perf["total_tasks"] > 0 else 0.0,
+                    "avg_execution_time": perf["avg_execution_time"],
+                }
+                for agent_id, perf in self.agent_performance.items()
+            },
+            "task_history_size": len(self.task_history),
+        }
+        
+        # Combine stats
+        base_stats.update(performance_stats)
+        return base_stats
