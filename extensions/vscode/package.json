@@ -1,0 +1,118 @@
+{
+  "name": "jebat-vscode",
+  "displayName": "JEBAT — AI Operator",
+  "description": "JEBAT AI operator integration for VS Code. Context injection, skill browser, and command palette access to the JEBAT ecosystem.",
+  "version": "0.1.0",
+  "publisher": "nusabyte",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["AI", "Other"],
+  "activationEvents": ["*"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jebat.installContext",
+        "title": "JEBAT: Install Context",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.runDoctor",
+        "title": "JEBAT: Run Doctor",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.skillBrowser",
+        "title": "JEBAT: Skill Browser",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.memoryStatus",
+        "title": "JEBAT: Memory Status",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.togglePanglima",
+        "title": "JEBAT: Toggle Panglima Mode",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.askJebat",
+        "title": "JEBAT: Ask JEBAT",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.explainCode",
+        "title": "JEBAT: Explain with JEBAT",
+        "category": "JEBAT"
+      },
+      {
+        "command": "jebat.reviewCode",
+        "title": "JEBAT: Review with JEBAT",
+        "category": "JEBAT"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "jebat.askJebat",
+          "group": "jebat@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "jebat.explainCode",
+          "group": "jebat@2"
+        },
+        {
+          "command": "jebat.reviewCode",
+          "group": "jebat@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "JEBAT",
+      "properties": {
+        "jebat.gatewayUrl": {
+          "type": "string",
+          "default": "http://localhost:18789",
+          "description": "JEBAT Gateway URL"
+        },
+        "jebat.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "JEBAT API URL"
+        },
+        "jebat.primaryProvider": {
+          "type": "string",
+          "default": "ollama",
+          "enum": ["ollama", "zai", "openai", "anthropic", "gemini", "openrouter"],
+          "description": "Primary LLM provider"
+        },
+        "jebat.thinkingMode": {
+          "type": "string",
+          "default": "deliberate",
+          "enum": ["fast", "deliberate", "deep", "strategic", "creative", "critical"],
+          "description": "Default thinking mode"
+        },
+        "jebat.panglimaMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Panglima capture-first mode"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

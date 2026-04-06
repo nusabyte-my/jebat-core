@@ -86,3 +86,6 @@ test_results/
 .kilocode/
 .kiro/
 .ollama/
+jebat-core/
+jebat-online/
+package-lock.json
