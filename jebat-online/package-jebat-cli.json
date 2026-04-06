@@ -1,0 +1,28 @@
+{
+  "name": "@nusabyte/jebat",
+  "version": "1.0.0",
+  "description": "JEBAT — The LLM Ecosystem That Remembers Everything. CLI for IDE setup, token management, skill installation, and AI chat.",
+  "bin": {
+    "jebat": "./bin/jebat.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "jebat",
+    "ai",
+    "llm",
+    "memory",
+    "agent",
+    "orchestration",
+    "cybersecurity",
+    "nusabyte"
+  ],
+  "author": "NusaByte <https://github.com/nusabyte-my>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusabyte-my/jebat-core.git"
+  },
+  "dependencies": {}
+}

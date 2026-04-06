@@ -87,5 +87,3 @@ test_results/
 .kiro/
 .ollama/
 jebat-core/
-jebat-online/
-package-lock.json
