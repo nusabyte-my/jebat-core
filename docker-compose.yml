@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # TIMESCALEDB - Memory storage with time-series extensions
+  # ============================================================================
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
+    container_name: jebat-timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jebat
+      POSTGRES_USER: jebat_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jebat_secure_password}
+      TIMESCALEDB_TELEMETRY: off
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/home/postgres/pgdata/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jebat_user -d jebat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jebat_network
+
+  # ============================================================================
+  # REDIS - Session caching and message queue
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: jebat-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secure_password}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jebat_network
+
+  # ============================================================================
+  # PGADMIN - Database management UI (optional, for development)
+  # ============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: jebat-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@jebat.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-pgadmin_password}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - timescaledb
+    networks:
+      - jebat_network
+    profiles:
+      - dev  # Only start with --profile dev
+
+  # ============================================================================
+  # REDIS COMMANDER - Redis UI (optional, for development)
+  # ============================================================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: jebat-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redis_secure_password}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - jebat_network
+    profiles:
+      - dev  # Only start with --profile dev
+
+volumes:
+  timescale_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  jebat_network:
+    driver: bridge

@@ -1,0 +1,139 @@
+{
+  "reviewedSkills": [
+    {
+      "name": "agent-team-orchestration",
+      "score": 25,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "delegation",
+        "handoff",
+        "reviewer-builder-pattern"
+      ]
+    },
+    {
+      "name": "arc-trust-verifier",
+      "score": 24,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "trust-scoring",
+        "provenance-checks",
+        "attestation-concepts"
+      ]
+    },
+    {
+      "name": "azhua-skill-vetter",
+      "score": 24,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "red-flag-checks",
+        "install-verdict-workflow",
+        "permission-vs-purpose-review"
+      ]
+    },
+    {
+      "name": "arc-security-audit",
+      "score": 24,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "consolidated-skill-stack-audit-flow"
+      ]
+    },
+    {
+      "name": "academic-research",
+      "score": 24,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "academic-research-patterns",
+        "literature-review-workflows"
+      ]
+    },
+    {
+      "name": "arxiv-search-collector",
+      "score": 23,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "curated-paper-set-building",
+        "model-led-query-expansion"
+      ]
+    },
+    {
+      "name": "arc-skill-gitops",
+      "score": 23,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "skill-snapshotting",
+        "rollback-discipline",
+        "skill-version-tracking"
+      ]
+    },
+    {
+      "name": "agent-commons",
+      "score": 15,
+      "max": 30,
+      "trustClass": "pattern extraction only",
+      "verdict": "PATTERN ONLY",
+      "plannedUse": [
+        "internal-provenance-ideas",
+        "local-reasoning-lineage"
+      ]
+    },
+    {
+      "name": "agentgate",
+      "score": 24,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "write-approval-discipline",
+        "external-action-boundary-design"
+      ]
+    },
+    {
+      "name": "billy-emergency-repair",
+      "score": 14,
+      "max": 30,
+      "trustClass": "pattern extraction only",
+      "verdict": "PATTERN ONLY",
+      "plannedUse": [
+        "emergency-procedure-template-ideas",
+        "authorization-audit-backup-pattern"
+      ]
+    },
+    {
+      "name": "arc-agent-lifecycle",
+      "score": 24,
+      "max": 30,
+      "trustClass": "adapt with caution",
+      "verdict": "APPROVE WITH CAUTION",
+      "plannedUse": [
+        "lifecycle-tracking",
+        "change-history-discipline",
+        "retirement-notes"
+      ]
+    },
+    {
+      "name": "auto-pr-merger",
+      "score": 14,
+      "max": 30,
+      "trustClass": "pattern extraction only",
+      "verdict": "PATTERN ONLY",
+      "plannedUse": [
+        "guarded-release-ops-reference"
+      ]
+    }
+  ]
+}

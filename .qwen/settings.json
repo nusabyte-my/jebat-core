@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git diff *)",
+      "Read(//home/humm1ngb1rd/Desktop/Jebat.CORE/**)"
+    ]
+  },
+  "$version": 3
+}

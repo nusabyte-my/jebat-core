@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Alacritty Jebat Ops
+Comment=Launch Alacritty with default Jebat operator profile
+Exec=env OPERATOR_PROFILE=default ALACRITTY_TITLE=JEBAT-OPS alacritty --config-file /home/humm1ngb1rd/Desktop/Jebat\ Online/config/alacritty/alacritty.toml
+Icon=utilities-terminal
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true

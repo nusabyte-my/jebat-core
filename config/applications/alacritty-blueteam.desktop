@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Alacritty Blue Team
+Comment=Launch Alacritty in blue-team operator mode
+Exec=env OPERATOR_PROFILE=blueteam ALACRITTY_TITLE=BLUETEAM-OPS alacritty --config-file /home/humm1ngb1rd/Desktop/Jebat\ Online/config/alacritty/alacritty-blueteam.toml
+Icon=utilities-terminal
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true

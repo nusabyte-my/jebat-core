@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Alacritty Red Team
+Comment=Launch Alacritty in red-team operator mode
+Exec=env OPERATOR_PROFILE=redteam ALACRITTY_TITLE=REDTEAM-OPS alacritty --config-file /home/humm1ngb1rd/Desktop/Jebat\ Online/config/alacritty/alacritty-redteam.toml
+Icon=utilities-terminal
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true

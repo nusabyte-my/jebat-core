@@ -1,0 +1,175 @@
+[general]
+live_config_reload = true
+
+[window]
+opacity = 0.98
+padding = { x = 10, y = 10 }
+decorations = "Full"
+startup_mode = "Windowed"
+dynamic_title = true
+
+[scrolling]
+history = 500
+multiplier = 5
+
+[font]
+size = 12.0
+builtin_box_drawing = true
+
+[font.normal]
+family = "JetBrains Mono"
+style = "Regular"
+
+[font.bold]
+family = "JetBrains Mono"
+style = "Bold"
+
+[font.italic]
+family = "JetBrains Mono"
+style = "Italic"
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = ",│`|:\"' ()[]{}<\t"
+
+[cursor]
+style = { shape = "Block", blinking = "Off" }
+unfocused_hollow = true
+
+[mouse]
+hide_when_typing = true
+
+[terminal]
+osc52 = "CopyPaste"
+
+[terminal.shell]
+program = "/usr/bin/fish"
+args = ["-l", "-C", "set -gx OPERATOR_PROFILE blueteam; set -gx ALACRITTY_TITLE BLUETEAM-OPS; if command -q tmux; tmux new-session -A -s blueteam; else; exec fish -l; end"]
+
+[env]
+TERM = "xterm-256color"
+COLORTERM = "truecolor"
+OPERATOR_PROFILE = "blueteam"
+ALACRITTY_TITLE = "BLUETEAM-OPS"
+
+[colors.primary]
+background = "#0b1220"
+foreground = "#d8e1f0"
+dim_foreground = "#8a97ab"
+bright_foreground = "#ffffff"
+
+[colors.cursor]
+text = "#0b1220"
+cursor = "#5ad1e6"
+
+[colors.vi_mode_cursor]
+text = "#0b1220"
+cursor = "#7aa2f7"
+
+[colors.search.matches]
+foreground = "#0b1220"
+background = "#e0af68"
+
+[colors.search.focused_match]
+foreground = "#0b1220"
+background = "#9ece6a"
+
+[colors.footer_bar]
+foreground = "#d8e1f0"
+background = "#162033"
+
+[colors.hints.start]
+foreground = "#0b1220"
+background = "#e0af68"
+
+[colors.hints.end]
+foreground = "#d8e1f0"
+background = "#162033"
+
+[colors.line_indicator]
+foreground = "None"
+background = "None"
+
+[colors.selection]
+text = "CellForeground"
+background = "#26324a"
+
+[colors.normal]
+black = "#1a2233"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#d8e1f0"
+
+[colors.bright]
+black = "#4b5b76"
+red = "#ff8da1"
+green = "#b7e07a"
+yellow = "#f0c27b"
+blue = "#8db4ff"
+magenta = "#ccb0ff"
+cyan = "#97e2ff"
+white = "#ffffff"
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control|Shift"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "C"
+mods = "Control|Shift"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "F"
+mods = "Control|Shift"
+action = "SearchForward"
+
+[[keyboard.bindings]]
+key = "B"
+mods = "Control|Shift"
+action = "SearchBackward"
+
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control|Shift"
+action = "ToggleViMode"
+
+[[keyboard.bindings]]
+key = "N"
+mods = "Control|Shift"
+action = "CreateNewWindow"
+
+[[keyboard.bindings]]
+key = "L"
+mods = "Control|Shift"
+chars = "clear\u000d"
+
+[[keyboard.bindings]]
+key = "PageUp"
+mods = "Shift"
+action = "ScrollPageUp"
+
+[[keyboard.bindings]]
+key = "PageDown"
+mods = "Shift"
+action = "ScrollPageDown"
+
+[[keyboard.bindings]]
+key = "Equals"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Minus"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Key0"
+mods = "Control"
+action = "ResetFontSize"

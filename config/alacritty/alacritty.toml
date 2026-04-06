@@ -1,0 +1,195 @@
+[general]
+live_config_reload = true
+
+[window]
+opacity = 0.97
+padding = { x = 10, y = 10 }
+decorations = "Full"
+startup_mode = "Windowed"
+dynamic_title = true
+option_as_alt = "None"
+
+[scrolling]
+history = 500
+multiplier = 5
+
+[font]
+size = 12.0
+builtin_box_drawing = true
+
+[font.normal]
+family = "JetBrains Mono"
+style = "Regular"
+
+[font.bold]
+family = "JetBrains Mono"
+style = "Bold"
+
+[font.italic]
+family = "JetBrains Mono"
+style = "Italic"
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = ",│`|:\"' ()[]{}<\t"
+
+[cursor]
+style = { shape = "Block", blinking = "Off" }
+unfocused_hollow = true
+
+[mouse]
+hide_when_typing = true
+
+[terminal]
+osc52 = "CopyPaste"
+
+[terminal.shell]
+program = "/usr/bin/fish"
+args = ["-l"]
+
+[env]
+TERM = "xterm-256color"
+COLORTERM = "truecolor"
+OPERATOR_PROFILE = "default"
+
+[colors.primary]
+background = "#0b0f14"
+foreground = "#d8dee9"
+dim_foreground = "#8b93a6"
+bright_foreground = "#ffffff"
+
+[colors.cursor]
+text = "#0b0f14"
+cursor = "#8fbcbb"
+
+[colors.vi_mode_cursor]
+text = "#0b0f14"
+cursor = "#88c0d0"
+
+[colors.search.matches]
+foreground = "#0b0f14"
+background = "#ebcb8b"
+
+[colors.search.focused_match]
+foreground = "#0b0f14"
+background = "#a3be8c"
+
+[colors.footer_bar]
+foreground = "#d8dee9"
+background = "#1b2430"
+
+[colors.hints.start]
+foreground = "#0b0f14"
+background = "#ebcb8b"
+
+[colors.hints.end]
+foreground = "#d8dee9"
+background = "#1b2430"
+
+[colors.line_indicator]
+foreground = "None"
+background = "None"
+
+[colors.selection]
+text = "CellForeground"
+background = "#2e3a4e"
+
+[colors.normal]
+black = "#1b1f27"
+red = "#bf616a"
+green = "#a3be8c"
+yellow = "#ebcb8b"
+blue = "#81a1c1"
+magenta = "#b48ead"
+cyan = "#88c0d0"
+white = "#d8dee9"
+
+[colors.bright]
+black = "#4c566a"
+red = "#ff7b86"
+green = "#b8d8a3"
+yellow = "#ffe08a"
+blue = "#8fb9e8"
+magenta = "#d7a9e3"
+cyan = "#93e0e3"
+white = "#ffffff"
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control|Shift"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "C"
+mods = "Control|Shift"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "F"
+mods = "Control|Shift"
+action = "SearchForward"
+
+[[keyboard.bindings]]
+key = "B"
+mods = "Control|Shift"
+action = "SearchBackward"
+
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control|Shift"
+action = "ToggleViMode"
+
+[[keyboard.bindings]]
+key = "N"
+mods = "Control|Shift"
+action = "CreateNewWindow"
+
+[[keyboard.bindings]]
+key = "L"
+mods = "Control|Shift"
+chars = "clear\u000d"
+
+[[keyboard.bindings]]
+key = "U"
+mods = "Control|Shift"
+chars = "\u0015"
+
+[[keyboard.bindings]]
+key = "PageUp"
+mods = "Shift"
+action = "ScrollPageUp"
+
+[[keyboard.bindings]]
+key = "PageDown"
+mods = "Shift"
+action = "ScrollPageDown"
+
+[[keyboard.bindings]]
+key = "Home"
+mods = "Shift"
+action = "ScrollToTop"
+
+[[keyboard.bindings]]
+key = "End"
+mods = "Shift"
+action = "ScrollToBottom"
+
+[[keyboard.bindings]]
+key = "Equals"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Minus"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Key0"
+mods = "Control"
+action = "ResetFontSize"
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"

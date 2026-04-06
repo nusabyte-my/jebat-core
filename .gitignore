@@ -1,0 +1,44 @@
+# Environment
+.env
+*.env
+
+# Node
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Memory (sensitive)
+memory/heartbeat-state.json
+
+# AI Agent Caches (large, ephemeral)
+.claude/
+.gemini/
+.agents/
+.ai_completion/
+.claude-code-router/
+.kilocode/
+.kiro/
+.ollama/
+
+# Sub-projects with their own git
+jebat-online/
+jebat-core/

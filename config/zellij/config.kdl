@@ -1,0 +1,53 @@
+keybinds clear-defaults=true {
+    normal {
+        bind "Ctrl a" { SwitchToMode "tmux"; }
+        bind "Alt h" { MoveFocus "Left"; }
+        bind "Alt l" { MoveFocus "Right"; }
+        bind "Alt j" { MoveFocus "Down"; }
+        bind "Alt k" { MoveFocus "Up"; }
+        bind "Alt n" { NewPane; }
+        bind "Alt i" { MoveTab "Left"; }
+        bind "Alt o" { MoveTab "Right"; }
+        bind "Alt =" { Resize "Increase"; }
+        bind "Alt -" { Resize "Decrease"; }
+        bind "Ctrl p" { SwitchToMode "Pane"; }
+        bind "Ctrl t" { SwitchToMode "Tab"; }
+        bind "Ctrl s" { SwitchToMode "Scroll"; }
+        bind "Ctrl q" { Quit; }
+    }
+    tmux {
+        bind "c" { NewTab; SwitchToMode "Normal"; }
+        bind "|" { NewPane "Right"; SwitchToMode "Normal"; }
+        bind "-" { NewPane "Down"; SwitchToMode "Normal"; }
+        bind "h" { MoveFocus "Left"; SwitchToMode "Normal"; }
+        bind "j" { MoveFocus "Down"; SwitchToMode "Normal"; }
+        bind "k" { MoveFocus "Up"; SwitchToMode "Normal"; }
+        bind "l" { MoveFocus "Right"; SwitchToMode "Normal"; }
+        bind "x" { CloseFocus; SwitchToMode "Normal"; }
+        bind "n" { GoToNextTab; SwitchToMode "Normal"; }
+        bind "p" { GoToPreviousTab; SwitchToMode "Normal"; }
+        bind "Escape" { SwitchToMode "Normal"; }
+    }
+}
+
+theme "jebat-operator" {
+    fg "#d8dee9"
+    bg "#0b0f14"
+    red "#bf616a"
+    green "#a3be8c"
+    yellow "#ebcb8b"
+    blue "#81a1c1"
+    magenta "#b48ead"
+    cyan "#88c0d0"
+    orange "#d08770"
+    black "#1b1f27"
+    white "#eceff4"
+}
+
+default_shell "/usr/bin/fish -l"
+default_layout "compact"
+theme "jebat-operator"
+copy_command "wl-copy"
+scrollback_editor "/usr/bin/nvim"
+show_startup_tips false
+pane_frames true
