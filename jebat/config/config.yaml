@@ -1,0 +1,107 @@
+# JEBAT Unified Configuration
+# Version: 2.0.0-refactored
+
+system:
+  name: JEBAT
+  version: 2.0.0
+  debug: false
+  log_level: INFO
+
+core:
+  memory:
+    layers: 5
+    consolidation_interval: 3600  # 1 hour
+    high_heat_threshold: 0.8
+    low_heat_threshold: 0.4
+    batch_size: 100
+    enable_auto_consolidation: true
+    decay_half_life_days: 30
+
+  cache:
+    tiers: 3
+    max_size_mb: 1000
+    hot_threshold: 10ms
+    warm_threshold: 100ms
+    cold_threshold: 500ms
+
+  agents:
+    max_concurrent: 10
+    default_personality: assistant
+    enable_multi_agent: true
+
+features:
+  ultra_loop:
+    enabled: true
+    cycle_interval: 1.0
+    max_iterations: 100
+
+  ultra_think:
+    enabled: true
+    max_thoughts: 20
+    default_mode: deliberate
+    timeout: 60.0
+
+  sentinel:
+    enabled: true
+    security_level: standard
+    audit_logging: true
+
+services:
+  webui:
+    enabled: true
+    host: 0.0.0.0
+    port: 8787
+    cors_enabled: true
+
+  api:
+    enabled: true
+    host: 0.0.0.0
+    port: 8080
+    websocket_enabled: true
+
+  mcp:
+    enabled: true
+    port: 18789
+    protocol_version: "1.0"
+
+integrations:
+  channels:
+    enabled: true
+    supported:
+      - websocket
+      - rest_api
+      - cli
+
+  webhooks:
+    enabled: true
+    max_retries: 3
+    timeout: 30
+
+database:
+  enabled: false  # Set to true when database is configured
+  type: sqlite  # Options: sqlite, postgresql, mysql
+  connection_string: "sqlite:///jebat.db"
+  pool_size: 5
+
+llm:
+  provider: openai
+  model: gpt-5.4
+  temperature: 0.2
+  max_tokens: 1200
+  ollama_host: "http://127.0.0.1:11434"
+  fallback_providers:
+    - google
+    - anthropic
+    - openrouter
+    - ollama
+    - local
+  history_path: ".jebat/chat_history.jsonl"
+
+# Environment-specific overrides
+environment:
+  dev:
+    debug: true
+    log_level: DEBUG
+  prod:
+    debug: false
+    log_level: WARNING

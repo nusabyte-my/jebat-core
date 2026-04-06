@@ -1,99 +1,158 @@
-version: '3.8'
+# JEBAT AI Assistant - Docker Compose
+# Complete stack with database, cache, and monitoring
+
+version: "3.8"
 
 services:
-  # ============================================================================
-  # TIMESCALEDB - Memory storage with time-series extensions
-  # ============================================================================
-  timescaledb:
-    image: timescale/timescaledb-ha:pg16
-    container_name: jebat-timescaledb
+  # JEBAT API Service
+  jebat-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD:-jebat_password}@postgres:5432/jebat_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - jebat_data:/app/data
+      - ./config:/app/config:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - jebat-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # JEBAT Ultra-Loop Worker
+  jebat-loop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-loop
     restart: unless-stopped
     environment:
-      POSTGRES_DB: jebat
-      POSTGRES_USER: jebat_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jebat_secure_password}
-      TIMESCALEDB_TELEMETRY: off
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD:-jebat_password}@postgres:5432/jebat_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - jebat_data:/app/data
+      - ./config:/app/config:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - jebat-network
+    command: ["python", "-m", "jebat.cli.launch", "loop", "start"]
+
+  # PostgreSQL Database with TimescaleDB
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    container_name: jebat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jebat_db
+      POSTGRES_USER: jebat
+      POSTGRES_PASSWORD: ${JEBAT_DB_PASSWORD:-jebat_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
-    volumes:
-      - timescale_data:/home/postgres/pgdata/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - jebat-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jebat_user -d jebat"]
+      test: ["CMD-SHELL", "pg_isready -U jebat -d jebat_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - jebat_network
 
-  # ============================================================================
-  # REDIS - Session caching and message queue
-  # ============================================================================
+  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: jebat-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secure_password}
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - jebat-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - jebat_network
 
-  # ============================================================================
-  # PGADMIN - Database management UI (optional, for development)
-  # ============================================================================
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: jebat-pgadmin
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: jebat-prometheus
     restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@jebat.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-pgadmin_password}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - timescaledb
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
     networks:
-      - jebat_network
-    profiles:
-      - dev  # Only start with --profile dev
+      - jebat-network
+    depends_on:
+      - jebat-api
 
-  # ============================================================================
-  # REDIS COMMANDER - Redis UI (optional, for development)
-  # ============================================================================
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: jebat-redis-commander
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: jebat-grafana
     restart: unless-stopped
     environment:
-      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redis_secure_password}
+      GF_SECURITY_ADMIN_PASSWORD: ${JEBAT_GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     ports:
-      - "8081:8081"
-    depends_on:
-      - redis
+      - "3000:3000"
     networks:
-      - jebat_network
-    profiles:
-      - dev  # Only start with --profile dev
-
-volumes:
-  timescale_data:
-    driver: local
-  redis_data:
-    driver: local
-  pgadmin_data:
-    driver: local
+      - jebat-network
+    depends_on:
+      - prometheus
 
 networks:
-  jebat_network:
+  jebat-network:
     driver: bridge
+
+volumes:
+  jebat_data:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:

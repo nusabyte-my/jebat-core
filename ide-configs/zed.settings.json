@@ -1,0 +1,31 @@
+{
+  "language_models": {
+    "openai": {
+      "api_url": "http://localhost:8000/api/v1",
+      "available_models": [
+        {
+          "name": "jebat-pro",
+          "display_name": "JEBAT Pro",
+          "max_tokens": 8192
+        },
+        {
+          "name": "jebat-fast",
+          "display_name": "JEBAT Fast",
+          "max_tokens": 4096
+        },
+        {
+          "name": "jebat-deep",
+          "display_name": "JEBAT Deep",
+          "max_tokens": 16384
+        }
+      ]
+    }
+  },
+  "assistant": {
+    "default_model": {
+      "provider": "openai",
+      "model": "jebat-pro"
+    },
+    "version": "2"
+  }
+}

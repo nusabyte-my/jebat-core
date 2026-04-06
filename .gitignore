@@ -1,33 +1,81 @@
-# Environment
-.env
-*.env
-
-# Node
-node_modules/
-package-lock.json
-
 # Python
 __pycache__/
-*.pyc
-*.pyo
-.env.*
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# OS
-.DS_Store
-Thumbs.db
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.manifest
+*.spec
 
 # Logs
 *.log
 logs/
 
-# Memory (sensitive)
-memory/heartbeat-state.json
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+
+# JEBAT specific
+jebat_old_backup/
+projects/
+*.pem
+*.key
+secrets/
+
+# Node (if using)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Testing
+test_results/
+.tmp/
+.temp/
+
+# Backup files
+*.bak
+*.backup
+*.old
 
 # AI Agent Caches (large, ephemeral)
 .claude/
@@ -38,7 +86,3 @@ memory/heartbeat-state.json
 .kilocode/
 .kiro/
 .ollama/
-
-# Sub-projects with their own git
-jebat-online/
-jebat-core/

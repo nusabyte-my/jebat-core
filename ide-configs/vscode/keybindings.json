@@ -1,0 +1,25 @@
+[
+  {
+    "context": "Editor",
+    "bindings": {
+      "ctrl-shift-j": "mcp:jebat:generate",
+      "ctrl-shift-r": "mcp:jebat:review",
+      "ctrl-shift-t": "mcp:jebat:test",
+      "ctrl-shift-d": "mcp:jebat:debug",
+      "ctrl-alt-g": "mcp:jebat:git_status",
+      "ctrl-alt-s": "mcp:jebat:scaffold"
+    }
+  },
+  {
+    "context": "Chat",
+    "bindings": {
+      "ctrl-enter": "mcp:jebat:send"
+    }
+  },
+  {
+    "context": "Terminal",
+    "bindings": {
+      "ctrl-shift-j": "mcp:jebat:explain_command"
+    }
+  }
+]

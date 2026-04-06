@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT Immersive Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-tertiary: #ec4899;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Main Layout */
+        .app {
+            display: grid;
+            grid-template-rows: 50px 1fr 60px;
+            height: 100vh;
+        }
+
+        /* Header - Ultra Minimal */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .mode-switcher {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .mode-btn {
+            padding: 0.4rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .mode-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            overflow: hidden;
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel:last-child {
+            border-right: none;
+            border-left: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .panel-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle, var(--text-muted) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: center;
+        }
+
+        /* AI Chat Panel */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .message.ai {
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .message.user {
+            border-left: 3px solid var(--accent-tertiary);
+            margin-left: 1rem;
+        }
+
+        .message-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-field {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 0.6rem 0.875rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            resize: none;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .chat-input-field:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .send-btn {
+            background: var(--accent-primary);
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        /* Properties Panel */
+        .property-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .property-group-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .property-item {
+            margin-bottom: 0.75rem;
+        }
+
+        .property-label {
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .property-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: var(--bg-secondary);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .tool-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        /* Floating Actions */
+        .floating-actions {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .floating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(99,102,241,0.4);
+        }
+
+        .floating-btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            color: white;
+        }
+
+        /* Welcome Screen */
+        .welcome {
+            position: absolute;
+            inset: 0;
+            background: rgba(15,23,42,0.98);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .welcome.hidden {
+            display: none;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome h1 {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .welcome p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .suggestion-card {
+            padding: 1.25rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .suggestion-card:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .suggestion-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <div class="logo">🗡️ JEBAT Builder</div>
+                <div class="mode-switcher">
+                    <button class="mode-btn active">Design</button>
+                    <button class="mode-btn">Code</button>
+                    <button class="mode-btn">Preview</button>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn">💾 Save</button>
+                <button class="btn btn-primary">🚀 Export</button>
+            </div>
+        </header>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <!-- Left Panel - AI Chat -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>💬 AI Assistant</span>
+                    <button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Clear</button>
+                </div>
+                <div class="panel-content" style="display: flex; flex-direction: column;">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message ai">
+                            <div class="message-text">
+                                👋 Hi! I'm your AI design assistant. What would you like to build today?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <div class="chat-input-wrapper">
+                            <textarea
+                                class="chat-input-field"
+                                placeholder="Describe what to build..."
+                                rows="1"
+                            ></textarea>
+                            <button class="send-btn">➤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-area">
+                <div class="canvas" id="canvas">
+                    <!-- Welcome Overlay -->
+                    <div class="welcome" id="welcome">
+                        <div class="welcome-content">
+                            <div class="welcome-icon">🎨</div>
+                            <h1>Start Building</h1>
+                            <p>Describe your idea or choose a template to get started</p>
+
+                            <div class="suggestion-grid">
+                                <div class="suggestion-card" onclick="startProject('landing')">
+                                    <div class="suggestion-title">🚀 Landing Page</div>
+                                    <div class="suggestion-desc">Modern startup landing page</div>
+                                </div>
+                                <div class="suggestion-card" onclick="startProject('portfolio')">
+                                    <div class="suggestion-title">👨‍💼 Portfolio</div>
+                                    <div class="suggestion-desc">Personal portfolio website</div>
+                                </div>
+                                <div class="suggestion-card" onclick="startProject('dashboard')">
+                                    <div class="suggestion-title">📊 Dashboard</div>
+                                    <div class="suggestion-desc">Analytics dashboard UI</div>
+                                </div>
+                                <div class="suggestion-card" onclick="startProject('ecommerce')">
+                                    <div class="suggestion-title">🛒 E-commerce</div>
+                                    <div class="suggestion-desc">Product page template</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Actions -->
+                <div class="floating-actions">
+                    <button class="floating-btn" title="Undo">↩️</button>
+                    <button class="floating-btn" title="Redo">↪️</button>
+                    <button class="floating-btn floating-btn-primary" title="AI Generate">✨</button>
+                </div>
+            </div>
+
+            <!-- Right Panel - Properties -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>⚙️ Properties</span>
+                </div>
+                <div class="panel-content">
+                    <div class="property-group">
+                        <div class="property-group-title">Layout</div>
+                        <div class="property-item">
+                            <div class="property-label">Width</div>
+                            <input type="text" class="property-input" value="100%" />
+                        </div>
+                        <div class="property-item">
+                            <div class="property-label">Height</div>
+                            <input type="text" class="property-input" value="auto" />
+                        </div>
+                        <div class="property-item">
+                            <div class="property-label">Padding</div>
+                            <input type="text" class="property-input" value="20px" />
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <div class="property-group-title">Style</div>
+                        <div class="property-item">
+                            <div class="property-label">Background</div>
+                            <div class="color-picker">
+                                <div class="color-swatch" style="background: #6366f1;"></div>
+                                <input type="text" class="property-input" value="#6366f1" />
+                            </div>
+                        </div>
+                        <div class="property-item">
+                            <div class="property-label">Border Radius</div>
+                            <input type="text" class="property-input" value="8px" />
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <div class="property-group-title">Typography</div>
+                        <div class="property-item">
+                            <div class="property-label">Font Size</div>
+                            <input type="text" class="property-input" value="16px" />
+                        </div>
+                        <div class="property-item">
+                            <div class="property-label">Font Weight</div>
+                            <select class="property-input">
+                                <option>Regular</option>
+                                <option>Medium</option>
+                                <option selected>Bold</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="tool-btn" title="Select">🖱️</button>
+            <button class="tool-btn" title="Frame">🖼️</button>
+            <button class="tool-btn" title="Text">T</button>
+            <button class="tool-btn" title="Image">🖼️</button>
+            <button class="tool-btn" title="Shape">⬜</button>
+            <button class="tool-btn" title="Component">🧩</button>
+            <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1);"></div>
+            <button class="tool-btn active" title="AI Generate">✨</button>
+            <button class="tool-btn" title="Hand Tool">✋</button>
+        </div>
+    </div>
+
+    <script>
+        // Welcome screen management
+        function startProject(type) {
+            document.getElementById('welcome').classList.add('hidden');
+
+            // Send message to AI
+            const messages = {
+                'landing': 'Create a modern landing page',
+                'portfolio': 'Build a personal portfolio',
+                'dashboard': 'Design an analytics dashboard',
+                'ecommerce': 'Create an e-commerce product page'
+            };
+
+            addMessage(messages[type], true);
+
+            // Simulate AI response
+            setTimeout(() => {
+                addMessage(`Great choice! I'm creating a ${type} template for you... ✨`, false);
+            }, 500);
+        }
+
+        // Add message to chat
+        function addMessage(text, isUser) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            messageDiv.innerHTML = `<div class="message-text">${text}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'f' && e.ctrlKey) {
+                e.preventDefault();
+                // Toggle focus mode
+            }
+        });
+    </script>
+</body>
+</html>

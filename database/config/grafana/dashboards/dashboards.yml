@@ -1,0 +1,162 @@
+# ==================== JEBAT AI System - Grafana Dashboards Configuration ====================
+# Version: 1.0.0
+# This file configures dashboards for monitoring the JEBAT system
+
+apiVersion: 1
+
+providers:
+  # ==================== JEBAT System Dashboards ====================
+  - name: 'JEBAT System'
+    orgId: 1
+    folder: 'JEBAT'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Memory System Dashboards ====================
+  - name: 'JEBAT Memory System'
+    orgId: 1
+    folder: 'JEBAT/Memory'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/memory
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Agent System Dashboards ====================
+  - name: 'JEBAT Agent System'
+    orgId: 1
+    folder: 'JEBAT/Agents'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/agents
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Error Recovery Dashboards ====================
+  - name: 'JEBAT Error Recovery'
+    orgId: 1
+    folder: 'JEBAT/Errors'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/errors
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Database Dashboards ====================
+  - name: 'JEBAT Database'
+    orgId: 1
+    folder: 'JEBAT/Database'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/database
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Cache Dashboards ====================
+  - name: 'JEBAT Cache'
+    orgId: 1
+    folder: 'JEBAT/Cache'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/cache
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT WebSocket Dashboards ====================
+  - name: 'JEBAT WebSocket'
+    orgId: 1
+    folder: 'JEBAT/WebSocket'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/websocket
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT MCP Protocol Dashboards ====================
+  - name: 'JEBAT MCP Protocol'
+    orgId: 1
+    folder: 'JEBAT/MCP'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/mcp
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Model Forge Dashboards ====================
+  - name: 'JEBAT Model Forge'
+    orgId: 1
+    folder: 'JEBAT/Models'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/models
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Sentinel Security Dashboards ====================
+  - name: 'JEBAT Sentinel Security'
+    orgId: 1
+    folder: 'JEBAT/Security'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/security
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Task Execution Dashboards ====================
+  - name: 'JEBAT Task Execution'
+    orgId: 1
+    folder: 'JEBAT/Tasks'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/tasks
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Skills Dashboards ====================
+  - name: 'JEBAT Skills'
+    orgId: 1
+    folder: 'JEBAT/Skills'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/skills
+      foldersFromFilesStructure: true
+
+  # ==================== JEBAT Decision Engine Dashboards ====================
+  - name: 'JEBAT Decision Engine'
+    orgId: 1
+    folder: 'JEBAT/Decisions'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/decisions
+      foldersFromFilesStructure: true

@@ -1,10 +1,5 @@
-# Jebat Heartbeat
+# HEARTBEAT.md
 
-# Keep this file small.
-# If nothing urgent is needed, stay quiet.
+# Keep this file empty (or with only comments) to skip heartbeat API calls.
 
-## Routine checks
-- If recent memory files exist, it's okay to run a lightweight memory review.
-- If reviewed skills exist, it's okay to summarize reviewed-skill audit state.
-- Do not repeat old task plans unless there is a concrete new reason.
-- If nothing needs attention, reply HEARTBEAT_OK.
+# Add tasks below when you want the agent to check something periodically.

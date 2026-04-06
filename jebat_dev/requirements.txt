@@ -1,0 +1,16 @@
+# JEBAT DevAssistant Requirements
+# Generated: 2026-02-18
+
+# Core dependencies
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+
+# Rich UI (for interactive CLI)
+rich>=13.7.0
+
+# Advanced input (for auto-completion, history)
+prompt-toolkit>=3.0.43
+
+# Testing
+pytest>=7.4.4
+pytest-asyncio>=0.23.3

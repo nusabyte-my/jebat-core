@@ -1,0 +1,52 @@
+{
+  "servers": {
+    "jebat": {
+      "enabled": true,
+      "priority": 1,
+      "capabilities": {
+        "code_generation": true,
+        "code_review": true,
+        "refactoring": true,
+        "debugging": true,
+        "testing": true,
+        "project_scaffold": true,
+        "git_operations": true
+      },
+      "settings": {
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "context_window": 8192,
+        "stream_responses": true,
+        "cache_enabled": true
+      },
+      "security": {
+        "require_confirmation_for": [
+          "file.write",
+          "file.delete",
+          "git.push",
+          "db.write"
+        ],
+        "allowed_paths": [
+          "${workspaceFolder}"
+        ],
+        "blocked_commands": [
+          "rm -rf",
+          "sudo",
+          "format"
+        ]
+      }
+    }
+  },
+
+  "chat": {
+    "default_model": "jebat",
+    "show_thinking": true,
+    "auto_save_history": true
+  },
+
+  "inline": {
+    "enabled": true,
+    "trigger_mode": "manual",
+    "show_diff_view": true
+  }
+}

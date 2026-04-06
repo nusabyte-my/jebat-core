@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "name": "jebat-tokguru",
+  "last_updated": "2026-02-18",
+  "total_skills": 868,
+  "categories": {
+    "architecture": 45,
+    "business": 78,
+    "data-ai": 156,
+    "development": 312,
+    "security": 89,
+    "testing": 68,
+    "infrastructure": 98,
+    "workflow": 55,
+    "jebat-native": 67
+  },
+  "skills": [
+    {
+      "name": "typescript-expert",
+      "description": "TypeScript best practices, advanced types, and patterns",
+      "category": "development",
+      "tags": ["typescript", "javascript", "types", "development"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/development/typescript-expert/SKILL.md"
+    },
+    {
+      "name": "python-patterns",
+      "description": "Python design patterns, best practices, and idiomatic code",
+      "category": "development",
+      "tags": ["python", "design-patterns", "best-practices", "development"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/development/python-patterns/SKILL.md"
+    },
+    {
+      "name": "react-patterns",
+      "description": "React best practices, hooks, patterns, and performance optimization",
+      "category": "development",
+      "tags": ["react", "javascript", "frontend", "hooks", "development"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/development/react-patterns/SKILL.md"
+    },
+    {
+      "name": "api-security-best-practices",
+      "description": "API security checklist and best practices",
+      "category": "security",
+      "tags": ["security", "api", "authentication", "authorization", "owasp"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/security/api-security-best-practices/SKILL.md"
+    },
+    {
+      "name": "rag-engineer",
+      "description": "RAG pipeline development, vector databases, and retrieval optimization",
+      "category": "data-ai",
+      "tags": ["rag", "llm", "vector-database", "embeddings", "ai"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/data-ai/rag-engineer/SKILL.md"
+    },
+    {
+      "name": "docker-expert",
+      "description": "Docker containerization, multi-stage builds, and optimization",
+      "category": "infrastructure",
+      "tags": [
+        "docker",
+        "containers",
+        "devops",
+        "deployment",
+        "infrastructure"
+      ],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/infrastructure/docker-expert/SKILL.md"
+    },
+    {
+      "name": "cortex-reasoning",
+      "description": "Deep reasoning and analysis using JEBAT Cortex",
+      "category": "jebat-native",
+      "tags": ["jebat", "cortex", "reasoning", "analysis", "native"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/jebat-native/cortex-reasoning/SKILL.md"
+    },
+    {
+      "name": "hermes-agent",
+      "description": "Personal multi-agent copilot for planning, execution, memory, and concise task routing",
+      "category": "jebat-native",
+      "tags": ["jebat", "hermes", "agent", "multi-agent", "planning", "memory"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/jebat-native/hermes-agent/SKILL.md"
+    },
+    {
+      "name": "webfetch",
+      "description": "Fetch live web pages, inspect responses, extract relevant content, and summarize findings with links",
+      "category": "workflow",
+      "tags": ["web", "fetch", "research", "inspection", "http"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/workflow/webfetch/SKILL.md"
+    },
+    {
+      "name": "search",
+      "description": "Search local or remote sources quickly, narrow results, and surface the highest-signal matches for the task",
+      "category": "workflow",
+      "tags": ["search", "discovery", "triage", "navigation", "evidence"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/workflow/search/SKILL.md"
+    },
+    {
+      "name": "test",
+      "description": "Run focused verification, interpret failures, and prove the change with the smallest meaningful test surface",
+      "category": "testing",
+      "tags": ["test", "verification", "regression", "validation", "debugging"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/testing/test/SKILL.md"
+    },
+    {
+      "name": "skill-forge",
+      "description": "Generate a new skill from a simple prompt, then run an enhancer pass to tighten trigger rules, workflow, and output quality",
+      "category": "workflow",
+      "tags": ["skill", "prompt", "generator", "enhancer", "workflow"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/workflow/skill-forge/SKILL.md"
+    }
+  ],
+  "bundles": [
+    {
+      "name": "web-wizard",
+      "description": "Full-stack web development skills",
+      "skills": [
+        "typescript-expert",
+        "react-patterns",
+        "nodejs-expert",
+        "frontend-master",
+        "graphql-expert"
+      ]
+    },
+    {
+      "name": "security-engineer",
+      "description": "Application security skills",
+      "skills": [
+        "api-security-best-practices",
+        "pentest-web",
+        "security-audit",
+        "owasp-top-10",
+        "auth-expert"
+      ]
+    },
+    {
+      "name": "data-scientist",
+      "description": "Data science and AI skills",
+      "skills": [
+        "rag-engineer",
+        "ml-ops",
+        "data-pipeline",
+        "embedding-expert",
+        "prompt-engineer"
+      ]
+    },
+    {
+      "name": "devops-engineer",
+      "description": "DevOps and infrastructure skills",
+      "skills": [
+        "docker-expert",
+        "kubernetes-expert",
+        "ci-cd-pipelines",
+        "terraform-expert",
+        "aws-serverless"
+      ]
+    },
+    {
+      "name": "fullstack-developer",
+      "description": "Full-stack development skills",
+      "skills": [
+        "typescript-expert",
+        "react-patterns",
+        "nodejs-expert",
+        "database-designer",
+        "fullstack-lead"
+      ]
+    }
+  ],
+  "ide_integration": {
+    "vscode": {
+      "path": "~/.vscode/jebat-tokguru",
+      "invoke": "@skill-name",
+      "config": ".vscode/mcp.json"
+    },
+    "zed": {
+      "path": "~/.config/zed/jebat-tokguru",
+      "invoke": "@skill-name",
+      "config": "~/.config/zed/settings.json"
+    },
+    "cursor": {
+      "path": "~/.cursor/jebat-tokguru",
+      "invoke": "@skill-name",
+      "config": ".cursor/mcp.json"
+    },
+    "claude": {
+      "path": "~/.claude/skills",
+      "invoke": "/skill-name or @skill-name",
+      "config": null
+    },
+    "gemini": {
+      "path": "~/.gemini/skills",
+      "invoke": "Reference in prompts",
+      "config": null
+    }
+  }
+}

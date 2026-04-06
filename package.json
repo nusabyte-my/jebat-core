@@ -1,0 +1,55 @@
+{
+  "name": "jebatcore",
+  "version": "0.1.0",
+  "description": "JEBATCore workstation installer for IDE context files and local MCP setup.",
+  "type": "module",
+  "bin": {
+    "jebatcore": "./bin/jebatcore.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "adapters",
+    "vault",
+    "skills",
+    "AGENTS.md",
+    "IDENTITY.md",
+    "MEMORY.md",
+    "ORCHESTRA.md",
+    "SOUL.md",
+    "TOOLS.md",
+    "USER.md",
+    "validate-workspace.ps1"
+  ],
+  "keywords": [
+    "jebat",
+    "cli",
+    "installer",
+    "mcp",
+    "ide",
+    "ai",
+    "token-optimization",
+    "context-compression",
+    "llm-tools"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "cli:detect": "node ./bin/jebatcore.js detect",
+    "cli:doctor": "node ./bin/jebatcore.js doctor",
+    "cli:help": "node ./bin/jebatcore.js help",
+    "cli:dry-run": "node ./bin/jebatcore.js install --ide vscode --mode both --scope workstation --home ./.tmp-jebat-home --yes --dry-run",
+    "cli:token-analyze": "node ./bin/jebatcore.js token-analyze",
+    "cli:token-compress": "node ./bin/jebatcore.js token-compress",
+    "cli:token-compress-prompt": "node ./bin/jebatcore.js token-compress-prompt",
+    "cli:token-budget": "node ./bin/jebatcore.js token-budget",
+    "cli:output-fluff": "node ./bin/jebatcore.js output-fluff",
+    "cli:design-system": "node ./bin/jebatcore.js design-system",
+    "cli:icon-search": "node ./bin/jebatcore.js icon-search",
+    "cli:skill-list": "node ./bin/jebatcore.js skill-list",
+    "cli:skill-verify": "node ./bin/jebatcore.js skill-verify",
+    "cli:skill-search": "node ./bin/jebatcore.js skill-search"
+  }
+}

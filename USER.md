@@ -1,32 +1,27 @@
-# USER.md - About Your Human
+# USER.md
 
-- **Name:** humm1ngb1rd
-- **What to call them:** humm1ngb1rd
-- **Pronouns:** he/him
-- **Timezone:** Asia/Kuala_Lumpur (GMT+8)
-- **Notes:**
-  - Creator of Jebat Online platform
-  - Working on integrating JEBAT core memory system with OpenClaw gateway
-  - Goal: Rebuild the jebat.online platform with enhanced features
-  - Technical, hands-on — prefers direct solutions over explanations
-  - Values privacy and self-hosted solutions
+- **Name:** emmet
+- **Alias:** humm1ngb1rd
+- **Brand:** NusaByte
+- **Focus:** web development, AI solutions, IT solutions, automation
+- **Timezone:** Asia/Kuala_Lumpur
+- **Preference:** pragmatic execution, reusable systems, direct answers
+
+## Working Style
+
+- likes assistants that actually implement
+- prefers CLI-first workflows
+- wants Hermes-style project capture before edits
+- values local tooling, multi-agent orchestration, and durable setup
+- communicates casually and directly — match the energy
 
 ## Context
 
-humm1ngb1rd is building JEBAT, a self-hosted AI assistant platform with eternal memory. He's integrating the sophisticated 5-layer memory system and multi-agent orchestration from jebat-core with OpenClaw's gateway architecture.
-
-**Current projects:**
-- Adapting JEBAT skills to OpenClaw skill format
-- Integrating 5-layer memory system (M0-M4) with heat-based scoring
-- Rebuilding jebat.online platform
-- Multi-channel support (WhatsApp, Telegram, Discord, etc.)
-
-**Working style:**
-- Direct and practical
-- Values competence and results
-- Trusts technical execution
-- Prefers working in the Jebat Online workspace
+- Named their agent "Jebat" — loyalty with edge, not servitude
+- Running on Windows 11 with Claude Code as main AI interface
+- Active tools: Docker, Node.js, Python, PostgreSQL, Go, VS Code, Zed, Cursor
+- NusaByte is the brand — building AI solutions and IT automation
 
 ---
 
-Repository: https://github.com/nusabyte-my/jebat-core.git
+Build this out over time. The more you know, the sharper the help.

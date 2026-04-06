@@ -1,0 +1,1899 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JEBAT - The Complete AI Development Ecosystem</title>
+        <meta
+            name="description"
+            content="JEBAT combines Ultra-Think reasoning, eternal memory, and multi-domain agents to create the most advanced AI development assistant ever built."
+        />
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            /* ==================== CSS Variables ==================== */
+            :root {
+                --primary: #6366f1;
+                --primary-light: #818cf8;
+                --primary-dark: #4f46e5;
+                --secondary: #06b6d4;
+                --secondary-light: #22d3ee;
+                --accent: #f59e0b;
+                --danger: #ef4444;
+                --success: #10b981;
+                --purple: #a855f7;
+                --pink: #ec4899;
+
+                --dark: #0f172a;
+                --dark-light: #1e293b;
+                --dark-lighter: #334155;
+                --gray: #64748b;
+                --gray-light: #94a3b8;
+                --light: #f1f5f9;
+                --white: #ffffff;
+
+                --gradient-primary: linear-gradient(
+                    135deg,
+                    #6366f1 0%,
+                    #06b6d4 100%
+                );
+                --gradient-secondary: linear-gradient(
+                    135deg,
+                    #a855f7 0%,
+                    #ec4899 100%
+                );
+                --gradient-dark: linear-gradient(
+                    180deg,
+                    #0f172a 0%,
+                    #1e293b 100%
+                );
+                --gradient-glow: linear-gradient(
+                    135deg,
+                    rgba(99, 102, 241, 0.3) 0%,
+                    rgba(6, 182, 212, 0.3) 100%
+                );
+
+                --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.3);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            html {
+                scroll-behavior: smooth;
+                scroll-padding-top: 80px;
+            }
+
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    sans-serif;
+                background: var(--dark);
+                color: var(--light);
+                line-height: 1.7;
+                overflow-x: hidden;
+                position: relative;
+            }
+
+            body::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background:
+                    radial-gradient(
+                        circle at 20% 30%,
+                        rgba(99, 102, 241, 0.08) 0%,
+                        transparent 40%
+                    ),
+                    radial-gradient(
+                        circle at 80% 70%,
+                        rgba(6, 182, 212, 0.08) 0%,
+                        transparent 40%
+                    ),
+                    radial-gradient(
+                        circle at 50% 50%,
+                        rgba(168, 85, 247, 0.05) 0%,
+                        transparent 60%
+                    );
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 2rem;
+                position: relative;
+                z-index: 1;
+            }
+
+            /* ==================== Animated Background Particles ==================== */
+            .particles {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 0;
+                overflow: hidden;
+            }
+
+            .particle {
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: var(--primary);
+                border-radius: 50%;
+                opacity: 0.3;
+                animation: float 15s infinite;
+            }
+
+            .particle:nth-child(1) {
+                left: 10%;
+                animation-delay: 0s;
+            }
+            .particle:nth-child(2) {
+                left: 20%;
+                animation-delay: 2s;
+            }
+            .particle:nth-child(3) {
+                left: 30%;
+                animation-delay: 4s;
+            }
+            .particle:nth-child(4) {
+                left: 50%;
+                animation-delay: 1s;
+            }
+            .particle:nth-child(5) {
+                left: 60%;
+                animation-delay: 3s;
+            }
+            .particle:nth-child(6) {
+                left: 70%;
+                animation-delay: 5s;
+            }
+            .particle:nth-child(7) {
+                left: 80%;
+                animation-delay: 2.5s;
+            }
+            .particle:nth-child(8) {
+                left: 90%;
+                animation-delay: 4.5s;
+            }
+
+            @keyframes float {
+                0%,
+                100% {
+                    transform: translateY(100vh) rotate(0deg);
+                    opacity: 0;
+                }
+                10% {
+                    opacity: 0.3;
+                }
+                90% {
+                    opacity: 0.3;
+                }
+                100% {
+                    transform: translateY(-100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
+
+            /* ==================== Navigation ==================== */
+            nav {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                background: rgba(15, 23, 42, 0.85);
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                z-index: 1000;
+                padding: 1rem 0;
+                transition: all 0.3s;
+            }
+
+            nav.scrolled {
+                background: rgba(15, 23, 42, 0.95);
+                box-shadow: var(--shadow-lg);
+            }
+
+            nav .container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .logo {
+                font-size: 1.75rem;
+                font-weight: 900;
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                text-decoration: none;
+                transition: transform 0.3s;
+            }
+
+            .logo:hover {
+                transform: scale(1.05);
+            }
+
+            .logo-icon {
+                font-size: 2.25rem;
+                filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 2.5rem;
+                list-style: none;
+                align-items: center;
+            }
+
+            .nav-links a {
+                color: var(--gray-light);
+                text-decoration: none;
+                font-weight: 500;
+                font-size: 0.95rem;
+                transition: all 0.3s;
+                position: relative;
+            }
+
+            .nav-links a:hover {
+                color: var(--white);
+            }
+
+            .nav-links a::after {
+                content: "";
+                position: absolute;
+                bottom: -8px;
+                left: 0;
+                width: 0;
+                height: 2px;
+                background: var(--gradient-primary);
+                transition: width 0.3s;
+            }
+
+            .nav-links a:hover::after {
+                width: 100%;
+            }
+
+            .nav-cta {
+                background: var(--gradient-primary);
+                color: var(--white);
+                padding: 0.75rem 1.5rem;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s;
+                box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            }
+
+            .nav-cta:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            }
+
+            .mobile-menu-btn {
+                display: none;
+                flex-direction: column;
+                gap: 5px;
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 5px;
+            }
+
+            .mobile-menu-btn span {
+                width: 25px;
+                height: 3px;
+                background: var(--light);
+                border-radius: 2px;
+                transition: all 0.3s;
+            }
+
+            /* ==================== Hero Section ==================== */
+            .hero {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                padding-top: 80px;
+                overflow: hidden;
+            }
+
+            .hero-bg-glow {
+                position: absolute;
+                width: 600px;
+                height: 600px;
+                background: radial-gradient(
+                    circle,
+                    rgba(99, 102, 241, 0.2) 0%,
+                    transparent 70%
+                );
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                animation: pulse-glow 8s ease-in-out infinite;
+            }
+
+            @keyframes pulse-glow {
+                0%,
+                100% {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 0.5;
+                }
+                50% {
+                    transform: translate(-50%, -50%) scale(1.2);
+                    opacity: 0.8;
+                }
+            }
+
+            .hero-content {
+                text-align: center;
+                z-index: 2;
+                max-width: 1000px;
+            }
+
+            .hero-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 50px;
+                padding: 0.5rem 1.25rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: var(--primary-light);
+                margin-bottom: 2rem;
+                animation: fadeInDown 0.8s ease;
+                backdrop-filter: blur(10px);
+            }
+
+            .hero-badge .badge-new {
+                background: var(--gradient-secondary);
+                padding: 0.2rem 0.6rem;
+                border-radius: 20px;
+                font-size: 0.7rem;
+                color: var(--white);
+            }
+
+            .hero h1 {
+                font-size: clamp(2.5rem, 6vw, 5rem);
+                font-weight: 900;
+                line-height: 1.1;
+                margin-bottom: 1.5rem;
+                letter-spacing: -0.02em;
+            }
+
+            .hero h1 .gradient-text {
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                display: inline;
+            }
+
+            .hero h1 .white-text {
+                background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                display: inline;
+            }
+
+            .hero p {
+                font-size: clamp(1.1rem, 2vw, 1.35rem);
+                color: var(--gray-light);
+                max-width: 700px;
+                margin: 0 auto 2.5rem;
+                line-height: 1.8;
+            }
+
+            .hero-buttons {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-bottom: 3rem;
+            }
+
+            .btn {
+                padding: 1rem 2rem;
+                border-radius: 12px;
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.3s;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+                cursor: pointer;
+                border: none;
+                font-size: 1rem;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .btn::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.2),
+                    transparent
+                );
+                transition: left 0.5s;
+            }
+
+            .btn:hover::before {
+                left: 100%;
+            }
+
+            .btn-primary {
+                background: var(--gradient-primary);
+                color: var(--white);
+                box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 40px rgba(99, 102, 241, 0.5);
+            }
+
+            .btn-secondary {
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--light);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+                transform: translateY(-3px);
+            }
+
+            .hero-cta-text {
+                font-size: 0.875rem;
+                color: var(--gray);
+                margin-top: 1rem;
+            }
+
+            .hero-stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 2rem;
+                max-width: 800px;
+                margin: 4rem auto 0;
+                padding: 2rem;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+            }
+
+            .hero-stat {
+                text-align: center;
+            }
+
+            .hero-stat-number {
+                font-size: 2.5rem;
+                font-weight: 900;
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                display: block;
+            }
+
+            .hero-stat-label {
+                color: var(--gray);
+                font-size: 0.875rem;
+                margin-top: 0.5rem;
+            }
+
+            /* ==================== Scroll Animations ==================== */
+            @keyframes fadeInDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .animate-on-scroll {
+                opacity: 0;
+                transform: translateY(50px);
+                transition: all 0.8s ease;
+            }
+
+            .animate-on-scroll.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            /* ==================== Features Section ==================== */
+            .features {
+                padding: 8rem 0;
+                position: relative;
+            }
+
+            .section-header {
+                text-align: center;
+                margin-bottom: 4rem;
+            }
+
+            .section-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 50px;
+                padding: 0.5rem 1.25rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: var(--primary-light);
+                margin-bottom: 1rem;
+                backdrop-filter: blur(10px);
+            }
+
+            .section-title {
+                font-size: clamp(2rem, 4vw, 3rem);
+                font-weight: 800;
+                margin-bottom: 1rem;
+                letter-spacing: -0.02em;
+            }
+
+            .section-subtitle {
+                color: var(--gray-light);
+                font-size: 1.125rem;
+                max-width: 600px;
+                margin: 0 auto;
+                line-height: 1.8;
+            }
+
+            .features-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 2rem;
+            }
+
+            .feature-card {
+                background: rgba(30, 41, 59, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 24px;
+                padding: 2.5rem;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
+                backdrop-filter: blur(10px);
+            }
+
+            .feature-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: var(--gradient-primary);
+                transform: scaleX(0);
+                transition: transform 0.4s;
+            }
+
+            .feature-card::after {
+                content: "";
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(
+                    circle,
+                    rgba(99, 102, 241, 0.05) 0%,
+                    transparent 70%
+                );
+                opacity: 0;
+                transition: opacity 0.4s;
+            }
+
+            .feature-card:hover {
+                transform: translateY(-8px);
+                border-color: rgba(99, 102, 241, 0.3);
+                box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+            }
+
+            .feature-card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .feature-card:hover::after {
+                opacity: 1;
+            }
+
+            .feature-icon {
+                font-size: 3rem;
+                margin-bottom: 1.5rem;
+                display: inline-block;
+                filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+            }
+
+            .feature-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                color: var(--white);
+            }
+
+            .feature-description {
+                color: var(--gray-light);
+                margin-bottom: 1.5rem;
+                line-height: 1.7;
+            }
+
+            .feature-list {
+                list-style: none;
+            }
+
+            .feature-list li {
+                padding: 0.6rem 0;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: var(--light);
+                font-size: 0.95rem;
+            }
+
+            .feature-list li::before {
+                content: "✓";
+                color: var(--success);
+                font-weight: 700;
+                font-size: 1.1rem;
+            }
+
+            /* ==================== Thinking Modes Section ==================== */
+            .thinking-modes {
+                padding: 8rem 0;
+                background: rgba(30, 41, 59, 0.3);
+                position: relative;
+            }
+
+            .modes-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 2rem;
+                margin-top: 3rem;
+            }
+
+            .mode-card {
+                background: rgba(30, 41, 59, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 20px;
+                padding: 2rem;
+                text-align: center;
+                transition: all 0.4s;
+                backdrop-filter: blur(10px);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .mode-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--gradient-primary);
+                opacity: 0;
+                transition: opacity 0.4s;
+            }
+
+            .mode-card:hover {
+                transform: scale(1.05);
+                border-color: rgba(99, 102, 241, 0.3);
+            }
+
+            .mode-card:hover::before {
+                opacity: 0.05;
+            }
+
+            .mode-icon {
+                font-size: 3.5rem;
+                margin-bottom: 1rem;
+                display: block;
+                position: relative;
+                z-index: 1;
+            }
+
+            .mode-name {
+                font-size: 1.25rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                position: relative;
+                z-index: 1;
+            }
+
+            .mode-speed {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                position: relative;
+                z-index: 1;
+            }
+
+            .speed-instant {
+                background: rgba(16, 185, 129, 0.2);
+                color: var(--success);
+            }
+            .speed-fast {
+                background: rgba(6, 182, 212, 0.2);
+                color: var(--secondary);
+            }
+            .speed-medium {
+                background: rgba(245, 158, 11, 0.2);
+                color: var(--accent);
+            }
+            .speed-slow {
+                background: rgba(239, 68, 68, 0.2);
+                color: var(--danger);
+            }
+
+            .mode-desc {
+                color: var(--gray-light);
+                font-size: 0.95rem;
+                line-height: 1.6;
+                position: relative;
+                z-index: 1;
+            }
+
+            /* ==================== Code Demo Section ==================== */
+            .code-demo {
+                padding: 8rem 0;
+                background: rgba(15, 23, 42, 0.5);
+            }
+
+            .code-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+            }
+
+            .code-content h3 {
+                font-size: 2rem;
+                font-weight: 800;
+                margin-bottom: 1rem;
+            }
+
+            .code-content p {
+                color: var(--gray-light);
+                margin-bottom: 2rem;
+                line-height: 1.8;
+            }
+
+            .code-preview {
+                background: #0d1117;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 20px;
+                overflow: hidden;
+                box-shadow: var(--shadow-2xl);
+            }
+
+            .code-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem 1.5rem;
+                background: rgba(255, 255, 255, 0.02);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .code-title {
+                font-size: 0.875rem;
+                color: var(--gray);
+            }
+
+            .code-dots {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .code-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+            }
+
+            .code-dot:nth-child(1) {
+                background: #ff5f56;
+            }
+            .code-dot:nth-child(2) {
+                background: #ffbd2e;
+            }
+            .code-dot:nth-child(3) {
+                background: #27ca40;
+            }
+
+            .code-body {
+                padding: 1.5rem;
+                font-family: "Fira Code", monospace;
+                font-size: 0.85rem;
+                line-height: 2;
+                overflow-x: auto;
+            }
+
+            .code-keyword {
+                color: #ff7b72;
+            }
+            .code-function {
+                color: #d2a8ff;
+            }
+            .code-string {
+                color: #a5d6ff;
+            }
+            .code-comment {
+                color: #8b949e;
+            }
+            .code-class {
+                color: #ffa657;
+            }
+            .code-number {
+                color: #79c0ff;
+            }
+
+            /* ==================== Live Chat Widget ==================== */
+            .chat-widget {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                z-index: 999;
+            }
+
+            .chat-button {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: var(--gradient-primary);
+                border: none;
+                cursor: pointer;
+                box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+            }
+
+            .chat-button:hover {
+                transform: scale(1.1);
+                box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+            }
+
+            .chat-button.pulse {
+                animation: chat-pulse 2s infinite;
+            }
+
+            @keyframes chat-pulse {
+                0%,
+                100% {
+                    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+                }
+                50% {
+                    box-shadow: 0 4px 40px rgba(99, 102, 241, 0.6);
+                }
+            }
+
+            .chat-window {
+                position: absolute;
+                bottom: 80px;
+                right: 0;
+                width: 380px;
+                height: 500px;
+                background: var(--dark-light);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+                box-shadow: var(--shadow-2xl);
+                display: none;
+                flex-direction: column;
+                overflow: hidden;
+                backdrop-filter: blur(20px);
+            }
+
+            .chat-window.open {
+                display: flex;
+                animation: slideIn 0.3s ease;
+            }
+
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .chat-header {
+                background: var(--gradient-primary);
+                padding: 1.25rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .chat-header h4 {
+                font-size: 1rem;
+                font-weight: 700;
+            }
+
+            .chat-close {
+                background: none;
+                border: none;
+                color: var(--white);
+                font-size: 1.5rem;
+                cursor: pointer;
+                opacity: 0.8;
+                transition: opacity 0.3s;
+            }
+
+            .chat-close:hover {
+                opacity: 1;
+            }
+
+            .chat-messages {
+                flex: 1;
+                padding: 1.25rem;
+                overflow-y: auto;
+            }
+
+            .chat-message {
+                margin-bottom: 1rem;
+                padding: 0.875rem 1rem;
+                border-radius: 12px;
+                max-width: 85%;
+                animation: messageIn 0.3s ease;
+            }
+
+            @keyframes messageIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .chat-message.bot {
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.2);
+                margin-right: auto;
+            }
+
+            .chat-message.user {
+                background: var(--gradient-primary);
+                margin-left: auto;
+            }
+
+            .chat-input {
+                padding: 1rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                display: flex;
+                gap: 0.75rem;
+            }
+
+            .chat-input input {
+                flex: 1;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 0.75rem 1rem;
+                color: var(--light);
+                font-size: 0.95rem;
+                outline: none;
+                transition: border-color 0.3s;
+            }
+
+            .chat-input input:focus {
+                border-color: var(--primary);
+            }
+
+            .chat-input button {
+                background: var(--gradient-primary);
+                border: none;
+                border-radius: 10px;
+                width: 44px;
+                height: 44px;
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+            }
+
+            .chat-input button:hover {
+                transform: scale(1.05);
+            }
+
+            /* ==================== CTA Section ==================== */
+            .cta {
+                padding: 8rem 0;
+            }
+
+            .cta-box {
+                background: var(--gradient-primary);
+                border-radius: 32px;
+                padding: 4rem;
+                position: relative;
+                overflow: hidden;
+                text-align: center;
+            }
+
+            .cta-box::before {
+                content: "";
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(
+                    circle,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    transparent 70%
+                );
+                animation: rotate 20s linear infinite;
+            }
+
+            @keyframes rotate {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .cta-content {
+                position: relative;
+                z-index: 1;
+            }
+
+            .cta-title {
+                font-size: clamp(2rem, 4vw, 3rem);
+                font-weight: 800;
+                margin-bottom: 1rem;
+                color: var(--white);
+            }
+
+            .cta-text {
+                font-size: 1.125rem;
+                opacity: 0.95;
+                margin-bottom: 2rem;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .btn-white {
+                background: var(--white);
+                color: var(--primary);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            .btn-white:hover {
+                background: var(--light);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            }
+
+            /* ==================== Footer ==================== */
+            footer {
+                background: var(--dark-light);
+                padding: 4rem 0 2rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .footer-grid {
+                display: grid;
+                grid-template-columns: 2fr repeat(3, 1fr);
+                gap: 3rem;
+                margin-bottom: 3rem;
+            }
+
+            .footer-brand p {
+                color: var(--gray);
+                margin: 1rem 0;
+                line-height: 1.8;
+            }
+
+            .footer-social {
+                display: flex;
+                gap: 1rem;
+                margin-top: 1.5rem;
+            }
+
+            .footer-social a {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.05);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                text-decoration: none;
+                transition: all 0.3s;
+            }
+
+            .footer-social a:hover {
+                background: var(--primary);
+                transform: translateY(-3px);
+            }
+
+            .footer-title {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: var(--white);
+            }
+
+            .footer-links {
+                list-style: none;
+            }
+
+            .footer-links li {
+                margin-bottom: 0.75rem;
+            }
+
+            .footer-links a {
+                color: var(--gray);
+                text-decoration: none;
+                transition: color 0.3s;
+                font-size: 0.95rem;
+            }
+
+            .footer-links a:hover {
+                color: var(--primary-light);
+            }
+
+            .footer-bottom {
+                text-align: center;
+                padding-top: 2rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                color: var(--gray);
+                font-size: 0.875rem;
+            }
+
+            /* ==================== Responsive ==================== */
+            @media (max-width: 1024px) {
+                .code-container {
+                    grid-template-columns: 1fr;
+                    gap: 3rem;
+                }
+
+                .footer-grid {
+                    grid-template-columns: 1fr 1fr;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .nav-links {
+                    display: none;
+                }
+
+                .mobile-menu-btn {
+                    display: flex;
+                }
+
+                .hero-stats {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    padding: 1.5rem;
+                }
+
+                .hero-stat-number {
+                    font-size: 2rem;
+                }
+
+                .features-grid,
+                .modes-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .footer-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .chat-window {
+                    width: calc(100vw - 2rem);
+                    right: -1rem;
+                }
+            }
+
+            /* ==================== Loading Animation ==================== */
+            .loading {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--dark);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                transition: opacity 0.5s;
+            }
+
+            .loading.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .loading-spinner {
+                width: 60px;
+                height: 60px;
+                border: 4px solid rgba(99, 102, 241, 0.2);
+                border-top-color: var(--primary);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Loading Screen -->
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Particles Background -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <!-- Navigation -->
+        <nav id="navbar">
+            <div class="container">
+                <a href="#" class="logo">
+                    <span class="logo-icon">🗡️</span>
+                    JEBAT
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#thinking">Thinking Modes</a></li>
+                    <li><a href="#demo">Demo</a></li>
+                    <li><a href="#docs">Docs</a></li>
+                </ul>
+                <a
+                    href="https://github.com/nusabyte-my/jebat-core"
+                    class="nav-cta"
+                    >Get Started →</a
+                >
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-bg-glow"></div>
+            <div class="container">
+                <div class="hero-content">
+                    <span class="hero-badge">
+                        🚀 Version 2.0 Now Available
+                        <span class="badge-new">NEW</span>
+                    </span>
+                    <h1>
+                        <span class="white-text">The Complete</span><br />
+                        <span class="gradient-text">AI-Powered</span><br />
+                        <span class="white-text">Development Ecosystem</span>
+                    </h1>
+                    <p>
+                        JEBAT combines <strong>Ultra-Think reasoning</strong>,
+                        <strong>eternal memory</strong>, and
+                        <strong>multi-domain agents</strong> to create the most
+                        advanced AI development assistant ever built.
+                    </p>
+                    <div class="hero-buttons">
+                        <a
+                            href="https://github.com/nusabyte-my/jebat-core"
+                            class="btn btn-primary"
+                        >
+                            ⭐ Star on GitHub
+                        </a>
+                        <a href="#demo" class="btn btn-secondary">
+                            ▶️ Live Demo
+                        </a>
+                    </div>
+                    <p class="hero-cta-text">
+                        👆 No installation required • Free forever
+                    </p>
+
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">5</span>
+                            <span class="hero-stat-label">Memory Layers</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">6</span>
+                            <span class="hero-stat-label">Thinking Modes</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">100%</span>
+                            <span class="hero-stat-label">Open Source</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number">∞</span>
+                            <span class="hero-stat-label">Possibilities</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header animate-on-scroll">
+                    <span class="section-label">✨ Features</span>
+                    <h2 class="section-title">Powerful Capabilities</h2>
+                    <p class="section-subtitle">
+                        Built with cutting-edge AI technology to supercharge
+                        your development workflow
+                    </p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card animate-on-scroll">
+                        <div class="feature-icon">🧠</div>
+                        <h3 class="feature-title">JEBAT Cortex</h3>
+                        <p class="feature-description">
+                            Deep reasoning engine with multiple thinking modes
+                            for complex problem-solving
+                        </p>
+                        <ul class="feature-list">
+                            <li>Deliberate Mode (Analytical)</li>
+                            <li>Creative Mode (Generative)</li>
+                            <li>Critical Mode (Evaluation)</li>
+                            <li>Strategic Mode (Planning)</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <div class="feature-icon">♾️</div>
+                        <h3 class="feature-title">JEBAT Continuum</h3>
+                        <p class="feature-description">
+                            Continuous processing loop with context preservation
+                            and iterative refinement
+                        </p>
+                        <ul class="feature-list">
+                            <li>Perpetual Execution</li>
+                            <li>Context Preservation</li>
+                            <li>Iterative Improvement</li>
+                            <li>Auto-Recovery</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <div class="feature-icon">🗄️</div>
+                        <h3 class="feature-title">Eternal Memory</h3>
+                        <p class="feature-description">
+                            5-layer memory system with heat-based consolidation
+                            and importance scoring
+                        </p>
+                        <ul class="feature-list">
+                            <li>Sensory Buffer (M0)</li>
+                            <li>Episodic Memory (M1)</li>
+                            <li>Semantic Memory (M2)</li>
+                            <li>Conceptual Memory (M3)</li>
+                            <li>Procedural Memory (M4)</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <div class="feature-icon">🤖</div>
+                        <h3 class="feature-title">Multi-Agent System</h3>
+                        <p class="feature-description">
+                            Specialized agents for different domains working
+                            together seamlessly
+                        </p>
+                        <ul class="feature-list">
+                            <li>Code Analysis Agent</li>
+                            <li>Security Review Agent</li>
+                            <li>Documentation Agent</li>
+                            <li>Testing Agent</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <div class="feature-icon">🔌</div>
+                        <h3 class="feature-title">Plugin Architecture</h3>
+                        <p class="feature-description">
+                            Extend JEBAT with custom plugins for any use case
+                        </p>
+                        <ul class="feature-list">
+                            <li>Dynamic Loading</li>
+                            <li>Sandboxed Execution</li>
+                            <li>Version Management</li>
+                            <li>Dependency Resolution</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">Analytics Dashboard</h3>
+                        <p class="feature-description">
+                            Real-time monitoring and insights into your AI
+                            assistant's performance
+                        </p>
+                        <ul class="feature-list">
+                            <li>Live Metrics</li>
+                            <li>Usage Analytics</li>
+                            <li>Performance Tracking</li>
+                            <li>Custom Alerts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Thinking Modes Section -->
+        <section class="thinking-modes" id="thinking">
+            <div class="container">
+                <div class="section-header animate-on-scroll">
+                    <span class="section-label">🎯 Ultra-Think</span>
+                    <h2 class="section-title">6 Thinking Modes</h2>
+                    <p class="section-subtitle">
+                        Choose the right thinking mode for any task
+                    </p>
+                </div>
+                <div class="modes-grid">
+                    <div class="mode-card animate-on-scroll">
+                        <span class="mode-icon">⚡</span>
+                        <h3 class="mode-name">FAST</h3>
+                        <span class="mode-speed speed-instant">Instant</span>
+                        <p class="mode-desc">
+                            Quick, intuitive responses for simple questions and
+                            immediate answers
+                        </p>
+                    </div>
+                    <div class="mode-card animate-on-scroll">
+                        <span class="mode-icon">🤔</span>
+                        <h3 class="mode-name">DELIBERATE</h3>
+                        <span class="mode-speed speed-fast">Fast</span>
+                        <p class="mode-desc">
+                            Balanced reasoning with logical analysis for most
+                            development tasks
+                        </p>
+                    </div>
+                    <div class="mode-card animate-on-scroll">
+                        <span class="mode-icon">🧠</span>
+                        <h3 class="mode-name">DEEP</h3>
+                        <span class="mode-speed speed-medium">Medium</span>
+                        <p class="mode-desc">
+                            Complex multi-layered analysis for challenging
+                            problems
+                        </p>
+                    </div>
+                    <div class="mode-card animate-on-scroll">
+                        <span class="mode-icon">📊</span>
+                        <h3 class="mode-name">STRATEGIC</h3>
+                        <span class="mode-speed speed-medium">Medium</span>
+                        <p class="mode-desc">
+                            Long-term planning and architectural decision-making
+                        </p>
+                    </div>
+                    <div class="mode-card animate-on-scroll">
+                        <span class="mode-icon">🎨</span>
+                        <h3 class="mode-name">CREATIVE</h3>
+                        <span class="mode-speed speed-medium">Medium</span>
+                        <p class="mode-desc">
+                            Innovative lateral thinking for novel solutions
+                        </p>
+                    </div>
+                    <div class="mode-card animate-on-scroll">
+                        <span class="mode-icon">🔍</span>
+                        <h3 class="mode-name">CRITICAL</h3>
+                        <span class="mode-speed speed-slow">Slow</span>
+                        <p class="mode-desc">
+                            Analytical evaluation and quality assessment
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Demo Section -->
+        <section class="code-demo" id="demo">
+            <div class="container">
+                <div class="code-container">
+                    <div class="code-content animate-on-scroll">
+                        <span class="section-label">💻 Demo</span>
+                        <h3>Simple to Use</h3>
+                        <p>
+                            JEBAT provides an elegant Python API that's easy to
+                            integrate into your workflow. Get started in minutes
+                            with intuitive, well-documented methods.
+                        </p>
+                        <a href="#docs" class="btn btn-primary"
+                            >View Full Documentation →</a
+                        >
+                    </div>
+                    <div class="code-preview animate-on-scroll">
+                        <div class="code-header">
+                            <span class="code-title">example.py</span>
+                            <div class="code-dots">
+                                <span class="code-dot"></span>
+                                <span class="code-dot"></span>
+                                <span class="code-dot"></span>
+                            </div>
+                        </div>
+                        <div class="code-body">
+                            <span class="code-keyword">from</span> jebat_sdk
+                            <span class="code-keyword">import</span> JEBATClient
+
+                            <span class="code-keyword">async with</span>
+                            JEBATClient()
+                            <span class="code-keyword">as</span> client:
+                            <span class="code-comment"># Chat with JEBAT</span>
+                            response =
+                            <span class="code-keyword">await</span> client.chat(
+                            <span class="code-string">"What is AI?"</span>,
+                            mode=<span class="code-string">"deliberate"</span>
+                            )
+                            <span class="code-function">print</span
+                            >(response.response)
+
+                            <span class="code-comment"># Store a memory</span>
+                            <span class="code-keyword">await</span>
+                            client.store_memory(
+                            <span class="code-string">"I prefer Python"</span>,
+                            user_id=<span class="code-string">"user1"</span>
+                            )
+
+                            <span class="code-comment"># Search memories</span>
+                            memories =
+                            <span class="code-keyword">await</span>
+                            client.search_memories(
+                            <span class="code-string">"Python"</span>,
+                            user_id=<span class="code-string">"user1"</span>
+                            )
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <div class="container">
+                <div class="cta-box animate-on-scroll">
+                    <div class="cta-content">
+                        <h2 class="cta-title">Ready to Get Started?</h2>
+                        <p class="cta-text">
+                            Join thousands of developers using JEBAT to build
+                            better software faster.
+                        </p>
+                        <a
+                            href="https://github.com/nusabyte-my/jebat-core"
+                            class="btn btn-white"
+                        >
+                            🚀 Start Building Free
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="docs">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <a href="#" class="logo">
+                            <span class="logo-icon">🗡️</span>
+                            JEBAT
+                        </a>
+                        <p>
+                            The complete AI-powered development ecosystem with
+                            Ultra-Think reasoning, eternal memory, and
+                            multi-domain agents.
+                        </p>
+                        <div class="footer-social">
+                            <a
+                                href="https://github.com/nusabyte-my/jebat-core"
+                                title="GitHub"
+                                >📦</a
+                            >
+                            <a href="#" title="Twitter">🐦</a>
+                            <a href="#" title="Discord">💬</a>
+                            <a href="#" title="LinkedIn">💼</a>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">Product</h4>
+                        <ul class="footer-links">
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#thinking">Thinking Modes</a></li>
+                            <li><a href="#demo">Demo</a></li>
+                            <li><a href="#">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">Resources</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">API Reference</a></li>
+                            <li><a href="#">Examples</a></li>
+                            <li><a href="#">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">Company</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">About</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>
+                        &copy; 2026 JEBAT. Open source under MIT License. Built
+                        with ❤️ for developers.
+                    </p>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Chat Widget -->
+        <div class="chat-widget">
+            <button
+                class="chat-button pulse"
+                id="chatButton"
+                title="Chat with JEBAT"
+            >
+                💬
+            </button>
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-header">
+                    <h4>🗡️ JEBAT Assistant</h4>
+                    <button class="chat-close" id="chatClose">×</button>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message bot">
+                        Hi! I'm JEBAT, your AI assistant. How can I help you
+                        today?
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input
+                        type="text"
+                        id="chatInput"
+                        placeholder="Type a message..."
+                    />
+                    <button id="chatSend">➤</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // ==================== Loading Screen ====================
+            window.addEventListener("load", () => {
+                const loading = document.getElementById("loading");
+                setTimeout(() => {
+                    loading.classList.add("hidden");
+                }, 500);
+            });
+
+            // ==================== Navbar Scroll Effect ====================
+            window.addEventListener("scroll", () => {
+                const navbar = document.getElementById("navbar");
+                if (window.scrollY > 50) {
+                    navbar.classList.add("scrolled");
+                } else {
+                    navbar.classList.remove("scrolled");
+                }
+            });
+
+            // ==================== Scroll Animations ====================
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: "0px 0px -100px 0px",
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll(".animate-on-scroll").forEach((el) => {
+                observer.observe(el);
+            });
+
+            // ==================== Chat Widget ====================
+            const chatButton = document.getElementById("chatButton");
+            const chatWindow = document.getElementById("chatWindow");
+            const chatClose = document.getElementById("chatClose");
+            const chatInput = document.getElementById("chatInput");
+            const chatSend = document.getElementById("chatSend");
+            const chatMessages = document.getElementById("chatMessages");
+
+            let chatOpen = false;
+
+            chatButton.addEventListener("click", () => {
+                chatOpen = !chatOpen;
+                chatWindow.classList.toggle("open");
+                chatButton.classList.toggle("pulse");
+                if (chatOpen) {
+                    chatInput.focus();
+                }
+            });
+
+            chatClose.addEventListener("click", () => {
+                chatOpen = false;
+                chatWindow.classList.remove("open");
+                chatButton.classList.add("pulse");
+            });
+
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                // Add user message
+                const userMsg = document.createElement("div");
+                userMsg.className = "chat-message user";
+                userMsg.textContent = message;
+                chatMessages.appendChild(userMsg);
+
+                chatInput.value = "";
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Simulate bot response (demo)
+                setTimeout(() => {
+                    const botMsg = document.createElement("div");
+                    botMsg.className = "chat-message bot";
+
+                    // Simple demo responses
+                    const responses = {
+                        hello: "Hello! How can I help you today?",
+                        hi: "Hi there! What would you like to know?",
+                        "what is jebat":
+                            "JEBAT is an advanced AI assistant with eternal memory and deep reasoning capabilities!",
+                        features:
+                            "JEBAT has Ultra-Think reasoning, 5-layer memory, multi-agent system, and more!",
+                        help: "I can help you with coding, analysis, planning, and more. Just ask!",
+                    };
+
+                    const lowerMsg = message.toLowerCase();
+                    let response =
+                        "That's interesting! Tell me more about what you'd like to accomplish?";
+
+                    for (const [key, value] of Object.entries(responses)) {
+                        if (lowerMsg.includes(key)) {
+                            response = value;
+                            break;
+                        }
+                    }
+
+                    botMsg.textContent = response;
+                    chatMessages.appendChild(botMsg);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1000);
+            }
+
+            chatSend.addEventListener("click", sendMessage);
+            chatInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    sendMessage();
+                }
+            });
+
+            // ==================== Mobile Menu ====================
+            const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+            const navLinks = document.querySelector(".nav-links");
+
+            mobileMenuBtn.addEventListener("click", () => {
+                navLinks.style.display =
+                    navLinks.style.display === "flex" ? "none" : "flex";
+                if (navLinks.style.display === "flex") {
+                    navLinks.style.flexDirection = "column";
+                    navLinks.style.position = "absolute";
+                    navLinks.style.top = "100%";
+                    navLinks.style.left = "0";
+                    navLinks.style.right = "0";
+                    navLinks.style.background = "rgba(15,23,42,0.95)";
+                    navLinks.style.padding = "1rem";
+                    navLinks.style.gap = "1rem";
+                }
+            });
+
+            // ==================== Smooth Scroll ====================
+            document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+                anchor.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(
+                        this.getAttribute("href"),
+                    );
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                        });
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

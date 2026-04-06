@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT Analytics - AI Usage Dashboard</title>
+    <meta name="description" content="Track AI usage, costs, and performance">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #10a37f;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --purple: #a855f7;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --dark-lighter: #334155;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --light: #f1f5f9;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            overflow-y: auto;
+        }
+
+        /* Header */
+        header {
+            background: var(--dark-light);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: rgba(255,255,255,0.05);
+            color: var(--light);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--dark-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(99,102,241,0.3);
+            transform: translateY(-2px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .change-positive {
+            color: var(--success);
+        }
+
+        .change-negative {
+            color: var(--danger);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--dark-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Usage Table */
+        .table-card {
+            background: var(--dark-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .model-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-mistral {
+            background: rgba(16,185,129,0.2);
+            color: var(--success);
+        }
+
+        .badge-openai {
+            background: rgba(99,102,241,0.2);
+            color: var(--primary);
+        }
+
+        .badge-anthropic {
+            background: rgba(168,85,247,0.2);
+            color: var(--purple);
+        }
+
+        .badge-google {
+            background: rgba(6,182,212,0.2);
+            color: var(--cyan);
+        }
+
+        /* Cost Breakdown */
+        .cost-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .cost-card {
+            background: var(--dark-light);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .cost-header {
+            margin-bottom: 1rem;
+        }
+
+        .cost-title {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .cost-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        .cost-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        .filter-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        /* Time Range Buttons */
+        .time-range {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.03);
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+
+        .range-btn {
+            padding: 0.4rem 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--gray);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .range-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .range-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <span class="logo-icon">📊</span>
+            JEBAT Analytics
+        </div>
+        <div class="header-actions">
+            <button class="btn">📥 Export</button>
+            <button class="btn">⚙️ Settings</button>
+            <button class="btn btn-primary">🔄 Refresh</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Filters -->
+        <div class="filters">
+            <div class="time-range">
+                <button class="range-btn">24h</button>
+                <button class="range-btn">7d</button>
+                <button class="range-btn active">30d</button>
+                <button class="range-btn">90d</button>
+                <button class="range-btn">All</button>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Model:</span>
+                <select class="filter-select">
+                    <option value="all">All Models</option>
+                    <option value="mistral">Mistral</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="google">Google</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Product:</span>
+                <select class="filter-select">
+                    <option value="all">All Products</option>
+                    <option value="chat">AI Chat</option>
+                    <option value="builder">AI Builder</option>
+                    <option value="code">Code Assistant</option>
+                    <option value="pentest">AI Pentest</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">💬</span>
+                </div>
+                <div class="stat-title">Total Requests</div>
+                <div class="stat-value">24,592</div>
+                <div class="stat-change change-positive">
+                    ↑ 12.5% vs last period
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">💰</span>
+                </div>
+                <div class="stat-title">Total Cost</div>
+                <div class="stat-value">$127.43</div>
+                <div class="stat-change change-positive">
+                    ↓ 8.2% vs last period
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">⚡</span>
+                </div>
+                <div class="stat-title">Avg Response Time</div>
+                <div class="stat-value">1.2s</div>
+                <div class="stat-change change-positive">
+                    ↓ 0.3s faster
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">🎯</span>
+                </div>
+                <div class="stat-title">Success Rate</div>
+                <div class="stat-value">99.8%</div>
+                <div class="stat-change change-positive">
+                    ↑ 0.2% improvement
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Usage Over Time</h3>
+                    <select class="filter-select">
+                        <option>Requests</option>
+                        <option>Tokens</option>
+                        <option>Cost</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="usageChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Model Distribution</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="modelChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Breakdown -->
+        <div class="cost-breakdown">
+            <div class="cost-card">
+                <div class="cost-header">
+                    <div class="cost-title">This Month</div>
+                    <div class="cost-value">$127.43</div>
+                </div>
+                <div class="cost-details">
+                    <div class="cost-item">
+                        <span>OpenAI</span>
+                        <span>$67.20</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Mistral (Free)</span>
+                        <span>$0.00</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Anthropic</span>
+                        <span>$45.15</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Google</span>
+                        <span>$15.08</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cost-card">
+                <div class="cost-header">
+                    <div class="cost-title">Last Month</div>
+                    <div class="cost-value">$142.87</div>
+                </div>
+                <div class="cost-details">
+                    <div class="cost-item">
+                        <span>OpenAI</span>
+                        <span>$78.45</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Mistral (Free)</span>
+                        <span>$0.00</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Anthropic</span>
+                        <span>$52.30</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Google</span>
+                        <span>$12.12</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cost-card">
+                <div class="cost-header">
+                    <div class="cost-title">Projected (Next 30d)</div>
+                    <div class="cost-value">$118.50</div>
+                </div>
+                <div class="cost-details">
+                    <div class="cost-item">
+                        <span>Based on current usage</span>
+                        <span>-7.1%</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Estimated savings</span>
+                        <span style="color: var(--success);">+$8.93</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">Recent API Calls</h3>
+                <button class="btn">View All</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Product</th>
+                        <th>Model</th>
+                        <th>Tokens</th>
+                        <th>Cost</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2026-02-18 14:32:15</td>
+                        <td>AI Chat</td>
+                        <td><span class="model-badge badge-mistral">Mistral</span></td>
+                        <td>1,247</td>
+                        <td>$0.00</td>
+                        <td style="color: var(--success);">✓ Success</td>
+                    </tr>
+                    <tr>
+                        <td>2026-02-18 14:31:42</td>
+                        <td>Code Assistant</td>
+                        <td><span class="model-badge badge-openai">OpenAI</span></td>
+                        <td>3,891</td>
+                        <td>$0.08</td>
+                        <td style="color: var(--success);">✓ Success</td>
+                    </tr>
+                    <tr>
+                        <td>2026-02-18 14:30:18</td>
+                        <td>AI Builder</td>
+                        <td><span class="model-badge badge-anthropic">Anthropic</span></td>
+                        <td>5,234</td>
+                        <td>$0.12</td>
+                        <td style="color: var(--success);">✓ Success</td>
+                    </tr>
+                    <tr>
+                        <td>2026-02-18 14:28:55</td>
+                        <td>AI Chat</td>
+                        <td><span class="model-badge badge-openai">OpenAI</span></td>
+                        <td>2,156</td>
+                        <td>$0.05</td>
+                        <td style="color: var(--success);">✓ Success</td>
+                    </tr>
+                    <tr>
+                        <td>2026-02-18 14:27:33</td>
+                        <td>AI Pentest</td>
+                        <td><span class="model-badge badge-mistral">Mistral</span></td>
+                        <td>987</td>
+                        <td>$0.00</td>
+                        <td style="color: var(--success);">✓ Success</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Usage Chart
+        const usageCtx = document.getElementById('usageChart').getContext('2d');
+        new Chart(usageCtx, {
+            type: 'line',
+            data: {
+                labels: ['Feb 1', 'Feb 5', 'Feb 10', 'Feb 15', 'Feb 18'],
+                datasets: [{
+                    label: 'Requests',
+                    data: [450, 680, 890, 1120, 1340],
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: 'rgba(255,255,255,0.05)'
+                        },
+                        ticks: {
+                            color: '#94a3b8'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#94a3b8'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Model Distribution Chart
+        const modelCtx = document.getElementById('modelChart').getContext('2d');
+        new Chart(modelCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Mistral (Free)', 'OpenAI', 'Anthropic', 'Google'],
+                datasets: [{
+                    data: [45, 28, 18, 9],
+                    backgroundColor: [
+                        '#10b981',
+                        '#6366f1',
+                        '#a855f7',
+                        '#06b6d4'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#94a3b8',
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update time range buttons
+        document.querySelectorAll('.range-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

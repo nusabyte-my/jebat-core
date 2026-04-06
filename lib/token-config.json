@@ -1,0 +1,74 @@
+# Token Optimization Configuration
+# Controls token usage, compression, and budget tracking for all LLM operations.
+
+{
+  "tokenSettings": {
+    "defaultModel": "default",
+    "enableCompression": true,
+    "compressionLevel": "moderate",
+    "maxTokensPerRequest": 8000,
+    "cacheResponses": true,
+    "cacheMaxSize": 50
+  },
+  
+  "budgets": {
+    "casualChat": { "input": 2000, "output": 500 },
+    "quickFact": { "input": 1500, "output": 300 },
+    "codeReview": { "input": 8000, "output": 1000 },
+    "implementation": { "input": 12000, "output": 2000 },
+    "research": { "input": 10000, "output": 1500 },
+    "memorySearch": { "input": 4000, "output": 800 },
+    "planning": { "input": 6000, "output": 1500 },
+    "verification": { "input": 5000, "output": 1000 }
+  },
+  
+  "modelPresets": {
+    "gpt4": { "charsPerToken": 4.0, "name": "GPT-4" },
+    "gpt35": { "charsPerToken": 3.5, "name": "GPT-3.5" },
+    "claude": { "charsPerToken": 3.7, "name": "Claude" },
+    "gemini": { "charsPerToken": 4.2, "name": "Gemini" },
+    "llama": { "charsPerToken": 3.8, "name": "Llama" },
+    "mistral": { "charsPerToken": 3.9, "name": "Mistral" },
+    "default": { "charsPerToken": 4.0, "name": "Default" }
+  },
+  
+  "compressionProfiles": {
+    "minimal": { 
+      "description": "Preserve almost everything, minor whitespace optimization",
+      "targetRetention": 0.95,
+      "removeWhitespace": true,
+      "shortenPaths": false,
+      "abbreviate": false
+    },
+    "moderate": { 
+      "description": "Balance between completeness and token efficiency",
+      "targetRetention": 0.75,
+      "removeWhitespace": true,
+      "shortenPaths": true,
+      "abbreviate": true
+    },
+    "aggressive": { 
+      "description": "Maximum token savings, may remove examples and verbose text",
+      "targetRetention": 0.50,
+      "removeWhitespace": true,
+      "shortenPaths": true,
+      "abbreviate": true,
+      "removeExamples": true,
+      "removeBlockquotes": true
+    }
+  },
+  
+  "mcpServer": {
+    "enableTokenEfficientTools": true,
+    "defaultMaxTokens": {
+      "operatingSystem": 6000,
+      "findAssets": 2000,
+      "readAsset": 4000
+    },
+    "compressionDefaults": {
+      "operatingSystem": "moderate",
+      "findAssets": "minimal",
+      "readAsset": "moderate"
+    }
+  }
+}

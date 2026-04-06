@@ -1,0 +1,45 @@
+{
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "jebat": {
+        "type": "stdio",
+        "command": "python",
+        "arguments": ["-m", "jebat.mcp.server"],
+        "env": {
+          "JEBAT_MODE": "assistant",
+          "JEBAT_PROJECT": "${ZED_WORKSPACE}"
+        }
+      }
+    },
+    "tools": {
+      "jebat": {
+        "enabled": [
+          "code.read",
+          "code.write",
+          "code.generate",
+          "code.review",
+          "project.scaffold"
+        ]
+      }
+    }
+  },
+
+  "ai": {
+    "default_provider": "jebat",
+    "inline_suggestions": true,
+    "chat_enabled": true,
+    "auto_review": true
+  },
+
+  "jebat": {
+    "enabled": true,
+    "context_aware": true,
+    "auto_review_on_save": false,
+    "suggestions": {
+      "inline": true,
+      "popup": true,
+      "trigger_delay_ms": 500
+    }
+  }
+}

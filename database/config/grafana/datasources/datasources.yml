@@ -1,0 +1,94 @@
+# ==================== JEBAT AI System - Grafana Datasources Configuration ====================
+# Version: 1.0.0
+# This file configures datasources for Grafana dashboards
+
+apiVersion: 1
+
+datasources:
+  # ==================== Prometheus Datasource ====================
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s
+      queryTimeout: 60s
+      httpMethod: POST
+    version: 1
+
+  # ==================== PostgreSQL Datasource ====================
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: jebat_db
+    user: ${POSTGRES_USER:-jebat}
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD:-jebat_secure_password_change_me}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1500
+      timescaledb: true
+    version: 1
+    editable: true
+
+  # ==================== Redis Datasource ====================
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    url: redis:6379
+    jsonData:
+      poolSize: 5
+      timeout: 10
+      pingInterval: 30
+      tlsAuth: false
+      tlsSkipVerify: false
+      sentinel: false
+      clientName: grafana
+    secureJsonData:
+      password: ${REDIS_PASSWORD:-redis_secure_password_change_me}
+    version: 1
+    editable: true
+
+  # ==================== Qdrant Datasource ====================
+  - name: Qdrant
+    type: postgres
+    access: proxy
+    url: qdrant:6333
+    isDefault: false
+    editable: true
+    jsonData:
+      httpMethod: GET
+      timeout: 30
+    version: 1
+
+  # ==================== JEBAT Application Datasource (Optional) ====================
+  - name: JEBAT Application
+    type: prometheus
+    access: proxy
+    url: http://host.docker.internal:8000/metrics
+    isDefault: false
+    editable: true
+    jsonData:
+      timeInterval: 15s
+      queryTimeout: 60s
+      httpMethod: POST
+    version: 1
+
+  # ==================== Node Exporter Datasource ====================
+  - name: Node Exporter
+    type: prometheus
+    access: proxy
+    url: http://node-exporter:9100/metrics
+    isDefault: false
+    editable: true
+    jsonData:
+      timeInterval: 30s
+      queryTimeout: 60s
+      httpMethod: POST
+    version: 1

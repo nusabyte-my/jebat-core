@@ -1,0 +1,35 @@
+{
+  "mcp": {
+    "jebat": {
+      "enabled": true,
+      "endpoint": "stdio",
+      "command": ["python", "-m", "jebat.mcp.server"],
+      "features": {
+        "cascade": true,
+        "flow": true,
+        "autocomplete": true,
+        "code_review": true,
+        "debugging": true
+      },
+      "cascade": {
+        "enabled": true,
+        "auto_context": true,
+        "include_terminal": true,
+        "max_context_files": 100
+      },
+      "flow": {
+        "auto_suggest": true,
+        "suggestion_delay_ms": 500,
+        "max_suggestions": 3,
+        "accept_on_tab": true
+      }
+    }
+  },
+
+  "ai": {
+    "primary_provider": "jebat",
+    "fallback_provider": null,
+    "chat_history_enabled": true,
+    "context_awareness": true
+  }
+}

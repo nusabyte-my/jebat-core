@@ -1,0 +1,121 @@
+services:
+  jebat-api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      JEBAT_API_ENABLED: "true"
+      JEBAT_API_HOST: 0.0.0.0
+      JEBAT_API_PORT: 8000
+      JEBAT_WEBUI_ENABLED: "false"
+      JEBAT_DATABASE_ENABLED: "false"
+      JEBAT_DATABASE_TYPE: sqlite
+      JEBAT_DATABASE_URL: sqlite:///app/data/jebat.db
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - jebat_data:/app/data
+      - ../../config:/app/config:ro
+    depends_on:
+      - redis
+    networks:
+      - jebat-public
+      - sh4dow-shared
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=sh4dow_sh4dow-net
+      - traefik.http.routers.jebat-api.rule=(Host(`jebat.online`) || Host(`www.jebat.online`)) && PathPrefix(`/api`)
+      - traefik.http.routers.jebat-api.priority=100
+      - traefik.http.routers.jebat-api.entrypoints=websecure
+      - traefik.http.routers.jebat-api.tls=true
+      - traefik.http.routers.jebat-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.jebat-api.middlewares=security-headers@file,compress@file
+      - traefik.http.services.jebat-api.loadbalancer.server.port=8000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  jebat-webui:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-webui
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      JEBAT_WEBUI_ENABLED: "true"
+      JEBAT_WEBUI_HOST: 0.0.0.0
+      JEBAT_WEBUI_PORT: 8787
+    volumes:
+      - jebat_data:/app/data
+      - ../../config:/app/config:ro
+    depends_on:
+      - jebat-api
+    command: ["python", "-m", "jebat.services.webui.launch", "--host", "0.0.0.0", "--port", "8787"]
+    networks:
+      - jebat-public
+      - sh4dow-shared
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=sh4dow_sh4dow-net
+      - traefik.http.routers.jebat-webui.rule=Host(`jebat.online`) || Host(`www.jebat.online`)
+      - traefik.http.routers.jebat-webui.priority=10
+      - traefik.http.routers.jebat-webui.entrypoints=websecure
+      - traefik.http.routers.jebat-webui.tls=true
+      - traefik.http.routers.jebat-webui.tls.certresolver=letsencrypt
+      - traefik.http.routers.jebat-webui.middlewares=security-headers@file,compress@file
+      - traefik.http.services.jebat-webui.loadbalancer.server.port=8787
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8787/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: jebat-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - jebat-public
+
+networks:
+  jebat-public:
+    driver: bridge
+  sh4dow-shared:
+    external: true
+    name: sh4dow_sh4dow-net
+
+volumes:
+  jebat_data:
+  redis_data:

@@ -1,0 +1,244 @@
+"""
+JEBAT DevAssistant - Google Stitch MCP Integration
+
+Integrates with Google Stitch MCP server for AI-powered UI/UX generation.
+
+Features:
+- Text-to-UI generation
+- Component export (React, Vue, Angular)
+- Style transfer
+- Figma integration (coming soon)
+
+Usage:
+    from jebat_dev.integrations.stitch_mcp import StitchMCPClient
+
+    client = StitchMCPClient()
+    result = await client.generate_ui("modern login form", framework="react")
+"""
+
+import logging
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class StitchUIResult:
+    """Result from Stitch MCP UI generation."""
+    success: bool
+    component_name: str = ""
+    framework: str = "react"
+    code: str = ""
+    styles: str = ""
+    files: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: Optional[str] = None
+
+
+class StitchMCPClient:
+    """
+    Client for Google Stitch MCP server.
+
+    Generates UI components from text descriptions.
+    """
+
+    def __init__(
+        self,
+        server_url: str = "http://localhost:8080",
+        api_key: Optional[str] = None,
+    ):
+        """
+        Initialize Stitch MCP client.
+
+        Args:
+            server_url: Stitch MCP server URL
+            api_key: Optional API key
+        """
+        self.server_url = server_url
+        self.api_key = api_key
+        self.session_id: Optional[str] = None
+        logger.info(f"StitchMCPClient initialized (server={server_url})")
+
+    async def generate_ui(
+        self,
+        description: str,
+        framework: str = "react",
+        style: Optional[str] = None,
+    ) -> StitchUIResult:
+        """
+        Generate UI component from description.
+
+        Args:
+            description: UI description (e.g., "modern login form with email")
+            framework: Target framework (react, vue, angular)
+            style: Optional style guide/theme
+
+        Returns:
+            StitchUIResult
+        """
+        logger.info(f"Generating UI: {description} ({framework})")
+
+        try:
+            # Check if Stitch MCP server is available
+            if not await self._check_server():
+                return StitchUIResult(
+                    success=False,
+                    error="Stitch MCP server not available",
+                )
+
+            # Generate UI via MCP
+            result = await self._call_stitch(description, framework, style)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"UI generation failed: {e}")
+            return StitchUIResult(
+                success=False,
+                error=str(e),
+            )
+
+    async def _check_server(self) -> bool:
+        """Check if Stitch MCP server is available."""
+        # Placeholder - will implement actual health check
+        # For now, return False to indicate server not running
+        logger.warning("Stitch MCP server check: Not implemented (server not running)")
+        return False
+
+    async def _call_stitch(
+        self,
+        description: str,
+        framework: str,
+        style: Optional[str],
+    ) -> StitchUIResult:
+        """
+        Call Stitch MCP to generate UI.
+
+        Args:
+            description: UI description
+            framework: Target framework
+            style: Optional style
+
+        Returns:
+            StitchUIResult
+        """
+        # Placeholder implementation
+        # Will be replaced with actual Stitch MCP API calls
+
+        # Generate component name from description
+        component_name = self._generate_component_name(description)
+
+        # Generate sample code
+        code = self._generate_sample_code(component_name, framework)
+
+        # Generate styles
+        styles = self._generate_styles(component_name, style)
+
+        return StitchUIResult(
+            success=True,
+            component_name=component_name,
+            framework=framework,
+            code=code,
+            styles=styles,
+            files=[
+                f"src/components/{component_name}.jsx",
+                f"src/styles/{component_name}.css",
+            ],
+            metadata={
+                "description": description,
+                "style": style,
+                "generated_by": "Stitch MCP (simulated)",
+            },
+        )
+
+    def _generate_component_name(self, description: str) -> str:
+        """Generate component name from description."""
+        # Simple name generation
+        words = description.lower().split()
+        name = "".join(word.capitalize() for word in words[:3])
+        return name + "Component"
+
+    def _generate_sample_code(self, component_name: str, framework: str) -> str:
+        """Generate sample component code."""
+        if framework == "react":
+            return f"""
+import React from 'react';
+import './{component_name}.css';
+
+export function {component_name}() {{
+  return (
+    <div className="{component_name.lower()}">
+      {/* Generated by JEBAT + Stitch MCP */}
+      <h2>{component_name}</h2>
+      {/* Add your component content here */}
+    </div>
+  );
+}}
+"""
+        elif framework == "vue":
+            return f"""
+<template>
+  <div class="{component_name.lower()}">
+    <!-- Generated by JEBAT + Stitch MCP -->
+    <h2>{component_name}</h2>
+  </div>
+</template>
+
+<script>
+export default {{
+  name: '{component_name}'
+}}
+</script>
+"""
+        else:
+            return f"""
+// Generated by JEBAT + Stitch MCP
+// Framework: {framework}
+// Component: {component_name}
+
+export class {component_name} {{
+  constructor() {{
+    console.log('{component_name} initialized');
+  }}
+}
+"""
+
+    def _generate_styles(self, component_name: str, style: Optional[str]) -> str:
+        """Generate component styles."""
+        return f"""
+/* {component_name} Styles */
+/* Generated by JEBAT + Stitch MCP */
+
+.{component_name.lower()} {{
+  padding: 20px;
+  border-radius: 8px;
+  background: #f5f5f5;
+}}
+
+.{component_name.lower()} h2 {{
+  margin: 0;
+  color: #333;
+}}
+"""
+
+
+# Convenience function
+async def generate_ui(
+    description: str,
+    framework: str = "react",
+    style: Optional[str] = None,
+) -> StitchUIResult:
+    """
+    Generate UI with Stitch MCP.
+
+    Args:
+        description: UI description
+        framework: Target framework
+        style: Optional style
+
+    Returns:
+        StitchUIResult
+    """
+    client = StitchMCPClient()
+    return await client.generate_ui(description, framework, style)

@@ -1,0 +1,33 @@
+{
+  "name": "jebat-tokguru",
+  "version": "1.0.0",
+  "description": "JEBAT Tok Guru - Universal Skill Catalog (Respected Master)",
+  "bin": {
+    "jebat-tokguru": "./bin/install.js"
+  },
+  "scripts": {
+    "install": "node bin/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusabyte-my/jebat-tokguru.git"
+  },
+  "keywords": [
+    "jebat",
+    "tokguru",
+    "skills",
+    "ai",
+    "ide",
+    "vscode",
+    "zed",
+    "cursor",
+    "mcp",
+    "nusantara"
+  ],
+  "author": "JEBAT Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nusabyte-my/jebat-tokguru/issues"
+  },
+  "homepage": "https://github.com/nusabyte-my/jebat-tokguru#readme"
+}
