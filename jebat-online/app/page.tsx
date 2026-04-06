@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 const features = [
@@ -192,7 +194,7 @@ export default function Home() {
                 ["Frontend", "Next.js 16 · React 19 · TypeScript · Tailwind v4 · shadcn/ui"],
                 ["Backend", "Python 3.11+ · FastAPI · Uvicorn · Pydantic"],
                 ["Database", "PostgreSQL/TimescaleDB · Redis 7 · SQLite + Chroma"],
-                ["AI/ML", "OpenAI · Anthropic · Gemini · ZAI · Ollama · OpenRouter"],
+                ["AI/ML", "Mesin (Ollama VPS) · Terbuka (OpenAI) · Bijak (Anthropic) · Gemilang (Gemini) · Haluan (OpenRouter) · ZAI"],
                 ["DevOps", "Docker Compose · Traefik · Prometheus · Grafana · Nginx"],
                 ["CLI", "Node.js (jebatcore) · Python (jebat_dev) · Rich UI"],
               ].map(([name, tools]) => (

@@ -11,12 +11,12 @@ const steps = [
 ];
 
 const providers = [
-  { id: "ollama", name: "Ollama", url: "http://localhost:11434", models: ["qwen2.5-coder:7b", "hermes-sec-v2", "llama3.1"] },
-  { id: "zai", name: "ZAI", url: "https://api.zai.network/v1", models: ["glm-5", "glm-4-plus"] },
-  { id: "openai", name: "OpenAI", url: "https://api.openai.com/v1", models: ["gpt-4o", "gpt-4o-mini", "o1"] },
-  { id: "anthropic", name: "Anthropic", url: "https://api.anthropic.com/v1", models: ["claude-sonnet-4-20250514", "claude-opus-4-20250605"] },
-  { id: "gemini", name: "Google Gemini", url: "https://generativelanguage.googleapis.com/v1beta", models: ["gemini-2.5-pro", "gemini-2.0-flash"] },
-  { id: "openrouter", name: "OpenRouter", url: "https://openrouter.ai/api/v1", models: ["anthropic/claude-sonnet-4", "google/gemini-2.5-pro"] },
+  { id: "mesin", name: "Mesin", subtitle: "Ollama · VPS-hosted", url: "https://bot.sh4dow.tech/api", models: ["qwen2.5-coder:7b", "hermes-sec-v2", "llama3.1"] },
+  { id: "zai", name: "ZAI", subtitle: "Malaysian AI Platform", url: "https://api.zai.network/v1", models: ["glm-5", "glm-4-plus"] },
+  { id: "terbuka", name: "Terbuka", subtitle: "OpenAI", url: "https://api.openai.com/v1", models: ["gpt-4o", "gpt-4o-mini", "o1"] },
+  { id: "bijak", name: "Bijak", subtitle: "Anthropic Claude", url: "https://api.anthropic.com/v1", models: ["claude-sonnet-4-20250514", "claude-opus-4-20250605"] },
+  { id: "gemilang", name: "Gemilang", subtitle: "Google Gemini", url: "https://generativelanguage.googleapis.com/v1beta", models: ["gemini-2.5-pro", "gemini-2.0-flash"] },
+  { id: "haluan", name: "Haluan", subtitle: "OpenRouter · Multi-model", url: "https://openrouter.ai/api/v1", models: ["anthropic/claude-sonnet-4", "google/gemini-2.5-pro"] },
 ];
 
 const ideList = [
@@ -216,7 +216,8 @@ export default function SetupPage() {
                       />
                       <div>
                         <div className="text-sm font-medium">{p.name}</div>
-                        <div className="text-xs text-neutral-500 font-mono">{p.url}</div>
+                        <div className="text-xs text-neutral-500">{p.subtitle}</div>
+                        <div className="text-xs text-neutral-600 font-mono">{p.url}</div>
                       </div>
                     </div>
                     <span className="text-xs text-neutral-500">{p.models.length} models</span>
