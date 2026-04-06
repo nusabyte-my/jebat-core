@@ -19,12 +19,12 @@ const thinkingModes = [
 ];
 
 const demoProviders = [
-  { id: "mesin", name: "Mesin" },
+  { id: "ollama", name: "Ollama" },
   { id: "zai", name: "ZAI" },
-  { id: "terbuka", name: "Terbuka" },
-  { id: "bijak", name: "Bijak" },
-  { id: "gemilang", name: "Gemilang" },
-  { id: "haluan", name: "Haluan" },
+  { id: "openai", name: "OpenAI" },
+  { id: "anthropic", name: "Anthropic" },
+  { id: "gemini", name: "Google Gemini" },
+  { id: "openrouter", name: "OpenRouter" },
 ];
 
 const sampleMessages: Record<string, string> = {
@@ -42,7 +42,7 @@ export default function DemoPage() {
   ]);
   const [input, setInput] = useState("");
   const [selectedMode, setSelectedMode] = useState("deliberate");
-  const [selectedProvider, setSelectedProvider] = useState("mesin");
+  const [selectedProvider, setSelectedProvider] = useState("ollama");
   const [isThinking, setIsThinking] = useState(false);
   const [tokenCount, setTokenCount] = useState(0);
   const [memoryDemo, setMemoryDemo] = useState(false);
