@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { AgentIcon } from "../components/icons";
+import { AgentIcon, AGENT_ICONS, SKILL_INFO, PixelAgent } from "../components/icons";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -120,7 +120,7 @@ const skillCategories = [
   { name: "Security", skills: ["Hulubalang", "Pengawal", "Perisai", "Serangan"], color: "red" },
   { name: "Intelligence", skills: ["Pawang", "Penganalisis", "Penyemak"], color: "green" },
   { name: "Operations", skills: ["Syahbandar", "Khidmat Pelanggan"], color: "amber" },
-  { name: "Growth", skills: ["Penjejak Carian", "Penggerak Pasaran", "Jurutulis Jualan", "Strategi Jenama"], color: "purple" },
+  { name: "SEO & Marketing", skills: ["Penjejak Carian (SEO)", "Penggerak Pasaran (SEM)", "Jurutulis Jualan (AEM)", "Strategi Jenama (GEO)"], color: "purple" },
   { name: "Product", skills: ["Strategi Produk", "Senibina Antara Muka", "Penyebar Reka Bentuk"], color: "pink" },
   { name: "Content", skills: ["Pengkarya Kandungan", "Penulis Cadangan", "Penggerak Jualan"], color: "orange" },
 ];
@@ -162,6 +162,8 @@ function SectionHeading({ badge, title, subtitle }: { badge: string; title: stri
 export default function Home() {
   const [quote, setQuote] = useState(cyberQuotes[0]);
   const [scrollY, setScrollY] = useState(0);
+  const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
+  const [guideModal, setGuideModal] = useState<{ title: string; description: string; path: string } | null>(null);
 
   useEffect(() => {
     setQuote(cyberQuotes[Math.floor(Math.random() * cyberQuotes.length)]);
@@ -262,6 +264,31 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Pixel Agent Heroes */}
+            <div className="pt-8">
+              <p className="text-sm text-neutral-500 mb-4">Your Agent Roster</p>
+              <div className="flex flex-wrap justify-center gap-4">
+                {[
+                  { id: "panglima", label: "Panglima", desc: "Orchestrator" },
+                  { id: "tukang", label: "Tukang", desc: "Builder" },
+                  { id: "hulubalang", label: "Hulubalang", desc: "Guardian" },
+                  { id: "pengawal", label: "Pengawal", desc: "CyberSec" },
+                  { id: "pawang", label: "Pawang", desc: "Researcher" },
+                  { id: "penyemak", label: "Penyemak", desc: "QA" },
+                ].map((agent, i) => (
+                  <div key={agent.id} className="flex flex-col items-center gap-2 group">
+                    <div className={`animate-float`} style={{ animationDelay: `${i * 0.3}s` }}>
+                      <PixelAgent name={agent.id} size={48} color={AGENT_ICONS[agent.id]?.color || "#00E5FF"} animated />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs font-medium text-white">{agent.label}</div>
+                      <div className="text-[10px] text-neutral-500">{agent.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -329,7 +356,55 @@ export default function Home() {
           subtitle="Step-by-step guides tailored to your role — developers, security teams, operations, and researchers."
         />
         <div className="grid gap-6 md:grid-cols-2">
-          {guideCategories.map((cat) => (
+          {[
+            {
+              id: "developers",
+              icon: "tukang",
+              title: "Developers",
+              description: "Code assistance, debugging, testing, and deployment",
+              pages: [
+                { title: "Setup & Installation", description: "Clone, install dependencies, and start JEBAT on your local machine." },
+                { title: "IDE Integration", description: "Install JEBAT context into VS Code, Cursor, Zed, Trae, or Antigravity." },
+                { title: "Code Review Workflow", description: "Use multi-agent code review — Tukang writes, Hulubalang audits, Penyemak validates." },
+                { title: "Deployment Guide", description: "Deploy JEBAT to Docker, VPS, or production with Traefik and Let's Encrypt." },
+              ],
+            },
+            {
+              id: "security",
+              icon: "hulubalang",
+              title: "Security Teams",
+              description: "Vulnerability scanning, pentesting, and compliance",
+              pages: [
+                { title: "Security Scanning", description: "Run autonomous security scans on your codebase. Understand findings and auto-fix." },
+                { title: "Pentesting Guide", description: "Use Serangan agent for authorized penetration testing with proper authorization." },
+                { title: "Compliance Reports", description: "Generate GDPR, SOC2, and ISO27001 compliance reports from audit logs." },
+                { title: "Incident Response", description: "Use JEBAT's incident response workflow — detect, investigate, contain, remediate." },
+              ],
+            },
+            {
+              id: "operations",
+              icon: "syahbandar",
+              title: "Operations & DevOps",
+              description: "Infrastructure, CI/CD, monitoring, and automation",
+              pages: [
+                { title: "Docker Setup", description: "Start JEBAT with Docker Compose — API, WebUI, Redis, and database in one command." },
+                { title: "VPS Deployment", description: "Deploy to a VPS with Nginx, Traefik, and Let's Encrypt SSL for jebat.online." },
+                { title: "Monitoring Setup", description: "Configure Prometheus and Grafana for real-time JEBAT metrics and alerts." },
+                { title: "CI/CD Pipeline", description: "Set up GitHub Actions for automated testing, building, and deployment." },
+              ],
+            },
+            {
+              id: "research",
+              icon: "pawang",
+              title: "Researchers & Analysts",
+              description: "Research workflows, data analysis, and documentation",
+              pages: [
+                { title: "Research Workflow", description: "Use Pawang agent for deep investigation, synthesis, and documentation." },
+                { title: "Data Analysis", description: "Use Penganalisis agent for KPI review, funnel analysis, and experiments." },
+                { title: "Documentation", description: "Generate structured documentation from code, architecture decisions, and API specs." },
+              ],
+            },
+          ].map((cat) => (
             <div key={cat.id} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-lg bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center">
@@ -342,16 +417,56 @@ export default function Home() {
               </div>
               <div className="grid gap-2">
                 {cat.pages.map((page) => (
-                  <Link key={page.path} href={page.path} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/5 hover:text-white">
+                  <button
+                    key={page.title}
+                    onClick={() => setGuideModal({ title: page.title, description: page.description, path: `/guides/${page.title.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")}` })}
+                    className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/5 hover:text-white text-left"
+                  >
                     <span>{page.title}</span>
                     <svg className="w-4 h-4 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* ─── Guide Modal ─────────────────────────────────────────────── */}
+      {guideModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setGuideModal(null)}>
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center">
+                  <AgentIcon name="pawang" size={18} color="#00E5FF" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{guideModal.title}</h3>
+              </div>
+              <button onClick={() => setGuideModal(null)} className="rounded-lg p-2 text-neutral-400 hover:text-white hover:bg-white/5 transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-neutral-400">{guideModal.description}</p>
+              <div className="rounded-lg bg-black/40 border border-white/5 p-4">
+                <div className="text-xs text-neutral-500 mb-2">Quick Start</div>
+                <pre className="text-sm font-mono text-cyan-300">git clone https://github.com/nusabyte-my/jebat-core.git
+cd jebat-core
+# Follow the full guide at github.com/nusabyte-my/jebat-core</pre>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full bg-cyan-400 px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-cyan-300">
+                  View on GitHub →
+                </a>
+                <button onClick={() => setGuideModal(null)} className="rounded-full border border-white/15 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-white/10">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Gelanggang Panglima Demo ────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-6 py-20">
@@ -502,11 +617,31 @@ export default function Home() {
             <div key={cat.name}>
               <h3 className="text-sm font-semibold text-neutral-300 mb-3">{cat.name}</h3>
               <div className="flex flex-wrap gap-2">
-                {cat.skills.map((skill) => (
-                  <span key={skill} className="rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-neutral-300 transition hover:border-cyan-400/30 hover:text-cyan-300 cursor-default">
-                    {skill}
-                  </span>
-                ))}
+                {cat.skills.map((skill) => {
+                  const info = SKILL_INFO[skill] || SKILL_INFO[skill.split(" (")[0]];
+                  return (
+                    <div
+                      key={skill}
+                      className="relative"
+                      onMouseEnter={() => setHoveredSkill(skill)}
+                      onMouseLeave={() => setHoveredSkill(null)}
+                    >
+                      <span className="rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-neutral-300 transition hover:border-cyan-400/30 hover:text-cyan-300 cursor-default">
+                        {skill}
+                      </span>
+                      {hoveredSkill === skill && info && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-xl border border-cyan-400/20 bg-[#0a0a0a] p-4 shadow-2xl shadow-cyan-400/5 z-50">
+                          <div className="text-xs font-semibold text-cyan-300 mb-1">{skill.split(" (")[0]}</div>
+                          <div className="text-xs text-neutral-400 mb-2">{info.description}</div>
+                          <div className="text-[10px] text-neutral-600">Use case: {info.useCase}</div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
+                            <div className="w-3 h-3 bg-[#0a0a0a] border-r border-b border-cyan-400/20 rotate-45 -translate-y-1.5" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
