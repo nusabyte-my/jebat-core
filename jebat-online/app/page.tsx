@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 const features = [
   {
@@ -12,7 +13,7 @@ const features = [
   {
     icon: "⚔️",
     title: "Multi-Agent Orchestration",
-    description: "17 specialized agents — from Tukang (builder) to Hulubalang (security) — coordinated by Panglima, the capture-first operator.",
+    description: "23 specialized agents — from Tukang (builder) to Hulubalang (security) — coordinated by Panglima, the capture-first operator.",
     details: ["Parallel specialist execution", "Council-style decision workflows", "Git worktree isolation for concurrent tasks"],
   },
   {
@@ -41,6 +42,33 @@ const features = [
   },
 ];
 
+const integrations = [
+  {
+    icon: "🏘️",
+    title: "Agent Town",
+    description: "Pixel-art RPG world where you walk up to AI workers and assign tasks face-to-face. Built on OpenClaw, integrates with JEBAT's multi-agent system.",
+    link: "https://github.com/geezerrrr/agent-town",
+    action: "Learn Integration",
+    actionLink: "/integration/agent-town",
+  },
+  {
+    icon: "🧩",
+    title: "OpenClaw Gateway",
+    description: "Plug your existing OpenClaw gateway into JEBAT's skill system, memory layers, and agent orchestration seamlessly.",
+    link: "#",
+    action: "Setup Guide",
+    actionLink: "/setup",
+  },
+  {
+    icon: "🤖",
+    title: "Custom Agents",
+    description: "Bring your own agents. JEBAT's adapter system accepts any AI agent that can communicate via REST API or WebSocket.",
+    link: "#",
+    action: "Build Your Agent",
+    actionLink: "/integration/custom-agent",
+  },
+];
+
 const skills = [
   "Panglima", "Hikmat", "Tukang", "Hulubalang", "Pawang", "Syahbandar",
   "Bendahara", "Penyemak", "Senibina Antara Muka", "Penyebar Reka Bentuk",
@@ -58,12 +86,34 @@ const roadmap = [
   { phase: "Phase 6", title: "Production Ready", status: "planned", items: ["Docker Compose v2", "Authentication", "CI/CD pipeline"] },
 ];
 
+const cyberQuotes = [
+  "\"The only truly secure system is one that is powered off.\" — Gene Spafford",
+  "\"In cybersecurity, the weakest link is always the human element.\" — Kevin Mitnick",
+  "\"Pentesting is not about breaking in. It's about proving that someone can.\" — Anonymous",
+  "\"The best defense is a good offense — test before they do.\" — Anonymous",
+  "\"Hackers are breaking into systems faster than you're patching them.\" — Anonymous",
+  "\"Security is not a product, but a process.\" — Bruce Schneier",
+  "\"There are two types of companies: those that have been hacked, and those that don't know it yet.\" — Anonymous",
+  "\"A pentester's job is to find vulnerabilities before the bad guys do.\" — Anonymous",
+  "\"Trust, but verify. Then verify again.\" — JEBAT Security Principle",
+  "\"The firewall is useless if the user opens the door.\" — Anonymous",
+  "\"Your network is only as secure as your weakest password.\" — Anonymous",
+  "\"Red team finds the cracks. Blue team patches them. Purple team wins.\" — Anonymous",
+];
+
 function StatusDot({ status }: { status: string }) {
   const color = status === "complete" ? "bg-emerald-400" : status === "in-progress" ? "bg-cyan-400" : "bg-neutral-600";
   return <span className={`inline-flex h-2.5 w-2.5 rounded-full ${color} animate-pulse-glow`} />;
 }
 
 export default function Home() {
+  const [quote, setQuote] = useState(cyberQuotes[0]);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * cyberQuotes.length);
+    setQuote(cyberQuotes[randomIndex]);
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#050505] text-neutral-100">
       {/* Nav */}
@@ -75,13 +125,13 @@ export default function Home() {
           </div>
           <div className="hidden items-center gap-6 text-sm text-neutral-400 md:flex">
             <a href="#features" className="transition hover:text-white">Features</a>
+            <a href="#integrations" className="transition hover:text-white">Integrations</a>
             <a href="#skills" className="transition hover:text-white">Skills</a>
             <a href="#roadmap" className="transition hover:text-white">Roadmap</a>
-            <a href="#architecture" className="transition hover:text-white">Architecture</a>
             <Link href="/demo" className="rounded-full border border-cyan-400/30 px-4 py-2 text-cyan-300 transition hover:bg-cyan-400/10">
               Try Demo
             </Link>
-            <Link href="/setup" className="rounded-full bg-cyan-400 px-4 py-2 text-black font-medium transition hover:bg-cyan-300">
+            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-4 py-2 text-black font-medium transition hover:bg-cyan-300">
               Get Started
             </Link>
           </div>
@@ -93,7 +143,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
             <span className="inline-flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse-glow" />
-            JEBATCore v2.0 — Now with Pengawal CyberSec
+            JEBATCore v2.0 — Now with Pengawal CyberSec & Agent Town
           </div>
           <h1 className="max-w-4xl text-5xl font-bold tracking-tight md:text-7xl">
             The LLM Ecosystem That{" "}
@@ -101,11 +151,11 @@ export default function Home() {
           </h1>
           <p className="max-w-2xl text-lg leading-8 text-neutral-400">
             Eternal memory. Multi-agent orchestration. 6 thinking modes. CyberSec assistant.
-            Self-hosted, privacy-first. Built by NusaByte for developers who need an operator, not a yes-man.
+            Self-hosted, privacy-first. Built by NusaByte for developers who need a buddy, not an assistant.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <Link href="/setup" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300">
-              Setup JEBAT →
+            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300">
+              Let's Build Together →
             </Link>
             <Link href="/demo" className="rounded-full border border-white/15 px-8 py-3.5 text-base font-medium text-white transition hover:bg-white/10">
               Live Demo
@@ -118,7 +168,7 @@ export default function Home() {
           {/* Quick stats */}
           <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-4">
             {[
-              ["17+", "Specialist Agents"],
+              ["23+", "Specialist Agents"],
               ["72+", "Skills Installed"],
               ["6", "Thinking Modes"],
               ["5", "Memory Layers"],
@@ -155,6 +205,31 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Integrations */}
+      <section id="integrations" className="mx-auto max-w-7xl px-6 py-16">
+        <h2 className="mb-2 text-center text-3xl font-bold md:text-4xl">Integrations</h2>
+        <p className="mx-auto mb-12 max-w-xl text-center text-neutral-400">Plug JEBAT into your existing tools. Bring your agents, connect your gateway, play in the world.</p>
+        <div className="grid gap-5 md:grid-cols-3">
+          {integrations.map((item) => (
+            <article key={item.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6 flex flex-col">
+              <div className="mb-3 text-3xl">{item.icon}</div>
+              <h3 className="mb-2 text-xl font-semibold text-white">{item.title}</h3>
+              <p className="mb-4 text-sm leading-7 text-neutral-400 flex-1">{item.description}</p>
+              <div className="flex gap-3 mt-auto">
+                {item.link !== "#" && (
+                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-cyan-300 underline underline-offset-4 transition hover:text-cyan-200">
+                    View Project
+                  </a>
+                )}
+                <Link href={item.actionLink} className="text-sm text-cyan-300 underline underline-offset-4 transition hover:text-cyan-200">
+                  {item.action}
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* Architecture */}
       <section id="architecture" className="mx-auto max-w-7xl px-6 py-16">
         <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 md:p-12">
@@ -169,9 +244,9 @@ export default function Home() {
                 { label: "├─ Memory (M0-M4)", sub: "Heat scoring · Consolidation · Vector search", indent: 2 },
                 { label: "├─ Ultra-Think", sub: "6 reasoning modes · Token optimization", indent: 2 },
                 { label: "├─ Ultra-Loop", sub: "5-phase continuous processing", indent: 2 },
-                { label: "├─ Agent Orchestrator", sub: "17 specialists · Council workflows", indent: 2 },
+                { label: "├─ Agent Orchestrator", sub: "23 specialists · Council workflows", indent: 2 },
                 { label: "├─ Pengawal (CyberSec)", sub: "Perisai · Pengawal · Serangan", indent: 2 },
-                { label: "└─ Sentinel", sub: "Autonomous security monitoring", indent: 2 },
+                { label: "└─ Agent Town", sub: "Pixel-art RPG task assignment world", indent: 2 },
                 { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis · SQLite (Chroma)", indent: 0 },
               ].map((row, i) => (
                 <div key={i} className="flex items-start gap-2" style={{ paddingLeft: row.indent ? `${row.indent}rem` : undefined }}>
@@ -195,8 +270,8 @@ export default function Home() {
                 ["Backend", "Python 3.11+ · FastAPI · Uvicorn · Pydantic"],
                 ["Database", "PostgreSQL/TimescaleDB · Redis 7 · SQLite + Chroma"],
                 ["AI/ML", "Ollama · OpenAI · Anthropic · Google Gemini · OpenRouter · ZAI"],
-                ["DevOps", "Docker Compose · Traefik · Prometheus · Grafana · Nginx"],
-                ["CLI", "Node.js (jebatcore) · Python (jebat_dev) · Rich UI"],
+                ["DevOps", "Docker Compose · Nginx · Let's Encrypt"],
+                ["CLI", "Node.js (jebat) · Python (jebat_dev) · Rich UI"],
               ].map(([name, tools]) => (
                 <div key={name}>
                   <div className="text-sm font-medium text-neutral-300">{name}</div>
@@ -250,12 +325,12 @@ export default function Home() {
         <div className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/5 to-transparent p-10 text-center md:p-16">
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">Ready to Build with JEBAT?</h2>
           <p className="mx-auto mb-8 max-w-lg text-neutral-400">
-            One command to start. One dashboard to configure. One platform for everything.
+            Tell us about yourself, your environment, and what you need. We'll set things up for you.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <code className="rounded-xl border border-white/10 bg-black/40 px-6 py-3 text-sm font-mono text-cyan-300">
-              npx @nusabyte/jebat setup
-            </code>
+            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300">
+              Start Onboarding →
+            </Link>
           </div>
         </div>
       </section>
@@ -273,8 +348,20 @@ export default function Home() {
           <div className="flex gap-6 text-sm text-neutral-500">
             <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">GitHub</a>
             <a href="https://jebat.online" className="transition hover:text-white">jebat.online</a>
+            <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">nusabyte.my</a>
             <Link href="/demo" className="transition hover:text-white">Demo</Link>
-            <Link href="/setup" className="transition hover:text-white">Setup</Link>
+            <Link href="/onboarding" className="transition hover:text-white">Onboarding</Link>
+          </div>
+        </div>
+        <div className="border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-6 py-6 text-center">
+            <div className="text-xs text-neutral-600">
+              Created by <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">nusabyte.my</a>
+              {" "}· Presented by <span className="text-neutral-400">humm1ngb1rd</span>
+            </div>
+            <div className="mt-2 text-xs text-neutral-700 italic max-w-2xl mx-auto">
+              {quote}
+            </div>
           </div>
         </div>
       </footer>
