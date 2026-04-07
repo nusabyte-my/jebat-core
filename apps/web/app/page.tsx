@@ -100,7 +100,6 @@ const roadmap = [
 
 const cyberQuotes = [
   "\"The only truly secure system is one that is powered off.\" — Gene Spafford",
-  "\"In cybersecurity, the weakest link is always the human element.\" — Kevin Mitnick",
   "\"Pentesting is not about breaking in. It's about proving that someone can.\" — Anonymous",
   "\"The best defense is a good offense — test before they do.\" — Anonymous",
   "\"Hackers are breaking into systems faster than you're patching them.\" — Anonymous",
@@ -181,7 +180,7 @@ export default function Home() {
           <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-4">
             {[
               ["23+", "Specialist Agents"],
-              ["40+", "Skills Installed"],
+              ["40+", "Optimized Skills"],
               ["9", "Pages Deployed"],
               ["87%", "Roadmap Complete"],
             ].map(([num, label]) => (
@@ -298,8 +297,13 @@ export default function Home() {
 
       {/* Skills */}
       <section id="skills" className="mx-auto max-w-7xl px-6 py-16">
-        <h2 className="mb-2 text-center text-3xl font-bold">72+ Skills Installed</h2>
-        <p className="mx-auto mb-10 max-w-xl text-center text-neutral-400">From Panglima (orchestration) to Serangan (offensive security) — every specialist, one platform.</p>
+        <h2 className="mb-2 text-center text-3xl font-bold">Optimized & Enhanced Skills</h2>
+        <p className="mx-auto mb-4 max-w-xl text-center text-neutral-400">
+          Every skill has been optimized for token efficiency, enhanced with real-world patterns from skills.sh, and adapted for the JEBAT ecosystem.
+        </p>
+        <p className="mx-auto mb-10 text-center text-sm text-cyan-300">
+          Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 transition hover:text-cyan-200">humm1ngb1rd — nusabyte.my</a>
+        </p>
         <div className="flex flex-wrap justify-center gap-3">
           {skills.map((s) => (
             <span key={s} className="rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-neutral-300 transition hover:border-cyan-400/30 hover:text-cyan-300 cursor-default">
@@ -369,8 +373,8 @@ export default function Home() {
         <div className="border-t border-white/5">
           <div className="mx-auto max-w-7xl px-6 py-6 text-center">
             <div className="text-xs text-neutral-600">
-              Created by <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">nusabyte.my</a>
-              {" "}· Presented by <span className="text-neutral-400">humm1ngb1rd</span>
+              Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">humm1ngb1rd — nusabyte.my</a>
+              {" "}· Created by <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">NusaByte</a>
             </div>
             <div className="mt-2 text-xs text-neutral-700 italic max-w-2xl mx-auto">
               {quote}
