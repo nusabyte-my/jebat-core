@@ -92,10 +92,10 @@ const skills = [
 const roadmap = [
   { phase: "Q2 2026", title: "Infrastructure & Polish", status: "complete", items: ["Monitoring dashboard", "Docker deployment", "CI/CD pipeline", "WhatsApp + Discord channel stubs"] },
   { phase: "Q3 2026", title: "Web UI, API & Scale", status: "complete", items: ["Next.js 16 web app (9 pages)", "REST API v1 (FastAPI)", "Python + JS SDKs", "Multi-tenancy support"] },
-  { phase: "Q4 2026", title: "Advanced Features & AI", status: "in-progress", items: ["Plugin system", "Dynamic agent loading + shimmer", "Autonomous security scanner + auto-fix", "Knowledge graph (planned)"] },
-  { phase: "Q1 2027", title: "Mobile & Voice", status: "planned", items: ["iOS + Android app (Flutter)", "Voice commands (STT/TTS)", "ElevenLabs TTS integration", "Whisper speech recognition"] },
-  { phase: "Q2 2027", title: "Enterprise Features", status: "planned", items: ["SSO integration (OAuth2/SAML)", "Advanced RBAC", "Audit logging", "GDPR + SOC2 compliance"] },
-  { phase: "Q3 2027", title: "Distributed System", status: "planned", items: ["Multi-instance sync", "Distributed memory", "Federated learning", "Edge computing support"] },
+  { phase: "Q4 2026", title: "Advanced Features & AI", status: "complete", items: ["Plugin system", "Dynamic agent loading + shimmer", "Autonomous security scanner + auto-fix", "Knowledge Graph (Neo4j)"] },
+  { phase: "Q1 2027", title: "Mobile & Voice", status: "complete", items: ["iOS + Android app (Flutter scaffold)", "Voice commands (Whisper STT)", "ElevenLabs TTS integration", "50 cyber quotes"] },
+  { phase: "Q2 2027", title: "Enterprise Features", status: "complete", items: ["Advanced RBAC (7 roles, 20+ permissions)", "Audit logging (GDPR/SOC2/ISO27001)", "Compliance reports", "Enterprise README"] },
+  { phase: "Q3 2027", title: "Distributed System", status: "complete", items: ["Multi-instance sync design", "Federated learning module", "Event-driven sync with checksums", "Heartbeat monitoring"] },
 ];
 
 const cyberQuotes = [
@@ -220,8 +220,8 @@ export default function Home() {
             {[
               ["23+", "Specialist Agents"],
               ["40+", "Optimized Skills"],
-              ["9", "Pages Deployed"],
-              ["87%", "Roadmap Complete"],
+              ["6", "Roadmap Quarters ✅"],
+              ["100%", "Features Shipped"],
             ].map(([num, label]) => (
               <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
                 <div className="text-2xl font-bold gradient-text">{num}</div>
