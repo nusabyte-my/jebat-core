@@ -293,30 +293,107 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Install Steps ───────────────────────────────────────────── */}
+      {/* ─── npm CLI Demo ────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeading
-          badge="Get Started"
-          title="Install in 5 Minutes"
-          subtitle="Clone, install, and start JEBAT on your local machine. No cloud dependency."
+          badge="npm CLI"
+          title="Try JEBAT from Your Terminal"
+          subtitle="No installation needed. Run JEBAT commands directly from npm with npx."
         />
-        <div className="space-y-6">
-          {installSteps.map((step) => (
-            <div key={step.step} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-400/20 text-cyan-300 flex items-center justify-center font-bold text-lg">
-                  {step.step}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
-                  <p className="text-sm text-neutral-400 mb-3">{step.description}</p>
-                  <div className="rounded-lg bg-black/40 border border-white/5 px-4 py-3">
-                    <pre className="text-sm font-mono text-cyan-300 whitespace-pre-wrap">{step.command}</pre>
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Command Demo */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
+              <div className="w-3 h-3 rounded-full bg-red-400/60" />
+              <div className="w-3 h-3 rounded-full bg-amber-400/60" />
+              <div className="w-3 h-3 rounded-full bg-green-400/60" />
+              <span className="ml-2 text-xs text-neutral-500 font-mono">Terminal</span>
+            </div>
+            <div className="p-6 space-y-4">
+              {[
+                { cmd: "npx jebat-core --help", output: "⚔️  JEBAT CLI — jebat-core\nThe LLM Ecosystem That Remembers Everything\n\nUsage:\n  npx jebat-core <command>\n\nCommands:\n  setup            Interactive setup wizard\n  chat             AI assistant chat (REPL mode)\n  install [dir]    Install JEBAT context to IDEs\n  detect           Detect installed IDEs\n  doctor           Workspace health check\n  status           Gateway + VPS status\n  skill-list       List installed skills\n  deploy           VPS deployment helper" },
+                { cmd: "npx jebat-core doctor", output: "🩺 JEBAT Doctor — Workspace Health Check\n\n✅ Core files: 5/5\n✅ Gateway: http://localhost:18789\n✅ Skills directory found (40+ skills)\n✅ Memory: 4 daily files\n✅ JEBAT home: ~/.jebat\n\n✅ All checks passed. JEBAT is healthy." },
+                { cmd: "npx jebat-core status", output: "📡 JEBAT System Status\n\n✅ Online Gateway (http://localhost:18789)\n✅ Healthy VPS (jebat.online)\n✅ Healthy WebUI (/webui/)\n\n✅ npm: jebat-core@2.0.0" },
+                { cmd: "npx jebat-core skill-list", output: "🗡️ Installed Skills\n\n📂 Core:\n  ✅ panglima  ✅ memory-core\n  ✅ hermes-agent  ✅ agent-dispatch\n\n📂 Development:\n  ✅ fullstack  ✅ web-developer\n  ✅ app-development  ✅ database\n  ✅ ui-ux  ✅ qa-validation\n\n📂 Security:\n  ✅ security-pentest  ✅ pengawal\n  ✅ perisai  ✅ serangan\n\n📂 SEO & Marketing:\n  ✅ seo  ✅ sem  ✅ aem  ✅ geo\n\n...and 20+ more skills installed" },
+              ].map((demo, i) => (
+                <details key={i} className="group rounded-lg border border-white/5 bg-black/20">
+                  <summary className="cursor-pointer px-4 py-3 text-sm font-mono text-cyan-300 hover:text-cyan-200 transition flex items-center justify-between">
+                    <span>$ {demo.cmd}</span>
+                    <svg className="w-4 h-4 text-neutral-500 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </summary>
+                  <pre className="px-4 pb-4 text-xs text-neutral-400 whitespace-pre-wrap font-mono leading-relaxed border-t border-white/5 pt-3">
+                    {demo.output}
+                  </pre>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          {/* Install Guide */}
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-cyan-400/10 bg-cyan-400/5 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <span className="text-xl">📦</span> One-Command Install
+              </h3>
+              <div className="rounded-lg bg-black/40 border border-white/5 p-4 mb-4">
+                <pre className="text-sm font-mono text-cyan-300">npx jebat-core install</pre>
+              </div>
+              <p className="text-sm text-neutral-400 mb-4">Installs JEBAT context into your IDE automatically. Supports:</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { name: "VS Code", icon: "🔵" },
+                  { name: "Cursor", icon: "⚡" },
+                  { name: "Zed", icon: "💎" },
+                  { name: "Trae", icon: "🔷" },
+                  { name: "Antigravity", icon: "🟣" },
+                  { name: "Windsurf", icon: "🟠" },
+                ].map((ide) => (
+                  <div key={ide.name} className="flex items-center gap-2 text-sm text-neutral-300">
+                    <span>{ide.icon}</span>
+                    {ide.name}
                   </div>
-                </div>
+                ))}
               </div>
             </div>
-          ))}
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <span className="text-xl">🚀</span> Quick Start Commands
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { cmd: "npx jebat-core doctor", desc: "Check workspace health" },
+                  { cmd: "npx jebat-core status", desc: "Check gateway & VPS status" },
+                  { cmd: "npx jebat-core skill-list", desc: "List all 40+ installed skills" },
+                  { cmd: "npx jebat-core deploy", desc: "Deploy to VPS" },
+                ].map((item) => (
+                  <div key={item.cmd} className="flex items-start gap-3">
+                    <code className="text-xs font-mono text-cyan-300 bg-black/30 rounded px-2 py-1 flex-shrink-0">{item.cmd}</code>
+                    <span className="text-xs text-neutral-400">{item.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <span className="text-xl">📋</span> Full Installation
+              </h3>
+              <div className="space-y-2">
+                {[
+                  "git clone https://github.com/nusabyte-my/jebat-core.git",
+                  "cd jebat-core",
+                  "npx jebat-core install",
+                  "npx jebat-core doctor",
+                ].map((cmd, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-cyan-400/20 text-cyan-300 flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
+                    <code className="text-xs font-mono text-neutral-300">{cmd}</code>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
