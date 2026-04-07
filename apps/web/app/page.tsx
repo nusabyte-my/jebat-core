@@ -47,21 +47,21 @@ const features = [
     details: ["One-click `npx @nusabyte/jebat install`", "Per-IDE optimized context files", "Command palette integration"],
   },
   {
-    icon: "🏘️",
-    title: "Agent Town",
-    description: "Pixel-art RPG world where you walk up to AI workers and assign tasks face-to-face. Built on OpenClaw, integrates with JEBAT's multi-agent system.",
-    details: ["Phaser 3 + React HUD", "Real-time task tracking in-game", "Worker autonomy with JEBAT skills"],
+    icon: "🏛️",
+    title: "Gelanggang Panglima",
+    description: "LLM-to-LLM orchestration arena. Agents from OpenAI, Anthropic, Gemini, Ollama, and ZAI communicate using the JEBAT protocol — sequential, parallel, consensus, or adversarial.",
+    details: ["Cross-provider LLM communication", "4 collaboration patterns", "Standardized agent protocol with 15+ message types"],
   },
 ];
 
 const integrations = [
   {
-    icon: "🏘️",
-    title: "Agent Town",
-    description: "Pixel-art RPG world where you walk up to AI workers and assign tasks face-to-face. Built on OpenClaw, integrates with JEBAT's multi-agent system.",
-    link: "https://github.com/geezerrrr/agent-town",
-    action: "Learn Integration",
-    actionLink: "/integration/agent-town",
+    icon: "🏛️",
+    title: "Gelanggang Panglima",
+    description: "LLM-to-LLM orchestration arena. Watch agents from OpenAI, Anthropic, Gemini, Ollama, and ZAI communicate, debate, and collaborate — orchestrated by Panglima.",
+    link: "https://github.com/nusabyte-my/jebat-core",
+    action: "Live Demo",
+    actionLink: "/gelanggang",
   },
   {
     icon: "🧩",
@@ -297,7 +297,7 @@ export default function Home() {
                 { label: "├─ Agent Orchestrator", sub: "23 specialists · Council workflows", indent: 2 },
                 { label: "├─ Serangan Autonomous", sub: "Codebase scanner · IBM agentic-ai-cyberres · 18 MCP tools", indent: 2 },
                 { label: "├─ Pengawal (CyberSec)", sub: "Perisai · Pengawal · Serangan", indent: 2 },
-                { label: "└─ Agent Town", sub: "Pixel-art RPG task assignment world", indent: 2 },
+                { label: "└─ Gelanggang Panglima", sub: "LLM-to-LLM cross-provider orchestration arena", indent: 2 },
                 { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis · SQLite (Chroma)", indent: 0 },
               ].map((row, i) => (
                 <div key={i} className="flex items-start gap-2" style={{ paddingLeft: row.indent ? `${row.indent}rem` : undefined }}>
@@ -405,8 +405,8 @@ export default function Home() {
             <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">GitHub</a>
             <a href="https://jebat.online" className="transition hover:text-white">jebat.online</a>
             <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">nusabyte.my</a>
+            <Link href="/gelanggang" className="transition hover:text-white">Gelanggang</Link>
             <Link href="/demo" className="transition hover:text-white">Demo</Link>
-            <Link href="/onboarding" className="transition hover:text-white">Onboarding</Link>
           </div>
         </div>
         <div className="border-t border-white/5">
