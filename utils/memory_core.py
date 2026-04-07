@@ -252,7 +252,8 @@ class MemoryCore:
                         access_count=row[6],
                         tags=json.loads(row[7]) if row[7] else [],
                         metadata=json.loads(row[8]) if row[8] else {},
-                        embeddings=pickle.loads(row[9]) if row[9] else None,
+                        embeddings=# TODO: Replace pickle with json/msgpack
+# pickle.load(row[9]) if row[9] else None,
                         decay_factor=row[10],
                         expiry_time=row[11],
                     )

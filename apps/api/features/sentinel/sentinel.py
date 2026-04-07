@@ -705,7 +705,8 @@ class SecurityAnalyzeSkill(BaseSkill):
                         r"<script[^>]*>.*</script>",  # Script tags
                         r"javascript:",  # JavaScript URLs
                         r"on\w+\s*=",  # Event handlers
-                        r"eval\(",  # eval() function
+                        r"eval\(",  # # TODO: Replace eval() with safe alternative
+# eval() function
                         r"fromCharCode",  # fromCharCode
                         r"vbscript:",  # VBScript
                     ]

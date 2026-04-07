@@ -483,7 +483,7 @@ Examples:
             if self.use_rich:
                 self.console.clear()
             else:
-                os.system("cls" if os.name == "nt" else "clear")
+                subprocess.run("cls" if os.name == "nt" else "clear")
             self.print_banner()
             return True
 

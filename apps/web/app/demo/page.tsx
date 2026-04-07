@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AgentShimmer } from "../../components/agent-shimmer";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   thinking?: string;
   tokens?: number;
+  agents?: string[];
 }
 
 const thinkingModes = [
@@ -27,6 +29,31 @@ const demoProviders = [
   { id: "openrouter", name: "OpenRouter" },
 ];
 
+// Intent classification — maps prompt keywords to agents
+const intentMap: [string[], string[]][] = [
+  [["build", "code", "create", "implement", "function", "component", "api"], ["tukang"]],
+  [["security", "vuln", "audit", "pentest", "hack", "exploit", "scan"], ["hulubalang", "pengawal"]],
+  [["research", "analyze", "investigate", "study", "find"], ["pawang", "penganalisis"]],
+  [["deploy", "docker", "server", "ci/cd", "infra"], ["syahbandar"]],
+  [["design", "ui", "css", "responsive", "layout", "style"], ["senibina-antara-muka"]],
+  [["database", "sql", "migration", "schema"], ["bendahara"]],
+  [["test", "qa", "verify", "check"], ["penyemak"]],
+  [["write", "content", "blog", "article"], ["pengkarya-kandungan"]],
+  [["marketing", "seo", "campaign"], ["penggerak-pasaran", "penjejak-carian"]],
+  [["copy", "landing", "cta"], ["juritulis-jualan"]],
+  [["product", "feature", "roadmap"], ["strategi-produk"]],
+  [["brand", "positioning", "messaging"], ["strategi-jenama"]],
+  [["memory", "remember", "recall"], ["hikmat", "memory-core"]],
+];
+
+function classifyIntent(prompt: string): string[] {
+  const lower = prompt.toLowerCase();
+  for (const [keywords, agents] of intentMap) {
+    if (keywords.some((k) => lower.includes(k))) return agents;
+  }
+  return ["panglima"]; // Default: Panglima routes to specialists
+}
+
 const sampleMessages: Record<string, string> = {
   fast: "Fast response mode — quick answers for simple questions.",
   deliberate: "I'll think through this step by step. Let me analyze the problem systematically, considering trade-offs and edge cases before providing a recommendation.",
@@ -44,23 +71,28 @@ export default function DemoPage() {
   const [selectedMode, setSelectedMode] = useState("deliberate");
   const [selectedProvider, setSelectedProvider] = useState("ollama");
   const [isThinking, setIsThinking] = useState(false);
+  const [loadingAgents, setLoadingAgents] = useState<string[]>([]);
   const [tokenCount, setTokenCount] = useState(0);
   const [memoryDemo, setMemoryDemo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  useEffect(scrollToBottom, [messages]);
+  useEffect(scrollToBottom, [messages, loadingAgents]);
 
   const sendMessage = async () => {
     if (!input.trim() || isThinking) return;
+
+    // Classify intent and load agents
+    const loadedAgents = classifyIntent(input);
+    setLoadingAgents(loadedAgents);
 
     const userMsg: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsThinking(true);
 
-    // Simulate thinking delay
-    const delay = selectedMode === "fast" ? 500 : selectedMode === "deep" ? 2500 : selectedMode === "strategic" ? 2000 : 1200;
+    // Simulate agent loading + thinking delay
+    const delay = selectedMode === "fast" ? 800 : selectedMode === "deep" ? 3000 : selectedMode === "strategic" ? 2500 : 1500;
 
     setTimeout(() => {
       const mode = thinkingModes.find((m) => m.id === selectedMode);
@@ -70,13 +102,15 @@ export default function DemoPage() {
       const assistantMsg: Message = {
         role: "assistant",
         content: thinkingText,
-        thinking: mode ? `${mode.label} mode — ${selectedProvider} provider` : undefined,
+        thinking: mode ? `${mode.label} mode — ${selectedProvider} · ${loadedAgents.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(" + ")}` : undefined,
         tokens: estimatedTokens,
+        agents: loadedAgents,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
       setTokenCount((prev) => prev + estimatedTokens);
       setIsThinking(false);
+      setLoadingAgents([]);
     }, delay);
   };
 
@@ -192,7 +226,8 @@ export default function DemoPage() {
           ))}
           {isThinking && (
             <div className="flex justify-start">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3.5">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3.5 space-y-2">
+                <AgentShimmer agents={loadingAgents} visible={isThinking} />
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
                   <span className="text-xs text-neutral-500 font-mono">

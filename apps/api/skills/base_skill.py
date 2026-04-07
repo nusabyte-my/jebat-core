@@ -456,7 +456,7 @@ class BaseSkill(ABC):
         # Sort parameters for consistent key generation
         sorted_params = sorted(kwargs.items())
         param_str = json.dumps(sorted_params, sort_keys=True)
-        hash_obj = hashlib.md5(param_str.encode())
+        hash_obj = hashlib.sha256(param_str.encode())
         return f"skill:{self.name}:{hash_obj.hexdigest()}"
 
     async def _log_execution(

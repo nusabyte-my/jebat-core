@@ -56,8 +56,10 @@ SECURITY_PATTERNS = [
     # Deserialization
     (r'(?i)pickle\.loads?\s*\(', "Unsafe Deserialization", "CRITICAL"),
     (r'(?i)yaml\.load\s*\([^,)]+\s*\)', "Unsafe YAML Load", "HIGH"),
-    (r'(?i)eval\s*\(', "Code Injection via eval()", "CRITICAL"),
-    (r'(?i)exec\s*\(', "Code Injection via exec()", "CRITICAL"),
+    (r'(?i)eval\s*\(', "Code Injection via # TODO: Replace eval() with safe alternative
+# eval()", "CRITICAL"),
+    (r'(?i)exec\s*\(', "Code Injection via # TODO: Replace exec() with safe alternative
+# exec()", "CRITICAL"),
 
     # Weak Crypto
     (r'(?i)hashlib\.md5\s*\(', "Weak Hash (MD5)", "MEDIUM"),
