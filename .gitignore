@@ -87,4 +87,21 @@ test_results/
 .kiro/
 .ollama/
 jebat-core/
+
+# Ignore ALL .md by default
 *.md
+
+# But keep core system files (root only)
+!/README.md
+!/AGENTS.md
+!/IDENTITY.md
+!/SOUL.md
+!/USER.md
+!/MEMORY.md
+!/HEARTBEAT.md
+!/HERMES.md
+!/TOOLS.md
+!/ULTRALOOP.md
+!/ULTRATHINK.md
+!/ORCHESTRA.md
+!/ORCHESTRATION_PATTERNS.md
