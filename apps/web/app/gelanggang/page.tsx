@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { AgentShimmer } from "../../components/agent-shimmer";
 
-// Agent definitions for the demo
+// ─── Agent Definitions ────────────────────────────────────────────────────────
+
 const DEMO_AGENTS = [
   { id: "tukang-001", name: "Tukang", role: "Development", provider: "OpenAI", model: "gpt-4o", emoji: "🔧", color: "#3B82F6" },
   { id: "hulubalang-001", name: "Hulubalang", role: "Security", provider: "Anthropic", model: "claude-sonnet-4", emoji: "🛡️", color: "#EF4444" },
@@ -13,160 +13,588 @@ const DEMO_AGENTS = [
   { id: "panglima-001", name: "Panglima", role: "Orchestration", provider: "Anthropic", model: "claude-opus-4", emoji: "⚔️", color: "#00E5FF" },
 ];
 
-const COLLAB_PATTERNS = [
-  { id: "sequential", name: "Sequential", description: "Each agent works in order, building on previous results" },
-  { id: "parallel", name: "Parallel", description: "All agents work simultaneously" },
-  { id: "consensus", name: "Consensus", description: "All agents propose and vote" },
-  { id: "adversarial", name: "Adversarial", description: "Two debate, third judges" },
-];
+// ─── Orchestration Scenarios ─────────────────────────────────────────────────
 
-const DEMO_SCENARIOS = [
+const SCENARIOS = [
   {
-    id: "code_review",
-    title: "Multi-Agent Code Review",
-    description: "Tukang writes code → Hulubalang audits security → Penyemak validates tests → Panglima synthesizes",
+    id: "secure_api",
+    title: "Secure API Design",
+    subtitle: "Build & audit a production authentication API",
+    description: "Watch Tukang build a JWT auth system → Hulubalang find vulnerabilities → Penyemak validate tests → Panglima synthesize the verdict.",
+    pattern: "Sequential",
+    patternIcon: "➡️",
     agents: ["tukang-001", "hulubalang-001", "penyemak-001", "panglima-001"],
-    pattern: "sequential",
-    task: "Build a secure user authentication API with JWT tokens and rate limiting",
+    estimatedTime: "~45 seconds",
   },
   {
-    id: "security_design",
-    title: "Security Architecture Design",
-    description: "Hulubalang proposes → Pawang researches → Penyemak validates → Panglima decides",
-    agents: ["hulubalang-001", "pawang-001", "penyemak-001", "panglima-001"],
-    pattern: "consensus",
-    task: "Design a zero-trust architecture for a microservices deployment",
+    id: "incident_response",
+    title: "Incident Response",
+    subtitle: "Detect, investigate, and remediate a security breach",
+    description: "Pawang investigates the breach → Hulubalang traces the attack vector → Syahbandar deploys containment → Panglima coordinates the response.",
+    pattern: "Parallel",
+    patternIcon: "⚡",
+    agents: ["pawang-001", "hulubalang-001", "syahbandar-001", "panglima-001"],
+    estimatedTime: "~50 seconds",
   },
   {
-    id: "debate",
-    title: "Adversarial Architecture Debate",
-    description: "Tukang proposes monolith → Syahbandar proposes microservices → Panglima judges",
+    id: "architecture_debate",
+    title: "Architecture Debate",
+    subtitle: "Monolith vs Microservices — adversarial resolution",
+    description: "Tukang argues for monolith simplicity → Syahbandar advocates microservices scalability → Panglima judges based on trade-offs.",
+    pattern: "Adversarial",
+    patternIcon: "⚔️",
     agents: ["tukang-001", "syahbandar-001", "panglima-001"],
-    pattern: "adversarial",
-    task: "Should we use monolith or microservices for our new platform?",
+    estimatedTime: "~35 seconds",
   },
 ];
 
-// Simulated LLM-to-LLM conversation messages
-const SIMULATED_RESPONSES: Record<string, Record<string, string>> = {
+// ─── Randomized Response Pool ─────────────────────────────────────────────────
+
+const RESPONSE_POOL: Record<string, Record<string, string[]>> = {
   tukang: {
-    "code_review": `I'll build a secure auth API with JWT and rate limiting.
+    secure_api: [
+      `I'll build a secure auth API with JWT, bcrypt, and rate limiting.
 
 \`\`\`python
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
-import jwt
-import time
+import jwt, bcrypt, os, time
 
 app = FastAPI()
 security = HTTPBearer()
-SECRET_KEY = os.getenv("JWT_SECRET")
-
-@app.post("/api/auth/login")
-async def login(credentials: LoginRequest):
-    user = await verify_user(credentials)
-    if not user:
-        raise HTTPException(401, "Invalid credentials")
-    
-    token = jwt.encode({
-        "sub": user.id,
-        "exp": time.time() + 3600,
-        "iat": time.time(),
-    }, SECRET_KEY, algorithm="HS256")
-    
-    return {"access_token": token, "token_type": "bearer"}
-
-@app.get("/api/auth/me")
-async def get_current_user(token: str = Depends(security)):
-    try:
-        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=["HS256"])
-        return await get_user(payload["sub"])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(401, "Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(401, "Invalid token")
-\`\`\`
-
-I've included proper JWT validation and error handling. Hulubalang should review the security aspects.`,
-  },
-  hulubalang: {
-    "code_review": `🔴 **CRITICAL SECURITY ISSUES FOUND**
-
-| Issue | Severity | Line |
-|-------|----------|------|
-| Hardcoded secret fallback | CRITICAL | 7 |
-| No rate limiting | HIGH | — |
-| No password hashing mentioned | HIGH | — |
-| Missing CSRF protection | MEDIUM | — |
-
-**Fixes:**
-1. Use environment variables ONLY — no fallback
-2. Add rate limiting with Redis-backed sliding window
-3. Use bcrypt for password hashing
-4. Add refresh token rotation
-5. Implement token blacklisting for logout
-
-\`\`\`python
-# Rate limiting middleware
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
+SECRET_KEY = os.environ["JWT_SECRET"]  # No fallbacks
 
 @app.post("/api/auth/login")
 @limiter.limit("5/minute")
 async def login(request: Request, credentials: LoginRequest):
-    # Implementation with rate limiting
-    pass
+    user = await db.get_user(credentials.email)
+    if not user or not bcrypt.checkpw(credentials.password.encode(), user.hashed_pw):
+        raise HTTPException(401, "Invalid credentials")
+    
+    token = jwt.encode({"sub": user.id, "exp": time.time() + 3600, "iat": time.time()}, SECRET_KEY, algorithm="HS256")
+    return {"access_token": token, "token_type": "bearer"}
 \`\`\`
 
-Penyemak should validate the test coverage for these security controls.`,
+Key security decisions:
+- Environment-only secrets (no defaults)
+- bcrypt for password hashing (cost factor 12)
+- Rate limiting at 5 req/min per IP
+- JWT expiry at 1 hour with rotation
+
+Hulubalang should review for edge cases.`,
+
+      `Building a production-grade auth API. Here's my approach:
+
+\`\`\`python
+from fastapi import FastAPI, Depends, HTTPException
+from passlib.context import CryptContext
+import jwt, os
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+SECRET_KEY = os.environ["JWT_SECRET"]
+
+class AuthService:
+    async def authenticate(self, email: str, password: str) -> str:
+        user = await self._get_user(email)
+        if not user or not pwd_context.verify(password, user.hashed_password):
+            raise HTTPException(401, "Authentication failed")
+        
+        return jwt.encode(
+            {"sub": str(user.id), "role": user.role, "exp": int(time.time()) + 3600},
+            SECRET_KEY, algorithm="HS256"
+        )
+    
+    async def verify_token(self, token: str) -> dict:
+        try:
+            return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(401, "Token expired")
+        except jwt.InvalidTokenError:
+            raise HTTPException(401, "Invalid token")
+\`\`\`
+
+Security layers implemented:
+1. bcrypt with automatic salt generation
+2. JWT with HS256 and 1-hour expiry
+3. Token blacklisting support for logout
+4. Refresh token rotation (not shown)
+5. Input validation on all endpoints
+
+Ready for Hulubalang's security review.`,
+
+      `Here's the auth system I've designed:
+
+\`\`\`python
+# Core authentication flow
+async def login(email: str, password: str) -> TokenResponse:
+    # 1. Validate input format
+    validate_email(email)
+    validate_password_strength(password)
+    
+    # 2. Lookup user (constant-time to prevent enumeration)
+    user = await users.get_by_email(email)
+    
+    # 3. Verify password (bcrypt, constant-time compare)
+    if not user or not verify_password(password, user.hashed_pw):
+        # Same error message to prevent email enumeration
+        raise AuthError("Invalid credentials")
+    
+    # 4. Check account status
+    if user.locked_until and user.locked_until > now():
+        raise AuthError("Account temporarily locked")
+    
+    # 5. Issue tokens
+    access_token = create_jwt(user.id, expiry=3600)
+    refresh_token = create_refresh_token(user.id)
+    
+    # 6. Log the authentication
+    await audit_log.log("login_success", user_id=user.id, ip=request.ip)
+    
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+\`\`\`
+
+Defensive measures:
+- Constant-time email lookup (prevents enumeration)
+- Account lockout after 5 failed attempts (15 min cooldown)
+- Structured audit logging for every auth event
+- Refresh token rotation with family detection
+
+Hulubalang, please review the cryptographic choices.`,
+    ],
+    incident_response: [
+      `I'm investigating the breach. Initial findings:
+
+**Timeline of events:**
+- 02:14:47 — Unusual API traffic spike from IP 203.0.113.42
+- 02:15:02 — Multiple failed login attempts across 12 accounts
+- 02:15:33 — Successful login from compromised service account
+- 02:16:01 — Data exfiltration attempt on /api/users/export
+
+**Attack vector analysis:**
+The attacker appears to have used a credential stuffing attack against our API. The compromised service account had overly broad permissions — it could access the user export endpoint.
+
+**Immediate actions taken:**
+1. Blocked IP 203.0.113.42 at WAF level
+2. Revoked the compromised service account's tokens
+3. Enabled enhanced logging on all export endpoints
+
+I'm passing this to Hulubalang for deeper forensic analysis.`,
+
+      `Breach investigation update:
+
+**What happened:**
+At 02:14 UTC, we detected anomalous behavior — 847 login attempts in 90 seconds from a single IP range. This triggered our rate limiter, but the attacker rotated through 47 different IPs.
+
+**Compromised assets:**
+- 1 service account (svc-backup-02) — token was stolen
+- 3 user accounts — credential stuffing successful
+- User database was queried (not exported — our rate limiting on exports held)
+
+**Containment status:**
+- 🔴 Active threat: BLOCKED
+- 🟡 Investigation: ONGOING
+- 🟢 User data: NOT EXFILTRATED
+
+Handing off to Hulubalang for attack vector deep-dive.`,
+    ],
+    architecture_debate: [
+      `I strongly recommend starting with a well-structured monolith. Here's why:
+
+**For our current team size (5 engineers):**
+- A monolith means ONE codebase to manage, ONE deployment pipeline, ONE monitoring system
+- We can still use modular architecture internally — separate packages for auth, users, billing
+- When we hit 50+ engineers OR need independent scaling, we can extract services
+
+**The microservices trap:**
+- 5 services = 5x deployment complexity, 5x monitoring, 5x CI/CD pipelines
+- Distributed tracing, service mesh, API gateways — all infrastructure we don't need yet
+- Network latency between services adds 50-200ms to every request
+
+**My recommendation:**
+Build a modular monolith with clear boundaries. When a module outgrows its bounds, extract it. This is what Stripe, Shopify, and GitHub all did.
+
+Syahbandar wants microservices now — but I say we earn that complexity.`,
+
+      `Monolith-first is the right call for Q1-Q2. But let me add context:
+
+**Where I agree with Tukang:**
+- Team size < 10 → monolith is correct
+- Modular boundaries are key — don't build a big ball of mud
+- Extract when you feel pain, not before
+
+**Where I disagree:**
+We should DESIGN for microservices from day one. Not build them, but DESIGN:
+- Clear API contracts between modules
+- Database-per-module pattern (even in monolith)
+- Event-driven communication between modules
+
+Why? Because refactoring a monolith into microservices later is 10x harder than extracting well-bounded modules.
+
+Let me show the hybrid approach I'm proposing...`,
+    ],
+  },
+  hulubalang: {
+    secure_api: [
+      `🔴 **CRITICAL SECURITY FINDINGS**
+
+| # | Issue | Severity | Impact |
+|---|-------|----------|--------|
+| 1 | JWT secret not rotated | HIGH | Token forgery if leaked |
+| 2 | No CSRF protection | MEDIUM | Cross-site request forgery |
+| 3 | Missing X-Content-Type-Options | LOW | MIME-type sniffing |
+
+**Detailed analysis:**
+
+**Issue #1 — JWT Secret Rotation:**
+The secret key is static. If compromised, ALL tokens are compromised until manual rotation.
+\`\`\`
+Recommendation: Implement key rotation with key ID (kid) in JWT header
+\`\`\`
+
+**Issue #2 — CSRF:**
+The login endpoint accepts POST without CSRF token validation.
+\`\`\`python
+# Fix: Add CSRF middleware
+app.add_middleware(CSRFMiddleware, secret=os.environ["CSRF_SECRET"])
+\`\`\`
+
+**Positive findings:**
+✅ bcrypt with cost factor 12 — good
+✅ Rate limiting implemented — good
+✅ No SQL injection (parameterized queries) — good
+
+Overall: 7/10 security score. Fix the 3 issues before production.`,
+
+      `🛡️ **Security Audit Report — Auth API**
+
+**Score: 7/10** — Good foundation, needs hardening
+
+**CRITICAL findings:**
+1. **No token blacklisting** — Users can't truly log out. JWTs remain valid until expiry.
+   - Fix: Add Redis-backed token blacklist or use short-lived tokens with refresh rotation
+
+2. **Missing input sanitization** — Email field not sanitized before DB query
+   - Fix: Add pydantic EmailStr validation + HTML/entity encoding
+
+**HIGH findings:**
+3. **No account lockout** — Brute force is rate-limited but not locked
+   - Fix: Lock account for 15 min after 5 failed attempts
+
+4. **Missing security headers** — No Content-Security-Policy, no X-Frame-Options
+   - Fix: Add SecurityHeaders middleware
+
+**What's done well:**
+✅ bcrypt password hashing
+✅ Rate limiting
+✅ No hardcoded secrets
+✅ Structured error messages (no stack traces)
+
+**Recommendation:** Fix CRITICAL items 1-2 before deploying to staging.`,
+    ],
+    incident_response: [
+      `🔴 **Forensic Analysis — Attack Vector Deep Dive**
+
+**Attack chain reconstruction:**
+
+1. **Reconnaissance (02:10-02:14):** Attacker scanned our API for login endpoints using automated tooling
+2. **Credential Stuffing (02:14-02:15):** Used 12,000 leaked credentials against /api/auth/login
+3. **Token Theft (02:15):** Obtained valid JWT for svc-backup-02 (likely from compromised CI/CD logs)
+4. **Lateral Movement (02:16):** Used service account to query /api/users/export
+5. **Exfiltration BLOCKED (02:16):** Rate limiting on export endpoint prevented data theft
+
+**Root cause:**
+The service account token was accidentally committed to a public CI/CD log 3 weeks ago. Our secret scanning didn't catch it because it was base64-encoded.
+
+**Remediation:**
+1. Rotate ALL service account tokens immediately
+2. Add base64-encoded secret detection to our scanning pipeline
+3. Implement short-lived service tokens (max 1 hour)
+4. Add anomaly detection on service account usage patterns
+
+Syahbandar, I need you to rotate the tokens and patch the CI/CD pipeline.`,
+
+      `🔍 **Attack Forensics Update**
+
+**Threat actor profile:**
+- Automated tooling (python-requests with randomized user agents)
+- Credential list matches HaveIBeenPwned breach from 2024
+- Targeted our specific API endpoints (not random scanning)
+- This appears to be a targeted attack, not opportunistic
+
+**IOCs (Indicators of Compromise):**
+- IPs: 203.0.113.42, 198.51.100.15, 192.0.2.88
+- User-Agent pattern: "Mozilla/5.0 (compatible; Bot/1.0)"
+- Request pattern: POST /api/auth/login with 0.1s intervals
+
+**What was NOT compromised:**
+- User database (export rate limiting held)
+- Admin accounts (MFA prevented credential stuffing)
+- Payment data (separate service, not accessed)
+
+Passing to Syahbandar for containment deployment.`,
+    ],
+    architecture_debate: [
+      `I disagree with Tukang's monolith recommendation for THIS specific use case.
+
+**Why microservices make sense here:**
+
+1. **Different security requirements:** Auth service needs PCI-DSS compliance. The analytics service doesn't. Putting them in the same codebase means the ENTIRE monolith needs PCI-DSS compliance.
+
+2. **Independent scaling:** During peak hours, our auth endpoints get 10x traffic while admin endpoints get 1x. With a monolith, you scale EVERYTHING. With microservices, you scale only what's under load.
+
+3. **Team autonomy:** When Team A breaks Team B's code in a monolith, you get deployment freezes. With service boundaries, teams deploy independently.
+
+**My proposed architecture:**
+- auth-service (Go — high performance, small binary)
+- api-gateway (Nginx + Lua)
+- user-service (Python/FastAPI — rapid development)
+- analytics-service (Node.js — streaming support)
+
+**Yes, it's more complex.** But the complexity buys us: security isolation, independent scaling, team autonomy, and technology diversity.
+
+Panglima, I'd like you to judge this based on our team's operational maturity.`,
+    ],
+  },
+  pawang: {
+    incident_response: [
+      `📊 **Threat Intelligence Report**
+
+**Attribution analysis:**
+The IP addresses (203.0.113.42, 198.51.100.15, 192.0.2.88) belong to a known threat actor group tracked as APT-47 "ShadowNet". This group has been active since 2023, targeting SaaS companies in Southeast Asia.
+
+**TTPs (Tactics, Techniques, Procedures):**
+- Initial access: Credential stuffing (MITRE ATT&CK T1110)
+- Persistence: Service account token reuse (T1078)
+- Collection: API data export (T1530)
+- This matches their standard playbook from the March 2025 TechCorp breach
+
+**Recommended additional actions:**
+1. Check all CI/CD logs from the past 90 days for other leaked tokens
+2. Search threat intelligence feeds for our domain in APT-47 target lists
+3. Review all service accounts for overly broad permissions
+4. Implement mandatory token rotation every 24 hours
+
+**Confidence level: HIGH** — The attack pattern matches 3 previous incidents attributed to this group.`,
+
+      `📋 **Research Summary — Threat Landscape**
+
+**What we know:**
+- This is NOT a random automated attack. The targeting was specific to our API.
+- The credential list used matches the "DataBreach2024" leak (8.2M records).
+- Our domain appears in 2 dark web forum posts discussing "Southeast Asian SaaS targets."
+
+**Industry context:**
+Similar attacks on 3 other companies in our sector this quarter:
+- Company A: Full breach (no rate limiting) → $2.4M in damages
+- Company B: Partial breach (rate limiting but no MFA) → $800K in damages
+- Company C: No breach (rate limiting + MFA + token rotation) → $0 in damages
+
+**Key takeaway:** Our rate limiting saved us. But the compromised service account shows we need mandatory token rotation.
+
+Recommendation: Implement the 4-point remediation plan Hulubalang outlined.`,
+    ],
+  },
+  syahbandar: {
+    incident_response: [
+      `⚙️ **Containment Deployment — In Progress**
+
+**Actions completed:**
+1. ✅ Rotated ALL 23 service account tokens (took 12 minutes)
+2. ✅ Patched CI/CD pipeline — added base64 secret detection (commit a3f7b2c)
+3. ✅ Implemented 1-hour token expiry for all service accounts
+4. ✅ Deployed anomaly detection rules on service account usage
+
+**Infrastructure changes deployed:**
+\`\`\`yaml
+# New CI/CD secret scanning rule
+- name: detect-base64-secrets
+  pattern: "(?:[A-Za-z0-9+/]{4}){10,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?"
+  action: block_and_alert
+\`\`\`
+
+**Monitoring status:**
+- All export endpoints now have enhanced logging (5 min retention → 90 day retention)
+- Real-time alerts configured for service account anomalies
+- Dashboard updated with breach timeline
+
+Estimated time to full remediation: 45 minutes. All critical actions complete.`,
+    ],
+    architecture_debate: [
+      `Both of you make valid points. Let me add the operational perspective:
+
+**Infrastructure cost comparison (estimated monthly):**
+
+| Architecture | Compute | Monitoring | CI/CD | Total |
+|-------------|---------|-----------|-------|-------|
+| Monolith | $200 | $50 | $30 | **$280** |
+| Microservices (5 services) | $800 | $200 | $150 | **$1,150** |
+
+**The hidden cost nobody talks about:**
+- Developer cognitive load: monolith = 1 context, microservices = 5 contexts
+- On-call rotation: monolith = 1 page, microservices = 5 possible pages
+- Debugging: monolith = grep logs, microservices = distributed tracing setup
+
+**My operational recommendation:**
+Start with monolith BUT build the operational tooling for microservices NOW:
+- Containerize each module as if it were a service
+- Set up the CI/CD pipeline for independent deployment
+- Monitor each module's resource usage independently
+
+When we're ready to split, it's a config change, not a rewrite.`,
+    ],
   },
   penyemak: {
-    "code_review": `✅ **QA Validation Report**
+    secure_api: [
+      `✅ **QA Validation Report**
 
 **Test Coverage Analysis:**
 - Auth flow: 85% coverage ✅
-- Error handling: 70% coverage ⚠️
-- Rate limiting: 60% coverage ⚠️
+- Error handling: 72% coverage ⚠️
+- Rate limiting: 65% coverage ⚠️
 - Token validation: 90% ✅
 
-**Missing Test Cases:**
-1. Expired token handling
-2. Invalid signature detection
-3. Rate limit exhaustion
-4. Concurrent login from different IPs
-5. Token replay attack prevention
+**Missing test cases (critical):**
+1. Expired token handling — not tested
+2. Invalid signature detection — not tested
+3. Rate limit exhaustion — not tested
+4. Concurrent login from different IPs — not tested
+5. Token replay attack prevention — not tested
 
 **Recommendation:** Add integration tests for all 5 missing cases before deployment. Estimated effort: 2-3 hours.
 
-**Overall Assessment:** Code is 75% production-ready. Fix the 3 HIGH security issues and add the 5 missing test cases.`,
+**Overall Assessment:** Code is 75% production-ready. Fix the 3 HIGH security issues from Hulubalang and add the 5 missing test cases.`,
+
+      `📊 **Test Results Summary**
+
+**Passed:** 23/32 tests (72%)
+**Failed:** 5/32 tests (missing implementations)
+**Skipped:** 4/32 tests (need mock infrastructure)
+
+**Blocking issues:**
+- test_expired_token_rejection — FAIL (token doesn't actually expire)
+- test_rate_limit_enforcement — FAIL (limiter not connected to Redis)
+- test_concurrent_logins — FAIL (no lock mechanism)
+
+**Non-blocking:**
+- test_password_complexity — PASS ✅
+- test_jwt_signature_validation — PASS ✅
+- test_error_message_safety — PASS ✅ (no stack traces leaked)
+
+**Verdict:** NOT READY for production. Fix 3 blocking issues first. Estimated time: 4 hours.`,
+    ],
   },
   panglima: {
-    "code_review": `⚔️ **Orchestrator Synthesis**
+    secure_api: [
+      `⚔️ **Orchestrator Synthesis**
 
 **Final Verdict: PROCEED WITH MODIFICATIONS**
 
 **Summary of Multi-Agent Review:**
-- 🔧 Tukang: Built solid JWT auth foundation
-- 🛡️ Hulubalang: Found 4 security issues (2 CRITICAL, 2 HIGH)
-- ✅ Penyemak: 75% production-ready, 5 test gaps
+- 🔧 Tukang: Built solid JWT auth foundation with bcrypt + rate limiting
+- 🛡️ Hulubalang: Found 3 security issues (2 CRITICAL, 1 HIGH)
+- ✅ Penyemak: 75% production-ready, 5 test gaps identified
 
 **Action Items (Priority Order):**
-1. **[CRITICAL]** Fix hardcoded secret — use env vars only
-2. **[CRITICAL]** Add rate limiting (Redis-backed)
-3. **[HIGH]** Implement bcrypt password hashing
-4. **[HIGH]** Add refresh token rotation
-5. **[MEDIUM]** Add 5 missing integration tests
+1. **[CRITICAL]** Add token blacklisting for true logout capability
+2. **[CRITICAL]** Implement CSRF protection middleware
+3. **[HIGH]** Add account lockout after 5 failed attempts
+4. **[HIGH]** Add 5 missing integration tests
+5. **[MEDIUM]** Add security headers (CSP, X-Frame-Options)
 
 **Estimated Time:** 4-6 hours
 **Confidence:** HIGH — All agents agree on critical issues
 **Next Step:** Assign to Tukang for fixes, re-review by Hulubalang`,
+
+      `⚔️ **Final Verdict — Auth API Review**
+
+**Decision: CONDITIONAL APPROVAL**
+
+The code is solid but needs 3 critical fixes before it touches production.
+
+**What went well:**
+- Tukang's architectural decisions were sound (bcrypt, rate limiting, no hardcoded secrets)
+- Hulubalang's security review was thorough and actionable
+- Penyemak's test coverage analysis identified real gaps
+
+**What needs work:**
+- Token lifecycle management (no blacklisting, no rotation)
+- CSRF protection missing on state-changing endpoints
+- Test coverage below the 80% threshold
+
+**Go/No-Go: NO-GO** until critical items 1-2 are resolved.
+
+I'm assigning this back to Tukang with a 6-hour deadline. Hulubalang will re-review within 1 hour of fix submission.`,
+    ],
+    incident_response: [
+      `⚔️ **Incident Response — Commander's Summary**
+
+**Status: CONTAINED**
+
+**Timeline:**
+- 02:14 — Attack detected (automated alert triggered)
+- 02:16 — Attack blocked (rate limiting held)
+- 02:30 — Root cause identified (leaked service token)
+- 02:45 — Full containment deployed (tokens rotated, pipeline patched)
+
+**Impact Assessment:**
+- User data: NOT compromised ✅
+- Financial data: NOT compromised ✅
+- Service disruption: 31 minutes ⚠️
+- Reputation risk: LOW (internal detection, no public exposure)
+
+**Lessons Learned:**
+1. Rate limiting SAVED us — validate this investment quarterly
+2. Base64-encoded secrets slip through scanners — fix immediately
+3. Service accounts need mandatory rotation — implement within 48 hours
+
+**Confidence:** HIGH
+**Escalation:** No executive notification needed — contained before impact.`,
+    ],
+    architecture_debate: [
+      `⚔️ **Architectural Verdict — Panglima's Decision**
+
+After reviewing both positions, here is my ruling:
+
+**VERDICT: MODULAR MONOLITH with microservices-ready infrastructure**
+
+**Rationale:**
+
+Tukang is RIGHT about:
+- Team size (5 engineers) doesn't justify microservices overhead
+- Deployment complexity is a real cost
+- "Earn your complexity" is the correct philosophy
+
+Syahbandar is RIGHT about:
+- Security isolation requirements (PCI-DSS)
+- Independent scaling needs for auth endpoints
+- Operational tooling should be built early
+
+**My decision:**
+1. Build a monolith for Q1-Q2
+2. BUT containerize each module independently from day one
+3. Set up the full microservices CI/CD pipeline now
+4. Monitor each module's resource usage independently
+5. Extract to microservices when we hit: 10+ engineers OR 100K+ daily active users
+
+**This gives us:** Tukang's simplicity NOW + Syahbandar's scalability LATER.
+
+Both agents presented strong cases. The compromise honors both perspectives.`,
+    ],
   },
 };
 
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+function getRandomResponse(agentKey: string, scenarioId: string): string {
+  const pool = RESPONSE_POOL[agentKey]?.[scenarioId];
+  if (!pool || pool.length === 0) return `${agentKey} is processing the task...`;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ─── Page Component ───────────────────────────────────────────────────────────
+
 export default function GelanggangPage() {
-  const [selectedScenario, setSelectedScenario] = useState(DEMO_SCENARIOS[0]);
+  const [selectedScenario, setSelectedScenario] = useState(SCENARIOS[0]);
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<any[]>([]);
@@ -182,7 +610,7 @@ export default function GelanggangPage() {
     setCurrentStep(0);
     setMessages([]);
     setFinalResult("");
-    setMessages([{ role: "system", content: `🏛️ Gelanggang Panglima initialized\nTask: ${selectedScenario.task}\nPattern: ${selectedScenario.pattern}\nAgents: ${selectedScenario.agents.map(id => DEMO_AGENTS.find(a => a.id === id)?.name).join(" → ")}` }]);
+    setMessages([{ role: "system", content: `🏛️ Gelanggang Panglima initialized\nScenario: ${selectedScenario.title}\nPattern: ${selectedScenario.pattern}\nAgents: ${selectedScenario.agents.map(id => DEMO_AGENTS.find(a => a.id === id)?.emoji + " " + DEMO_AGENTS.find(a => a.id === id)?.name).join(" → ")}` }]);
 
     const agentIds = selectedScenario.agents;
 
@@ -190,15 +618,13 @@ export default function GelanggangPage() {
       const agentId = agentIds[i];
       const agent = DEMO_AGENTS.find(a => a.id === agentId)!;
 
-      // Show shimmer
       setLoadingAgents([agentId]);
       setCurrentStep(i + 1);
 
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
 
-      // Simulate LLM-to-LLM communication
       const agentKey = agent.name.toLowerCase();
-      const content = SIMULATED_RESPONSES[agentKey]?.[selectedScenario.id] || `${agent.name} is processing the task with ${agent.provider} (${agent.model})...`;
+      const content = getRandomResponse(agentKey, selectedScenario.id);
 
       setMessages(prev => [...prev, {
         role: "agent",
@@ -208,7 +634,7 @@ export default function GelanggangPage() {
       }]);
 
       setLoadingAgents([]);
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
     }
 
     setFinalResult("✅ Collaboration complete. All agents have contributed.");
@@ -217,7 +643,7 @@ export default function GelanggangPage() {
 
   return (
     <main className="min-h-screen bg-[#050505] text-neutral-100">
-      {/* Nav */}
+      {/* ─── Nav ──────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -232,17 +658,17 @@ export default function GelanggangPage() {
       </nav>
 
       <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
-        {/* Hero */}
+        {/* ─── Hero ───────────────────────────────────────────────── */}
         <section className="text-center space-y-4">
           <h1 className="text-4xl font-bold gradient-text">⚔️ Gelanggang Panglima</h1>
           <p className="max-w-2xl mx-auto text-lg text-neutral-400">
-            Watch LLM agents from different providers (OpenAI, Anthropic, Gemini, Ollama, ZAI) communicate, collaborate, and debate — all orchestrated by Panglima.
+            Pick a scenario, watch agents from different LLM providers communicate, debate, and decide — all orchestrated by Panglima.
           </p>
         </section>
 
-        {/* Scenario Selector */}
+        {/* ─── Scenario Selector ──────────────────────────────────── */}
         <section className="grid gap-4 md:grid-cols-3">
-          {DEMO_SCENARIOS.map((scenario) => (
+          {SCENARIOS.map((scenario) => (
             <button
               key={scenario.id}
               onClick={() => !isRunning && setSelectedScenario(scenario)}
@@ -253,23 +679,31 @@ export default function GelanggangPage() {
                   : "border-white/10 bg-white/[0.02] hover:border-white/20"
               } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <h3 className="font-semibold text-white mb-2">{scenario.title}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">{scenario.patternIcon}</span>
+                <span className="text-xs rounded-full border border-white/10 px-2 py-0.5 text-neutral-400">{scenario.pattern}</span>
+              </div>
+              <h3 className="font-semibold text-white mb-1">{scenario.title}</h3>
+              <p className="text-xs text-cyan-300 mb-2">{scenario.subtitle}</p>
               <p className="text-sm text-neutral-400 mb-3">{scenario.description}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {scenario.agents.map(id => {
-                  const agent = DEMO_AGENTS.find(a => a.id === id);
-                  return agent ? (
-                    <span key={id} className="text-xs rounded-full border px-2 py-0.5" style={{ borderColor: agent.color + "40", color: agent.color }}>
-                      {agent.emoji} {agent.name}
-                    </span>
-                  ) : null;
-                })}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-1">
+                  {scenario.agents.map(id => {
+                    const agent = DEMO_AGENTS.find(a => a.id === id);
+                    return agent ? (
+                      <span key={id} className="text-xs rounded-full border px-1.5 py-0.5" style={{ borderColor: agent.color + "40", color: agent.color }}>
+                        {agent.emoji} {agent.name}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+                <span className="text-xs text-neutral-600">{scenario.estimatedTime}</span>
               </div>
             </button>
           ))}
         </section>
 
-        {/* Run Button */}
+        {/* ─── Run Button ─────────────────────────────────────────── */}
         <div className="flex justify-center">
           <button
             onClick={runDemo}
@@ -280,22 +714,28 @@ export default function GelanggangPage() {
                 : "bg-cyan-400 text-black hover:bg-cyan-300"
             }`}
           >
-            {isRunning ? `⏳ Step ${currentStep}/${selectedScenario.agents.length} — ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.name} is thinking...` : "🏛️ Start Gelanggang"}
+            {isRunning ? `⏳ Step ${currentStep}/${selectedScenario.agents.length} — ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.emoji} ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.name} is thinking...` : "🏛️ Start Gelanggang"}
           </button>
+          {!isRunning && messages.length > 1 && (
+            <button onClick={runDemo} className="ml-3 rounded-xl border border-white/10 px-6 py-4 text-base font-medium text-white transition hover:bg-white/10">
+              🔄 Rerun (new responses)
+            </button>
+          )}
         </div>
 
-        {/* Agent Status Bar */}
+        {/* ─── Agent Status Bar ───────────────────────────────────── */}
         <section className="flex flex-wrap justify-center gap-4">
           {DEMO_AGENTS.map((agent) => {
             const isActive = loadingAgents.includes(agent.id);
             const hasSpoken = messages.some(m => m.agent?.id === agent.id);
+            const isInvolved = selectedScenario.agents.includes(agent.id);
             return (
               <div
                 key={agent.id}
                 className={`flex items-center gap-2 rounded-xl border px-4 py-2 transition ${
                   isActive ? "border-cyan-400/50 bg-cyan-400/10" :
                   hasSpoken ? "border-emerald-400/30 bg-emerald-400/5" :
-                  "border-white/10 bg-white/[0.02]"
+                  isInvolved ? "border-white/10 bg-white/[0.02]" : "border-white/5 bg-white/[0.01] opacity-40"
                 }`}
               >
                 <span className="text-lg">{agent.emoji}</span>
@@ -310,12 +750,13 @@ export default function GelanggangPage() {
           })}
         </section>
 
-        {/* Conversation Feed */}
+        {/* ─── Conversation Feed ──────────────────────────────────── */}
         <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 min-h-[400px] max-h-[600px] overflow-y-auto">
-          {messages.length === 0 && (
+          {messages.length <= 1 && !isRunning && (
             <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
               <span className="text-4xl mb-4">🏛️</span>
-              <p>Select a scenario and click "Start Gelanggang" to watch agents communicate</p>
+              <p className="text-center">Select a scenario above and click "Start Gelanggang" to watch agents communicate.</p>
+              <p className="text-xs text-neutral-600 mt-2">Each run generates randomized responses for variety.</p>
             </div>
           )}
 
@@ -336,7 +777,7 @@ export default function GelanggangPage() {
                     </div>
                     <div className="ml-auto">
                       <span className="text-xs rounded-full border px-2 py-0.5 text-neutral-400 border-white/10">
-                        LLM-to-LLM Message #{i}
+                        LLM-to-LLM #{i}
                       </span>
                     </div>
                   </div>
@@ -349,21 +790,25 @@ export default function GelanggangPage() {
           ))}
 
           {isRunning && loadingAgents.length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-              <AgentShimmer agents={loadingAgents} visible={true} />
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4 flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+              <span className="text-sm text-cyan-300">
+                {DEMO_AGENTS.find(a => a.id === loadingAgents[0])?.emoji} {DEMO_AGENTS.find(a => a.id === loadingAgents[0])?.name} is generating response...
+              </span>
             </div>
           )}
 
           {finalResult && (
             <div className="rounded-xl bg-emerald-400/5 border border-emerald-400/20 px-4 py-3 text-center">
               <span className="text-emerald-300 font-medium">{finalResult}</span>
+              <p className="text-xs text-neutral-500 mt-1">Click "Rerun" to see different randomized responses.</p>
             </div>
           )}
 
           <div ref={messagesEndRef} />
         </section>
 
-        {/* How It Works */}
+        {/* ─── How It Works ───────────────────────────────────────── */}
         <section className="rounded-3xl border border-white/10 bg-white/[0.02] p-8">
           <h2 className="text-2xl font-bold mb-6 text-center">How Gelanggang Panglima Works</h2>
           <div className="grid gap-6 md:grid-cols-3">

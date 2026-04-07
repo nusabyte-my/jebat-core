@@ -1,306 +1,375 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
-const features = [
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const navLinks = [
+  { label: "Features", href: "#features" },
+  { label: "Security", href: "#security" },
+  { label: "Gelanggang", href: "/gelanggang" },
+  { label: "Architecture", href: "#architecture" },
+  { label: "Skills", href: "#skills" },
+];
+
+const trustStats = [
+  { value: "23+", label: "Specialist Agents", icon: "⚔️" },
+  { value: "40+", label: "Optimized Skills", icon: "🗡️" },
+  { value: "5", label: "LLM Providers", icon: "🌐" },
+  { value: "100%", label: "Self-Hosted", icon: "🔒" },
+];
+
+const valuePillars = [
   {
     icon: "🧠",
-    title: "Eternal Memory",
-    description: "5-layer cognitive architecture (M0–M4) with heat-based importance scoring. JEBAT remembers what matters across every session.",
-    details: ["Sensory → Episodic → Semantic → Conceptual → Procedural", "Automatic consolidation and intelligent forgetting", "Cross-linked semantic recall"],
+    title: "Memory That Never Forgets",
+    description: "5-layer cognitive architecture (M0–M4) with heat-based importance scoring. JEBAT remembers context, preferences, and decisions across every session — unlike stateless AI assistants.",
+    features: ["Cross-session continuity", "Intelligent forgetting", "Semantic recall", "Vector search"],
   },
   {
     icon: "⚔️",
-    title: "Multi-Agent Orchestration",
-    description: "23 specialized agents — from Tukang (builder) to Hulubalang (security) — coordinated by Panglima, the capture-first operator.",
-    details: ["Parallel specialist execution", "Council-style decision workflows", "Git worktree isolation for concurrent tasks"],
-  },
-  {
-    icon: "🔥",
-    title: "Ultra-Think Reasoning",
-    description: "6 thinking modes optimized for every task: Fast, Deliberate, Deep, Strategic, Creative, and Critical.",
-    details: ["Token-optimized context compression", "Progressive disclosure of reasoning chains", "Confidence scoring per response"],
+    title: "Agents That Collaborate",
+    description: "23 specialist agents orchestrated by Panglima. Watch them debate, propose solutions, and reach consensus — all across different LLM providers in real-time.",
+    features: ["Cross-provider LLM communication", "4 collaboration patterns", "Dynamic agent loading", "Shimmer notifications"],
   },
   {
     icon: "🛡️",
-    title: "Pengawal — CyberSec Assistant",
-    description: "Three-tier security: Perisai (defensive), Pengawal (monitoring), Serangan (authorized offensive).",
-    details: ["Vulnerability scanning & threat modeling", "OWASP/CIS compliance auditing", "Automated pentest reporting"],
+    title: "Security From Day One",
+    description: "Autonomous security scanner on every startup. Three-tier cybersec assistant (Perisai, Pengawal, Serangan) with auto-fix for 6 vulnerability types.",
+    features: ["IBM agentic-ai-cyberres integration", "18 MCP security tools", "GDPR/SOC2/ISO27001 compliance", "Audit logging"],
+  },
+];
+
+const securityFeatures = [
+  {
+    icon: "🔍",
+    title: "Autonomous Scanning",
+    description: "Every JEBAT session begins with a full codebase security audit — secrets, CVEs, injection patterns, infrastructure misconfigs.",
+    severity: "Always On",
+  },
+  {
+    icon: "🔧",
+    title: "Auto-Remediation",
+    description: "Automatically fixes 6 vulnerability types (MD5→SHA256, eval removal, safe YAML, pickle, os.system, XSS) with backups before every change.",
+    severity: "1-Click Fix",
+  },
+  {
+    icon: "📋",
+    title: "Compliance Reports",
+    description: "Generate compliance reports for GDPR, SOC2, and ISO27001. Full audit trail with structured event logging and anomaly detection.",
+    severity: "Enterprise Ready",
   },
   {
     icon: "🔒",
-    title: "Autonomous Security Scanner",
-    description: "Adapted from IBM's agentic-ai-cyberres. Runs on every session startup — scans the entire codebase for secrets, CVEs, injection patterns, and infrastructure misconfigs.",
-    details: ["Secret & credential detection across all files", "Dependency vulnerability audit (npm + pip)", "18 MCP security tools catalog from awesome-cybersecurity-agentic-ai", "Auto-generated scan reports in security/scan-reports/"],
-  },
-  {
-    icon: "📡",
-    title: "Multi-Channel Gateway",
-    description: "WhatsApp, Telegram, Discord, Slack, and REST API — meet users where they are, all through one gateway on port 18789.",
-    details: ["OpenClaw-compatible protocol", "Session management & cron automation", "DM pairing for security"],
-  },
-  {
-    icon: "🔌",
-    title: "Dev Tool Integration",
-    description: "VS Code, Cursor, Zed, Trae, Antigravity — JEBAT context injects directly into your IDE workflow.",
-    details: ["One-click `npx @nusabyte/jebat install`", "Per-IDE optimized context files", "Command palette integration"],
-  },
-  {
-    icon: "🏛️",
-    title: "Gelanggang Panglima",
-    description: "LLM-to-LLM orchestration arena. Agents from OpenAI, Anthropic, Gemini, Ollama, and ZAI communicate using the JEBAT protocol — sequential, parallel, consensus, or adversarial.",
-    details: ["Cross-provider LLM communication", "4 collaboration patterns", "Standardized agent protocol with 15+ message types"],
+    title: "Zero-Trust Design",
+    description: "7 built-in RBAC roles with 20+ granular permissions. Every API call, memory access, and config change is logged and auditable.",
+    severity: "Role-Based",
   },
 ];
 
-const integrations = [
+const collaborationPatterns = [
   {
-    icon: "🏛️",
-    title: "Gelanggang Panglima",
-    description: "LLM-to-LLM orchestration arena. Watch agents from OpenAI, Anthropic, Gemini, Ollama, and ZAI communicate, debate, and collaborate — orchestrated by Panglima.",
-    link: "https://github.com/nusabyte-my/jebat-core",
-    action: "Live Demo",
-    actionLink: "/gelanggang",
+    icon: "➡️",
+    title: "Sequential",
+    description: "Agent A → Agent B → Agent C, each building on previous results.",
+    example: "Tukang writes code → Hulubalang audits → Penyemak validates",
   },
   {
-    icon: "🧩",
-    title: "OpenClaw Gateway",
-    description: "Plug your existing OpenClaw gateway into JEBAT's skill system, memory layers, and agent orchestration seamlessly.",
-    link: "#",
-    action: "Setup Guide",
-    actionLink: "/setup",
+    icon: "⚡",
+    title: "Parallel",
+    description: "All agents work simultaneously, results combined at the end.",
+    example: "3 agents analyze the same codebase independently",
   },
   {
-    icon: "🤖",
-    title: "Custom Agents",
-    description: "Bring your own agents. JEBAT's adapter system accepts any AI agent that can communicate via REST API or WebSocket.",
-    link: "#",
-    action: "Build Your Agent",
-    actionLink: "/integration/custom-agent",
+    icon: "🗳️",
+    title: "Consensus",
+    description: "All agents propose solutions, then vote. Majority wins.",
+    example: "3 agents propose architectures → vote → 2 agree on microservices",
+  },
+  {
+    icon: "⚔️",
+    title: "Adversarial",
+    description: "Two agents debate opposing positions. Third agent judges.",
+    example: "Monolith vs Microservices debate → Panglima decides",
   },
 ];
 
-const skills = [
-  "Panglima", "Hikmat", "Tukang", "Hulubalang", "Pawang", "Syahbandar",
-  "Bendahara", "Penyemak", "Senibina Antara Muka", "Penyebar Reka Bentuk",
-  "Pengkarya Kandungan", "Jurutulis Jualan", "Penjejak Carian", "Penggerak Pasaran",
-  "Penganalisis", "Strategi Jenama", "Strategi Produk", "Khidmat Pelanggan",
-  "Penulis Cadangan", "Penggerak Jualan", "Pengawal", "Perisai", "Serangan",
-];
-
-const roadmap = [
-  { phase: "Q2 2026", title: "Infrastructure & Polish", status: "complete", items: ["Monitoring dashboard", "Docker deployment", "CI/CD pipeline", "WhatsApp + Discord channel stubs"] },
-  { phase: "Q3 2026", title: "Web UI, API & Scale", status: "complete", items: ["Next.js 16 web app (9 pages)", "REST API v1 (FastAPI)", "Python + JS SDKs", "Multi-tenancy support"] },
-  { phase: "Q4 2026", title: "Advanced Features & AI", status: "complete", items: ["Plugin system", "Dynamic agent loading + shimmer", "Autonomous security scanner + auto-fix", "Knowledge Graph (Neo4j)"] },
-  { phase: "Q1 2027", title: "Mobile & Voice", status: "complete", items: ["iOS + Android app (Flutter scaffold)", "Voice commands (Whisper STT)", "ElevenLabs TTS integration", "50 cyber quotes"] },
-  { phase: "Q2 2027", title: "Enterprise Features", status: "complete", items: ["Advanced RBAC (7 roles, 20+ permissions)", "Audit logging (GDPR/SOC2/ISO27001)", "Compliance reports", "Enterprise README"] },
-  { phase: "Q3 2027", title: "Distributed System", status: "complete", items: ["Multi-instance sync design", "Federated learning module", "Event-driven sync with checksums", "Heartbeat monitoring"] },
+const skillCategories = [
+  { name: "Core", skills: ["Panglima", "Hikmat", "Agent Dispatch"], color: "cyan" },
+  { name: "Engineering", skills: ["Tukang", "Tukang Web", "Pembina Aplikasi", "Bendahara"], color: "blue" },
+  { name: "Security", skills: ["Hulubalang", "Pengawal", "Perisai", "Serangan"], color: "red" },
+  { name: "Intelligence", skills: ["Pawang", "Penganalisis", "Penyemak"], color: "green" },
+  { name: "Operations", skills: ["Syahbandar", "Khidmat Pelanggan"], color: "amber" },
+  { name: "Growth", skills: ["Penjejak Carian", "Penggerak Pasaran", "Jurutulis Jualan", "Strategi Jenama"], color: "purple" },
+  { name: "Product", skills: ["Strategi Produk", "Senibina Antara Muka", "Penyebar Reka Bentuk"], color: "pink" },
+  { name: "Content", skills: ["Pengkarya Kandungan", "Penulis Cadangan", "Penggerak Jualan"], color: "orange" },
 ];
 
 const cyberQuotes = [
   "\"The only truly secure system is one that is powered off.\" — Gene Spafford",
   "\"In cybersecurity, the weakest link is always the human element.\" — Kevin Mitnick",
-  "\"Pentesting is not about breaking in. It's about proving that someone can.\" — Anonymous",
-  "\"The best defense is a good offense — test before they do.\" — Anonymous",
-  "\"Hackers are breaking into systems faster than you're patching them.\" — Anonymous",
-  "\"Security is not a product, but a process.\" — Bruce Schneier",
-  "\"There are two types of companies: those that have been hacked, and those that don't know it yet.\" — Anonymous",
-  "\"A pentester's job is to find vulnerabilities before the bad guys do.\" — Anonymous",
-  "\"Trust, but verify. Then verify again.\" — JEBAT Security Principle",
-  "\"The firewall is useless if the user opens the door.\" — Anonymous",
-  "\"Your network is only as secure as your weakest password.\" — Anonymous",
-  "\"Red team finds the cracks. Blue team patches them. Purple team wins.\" — Anonymous",
-  "\"Privacy is not something that I'm merely entitled to, it's a fundamental human right.\" — Edward Snowden",
-  "\"The great question of the 21st century is: will the internet set us free, or enslave us?\" — Anonymous",
-  "\"Hackers are breaking the rules. It's time defenders start rewriting them.\" — Anonymous",
-  "\"The quieter you become, the more you are able to hear.\" — Kali Linux Motto",
-  "\"Information wants to be free. Privacy demands it be protected.\" — Anonymous",
-  "\"A system is only as good as the people who maintain it.\" — JEBAT Principle",
-  "\"Attack surfaces multiply. Defenders must automate or drown.\" — Anonymous",
-  "\"The best time to secure your system was yesterday. The second best time is now.\" — Anonymous",
-  "\"Every line of code is a liability. Every vulnerability is a lesson.\" — Anonymous",
-  "\"You can't secure what you can't see. Visibility is the foundation of security.\" — Anonymous",
   "\"The attacker only needs to be right once. The defender must be right every time.\" — Bruce Schneier",
-  "\"Security is a journey, not a destination.\" — Anonymous",
-  "\"Patching is cheaper than breach notification.\" — Anonymous",
-  "\"If you think technology can solve your security problems, you don't understand the problems.\" — Bruce Schneier",
-  "\"Ethical hacking is the art of thinking like a criminal to protect like a guardian.\" — Anonymous",
-  "\"The cost of prevention is always less than the cost of cure.\" — JEBAT Principle",
+  "\"Security is not a product, but a process.\" — Bruce Schneier",
+  "\"Trust, but verify. Then verify again.\" — JEBAT Security Principle",
   "\"Zero trust doesn't mean zero faith. It means verify everything.\" — Anonymous",
-  "\"A vulnerability disclosed is a vulnerability half-fixed.\" — Anonymous",
-  "\"The most dangerous vulnerability is the one you don't know exists.\" — Anonymous",
-  "\"Encryption is the lock on the door of the digital age.\" — Anonymous",
   "\"Social engineering will always beat technical security.\" — Kevin Mitnick",
-  "\"The difference between a hacker and a pentester is permission.\" — Anonymous",
-  "\"Security through obscurity is not security. It's hope.\" — Anonymous",
-  "\"Logs don't lie. People do. Monitor everything.\" — Anonymous",
-  "\"The best firewall rule is the one you don't need.\" — Anonymous",
-  "\"A secure system is a tested system.\" — JEBAT Principle",
-  "\"Don't patch the symptom. Fix the root cause.\" — Anonymous",
-  "\"Every breach is a failure of imagination by the defenders.\" — Anonymous",
-  "\"Threat modeling is thinking about tomorrow's attacks today.\" — Anonymous",
-  "\"The most secure password is the one you never type.\" — Anonymous",
-  "\"Compliance is not security. Security is not compliance.\" — Anonymous",
-  "\"An untested backup is a lie you tell yourself.\" — Anonymous",
-  "\"The cloud is just someone else's computer. Secure accordingly.\" — Anonymous",
-  "\"Defense in depth means the attacker has to win every time. You only need to win once.\" — Anonymous",
-  "\"Automate everything that can be automated. Humans make mistakes under pressure.\" — Anonymous",
-  "\"The best incident response plan is the one you practice.\" — Anonymous",
+  "\"The cost of prevention is always less than the cost of cure.\" — JEBAT Principle",
   "\"Never trust input. Always validate. Always sanitize.\" — JEBAT Principle",
   "\"A pentest report without remediation is just a horror story.\" — Anonymous",
 ];
 
+// ─── Components ───────────────────────────────────────────────────────────────
+
 function StatusDot({ status }: { status: string }) {
   const color = status === "complete" ? "bg-emerald-400" : status === "in-progress" ? "bg-cyan-400" : "bg-neutral-600";
-  return <span className={`inline-flex h-2.5 w-2.5 rounded-full ${color} animate-pulse-glow`} />;
+  return <span className={`inline-flex h-2.5 w-2.5 rounded-full ${color}`} />;
 }
+
+function SectionHeading({ badge, title, subtitle }: { badge: string; title: string; subtitle: string }) {
+  return (
+    <div className="text-center mb-12">
+      <span className="inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
+        {badge}
+      </span>
+      <h2 className="text-3xl font-bold md:text-4xl mb-4">{title}</h2>
+      <p className="max-w-2xl mx-auto text-neutral-400">{subtitle}</p>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [quote, setQuote] = useState(cyberQuotes[0]);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * cyberQuotes.length);
-    setQuote(cyberQuotes[randomIndex]);
+    setQuote(cyberQuotes[Math.floor(Math.random() * cyberQuotes.length)]);
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#050505] text-neutral-100">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
+    <main className="min-h-screen bg-[#050505] text-neutral-100 overflow-x-hidden">
+      {/* ─── Nav ─────────────────────────────────────────────────────── */}
+      <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrollY > 50 ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5" : "bg-transparent"}`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl">⚔️</span>
             <span className="text-lg font-semibold tracking-tight">JEBAT</span>
+            <span className="hidden md:inline-block text-xs text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v2.0</span>
           </div>
-          <div className="hidden items-center gap-6 text-sm text-neutral-400 md:flex">
-            <a href="#features" className="transition hover:text-white">Features</a>
-            <a href="#integrations" className="transition hover:text-white">Integrations</a>
-            <a href="#skills" className="transition hover:text-white">Skills</a>
-            <a href="#roadmap" className="transition hover:text-white">Roadmap</a>
-            <Link href="/demo" className="rounded-full border border-cyan-400/30 px-4 py-2 text-cyan-300 transition hover:bg-cyan-400/10">
-              Try Demo
+          <div className="hidden md:flex items-center gap-6 text-sm text-neutral-400">
+            {navLinks.map((link) => (
+              <a key={link.label} href={link.href} className="transition hover:text-white">{link.label}</a>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="hidden sm:inline-block text-sm text-neutral-400 transition hover:text-white">
+              GitHub
+            </a>
+            <Link href="/gelanggang" className="rounded-full border border-cyan-400/30 px-4 py-2 text-sm text-cyan-300 transition hover:bg-cyan-400/10">
+              Gelanggang
             </Link>
-            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-4 py-2 text-black font-medium transition hover:bg-cyan-300">
+            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-cyan-300">
               Get Started
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-7xl px-6 pt-20 pb-16 md:pt-32 md:pb-24">
-        <div className="flex flex-col items-center gap-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
-            <span className="inline-flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse-glow" />
-            JEBATCore v2.0 — Now with Pengawal CyberSec & Agent Town
-          </div>
-          <h1 className="max-w-4xl text-5xl font-bold tracking-tight md:text-7xl">
-            The LLM Ecosystem That{" "}
-            <span className="gradient-text">Remembers Everything</span>
-          </h1>
-          <p className="max-w-2xl text-lg leading-8 text-neutral-400">
-            Eternal memory. Multi-agent orchestration. 6 thinking modes. CyberSec assistant.
-            Self-hosted, privacy-first. Built by NusaByte for developers who need a buddy, not an assistant.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300">
-              Let's Build Together →
-            </Link>
-            <Link href="/demo" className="rounded-full border border-white/15 px-8 py-3.5 text-base font-medium text-white transition hover:bg-white/10">
-              Live Demo
-            </Link>
-            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-8 py-3.5 text-base font-medium text-white transition hover:bg-white/10">
-              GitHub
-            </a>
-          </div>
+      {/* ─── Hero ────────────────────────────────────────────────────── */}
+      <section className="relative">
+        {/* Background effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-cyan-400/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 right-10 w-[400px] h-[400px] bg-red-400/3 rounded-full blur-3xl" />
+          <div className="absolute top-40 left-10 w-[300px] h-[300px] bg-green-400/3 rounded-full blur-3xl" />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
+        </div>
 
-          {/* Quick stats */}
-          <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-4">
-            {[
-              ["23+", "Specialist Agents"],
-              ["40+", "Optimized Skills"],
-              ["6", "Roadmap Quarters ✅"],
-              ["100%", "Features Shipped"],
-            ].map(([num, label]) => (
-              <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-                <div className="text-2xl font-bold gradient-text">{num}</div>
-                <div className="text-sm text-neutral-500">{label}</div>
+        <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-16 md:pt-32 md:pb-24">
+          <div className="text-center space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
+              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              Self-Hosted · Enterprise-Ready · 100% Private
+            </div>
+
+            {/* Headline */}
+            <h1 className="max-w-5xl mx-auto text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl leading-[1.1]">
+              The AI Platform That{" "}
+              <span className="gradient-text">Remembers</span>,{" "}
+              <span className="gradient-text">Collaborates</span>,{" "}
+              <span className="gradient-text">Protects</span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="max-w-3xl mx-auto text-lg md:text-xl leading-8 text-neutral-400">
+              JEBAT combines eternal memory, multi-agent orchestration across 5 LLM providers, and autonomous cybersecurity scanning into one self-hosted platform. Built by <a href="https://nusabyte.my" className="text-cyan-300 hover:text-cyan-200 transition">NusaByte</a> for teams who need an AI operator — not just a chatbot.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-wrap justify-center gap-4 pt-4">
+              <Link href="/onboarding" className="group rounded-full bg-cyan-400 px-8 py-4 text-base font-semibold text-black transition hover:bg-cyan-300 flex items-center gap-2">
+                Start Building
+                <svg className="w-4 h-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              </Link>
+              <Link href="/gelanggang" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white transition hover:bg-white/10 flex items-center gap-2">
+                🏛️ Watch Gelanggang
+              </Link>
+              <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white transition hover:bg-white/10">
+                ⭐ Star on GitHub
+              </a>
+            </div>
+
+            {/* Trust Stats */}
+            <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+              {trustStats.map((stat) => (
+                <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
+                  <div className="text-xl mb-1">{stat.icon}</div>
+                  <div className="text-2xl font-bold gradient-text">{stat.value}</div>
+                  <div className="text-xs text-neutral-500">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Value Pillars ───────────────────────────────────────────── */}
+      <section id="features" className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          badge="Core Capabilities"
+          title="Why Teams Choose JEBAT"
+          subtitle="Three pillars that make JEBAT fundamentally different from stateless AI assistants."
+        />
+        <div className="grid gap-6 md:grid-cols-3">
+          {valuePillars.map((pillar) => (
+            <div key={pillar.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <div className="text-3xl mb-4">{pillar.icon}</div>
+              <h3 className="text-xl font-semibold text-white mb-3">{pillar.title}</h3>
+              <p className="text-sm leading-7 text-neutral-400 mb-4">{pillar.description}</p>
+              <div className="space-y-2">
+                {pillar.features.map((f) => (
+                  <div key={f} className="flex items-center gap-2 text-sm text-neutral-500">
+                    <svg className="w-4 h-4 text-cyan-400/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Gelanggang Panglima Demo ────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <div className="rounded-3xl border border-cyan-400/10 bg-gradient-to-br from-cyan-400/5 via-transparent to-transparent p-8 md:p-12">
+          <div className="grid gap-8 lg:grid-cols-2 items-center">
+            <div className="space-y-6">
+              <span className="text-4xl">🏛️</span>
+              <h2 className="text-3xl font-bold md:text-4xl">
+                <span className="text-amber-300">Gelanggang Panglima</span>
+              </h2>
+              <p className="text-neutral-400 leading-7">
+                Watch AI agents from OpenAI, Anthropic, Gemini, Ollama, and ZAI communicate, debate, and collaborate in real-time. Choose from 4 collaboration patterns — Sequential, Parallel, Consensus, or Adversarial.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {["OpenAI", "Anthropic", "Gemini", "Ollama", "ZAI"].map((p) => (
+                  <span key={p} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300">{p}</span>
+                ))}
+              </div>
+              <Link href="/gelanggang" className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-cyan-300">
+                Try Live Demo →
+              </Link>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/40 p-6 font-mono text-sm space-y-3">
+              <div className="flex items-center gap-2 text-neutral-500 text-xs mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-400/60" />
+                <div className="w-3 h-3 rounded-full bg-amber-400/60" />
+                <div className="w-3 h-3 rounded-full bg-green-400/60" />
+                <span className="ml-2">Gelanggang — Live Session</span>
+              </div>
+              {[
+                { agent: "Tukang (OpenAI)", text: "I've built the auth API with JWT and rate limiting.", color: "#3B82F6" },
+                { agent: "Hulubalang (Anthropic)", text: "🔴 CRITICAL — SQL injection vulnerability found.", color: "#EF4444" },
+                { agent: "Penyemak (ZAI)", text: "✅ 75% production-ready. 5 test gaps identified.", color: "#8B5CF6" },
+                { agent: "Panglima (Anthropic)", text: "⚔️ VERDICT: Proceed with 3 critical fixes.", color: "#00E5FF" },
+              ].map((msg, i) => (
+                <div key={i} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: msg.color }} />
+                    <span className="text-xs" style={{ color: msg.color }}>{msg.agent}</span>
+                  </div>
+                  <div className="text-xs text-neutral-300">{msg.text}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Security Section ────────────────────────────────────────── */}
+      <section id="security" className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          badge="Enterprise Security"
+          title="Security From Day One"
+          subtitle="Autonomous scanning, auto-remediation, and compliance reporting — built into every JEBAT session."
+        />
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {securityFeatures.map((feature) => (
+            <div key={feature.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-2xl">{feature.icon}</span>
+                <span className="text-xs rounded-full border border-red-400/20 bg-red-400/5 px-2 py-0.5 text-red-300">{feature.severity}</span>
+              </div>
+              <h3 className="font-semibold text-white mb-2">{feature.title}</h3>
+              <p className="text-sm text-neutral-400 leading-6">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Collaboration Patterns */}
+        <div className="mt-16">
+          <h3 className="text-2xl font-bold text-center mb-8">Cross-Provider Collaboration Patterns</h3>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {collaborationPatterns.map((p) => (
+              <div key={p.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                <div className="text-2xl mb-2">{p.icon}</div>
+                <h4 className="font-semibold text-white mb-1">{p.title}</h4>
+                <p className="text-xs text-neutral-400 mb-3">{p.description}</p>
+                <div className="rounded bg-black/30 px-3 py-2 text-xs text-neutral-300">{p.example}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="mx-auto max-w-7xl px-6 py-16">
-        <h2 className="mb-2 text-center text-3xl font-bold md:text-4xl">Everything You Need</h2>
-        <p className="mx-auto mb-12 max-w-xl text-center text-neutral-400">A complete development ecosystem — from memory to security to deployment.</p>
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <article key={f.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-              <div className="mb-3 text-3xl">{f.icon}</div>
-              <h3 className="mb-2 text-xl font-semibold text-white">{f.title}</h3>
-              <p className="mb-4 text-sm leading-7 text-neutral-400">{f.description}</p>
-              <ul className="space-y-2">
-                {f.details.map((d) => (
-                  <li key={d} className="flex items-start gap-2 text-sm text-neutral-500">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400/60" />
-                    {d}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* Integrations */}
-      <section id="integrations" className="mx-auto max-w-7xl px-6 py-16">
-        <h2 className="mb-2 text-center text-3xl font-bold md:text-4xl">Integrations</h2>
-        <p className="mx-auto mb-12 max-w-xl text-center text-neutral-400">Plug JEBAT into your existing tools. Bring your agents, connect your gateway, play in the world.</p>
-        <div className="grid gap-5 md:grid-cols-3">
-          {integrations.map((item) => (
-            <article key={item.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6 flex flex-col">
-              <div className="mb-3 text-3xl">{item.icon}</div>
-              <h3 className="mb-2 text-xl font-semibold text-white">{item.title}</h3>
-              <p className="mb-4 text-sm leading-7 text-neutral-400 flex-1">{item.description}</p>
-              <div className="flex gap-3 mt-auto">
-                {item.link !== "#" && (
-                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-cyan-300 underline underline-offset-4 transition hover:text-cyan-200">
-                    View Project
-                  </a>
-                )}
-                <Link href={item.actionLink} className="text-sm text-cyan-300 underline underline-offset-4 transition hover:text-cyan-200">
-                  {item.action}
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* Architecture */}
-      <section id="architecture" className="mx-auto max-w-7xl px-6 py-16">
+      {/* ─── Architecture ────────────────────────────────────────────── */}
+      <section id="architecture" className="mx-auto max-w-7xl px-6 py-20">
         <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 md:p-12">
-          <h2 className="mb-8 text-center text-3xl font-bold">Architecture</h2>
+          <h2 className="text-3xl font-bold text-center mb-10">Platform Architecture</h2>
           <div className="grid gap-8 lg:grid-cols-2">
-            {/* Visual diagram */}
             <div className="space-y-3 font-mono text-sm">
               {[
                 { label: "Channels", sub: "WhatsApp · Telegram · Discord · Slack · REST API", indent: 0 },
-                { label: "Gateway (port 18789)", sub: "Sessions · Cron · Tool routing · Multi-tenant", indent: 0 },
+                { label: "jebat-gateway (:18789)", sub: "Sessions · Cron · Tool routing", indent: 0 },
                 { label: "JEBAT Core", sub: "", indent: 0 },
-                { label: "├─ Memory (M0-M4)", sub: "Heat scoring · Consolidation · Vector search", indent: 2 },
-                { label: "├─ Ultra-Think", sub: "6 reasoning modes · Token optimization", indent: 2 },
+                { label: "├─ Memory (M0-M4)", sub: "Heat scoring · Vector search", indent: 2 },
+                { label: "├─ Ultra-Think", sub: "6 reasoning modes", indent: 2 },
                 { label: "├─ Ultra-Loop", sub: "5-phase continuous processing", indent: 2 },
-                { label: "├─ Agent Orchestrator", sub: "23 specialists · Council workflows", indent: 2 },
-                { label: "├─ Serangan Autonomous", sub: "Codebase scanner · IBM agentic-ai-cyberres · 18 MCP tools", indent: 2 },
+                { label: "├─ Agent Orchestrator", sub: "23 specialists", indent: 2 },
+                { label: "├─ Serangan Autonomous", sub: "IBM agentic-ai-cyberres · 18 MCP tools", indent: 2 },
                 { label: "├─ Pengawal (CyberSec)", sub: "Perisai · Pengawal · Serangan", indent: 2 },
-                { label: "└─ Gelanggang Panglima", sub: "LLM-to-LLM cross-provider orchestration arena", indent: 2 },
-                { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis · SQLite (Chroma)", indent: 0 },
+                { label: "├─ Prompt Enhancer", sub: "6-stage optimization pipeline", indent: 2 },
+                { label: "└─ Gelanggang Panglima", sub: "LLM-to-LLM cross-provider arena", indent: 2 },
+                { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis · SQLite + Chroma", indent: 0 },
               ].map((row, i) => (
-                <div key={i} className="flex items-start gap-2" style={{ paddingLeft: row.indent ? `${row.indent}rem` : undefined }}>
+                <div key={i} style={{ paddingLeft: row.indent ? `${row.indent}rem` : undefined }}>
                   {row.sub ? (
                     <div>
                       <span className="text-cyan-300">{row.label}</span>
@@ -312,17 +381,15 @@ export default function Home() {
                 </div>
               ))}
             </div>
-
-            {/* Tech stack */}
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-white">Stack</h3>
+              <h3 className="text-xl font-semibold text-white">Tech Stack</h3>
               {[
-                ["Frontend", "Next.js 16 · React 19 · TypeScript · Tailwind v4 · shadcn/ui"],
-                ["Backend", "Python 3.11+ · FastAPI · Uvicorn · Pydantic"],
-                ["Database", "PostgreSQL/TimescaleDB · Redis 7 · SQLite + Chroma"],
-                ["AI/ML", "Ollama · OpenAI · Anthropic · Google Gemini · OpenRouter · ZAI"],
+                ["Frontend", "Next.js 16 · React 19 · TypeScript · Tailwind v4"],
+                ["Backend", "Python 3.11+ · FastAPI · Uvicorn"],
+                ["Database", "PostgreSQL/TimescaleDB · Redis 7 · Chroma"],
+                ["AI/ML", "OpenAI · Anthropic · Gemini · Ollama · ZAI"],
                 ["DevOps", "Docker Compose · Nginx · Let's Encrypt"],
-                ["CLI", "Node.js (jebat) · Python (jebat_dev) · Rich UI"],
+                ["Mobile", "Flutter (iOS + Android scaffold)"],
               ].map(([name, tools]) => (
                 <div key={name}>
                   <div className="text-sm font-medium text-neutral-300">{name}</div>
@@ -334,29 +401,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Skills */}
-      <section id="skills" className="mx-auto max-w-7xl px-6 py-16">
-        <h2 className="mb-2 text-center text-3xl font-bold">Optimized & Enhanced Skills</h2>
-        <p className="mx-auto mb-4 max-w-xl text-center text-neutral-400">
-          Every skill has been optimized for token efficiency, enhanced with real-world patterns from skills.sh, and adapted for the JEBAT ecosystem.
-        </p>
-        <p className="mx-auto mb-10 text-center text-sm text-cyan-300">
-          Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 transition hover:text-cyan-200">humm1ngb1rd — nusabyte.my</a>
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          {skills.map((s) => (
-            <span key={s} className="rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-neutral-300 transition hover:border-cyan-400/30 hover:text-cyan-300 cursor-default">
-              {s}
-            </span>
+      {/* ─── Skills Ecosystem ────────────────────────────────────────── */}
+      <section id="skills" className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          badge="Skills Ecosystem"
+          title="23 Optimized & Enhanced Skills"
+          subtitle="Every skill optimized for token efficiency, enhanced with real-world patterns from skills.sh, and adapted for the JEBAT ecosystem."
+        />
+        <div className="space-y-6">
+          {skillCategories.map((cat) => (
+            <div key={cat.name}>
+              <h3 className="text-sm font-semibold text-neutral-300 mb-3">{cat.name}</h3>
+              <div className="flex flex-wrap gap-2">
+                {cat.skills.map((skill) => (
+                  <span key={skill} className="rounded-full border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-neutral-300 transition hover:border-cyan-400/30 hover:text-cyan-300 cursor-default">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Roadmap */}
-      <section id="roadmap" className="mx-auto max-w-7xl px-6 py-16">
-        <h2 className="mb-10 text-center text-3xl font-bold">Roadmap</h2>
+      {/* ─── Roadmap ─────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          badge="Roadmap"
+          title="100% Features Shipped"
+          subtitle="All planned quarters complete. From infrastructure to distributed systems — JEBAT is production-ready."
+        />
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {roadmap.map((r) => (
+          {[
+            { phase: "Q2 2026", title: "Infrastructure & Polish", status: "complete", items: ["Monitoring dashboard", "Docker deployment", "CI/CD pipeline", "WhatsApp + Discord stubs"] },
+            { phase: "Q3 2026", title: "Web UI, API & Scale", status: "complete", items: ["Next.js 16 web app (9 pages)", "REST API v1 (FastAPI)", "Python + JS SDKs", "Multi-tenancy"] },
+            { phase: "Q4 2026", title: "Advanced Features & AI", status: "complete", items: ["Plugin system", "Dynamic agent loading", "Security scanner + auto-fix", "Knowledge Graph (Neo4j)"] },
+            { phase: "Q1 2027", title: "Mobile & Voice", status: "complete", items: ["Flutter app (iOS + Android)", "Whisper STT integration", "ElevenLabs TTS", "50 cyber quotes"] },
+            { phase: "Q2 2027", title: "Enterprise Features", status: "complete", items: ["Advanced RBAC (7 roles)", "Audit logging (GDPR/SOC2)", "Compliance reports", "Enterprise README"] },
+            { phase: "Q3 2027", title: "Distributed System", status: "complete", items: ["Multi-instance sync", "Federated learning", "Event-driven sync", "Heartbeat monitoring"] },
+          ].map((r) => (
             <div key={r.phase} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <div className="mb-3 flex items-center gap-2">
                 <StatusDot status={r.status} />
@@ -376,7 +459,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ─── CTA ─────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/5 to-transparent p-10 text-center md:p-16">
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">Ready to Build with JEBAT?</h2>
@@ -387,36 +470,101 @@ export default function Home() {
             <Link href="/onboarding" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300">
               Start Onboarding →
             </Link>
+            <Link href="/gelanggang" className="rounded-full border border-white/15 px-8 py-3.5 text-base font-medium text-white transition hover:bg-white/10">
+              🏛️ Watch Gelanggang
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ─── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-white/5">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">⚔️</span>
-            <div>
-              <div className="text-sm font-semibold">JEBAT by NusaByte</div>
-              <div className="text-xs text-neutral-500">Because warriors remember everything that matters.</div>
+        {/* Main footer */}
+        <div className="mx-auto max-w-7xl px-6 py-16">
+          <div className="grid gap-10 md:grid-cols-5">
+            {/* Brand column */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">⚔️</span>
+                <div>
+                  <span className="text-lg font-semibold">JEBAT</span>
+                  <span className="ml-2 text-xs text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v2.0.0</span>
+                </div>
+              </div>
+              <p className="text-sm text-neutral-400 mb-6 max-w-sm leading-relaxed">
+                The self-hosted AI platform that remembers, collaborates, and protects. Built by <a href="https://nusabyte.my" className="text-cyan-300 hover:text-cyan-200 transition">NusaByte</a> for teams who need an AI operator — not just a chatbot.
+              </p>
+              {/* Trust badges */}
+              <div className="flex flex-wrap gap-3 mb-6">
+                {[
+                  { icon: "🔒", label: "Self-Hosted" },
+                  { icon: "✅", label: "SOC2 Ready" },
+                  { icon: "🛡️", label: "GDPR Compliant" },
+                  { icon: "⭐", label: "MIT License" },
+                ].map((badge) => (
+                  <span key={badge.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-400">
+                    <span>{badge.icon}</span>
+                    {badge.label}
+                  </span>
+                ))}
+              </div>
+              {/* GitHub star CTA */}
+              <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>Star on GitHub</span>
+                <span className="text-xs text-neutral-500">— helps others find JEBAT</span>
+              </a>
             </div>
-          </div>
-          <div className="flex gap-6 text-sm text-neutral-500">
-            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">GitHub</a>
-            <a href="https://jebat.online" className="transition hover:text-white">jebat.online</a>
-            <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">nusabyte.my</a>
-            <Link href="/gelanggang" className="transition hover:text-white">Gelanggang</Link>
-            <Link href="/demo" className="transition hover:text-white">Demo</Link>
+            {/* Platform */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Platform</h4>
+              <div className="space-y-3 text-sm text-neutral-500">
+                <a href="#features" className="block transition hover:text-white">Features</a>
+                <a href="#security" className="block transition hover:text-white">Security</a>
+                <a href="#architecture" className="block transition hover:text-white">Architecture</a>
+                <a href="#skills" className="block transition hover:text-white">Skills</a>
+                <Link href="/gelanggang" className="block transition hover:text-white">Gelanggang Demo</Link>
+              </div>
+            </div>
+            {/* Resources */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Resources</h4>
+              <div className="space-y-3 text-sm text-neutral-500">
+                <Link href="/demo" className="block transition hover:text-white">Chat Demo</Link>
+                <Link href="/onboarding" className="block transition hover:text-white">Onboarding</Link>
+                <Link href="/setup" className="block transition hover:text-white">Setup Guide</Link>
+                <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Documentation</a>
+                <a href="https://github.com/nusabyte-my/jebat-core/issues" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Report Issues</a>
+              </div>
+            </div>
+            {/* Company */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Company</h4>
+              <div className="space-y-3 text-sm text-neutral-500">
+                <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">nusabyte.my</a>
+                <a href="https://github.com/nusabyte-my" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">GitHub Organization</a>
+                <a href="https://jebat.online" className="block transition hover:text-white">jebat.online</a>
+              </div>
+            </div>
           </div>
         </div>
+        {/* Bottom bar */}
         <div className="border-t border-white/5">
-          <div className="mx-auto max-w-7xl px-6 py-6 text-center">
-            <div className="text-xs text-neutral-600">
-              Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">humm1ngb1rd — nusabyte.my</a>
-              {" "}· Created by <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">NusaByte</a>
-            </div>
-            <div className="mt-2 text-xs text-neutral-700 italic max-w-2xl mx-auto">
-              {quote}
+          <div className="mx-auto max-w-7xl px-6 py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-xs text-neutral-600">
+                © {new Date().getFullYear()} <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">NusaByte</a>. 
+                Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">humm1ngb1rd</a>. 
+                All rights reserved.
+              </div>
+              <div className="text-xs text-neutral-700 italic max-w-md text-center">
+                {quote}
+              </div>
+              <div className="flex items-center gap-4 text-xs text-neutral-600">
+                <a href="https://github.com/nusabyte-my/jebat-core/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">MIT License</a>
+                <span>·</span>
+                <span>Built with ❤️ in Malaysia</span>
+              </div>
             </div>
           </div>
         </div>
