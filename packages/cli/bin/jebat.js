@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 /**
- * ⚔️ JEBAT CLI — @nusabyte/jebat
+ * ⚔️ JEBAT CLI — jebat-core
  *
  * The LLM Ecosystem That Remembers Everything
  *
  * Usage:
- *   npx @nusabyte/jebat setup        Interactive setup wizard
- *   npx @nusabyte/jebat chat         AI assistant chat (REPL)
- *   npx @nusabyte/jebat install      Install JEBAT context to IDEs
- *   npx @nusabyte/jebat detect       Detect installed IDEs
- *   npx @nusabyte/jebat prompt       Print universal prompt
- *   npx @nusabyte/jebat doctor       Workspace health check
- *   npx @nusabyte/jebat status       Gateway + VPS status
- *   npx @nusabyte/jebat memory       Memory operations
- *   npx @nusabyte/jebat token-analyze  Count/analyze tokens
- *   npx @nusabyte/jebat token-compress Compress context
- *   npx @nusabyte/jebat skill-list   List installed skills
- *   npx @nusabyte/jebat skill-search Search skills catalog
- *   npx @nusabyte/jebat design-system  Browse design systems
- *   npx @nusabyte/jebat icon-search  Search tech icons
- *   npx @nusabyte/jebat deploy       VPS deployment helper
+ *   npx jebat-core setup        Interactive setup wizard
+ *   npx jebat-core chat         AI assistant chat (REPL)
+ *   npx jebat-core install      Install JEBAT context to IDEs
+ *   npx jebat-core detect       Detect installed IDEs
+ *   npx jebat-core prompt       Print universal prompt
+ *   npx jebat-core doctor       Workspace health check
+ *   npx jebat-core status       Gateway + VPS status
+ *   npx jebat-core memory       Memory operations
+ *   npx jebat-core token-analyze  Count/analyze tokens
+ *   npx jebat-core token-compress Compress context
+ *   npx jebat-core skill-list   List installed skills
+ *   npx jebat-core skill-search Search skills catalog
+ *   npx jebat-core design-system  Browse design systems
+ *   npx jebat-core icon-search  Search tech icons
+ *   npx jebat-core deploy       VPS deployment helper
  */
 
 const { execSync } = require("child_process");
@@ -52,8 +52,19 @@ function error(msg) {
 function checkWorkspace() {
   const files = ["AGENTS.md", "SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md"];
   const cwd = process.cwd();
-  const found = files.filter((f) => fs.existsSync(path.join(cwd, f)));
-  return { total: files.length, found: found.length, missing: files.filter((f) => !fs.existsSync(path.join(cwd, f))) };
+  const found = [];
+  const missing = [];
+
+  for (const f of files) {
+    // Check root first, then core/ subdirectory
+    if (fs.existsSync(path.join(cwd, f)) || fs.existsSync(path.join(cwd, "core", f))) {
+      found.push(f);
+    } else {
+      missing.push(f);
+    }
+  }
+
+  return { total: files.length, found: found.length, missing };
 }
 
 function detectIDEs() {
@@ -103,14 +114,14 @@ function cmdSetup() {
 
   log("");
   log("Step 4: Install JEBAT context to IDEs?", "💻");
-  log("  Run: npx @nusabyte/jebat install");
+  log("  Run: npx jebat-core install");
 
   log("");
   log("Step 5: Install skills?", "🗡️");
-  log("  Run: npx @nusabyte/jebat skill-list");
+  log("  Run: npx jebat-core skill-list");
 
   log("");
-  log("Setup checklist complete! Use 'npx @nusabyte/jebat chat' to start chatting.", "⚔️");
+  log("Setup checklist complete! Use 'npx jebat-core chat' to start chatting.", "⚔️");
 }
 
 function cmdInstall(targetDir) {
@@ -215,13 +226,21 @@ function cmdStatus() {
   }
 
   log("");
-  log(`NPM: @nusabyte/jebat v${require("../package.json").version}`, "✅");
+  log(`NPM: jebat-core v${require("../package.json").version}`, "✅");
 }
 
 function cmdSkillList() {
-  const skillsDir = path.join(process.cwd(), "skills");
-  if (!fs.existsSync(skillsDir)) {
-    error("No skills directory found. Run: npx @nusabyte/jebat install");
+  // Check both old and new skill directory locations
+  const skillsDirs = [
+    path.join(process.cwd(), "skills"),
+    path.join(process.cwd(), "packages", "skills", "skills"),
+  ];
+  let skillsDir = null;
+  for (const dir of skillsDirs) {
+    if (fs.existsSync(dir)) { skillsDir = dir; break; }
+  }
+  if (!skillsDir) {
+    error("No skills directory found. Run: git clone https://github.com/nusabyte-my/jebat-core.git");
   }
 
   log("Installed Skills", "🗡️");
@@ -264,11 +283,11 @@ function cmdTokenAnalyze(text) {
 
 function cmdHelp() {
   console.log(`
-⚔️  JEBAT CLI — @nusabyte/jebat
+⚔️  JEBAT CLI — jebat-core
 The LLM Ecosystem That Remembers Everything
 
 Usage:
-  npx @nusabyte/jebat <command>
+  npx jebat-core <command>
 
 Commands:
   setup            Interactive setup wizard
@@ -289,12 +308,12 @@ Commands:
   help             Show this help
 
 Examples:
-  npx @nusabyte/jebat setup
-  npx @nusabyte/jebat chat
-  npx @nusabyte/jebat install
-  npx @nusabyte/jebat doctor
-  npx @nusabyte/jebat status
-  echo "some text" | npx @nusabyte/jebat token-analyze
+  npx jebat-core setup
+  npx jebat-core chat
+  npx jebat-core install
+  npx jebat-core doctor
+  npx jebat-core status
+  echo "some text" | npx jebat-core token-analyze
 `);
 }
 
@@ -332,7 +351,7 @@ switch (cmd) {
     break;
   case "token-analyze":
     if (process.stdin.isTTY) {
-      log("Usage: echo 'text' | npx @nusabyte/jebat token-analyze", "📖");
+      log("Usage: echo 'text' | npx jebat-core token-analyze", "📖");
     } else {
       let data = "";
       process.stdin.on("data", (chunk) => (data += chunk));
@@ -350,7 +369,7 @@ switch (cmd) {
   case "chat":
     log("Chat mode — requires gateway connection.", "💬");
     log("  Ensure gateway is running on port 18789");
-    log("  Run: npx @nusabyte/jebat status");
+    log("  Run: npx jebat-core status");
     log("  For full interactive chat, see: /demo in the web UI");
     break;
   case "design-system":

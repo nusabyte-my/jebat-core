@@ -1,10 +1,9 @@
 {
-  "name": "@nusabyte/jebat",
+  "name": "jebat-core",
   "version": "2.0.0",
   "description": "JEBAT — The LLM Ecosystem That Remembers Everything. CLI for IDE setup, workspace configuration, and agent management.",
-  "type": "module",
   "bin": {
-    "jebat": "./bin/jebat.js"
+    "jebat-core": "./bin/jebat.js"
   },
   "files": [
     "bin",
@@ -19,5 +18,14 @@
   "bugs": {
     "url": "https://github.com/nusabyte-my/jebat-core/issues"
   },
-  "homepage": "https://jebat.online"
+  "homepage": "https://jebat.online",
+  "keywords": [
+    "jebat",
+    "ai",
+    "llm",
+    "agent",
+    "orchestration",
+    "cybersecurity",
+    "nusabyte"
+  ]
 }
