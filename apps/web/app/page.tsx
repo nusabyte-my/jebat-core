@@ -90,12 +90,12 @@ const skills = [
 ];
 
 const roadmap = [
-  { phase: "Phase 1", title: "Platform Foundation", status: "complete", items: ["Core identity & memory", "Hermes execution layer", "Skill architecture"] },
-  { phase: "Phase 2", title: "Gateway & Dashboard", status: "complete", items: ["Onboarding wizard", "Provider configuration", "Live status dashboard"] },
-  { phase: "Phase 3", title: "CLI & Dev Tools", status: "complete", items: ["NPX CLI rebrand", "AI Assistant CLI", "IDE adapter expansion"] },
-  { phase: "Phase 4", title: "Skill Expansion", status: "in-progress", items: ["40+ skills from skills.sh", "Ralphex execution engine", "CCPM project manager"] },
-  { phase: "Phase 5", title: "CyberSec Suite", status: "in-progress", items: ["Pengawal assistant", "Perisai defensive layer", "Serangan offensive layer"] },
-  { phase: "Phase 6", title: "Production Ready", status: "planned", items: ["Docker Compose v2", "Authentication", "CI/CD pipeline"] },
+  { phase: "Q2 2026", title: "Infrastructure & Polish", status: "complete", items: ["Monitoring dashboard", "Docker deployment", "CI/CD pipeline", "WhatsApp + Discord channel stubs"] },
+  { phase: "Q3 2026", title: "Web UI, API & Scale", status: "complete", items: ["Next.js 16 web app (9 pages)", "REST API v1 (FastAPI)", "Python + JS SDKs", "Multi-tenancy support"] },
+  { phase: "Q4 2026", title: "Advanced Features & AI", status: "in-progress", items: ["Plugin system", "Dynamic agent loading + shimmer", "Autonomous security scanner + auto-fix", "Knowledge graph (planned)"] },
+  { phase: "Q1 2027", title: "Mobile & Voice", status: "planned", items: ["iOS + Android app (Flutter)", "Voice commands (STT/TTS)", "ElevenLabs TTS integration", "Whisper speech recognition"] },
+  { phase: "Q2 2027", title: "Enterprise Features", status: "planned", items: ["SSO integration (OAuth2/SAML)", "Advanced RBAC", "Audit logging", "GDPR + SOC2 compliance"] },
+  { phase: "Q3 2027", title: "Distributed System", status: "planned", items: ["Multi-instance sync", "Distributed memory", "Federated learning", "Edge computing support"] },
 ];
 
 const cyberQuotes = [
@@ -181,9 +181,9 @@ export default function Home() {
           <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-4">
             {[
               ["23+", "Specialist Agents"],
-              ["72+", "Skills Installed"],
-              ["6", "Thinking Modes"],
-              ["5", "Memory Layers"],
+              ["40+", "Skills Installed"],
+              ["9", "Pages Deployed"],
+              ["87%", "Roadmap Complete"],
             ].map(([num, label]) => (
               <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
                 <div className="text-2xl font-bold gradient-text">{num}</div>
