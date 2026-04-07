@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(git diff *)",
-      "Read(//home/humm1ngb1rd/Desktop/Jebat.CORE/**)"
+      "Read(//home/humm1ngb1rd/Desktop/Jebat.CORE/**)",
+      "Bash(npx *)",
+      "Bash(git *)",
+      "Bash(git push *)"
     ]
   },
   "$version": 3

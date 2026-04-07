@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { AgentIcon, AGENT_ICONS } from "../components/icons";
+import { AgentIcon } from "../components/icons";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -10,8 +10,66 @@ const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Security", href: "#security" },
   { label: "Gelanggang", href: "/gelanggang" },
+  { label: "Guides", href: "/guides" },
   { label: "Architecture", href: "#architecture" },
-  { label: "Skills", href: "#skills" },
+];
+
+const installSteps = [
+  { step: 1, title: "Clone the Repository", command: "git clone https://github.com/nusabyte-my/jebat-core.git\ncd jebat-core", description: "Get the full JEBAT codebase with all agents, skills, and infrastructure configs." },
+  { step: 2, title: "Install Dependencies", command: "cd apps/web && npm install\ncd ../api && pip install -r requirements.txt", description: "Install frontend (Next.js) and backend (FastAPI) dependencies." },
+  { step: 3, title: "Start the Backend API", command: "cd apps/api && python -m services.api.jebat_api &", description: "Starts FastAPI on port 8000 with memory, agents, and security scanning." },
+  { step: 4, title: "Start the Frontend", command: "cd apps/web && npm run dev", description: "Next.js dev server on localhost:3000 with hot reload." },
+  { step: 5, title: "Install to Your IDE", command: "npx github:nusabyte-my/jebat-core install", description: "Injects JEBAT context into VS Code, Cursor, Zed, Trae, or Antigravity." },
+];
+
+const guideCategories = [
+  {
+    id: "developers",
+    icon: "tukang",
+    title: "Developers",
+    description: "Code assistance, debugging, testing, and deployment",
+    pages: [
+      { title: "Setup & Installation", path: "/guides/setup" },
+      { title: "IDE Integration", path: "/guides/ide-setup" },
+      { title: "Code Review Workflow", path: "/guides/code-review" },
+      { title: "Deployment Guide", path: "/guides/deployment" },
+    ],
+  },
+  {
+    id: "security",
+    icon: "hulubalang",
+    title: "Security Teams",
+    description: "Vulnerability scanning, pentesting, and compliance",
+    pages: [
+      { title: "Security Scanning", path: "/guides/security-scan" },
+      { title: "Pentesting Guide", path: "/guides/pentesting" },
+      { title: "Compliance Reports", path: "/guides/compliance" },
+      { title: "Incident Response", path: "/guides/incident-response" },
+    ],
+  },
+  {
+    id: "operations",
+    icon: "syahbandar",
+    title: "Operations & DevOps",
+    description: "Infrastructure, CI/CD, monitoring, and automation",
+    pages: [
+      { title: "Docker Setup", path: "/guides/docker" },
+      { title: "VPS Deployment", path: "/guides/vps" },
+      { title: "Monitoring Setup", path: "/guides/monitoring" },
+      { title: "CI/CD Pipeline", path: "/guides/cicd" },
+    ],
+  },
+  {
+    id: "research",
+    icon: "pawang",
+    title: "Researchers & Analysts",
+    description: "Research workflows, data analysis, and documentation",
+    pages: [
+      { title: "Research Workflow", path: "/guides/research" },
+      { title: "Data Analysis", path: "/guides/analysis" },
+      { title: "Documentation", path: "/guides/documentation" },
+    ],
+  },
 ];
 
 const trustStats = [
@@ -25,75 +83,35 @@ const valuePillars = [
   {
     icon: "memory",
     title: "Memory That Never Forgets",
-    description: "5-layer cognitive architecture (M0–M4) with heat-based importance scoring. JEBAT remembers context, preferences, and decisions across every session — unlike stateless AI assistants.",
+    description: "5-layer cognitive architecture (M0–M4) with heat-based importance scoring. JEBAT remembers context, preferences, and decisions across every session.",
     features: ["Cross-session continuity", "Intelligent forgetting", "Semantic recall", "Vector search"],
   },
   {
     icon: "agents",
     title: "Agents That Collaborate",
-    description: "23 specialist agents orchestrated by Panglima. Watch them debate, propose solutions, and reach consensus — all across different LLM providers in real-time.",
+    description: "23 specialist agents orchestrated by Panglima. Watch them debate, propose solutions, and reach consensus across different LLM providers.",
     features: ["Cross-provider LLM communication", "4 collaboration patterns", "Dynamic agent loading", "Shimmer notifications"],
   },
   {
     icon: "security",
     title: "Security From Day One",
-    description: "Autonomous security scanner on every startup. Three-tier cybersec assistant (Perisai, Pengawal, Serangan) with auto-fix for 6 vulnerability types.",
+    description: "Autonomous security scanner on every startup. Three-tier cybersec assistant with auto-fix for 6 vulnerability types.",
     features: ["IBM agentic-ai-cyberres integration", "18 MCP security tools", "GDPR/SOC2/ISO27001 compliance", "Audit logging"],
   },
 ];
 
 const securityFeatures = [
-  {
-    icon: "🔍",
-    title: "Autonomous Scanning",
-    description: "Every JEBAT session begins with a full codebase security audit — secrets, CVEs, injection patterns, infrastructure misconfigs.",
-    severity: "Always On",
-  },
-  {
-    icon: "🔧",
-    title: "Auto-Remediation",
-    description: "Automatically fixes 6 vulnerability types (MD5→SHA256, eval removal, safe YAML, pickle, os.system, XSS) with backups before every change.",
-    severity: "1-Click Fix",
-  },
-  {
-    icon: "📋",
-    title: "Compliance Reports",
-    description: "Generate compliance reports for GDPR, SOC2, and ISO27001. Full audit trail with structured event logging and anomaly detection.",
-    severity: "Enterprise Ready",
-  },
-  {
-    icon: "🔒",
-    title: "Zero-Trust Design",
-    description: "7 built-in RBAC roles with 20+ granular permissions. Every API call, memory access, and config change is logged and auditable.",
-    severity: "Role-Based",
-  },
+  { icon: "pawang", title: "Autonomous Scanning", description: "Every session begins with a full codebase security audit — secrets, CVEs, injection patterns, infrastructure misconfigs.", severity: "Always On" },
+  { icon: "tukang", title: "Auto-Remediation", description: "Automatically fixes 6 vulnerability types (MD5→SHA256, eval removal, safe YAML, pickle, os.system, XSS) with backups.", severity: "1-Click Fix" },
+  { icon: "penyemak", title: "Compliance Reports", description: "Generate compliance reports for GDPR, SOC2, and ISO27001. Full audit trail with structured event logging.", severity: "Enterprise Ready" },
+  { icon: "perisai", title: "Zero-Trust Design", description: "7 built-in RBAC roles with 20+ granular permissions. Every API call, memory access, and config change is logged.", severity: "Role-Based" },
 ];
 
 const collaborationPatterns = [
-  {
-    icon: "➡️",
-    title: "Sequential",
-    description: "Agent A → Agent B → Agent C, each building on previous results.",
-    example: "Tukang writes code → Hulubalang audits → Penyemak validates",
-  },
-  {
-    icon: "⚡",
-    title: "Parallel",
-    description: "All agents work simultaneously, results combined at the end.",
-    example: "3 agents analyze the same codebase independently",
-  },
-  {
-    icon: "🗳️",
-    title: "Consensus",
-    description: "All agents propose solutions, then vote. Majority wins.",
-    example: "3 agents propose architectures → vote → 2 agree on microservices",
-  },
-  {
-    icon: "⚔️",
-    title: "Adversarial",
-    description: "Two agents debate opposing positions. Third agent judges.",
-    example: "Monolith vs Microservices debate → Panglima decides",
-  },
+  { icon: "➡️", title: "Sequential", description: "Agent A → Agent B → Agent C, each building on previous results.", example: "Tukang writes code → Hulubalang audits → Penyemak validates" },
+  { icon: "⚡", title: "Parallel", description: "All agents work simultaneously, results combined at the end.", example: "3 agents analyze the same codebase independently" },
+  { icon: "🗳️", title: "Consensus", description: "All agents propose solutions, then vote. Majority wins.", example: "3 agents propose architectures → vote → 2 agree on microservices" },
+  { icon: "⚔️", title: "Adversarial", description: "Two agents debate opposing positions. Third agent judges.", example: "Monolith vs Microservices debate → Panglima decides" },
 ];
 
 const skillCategories = [
@@ -155,12 +173,16 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-neutral-100 overflow-x-hidden">
       {/* ─── Nav ─────────────────────────────────────────────────────── */}
-      <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrollY > 50 ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5" : "bg-transparent"}`}>
+      <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrollY > 50 ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20" : "bg-transparent"}`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">⚔️</span>
-            <span className="text-lg font-semibold tracking-tight">JEBAT</span>
-            <span className="hidden md:inline-block text-xs text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v2.0</span>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-400/10 border border-cyan-400/20">
+              <AgentIcon name="panglima" size={18} color="#00E5FF" />
+            </div>
+            <div>
+              <span className="text-lg font-semibold tracking-tight">JEBAT</span>
+              <span className="ml-2 text-xs text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v2.0</span>
+            </div>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm text-neutral-400">
             {navLinks.map((link) => (
@@ -168,15 +190,16 @@ export default function Home() {
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="hidden sm:inline-block text-sm text-neutral-400 transition hover:text-white">
+            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="hidden sm:inline-flex items-center gap-2 text-sm text-neutral-400 transition hover:text-white">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
               GitHub
             </a>
             <Link href="/gelanggang" className="rounded-full border border-cyan-400/30 px-4 py-2 text-sm text-cyan-300 transition hover:bg-cyan-400/10">
               Gelanggang
             </Link>
-            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-cyan-300">
-              Get Started
-            </Link>
+            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-cyan-300">
+              Download
+            </a>
           </div>
         </div>
       </nav>
@@ -188,7 +211,6 @@ export default function Home() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-cyan-400/5 rounded-full blur-3xl" />
           <div className="absolute top-20 right-10 w-[400px] h-[400px] bg-red-400/3 rounded-full blur-3xl" />
           <div className="absolute top-40 left-10 w-[300px] h-[300px] bg-green-400/3 rounded-full blur-3xl" />
-          {/* Grid pattern */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
         </div>
 
@@ -210,21 +232,22 @@ export default function Home() {
 
             {/* Subheadline */}
             <p className="max-w-3xl mx-auto text-lg md:text-xl leading-8 text-neutral-400">
-              JEBAT combines eternal memory, multi-agent orchestration across 5 LLM providers, and autonomous cybersecurity scanning into one self-hosted platform. Built by <a href="https://nusabyte.my" className="text-cyan-300 hover:text-cyan-200 transition">NusaByte</a> for teams who need an AI operator — not just a chatbot.
+              JEBAT combines eternal memory, multi-agent orchestration across 5 LLM providers, and autonomous cybersecurity scanning into one self-hosted platform. Download, install, and own your AI.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-wrap justify-center gap-4 pt-4">
-              <Link href="/onboarding" className="group rounded-full bg-cyan-400 px-8 py-4 text-base font-semibold text-black transition hover:bg-cyan-300 flex items-center gap-2">
-                Start Building
+              <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-cyan-400 px-8 py-4 text-base font-semibold text-black transition hover:bg-cyan-300 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                Download JEBAT Core
                 <svg className="w-4 h-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-              </Link>
+              </a>
               <Link href="/gelanggang" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white transition hover:bg-white/10 flex items-center gap-2">
                 🏛️ Watch Gelanggang
               </Link>
-              <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white transition hover:bg-white/10">
-                ⭐ Star on GitHub
-              </a>
+              <Link href="/guides" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white transition hover:bg-white/10">
+                📖 View Guides
+              </Link>
             </div>
 
             {/* Trust Stats */}
@@ -240,6 +263,33 @@ export default function Home() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ─── Install Steps ───────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          badge="Get Started"
+          title="Install in 5 Minutes"
+          subtitle="Clone, install, and start JEBAT on your local machine. No cloud dependency."
+        />
+        <div className="space-y-6">
+          {installSteps.map((step) => (
+            <div key={step.step} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-400/20 text-cyan-300 flex items-center justify-center font-bold text-lg">
+                  {step.step}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
+                  <p className="text-sm text-neutral-400 mb-3">{step.description}</p>
+                  <div className="rounded-lg bg-black/40 border border-white/5 px-4 py-3">
+                    <pre className="text-sm font-mono text-cyan-300 whitespace-pre-wrap">{step.command}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -264,6 +314,38 @@ export default function Home() {
                     <svg className="w-4 h-4 text-cyan-400/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                     {f}
                   </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Guide Categories ────────────────────────────────────────── */}
+      <section id="guides" className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          badge="Documentation"
+          title="Guides for Every Domain"
+          subtitle="Step-by-step guides tailored to your role — developers, security teams, operations, and researchers."
+        />
+        <div className="grid gap-6 md:grid-cols-2">
+          {guideCategories.map((cat) => (
+            <div key={cat.id} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center">
+                  <AgentIcon name={cat.icon} size={22} color="#00E5FF" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">{cat.title}</h3>
+                  <p className="text-xs text-neutral-500">{cat.description}</p>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                {cat.pages.map((page) => (
+                  <Link key={page.path} href={page.path} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/5 hover:text-white">
+                    <span>{page.title}</span>
+                    <svg className="w-4 h-4 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -329,7 +411,9 @@ export default function Home() {
           {securityFeatures.map((feature) => (
             <div key={feature.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-2xl">{feature.icon}</span>
+                <div className="w-8 h-8 rounded-lg bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center">
+                  <AgentIcon name={feature.icon} size={18} color="#00E5FF" />
+                </div>
                 <span className="text-xs rounded-full border border-red-400/20 bg-red-400/5 px-2 py-0.5 text-red-300">{feature.severity}</span>
               </div>
               <h3 className="font-semibold text-white mb-2">{feature.title}</h3>
@@ -372,7 +456,7 @@ export default function Home() {
                 { label: "├─ Pengawal (CyberSec)", sub: "Perisai · Pengawal · Serangan", indent: 2 },
                 { label: "├─ Prompt Enhancer", sub: "6-stage optimization pipeline", indent: 2 },
                 { label: "└─ Gelanggang Panglima", sub: "LLM-to-LLM cross-provider arena", indent: 2 },
-                { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis · SQLite + Chroma", indent: 0 },
+                { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis 7 · Chroma", indent: 0 },
               ].map((row, i) => (
                 <div key={i} style={{ paddingLeft: row.indent ? `${row.indent}rem` : undefined }}>
                   {row.sub ? (
@@ -469,14 +553,15 @@ export default function Home() {
         <div className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/5 to-transparent p-10 text-center md:p-16">
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">Ready to Build with JEBAT?</h2>
           <p className="mx-auto mb-8 max-w-lg text-neutral-400">
-            Tell us about yourself, your environment, and what you need. We'll set things up for you.
+            Clone the repository, install dependencies, and start building. No cloud dependency. No subscriptions. Your data, your control.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/onboarding" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300">
-              Start Onboarding →
-            </Link>
-            <Link href="/gelanggang" className="rounded-full border border-white/15 px-8 py-3.5 text-base font-medium text-white transition hover:bg-white/10">
-              🏛️ Watch Gelanggang
+            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full bg-cyan-400 px-8 py-3.5 text-base font-semibold text-black transition hover:bg-cyan-300 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              Download JEBAT Core →
+            </a>
+            <Link href="/guides" className="rounded-full border border-white/15 px-8 py-3.5 text-base font-medium text-white transition hover:bg-white/10">
+              📖 Read the Guides
             </Link>
           </div>
         </div>
@@ -490,7 +575,9 @@ export default function Home() {
             {/* Brand column */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">⚔️</span>
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-400/10 border border-cyan-400/20">
+                  <AgentIcon name="panglima" size={18} color="#00E5FF" />
+                </div>
                 <div>
                   <span className="text-lg font-semibold">JEBAT</span>
                   <span className="ml-2 text-xs text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v2.0.0</span>
@@ -535,9 +622,8 @@ export default function Home() {
             <div>
               <h4 className="text-sm font-semibold text-white mb-4">Resources</h4>
               <div className="space-y-3 text-sm text-neutral-500">
-                <Link href="/demo" className="block transition hover:text-white">Chat Demo</Link>
+                <Link href="/guides" className="block transition hover:text-white">Guides</Link>
                 <Link href="/onboarding" className="block transition hover:text-white">Onboarding</Link>
-                <Link href="/setup" className="block transition hover:text-white">Setup Guide</Link>
                 <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Documentation</a>
                 <a href="https://github.com/nusabyte-my/jebat-core/issues" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Report Issues</a>
               </div>
@@ -553,7 +639,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        {/* Bottom bar */}
+        {/* Bottom bar with shimmer quote */}
         <div className="border-t border-white/5">
           <div className="mx-auto max-w-7xl px-6 py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -562,8 +648,10 @@ export default function Home() {
                 Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">humm1ngb1rd</a>. 
                 All rights reserved.
               </div>
-              <div className="text-xs text-neutral-700 italic max-w-md text-center">
-                {quote}
+              <div className="relative">
+                <div className="text-xs italic max-w-md text-center bg-gradient-to-r from-neutral-700 via-cyan-300 to-neutral-700 bg-[length:200%_auto] animate-shimmer bg-clip-text text-transparent">
+                  {quote}
+                </div>
               </div>
               <div className="flex items-center gap-4 text-xs text-neutral-600">
                 <a href="https://github.com/nusabyte-my/jebat-core/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">MIT License</a>
