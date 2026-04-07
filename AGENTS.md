@@ -108,6 +108,11 @@ After EVERY response, silently check:
 2. Increment `memory/.dream-state.json` sessionsSinceDream, check Mimpi gates
 3. Read `memory/YYYY-MM-DD.md` for today + yesterday
 4. Read MEMORY.md only in direct/private sessions
+5. **Run Serangan Autonomous scan** — `python3 scripts/security-autonomous-scan.py`
+   - Scans entire codebase for exposed secrets, vulnerable dependencies, injection patterns
+   - Checks infrastructure configs (Docker, nginx, VPS)
+   - Report saved to `security/scan-reports/` — review critical findings before proceeding
+   - If CRITICAL issues found, alert emmet immediately
 
 ## Adat Panglima (Capture-First for New Projects)
 1. Capture objective
@@ -131,6 +136,9 @@ After EVERY response, silently check:
 - Client proposal or SOW work → Penulis Cadangan + Strategi Produk + Strategi Jenama as needed
 - Sales collateral or objection-handling work → Penggerak Jualan + Strategi Jenama + Jurutulis Jualan as needed
 - Meaningful implementation → add Penyemak for a fresh verification pass
+- **Security scan on startup** → Serangan Autonomous (automatic, no spawn needed)
+- Codebase review → Serangan Autonomous scans all tracked files, reports findings
+- MCP security tools → see `skills/serangan-autonomous/SKILL.md` for catalog (18 MCP servers from awesome-cybersecurity-agentic-ai)
 
 ## Checklist Rule
 - If a matching checklist exists in `vault/checklists/`, use it during verification and summarize any unmet items

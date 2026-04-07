@@ -29,6 +29,12 @@ const features = [
     details: ["Vulnerability scanning & threat modeling", "OWASP/CIS compliance auditing", "Automated pentest reporting"],
   },
   {
+    icon: "🔒",
+    title: "Autonomous Security Scanner",
+    description: "Adapted from IBM's agentic-ai-cyberres. Runs on every session startup — scans the entire codebase for secrets, CVEs, injection patterns, and infrastructure misconfigs.",
+    details: ["Secret & credential detection across all files", "Dependency vulnerability audit (npm + pip)", "18 MCP security tools catalog from awesome-cybersecurity-agentic-ai", "Auto-generated scan reports in security/scan-reports/"],
+  },
+  {
     icon: "📡",
     title: "Multi-Channel Gateway",
     description: "WhatsApp, Telegram, Discord, Slack, and REST API — meet users where they are, all through one gateway on port 18789.",
@@ -39,6 +45,12 @@ const features = [
     title: "Dev Tool Integration",
     description: "VS Code, Cursor, Zed, Trae, Antigravity — JEBAT context injects directly into your IDE workflow.",
     details: ["One-click `npx @nusabyte/jebat install`", "Per-IDE optimized context files", "Command palette integration"],
+  },
+  {
+    icon: "🏘️",
+    title: "Agent Town",
+    description: "Pixel-art RPG world where you walk up to AI workers and assign tasks face-to-face. Built on OpenClaw, integrates with JEBAT's multi-agent system.",
+    details: ["Phaser 3 + React HUD", "Real-time task tracking in-game", "Worker autonomy with JEBAT skills"],
   },
 ];
 
@@ -245,6 +257,7 @@ export default function Home() {
                 { label: "├─ Ultra-Think", sub: "6 reasoning modes · Token optimization", indent: 2 },
                 { label: "├─ Ultra-Loop", sub: "5-phase continuous processing", indent: 2 },
                 { label: "├─ Agent Orchestrator", sub: "23 specialists · Council workflows", indent: 2 },
+                { label: "├─ Serangan Autonomous", sub: "Codebase scanner · IBM agentic-ai-cyberres · 18 MCP tools", indent: 2 },
                 { label: "├─ Pengawal (CyberSec)", sub: "Perisai · Pengawal · Serangan", indent: 2 },
                 { label: "└─ Agent Town", sub: "Pixel-art RPG task assignment world", indent: 2 },
                 { label: "Storage", sub: "PostgreSQL/TimescaleDB · Redis · SQLite (Chroma)", indent: 0 },
