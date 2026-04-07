@@ -19,7 +19,7 @@ const installSteps = [
   { step: 2, title: "Install Dependencies", command: "cd apps/web && npm install\ncd ../api && pip install -r requirements.txt", description: "Install frontend (Next.js) and backend (FastAPI) dependencies." },
   { step: 3, title: "Start the Backend API", command: "cd apps/api && python -m services.api.jebat_api &", description: "Starts FastAPI on port 8000 with memory, agents, and security scanning." },
   { step: 4, title: "Start the Frontend", command: "cd apps/web && npm run dev", description: "Next.js dev server on localhost:3000 with hot reload." },
-  { step: 5, title: "Install to Your IDE", command: "npx github:nusabyte-my/jebat-core install", description: "Injects JEBAT context into VS Code, Cursor, Zed, Trae, or Antigravity." },
+  { step: 5, title: "Install to Your IDE", command: "# VS Code: creates .github/copilot-instructions.md\n# Cursor: creates .cursorrules\n# Zed: creates .zed/jebat-system-prompt.md\ncp adapters/vscode/copilot-instructions.md .github/copilot-instructions.md", description: "Injects JEBAT context into VS Code, Cursor, Zed, Trae, or Antigravity." },
 ];
 
 const guideCategories = [
