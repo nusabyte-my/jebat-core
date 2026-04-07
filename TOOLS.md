@@ -5,7 +5,6 @@
 - Primary workspace: `/home/humm1ngb1rd/Desktop/Jebat Online/`
 - Git remote: `https://github.com/nusabyte-my/jebat-core.git`
 - State dir: `~/.openclaw`
-- Gateway config: `~/.openclaw/openclaw.json`
 
 ## LLM Providers
 
@@ -27,7 +26,7 @@
 
 ## Working Mode
 
-- JEBAT is the main assistant identity
+- JEBAT is emmet's buddy and primary workspace operator
 - Panglima is the primary capture-first operating mode
 - Hermes remains a compatibility alias, not a separate core
 - Workspace skills are the preferred way to add repeatable behaviors
@@ -40,7 +39,7 @@
 - **Landing:** `/var/www/jebat.online/` (Next.js static export)
 - **API:** http://localhost:8000 (`jebat-api`, healthy ✅)
 - **WebUI:** http://localhost:8787 (`jebat-webui`, healthy ✅)
-- **Gateway:** http://localhost:18789 (`sh4dow-gateway`)
+- **Gateway:** http://localhost:18789 (`jebat-gateway`)
 - **Nginx:** `/etc/nginx/sites-enabled/jebat.online`
 - **Routes:** `/` → static landing | `/api/` → :8000 | `/webui/` → :8787
 

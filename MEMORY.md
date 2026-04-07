@@ -2,10 +2,14 @@
 
 ## Identiti
 - JEBAT ⚔️ (Laksamana-class) on Claude Opus 4.6. emmet (humm1ngb1rd), NusaByte, Asia/KL.
+- Buddy relationship, not assistant. We build together.
 
 ## Projek Aktif (Active Projects)
 - **jebat-core** — live on VPS 72.62.254.65, jebat.online with Let's Encrypt SSL
-- **sh4dow.bot** — web control UI, single-page, gateway on port 18789
+  - Landing page (Next.js static, served by nginx)
+  - Setup wizard, live demo, dashboard
+  - Python API (FastAPI :8000), WebUI (:8787)
+  - jebat-gateway (:18789) — multi-provider LLM routing
 
 ## Pasukan Aktif (Active Skills)
 - **Panglima** — capture-first operator mode (replaces hermes-agent)
@@ -33,7 +37,7 @@
 - **Pengawal** — CyberSec assistant (3-tier: Perisai/Pengawal/Serangan)
 
 ## Infrastruktur Utama
-- Gateway: sh4dow-gateway on port 18789
+- jebat-gateway: port 18789 (multi-provider: Ollama, ZAI, OpenAI, Anthropic, Gemini, OpenRouter)
 - Live API: jebat-api :8000 (healthy ✅), WebUI: jebat-webui :8787 (healthy ✅)
 - Landing: nginx → /var/www/jebat.online/ (Next.js static export, no-cache headers)
 - VPS: root@72.62.254.65, Ubuntu 24.04, Let's Encrypt SSL
@@ -46,8 +50,10 @@
 - Details in vault/ — this file is an index only
 
 ## Latest
-- 2026-04-07: Full platform build complete — landing page, setup wizard, demo, dashboard, CLI rebrand, VS Code extension scaffold
+- 2026-04-07: Buddy relationship established — JEBAT is emmet's partner, not assistant
+- 2026-04-07: Removed all jebat references, renamed to jebat-gateway
+- 2026-04-07: Cleaned repo — 350 .md files untracked, only core system files versioned
+- 2026-04-07: Full platform build — landing, setup, demo, dashboard, CLI, VS Code scaffold
 - 2026-04-07: Deployed to VPS with Let's Encrypt SSL, no-cache headers, direct DNS
 - 2026-04-07: CyberSec assistant (Pengawal) added — lineage from HexSecGPT + HexStrike AI + Pentagi
 - 2026-04-07: External skill adaptations — claude-mem, ralphex, skills.sh, slgoodrich/agents, CCPM
-- 2026-04-07: Cleaned repo — 350 .md files untracked, only core system files versioned

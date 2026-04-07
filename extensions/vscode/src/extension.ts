@@ -19,7 +19,7 @@ Panglima, Hikmat, Tukang, Hulubalang, Pawang, Syahbandar,
 Bendahara, Penyemak, Senibina Antara Muka, Pengawal, and 20+ more.
 
 ## Gateway
-Sh4dow Gateway on port 18789 — multi-provider LLM routing.
+Jebat Gateway on port 18789 — multi-provider LLM routing.
 Providers: Ollama, ZAI, OpenAI, Anthropic, Gemini, OpenRouter.
 `;
 

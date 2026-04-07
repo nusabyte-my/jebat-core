@@ -123,7 +123,7 @@ function cmdInstall(targetDir) {
   if (fs.existsSync(contextFile)) {
     context = fs.readFileSync(contextFile, "utf8");
   } else {
-    context = `# JEBAT Context — ${new Date().toISOString()}\n\nJEBAT is the primary AI operator for this workspace.\nNamed after Hang Jebat — loyal, sharp, decisive.\n\n## Core Rules\n- Direct answers, no filler\n- Search memory before claiming ignorance\n- Backup config before editing\n- Confirm before SSH or external actions\n\n## Skills\nPanglima, Hikmat, Tukang, Hulubalang, Pawang, Syahbandar, and 20+ more specialists.\n\n## Gateway\nSh4dow Gateway on port 18789 — multi-provider LLM routing.\n`;
+    context = `# JEBAT Context — ${new Date().toISOString()}\n\nJEBAT is the primary AI operator for this workspace.\nNamed after Hang Jebat — loyal, sharp, decisive.\n\n## Core Rules\n- Direct answers, no filler\n- Search memory before claiming ignorance\n- Backup config before editing\n- Confirm before SSH or external actions\n\n## Skills\nPanglima, Hikmat, Tukang, Hulubalang, Pawang, Syahbandar, and 20+ more specialists.\n\n## Gateway\nJebat Gateway on port 18789 — multi-provider LLM routing.\n`;
   }
 
   let installed = 0;

@@ -126,10 +126,10 @@
 
 ## Lapisan Web (Web Layer)
 
-### sh4dow.bot — Papan Kawalan
+### jebat buddy interface — Papan Kawalan
 - role: browser-based control panel for the gateway
-- connects to: sh4dow-gateway on port 18789
-- repo: https://github.com/nusabyte-my/sh4dow.bot
+- connects to: jebat-gateway on port 18789
+- repo: https://github.com/nusabyte-my/jebat buddy interface
 
 ### jebat.online — Platform Hidup
 - API: jebat-api (:8000) | WebUI: jebat-webui (:8787)

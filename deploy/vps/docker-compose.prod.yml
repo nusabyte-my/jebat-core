@@ -27,7 +27,7 @@ services:
       - redis
     networks:
       - jebat-public
-      - sh4dow-shared
+      - jebat-shared
     labels:
       - traefik.enable=true
       - traefik.docker.network=sh4dow_sh4dow-net
@@ -75,7 +75,7 @@ services:
     command: ["python", "-m", "jebat.services.webui.launch", "--host", "0.0.0.0", "--port", "8787"]
     networks:
       - jebat-public
-      - sh4dow-shared
+      - jebat-shared
     labels:
       - traefik.enable=true
       - traefik.docker.network=sh4dow_sh4dow-net
@@ -112,7 +112,7 @@ services:
 networks:
   jebat-public:
     driver: bridge
-  sh4dow-shared:
+  jebat-shared:
     external: true
     name: sh4dow_sh4dow-net
 
