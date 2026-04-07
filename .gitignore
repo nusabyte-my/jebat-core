@@ -87,3 +87,4 @@ test_results/
 .kiro/
 .ollama/
 jebat-core/
+*.md
