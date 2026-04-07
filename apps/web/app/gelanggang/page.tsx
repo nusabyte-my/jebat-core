@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AgentIcon, AGENT_ICONS } from "../../components/icons";
 
 // ─── Agent Definitions ────────────────────────────────────────────────────────
 
 const DEMO_AGENTS = [
-  { id: "tukang-001", name: "Tukang", role: "Development", provider: "OpenAI", model: "gpt-4o", emoji: "🔧", color: "#3B82F6" },
-  { id: "hulubalang-001", name: "Hulubalang", role: "Security", provider: "Anthropic", model: "claude-sonnet-4", emoji: "🛡️", color: "#EF4444" },
-  { id: "pawang-001", name: "Pawang", role: "Research", provider: "Gemini", model: "gemini-2.5-pro", emoji: "🔍", color: "#10B981" },
-  { id: "syahbandar-001", name: "Syahbandar", role: "Operations", provider: "Ollama", model: "qwen2.5-coder:7b", emoji: "⚙️", color: "#F59E0B" },
-  { id: "penyemak-001", name: "Penyemak", role: "QA", provider: "ZAI", model: "glm-5", emoji: "✅", color: "#8B5CF6" },
-  { id: "panglima-001", name: "Panglima", role: "Orchestration", provider: "Anthropic", model: "claude-opus-4", emoji: "⚔️", color: "#00E5FF" },
+  { id: "tukang-001", name: "Tukang", role: "Development", provider: "OpenAI", model: "gpt-4o", icon: "tukang", color: "#3B82F6" },
+  { id: "hulubalang-001", name: "Hulubalang", role: "Security", provider: "Anthropic", model: "claude-sonnet-4", icon: "hulubalang", color: "#EF4444" },
+  { id: "pawang-001", name: "Pawang", role: "Research", provider: "Gemini", model: "gemini-2.5-pro", icon: "pawang", color: "#10B981" },
+  { id: "syahbandar-001", name: "Syahbandar", role: "Operations", provider: "Ollama", model: "qwen2.5-coder:7b", icon: "syahbandar", color: "#F59E0B" },
+  { id: "penyemak-001", name: "Penyemak", role: "QA", provider: "ZAI", model: "glm-5", icon: "penyemak", color: "#8B5CF6" },
+  { id: "panglima-001", name: "Panglima", role: "Orchestration", provider: "Anthropic", model: "claude-opus-4", icon: "panglima", color: "#00E5FF" },
 ];
 
 // ─── Orchestration Scenarios ─────────────────────────────────────────────────
@@ -610,7 +611,7 @@ export default function GelanggangPage() {
     setCurrentStep(0);
     setMessages([]);
     setFinalResult("");
-    setMessages([{ role: "system", content: `🏛️ Gelanggang Panglima initialized\nScenario: ${selectedScenario.title}\nPattern: ${selectedScenario.pattern}\nAgents: ${selectedScenario.agents.map(id => DEMO_AGENTS.find(a => a.id === id)?.emoji + " " + DEMO_AGENTS.find(a => a.id === id)?.name).join(" → ")}` }]);
+    setMessages([{ role: "system", content: `🏛️ Gelanggang Panglima initialized\nScenario: ${selectedScenario.title}\nPattern: ${selectedScenario.pattern}\nAgents: ${selectedScenario.agents.map(id => DEMO_AGENTS.find(a => a.id === id)?.icon + " " + DEMO_AGENTS.find(a => a.id === id)?.name).join(" → ")}` }]);
 
     const agentIds = selectedScenario.agents;
 
@@ -692,7 +693,7 @@ export default function GelanggangPage() {
                     const agent = DEMO_AGENTS.find(a => a.id === id);
                     return agent ? (
                       <span key={id} className="text-xs rounded-full border px-1.5 py-0.5" style={{ borderColor: agent.color + "40", color: agent.color }}>
-                        {agent.emoji} {agent.name}
+                      <AgentIcon name={agent.icon} size={14} color={agent.color} /> {agent.name}
                       </span>
                     ) : null;
                   })}
@@ -714,7 +715,7 @@ export default function GelanggangPage() {
                 : "bg-cyan-400 text-black hover:bg-cyan-300"
             }`}
           >
-            {isRunning ? `⏳ Step ${currentStep}/${selectedScenario.agents.length} — ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.emoji} ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.name} is thinking...` : "🏛️ Start Gelanggang"}
+            {isRunning ? `⏳ Step ${currentStep}/${selectedScenario.agents.length} — ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.icon} ${DEMO_AGENTS.find(a => a.id === selectedScenario.agents[currentStep - 1])?.name} is thinking...` : "🏛️ Start Gelanggang"}
           </button>
           {!isRunning && messages.length > 1 && (
             <button onClick={runDemo} className="ml-3 rounded-xl border border-white/10 px-6 py-4 text-base font-medium text-white transition hover:bg-white/10">
@@ -738,7 +739,7 @@ export default function GelanggangPage() {
                   isInvolved ? "border-white/10 bg-white/[0.02]" : "border-white/5 bg-white/[0.01] opacity-40"
                 }`}
               >
-                <span className="text-lg">{agent.emoji}</span>
+                <AgentIcon name={agent.icon} size={20} color={agent.color} />
                 <div>
                   <div className="text-sm font-medium">{agent.name}</div>
                   <div className="text-xs text-neutral-500">{agent.provider} · {agent.model}</div>
@@ -769,7 +770,7 @@ export default function GelanggangPage() {
               ) : (
                 <div className="rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xl">{msg.agent.emoji}</span>
+                    <AgentIcon name={msg.agent.icon} size={24} color={msg.agent.color} />
                     <div>
                       <span className="font-semibold" style={{ color: msg.agent.color }}>{msg.agent.name}</span>
                       <span className="ml-2 text-xs text-neutral-500">{msg.agent.provider}/{msg.agent.model}</span>
@@ -793,7 +794,7 @@ export default function GelanggangPage() {
             <div className="rounded-xl border border-white/10 bg-black/20 p-4 flex items-center gap-3">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
               <span className="text-sm text-cyan-300">
-                {DEMO_AGENTS.find(a => a.id === loadingAgents[0])?.emoji} {DEMO_AGENTS.find(a => a.id === loadingAgents[0])?.name} is generating response...
+              <AgentIcon name={DEMO_AGENTS.find(a => a.id === loadingAgents[0])?.icon || "panglima"} size={20} color="#00E5FF" /> {DEMO_AGENTS.find(a => a.id === loadingAgents[0])?.name} is generating response...
               </span>
             </div>
           )}

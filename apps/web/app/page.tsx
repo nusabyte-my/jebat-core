@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { AgentIcon, AGENT_ICONS } from "../components/icons";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -14,27 +15,27 @@ const navLinks = [
 ];
 
 const trustStats = [
-  { value: "23+", label: "Specialist Agents", icon: "⚔️" },
-  { value: "40+", label: "Optimized Skills", icon: "🗡️" },
-  { value: "5", label: "LLM Providers", icon: "🌐" },
-  { value: "100%", label: "Self-Hosted", icon: "🔒" },
+  { value: "23+", label: "Specialist Agents", icon: "panglima" },
+  { value: "40+", label: "Optimized Skills", icon: "tukang" },
+  { value: "5", label: "LLM Providers", icon: "gateway" },
+  { value: "100%", label: "Self-Hosted", icon: "security" },
 ];
 
 const valuePillars = [
   {
-    icon: "🧠",
+    icon: "memory",
     title: "Memory That Never Forgets",
     description: "5-layer cognitive architecture (M0–M4) with heat-based importance scoring. JEBAT remembers context, preferences, and decisions across every session — unlike stateless AI assistants.",
     features: ["Cross-session continuity", "Intelligent forgetting", "Semantic recall", "Vector search"],
   },
   {
-    icon: "⚔️",
+    icon: "agents",
     title: "Agents That Collaborate",
     description: "23 specialist agents orchestrated by Panglima. Watch them debate, propose solutions, and reach consensus — all across different LLM providers in real-time.",
     features: ["Cross-provider LLM communication", "4 collaboration patterns", "Dynamic agent loading", "Shimmer notifications"],
   },
   {
-    icon: "🛡️",
+    icon: "security",
     title: "Security From Day One",
     description: "Autonomous security scanner on every startup. Three-tier cybersec assistant (Perisai, Pengawal, Serangan) with auto-fix for 6 vulnerability types.",
     features: ["IBM agentic-ai-cyberres integration", "18 MCP security tools", "GDPR/SOC2/ISO27001 compliance", "Audit logging"],
@@ -230,7 +231,9 @@ export default function Home() {
             <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
               {trustStats.map((stat) => (
                 <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-                  <div className="text-xl mb-1">{stat.icon}</div>
+                  <div className="mb-2">
+                    <AgentIcon name={stat.icon} size={28} color="#00E5FF" />
+                  </div>
                   <div className="text-2xl font-bold gradient-text">{stat.value}</div>
                   <div className="text-xs text-neutral-500">{stat.label}</div>
                 </div>
@@ -250,7 +253,9 @@ export default function Home() {
         <div className="grid gap-6 md:grid-cols-3">
           {valuePillars.map((pillar) => (
             <div key={pillar.title} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-              <div className="text-3xl mb-4">{pillar.icon}</div>
+              <div className="mb-4">
+                <AgentIcon name={pillar.icon} size={40} color="#00E5FF" />
+              </div>
               <h3 className="text-xl font-semibold text-white mb-3">{pillar.title}</h3>
               <p className="text-sm leading-7 text-neutral-400 mb-4">{pillar.description}</p>
               <div className="space-y-2">
@@ -497,13 +502,13 @@ export default function Home() {
               {/* Trust badges */}
               <div className="flex flex-wrap gap-3 mb-6">
                 {[
-                  { icon: "🔒", label: "Self-Hosted" },
-                  { icon: "✅", label: "SOC2 Ready" },
-                  { icon: "🛡️", label: "GDPR Compliant" },
-                  { icon: "⭐", label: "MIT License" },
+                  { icon: "security", label: "Self-Hosted" },
+                  { icon: "penyemak", label: "SOC2 Ready" },
+                  { icon: "perisai", label: "GDPR Compliant" },
+                  { icon: "enterprise", label: "MIT License" },
                 ].map((badge) => (
                   <span key={badge.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-400">
-                    <span>{badge.icon}</span>
+                    <AgentIcon name={badge.icon} size={12} color="#00E5FF" />
                     {badge.label}
                   </span>
                 ))}
