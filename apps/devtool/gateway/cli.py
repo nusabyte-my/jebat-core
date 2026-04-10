@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..brain.dev_brain import DevBrain
+from ..security_console.cli import SecurityConsoleCLI
 from ..sandbox.dev_sandbox import DevSandbox
 
 
@@ -121,6 +122,11 @@ class DevCLI:
             help="Test framework",
         )
 
+        subparsers.add_parser(
+            "security",
+            help="Launch Serangan Console for local security and pentest workflows",
+        )
+
         # Help command
         subparsers.add_parser("help", help="Show help")
 
@@ -166,6 +172,8 @@ class DevCLI:
                 )
             elif parsed.command == "test":
                 await self.cmd_test(parsed.path, parsed.framework)
+            elif parsed.command == "security":
+                return await self.cmd_security()
             elif parsed.command == "help":
                 self.parser.print_help()
             else:
@@ -309,6 +317,11 @@ class DevCLI:
                 print(f"    - {issue[:100]}...")
         if result.metadata.get("output"):
             print(f"\n  Output:\n{result.metadata['output'][:500]}")
+
+    async def cmd_security(self) -> int:
+        """Launch the security console."""
+        console = SecurityConsoleCLI()
+        return await console.run()
 
 
 def main():

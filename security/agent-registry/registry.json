@@ -1,0 +1,412 @@
+{
+  "agents": {
+    "panglima-001": {
+      "agent_id": "panglima-001",
+      "agent_name": "Panglima",
+      "agent_role": "orchestration",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "capabilities": [
+        "orchestration",
+        "routing",
+        "delegation",
+        "consensus",
+        "planning"
+      ],
+      "languages": [
+        "en",
+        "ms"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556867+00:00",
+      "metadata": {}
+    },
+    "tukang-001": {
+      "agent_id": "tukang-001",
+      "agent_name": "Tukang",
+      "agent_role": "development",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:7b",
+      "capabilities": [
+        "coding",
+        "debugging",
+        "testing",
+        "deployment",
+        "refactoring"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556881+00:00",
+      "metadata": {}
+    },
+    "hulubalang-001": {
+      "agent_id": "hulubalang-001",
+      "agent_name": "Hulubalang",
+      "agent_role": "security",
+      "provider": "ollama",
+      "model": "hermes-sec-v2",
+      "capabilities": [
+        "pentesting",
+        "vulnerability_scanning",
+        "hardening",
+        "audit",
+        "threat_modeling"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556886+00:00",
+      "metadata": {}
+    },
+    "pengawal-001": {
+      "agent_id": "pengawal-001",
+      "agent_name": "Pengawal",
+      "agent_role": "cybersec",
+      "provider": "ollama",
+      "model": "hermes-sec-v2",
+      "capabilities": [
+        "defensive_security",
+        "monitoring",
+        "incident_response",
+        "compliance",
+        "offensive_security"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556889+00:00",
+      "metadata": {}
+    },
+    "pawang-001": {
+      "agent_id": "pawang-001",
+      "agent_name": "Pawang",
+      "agent_role": "research",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "capabilities": [
+        "research",
+        "analysis",
+        "documentation",
+        "investigation",
+        "synthesis"
+      ],
+      "languages": [
+        "en",
+        "ms"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556893+00:00",
+      "metadata": {}
+    },
+    "syahbandar-001": {
+      "agent_id": "syahbandar-001",
+      "agent_name": "Syahbandar",
+      "agent_role": "operations",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:7b",
+      "capabilities": [
+        "deployment",
+        "ci_cd",
+        "docker",
+        "monitoring",
+        "automation"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556896+00:00",
+      "metadata": {}
+    },
+    "bendahara-001": {
+      "agent_id": "bendahara-001",
+      "agent_name": "Bendahara",
+      "agent_role": "database",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:7b",
+      "capabilities": [
+        "sql",
+        "schema_design",
+        "migrations",
+        "optimization",
+        "backup"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556899+00:00",
+      "metadata": {}
+    },
+    "hikmat-001": {
+      "agent_id": "hikmat-001",
+      "agent_name": "Hikmat",
+      "agent_role": "memory",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "capabilities": [
+        "memory_management",
+        "search",
+        "consolidation",
+        "recall",
+        "vector_search"
+      ],
+      "languages": [
+        "en",
+        "ms"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556902+00:00",
+      "metadata": {}
+    },
+    "penganalisis-001": {
+      "agent_id": "penganalisis-001",
+      "agent_name": "Penganalisis",
+      "agent_role": "analytics",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "capabilities": [
+        "data_analysis",
+        "kpi_review",
+        "funnel_analysis",
+        "reporting",
+        "experiments"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556905+00:00",
+      "metadata": {}
+    },
+    "penyemak-001": {
+      "agent_id": "penyemak-001",
+      "agent_name": "Penyemak",
+      "agent_role": "qa",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "capabilities": [
+        "testing",
+        "code_review",
+        "validation",
+        "regression",
+        "acceptance"
+      ],
+      "languages": [
+        "en"
+      ],
+      "max_context_tokens": 128000,
+      "status": "idle",
+      "registered_at": "2026-04-10T18:23:18.556909+00:00",
+      "metadata": {}
+    }
+  },
+  "capabilities_index": {
+    "orchestration": [
+      "panglima-001"
+    ],
+    "routing": [
+      "panglima-001"
+    ],
+    "delegation": [
+      "panglima-001"
+    ],
+    "consensus": [
+      "panglima-001"
+    ],
+    "planning": [
+      "panglima-001"
+    ],
+    "coding": [
+      "tukang-001"
+    ],
+    "debugging": [
+      "tukang-001"
+    ],
+    "testing": [
+      "tukang-001",
+      "penyemak-001"
+    ],
+    "deployment": [
+      "tukang-001",
+      "syahbandar-001"
+    ],
+    "refactoring": [
+      "tukang-001"
+    ],
+    "pentesting": [
+      "hulubalang-001"
+    ],
+    "vulnerability_scanning": [
+      "hulubalang-001"
+    ],
+    "hardening": [
+      "hulubalang-001"
+    ],
+    "audit": [
+      "hulubalang-001"
+    ],
+    "threat_modeling": [
+      "hulubalang-001"
+    ],
+    "defensive_security": [
+      "pengawal-001"
+    ],
+    "monitoring": [
+      "pengawal-001",
+      "syahbandar-001"
+    ],
+    "incident_response": [
+      "pengawal-001"
+    ],
+    "compliance": [
+      "pengawal-001"
+    ],
+    "offensive_security": [
+      "pengawal-001"
+    ],
+    "research": [
+      "pawang-001"
+    ],
+    "analysis": [
+      "pawang-001"
+    ],
+    "documentation": [
+      "pawang-001"
+    ],
+    "investigation": [
+      "pawang-001"
+    ],
+    "synthesis": [
+      "pawang-001"
+    ],
+    "ci_cd": [
+      "syahbandar-001"
+    ],
+    "docker": [
+      "syahbandar-001"
+    ],
+    "automation": [
+      "syahbandar-001"
+    ],
+    "sql": [
+      "bendahara-001"
+    ],
+    "schema_design": [
+      "bendahara-001"
+    ],
+    "migrations": [
+      "bendahara-001"
+    ],
+    "optimization": [
+      "bendahara-001"
+    ],
+    "backup": [
+      "bendahara-001"
+    ],
+    "memory_management": [
+      "hikmat-001"
+    ],
+    "search": [
+      "hikmat-001"
+    ],
+    "consolidation": [
+      "hikmat-001"
+    ],
+    "recall": [
+      "hikmat-001"
+    ],
+    "vector_search": [
+      "hikmat-001"
+    ],
+    "data_analysis": [
+      "penganalisis-001"
+    ],
+    "kpi_review": [
+      "penganalisis-001"
+    ],
+    "funnel_analysis": [
+      "penganalisis-001"
+    ],
+    "reporting": [
+      "penganalisis-001"
+    ],
+    "experiments": [
+      "penganalisis-001"
+    ],
+    "code_review": [
+      "penyemak-001"
+    ],
+    "validation": [
+      "penyemak-001"
+    ],
+    "regression": [
+      "penyemak-001"
+    ],
+    "acceptance": [
+      "penyemak-001"
+    ]
+  },
+  "provider_index": {
+    "anthropic": [
+      "panglima-001",
+      "pawang-001",
+      "hikmat-001",
+      "penganalisis-001",
+      "penyemak-001"
+    ],
+    "ollama": [
+      "tukang-001",
+      "hulubalang-001",
+      "pengawal-001",
+      "syahbandar-001",
+      "bendahara-001"
+    ]
+  },
+  "role_index": {
+    "orchestration": [
+      "panglima-001"
+    ],
+    "development": [
+      "tukang-001"
+    ],
+    "security": [
+      "hulubalang-001"
+    ],
+    "cybersec": [
+      "pengawal-001"
+    ],
+    "research": [
+      "pawang-001"
+    ],
+    "operations": [
+      "syahbandar-001"
+    ],
+    "database": [
+      "bendahara-001"
+    ],
+    "memory": [
+      "hikmat-001"
+    ],
+    "analytics": [
+      "penganalisis-001"
+    ],
+    "qa": [
+      "penyemak-001"
+    ]
+  },
+  "last_updated": "2026-04-10T18:23:18.561580+00:00"
+}

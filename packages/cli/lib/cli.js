@@ -1023,12 +1023,30 @@ function printHelp() {
   console.log("  npx jebatcore skill-verify");
 }
 
+// ─── JEBAT Load Prompt ────────────────────────────────────────────────
+
+async function promptJebatLoad() {
+  const { askYesNo } = await import("./prompt.js");
+  const yes = await askYesNo("Do you want to load JEBAT?", true);
+  return yes;
+}
+
 export async function runCli(args) {
   const parsed = parseArgs(args);
 
   if (parsed.help || parsed.command === "help") {
     printHelp();
     return;
+  }
+
+  // Greet and ask to load JEBAT (skip for non-interactive flag commands)
+  const interactiveCmds = ["install", "setup", "skill-install", "skill-remove", "skill-list", "skill-search", "skill-create", "skill", "skill-verify", "design-system", "icon-search", "detect", "prompt", "doctor", "token-analyze", "token-compress", "token-compress-prompt", "token-budget", "output-fluff"];
+  if (!parsed.command || interactiveCmds.includes(parsed.command)) {
+    const { askYesNo } = await import("./prompt.js");
+    const jebatLoaded = await promptJebatLoad();
+    if (!jebatLoaded && (!parsed.command || parsed.command === "install" || parsed.command === "setup")) {
+      console.log("\nJEBAT not loaded. Run npx jebat-core for full JEBAT experience.\n");
+    }
   }
 
   if (parsed.command === "detect") {

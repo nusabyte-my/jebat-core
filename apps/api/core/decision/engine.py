@@ -47,19 +47,26 @@ class DecisionEngine:
     - User preferences
     """
 
-    def __init__(self, agent_registry: Optional[Dict] = None):
+    def __init__(self, agent_registry=None):
         """
         Initialize decision engine.
 
         Args:
-            agent_registry: Registry of available agents
+            agent_registry: AgentRegistry instance or dict of available agents
         """
-        self.agent_registry = agent_registry or {}
+        self.agent_registry = agent_registry
         self.decision_history: List[DecisionResult] = []
         self.performance_stats: Dict[str, Any] = {}
-        logger.info(
-            f"Decision Engine initialized with {len(self.agent_registry)} agents"
-        )
+
+        agent_count = 0
+        if self.agent_registry is not None:
+            # Support both AgentRegistry instance and legacy dict
+            if hasattr(self.agent_registry, "get_all_agents"):
+                agent_count = len(self.agent_registry.get_all_agents())
+            elif isinstance(self.agent_registry, dict):
+                agent_count = len(self.agent_registry)
+
+        logger.info(f"Decision Engine initialized with {agent_count} agents")
 
     async def decide(
         self,
@@ -90,16 +97,36 @@ class DecisionEngine:
         return result
 
     def _select_agent(self, task: Dict[str, Any]) -> Optional[str]:
-        """Select best agent for task."""
-        if not self.agent_registry:
+        """Select best agent for task using AgentRegistry."""
+        if self.agent_registry is None:
             return None
 
-        # Simple selection - return first available
+        # Use AgentRegistry's find_best_agent if available
+        if hasattr(self.agent_registry, "find_best_agent"):
+            description = task.get("description", "") or str(task)
+            best = self.agent_registry.find_best_agent(description)
+            if best is not None:
+                return best.agent_id
+            # Fall back to any available agent
+            available = self.agent_registry.find_available()
+            if available:
+                return available[0].agent_id
+            return None
+
+        # Legacy dict fallback
+        if not self.agent_registry:
+            return None
         return next(iter(self.agent_registry.keys()), None)
 
     def get_stats(self) -> Dict[str, Any]:
         """Get engine statistics."""
+        agent_count = 0
+        if self.agent_registry is not None:
+            if hasattr(self.agent_registry, "get_all_agents"):
+                agent_count = len(self.agent_registry.get_all_agents())
+            elif isinstance(self.agent_registry, dict):
+                agent_count = len(self.agent_registry)
         return {
-            "agents_registered": len(self.agent_registry),
+            "agents_registered": agent_count,
             "decisions_made": len(self.decision_history),
         }

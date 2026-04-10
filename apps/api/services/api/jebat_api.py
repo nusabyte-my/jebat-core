@@ -12,15 +12,19 @@ Endpoints:
 - GET  /api/v1/memories            - List memories
 - POST /api/v1/memories            - Store memory
 - GET  /api/v1/agents              - List agents
+- GET  /api/v1/skills              - List skills (from VPS)
 """
 
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+from .security_console import router as security_console_router
 
 # Configure logging
 logging.basicConfig(
@@ -46,6 +50,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(security_console_router)
 
 
 # ==================== Models ====================
@@ -144,6 +149,15 @@ class MetricsResponse(BaseModel):
     timestamp: str
 
 
+class SkillInfo(BaseModel):
+    """Skill metadata for listing"""
+    name: str
+    description: str = ""
+    category: str = "general"
+    version: str = "1.0.0"
+    source: str = "vps"
+
+
 # ==================== Global State ====================
 
 # These will be initialized when the API starts
@@ -152,7 +166,11 @@ jebat_components = {
     "ultra_loop": None,
     "ultra_think": None,
     "agent_orchestrator": None,
+    "agent_registry": None,
 }
+
+# Skill directory configuration
+VPS_SKILLS_DIR = os.path.expanduser("/root/jebat-core/skills")
 
 
 # ==================== Startup/Shutdown ====================
@@ -163,23 +181,47 @@ async def startup_event():
     """Initialize JEBAT components on startup"""
     logger.info("Starting JEBAT API...")
 
+    # ── Agent Registry (must come first — no transitive import issues) ──
     try:
-        # Import JEBAT components
-        from jebat import MemoryManager
-        from jebat.core.agents.orchestrator import AgentOrchestrator
-        from jebat.features.ultra_loop import create_ultra_loop
-        from jebat.features.ultra_think import create_ultra_think
+        from apps.api.core.agents.agent_registry import AgentRegistry, register_builtin_agents
+        from apps.api.core.agents.orchestrator import AgentOrchestrator
 
-        # Initialize components
+        jebat_components["agent_registry"] = AgentRegistry()
+        register_builtin_agents(jebat_components["agent_registry"])
+        agent_count = len(jebat_components["agent_registry"].get_all_agents())
+        logger.info(f"✓ Agent Registry initialized ({agent_count} agents)")
+
+        jebat_components["agent_orchestrator"] = AgentOrchestrator(
+            agent_registry=jebat_components["agent_registry"],
+        )
+        logger.info("✓ Agent Orchestrator initialized (wired to AgentRegistry)")
+    except Exception as e:
+        logger.error(f"Agent init error: {e}")
+
+    # ── Memory Manager ──
+    try:
+        from apps.api.core.memory import MemoryManager
         jebat_components["memory_manager"] = MemoryManager()
         logger.info("✓ Memory Manager initialized")
+    except Exception as e:
+        logger.error(f"Memory init error: {e}")
 
+    # ── Ultra-Loop (may fail if db/models import chain broken) ──
+    try:
+        from apps.api.features.ultra_loop import create_ultra_loop
         jebat_components["ultra_loop"] = await create_ultra_loop(
             config={"cycle_interval": 1.0, "max_cycles": 0},
             enable_db_persistence=False,
         )
         logger.info("✓ Ultra-Loop initialized")
+        await jebat_components["ultra_loop"].start()
+        logger.info("✓ Ultra-Loop started")
+    except Exception as e:
+        logger.error(f"Ultra-Loop init error: {e}")
 
+    # ── Ultra-Think (may fail if db/models import chain broken) ──
+    try:
+        from apps.api.features.ultra_think import create_ultra_think
         jebat_components["ultra_think"] = await create_ultra_think(
             config={"max_thoughts": 20, "default_mode": "deliberate"},
             memory_manager=jebat_components["memory_manager"],
@@ -187,19 +229,10 @@ async def startup_event():
             enable_memory_integration=True,
         )
         logger.info("✓ Ultra-Think initialized")
-
-        jebat_components["agent_orchestrator"] = AgentOrchestrator()
-        logger.info("✓ Agent Orchestrator initialized")
-
-        # Start Ultra-Loop
-        await jebat_components["ultra_loop"].start()
-        logger.info("✓ Ultra-Loop started")
-
-        logger.info("JEBAT API startup complete")
-
     except Exception as e:
-        logger.error(f"Startup error: {e}")
-        # Don't fail startup - components can be initialized lazily
+        logger.error(f"Ultra-Think init error: {e}")
+
+    logger.info("JEBAT API startup complete")
 
 
 @app.on_event("shutdown")
@@ -385,7 +418,7 @@ async def store_memory(request: MemoryStoreRequest):
         )
 
     try:
-        from jebat.core.memory.layers import MemoryLayer
+        from apps.api.core.memory.layers import MemoryLayer
 
         # Map layer string to MemoryLayer
         try:
@@ -452,7 +485,7 @@ async def openai_chat_completion(request: OpenAIChatRequest):
         )
 
     try:
-        from jebat.features.ultra_think import ThinkingMode
+        from apps.api.features.ultra_think import ThinkingMode
 
         # Extract the last user message as the prompt
         user_messages = [m for m in request.messages if m.role == "user"]
@@ -517,17 +550,99 @@ async def list_agents():
 
     Returns information about all registered agents.
     """
-    if not jebat_components.get("agent_orchestrator"):
+    registry = jebat_components.get("agent_registry")
+    orchestrator = jebat_components.get("agent_orchestrator")
+
+    if not registry:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Agent Orchestrator not initialized",
+            detail="Agent Registry not initialized",
         )
 
-    # Return agent information
+    agents = registry.get_all_agents()
+    agents_data = []
+    for agent in agents:
+        agents_data.append({
+            "agent_id": agent.agent_id,
+            "agent_name": agent.agent_name,
+            "agent_role": agent.agent_role,
+            "provider": agent.provider,
+            "model": agent.model,
+            "capabilities": agent.capabilities,
+            "languages": agent.languages,
+            "status": agent.status.value if hasattr(agent.status, 'value') else str(agent.status),
+        })
+
+    stats = registry.get_stats()
+
+    result = {
+        "agents": agents_data,
+        "total": len(agents_data),
+        "status": "operational" if orchestrator else "partial",
+        "stats": stats,
+    }
+
+    if orchestrator:
+        result["orchestrator"] = orchestrator.get_stats()
+
+    return result
+
+
+@app.get("/api/v1/skills", tags=["Skills"])
+async def list_skills():
+    """
+    List available skills from VPS.
+
+    Scans the VPS skills directory for SKILL.md files and returns metadata.
+    Skills are stored at /root/jebat-core/skills/ on the VPS.
+    """
+    skills = []
+    skills_dir = VPS_SKILLS_DIR
+
+    # Try VPS skills directory first
+    if os.path.exists(skills_dir):
+        try:
+            for entry in os.listdir(skills_dir):
+                skill_path = os.path.join(skills_dir, entry)
+                if os.path.isdir(skill_path):
+                    skill_md = os.path.join(skill_path, "SKILL.md")
+                    if os.path.exists(skill_md):
+                        with open(skill_md, "r") as f:
+                            content = f.read()
+                        # Parse frontmatter for metadata
+                        name = entry
+                        description = ""
+                        category = "general"
+                        version = "1.0.0"
+                        if "---" in content:
+                            parts = content.split("---", 2)
+                            if len(parts) >= 2:
+                                frontmatter = parts[1]
+                                for line in frontmatter.split("\n"):
+                                    if line.startswith("name:"):
+                                        name = line.split(":", 1)[1].strip().strip("'\"")
+                                    elif line.startswith("description:"):
+                                        description = line.split(":", 1)[1].strip().strip("'\"")
+                                    elif line.startswith("category:"):
+                                        category = line.split(":", 1)[1].strip().strip("'\"")
+                                    elif line.startswith("version:"):
+                                        version = line.split(":", 1)[1].strip().strip("'\"")
+                        skills.append({
+                            "name": name,
+                            "description": description,
+                            "category": category,
+                            "version": version,
+                            "source": "vps",
+                            "content": content[:500],  # First 500 chars preview
+                        })
+        except Exception as e:
+            logger.error(f"Error reading skills directory: {e}")
+
     return {
-        "agents": [],
-        "total": 0,
-        "status": "operational",
+        "skills": skills,
+        "total": len(skills),
+        "source": "vps",
+        "path": skills_dir,
     }
 
 
@@ -538,8 +653,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "jebat_api:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        app,
+        host="127.0.0.1",
+        port=8080,
+        reload=False,
     )

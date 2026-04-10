@@ -64,6 +64,7 @@ class AgentOrchestrator:
         self,
         config: Optional[Dict] = None,
         max_concurrent_tasks: int = 10,
+        agent_registry=None,
     ):
         """
         Initialize orchestrator.
@@ -71,17 +72,22 @@ class AgentOrchestrator:
         Args:
             config: Configuration
             max_concurrent_tasks: Maximum concurrent tasks
+            agent_registry: AgentRegistry instance for agent discovery
         """
         self.config = config or {}
         self.max_concurrent_tasks = max_concurrent_tasks
-        self.agents: Dict[str, Any] = {}
+        self.agent_registry = agent_registry
         self.active_tasks: Dict[str, AgentTask] = {}
         self.completed_tasks: Dict[str, TaskResult] = {}
         self.task_queue: asyncio.Queue = asyncio.Queue()
         self._is_running = False
         self._processor_task: Optional[asyncio.Task] = None
 
-        logger.info(f"AgentOrchestrator initialized (max={max_concurrent_tasks} tasks)")
+        agent_count = 0
+        if self.agent_registry:
+            agent_count = len(self.agent_registry.get_all_agents())
+
+        logger.info(f"AgentOrchestrator initialized (max={max_concurrent_tasks} tasks, agents={agent_count})")
 
     async def start(self):
         """Start orchestrator."""
@@ -154,10 +160,20 @@ class AgentOrchestrator:
             del self.active_tasks[task.task_id]
 
     def _select_agent(self, task: AgentTask) -> Optional[str]:
-        """Select agent for task."""
-        if not self.agents:
+        """Select agent for task using the AgentRegistry."""
+        # Use registry's capability-based selection if available
+        if self.agent_registry is not None:
+            best = self.agent_registry.find_best_agent(task.description)
+            if best is not None:
+                return best.agent_id
+            # Fall back to any available agent
+            available = self.agent_registry.find_available()
+            if available:
+                return available[0].agent_id
+            logger.warning("No available agents in registry")
             return None
-        return next(iter(self.agents.keys()), None)
+        # Legacy fallback — empty
+        return None
 
     async def _run_task(self, agent_id: Optional[str], task: AgentTask) -> Any:
         """Run task with agent."""
@@ -167,15 +183,27 @@ class AgentOrchestrator:
 
     def get_agent_registry(self) -> Dict[str, Any]:
         """Get agent registry for decision engine."""
-        return {
-            agent_id: {"type": "agent", "status": "active"}
-            for agent_id in self.agents.keys()
-        }
+        if self.agent_registry is not None:
+            return {
+                agent.agent_id: {
+                    "name": agent.agent_name,
+                    "role": agent.agent_role,
+                    "provider": agent.provider,
+                    "model": agent.model,
+                    "capabilities": agent.capabilities,
+                    "status": agent.status.value if hasattr(agent.status, 'value') else str(agent.status),
+                }
+                for agent in self.agent_registry.get_all_agents()
+            }
+        return {}
 
     def get_stats(self) -> Dict[str, Any]:
         """Get orchestrator statistics."""
+        agent_count = 0
+        if self.agent_registry is not None:
+            agent_count = len(self.agent_registry.get_all_agents())
         return {
-            "agents": len(self.agents),
+            "agents": agent_count,
             "active_tasks": len(self.active_tasks),
             "completed_tasks": len(self.completed_tasks),
             "is_running": self._is_running,

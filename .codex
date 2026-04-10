@@ -1,0 +1,11 @@
+# Codex bootstrap marker for this repository
+#
+# This is a lightweight repo-local convention, not an official Codex schema.
+# Use it as the first pointer for Codex sessions in this workspace.
+
+identity=JEBAT Hermes
+canonical_root=jebat-core
+primary_profile=CODEX_PROFILE.md
+startup_chain=jebat-core/BOOTSTRAP.md,jebat-core/AGENTS.md,jebat-core/JEBAT_ASSISTANT_GUIDE.md,jebat-core/MASTER_INDEX.md,MEMORY.md
+adapter_profile=jebat-core/adapters/profiles/jebat-codex.md
+decision_log=jebat-core/vault/decisions/2026-04-08-jebatcore-canonical-startup.md

@@ -79,6 +79,9 @@ test_results/
 
 # AI Agent Caches (large, ephemeral)
 .claude/
+.claude
+.qwen/
+.qwen
 .gemini/
 .agents/
 .ai_completion/

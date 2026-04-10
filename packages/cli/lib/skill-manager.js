@@ -1,20 +1,30 @@
 // JEBAT Skills Manager
 // Handles skill installation, discovery, versioning, and lifecycle.
 // Compatible with Anthropic SKILL.md format and skills.sh ecosystem.
+// Skills are stored on VPS (root@72.62.254.65:/root/jebat-core/skills)
+// and synced to local cache at ~/.jebat/vps-skills/
 
 import { readFile, writeFile, mkdir, readdir, stat, rm } from "node:fs/promises";
 import { join, resolve, dirname } from "node:path";
-import { cwd } from "node:process";
+import { cwd, env } from "node:process";
 import { createHash } from "node:crypto";
+import { homedir } from "node:os";
 
-// Skill registry — local + remote sources
+// Skill directory configuration
+// Priority: JEBAT_SKILLS_PATH env > VPS cache > local > project
+const VPS_SKILLS_CACHE = resolve(homedir(), ".jebat", "vps-skills");
 const LOCAL_SKILLS_DIR = resolve(cwd(), "skills");
 const PROJECT_SKILLS_DIR = resolve(cwd(), ".jebat", "skills");
 const CONFIG_PATH = resolve(cwd(), "skills.json");
 const LOCK_PATH = resolve(cwd(), "skills.lock");
 
+// VPS skill storage
+const VPS_SKILLS_API = "https://jebat.online/api/v1/skills";
+const VPS_SKILLS_SSH = "root@72.62.254.65:/root/jebat-core/skills";
+
 // Remote skill registries
 const REGISTRIES = {
+  vps: VPS_SKILLS_API,
   jebatcore: "https://github.com/nusabyte-my/jebat-core/skills",
   community: "https://github.com/anthropics/skills",
   vercel: "https://github.com/vercel-labs/skills",
@@ -28,6 +38,60 @@ const DEFAULT_META = {
   tags: [],
   ide_support: ["vscode", "cursor", "zed", "claude"],
 };
+
+// ─── VPS Skills Sync ────────────────────────────────────────────────
+
+/**
+ * Sync skills from VPS to local cache.
+ * Uses HTTPS API if available, falls back to rsync via SSH.
+ */
+export async function syncSkillsFromVPS(cacheDir = VPS_SKILLS_CACHE) {
+  try {
+    // Try fetching from VPS API first
+    const https = await import("node:https");
+    const data = await new Promise((resolve, reject) => {
+      https.get(VPS_SKILLS_API, { timeout: 5000 }, (res) => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode}`));
+          return;
+        }
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => resolve(JSON.parse(body)));
+      }).on("error", reject).on("timeout", (req) => { req.destroy(); reject(new Error("timeout")); });
+    });
+
+    if (data.skills && data.skills.length > 0) {
+      await mkdir(cacheDir, { recursive: true });
+      for (const skill of data.skills) {
+        const skillDir = join(cacheDir, skill.name);
+        await mkdir(skillDir, { recursive: true });
+        await writeFile(join(skillDir, "SKILL.md"), skill.content || `---\nname: ${skill.name}\ndescription: ${skill.description || ""}\ncategory: ${skill.category || "general"}\nversion: ${skill.version || "1.0.0"}\n---\n\n# ${skill.name}\n\n${skill.description || ""}\n`);
+      }
+      return { source: "vps-api", count: data.skills.length };
+    }
+  } catch {
+    // Fallback: try rsync via SSH (only if local command available)
+    try {
+      const { execSync } = await import("node:child_process");
+      await mkdir(cacheDir, { recursive: true });
+      execSync(`rsync -avz --delete ${VPS_SKILLS_SSH}/ ${cacheDir}/`, { stdio: "pipe", timeout: 30000 });
+      return { source: "vps-rsync", count: "synced" };
+    } catch {
+      return { source: "none", error: "VPS unreachable" };
+    }
+  }
+  return { source: "none", error: "No skills on VPS" };
+}
+
+/**
+ * Push local skills to VPS via rsync.
+ */
+export async function pushSkillsToVPS(localDir = LOCAL_SKILLS_DIR) {
+  const { execSync } = await import("node:child_process");
+  execSync(`rsync -avz ${localDir}/ ${VPS_SKILLS_SSH}/`, { stdio: "pipe", timeout: 30000 });
+  return { source: "vps-rsync", message: "Skills pushed to VPS" };
+}
 
 /**
  * Parse SKILL.md frontmatter and body.
