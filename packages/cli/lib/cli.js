@@ -1,8 +1,11 @@
 import { mkdir, readFile, stat, readdir, writeFile } from "node:fs/promises";
-import { join, resolve, relative, basename as pathBasename } from "node:path";
+import { join, resolve, relative, basename as pathBasename, dirname } from "node:path";
 import { cwd } from "node:process";
+import { fileURLToPath } from "node:url";
 import { DEFAULT_HOME, IDES, MODES, SCOPES } from "./constants.js";
 import { detectIdes } from "./detect.js";
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 import { withPrompt, askText, chooseMany, chooseOne } from "./prompt.js";
 import {
   ensureTarget,
@@ -41,12 +44,14 @@ import {
   MODEL_TOKEN_RATIOS,
   DEFAULT_BUDGETS
 } from "./token-utils.js";
-import { 
-  compressContext, 
-  compressSystemPrompt, 
+import {
+  compressContext,
+  compressSystemPrompt,
   extractEssentialContext,
   COMPRESSION_LEVELS
 } from "./context-compression.js";
+import { spawn } from "node:child_process";
+import { platform } from "node:process";
 
 /**
  * Strip common LLM output fluff to measure actual useful token count.
@@ -397,6 +402,33 @@ function printInstallResult(result) {
   console.log("  - Use `both` for VS Code, Cursor, Windsurf, Zed, or VSCodium.");
   console.log("  - Use `extension` first for JetBrains, Neovim, Sublime, Trae, or Antigravity.");
   console.log("  - MCP snippets are generated conservatively for manual import into each IDE/client config.");
+}
+
+async function runOnboardingScript() {
+  const isWindows = platform === "win32";
+  const scriptName = isWindows ? "onboarding.bat" : "onboarding.sh";
+  const scriptPath = join(ROOT, "scripts", scriptName);
+
+  try {
+    const { existsSync } = await import("node:fs");
+    if (!existsSync(scriptPath)) {
+      return;
+    }
+
+    console.log("\n🚀 Launching onboarding guide...\n");
+    
+    const child = spawn(
+      isWindows ? scriptPath : "bash",
+      isWindows ? [] : [scriptPath],
+      { stdio: "inherit", shell: isWindows }
+    );
+
+    await new Promise((resolve) => {
+      child.on("close", resolve);
+    });
+  } catch (error) {
+    // Silently fail if onboarding script doesn't exist
+  }
 }
 
 function printDetect() {
@@ -1149,4 +1181,9 @@ export async function runCli(args) {
   validateInstallConfig(installConfig);
   const result = await performInstall({ ...installConfig, home: parsed.home, dryRun: parsed.dryRun });
   printInstallResult(result);
+
+  // Run onboarding script after successful installation (not dry-run)
+  if (!parsed.dryRun) {
+    await runOnboardingScript();
+  }
 }

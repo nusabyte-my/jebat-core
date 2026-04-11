@@ -54,3 +54,15 @@ export async function chooseMany(rl, label, options) {
   }
   return [...new Set(selected)];
 }
+
+export async function askYesNo(label, defaultValue = true) {
+  const rl = readline.createInterface({ input, output });
+  try {
+    const defaultStr = defaultValue ? "Y/n" : "y/N";
+    const answer = (await rl.question(`${label} [${defaultStr}]: `)).trim().toLowerCase();
+    if (answer === "") return defaultValue;
+    return answer === "y" || answer === "yes";
+  } finally {
+    rl.close();
+  }
+}

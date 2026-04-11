@@ -209,7 +209,7 @@ if have_cmd distrobox; then
    echo "Recommended next commands:"
    echo " ollama pull qwen2.5-coder:7b"
    echo " ollama pull llama3:8b"
-   echo " ollama pull hermes-sec-v2:latest"
+   echo " ollama pull hermes-sec-v2:latest  # alias: jebat-security"
    echo
    echo "Recommended manual checks:"
    echo " 1. Log out and log back in for shell/group changes"

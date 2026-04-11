@@ -928,7 +928,7 @@ function cmdSkillList() {
   divider("🗡️  Installed Skills");
 
   const categories = {
-    "Core": ["panglima", "memory-core", "hermes-agent", "agent-dispatch"],
+    "Core": ["panglima", "memory-core", "jebat-agent", "agent-dispatch"],
     "Development": ["fullstack", "web-developer", "app-development", "database", "ui-ux", "qa-validation"],
     "Security": ["security-pentest", "jebat-cybersecurity", "jebat-hardening", "jebat-pentesting"],
     "Growth": ["seo", "marketing", "copywriting", "brand-strategy", "content-creation"],

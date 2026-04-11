@@ -1,0 +1,135 @@
+{
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "${JEBAT_GATEWAY_TOKEN}"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "env": {
+    "shellEnv": {
+      "enabled": true,
+      "timeoutMs": 15000
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "groupPolicy": "allowlist",
+      "streaming": "partial"
+    }
+  },
+  "plugins": {
+    "installs": {
+      "builtin-channel-telegram": {
+        "source": "npm",
+        "spec": "builtin-channel-telegram",
+        "installPath": "~/.jebat/extensions/builtin-channel-telegram",
+        "version": "0.2.12",
+        "resolvedName": "builtin-channel-telegram",
+        "resolvedVersion": "0.2.12",
+        "resolvedSpec": "builtin-channel-telegram@0.2.12",
+        "integrity": "sha512-Qj3jTX4ZXVow+thsCaiIQ0alBc2Kys5h8h1guBjigvflRgVpCpRN2MQTO7KALSk+tkPFw8zGL6xLiD7RzYehaA==",
+        "shasum": "9481b27102955c3984acb7158e3cfc67e9eb1e4c",
+        "resolvedAt": "2026-03-23T21:22:57.178Z",
+        "installedAt": "2026-03-23T21:23:32.377Z"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "google-gemini-cli/gemini-3-flash-preview",
+        "fallbacks": [
+          "google-gemini-cli/gemini-3.1-pro-preview",
+          "zai/glm-5",
+          "zai/glm-4.7-flash",
+          "ollama/hermes3:8b",
+          "ollama/qwen2.5-coder:7b",
+          "ollama/hermes-sec-v2:latest",
+          "ollama/llama3:8b"
+        ]
+      },
+      "maxConcurrent": 4,
+      "typingMode": "instant",
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "5m"
+      },
+      "models": {
+        "google-gemini-cli/gemini-3.1-pro-preview": {
+          "alias": "JEBAT Google"
+        },
+        "google-gemini-cli/gemini-3-flash-preview": {
+          "alias": "JEBAT Google Fast"
+        },
+        "zai/glm-4.7-flash": {
+          "alias": "JEBAT Fast"
+        },
+        "zai/glm-5": {
+          "alias": "JEBAT Core"
+        },
+        "zai/glm-5-turbo": {
+          "alias": "JEBAT Turbo"
+        },
+        "ollama/hermes3:8b": {
+          "alias": "Jebat Agent"
+        },
+        "ollama/hermes-sec-v2:latest": {
+          "alias": "JEBAT Security"
+        },
+        "ollama/qwen2.5-coder:7b": {
+          "alias": "JEBAT Builder"
+        },
+        "ollama/llama3:8b": {
+          "alias": "JEBAT Local"
+        }
+      },
+      "workspace": "~/.jebat/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "identity": {
+          "name": "JEBATCore",
+          "emoji": "\ud83e\udebd"
+        },
+        "skills": [
+          "jebat-agent"
+        ]
+      },
+      {
+        "id": "builder",
+        "identity": {
+          "name": "JEBAT Builder",
+          "emoji": "\ud83d\udee0\ufe0f"
+        }
+      },
+      {
+        "id": "security",
+        "identity": {
+          "name": "JEBAT Security",
+          "emoji": "\ud83d\udee1\ufe0f"
+        }
+      },
+      {
+        "id": "research",
+        "identity": {
+          "name": "JEBAT Research",
+          "emoji": "\ud83d\udcda"
+        }
+      }
+    ]
+  }
+}

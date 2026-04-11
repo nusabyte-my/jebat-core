@@ -72,7 +72,7 @@ def test_skill_registry_loads_tokguru_repo_skills() -> None:
     skills = {skill.name for skill in registry.get_all_skills()}
     assert "python-patterns" in skills
     assert "cortex-reasoning" in skills
-    assert "hermes-agent" in skills
+    assert "jebat-agent" in skills
 
 
 def test_select_relevant_skills_matches_python_prompt() -> None:
@@ -101,12 +101,12 @@ def test_build_skill_prompt_can_pin_hermes_agent() -> None:
     prompt, selected = build_skill_prompt(
         "Be my daily coding copilot for this repo",
         registry=registry,
-        requested_skills=["hermes-agent"],
+        requested_skills=["jebat-agent"],
         auto_discover=False,
     )
     names = [skill.name for skill in selected]
-    assert names == ["hermes-agent"]
-    assert "Skill: hermes-agent" in prompt
+    assert names == ["jebat-agent"]
+    assert "Skill: jebat-agent" in prompt
 
 
 def test_doctor_reports_configured_provider(monkeypatch) -> None:

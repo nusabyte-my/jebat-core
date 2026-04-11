@@ -37,6 +37,9 @@
     "node": ">=18"
   },
   "scripts": {
+    "build:cli": "bash scripts/build-cli-bundle.sh || scripts\\build-cli-bundle.bat",
+    "build:cli:win": "scripts\\build-cli-bundle.bat",
+    "build:cli:unix": "bash scripts/build-cli-bundle.sh",
     "cli:detect": "node ./bin/jebatcore.js detect",
     "cli:doctor": "node ./bin/jebatcore.js doctor",
     "cli:help": "node ./bin/jebatcore.js help",

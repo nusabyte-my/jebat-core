@@ -1,0 +1,40 @@
+{
+  "name": "jebat-agent",
+  "version": "1.0.3",
+  "description": "Quick setup wizard for Jebat Gateway and Jebat Agent integration",
+  "main": "index.js",
+  "bin": {
+    "jebat-agent": "./index.js",
+    "jebat-gateway": "./bin/gateway.js",
+    "jebat-setup": "./bin/agent.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "jebat",
+    "gateway",
+    "agent",
+    "ai",
+    "setup",
+    "integration",
+    "copilot",
+    "multi-agent"
+  ],
+  "author": "JEBATCore / NusaByte",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nusabyte-my/jebat-core.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "execa": "^8.0.1",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.12"
+  }
+}

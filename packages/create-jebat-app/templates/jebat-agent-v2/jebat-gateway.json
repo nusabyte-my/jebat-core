@@ -1,0 +1,209 @@
+{
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "${JEBAT_GATEWAY_TOKEN}",
+      "tokenRotationDays": 90,
+      "maxFailedAttempts": 5,
+      "lockoutDurationMinutes": 30
+    },
+    "tls": {
+      "enabled": false,
+      "certPath": "",
+      "keyPath": "",
+      "minVersion": "TLSv1.3"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "cors": {
+      "allowedOrigins": ["http://localhost:18789"],
+      "allowedMethods": ["GET", "POST"],
+      "allowCredentials": true
+    },
+    "rateLimit": {
+      "enabled": true,
+      "requestsPerMinute": 60,
+      "requestsPerHour": 1000,
+      "burstSize": 10
+    }
+  },
+  "security": {
+    "level": "enterprise",
+    "inputValidation": {
+      "enabled": true,
+      "maxLength": 10000,
+      "allowedCharsets": "utf-8",
+      "stripControlChars": true,
+      "maxNestingDepth": 10
+    },
+    "promptInjectionDefense": {
+      "enabled": true,
+      "detectSystemPrompts": true,
+      "detectRolePlay": true,
+      "detectEncodingAttacks": true,
+      "blocklistPatterns": [
+        "ignore previous instructions",
+        "you are now",
+        "disregard",
+        "system prompt",
+        "base64:",
+        "eval(",
+        "exec("
+      ],
+      "action": "reject",
+      "logSuspicious": true
+    },
+    "commandSanitization": {
+      "enabled": true,
+      "whitelistOnly": true,
+      "allowedCommands": [
+        "ls", "cat", "grep", "find", "wc", "head", "tail",
+        "git status", "git log", "git diff",
+        "python", "node", "npm", "pip",
+        "docker ps", "docker images",
+        "curl", "wget",
+        "mkdir", "touch", "cp", "mv",
+        "chmod", "chown"
+      ],
+      "blockedPatterns": [
+        ";", "|", "&&", "`", "$(",
+        "rm -rf", "rm -r /",
+        "sudo", "su ",
+        "> /dev/",
+        "/etc/passwd",
+        "/etc/shadow"
+      ],
+      "maxArguments": 10,
+      "timeoutSeconds": 30,
+      "maxOutputSize": 50000
+    },
+    "auditLogging": {
+      "enabled": true,
+      "level": "verbose",
+      "logPath": "~/.jebat/logs/audit.log",
+      "maxFileSize": "100MB",
+      "maxFiles": 10,
+      "includeInput": false,
+      "includeOutput": true,
+      "tamperEvident": true,
+      "logFormat": "json"
+    },
+    "secretsManagement": {
+      "enabled": true,
+      "maskingPattern": "(api[_-]?key|token|secret|password|credential)s?[:=]\\s*['\"]?([^'\"\\s]+)['\"]?",
+      "maskChar": "****",
+      "neverLogPatterns": [
+        "sk-",
+        "ghp_",
+        "xoxb-",
+        "Bearer "
+      ],
+      "secureStorage": true,
+      "autoRotateDays": 90
+    },
+    "sessionManagement": {
+      "enabled": true,
+      "maxConcurrentSessions": 5,
+      "sessionTimeoutMinutes": 60,
+      "idleTimeoutMinutes": 15,
+      "requireReauth": false,
+      "trackUserAgent": true
+    },
+    "resourceLimits": {
+      "enabled": true,
+      "maxMemoryMB": 512,
+      "maxCPU": 2,
+      "maxDiskUsageMB": 1000,
+      "maxExecutionTimeSeconds": 300,
+      "maxFileUploads": 10,
+      "maxUploadSizeMB": 50
+    }
+  },
+  "env": {
+    "shellEnv": {
+      "enabled": true,
+      "timeoutMs": 15000
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": false,
+      "dmPolicy": "pairing",
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "groupPolicy": "allowlist",
+      "streaming": "partial",
+      "security": {
+        "verifyUser": true,
+        "allowedUserIds": [],
+        "rateLimitPerUser": 30,
+        "blockUnknownUsers": true
+      }
+    }
+  },
+  "plugins": {
+    "installs": {}
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "ollama/hermes3:8b",
+        "fallbacks": [
+          "ollama/hermes-sec-v2:latest",
+          "google-gemini-cli/gemini-3-flash-preview"
+        ],
+        "securityValidation": true,
+        "maxTokens": 4096,
+        "temperature": 0.7
+      },
+      "systemPrompt": "You are Jebat Agent v2.0 - a secure, unified AI agent combining OpenClaw control plane and Hermes capture-first methodology. Always validate inputs, follow security principles, and maintain audit trails.",
+      "contextIsolation": true,
+      "maxContextLength": 8192
+    },
+    "list": [
+      {
+        "id": "jebat-agent",
+        "identity": {
+          "name": "Jebat Agent",
+          "title": "Primary Agent",
+          "version": "2.0.0",
+          "securityLevel": "enterprise"
+        },
+        "capabilities": [
+          "task-planning",
+          "code-generation",
+          "multi-agent-orchestration",
+          "security-audit",
+          "system-administration",
+          "research-analysis"
+        ],
+        "restrictions": {
+          "allowFileOperations": true,
+          "allowNetworkAccess": true,
+          "allowCommandExecution": true,
+          "requireApproval": [
+            "destructive-operations",
+            "credential-access",
+            "production-changes"
+          ]
+        }
+      }
+    ]
+  },
+  "workspace": {
+    "path": "~/.jebat/workspace",
+    "skills": [
+      "jebat-agent"
+    ],
+    "security": {
+      "isolateWorkspace": true,
+      "allowSymlinks": false,
+      "maxDepth": 10,
+      "watchChanges": true
+    }
+  }
+}

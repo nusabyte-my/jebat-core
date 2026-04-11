@@ -5,7 +5,8 @@
       "Read(//home/humm1ngb1rd/Desktop/Jebat.CORE/**)",
       "Bash(npx *)",
       "Bash(git *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(sed *)"
     ]
   },
   "$version": 3

@@ -2,7 +2,7 @@
 🗡️ JEBAT Product Selector
 
 Interactive menu to select and launch different JEBAT variants.
-OpenClaw-style interface with rich UI.
+Jebat Gateway-style interface with rich UI.
 
 Variants:
 - JEBAT Core (Main Platform)
@@ -141,7 +141,7 @@ PRODUCTS = [
         "name": "JEBAT Nexus",
         "codename": "Perisai",  # Malay for "shield" - protects and connects
         "type": "bot",
-        "description": "OpenClaw-Style Bot Orchestrator for Multi-Channel Deployment",
+        "description": "Jebat Gateway-Style Bot Orchestrator for Multi-Channel Deployment",
         "module": "jebat_nexus",
         "entry": "jebat_nexus.bot",
         "icon": "🔗",
@@ -170,7 +170,7 @@ PRODUCTS = [
 
 class ProductSelector:
     """
-    Interactive product selector with OpenClaw-style UI.
+    Interactive product selector with Jebat Gateway-style UI.
     """
 
     BANNER = """

@@ -402,7 +402,7 @@ async def get_doctor():
 
 @webui_router.get("/webui/control", response_class=HTMLResponse)
 async def get_control():
-    """Serve OpenClaw-style control page."""
+    """Serve Jebat Gateway-style control page."""
     return _get_control_html()
 
 
@@ -642,7 +642,7 @@ async def check_workstation(payload: WorkstationActionRequest):
                 "detail": "Missing VPS host. Save ssh_host or path first.",
                 "checked_at": _now_iso(),
             }
-    elif workstation in {"cli", "openclaw", "vscode"}:
+    elif workstation in {"cli", "jebat-gateway", "vscode"}:
         target = state.get("path") or ""
         health = {
             "ok": bool(target),
@@ -912,8 +912,8 @@ def _get_setup_html():
 
 
 def _console_meta() -> dict[str, Any]:
-    openclaw_template = REPO_ROOT / "integrations" / "openclaw" / "openclaw.template.json"
-    openclaw_data = json.loads(openclaw_template.read_text()) if openclaw_template.exists() else {}
+    jebat_gateway_template = REPO_ROOT / "integrations" / "jebat-gateway" / "jebat-gateway.template.json"
+    jebat_gateway_data = json.loads(jebat_gateway_template.read_text()) if jebat_gateway_template.exists() else {}
 
     channel_dir = REPO_ROOT / "jebat" / "integrations" / "channels"
     available_channels = sorted(
@@ -927,7 +927,7 @@ def _console_meta() -> dict[str, Any]:
         registry = build_skill_registry(skill_root)
         all_skills = registry.get_all_skills()
         featured_names = [
-            "hermes-agent",
+            "jebat-agent",
             "skill-forge",
             "webfetch",
             "search",
@@ -953,36 +953,36 @@ def _console_meta() -> dict[str, Any]:
         all_skills = []
         top_skills = []
 
-    openclaw_skill_path = (
+    jebat_gateway_skill_path = (
         REPO_ROOT
         / "integrations"
-        / "openclaw"
+        / "jebat-gateway"
         / "workspace"
         / "skills"
-        / "hermes-agent"
+        / "jebat-agent"
         / "SKILL.md"
     )
-    openclaw_skill_excerpt = ""
-    if openclaw_skill_path.exists():
-        openclaw_skill_excerpt = "\n".join(
+    jebat_gateway_skill_excerpt = ""
+    if jebat_gateway_skill_path.exists():
+        jebat_gateway_skill_excerpt = "\n".join(
             line.strip()
-            for line in openclaw_skill_path.read_text().splitlines()
+            for line in jebat_gateway_skill_path.read_text().splitlines()
             if line.strip() and not line.startswith("---")
         )[:280]
 
     return {
-        "openclaw": {
-            "gateway_port": openclaw_data.get("gateway", {}).get("port"),
-            "channel_names": sorted((openclaw_data.get("channels") or {}).keys()),
+        "jebat-gateway": {
+            "gateway_port": jebat_gateway_data.get("gateway", {}).get("port"),
+            "channel_names": sorted((jebat_gateway_data.get("channels") or {}).keys()),
             "agent_names": [
                 item.get("identity", {}).get("name", item.get("id"))
-                for item in openclaw_data.get("agents", {}).get("list", [])
+                for item in jebat_gateway_data.get("agents", {}).get("list", [])
             ],
-            "primary_model": openclaw_data.get("agents", {})
+            "primary_model": jebat_gateway_data.get("agents", {})
             .get("defaults", {})
             .get("model", {})
             .get("primary"),
-            "fallback_models": openclaw_data.get("agents", {})
+            "fallback_models": jebat_gateway_data.get("agents", {})
             .get("defaults", {})
             .get("model", {})
             .get("fallbacks", []),
@@ -990,19 +990,19 @@ def _console_meta() -> dict[str, Any]:
         "channels": available_channels,
         "workstations": [
             {"name": "CLI", "path": "~/.local/bin/jebat-cli", "state": "ready"},
-            {"name": "OpenClaw", "path": "~/.openclaw", "state": "ready"},
+            {"name": "Jebat Gateway", "path": "~/.jebat", "state": "ready"},
             {"name": "VS Code", "path": "~/.config/Code/User", "state": "ready"},
             {"name": "VPS", "path": "jebat.online", "state": "live"},
         ],
         "integrations": [
-            {"name": "OpenClaw Bundle", "path": "integrations/openclaw", "state": "versioned"},
+            {"name": "Jebat Gateway Bundle", "path": "integrations/jebat-gateway", "state": "versioned"},
             {"name": "MCP Guide", "path": "docs/MCP_INTEGRATION_GUIDE.md", "state": "available"},
             {"name": "IDE Guide", "path": "docs/IDE_INTEGRATION_GUIDE.md", "state": "available"},
         ],
         "skills": {
             "count": len(all_skills),
             "top": top_skills,
-            "openclaw_excerpt": openclaw_skill_excerpt,
+            "jebat_gateway_excerpt": jebat_gateway_skill_excerpt,
         },
         "learning": {
             "modules": [
@@ -1089,7 +1089,7 @@ def _channel_catalog() -> list[dict[str, Any]]:
 def _workstation_catalog() -> list[dict[str, Any]]:
     return [
         {"id": "cli", "label": "CLI", "path": "~/.local/bin/jebat-cli", "supports_remote": False},
-        {"id": "openclaw", "label": "OpenClaw", "path": "~/.openclaw", "supports_remote": False},
+        {"id": "jebat-gateway", "label": "Jebat Gateway", "path": "~/.jebat", "supports_remote": False},
         {"id": "vscode", "label": "VS Code", "path": "~/.config/Code/User", "supports_remote": False},
         {"id": "vps", "label": "VPS", "path": "jebat.online", "supports_remote": True},
     ]
@@ -1132,7 +1132,7 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <body>
 <div class="app">
 <aside class="sidebar">
-<div class="brand-stack"><div class="brand"><div class="brand-mark">J</div><div class="brand-copy"><small>Hermes x OpenClaw</small><strong>JEBATCore</strong></div></div><div class="terminal-line"><span>profile</span><strong>cyber-ops</strong></div><div class="terminal-line"><span>focus</span><strong>capture > control > execute</strong></div><div class="stack-tags"><span>hermes</span><span>openclaw</span><span>security</span></div></div>
+<div class="brand-stack"><div class="brand"><div class="brand-mark">J</div><div class="brand-copy"><small>Jebat Agent × Jebat Gateway</small><strong>JEBATCore</strong></div></div><div class="terminal-line"><span>profile</span><strong>cyber-ops</strong></div><div class="terminal-line"><span>focus</span><strong>capture > control > execute</strong></div><div class="stack-tags"><span>jebat-agent</span><span>jebat-gateway</span><span>security</span></div></div>
 <div class="sidebar-section">
 <label>Navigation</label>
 <input id="navFilter" class="input" style="margin-bottom:10px" placeholder="Filter menu">
@@ -1141,7 +1141,7 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <div class="sidebar-section">
 <label>Runtime</label>
 <div class="mini-card"><strong id="effectiveProvider">Loading</strong><span id="providerMeta">Checking provider path and live model selection.</span></div>
-<div class="mini-card"><strong id="workspaceState">Workspace Ready</strong><span id="workspaceMeta">CLI, OpenClaw, VS Code, and VPS surfaces available.</span></div>
+<div class="mini-card"><strong id="workspaceState">Workspace Ready</strong><span id="workspaceMeta">CLI, Jebat Gateway, VS Code, and VPS surfaces available.</span></div>
 </div>
 <div class="sidebar-section">
 <label>Shell Shortcuts</label>
@@ -1162,11 +1162,12 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <script>
 const sections = [
   {id:'overview', label:'Bridge', meta:'surface'},
-  {id:'livechat', label:'Hermes', meta:'session'},
+  {id:'livechat', label:'Jebat Agent', meta:'session'},
   {id:'control', label:'Models', meta:'router'},
   {id:'doctor', label:'Pulse', meta:'health'},
   {id:'channels', label:'Channels', meta:'adapters'},
   {id:'workstation', label:'Stations', meta:'connect'},
+  {id:'quickstart', label:'Quick Start', meta:'npx'},
   {id:'integrations', label:'Links', meta:'bundle'},
   {id:'agents', label:'Cells', meta:'roles'},
   {id:'skills', label:'Skills', meta:'toolkit'},
@@ -1256,6 +1257,7 @@ function openDrawer(title, body){
 }
 function closeDrawer(){ document.getElementById('drawerBackdrop').classList.remove('open'); }
 function escapeHtml(value){return String(value??'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function copyToClipboard(text){navigator.clipboard.writeText(text).then(()=>alert('Copied: '+text)).catch(()=>prompt('Copy this:',text));}
 function agentRole(name){
   if(name === 'JEBATCore') return 'Primary operator brain';
   if(name.includes('Builder')) return 'Implementation and delivery cell';
@@ -1268,7 +1270,7 @@ function skillMetaBlock(skill){
 }
 function defaultWorkstationPayload(type){
   if(type === 'cli') return {workstation:'cli', path:'~/.local/bin/jebat-cli', notes:'local cli station', ssh_host:'', ssh_user:'', deploy_path:''};
-  if(type === 'openclaw') return {workstation:'openclaw', path:'~/.openclaw', notes:'local openclaw runtime', ssh_host:'', ssh_user:'', deploy_path:''};
+  if(type === 'jebat-gateway') return {workstation:'jebat-gateway', path:'~/.jebat', notes:'local jebat-gateway runtime', ssh_host:'', ssh_user:'', deploy_path:''};
   if(type === 'vscode') return {workstation:'vscode', path:'~/.config/Code/User', notes:'local vscode profile', ssh_host:'', ssh_user:'', deploy_path:''};
   if(type === 'vps') return {workstation:'vps', path:'jebat.online', notes:'live production node', ssh_host:'jebat.online', ssh_user:'root', deploy_path:'/root/jebat-core'};
   return {workstation:type, path:'', notes:'', ssh_host:'', ssh_user:'', deploy_path:''};
@@ -1308,7 +1310,7 @@ function renderStatusStrip(){
   const pills = [
     ['Provider', runtime?.provider?.effective || 'unknown'],
     ['Model', runtime?.provider?.model || 'unknown'],
-    ['OpenClaw Agents', String(consoleMeta?.openclaw?.agent_names?.length || 0)],
+    ['Jebat Gateway Agents', String(consoleMeta?.['jebat-gateway']?.agent_names?.length || 0)],
     ['Skill Count', String(consoleMeta?.skills?.count || 0)],
     ['Channels', String(Object.keys(runtime?.channel_connections || {}).length)]
   ];
@@ -1318,16 +1320,16 @@ function renderStatusStrip(){
   document.getElementById('workspaceMeta').textContent = `${(runtime?.workspace?.stations || []).length} workstations and ${(runtime?.workspace?.integrations || []).length} integration points detected.`;
 }
 function renderOverview(){
-  return `<section class="hero"><div class="eyebrow">Cyber operations bridge</div><h1>Hermes capture. OpenClaw control. One operator shell.</h1><p>JEBATCore is now the bridge between Hermes-style capture and OpenClaw-style runtime control: provider routing, channel surfaces, workstation access, skill planes, and health posture in one cybersecurity-themed console.</p><div class="hero-actions"><button class="btn primary" data-section-jump="livechat">Launch Hermes session</button><button class="btn" data-section-jump="control">Open model grid</button><button class="btn" data-section-jump="channels">Review channels</button></div></section>
+  return `<section class="hero"><div class="eyebrow">Cyber operations bridge</div><h1>Jebat Agent capture. Jebat Gateway control. One operator shell.</h1><p>JEBATCore is now the bridge between Jebat Agent-style capture and Jebat Gateway-style runtime control: provider routing, channel surfaces, workstation access, skill planes, and health posture in one cybersecurity-themed console.</p><div class="hero-actions"><button class="btn primary" data-section-jump="livechat">Launch Jebat Agent session</button><button class="btn" data-section-jump="control">Open model grid</button><button class="btn" data-section-jump="channels">Review channels</button></div></section>
   <section class="layout"><div class="stack"><div class="grid">
   <article class="grid-card"><div class="card-label">Message bus</div><h3>Channel fabric</h3><p>${(consoleMeta.channels||[]).length} adapters are visible in the repo and can be wired into Telegram, WhatsApp, Discord, or Slack without leaving the shell.</p></article>
-  <article class="grid-card"><div class="card-label">Operator mesh</div><h3>Workstation access</h3><p>${(runtime.workspace.stations||[]).length} stations are staged across CLI, OpenClaw, VS Code, and the live VPS surface.</p></article>
+  <article class="grid-card"><div class="card-label">Operator mesh</div><h3>Workstation access</h3><p>${(runtime.workspace.stations||[]).length} stations are staged across CLI, Jebat Gateway, VS Code, and the live VPS surface.</p></article>
   <article class="grid-card"><div class="card-label">Skill plane</div><h3>Hermes + TokGuru</h3><p>${consoleMeta.skills.count} skills are on deck, with Hermes imported as an explicit operating mode instead of hidden prompt state.</p></article>
   <article class="grid-card"><div class="card-label">Learning loop</div><h3>Adaptive modules</h3><p>${consoleMeta.learning.modules.length} improvement modules are already present for reasoning, recommendation, and skill evolution.</p></article>
   </div></div>
   <div class="stack">
     <article class="wide-card"><div class="card-label">Runtime lattice</div><h3>Live provider state</h3><div class="kv"><div class="kv-item"><label>Configured provider</label><strong>${escapeHtml(runtime.provider.configured)}</strong></div><div class="kv-item"><label>Effective provider</label><strong>${escapeHtml(runtime.provider.effective)}</strong></div><div class="kv-item"><label>Effective model</label><strong>${escapeHtml(runtime.provider.model)}</strong></div></div></article>
-    <article class="wide-card"><div class="card-label">OpenClaw core</div><h3>Control pattern</h3><p>Primary model: ${escapeHtml(consoleMeta.openclaw.primary_model || 'unknown')}</p><p>Fallbacks: ${escapeHtml((consoleMeta.openclaw.fallback_models || []).join(', '))}</p></article>
+    <article class="wide-card"><div class="card-label">Jebat Gateway core</div><h3>Control pattern</h3><p>Primary model: ${escapeHtml(consoleMeta.openclaw.primary_model || 'unknown')}</p><p>Fallbacks: ${escapeHtml((consoleMeta.openclaw.fallback_models || []).join(', '))}</p></article>
   </div></section>`;
 }
 function renderLiveChat(){
@@ -1352,7 +1354,7 @@ function renderControl(){
   }).join('');
   const fallbacks = (runtime.provider.fallbacks || []).map(item => `<span class="chip">${escapeHtml(item)}</span>`).join('') || '<span class="chip">none</span>';
   const authTargets = selectedProvider === 'ollama' ? 'OLLAMA_HOST' : ((runtime.providers.available || []).find(item => item.provider === selectedProvider)?.env_vars || []).join(', ');
-  return `<section class="hero"><div class="eyebrow">Model lattice</div><h1>Route providers and models from one control grid.</h1><p>The shell keeps Hermes fast and OpenClaw stable by showing the active provider path, filtered model choices, and fallback order in a single runtime panel.</p></section>
+  return `<section class="hero"><div class="eyebrow">Model lattice</div><h1>Route providers and models from one control grid.</h1><p>The shell keeps Jebat Agent fast and Jebat Gateway stable by showing the active provider path, filtered model choices, and fallback order in a single runtime panel.</p></section>
   <section class="layout"><div class="provider-stack"><article class="wide-card"><div class="card-label">Override rail</div><h3>Runtime control</h3><form class="control-form" id="runtimeForm"><div class="control-grid tight"><select class="select" id="runtimeProvider" name="provider">${providerOptions}</select><select class="select" id="runtimeModel" name="model">${modelOptions}</select><input class="input" id="runtimeCustomModel" type="text" placeholder="Custom model id"></div><div class="model-hint" id="runtimeModelHint">Choose a provider first. Model choices are filtered to that provider, and custom models are only enabled where the provider supports them.</div><div class="provider-meta"><span class="chip">Configured: ${escapeHtml(runtime.provider.configured)}</span><span class="chip">Effective: ${escapeHtml(runtime.provider.effective)}</span><span class="chip">Model: ${escapeHtml(runtime.provider.model)}</span></div><button class="btn primary" type="submit">Apply runtime override</button></form></article><article class="wide-card"><div class="card-label">Auth bridge</div><h3>Connect provider credentials</h3><form class="control-form" id="providerAuthForm"><div class="control-grid"><select class="select" id="authProvider" name="provider">${providerOptions}</select><input class="input" id="authSecret" name="secret" type="password" placeholder="API key or host"></div><div class="model-hint" id="providerAuthHint">Target env: ${escapeHtml(authTargets || 'n/a')}. For Ollama, enter the host such as <code>http://127.0.0.1:11434</code>.</div><button class="btn primary" type="submit">Save provider auth</button></form></article><article class="wide-card"><div class="card-label">Fallback rail</div><h3>Routing chain</h3><div class="provider-meta">${fallbacks}</div><p class="small-note">The shell override changes the active preference for this live console. Repo config and environment stay intact.</p></article></div>
   <article class="wide-card"><div class="card-label">Provider map</div><h3>Available provider tracks</h3><div class="provider-grid">${providerCards}</div></article></section>
   <section class="wide-card"><div class="card-label">Surface state</div><h3>Current stations</h3><ul class="list">${(runtime.workspace.stations||[]).map(item => `<li><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.path)} / ${escapeHtml(item.state)}</span></li>`).join('')}</ul></section>`;
@@ -1360,7 +1362,7 @@ function renderControl(){
 function renderChannels(){
   const available = (channelState?.available || []).map(item => `<li><strong>${escapeHtml(item.label)}</strong><span>Required: ${escapeHtml(item.required.join(', '))}</span></li>`).join('');
   const connected = Object.entries(channelState?.connections || {}).map(([name, item]) => `<li><strong>${escapeHtml(name)}</strong><span>${escapeHtml(item.status)} / missing: ${escapeHtml((item.missing || []).join(', ') || 'none')}</span></li>`).join('') || '<li><strong>None</strong><span>No channels configured from this shell yet.</span></li>';
-  return `<section class="hero"><div class="eyebrow">Message bus</div><h1>Wire external channels into the operator shell.</h1><p>The console reads real adapters from <code>jebat/integrations/channels</code> and overlays them with OpenClaw runtime declarations so channel wiring stays visible and grounded.</p></section>
+  return `<section class="hero"><div class="eyebrow">Message bus</div><h1>Wire external channels into the operator shell.</h1><p>The console reads real adapters from <code>jebat/integrations/channels</code> and overlays them with Jebat Gateway runtime declarations so channel wiring stays visible and grounded.</p></section>
   <section class="layout"><article class="wide-card"><div class="card-label">Channel bridge</div><h3>Store channel connection</h3><form class="control-form" id="channelForm"><div class="control-grid"><select class="select" name="channel">${(channelState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="field1" placeholder="Primary token / id"></div><div class="control-grid"><input class="input" name="field2" placeholder="Secondary value"><input class="input" name="field3" placeholder="Third value"></div><button class="btn primary" type="submit">Save channel intent</button></form><ul class="list" style="margin-top:14px">${available}</ul></article><article class="wide-card"><div class="card-label">Connection state</div><h3>Shell-known channel links</h3><ul class="list">${connected}</ul></article></section>`;
 }
 function renderWorkstation(){
@@ -1369,7 +1371,7 @@ function renderWorkstation(){
     const label = item.id === 'vps' ? 'Create live link' : 'Create connection';
     const note = item.id === 'cli'
       ? 'Best for local terminal control.'
-      : item.id === 'openclaw'
+      : item.id === 'jebat-gateway'
       ? 'Best for dashboard and runtime control.'
       : item.id === 'vscode'
       ? 'Best for editor-driven workflows.'
@@ -1383,8 +1385,8 @@ function renderWorkstation(){
     const sshTarget = item.ssh_host ? `${item.ssh_user || 'root'}@${item.ssh_host}` : '';
     const connectCommand = name === 'CLI'
       ? (item.path || '~/.local/bin/jebat-cli')
-      : name === 'OpenClaw'
-      ? `openclaw dashboard --no-open`
+      : name === 'Jebat Gateway'
+      ? `jebat-gateway dashboard --no-open`
       : name === 'VS Code'
       ? `code ${item.path || '~/.config/Code/User'}`
       : sshTarget
@@ -1394,38 +1396,69 @@ function renderWorkstation(){
       ? `<a class="ghost-btn" href="ssh://${escapeHtml(sshTarget)}">Connect link</a>`
       : name === 'CLI'
       ? `<button class="ghost-btn" data-workstation-copy="${escapeHtml(connectCommand)}">Copy launch command</button>`
-      : name === 'OpenClaw'
+      : name === 'Jebat Gateway'
       ? `<a class="ghost-btn" href="#control" data-section-jump="control">Open control</a>`
       : name === 'VS Code'
       ? `<button class="ghost-btn" data-workstation-copy="${escapeHtml(connectCommand)}">Copy VS Code command</button>`
       : '';
     return `<li><strong>${escapeHtml(name)}</strong><span>${escapeHtml(item.status)} / ${escapeHtml(item.path || '')}${escapeHtml(remote)}${escapeHtml(deploy)}${escapeHtml(health)}</span><div style="margin-top:10px" class="toolbar-inline"><button class="ghost-btn" data-workstation-copy="${escapeHtml(connectCommand)}">Copy connect command</button>${connectLink}<button class="ghost-btn" data-workstation-check="${escapeHtml(name)}">Health check</button></div><pre style="margin-top:12px">${escapeHtml(connectCommand || 'Save a host or path to generate a connect command.')}</pre></li>`;
   }).join('') || '<li><strong>None</strong><span>No workstation connections stored from the shell yet.</span></li>';
-  return `<section class="hero"><div class="eyebrow">Station mesh</div><h1>Align local and remote workstations in one shell.</h1><p>Track every operator surface JEBATCore is meant to use: local CLI, OpenClaw runtime, VS Code, and the live VPS deployment.</p></section><section class="layout"><div class="stack"><section class="grid">${cards}</section><article class="wide-card"><div class="card-label">Connect flow</div><h3>How to connect a station to JEBATCore</h3><ul class="list"><li><strong>1. Pick a station type</strong><span>Choose CLI, OpenClaw, VS Code, or VPS in the form.</span></li><li><strong>2. Save the real path or host</strong><span>Use a local path for CLI and VS Code, or an SSH host for VPS.</span></li><li><strong>3. Generate the connect command</strong><span>After save, the shell prints the exact command or link for that station.</span></li><li><strong>4. Run health check</strong><span>Use the health button to confirm the saved station is reachable.</span></li></ul></article></div><article class="wide-card"><div class="card-label">Station link</div><h3>Connect a workstation to JEBATCore</h3><p class="small-note">Recommended values: <code>~/.local/bin/jebat-cli</code> for CLI, <code>~/.openclaw</code> for OpenClaw, <code>~/.config/Code/User</code> for VS Code, and your SSH host for VPS.</p><form class="control-form" id="workstationForm"><select class="select" id="workstationType" name="workstation">${(workstationState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="path" placeholder="Path or host, for example jebat.online or ~/.local/bin/jebat-cli"><input class="input" name="notes" placeholder="Notes, for example primary laptop or production node"><div class="control-grid" id="workstationRemoteFields" style="display:none"><input class="input" name="ssh_host" placeholder="SSH host, for example 72.62.255.206"><input class="input" name="ssh_user" placeholder="SSH user, for example root"></div><input class="input" id="workstationDeployPath" name="deploy_path" placeholder="Deploy path on remote host, for example /root/jebat-core" style="display:none"><button class="btn primary" type="submit">Save station link</button></form><ul class="list" style="margin-top:14px">${connected}</ul></article></section>`;
+  return `<section class="hero"><div class="eyebrow">Station mesh</div><h1>Align local and remote workstations in one shell.</h1><p>Track every operator surface JEBATCore is meant to use: local CLI, Jebat Gateway runtime, VS Code, and the live VPS deployment.</p></section><section class="layout"><div class="stack"><section class="grid">${cards}</section><article class="wide-card"><div class="card-label">Connect flow</div><h3>How to connect a station to JEBATCore</h3><ul class="list"><li><strong>1. Pick a station type</strong><span>Choose CLI, Jebat Gateway, VS Code, or VPS in the form.</span></li><li><strong>2. Save the real path or host</strong><span>Use a local path for CLI and VS Code, or an SSH host for VPS.</span></li><li><strong>3. Generate the connect command</strong><span>After save, the shell prints the exact command or link for that station.</span></li><li><strong>4. Run health check</strong><span>Use the health button to confirm the saved station is reachable.</span></li></ul></article></div><article class="wide-card"><div class="card-label">Station link</div><h3>Connect a workstation to JEBATCore</h3><p class="small-note">Recommended values: <code>~/.local/bin/jebat-cli</code> for CLI, <code>~/.openclaw</code> for OpenClaw, <code>~/.config/Code/User</code> for VS Code, and your SSH host for VPS.</p><form class="control-form" id="workstationForm"><select class="select" id="workstationType" name="workstation">${(workstationState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="path" placeholder="Path or host, for example jebat.online or ~/.local/bin/jebat-cli"><input class="input" name="notes" placeholder="Notes, for example primary laptop or production node"><div class="control-grid" id="workstationRemoteFields" style="display:none"><input class="input" name="ssh_host" placeholder="SSH host, for example 72.62.255.206"><input class="input" name="ssh_user" placeholder="SSH user, for example root"></div><input class="input" id="workstationDeployPath" name="deploy_path" placeholder="Deploy path on remote host, for example /root/jebat-core" style="display:none"><button class="btn primary" type="submit">Save station link</button></form><ul class="list" style="margin-top:14px">${connected}</ul></article></section>`;
+}
+function renderQuickStart(){
+  return `<section class="hero"><div class="eyebrow">One-Command Setup</div><h1>Get started with Jebat in 30 seconds.</h1><p>No manual configuration needed. Use the <code>npx jebat-agent</code> command for instant setup with sensible defaults.</p><div class="hero-actions"><button class="btn primary" onclick="copyToClipboard('npx jebat-agent')">Copy Command</button><a class="btn" href="https://github.com/nusabyte-my/jebat-core/blob/main/INTEGRATION_GUIDE.md" target="_blank" rel="noreferrer">Full Guide</a></div></section>
+  <section class="layout">
+  <article class="wide-card"><div class="card-label">Quick Commands</div><h3>Choose your setup</h3>
+  <div style="display:grid;gap:12px;margin-top:16px">
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent</code><p style="margin-top:8px;color:var(--muted)">Interactive wizard (recommended)</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --quick</code><p style="margin-top:8px;color:var(--muted)">Minimal setup (gateway only)</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --full</code><p style="margin-top:8px;color:var(--muted)">Full workspace with skills</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --migrate</code><p style="margin-top:8px;color:var(--muted)">Migrate from OpenClaw/Hermes</p></div>
+  </div></article>
+  <article class="wide-card"><div class="card-label">IDE Integration</div><h3>Your editor, configured</h3>
+  <div style="display:grid;gap:12px;margin-top:16px">
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --ide vscode</code><p style="margin-top:8px;color:var(--muted)">VS Code / Cursor</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --ide zed</code><p style="margin-top:8px;color:var(--muted)">Zed editor</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --ide claude</code><p style="margin-top:8px;color:var(--muted)">Claude Desktop</p></div>
+  </div></article>
+  <article class="wide-card"><div class="card-label">Messaging Channels</div><h3>Connect your apps</h3>
+  <div style="display:grid;gap:12px;margin-top:16px">
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --channel telegram</code><p style="margin-top:8px;color:var(--muted)">Telegram bot</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --channel discord</code><p style="margin-top:8px;color:var(--muted)">Discord bot</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent --channel whatsapp</code><p style="margin-top:8px;color:var(--muted)">WhatsApp Business</p></div>
+  </div></article>
+  <article class="wide-card"><div class="card-label">Management</div><h3>Gateway & Agent commands</h3>
+  <div style="display:grid;gap:12px;margin-top:16px">
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-gateway start</code><p style="margin-top:8px;color:var(--muted)">Start the gateway server</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-gateway status</code><p style="margin-top:8px;color:var(--muted)">Check gateway status</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent health</code><p style="margin-top:8px;color:var(--muted)">Check agent health</p></div>
+  <div style="background:var(--bg-card);padding:16px;border-radius:8px"><code style="font-size:14px">npx jebat-agent skills</code><p style="margin-top:8px;color:var(--muted)">List available skills</p></div>
+  </div></article>
+  </section>`;
 }
 function renderIntegrations(){
-  return `<section class="hero"><div class="eyebrow">Versioned connections</div><h1>Integration assets grounded in the repo.</h1><p>This is the repo-backed integration layer, not UI filler. It shows the OpenClaw bundle and the docs that support MCP and IDE workflows.</p></section><section class="grid">${(runtime.workspace.integrations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
+  return `<section class="hero"><div class="eyebrow">Versioned connections</div><h1>Integration assets grounded in the repo.</h1><p>This is the repo-backed integration layer, not UI filler. It shows the Jebat Gateway bundle and the docs that support MCP and IDE workflows.</p></section><section class="grid">${(runtime.workspace.integrations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
 }
 function renderAgents(){
-  return `<section class="hero"><div class="eyebrow">Cell topology</div><h1>Hermes and OpenClaw roles as visible operator cells.</h1><p>The shell exposes the OpenClaw role map while keeping Hermes visible as an explicit mode, not buried in prompt text or hidden routing.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.openclaw.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Cell</div><h3>${escapeHtml(name)}</h3><p>${escapeHtml(agentRole(name))}</p><div class="mini-card" style="margin-top:14px"><strong>Runtime presence</strong><span>Visible in the OpenClaw bundle agent list and available to the shell runtime.</span></div></article>`).join('')}</div></section>`;
+  return `<section class="hero"><div class="eyebrow">Cell topology</div><h1>Jebat Agent and Jebat Gateway roles as visible operator cells.</h1><p>The shell exposes the Jebat Gateway role map while keeping Jebat Agent visible as an explicit mode, not buried in prompt text or hidden routing.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.openclaw.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Cell</div><h3>${escapeHtml(name)}</h3><p>${escapeHtml(agentRole(name))}</p><div class="mini-card" style="margin-top:14px"><strong>Runtime presence</strong><span>Visible in the Jebat Gateway bundle agent list and available to the shell runtime.</span></div></article>`).join('')}</div></section>`;
 }
 function renderSkills(){
   const skills = consoleMeta.skills.top || [];
   const coreSkill = skills.find(skill => skill.name === 'skill-forge');
   const otherSkills = skills.filter(skill => skill.name !== 'skill-forge');
-  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>Hermes skills, OpenClaw skills, and operator tooling in one plane.</h1><p>These cards are built from the live skill registry so the console shows the actual skill surfaces the runtime can route into, including webfetch, search, test, and the new skill-forge prompt generator with enhancer flow.</p></section>${coreSkill ? `<section class="wide-card"><div class="card-label">Core skill enhancer</div><h3>${escapeHtml(coreSkill.name)}</h3><p>${escapeHtml(coreSkill.description)}</p>${skillMetaBlock(coreSkill)}<div class="mini-card" style="margin-top:14px"><strong>Turn a simple idea into a core skill</strong><span>Type a rough idea and let JEBAT shape it into a stronger reusable skill prompt.</span></div><textarea id="skillForgeIdeaCard" class="input" style="min-height:108px;margin-top:14px;resize:vertical" placeholder="Describe a simple skill idea"></textarea><pre id="skillForgeOutputCard" style="margin-top:12px">${escapeHtml(buildSkillForgePrompt(''))}</pre><div class="toolbar-inline" style="margin-top:14px"><button class="btn primary" data-skillforge-generate="card">Enhance prompt</button><button class="ghost-btn" data-skillforge-send-generated="card">Use in chat</button><button class="ghost-btn" data-skillforge-copy-generated="card">Copy enhanced prompt</button></div></section>` : ''}<section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${otherSkills.length} featured skills</span></span></div><div class="grid" id="skillGrid">${otherSkills.map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p>${skillMetaBlock(skill)}</article>`).join('')}</div></section>`;
+  return `<section class="hero"><div class="eyebrow">Skill plane</div><h1>Jebat Agent skills, Jebat Gateway skills, and operator tooling in one plane.</h1><p>These cards are built from the live skill registry so the console shows the actual skill surfaces the runtime can route into, including webfetch, search, test, and the new skill-forge prompt generator with enhancer flow.</p></section>${coreSkill ? `<section class="wide-card"><div class="card-label">Core skill enhancer</div><h3>${escapeHtml(coreSkill.name)}</h3><p>${escapeHtml(coreSkill.description)}</p>${skillMetaBlock(coreSkill)}<div class="mini-card" style="margin-top:14px"><strong>Turn a simple idea into a core skill</strong><span>Type a rough idea and let JEBAT shape it into a stronger reusable skill prompt.</span></div><textarea id="skillForgeIdeaCard" class="input" style="min-height:108px;margin-top:14px;resize:vertical" placeholder="Describe a simple skill idea"></textarea><pre id="skillForgeOutputCard" style="margin-top:12px">${escapeHtml(buildSkillForgePrompt(''))}</pre><div class="toolbar-inline" style="margin-top:14px"><button class="btn primary" data-skillforge-generate="card">Enhance prompt</button><button class="ghost-btn" data-skillforge-send-generated="card">Use in chat</button><button class="ghost-btn" data-skillforge-copy-generated="card">Copy enhanced prompt</button></div></section>` : ''}<section class="wide-card"><div class="toolbar-inline"><input id="skillFilter" class="input" placeholder="Search skills by name or category"><span class="status-pill"><i class="dot"></i><span>${otherSkills.length} featured skills</span></span></div><div class="grid" id="skillGrid">${otherSkills.map(skill => `<article class="grid-card"><div class="card-label">${escapeHtml(skill.category)}</div><h3>${escapeHtml(skill.name)}</h3><p>${escapeHtml(skill.description)}</p>${skillMetaBlock(skill)}</article>`).join('')}</div></section>`;
 }
 function renderLearning(){
-  return `<section class="hero"><div class="eyebrow">Learning loop</div><h1>Adaptive reasoning and skill evolution.</h1><p>Continuum and cortex modules stay visible here so the operator can see exactly where recommendation and improvement logic already exists in the repo.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Adaptive modules</div><h3>Learning code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">Hermes import</div><h3>Imported guidance</h3><p>${escapeHtml(consoleMeta.skills.openclaw_excerpt || 'Unavailable')}</p></article></section>`;
+  return `<section class="hero"><div class="eyebrow">Learning loop</div><h1>Adaptive reasoning and skill evolution.</h1><p>Continuum and cortex modules stay visible here so the operator can see exactly where recommendation and improvement logic already exists in the repo.</p></section><section class="layout"><article class="wide-card"><div class="card-label">Adaptive modules</div><h3>Learning code paths</h3><ul class="list">${(consoleMeta.learning.modules||[]).map(item => `<li><strong>${escapeHtml(item.split('/').slice(-1)[0])}</strong><span>${escapeHtml(item)}</span></li>`).join('')}</ul></article><article class="wide-card"><div class="card-label">Hermes import</div><h3>Imported guidance</h3><p>${escapeHtml(consoleMeta.skills.jebat_gateway_excerpt || 'Unavailable')}</p></article></section>`;
 }
 function renderSetup(){
-  return `<section class="hero"><div class="eyebrow">Boot sequence</div><h1>Connect channels and stations without guesswork.</h1><p>This page mirrors the versioned setup guide and gives you one clean operator reference for Telegram, WhatsApp, Discord, Slack, CLI, OpenClaw, VS Code, and VPS setup.</p><div class="hero-actions"><a class="btn primary" href="#channels">Open channels</a><a class="btn" href="#workstation">Open stations</a><a class="btn" href="https://github.com/nusabyte-my/jebat-core/blob/main/docs/SETUP_CHANNELS_AND_WORKSTATIONS.md" target="_blank" rel="noreferrer">Open repo guide</a></div></section>
+  return `<section class="hero"><div class="eyebrow">Boot sequence</div><h1>Connect channels and stations without guesswork.</h1><p>This page mirrors the versioned setup guide and gives you one clean operator reference for Telegram, WhatsApp, Discord, Slack, CLI, Jebat Gateway, VS Code, and VPS setup.</p><div class="hero-actions"><a class="btn primary" href="#channels">Open channels</a><a class="btn" href="#workstation">Open stations</a><a class="btn" href="https://github.com/nusabyte-my/jebat-core/blob/main/docs/SETUP_CHANNELS_AND_WORKSTATIONS.md" target="_blank" rel="noreferrer">Open repo guide</a></div></section>
   <section class="layout"><article class="wide-card"><div class="card-label">Channels</div><h3>Messaging setup</h3><ul class="list"><li><strong>Telegram</strong><span>Needs <code>bot_token</code> from <code>@BotFather</code>.</span></li><li><strong>WhatsApp</strong><span>Needs <code>phone_number_id</code>, <code>access_token</code>, <code>verify_token</code> from Meta.</span></li><li><strong>Discord</strong><span>Needs <code>bot_token</code>, <code>guild_id</code>.</span></li><li><strong>Slack</strong><span>Needs <code>bot_token</code>, <code>app_token</code>.</span></li></ul></article><article class="wide-card"><div class="card-label">Workstations</div><h3>Operator stations</h3><ul class="list"><li><strong>CLI</strong><span>Suggested path: <code>~/.local/bin/jebat-cli</code></span></li><li><strong>OpenClaw</strong><span>Suggested path: <code>~/.openclaw</code></span></li><li><strong>VS Code</strong><span>Suggested path: <code>~/.config/Code/User</code></span></li><li><strong>VPS</strong><span>Suggested host: <code>jebat.online</code> or your SSH target.</span></li></ul></article></section>`;
 }
 function renderSection(section){
   const view = document.getElementById('view');
   document.getElementById('navList').innerHTML = navMarkup(section);
-  const renderers = {overview:renderOverview,livechat:renderLiveChat,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning,setup:renderSetup};
+  const renderers = {overview:renderOverview,livechat:renderLiveChat,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,quickstart:renderQuickStart,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning,setup:renderSetup};
   view.innerHTML = renderers[section] ? renderers[section]() : renderOverview();
   bindDynamicUI();
 }
@@ -1512,7 +1545,7 @@ function bindDynamicUI(){
   if(shellChatForm){shellChatForm.onsubmit = async (event) => { event.preventDefault(); const input = document.getElementById('shellChatInput'); const mode = document.getElementById('shellChatMode'); const log = document.getElementById('shellChatLog'); const message = input.value.trim(); if(!message) return; log.insertAdjacentHTML('beforeend', `<div class="chat-entry user"><strong>You</strong><div>${escapeHtml(message)}</div></div>`); input.value=''; log.scrollTop = log.scrollHeight; const res = await fetch('/webui/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_id:'shell_user', message, thinking_mode: mode.value})}); const data = await res.json(); log.insertAdjacentHTML('beforeend', `<div class="chat-entry"><strong>JEBATCore</strong><div>${escapeHtml(data.response || data.error || 'No response')}</div></div>`); log.scrollTop = log.scrollHeight; };}
   const agentFilter = document.getElementById('agentFilter');
   if(agentFilter){agentFilter.oninput = () => { const q = agentFilter.value.toLowerCase(); document.querySelectorAll('#agentGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
-  document.querySelectorAll('[data-agent]').forEach(btn => btn.onclick = () => { const name = btn.dataset.agent; openDrawer(name, `<p>OpenClaw bundle agent visible in the runtime template.</p><pre>${escapeHtml(JSON.stringify(consoleMeta.openclaw.agent_names, null, 2))}</pre>`); });
+  document.querySelectorAll('[data-agent]').forEach(btn => btn.onclick = () => { const name = btn.dataset.agent; openDrawer(name, `<p>Jebat Gateway bundle agent visible in the runtime template.</p><pre>${escapeHtml(JSON.stringify(consoleMeta.openclaw.agent_names, null, 2))}</pre>`); });
   const skillFilter = document.getElementById('skillFilter');
   if(skillFilter){skillFilter.oninput = () => { const q = skillFilter.value.toLowerCase(); document.querySelectorAll('#skillGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
   document.querySelectorAll('[data-skill]').forEach(btn => btn.onclick = () => {
@@ -1989,10 +2022,10 @@ body{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(c
 <body>
 <div class="shell">
 <header class="top">
-<div class="brand"><div class="mark">J</div><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Hermes + OpenClaw pattern</small><h2>Agent Surface</h2></div></div>
+<div class="brand"><div class="mark">J</div><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Jebat Agent + Jebat Gateway pattern</small><h2>Agent Surface</h2></div></div>
 <nav class="nav"><a href="/webui/">Overview</a><a href="/webui/chat">Chat</a><a href="/webui/dashboard">Board</a><a href="/webui/skills">Skills</a><a href="/webui/doctor">Doctor</a><a href="/webui/control">Control</a></nav>
 </header>
-<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Operator map</small><h1>Multi-agent roles, without losing the main thread.</h1><p>JEBATCore adopts the Hermes habit of staying useful in the foreground while OpenClaw-style routing and role separation stay visible. Each role has a clear surface and a reason to exist.</p></section>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Operator map</small><h1>Multi-agent roles, without losing the main thread.</h1><p>JEBATCore adopts the Jebat Agent habit of staying useful in the foreground while Jebat Gateway-style routing and role separation stay visible. Each role has a clear surface and a reason to exist.</p></section>
 <section class="grid">
 <article class="card"><small>Primary</small><h3>JEBAT Operator</h3><p>The main interactive agent for planning, coding, execution, and repo-aware support.</p><ul><li>Owns the working conversation</li><li>Chooses mode and provider</li><li>Keeps task context stable</li></ul></article>
 <article class="card"><small>Hermes Mode</small><h3>Capture-first copilot</h3><p>Biases toward understanding project shape, constraints, and risks before editing anything.</p><ul><li>Repo capture</li><li>Planning before action</li><li>Skill-guided execution</li></ul></article>
@@ -2026,9 +2059,9 @@ body{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(c
 <body>
 <div class="shell">
 <header class="top"><div class="brand"><div class="mark">J</div><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Hermes-aligned toolkit</small><h2>Skills Menu</h2></div></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/chat">Chat</a><a href="/webui/agents">Agents</a><a href="/webui/dashboard">Board</a><a href="/webui/doctor">Doctor</a><a href="/webui/control">Control</a></nav></header>
-<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Menu surface</small><h1>Skills are visible, not hidden prompt magic.</h1><p>The console exposes the operating patterns behind the assistant so you know when you are in Hermes capture mode, coding mode, project mode, or provider-health mode.</p></section>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Menu surface</small><h1>Skills are visible, not hidden prompt magic.</h1><p>The console exposes the operating patterns behind the assistant so you know when you are in Jebat Agent capture mode, coding mode, project mode, or provider-health mode.</p></section>
 <section class="grid">
-<article class="skill"><div class="tag">Core</div><h3>Hermes Agent</h3><p>Capture-first behavior for repo understanding, planning, and practical execution.</p><ul><li>Project intake</li><li>Constraint mapping</li><li>Next-step bias</li></ul></article>
+<article class="skill"><div class="tag">Core</div><h3>Jebat Agent</h3><p>Capture-first behavior for repo understanding, planning, and practical execution.</p><ul><li>Project intake</li><li>Constraint mapping</li><li>Next-step bias</li></ul></article>
 <article class="skill"><div class="tag">Routing</div><h3>Provider failover</h3><p>Moves through configured provider paths when quota or availability changes.</p><ul><li>OpenAI / Google / Anthropic aware</li><li>Local fallback path</li><li>Doctor integration</li></ul></article>
 <article class="skill"><div class="tag">Workflow</div><h3>Project-aware chat</h3><p>Injects repo context and keeps working sessions grounded in the current codebase.</p><ul><li>Repo summary</li><li>Session history</li><li>Pinned skills</li></ul></article>
 <article class="skill"><div class="tag">Control</div><h3>OpenClaw-style surface</h3><p>Aligns the UI around sessions, agents, control, and visibility instead of generic chatbot screens.</p><ul><li>Control page</li><li>Status board</li><li>Agent menu</li></ul></article>
@@ -2095,7 +2128,7 @@ body{font-family:ui-sans-serif,system-ui,sans-serif;background:radial-gradient(c
 <section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Control plane</small><h1>OpenClaw-style menus, adapted for JEBATCore.</h1><p>This page collects the control concepts users expect from OpenClaw: sessions, agents, routing, surface health, and operator visibility, but expressed inside the JEBATCore WebUI.</p></section>
 <section class="grid">
 <article class="grid-card"><div class="tag">Sessions</div><h3>Chat and project runs</h3><p>Use the live chat page as the primary session surface and the dashboard as the readiness board.</p><ul><li>Live chat</li><li>Project-aware flow</li><li>Reasoning visibility</li></ul></article>
-<article class="grid-card"><div class="tag">Agents</div><h3>Hermes and role surfaces</h3><p>Use the agent page to understand which role should act: operator, builder, security, or research.</p><ul><li>Hermes capture mode</li><li>Specialist roles</li><li>Routing visibility</li></ul></article>
+<article class="grid-card"><div class="tag">Agents</div><h3>Hermes and role surfaces</h3><p>Use the agent page to understand which role should act: operator, builder, security, or research.</p><ul><li>Jebat Agent capture mode</li><li>Specialist roles</li><li>Routing visibility</li></ul></article>
 <article class="grid-card"><div class="tag">Health</div><h3>Doctor and status checks</h3><p>Use the doctor page and CLI doctor command before long runs or when provider behavior looks degraded.</p><ul><li>Provider readiness</li><li>Fallback awareness</li><li>Surface health</li></ul></article>
 </section>
 </div>
@@ -2111,7 +2144,7 @@ def _channels_html():
     )
     configured = "".join(
         f"<li><strong>{name}</strong><span>Configured in OpenClaw template.</span></li>"
-        for name in meta["openclaw"]["channel_names"]
+        for name in meta["jebat-gateway"]["channel_names"]
     )
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JEBATCore Channels</title>
@@ -2127,7 +2160,7 @@ def _channels_html():
 <section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Surface routing</small><h1>Operator channels and message surfaces.</h1><p>These entries are pulled from the repo’s channel adapters and OpenClaw template, so the menu reflects the actual surfaces you can wire into the runtime.</p></section>
 <section class="grid">
 <article class="panel"><h3>Available channel adapters</h3><ul>{available}</ul></article>
-<article class="panel"><h3>OpenClaw configured channels</h3><ul>{configured or '<li><strong>None</strong><span>No configured channels found in the template.</span></li>'}</ul><p style="margin-top:14px">Gateway port: <strong style="color:var(--text)">{meta["openclaw"]["gateway_port"]}</strong></p></article>
+<article class="panel"><h3>OpenClaw configured channels</h3><ul>{configured or '<li><strong>None</strong><span>No configured channels found in the template.</span></li>'}</ul><p style="margin-top:14px">Gateway port: <strong style="color:var(--text)">{meta["jebat-gateway"]["gateway_port"]}</strong></p></article>
 </section></div></body></html>"""
 
 
@@ -2147,7 +2180,7 @@ def _workstation_html():
 .panel{{padding:22px}}.panel ul{{list-style:none;display:grid;gap:12px}}.panel li{{padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}}.panel strong{{display:block;color:var(--text)}}
 </style></head><body><div class="shell">
 <header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Operator environment</small><h2>Workstation</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/channels">Channels</a><a href="/webui/integrations">Integrations</a><a href="/webui/doctor">Doctor</a></nav></header>
-<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Connection surface</small><h1>One console, multiple operating stations.</h1><p>JEBATCore now exposes the work surfaces you actually use: CLI, OpenClaw runtime, VS Code, and the live VPS deployment.</p></section>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Connection surface</small><h1>One console, multiple operating stations.</h1><p>JEBATCore now exposes the work surfaces you actually use: CLI, Jebat Gateway runtime, VS Code, and the live VPS deployment.</p></section>
 <article class="panel"><ul>{cards}</ul></article></div></body></html>"""
 
 
@@ -2167,7 +2200,7 @@ def _integrations_html():
 .panel{{padding:22px}}.panel ul{{list-style:none;display:grid;gap:12px}}.panel li{{padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.02)}}.panel strong{{display:block;color:var(--text)}}
 </style></head><body><div class="shell">
 <header class="top"><div><small style="display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-size:11px">Versioned connections</small><h2>Integrations</h2></div><nav class="nav"><a href="/webui/">Overview</a><a href="/webui/channels">Channels</a><a href="/webui/workstation">Workstation</a><a href="/webui/control">Control</a></nav></header>
-<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Repo-grounded links</small><h1>Integration points that already exist in the repo.</h1><p>The page lists versioned integration assets, not aspirational ideas. That includes the OpenClaw bundle, MCP guide, and IDE integration docs already present in JEBATCore.</p></section>
+<section class="hero"><small style="color:#ffb4a4;letter-spacing:.14em;text-transform:uppercase;font-size:11px">Repo-grounded links</small><h1>Integration points that already exist in the repo.</h1><p>The page lists versioned integration assets, not aspirational ideas. That includes the Jebat Gateway bundle, MCP guide, and IDE integration docs already present in JEBATCore.</p></section>
 <article class="panel"><ul>{items}</ul></article></div></body></html>"""
 
 
@@ -2181,7 +2214,7 @@ def _learning_html():
         f"<li><strong>{Path(module).name}</strong><span>{module}</span></li>"
         for module in meta["learning"]["modules"]
     )
-    excerpt = meta["skills"]["openclaw_excerpt"] or "OpenClaw Hermes skill excerpt unavailable."
+    excerpt = meta["skills"]["jebat_gateway_excerpt"] or "OpenClaw Hermes skill excerpt unavailable."
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JEBATCore Learning</title>
 <style>

@@ -1,13 +1,26 @@
 {
   "name": "jebat-core",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "JEBAT — The LLM Ecosystem That Remembers Everything. CLI for IDE setup, workspace configuration, and agent management.",
+  "type": "module",
   "bin": {
-    "jebat-core": "./bin/jebat.js"
+    "jebat-core": "./bin/jebatcore.js"
   },
   "files": [
     "bin",
-    "lib"
+    "lib",
+    "adapters",
+    "vault",
+    "skills",
+    "AGENTS.md",
+    "IDENTITY.md",
+    "MEMORY.md",
+    "ORCHESTRA.md",
+    "SOUL.md",
+    "TOOLS.md",
+    "USER.md",
+    "validate-workspace.ps1",
+    "scripts"
   ],
   "repository": {
     "type": "git",
@@ -26,6 +39,20 @@
     "agent",
     "orchestration",
     "cybersecurity",
-    "nusabyte"
-  ]
+    "nusabyte",
+    "cli",
+    "installer",
+    "mcp",
+    "ide",
+    "token-optimization",
+    "context-compression"
+  ],
+  "scripts": {
+    "prepublishOnly": "cd ../.. && bash scripts/build-cli-bundle.sh || scripts\\build-cli-bundle.bat",
+    "build": "cd ../.. && bash scripts/build-cli-bundle.sh || scripts\\build-cli-bundle.bat",
+    "postinstall": "node ./lib/postinstall.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

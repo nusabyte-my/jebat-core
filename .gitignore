@@ -108,3 +108,17 @@ jebat-core/
 !/ULTRATHINK.md
 !/ORCHESTRA.md
 !/ORCHESTRATION_PATTERNS.md
+
+# CLI package bundle files (packages/cli/)
+!packages/cli/AGENTS.md
+!packages/cli/IDENTITY.md
+!packages/cli/MEMORY.md
+!packages/cli/ORCHESTRA.md
+!packages/cli/SOUL.md
+!packages/cli/TOOLS.md
+!packages/cli/USER.md
+!packages/cli/adapters/
+!packages/cli/vault/
+!packages/cli/skills/
+!packages/cli/validate-workspace.ps1
+!packages/cli/scripts/
