@@ -11,7 +11,7 @@ const steps = [
 ];
 
 const providers = [
-  { id: "ollama", name: "Ollama", url: "http://localhost:11434", models: ["qwen2.5-coder:7b", "hermes-sec-v2", "llama3.1"] },
+  { id: "ollama", name: "Ollama", url: "http://localhost:11434", models: ["qwen2.5-coder:7b", "jebat-sec-v2", "llama3.1"] },
   { id: "zai", name: "ZAI", url: "https://api.zai.network/v1", models: ["glm-5", "glm-4-plus"] },
   { id: "openai", name: "OpenAI", url: "https://api.openai.com/v1", models: ["gpt-4o", "gpt-4o-mini", "o1"] },
   { id: "anthropic", name: "Anthropic", url: "https://api.anthropic.com/v1", models: ["claude-sonnet-4-20250514", "claude-opus-4-20250605"] },
@@ -103,8 +103,8 @@ export default function SetupPage() {
     log.push("✅ Setup complete! JEBAT is ready.");
     log.push("");
     log.push("Next steps:");
-    log.push("  • Run: npx @nusabyte/jebat setup (CLI setup)");
-    log.push("  • Run: npx @nusabyte/jebat chat (AI chat)");
+    log.push("  • Run: npx jebat-agent --full (full setup)");
+    log.push("  • Run: npx jebat-agent --quick (quick start)");
     log.push("  • Visit: /dashboard for gateway management");
 
     setInstallLog(log);
@@ -190,7 +190,7 @@ export default function SetupPage() {
             {gatewayStatus === "offline" && (
               <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-300">
                 ⚠️ Gateway not reachable. You can continue setup and configure the gateway later.
-                <div className="mt-2 text-xs text-amber-400/80">Run: docker compose up -d (or start sh4dow-gateway)</div>
+                <div className="mt-2 text-xs text-amber-400/80">Run: npx jebat-agent --full (or start JEBAT Gateway)</div>
               </div>
             )}
           </div>

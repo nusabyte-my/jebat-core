@@ -311,10 +311,10 @@ export default function Home() {
             </div>
             <div className="p-6 space-y-4">
               {[
-                { cmd: "npx jebat-core --help", output: "⚔️  JEBAT CLI — jebat-core\nThe LLM Ecosystem That Remembers Everything\n\nUsage:\n  npx jebat-core <command>\n\nCommands:\n  setup            Interactive setup wizard\n  chat             AI assistant chat (REPL mode)\n  install [dir]    Install JEBAT context to IDEs\n  detect           Detect installed IDEs\n  doctor           Workspace health check\n  status           Gateway + VPS status\n  skill-list       List installed skills\n  deploy           VPS deployment helper" },
-                { cmd: "npx jebat-core doctor", output: "🩺 JEBAT Doctor — Workspace Health Check\n\n✅ Core files: 5/5\n✅ Gateway: http://localhost:18789\n✅ Skills directory found (40+ skills)\n✅ Memory: 4 daily files\n✅ JEBAT home: ~/.jebat\n\n✅ All checks passed. JEBAT is healthy." },
-                { cmd: "npx jebat-core status", output: "📡 JEBAT System Status\n\n✅ Online Gateway (http://localhost:18789)\n✅ Healthy VPS (jebat.online)\n✅ Healthy WebUI (/webui/)\n\n✅ npm: jebat-core@2.0.0" },
-                { cmd: "npx jebat-core skill-list", output: "🗡️ Installed Skills\n\n📂 Core:\n  ✅ panglima  ✅ memory-core\n  ✅ jebat-agent  ✅ agent-dispatch\n\n📂 Development:\n  ✅ fullstack  ✅ web-developer\n  ✅ app-development  ✅ database\n  ✅ ui-ux  ✅ qa-validation\n\n📂 Security:\n  ✅ security-pentest  ✅ pengawal\n  ✅ perisai  ✅ serangan\n\n📂 SEO & Marketing:\n  ✅ seo  ✅ sem  ✅ aem  ✅ geo\n\n...and 20+ more skills installed" },
+                { cmd: "npx jebat-agent --help", output: "⚔️  JEBAT CLI — jebat-agent\nThe LLM Ecosystem That Remembers Everything\n\nUsage:\n  npx jebat-agent <command>\n\nCommands:\n  setup            Interactive setup wizard\n  chat             AI assistant chat (REPL mode)\n  install [dir]    Install JEBAT context to IDEs\n  detect           Detect installed IDEs\n  doctor           Workspace health check\n  status           Gateway + VPS status\n  skill-list       List installed skills\n  deploy           VPS deployment helper" },
+                { cmd: "npx jebat-agent doctor", output: "🩺 JEBAT Doctor — Workspace Health Check\n\n✅ Core files: 5/5\n✅ Gateway: http://localhost:18789\n✅ Skills directory found (40+ skills)\n✅ Memory: 4 daily files\n✅ JEBAT home: ~/.jebat\n\n✅ All checks passed. JEBAT is healthy." },
+                { cmd: "npx jebat-agent status", output: "📡 JEBAT System Status\n\n✅ Online Gateway (http://localhost:18789)\n✅ Healthy VPS (jebat.online)\n✅ Healthy WebUI (/webui/)\n\n✅ npm: jebat-agent@1.0.3" },
+                { cmd: "npx jebat-agent skill-list", output: "🗡️ Installed Skills\n\n📂 Core:\n  ✅ panglima  ✅ memory-core\n  ✅ jebat-agent  ✅ agent-dispatch\n\n📂 Development:\n  ✅ fullstack  ✅ web-developer\n  ✅ app-development  ✅ database\n  ✅ ui-ux  ✅ qa-validation\n\n📂 Security:\n  ✅ security-pentest  ✅ pengawal\n  ✅ perisai  ✅ serangan\n\n📂 SEO & Marketing:\n  ✅ seo  ✅ sem  ✅ aem  ✅ geo\n\n...and 20+ more skills installed" },
               ].map((demo, i) => (
                 <details key={i} className="group rounded-lg border border-white/5 bg-black/20">
                   <summary className="cursor-pointer px-4 py-3 text-sm font-mono text-cyan-300 hover:text-cyan-200 transition flex items-center justify-between">
@@ -336,7 +336,7 @@ export default function Home() {
                 <span className="text-xl">📦</span> One-Command Install
               </h3>
               <div className="rounded-lg bg-black/40 border border-white/5 p-4 mb-4">
-                <pre className="text-sm font-mono text-cyan-300">npx jebat-core install</pre>
+                <pre className="text-sm font-mono text-cyan-300">npx jebat-agent install</pre>
               </div>
               <p className="text-sm text-neutral-400 mb-4">Installs JEBAT context into your IDE automatically. Supports:</p>
               <div className="grid grid-cols-2 gap-3">
@@ -362,10 +362,10 @@ export default function Home() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { cmd: "npx jebat-core doctor", desc: "Check workspace health" },
-                  { cmd: "npx jebat-core status", desc: "Check gateway & VPS status" },
-                  { cmd: "npx jebat-core skill-list", desc: "List all 40+ installed skills" },
-                  { cmd: "npx jebat-core deploy", desc: "Deploy to VPS" },
+                  { cmd: "npx jebat-agent doctor", desc: "Check workspace health" },
+                  { cmd: "npx jebat-agent status", desc: "Check gateway & VPS status" },
+                  { cmd: "npx jebat-agent skill-list", desc: "List all 40+ installed skills" },
+                  { cmd: "npx jebat-agent deploy", desc: "Deploy to VPS" },
                 ].map((item) => (
                   <div key={item.cmd} className="flex items-start gap-3">
                     <code className="text-xs font-mono text-cyan-300 bg-black/30 rounded px-2 py-1 flex-shrink-0">{item.cmd}</code>
@@ -383,8 +383,8 @@ export default function Home() {
                 {[
                   "git clone https://github.com/nusabyte-my/jebat-core.git",
                   "cd jebat-core",
-                  "npx jebat-core install",
-                  "npx jebat-core doctor",
+                  "npx jebat-agent install",
+                  "npx jebat-agent doctor",
                 ].map((cmd, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="w-6 h-6 rounded-full bg-cyan-400/20 text-cyan-300 flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
@@ -686,7 +686,7 @@ cd jebat-core
       <section id="skills" className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeading
           badge="Skills Ecosystem"
-          title="23 Optimized & Enhanced Skills"
+          title="40+ Optimized & Enhanced Skills"
           subtitle="Every skill optimized for token efficiency, enhanced with real-world patterns from skills.sh, and adapted for the JEBAT ecosystem."
         />
         <div className="space-y-6">
@@ -736,10 +736,10 @@ cd jebat-core
           {[
             { phase: "Q2 2026", title: "Infrastructure & Polish", status: "complete", items: ["Monitoring dashboard", "Docker deployment", "CI/CD pipeline", "WhatsApp + Discord stubs"] },
             { phase: "Q3 2026", title: "Web UI, API & Scale", status: "complete", items: ["Next.js 16 web app (9 pages)", "REST API v1 (FastAPI)", "Python + JS SDKs", "Multi-tenancy"] },
-            { phase: "Q4 2026", title: "Advanced Features & AI", status: "complete", items: ["Plugin system", "Dynamic agent loading", "Security scanner + auto-fix", "Knowledge Graph (Neo4j)"] },
-            { phase: "Q1 2027", title: "Mobile & Voice", status: "complete", items: ["Flutter app (iOS + Android)", "Whisper STT integration", "ElevenLabs TTS", "50 cyber quotes"] },
-            { phase: "Q2 2027", title: "Enterprise Features", status: "complete", items: ["Advanced RBAC (7 roles)", "Audit logging (GDPR/SOC2)", "Compliance reports", "Enterprise README"] },
-            { phase: "Q3 2027", title: "Distributed System", status: "complete", items: ["Multi-instance sync", "Federated learning", "Event-driven sync", "Heartbeat monitoring"] },
+            { phase: "Q4 2026", title: "Advanced Features & AI", status: "in-progress", items: ["Plugin system", "Dynamic agent loading", "Security scanner + auto-fix", "Knowledge Graph (Neo4j)"] },
+            { phase: "Q1 2027", title: "Mobile & Voice", status: "planned", items: ["Flutter app (iOS + Android)", "Whisper STT integration", "ElevenLabs TTS", "50 cyber quotes"] },
+            { phase: "Q2 2027", title: "Enterprise Features", status: "planned", items: ["Advanced RBAC (7 roles)", "Audit logging (GDPR/SOC2)", "Compliance reports", "Enterprise README"] },
+            { phase: "Q3 2027", title: "Distributed System", status: "planned", items: ["Multi-instance sync", "Federated learning", "Event-driven sync", "Heartbeat monitoring"] },
           ].map((r) => (
             <div key={r.phase} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <div className="mb-3 flex items-center gap-2">

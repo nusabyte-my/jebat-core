@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 
 const pillars = [
   {
-    title: "j3b4t CLI",
-    body: "Run `python j3b4t-p3nt3st-cli/main.py engage ...` or `jebat security` for the terminal-first operator flow.",
+    title: "JEBAT CLI",
+    body: "Run `python jebat-pentest-cli/main.py engage ...` or `jebat security` for the terminal-first operator flow.",
   },
   {
     title: "Security API",
@@ -14,7 +14,7 @@ const pillars = [
   },
   {
     title: "Ollama Local-First",
-    body: "j3b4t and Serangan share the same local security runtime, with Ollama-backed reasoning and SQLite session persistence.",
+    body: "JEBAT and Serangan share the same local security runtime, with Ollama-backed reasoning and SQLite session persistence.",
   },
 ];
 

@@ -5,7 +5,7 @@ const sections = [
   },
   {
     title: "Skills",
-    body: "Eight OpenClaw-compatible skills define memory, consolidation, orchestration, analysis, research, cybersecurity, hardening, and authorized pentesting workflows.",
+    body: "Forty-plus JEBAT skills define memory, consolidation, orchestration, analysis, research, cybersecurity, hardening, and authorized pentesting workflows.",
   },
   {
     title: "Security",
@@ -13,7 +13,7 @@ const sections = [
   },
   {
     title: "Platform",
-    body: "The recommended stack is Next.js 14 + TypeScript + Tailwind + shadcn/ui with TimescaleDB and Redis behind OpenClaw Gateway.",
+    body: "The recommended stack is Next.js 14 + TypeScript + Tailwind + shadcn/ui with TimescaleDB and Redis behind JEBAT Gateway.",
   },
 ];
 
@@ -29,9 +29,7 @@ export default function DocsPage() {
             JEBAT system docs
           </h1>
           <p className="mt-4 max-w-3xl text-neutral-300">
-            This is the first documentation scaffold for the rebuilt jebat.online
-            platform. It reflects the current integration work already created in
-            this workspace.
+            Core documentation for the JEBAT platform. Explore the memory system, skills ecosystem, security workflows, and platform architecture.
           </p>
         </div>
 

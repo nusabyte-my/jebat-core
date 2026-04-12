@@ -91,7 +91,7 @@ export default function GelanggangIntegrationPage() {
         {/* Worker Roles */}
         <section>
           <h2 className="text-2xl font-bold mb-2">Agents in the Gelanggang</h2>
-          <p className="text-neutral-400 mb-8">Each agent connects to its LLM provider and communicates using the JEBAT protocol. Walk up and assign tasks — or let Panglima orchestrate.</p>
+          <p className="text-neutral-400 mb-8">Each agent connects to its LLM provider and communicates using the JEBAT protocol. Manually assign tasks — or let Panglima orchestrate.</p>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {workerRoles.map((w) => (
               <div key={w.role} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-5">
