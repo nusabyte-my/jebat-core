@@ -31,24 +31,27 @@ import {
   HiOutlineAcademicCap,
   HiOutlineBuildingOffice,
   HiOutlineCodeBracket,
+  HiOutlineWrenchScrewdriver,
+  HiOutlineQueueList,
+  HiOutlineBookOpen,
 } from "react-icons/hi2";
 
 // ─── Data ───────────────────────────────────────────────────────────────
 
 const SECTIONS = [
-  "hero", "platform", "agents", "core", "orchestration", "why", "chat", "cta",
+  "hero", "agent", "portal", "chat", "gelanggang", "security", "guides", "cta",
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number];
 
 const SECTION_LABELS: Record<SectionId, string> = {
   hero: "Home",
-  platform: "Platform",
-  agents: "Agents",
-  core: "Core Engine",
-  orchestration: "Orchestration",
-  why: "Why JEBAT",
-  chat: "Live Demo",
+  agent: "Agent",
+  portal: "Portal",
+  chat: "Chat",
+  gelanggang: "Arena",
+  security: "Security",
+  guides: "Guides",
   cta: "Get Started",
 };
 
@@ -974,9 +977,299 @@ function CTASection() {
   );
 }
 
+// ─── Feature CTA Section ────────────────────────────────────────────────
+
+interface FeatureCardData {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}
+
+function FeatureCTASection({
+  agentName,
+  agentRole,
+  agentGradient,
+  agentInitials,
+  badge,
+  title,
+  subtitle,
+  features,
+  primaryCta,
+  secondaryCta,
+  primaryHref,
+  secondaryHref,
+  stats,
+  themeColor,
+}: {
+  agentName: string;
+  agentRole: string;
+  agentGradient: string;
+  agentInitials: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  features: FeatureCardData[];
+  primaryCta: string;
+  secondaryCta: string;
+  primaryHref: string;
+  secondaryHref: string;
+  stats: { value: string; label: string }[];
+  themeColor: string;
+}) {
+  return (
+    <SectionContent>
+      <div className="space-y-10 lg:space-y-12">
+        {/* Agent Header */}
+        <div className="text-center space-y-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className={`inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br ${agentGradient} shadow-lg mx-auto mb-4`}
+          >
+            <span className="text-2xl lg:text-3xl font-bold text-white">{agentInitials}</span>
+          </motion.div>
+          <div className="text-sm text-neutral-400">
+            <span className={`font-semibold ${themeColor}`}>{agentName}</span> · {agentRole}
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
+            {badge}
+          </span>
+        </div>
+
+        {/* Title & Subtitle */}
+        <div className="text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">{title}</h2>
+          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">{subtitle}</p>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.1 }}
+              whileHover={{ y: -4 }}
+              className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 hover:border-cyan-400/20 transition-colors"
+            >
+              <div className="mb-4">{f.icon}</div>
+              <h3 className="font-semibold text-base mb-2">{f.title}</h3>
+              <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-wrap justify-center gap-3 lg:gap-4">
+          <a href={primaryHref} className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
+            {primaryCta}
+            <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </a>
+          <a href={secondaryHref} className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
+            {secondaryCta}
+            <HiOutlineArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+
+        {/* Stats */}
+        <div className="flex flex-wrap justify-center gap-6 lg:gap-10">
+          {stats.map((s, i) => (
+            <div key={i} className="text-center">
+              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{s.value}</div>
+              <div className="text-xs text-neutral-500">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SectionContent>
+  );
+}
+
+// ─── Updated Sections ───────────────────────────────────────────────────
+
+function AgentCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Tukang"
+      agentRole="Development & Engineering"
+      agentGradient="from-purple-400 to-pink-500"
+      agentInitials="TK"
+      badge="Jebat Agent"
+      title="Deploy Your AI Workspace in 30 Seconds"
+      subtitle="Jebat Agent — Setup wizard, IDE integration, 8 local LLMs, channel automation, and OpenClaw migration. Everything you need to run AI on your infrastructure."
+      features={[
+        { icon: <HiOutlineWrenchScrewdriver className="w-6 h-6 text-purple-400" />, title: "30-Second Setup", desc: "One command deploys your entire AI workspace with skills, config, and IDE integration." },
+        { icon: <HiOutlineCodeBracket className="w-6 h-6 text-purple-400" />, title: "IDE Integration", desc: "VS Code, Zed, Cursor, Claude Desktop, Gemini CLI — works with your favorite editor." },
+        { icon: <HiOutlineCpuChip className="w-6 h-6 text-purple-400" />, title: "8 Local LLMs", desc: "Gemma 4, Qwen2.5, Hermes3, Phi-3, Llama 3.1, Mistral, CodeLlama, TinyLlama." },
+      ]}
+      primaryCta="Deploy Now"
+      secondaryCta="View on npm"
+      primaryHref="/agent/"
+      secondaryHref="https://www.npmjs.com/package/jebat-agent"
+      stats={[
+        { value: "30s", label: "Setup Time" },
+        { value: "40+", label: "Skills" },
+        { value: "8", label: "Local LLMs" },
+      ]}
+      themeColor="text-purple-400"
+    />
+  );
+}
+
+function PortalCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Panglima"
+      agentRole="Orchestration & Command"
+      agentGradient="from-cyan-400 to-blue-500"
+      agentInitials="PL"
+      badge="Enterprise Portal"
+      title="Real-Time AI Command Center"
+      subtitle="Monitor all 34 agents, track usage analytics, measure performance metrics, and manage your AI team from a single dashboard."
+      features={[
+        { icon: <HiOutlineChartBar className="w-6 h-6 text-cyan-400" />, title: "Live Analytics", desc: "Real-time usage tracking, token consumption, response times, and cost analysis." },
+        { icon: <HiOutlineUsers className="w-6 h-6 text-cyan-400" />, title: "Agent Monitoring", desc: "Status, health, and activity for all 10 core agents and 24 specialists." },
+        { icon: <HiOutlineCog6Tooth className="w-6 h-6 text-cyan-400" />, title: "Performance Metrics", desc: "Latency, cache hit rates, throughput, and system health indicators." },
+      ]}
+      primaryCta="Open Portal"
+      secondaryCta="Explore Features"
+      primaryHref="/portal/"
+      secondaryHref="/agent/"
+      stats={[
+        { value: "10", label: "Core Agents" },
+        { value: "24", label: "Specialists" },
+        { value: "Live", label: "Analytics" },
+      ]}
+      themeColor="text-cyan-400"
+    />
+  );
+}
+
+function ChatCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Hikmat"
+      agentRole="Memory & Knowledge"
+      agentGradient="from-pink-400 to-rose-500"
+      agentInitials="HK"
+      badge="Live Chat"
+      title="AI Chat That Remembers You"
+      subtitle="5 orchestration modes, 8 local LLMs, markdown rendering with tables, session persistence, and personalized onboarding that adapts to your role."
+      features={[
+        { icon: <HiOutlineArrowPath className="w-6 h-6 text-pink-400" />, title: "5 Orchestration Modes", desc: "Debate, Consensus, Sequential, Parallel, Hierarchical — switch modes instantly." },
+        { icon: <HiOutlineDocumentText className="w-6 h-6 text-pink-400" />, title: "Markdown Rendering", desc: "Tables, code blocks, headers, lists — beautiful AI responses with full formatting." },
+        { icon: <HiOutlineCog6Tooth className="w-6 h-6 text-pink-400" />, title: "Session Persistence", desc: "Conversations survive refresh. Settings remembered. Last chat auto-loads." },
+      ]}
+      primaryCta="Start Chatting"
+      secondaryCta="View Features"
+      primaryHref="/chat/"
+      secondaryHref="/portal/"
+      stats={[
+        { value: "5", label: "Modes" },
+        { value: "8", label: "Local LLMs" },
+        { value: "∞", label: "Memory" },
+      ]}
+      themeColor="text-pink-400"
+    />
+  );
+}
+
+function GelanggangCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Penganalisis"
+      agentRole="Analytics & Insights"
+      agentGradient="from-yellow-400 to-orange-500"
+      agentInitials="PA"
+      badge="LLM Arena"
+      title="Watch AI Models Compete in Real-Time"
+      subtitle="Gelanggang — the LLM-to-LLM arena where models debate, collaborate, and compete. Research-backed orchestration patterns from AutoGen and MAD Paradigm."
+      features={[
+        { icon: <HiOutlineChatBubbleLeftRight className="w-6 h-6 text-yellow-400" />, title: "Live Debates", desc: "Watch models argue, rebut, and reach consensus in real-time conversations." },
+        { icon: <HiOutlineChartBar className="w-6 h-6 text-yellow-400" />, title: "Model Comparison", desc: "Side-by-side analysis of different models on the same topic." },
+        { icon: <HiOutlineBolt className="w-6 h-6 text-yellow-400" />, title: "Research-Backed", desc: "Based on AutoGen, ChatDev 2.0, and MAD Paradigm papers." },
+      ]}
+      primaryCta="Enter Arena"
+      secondaryCta="Learn More"
+      primaryHref="/gelanggang/"
+      secondaryHref="/chat/"
+      stats={[
+        { value: "Live", label: "Debates" },
+        { value: "8", label: "Models" },
+        { value: "Real", label: "Time" },
+      ]}
+      themeColor="text-yellow-400"
+    />
+  );
+}
+
+function SecurityCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Hulubalang"
+      agentRole="Security Audit & Compliance"
+      agentGradient="from-red-400 to-rose-500"
+      agentInitials="HB"
+      badge="CyberSec Suite"
+      title="Military-Grade Security Infrastructure"
+      subtitle="Four-layer security: Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest). Prompt injection defense, command sanitization, and complete audit trails."
+      features={[
+        { icon: <HiOutlineShieldCheck className="w-6 h-6 text-red-400" />, title: "Injection Defense", desc: "Automatic detection and blocking of prompt injection attacks." },
+        { icon: <HiOutlineClipboardDocumentCheck className="w-6 h-6 text-red-400" />, title: "Complete Audit Trails", desc: "Every action logged for compliance, review, and incident response." },
+        { icon: <HiOutlineKey className="w-6 h-6 text-red-400" />, title: "Secrets Management", desc: "API keys and credentials never exposed. Encrypted storage and rotation." },
+      ]}
+      primaryCta="View Security"
+      secondaryCta="CyberSec Suite"
+      primaryHref="/security/"
+      secondaryHref="/portal/"
+      stats={[
+        { value: "4", label: "Security Tools" },
+        { value: "0", label: "Breaches" },
+        { value: "100%", label: "Audit" },
+      ]}
+      themeColor="text-red-400"
+    />
+  );
+}
+
+function GuidesCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Syahbandar"
+      agentRole="Operations & Infrastructure"
+      agentGradient="from-blue-400 to-indigo-500"
+      agentInitials="SB"
+      badge="Setup Guides"
+      title="Step-by-Step Deployment Guides"
+      subtitle="Comprehensive documentation for IDE integration, channel setup, model deployment, migration from OpenClaw/Hermes, and production hardening."
+      features={[
+        { icon: <HiOutlineBookOpen className="w-6 h-6 text-blue-400" />, title: "Step-by-Step Guides", desc: "Clear instructions for every setup scenario, from beginner to advanced." },
+        { icon: <HiOutlineCommandLine className="w-6 h-6 text-blue-400" />, title: "CLI Commands", desc: "Copy-paste ready commands for quick setup and automation." },
+        { icon: <HiOutlineArrowPath className="w-6 h-6 text-blue-400" />, title: "Migration Paths", desc: "Seamless migration from OpenClaw and Hermes with zero downtime." },
+      ]}
+      primaryCta="Read Guides"
+      secondaryCta="Quick Start"
+      primaryHref="/guides/"
+      secondaryHref="https://github.com/nusabyte-my/jebat-core"
+      stats={[
+        { value: "10+", label: "Guides" },
+        { value: "CLI", label: "Commands" },
+        { value: "Zero", label: "Downtime" },
+      ]}
+      themeColor="text-blue-400"
+    />
+  );
+}
+
+// ─── Section Order ──────────────────────────────────────────────────────
+
 const SECTION_COMPONENTS = [
-  HeroSection, PlatformSection, AgentsSection, CoreSection,
-  OrchestrationSection, WhySection, ChatSection, CTASection,
+  HeroSection, AgentCTASection, PortalCTASection, ChatCTASection,
+  GelanggangCTASection, SecurityCTASection, GuidesCTASection, CTASection,
 ];
 
 // ─── Main Page ──────────────────────────────────────────────────────────
