@@ -285,6 +285,91 @@
             color: var(--text-secondary);
         }
 
+        /* Markdown Styling */
+        .message-content.markdown {
+            line-height: 1.7;
+        }
+        .message-content.markdown h1,
+        .message-content.markdown h2,
+        .message-content.markdown h3 {
+            margin: 16px 0 8px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .message-content.markdown h1 { font-size: 1.5em; }
+        .message-content.markdown h2 { font-size: 1.3em; }
+        .message-content.markdown h3 { font-size: 1.1em; }
+        .message-content.markdown p { margin: 8px 0; }
+        .message-content.markdown strong { color: var(--text); }
+        .message-content.markdown em { color: var(--text-secondary); }
+        .message-content.markdown ul,
+        .message-content.markdown ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+        .message-content.markdown li { margin: 4px 0; }
+        .message-content.markdown code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #7dd3fc;
+        }
+        .message-content.markdown pre {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        .message-content.markdown pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+        }
+        .message-content.markdown table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        .message-content.markdown th,
+        .message-content.markdown td {
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .message-content.markdown th {
+            background: rgba(255,255,255,0.05);
+            font-weight: 600;
+        }
+        .message-content.markdown tr:nth-child(even) {
+            background: rgba(255,255,255,0.02);
+        }
+        .message-content.markdown blockquote {
+            border-left: 3px solid #8b5cf6;
+            padding-left: 16px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .message-content.markdown hr {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin: 16px 0;
+        }
+        .message-content.markdown img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .message-content.markdown a {
+            color: #7dd3fc;
+            text-decoration: underline;
+        }
+
         .message-content {
             background: var(--ai-bubble);
             padding: 16px 20px;
@@ -501,6 +586,8 @@
             }
         }
     </style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
 <body>
     <div class="app">
@@ -628,6 +715,18 @@
         let currentConvId = null;
         let isStreaming = false;
         
+        // Configure markdown renderer
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false,
+            mangle: false
+        });
+
+        function renderMarkdown(text) {
+            return DOMPurify.sanitize(marked.parse(text || ''));
+        }
+
         const OLLAMA_URL = window.location.origin.includes('jebat.online') 
             ? '/ollama' 
             : '/ollama';
@@ -757,7 +856,7 @@
                         <span class="message-role">${msg.role === 'user' ? 'You' : msg.model || 'Jebat'}</span>
                         ${msg.isLLMChat ? `<span class="llm-indicator">${msg.model1} → ${msg.model2}</span>` : ''}
                     </div>
-                    <div class="message-content">${msg.role === 'system' ? msg.content.replace(/\\n/g, '<br>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') : msg.content}</div>
+                    <div class="message-content markdown">${msg.role === 'system' ? renderMarkdown(msg.content) : renderMarkdown(msg.content)}</div>
                 `;
                 container.appendChild(div);
             });
@@ -877,7 +976,7 @@
             try {
                 // Phase 1: LLM 1 speaks
                 response1 = await llmThinkAndRespond(container, model1, name1, name2, 
-                    `Another AI wants to discuss: "${topic}". Share your thoughts (keep it concise, 2-3 sentences).`, conv);
+                    `Another AI wants to discuss: "${topic}". Share your thoughts in Markdown format. Use headers, lists, or tables if helpful (keep it concise, 2-3 sentences).`, conv);
                 conv.messages.push({
                     role: 'assistant', content: response1, model: name1,
                     isLLMChat: true, model1: name1, model2: name2
@@ -887,7 +986,7 @@
                 
                 // Phase 2: LLM 2 responds
                 response2 = await llmThinkAndRespond(container, model2, name2, name1,
-                    `Model A (${name1}) said: "${response1}". What's your perspective? (keep it concise, 2-3 sentences)`, conv);
+                    `In Markdown format, Model A (${name1}) said: "${response1}". What's your perspective? (keep it concise, 2-3 sentences)`, conv);
                 conv.messages.push({
                     role: 'assistant', content: response2, model: name2,
                     isLLMChat: true, model1: name1, model2: name2
@@ -897,7 +996,7 @@
                 
                 // Phase 3: LLM 1 replies
                 response3 = await llmThinkAndRespond(container, model1, name1, name2,
-                    `Model B (${name2}) responded: "${response2}". Any counterpoints? (keep it brief)`, conv);
+                    `Model B (${name2}) responded: "${response2}". Any counterpoints in Markdown? (keep it brief)`, conv);
                 conv.messages.push({
                     role: 'assistant', content: response3, model: name1,
                     isLLMChat: true, model1: name1, model2: name2
@@ -973,7 +1072,7 @@
 - ${name1}: "${r1}" then "${r3}"
 - ${name2}: "${r2}"
 
-Write a brief conclusion (2-3 sentences) summarizing the key points of agreement and disagreement.`;
+Write a brief conclusion in Markdown format (2-3 sentences) summarizing the key points of agreement and disagreement. Use a table to compare viewpoints if applicable.`;
 
             // Use model1 for the summary
             const summary = await callOllama(document.getElementById('primaryModel').value, summaryPrompt, conv);
@@ -1005,7 +1104,7 @@ Write a brief conclusion (2-3 sentences) summarizing the key points of agreement
                         body: JSON.stringify({
                             model: modelName,
                             messages: [
-                                { role: 'system', content: 'You are Jebat Agent, a helpful AI assistant. Be concise and direct.' },
+                                { role: 'system', content: 'You are Jebat Agent, a helpful AI assistant. Always respond in Markdown format. Use headers, bold, lists, tables, and code blocks when appropriate. Be concise but thorough.' },
                                 ...conv.messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
                             ],
                             stream: false,
