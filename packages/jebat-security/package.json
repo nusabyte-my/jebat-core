@@ -1,0 +1,52 @@
+{
+  "name": "jebat-security",
+  "version": "1.0.0",
+  "description": "JEBAT Security CLI — Enterprise penetration testing, vulnerability scanning, and compliance auditing. Four-layer security: Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest).",
+  "main": "bin/jebat-security.js",
+  "bin": {
+    "jebat-security": "bin/jebat-security.js",
+    "jebat-sec": "bin/jebat-security.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node bin/jebat-security.js",
+    "audit": "node bin/jebat-security.js audit",
+    "scan": "node bin/jebat-security.js scan",
+    "pentest": "node bin/jebat-security.js pentest"
+  },
+  "keywords": [
+    "jebat",
+    "security",
+    "pentest",
+    "vulnerability",
+    "compliance",
+    "cybersec",
+    "audit",
+    "scanning",
+    "hulubalang",
+    "pengawal",
+    "perisai",
+    "serangan",
+    "enterprise",
+    "self-hosted",
+    "ai",
+    "llm"
+  ],
+  "author": "NusaByte <https://nusabyte.my>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusabyte-my/jebat-core.git",
+    "directory": "packages/jebat-security"
+  },
+  "homepage": "https://jebat.online/security",
+  "bugs": {
+    "url": "https://github.com/nusabyte-my/jebat-core/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
