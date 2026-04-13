@@ -1,0 +1,15 @@
+{
+  "name": "jebat-gelanggang",
+  "version": "1.0.0",
+  "description": "JEBAT Gelanggang — LLM-to-LLM Arena CLI. Watch AI models debate, collaborate, and compete in real-time. Research-backed orchestration from AutoGen, ChatDev 2.0, MAD Paradigm.",
+  "main": "bin/jebat-gelanggang.js",
+  "bin": { "jebat-gelanggang": "bin/jebat-gelanggang.js", "jebat-arena": "bin/jebat-gelanggang.js" },
+  "files": ["bin/", "README.md"],
+  "keywords": ["jebat", "gelanggang", "arena", "llm", "debate", "multi-agent", "orchestration", "autogen", "mad", "self-hosted"],
+  "author": "NusaByte <https://nusabyte.my>",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/nusabyte-my/jebat-core.git", "directory": "packages/jebat-gelanggang" },
+  "homepage": "https://jebat.online/gelanggang",
+  "bugs": { "url": "https://github.com/nusabyte-my/jebat-core/issues" },
+  "engines": { "node": ">=18.0.0" }
+}

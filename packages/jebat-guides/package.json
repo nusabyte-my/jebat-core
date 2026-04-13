@@ -1,0 +1,40 @@
+{
+  "name": "jebat-guides",
+  "version": "1.0.0",
+  "description": "JEBAT Guides CLI \u2014 Setup, deployment, IDE integration, local LLM deployment, channel setup, migration, and security hardening documentation.",
+  "main": "bin/jebat-guides.js",
+  "bin": {
+    "jebat-guides": "bin/jebat-guides.js",
+    "jebat-docs": "bin/jebat-guides.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "keywords": [
+    "jebat",
+    "guides",
+    "setup",
+    "deployment",
+    "ide",
+    "ollama",
+    "migration",
+    "security",
+    "documentation",
+    "self-hosted"
+  ],
+  "author": "NusaByte <https://nusabyte.my>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusabyte-my/jebat-core.git",
+    "directory": "packages/jebat-guides"
+  },
+  "homepage": "https://jebat.online/guides",
+  "bugs": {
+    "url": "https://github.com/nusabyte-my/jebat-core/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
