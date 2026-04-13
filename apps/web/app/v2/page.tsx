@@ -179,8 +179,8 @@ function AgentNetworkBackground() {
 
 function SectionContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`w-full h-full flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16 lg:py-0 overflow-y-auto ${className}`}>
-      <div className="max-w-7xl mx-auto w-full relative z-10">
+    <div className={`w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 lg:py-8 overflow-y-auto ${className}`}>
+      <div className="max-w-6xl mx-auto w-full relative z-10">
         {children}
       </div>
     </div>
@@ -370,7 +370,7 @@ function HeroSection() {
           Enterprise AI Platform &middot; Self-Hosted &middot; Zero Cloud Dependency
         </motion.div>
 
-        <div>
+        <div className="max-w-5xl mx-auto">
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -451,7 +451,7 @@ function HeroSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.8 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 max-w-3xl mx-auto pt-4"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 max-w-4xl mx-auto pt-4"
         >
           {stats.map((stat, i) => (
             <motion.div
@@ -503,7 +503,7 @@ function PlatformSection() {
         title="Two Pillars. One Platform."
         subtitle="JEBAT is built on two powerful components that work together seamlessly to deliver enterprise-grade AI capabilities."
       />
-      <div className="grid gap-6 lg:gap-8 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-5 lg:gap-6 grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto">
         {pillars.map((p, i) => (
           <motion.div
             key={i}
@@ -579,7 +579,7 @@ function AgentsSection() {
         subtitle="10 core agents orchestrate 24 specialists — each with distinct roles, providers, and models optimized for enterprise tasks."
       />
 
-      <div className="mb-10 lg:mb-14">
+      <div className="mb-10 lg:mb-14 max-w-5xl mx-auto">
         <div className="flex items-center gap-2 mb-4 lg:mb-6 justify-center">
           <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} />
           <h3 className="text-lg lg:text-xl font-semibold">10 Core Agents</h3>
@@ -653,68 +653,76 @@ function CoreSection() {
 
   return (
     <SectionContent>
-      <div className="grid gap-8 lg:gap-12 lg:grid-cols-2 items-center">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-purple-400/20 bg-purple-400/5 px-4 py-1.5 text-sm text-purple-300 mb-4">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse"/>
-            Core Engine
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">The Brain Behind JEBAT</h2>
-          <p className="text-neutral-400 text-base lg:text-lg mb-8 leading-relaxed">
-            Jebat Core is the platform backbone — the multi-agent orchestration engine that powers the entire ecosystem. It manages memory, routes requests, enforces security, and coordinates 34 agents seamlessly.
-          </p>
-          <div className="space-y-3 lg:space-y-4">
-            {features.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 + i * 0.1 }}
-                className="flex items-start gap-3 lg:gap-4 p-3 lg:p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:border-purple-400/20 transition-colors"
-              >
-                <div className="mt-0.5">{f.icon}</div>
-                <div>
-                  <h3 className="font-semibold text-sm lg:text-base mb-0.5 lg:mb-1">{f.title}</h3>
-                  <p className="text-xs lg:text-sm text-neutral-500">{f.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+      <SectionHeader
+        badge="Core Engine"
+        title="The Brain Behind JEBAT"
+        subtitle="Jebat Core is the platform backbone — the multi-agent orchestration engine that powers the entire ecosystem."
+      />
+      <div className="space-y-8 lg:space-y-10">
+        {/* Features Grid */}
+        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.08 }}
+              className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
+            >
+              <div className="mt-0.5">{f.icon}</div>
+              <div>
+                <h3 className="font-semibold text-sm lg:text-base mb-1">{f.title}</h3>
+                <p className="text-xs lg:text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+              </div>
+            </motion.div>
+          ))}
         </div>
-        <div className="rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8">
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <HiOutlineGlobeAlt className="w-5 h-5 text-cyan-400" />
-              <h3 className="text-xl lg:text-2xl font-bold">Provider Network</h3>
+
+        {/* Providers + Terminal Row */}
+        <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2">
+          {/* Provider Network */}
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
+            <div className="text-center mb-5">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <HiOutlineGlobeAlt className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-lg font-bold">Provider Network</h3>
+              </div>
+              <p className="text-sm text-neutral-400">Intelligent routing across 5 LLM backends</p>
             </div>
-            <p className="text-sm text-neutral-400">Intelligent routing across 5 LLM backends</p>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 mb-6">
-            {providers.map((p, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.05 }}
-                className="rounded-xl border border-white/10 bg-white/[0.02] p-3 lg:p-4 text-center"
-              >
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${p.gradient} mx-auto mb-2 flex items-center justify-center text-sm font-bold text-white`}>
-                  {p.name.substring(0, 2).toUpperCase()}
-                </div>
-                <h4 className="text-xs lg:text-sm font-semibold mb-1">{p.name}</h4>
-                <p className="text-[9px] lg:text-[10px] text-neutral-500">{p.models}</p>
-              </motion.div>
-            ))}
-          </div>
-          <div className="rounded-lg bg-black/30 border border-white/5 p-3 lg:p-4 font-mono text-xs lg:text-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <HiOutlineCommandLine className="w-4 h-4 text-cyan-400" />
-              <span className="text-white">npx jebat-core doctor</span>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              {providers.map((p, i) => (
+                <motion.div
+                  key={i}
+                  whileHover={{ scale: 1.05 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center"
+                >
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${p.gradient} mx-auto mb-2 flex items-center justify-center text-sm font-bold text-white`}>
+                    {p.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  <h4 className="text-xs font-semibold mb-1">{p.name}</h4>
+                  <p className="text-[10px] text-neutral-500">{p.models}</p>
+                </motion.div>
+              ))}
             </div>
-            <div className="text-neutral-500 space-y-1">
-              <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Memory system: 5-layer (M0-M4)</div>
-              <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Skills: 40+ installed</div>
-              <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-3.5 h-3.5 text-emerald-400" /> Gateway: 5 providers connected</div>
-              <div className="flex items-center gap-2 text-emerald-400"><HiOutlineCheckCircle className="w-3.5 h-3.5" /> System healthy</div>
+          </div>
+
+          {/* Terminal */}
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <HiOutlineCommandLine className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-lg font-bold">System Health</h3>
+            </div>
+            <div className="rounded-lg bg-black/30 border border-white/5 p-4 font-mono text-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-cyan-400">$</span> <span className="text-white">npx jebat-core doctor</span>
+              </div>
+              <div className="text-neutral-500 space-y-2">
+                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Memory system: 5-layer (M0-M4)</div>
+                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Skills: 40+ installed</div>
+                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Gateway: 5 providers connected</div>
+                <div className="flex items-center gap-2 text-emerald-400 font-semibold"><HiOutlineCheckCircle className="w-4 h-4 flex-shrink-0" /> System healthy</div>
+              </div>
             </div>
           </div>
         </div>
@@ -741,7 +749,7 @@ function OrchestrationSection() {
         title="5 Research-Backed Orchestration Modes"
         subtitle="Based on AutoGen, ChatDev 2.0, and MAD Paradigm papers. Choose the right pattern for your use case."
       />
-      <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
         {modes.map((m, i) => (
           <motion.div
             key={i}
@@ -792,7 +800,7 @@ function WhySection() {
         title="Why Enterprise Teams Choose JEBAT"
         subtitle="Built for organizations that demand privacy, performance, and control over their AI infrastructure."
       />
-      <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
         {reasons.map((r, i) => (
           <motion.div
             key={i}
@@ -833,79 +841,82 @@ function ChatSection() {
 
   return (
     <SectionContent>
-      <div className="grid gap-8 lg:gap-12 lg:grid-cols-2 items-center">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
-            Live Demo
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">Experience JEBAT Chat</h2>
-          <p className="text-neutral-400 text-base lg:text-lg mb-8 leading-relaxed">
-            Try our live chat interface with 8 local LLMs, 5 orchestration modes, and enterprise-grade features. No signup, no API key required.
-          </p>
-          <div className="space-y-3 lg:space-y-4 mb-8">
-            {features.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 + i * 0.1 }}
-                className="flex items-start gap-3 lg:gap-4 p-3 lg:p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
-              >
-                <div className="mt-0.5">{f.icon}</div>
+      <SectionHeader
+        badge="Live Demo"
+        title="Experience JEBAT Chat"
+        subtitle="Try our live chat interface with 8 local LLMs, 5 orchestration modes, and enterprise-grade features. No signup, no API key required."
+      />
+      <div className="space-y-8 lg:space-y-10">
+        {/* Features Grid */}
+        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.08 }}
+              className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
+            >
+              <div className="mt-0.5">{f.icon}</div>
+              <div>
+                <h3 className="font-semibold text-sm lg:text-base mb-1">{f.title}</h3>
+                <p className="text-xs lg:text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Chat Mockup + CTA */}
+        <div className="flex flex-col items-center gap-6">
+          {/* Chat Mockup */}
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
+            <div className="rounded-xl bg-black/40 border border-white/5 overflow-hidden">
+              <div className="p-4 border-b border-white/5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">AI</div>
                 <div>
-                  <h3 className="font-semibold text-sm lg:text-base mb-0.5 lg:mb-1">{f.title}</h3>
-                  <p className="text-xs lg:text-sm text-neutral-500">{f.desc}</p>
+                  <div className="text-sm font-semibold">Jebat Chat</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400"/>
+                    <span className="text-[10px] text-emerald-400">Online · 8 models ready</span>
+                  </div>
                 </div>
-              </motion.div>
-            ))}
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="flex justify-end">
+                  <div className="rounded-2xl rounded-br-md bg-blue-600/20 border border-blue-500/20 px-4 py-3 max-w-[80%]">
+                    <p className="text-sm">Compare Python vs JavaScript for backend development</p>
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-4 py-3 max-w-[85%]">
+                    <p className="text-sm mb-2 font-semibold">## Python vs JavaScript: Backend</p>
+                    <div className="rounded-lg bg-black/30 p-3 mb-2 font-mono text-xs overflow-x-auto">
+                      <div className="text-cyan-400">| Feature | Python | JavaScript |</div>
+                      <div className="text-neutral-600">|---------|--------|------------|</div>
+                      <div className="text-neutral-400">| Typing | Strong | Dynamic |</div>
+                      <div className="text-neutral-400">| Async | asyncio | Native |</div>
+                      <div className="text-neutral-400">| ML/AI | Excellent | Growing |</div>
+                    </div>
+                    <p className="text-xs text-neutral-400">Python excels in AI/ML ecosystems while JavaScript dominates full-stack development...</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t border-white/5 flex items-center gap-2">
+                <div className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-neutral-500">Message Jebat...</div>
+                <button className="rounded-full bg-cyan-400/20 p-2">
+                  <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-cyan-400" />
+                </button>
+              </div>
+            </div>
           </div>
-          <a href="/chat" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-semibold text-black shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
+
+          {/* CTA */}
+          <a href="/chat" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
             <HiOutlinePlay className="w-5 h-5" />
             Launch Chat Interface
             <HiOutlineArrowRight className="w-4 h-4" />
           </a>
-        </div>
-        <div className="rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8">
-          <div className="rounded-xl bg-black/40 border border-white/5 overflow-hidden">
-            <div className="p-3 lg:p-4 border-b border-white/5 flex items-center gap-2 lg:gap-3">
-              <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-[10px] lg:text-xs font-bold text-white">AI</div>
-              <div>
-                <div className="text-xs lg:text-sm font-semibold">Jebat Chat</div>
-                <div className="flex items-center gap-1.5">
-                  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400"/>
-                  <span className="text-[9px] lg:text-[10px] text-emerald-400">Online &middot; 8 models ready</span>
-                </div>
-              </div>
-            </div>
-            <div className="p-3 lg:p-4 space-y-3 lg:space-y-4">
-              <div className="flex justify-end">
-                <div className="rounded-2xl rounded-br-md bg-blue-600/20 border border-blue-500/20 px-3 lg:px-4 py-2 lg:py-3 max-w-[80%]">
-                  <p className="text-xs lg:text-sm">Compare Python vs JavaScript for backend development</p>
-                </div>
-              </div>
-              <div className="flex justify-start">
-                <div className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-3 lg:px-4 py-2 lg:py-3 max-w-[85%]">
-                  <p className="text-xs lg:text-sm mb-2 font-semibold">## Python vs JavaScript: Backend</p>
-                  <div className="rounded-lg bg-black/30 p-2 lg:p-3 mb-2 font-mono text-[9px] lg:text-xs overflow-x-auto">
-                    <div className="text-cyan-400">| Feature | Python | JavaScript |</div>
-                    <div className="text-neutral-600">|---------|--------|------------|</div>
-                    <div className="text-neutral-400">| Typing | Strong | Dynamic |</div>
-                    <div className="text-neutral-400">| Async | asyncio | Native |</div>
-                    <div className="text-neutral-400">| ML/AI | Excellent | Growing |</div>
-                  </div>
-                  <p className="text-xs text-neutral-400">Python excels in AI/ML ecosystems while JavaScript dominates full-stack development...</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-3 lg:p-4 border-t border-white/5 flex items-center gap-2">
-              <div className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-neutral-500">Message Jebat...</div>
-              <button className="rounded-full bg-cyan-400/20 p-1.5 lg:p-2">
-                <HiOutlineChatBubbleLeftRight className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-cyan-400" />
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </SectionContent>
@@ -923,7 +934,7 @@ function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/5 to-purple-400/5 p-8 lg:p-16"
+          className="rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/5 to-purple-400/5 p-8 lg:p-12 max-w-4xl mx-auto"
         >
           <div className="inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20 mx-auto mb-4 lg:mb-6">
             <HiOutlineRocketLaunch className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
