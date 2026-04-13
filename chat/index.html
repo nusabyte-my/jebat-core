@@ -757,7 +757,7 @@
                         <span class="message-role">${msg.role === 'user' ? 'You' : msg.model || 'Jebat'}</span>
                         ${msg.isLLMChat ? `<span class="llm-indicator">${msg.model1} → ${msg.model2}</span>` : ''}
                     </div>
-                    <div class="message-content">${msg.content}</div>
+                    <div class="message-content">${msg.role === 'system' ? msg.content.replace(/\\n/g, '<br>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') : msg.content}</div>
                 `;
                 container.appendChild(div);
             });
@@ -872,116 +872,42 @@
             document.getElementById('sendBtn').disabled = true;
             startJokes();
             
+            let response1 = '', response2 = '', response3 = '';
+            
             try {
-                // LLM 1 speaks first - show thinking with shimmer
-                let thinkingDiv = document.createElement('div');
-                thinkingDiv.className = 'message assistant';
-                thinkingDiv.id = 'thinkingMessage';
-                thinkingDiv.innerHTML = `
-                    <div class="message-header">
-                        <div class="avatar ai">${name1.substring(0, 2).toUpperCase()}</div>
-                        <span class="message-role">${name1}</span>
-                        <span class="ml-2 text-xs text-cyan-400 animate-pulse">Thinking...</span>
-                    </div>
-                    <div class="message-content">
-                        <div class="typing-indicator">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                        </div>
-                        <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
-                    </div>
-                `;
-                container.appendChild(thinkingDiv);
-                container.scrollTop = container.scrollHeight;
-                
-                const prompt1 = `Another AI wants to discuss: "${topic}". Share your thoughts (keep it concise, 2-3 sentences).`;
-                const response1 = await callOllama(model1, prompt1, conv);
-                
-                thinkingDiv.remove();
+                // Phase 1: LLM 1 speaks
+                response1 = await llmThinkAndRespond(container, model1, name1, name2, 
+                    `Another AI wants to discuss: "${topic}". Share your thoughts (keep it concise, 2-3 sentences).`, conv);
                 conv.messages.push({
-                    role: 'assistant',
-                    content: response1,
-                    model: name1,
-                    isLLMChat: true,
-                    model1: name1,
-                    model2: name2
+                    role: 'assistant', content: response1, model: name1,
+                    isLLMChat: true, model1: name1, model2: name2
                 });
                 renderMessages();
                 await sleep(500);
                 
-                // LLM 2 responds - show thinking with shimmer
-                thinkingDiv = document.createElement('div');
-                thinkingDiv.className = 'message assistant';
-                thinkingDiv.id = 'thinkingMessage';
-                thinkingDiv.innerHTML = `
-                    <div class="message-header">
-                        <div class="avatar ai">${name2.substring(0, 2).toUpperCase()}</div>
-                        <span class="message-role">${name2}</span>
-                        <span class="ml-2 text-xs text-cyan-400 animate-pulse">Thinking...</span>
-                    </div>
-                    <div class="message-content">
-                        <div class="typing-indicator">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                        </div>
-                        <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
-                    </div>
-                `;
-                container.appendChild(thinkingDiv);
-                container.scrollTop = container.scrollHeight;
-                
-                const prompt2 = `Model A said: "${response1}". What's your perspective? (keep it concise, 2-3 sentences)`;
-                const response2 = await callOllama(model2, prompt2, conv);
-                
-                thinkingDiv.remove();
+                // Phase 2: LLM 2 responds
+                response2 = await llmThinkAndRespond(container, model2, name2, name1,
+                    `Model A (${name1}) said: "${response1}". What's your perspective? (keep it concise, 2-3 sentences)`, conv);
                 conv.messages.push({
-                    role: 'assistant',
-                    content: response2,
-                    model: name2,
-                    isLLMChat: true,
-                    model1: name1,
-                    model2: name2
+                    role: 'assistant', content: response2, model: name2,
+                    isLLMChat: true, model1: name1, model2: name2
                 });
                 renderMessages();
                 await sleep(500);
                 
-                // LLM 1 final response - show thinking with shimmer
-                thinkingDiv = document.createElement('div');
-                thinkingDiv.className = 'message assistant';
-                thinkingDiv.id = 'thinkingMessage';
-                thinkingDiv.innerHTML = `
-                    <div class="message-header">
-                        <div class="avatar ai">${name1.substring(0, 2).toUpperCase()}</div>
-                        <span class="message-role">${name1}</span>
-                        <span class="ml-2 text-xs text-cyan-400 animate-pulse">Replying...</span>
-                    </div>
-                    <div class="message-content">
-                        <div class="typing-indicator">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                        </div>
-                        <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
-                    </div>
-                `;
-                container.appendChild(thinkingDiv);
-                container.scrollTop = container.scrollHeight;
-                
-                const prompt3 = `Model B responded: "${response2}". Any counterpoints? (keep it brief)`;
-                const response3 = await callOllama(model1, prompt3, conv);
-                
-                thinkingDiv.remove();
+                // Phase 3: LLM 1 replies
+                response3 = await llmThinkAndRespond(container, model1, name1, name2,
+                    `Model B (${name2}) responded: "${response2}". Any counterpoints? (keep it brief)`, conv);
                 conv.messages.push({
-                    role: 'assistant',
-                    content: response3,
-                    model: name1,
-                    isLLMChat: true,
-                    model1: name1,
-                    model2: name2
+                    role: 'assistant', content: response3, model: name1,
+                    isLLMChat: true, model1: name1, model2: name2
                 });
                 renderMessages();
+                await sleep(500);
+                
+                // Phase 4: Conclusion
+                await showConclusion(container, topic, response1, response2, response3, name1, name2, conv);
+                
             } catch (error) {
                 console.error('❌ LLM Chat Error:', error);
                 const thinkingEl = document.getElementById('thinkingMessage');
@@ -993,6 +919,72 @@
                 isStreaming = false;
                 document.getElementById('sendBtn').disabled = false;
             }
+        }
+
+        async function llmThinkAndRespond(container, model, name, otherName, prompt, conv) {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'message assistant';
+            thinkingDiv.id = 'thinkingMessage';
+            thinkingDiv.innerHTML = `
+                <div class="message-header">
+                    <div class="avatar ai">${name.substring(0, 2).toUpperCase()}</div>
+                    <span class="message-role">${name}</span>
+                    <span class="ml-2 text-xs text-cyan-400 animate-pulse">Thinking...</span>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
+                </div>
+            `;
+            container.appendChild(thinkingDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            const response = await callOllama(model, prompt, conv);
+            thinkingDiv.remove();
+            return response;
+        }
+
+        async function showConclusion(container, topic, r1, r2, r3, name1, name2, conv) {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'message system';
+            thinkingDiv.id = 'thinkingMessage';
+            thinkingDiv.innerHTML = `
+                <div class="message-header">
+                    <div class="avatar system">📝</div>
+                    <span class="message-role">Conclusion</span>
+                    <span class="ml-2 text-xs text-purple-400 animate-pulse">Summarizing...</span>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(thinkingDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            const summaryPrompt = `Based on this debate about "${topic}":
+- ${name1}: "${r1}" then "${r3}"
+- ${name2}: "${r2}"
+
+Write a brief conclusion (2-3 sentences) summarizing the key points of agreement and disagreement.`;
+
+            // Use model1 for the summary
+            const summary = await callOllama(document.getElementById('primaryModel').value, summaryPrompt, conv);
+            thinkingDiv.remove();
+            
+            conv.messages.push({
+                role: 'system',
+                content: `📝 **Conclusion**\n\n${summary}`,
+                model: 'Summary'
+            });
+            renderMessages();
         }
 
         async function callOllama(model, message, conv) {
