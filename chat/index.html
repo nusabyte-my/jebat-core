@@ -971,41 +971,83 @@
             document.getElementById('sendBtn').disabled = true;
             startJokes();
             
-            let response1 = '', response2 = '', response3 = '';
+            // Assign roles based on research-backed MAD paradigm
+            const roles = {
+                advocate: "You are the PROponent. Argue strongly in favor of the topic. Provide evidence, examples, and logical reasoning.",
+                critic: "You are the CRITIC. Analyze weaknesses, counterarguments, and potential flaws. Be thorough but fair.",
+                moderator: "You are the MODERATOR. Synthesize viewpoints, find common ground, and present a balanced conclusion."
+            };
+            
+            let responses = [];
             
             try {
-                // Phase 1: LLM 1 speaks
-                response1 = await llmThinkAndRespond(container, model1, name1, name2, 
-                    `Another AI wants to discuss: "${topic}". Share your thoughts in Markdown format. Use headers, lists, or tables if helpful (keep it concise, 2-3 sentences).`, conv);
+                // Round 1: Independent Positions (Parallel Thinking)
+                // Model 1 takes Advocate role
+                responses[0] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Debate Topic: "${topic}"**\n\n${roles.advocate}\n\nPresent your position in Markdown with clear arguments.`, conv);
                 conv.messages.push({
-                    role: 'assistant', content: response1, model: name1,
-                    isLLMChat: true, model1: name1, model2: name2
+                    role: 'assistant',
+                    content: `### ${name1} (Advocate)\n\n${responses[0]}`,
+                    model: name1, isLLMChat: true, model1: name1, model2: name2, round: 1
+                });
+                renderMessages();
+                await sleep(300);
+                
+                // Model 2 takes Critic role
+                responses[1] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Debate Topic: "${topic}"**\n\n${roles.critic}\n\nAnalyze the topic and provide counterarguments in Markdown.`, conv);
+                conv.messages.push({
+                    role: 'assistant',
+                    content: `### ${name2} (Critic)\n\n${responses[1]}`,
+                    model: name2, isLLMChat: true, model1: name1, model2: name2, round: 1
+                });
+                renderMessages();
+                await sleep(300);
+                
+                // Round 2: Rebuttal (Opinion Exchange - MAD Paradigm)
+                responses[2] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Debate Topic: "${topic}"**\n\n${roles.advocate}\n\nThe critic argued:\n"${responses[1].substring(0, 300)}..."\n\nRebut their points and defend your position in Markdown.`, conv);
+                conv.messages.push({
+                    role: 'assistant',
+                    content: `### ${name1} - Rebuttal\n\n${responses[2]}`,
+                    model: name1, isLLMChat: true, model1: name1, model2: name2, round: 2
+                });
+                renderMessages();
+                await sleep(300);
+                
+                responses[3] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Debate Topic: "${topic}"**\n\n${roles.critic}\n\nThe advocate countered:\n"${responses[2].substring(0, 300)}..."\n\nProvide your final critique in Markdown.`, conv);
+                conv.messages.push({
+                    role: 'assistant',
+                    content: `### ${name2} - Final Critique\n\n${responses[3]}`,
+                    model: name2, isLLMChat: true, model1: name1, model2: name2, round: 2
+                });
+                renderMessages();
+                await sleep(300);
+                
+                // Round 3: Confidence Scores (ConfMAD Paradigm)
+                responses[4] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `Based on the debate about "${topic}", rate your confidence (0-100%) that your position is correct, and briefly explain why in Markdown.`, conv);
+                conv.messages.push({
+                    role: 'assistant',
+                    content: `### ${name1} - Confidence Assessment\n\n${responses[4]}`,
+                    model: name1, isLLMChat: true, model1: name1, model2: name2, round: 3
+                });
+                renderMessages();
+                await sleep(300);
+                
+                responses[5] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `Based on the debate about "${topic}", rate your confidence (0-100%) that your position is correct, and briefly explain why in Markdown.`, conv);
+                conv.messages.push({
+                    role: 'assistant',
+                    content: `### ${name2} - Confidence Assessment\n\n${responses[5]}`,
+                    model: name2, isLLMChat: true, model1: name1, model2: name2, round: 3
                 });
                 renderMessages();
                 await sleep(500);
                 
-                // Phase 2: LLM 2 responds
-                response2 = await llmThinkAndRespond(container, model2, name2, name1,
-                    `In Markdown format, Model A (${name1}) said: "${response1}". What's your perspective? (keep it concise, 2-3 sentences)`, conv);
-                conv.messages.push({
-                    role: 'assistant', content: response2, model: name2,
-                    isLLMChat: true, model1: name1, model2: name2
-                });
-                renderMessages();
-                await sleep(500);
-                
-                // Phase 3: LLM 1 replies
-                response3 = await llmThinkAndRespond(container, model1, name1, name2,
-                    `Model B (${name2}) responded: "${response2}". Any counterpoints in Markdown? (keep it brief)`, conv);
-                conv.messages.push({
-                    role: 'assistant', content: response3, model: name1,
-                    isLLMChat: true, model1: name1, model2: name2
-                });
-                renderMessages();
-                await sleep(500);
-                
-                // Phase 4: Conclusion
-                await showConclusion(container, topic, response1, response2, response3, name1, name2, conv);
+                // Phase 4: Moderator Conclusion (LLM-as-Judge Consensus)
+                await showModeratorConclusion(container, topic, responses, name1, name2, model1, conv);
                 
             } catch (error) {
                 console.error('❌ LLM Chat Error:', error);
@@ -1018,6 +1060,61 @@
                 isStreaming = false;
                 document.getElementById('sendBtn').disabled = false;
             }
+        }
+
+        async function showModeratorConclusion(container, topic, responses, name1, name2, model1, conv) {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'message system';
+            thinkingDiv.id = 'thinkingMessage';
+            thinkingDiv.innerHTML = `
+                <div class="message-header">
+                    <div class="avatar system">⚖️</div>
+                    <span class="message-role">Moderator Synthesis</span>
+                    <span class="ml-2 text-xs text-purple-400 animate-pulse">Analyzing debate...</span>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(thinkingDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            const moderatorPrompt = `**Multi-Agent Debate Summary Request**
+
+Topic: ${topic}
+
+${name1} (Advocate) argued:
+"${responses[0]?.substring(0, 200) || 'N/A'}"
+Rebuttal: "${responses[2]?.substring(0, 200) || 'N/A'}"
+Confidence: "${responses[4]?.substring(0, 100) || 'N/A'}"
+
+${name2} (Critic) argued:
+"${responses[1]?.substring(0, 200) || 'N/A'}"
+Critique: "${responses[3]?.substring(0, 200) || 'N/A'}"
+Confidence: "${responses[5]?.substring(0, 100) || 'N/A'}"
+
+As an impartial moderator, provide a comprehensive conclusion in Markdown format:
+1. **Summary of Key Arguments** from both sides
+2. **Points of Agreement** between advocates
+3. **Irreconcilable Differences** where they disagree
+4. **Strength of Evidence** assessment
+5. **Balanced Conclusion** with your recommendation
+
+Use tables, lists, and headers to organize the analysis clearly.`;
+
+            const conclusion = await callOllama(model1, moderatorPrompt, conv);
+            thinkingDiv.remove();
+            
+            conv.messages.push({
+                role: 'system',
+                content: conclusion,
+                model: 'Moderator'
+            });
+            renderMessages();
         }
 
         async function llmThinkAndRespond(container, model, name, otherName, prompt, conv) {
