@@ -991,24 +991,45 @@ Write a brief conclusion (2-3 sentences) summarizing the key points of agreement
             const modelName = model.includes('/') ? model.split('/')[1] : model;
             console.log('📡 Calling Ollama:', modelName, 'at', `${OLLAMA_URL}/api/chat`);
             
-            const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: modelName,
-                    messages: [
-                        { role: 'system', content: 'You are Jebat Agent, a helpful AI assistant. Be concise and direct.' },
-                        ...conv.messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
-                    ],
-                    stream: false
-                })
-            });
+            // Try up to 3 times (models may need to load into memory)
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                if (attempt > 1) {
+                    console.log(`🔄 Retry ${attempt}/3 for ${modelName}...`);
+                    await sleep(2000);
+                }
+                
+                try {
+                    const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: modelName,
+                            messages: [
+                                { role: 'system', content: 'You are Jebat Agent, a helpful AI assistant. Be concise and direct.' },
+                                ...conv.messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
+                            ],
+                            stream: false,
+                            options: { num_predict: 512 }
+                        })
+                    });
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            
-            const data = await res.json();
-            console.log('✅ Got response:', data.message?.content?.substring(0, 50));
-            return data.message?.content || 'No response';
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    
+                    const data = await res.json();
+                    const response = data.message?.content?.trim() || '';
+                    
+                    if (!response && attempt < 3) {
+                        console.log('⚠️ Empty response, retrying...');
+                        continue;
+                    }
+                    
+                    console.log('✅ Got response:', response.substring(0, 50) || '(empty)');
+                    return response || `I apologize, but I couldn't generate a response for "${modelName}". The model may still be loading.`;
+                } catch (e) {
+                    if (attempt === 3) throw e;
+                    console.log(`⚠️ Attempt ${attempt} failed: ${e.message}`);
+                }
+            }
         }
 
         async function callBYOK(provider, message, conv) {
