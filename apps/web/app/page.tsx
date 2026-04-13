@@ -1,1064 +1,1300 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
+import {
+  HiOutlineCpuChip,
+  HiOutlineServerStack,
+  HiOutlineUsers,
+  HiOutlineShieldCheck,
+  HiOutlineBolt,
+  HiOutlineChatBubbleLeftRight,
+  HiOutlineRocketLaunch,
+  HiOutlineGlobeAlt,
+  HiOutlineLockClosed,
+  HiOutlineDocumentText,
+  HiOutlineCommandLine,
+  HiOutlineCube,
+  HiOutlineCog6Tooth,
+  HiOutlineCheckCircle,
+  HiOutlineArrowRight,
+  HiOutlinePlay,
+  HiOutlineEye,
+  HiOutlineSquares2X2,
+  HiOutlineArrowPath,
+  HiOutlineSignal,
+  HiOutlineMagnifyingGlass,
+  HiOutlineClipboardDocumentCheck,
+  HiOutlineKey,
+  HiOutlineBanknotes,
+  HiOutlineChartBar,
+  HiOutlineAcademicCap,
+  HiOutlineBuildingOffice,
+  HiOutlineCodeBracket,
+  HiOutlineWrenchScrewdriver,
+  HiOutlineQueueList,
+  HiOutlineBookOpen,
+} from "react-icons/hi2";
 
-// ─── Components ──────────────────────────────────────────────────────────
+// ─── Data ───────────────────────────────────────────────────────────────
+
+const SECTIONS = [
+  "hero", "agent", "portal", "chat", "gelanggang", "security", "guides", "cta",
+] as const;
+
+type SectionId = (typeof SECTIONS)[number];
+
+const SECTION_LABELS: Record<SectionId, string> = {
+  hero: "Home",
+  agent: "Agent",
+  portal: "Portal",
+  chat: "Chat",
+  gelanggang: "Arena",
+  security: "Security",
+  guides: "Guides",
+  cta: "Get Started",
+};
+
+const ICON_SIZE = "1.25rem";
+const ICON_CLASS = "text-cyan-400 flex-shrink-0";
+
+// ─── Background Animation ───────────────────────────────────────────────
+
+function AgentNetworkBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const nodesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number; size: number; label: string }>>([]);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const labels = ["Panglima", "Tukang", "Hulubalang", "Pengawal", "Pawang", "Syahbandar", "Bendahara", "Hikmat", "Penganalisis", "Penyemak"];
+    const nodes = labels.map((label) => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: 2 + Math.random() * 2,
+      label,
+    }));
+    nodesRef.current = nodes;
+
+    const handleMouse = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("mousemove", handleMouse);
+
+    let animId: number;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      nodes.forEach((n) => {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+        const dx = mouseRef.current.x - n.x;
+        const dy = mouseRef.current.y - n.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 200) {
+          n.vx += dx * 0.00003;
+          n.vy += dy * 0.00003;
+        }
+        n.vx *= 0.999;
+        n.vy *= 0.999;
+      });
+
+      const connectionDist = 180;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < connectionDist) {
+            const opacity = (1 - dist / connectionDist) * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      }
+
+      nodes.forEach((n) => {
+        const dx = mouseRef.current.x - n.x;
+        const dy = mouseRef.current.y - n.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 250) {
+          const opacity = (1 - dist / 250) * 0.25;
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
+          ctx.strokeStyle = `rgba(34, 211, 238, ${opacity})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      });
+
+      nodes.forEach((n) => {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.size + 3, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(59, 130, 246, 0.08)";
+        ctx.fill();
+      });
+
+      animId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouse);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-0"
+      style={{ opacity: 0.5 }}
+    />
+  );
+}
+
+// ─── Section Wrapper ────────────────────────────────────────────────────
+
+function SectionContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 lg:py-8 overflow-y-auto ${className}`}>
+      <div className="max-w-6xl mx-auto w-full relative z-10">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ badge, title, subtitle }: { badge: string; title: string; subtitle: string }) {
+  return (
+    <div className="text-center mb-10 lg:mb-16">
+      <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
+        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
+        {badge}
+      </span>
+      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 lg:mb-4">{title}</h2>
+      <p className="max-w-2xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">{subtitle}</p>
+    </div>
+  );
+}
+
+// ─── Navbar ─────────────────────────────────────────────────────────────
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("scroll", () => setScrolled(window.scrollY > 20));
-  }
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handler);
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  const scrollTo = (id: string) => {
+    setMobileOpen(false);
+    const el = document.getElementById(`section-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5" : "bg-transparent"}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div>
-            <span className="text-lg font-bold tracking-tight">JEBAT</span>
-            <span className="ml-2 text-[10px] font-medium text-cyan-400/80 border border-cyan-400/20 rounded-full px-2 py-0.5">v3.0</span>
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-[#050505]/90 backdrop-blur-xl border-b border-white/5" : "bg-transparent"
+      }`}
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
+        <a href="/" className="flex items-center gap-2 lg:gap-3 group">
+          <motion.div
+            className="flex items-center justify-center w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20"
+            whileHover={{ scale: 1.1, rotate: 5 }}
+          >
+            <HiOutlineCpuChip className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+          </motion.div>
+          <div className="flex items-center gap-1 lg:gap-2">
+            <span className="text-base lg:text-lg font-bold tracking-tight">JEBAT</span>
+            <span className="hidden sm:inline text-[10px] font-medium text-cyan-400/80 border border-cyan-400/20 rounded-full px-2 py-0.5">v3.0</span>
           </div>
         </a>
 
-        <div className="hidden md:flex items-center gap-1 text-sm">
-          {[
-            { href: "#platform", label: "Platform" },
-            { href: "#agents-registry", label: "Agents" },
-            { href: "#specialists", label: "Specialists" },
-            { href: "#features", label: "Features" },
-            { href: "#chat", label: "Chat" },
-            { href: "#security", label: "Security" },
-            { href: "/gelanggang", label: "Gelanggang" },
-            { href: "/portal", label: "Portal" },
-          ].map(link => (
-            <a key={link.href} href={link.href} className="px-3 py-2 text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5">
-              {link.label}
-            </a>
+        <div className="hidden xl:flex items-center gap-1">
+          {SECTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => scrollTo(s)}
+              className="px-3 py-2 text-xs lg:text-sm text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5"
+            >
+              {SECTION_LABELS[s]}
+            </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-            GitHub
-          </a>
-          <a href="/chat" className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10 transition">
+        <div className="flex items-center gap-2 lg:gap-3">
+          <a href="/chat" className="hidden sm:inline-flex items-center gap-1 lg:gap-2 rounded-full border border-white/10 bg-white/5 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm text-white hover:bg-white/10 transition">
+            <HiOutlineChatBubbleLeftRight className="w-3.5 h-3.5" />
             Try Chat
           </a>
-          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-2 text-sm font-semibold text-black hover:from-cyan-300 hover:to-blue-400 transition shadow-lg shadow-cyan-500/20">
+          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-3 lg:px-5 py-1.5 lg:py-2 text-xs lg:text-sm font-semibold text-black hover:from-cyan-300 hover:to-blue-400 transition shadow-lg shadow-cyan-500/20">
             Get Started
           </a>
-          <button className="md:hidden text-white" onClick={() => setMobileOpen(!mobileOpen)}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="xl:hidden text-white p-1" onClick={() => setMobileOpen(!mobileOpen)}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {mobileOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>}
             </svg>
           </button>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#050505]/98 border-t border-white/5 px-6 py-4 space-y-2">
-          {["#platform", "#agents-registry", "#specialists", "#features", "#agent", "#core", "#chat", "#security"].map(href => (
-            <a key={href} href={href} className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>
-              {href.replace("#", "").replace("-", " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
-            </a>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="xl:hidden bg-[#050505]/98 border-t border-white/5 px-4 sm:px-6 py-4 space-y-1"
+        >
+          {SECTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => scrollTo(s)}
+              className="block w-full text-left px-3 py-2 text-sm text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5"
+            >
+              {SECTION_LABELS[s]}
+            </button>
           ))}
-          <a href="/gelanggang" className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>Gelanggang</a>
-          <a href="/portal" className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>Portal</a>
-        </div>
+        </motion.div>
       )}
-    </nav>
+    </motion.nav>
   );
 }
+
+// ─── Side Dots ──────────────────────────────────────────────────────────
+
+function SideDots() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = SECTIONS.indexOf(entry.target.id.replace("section-", "") as SectionId);
+            if (idx >= 0) setActive(idx);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    SECTIONS.forEach((s) => {
+      const el = document.getElementById(`section-${s}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(`section-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <div className="fixed right-3 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 sm:gap-3">
+      {SECTIONS.map((s, i) => (
+        <button
+          key={s}
+          onClick={() => scrollTo(s)}
+          className="group flex flex-col items-center gap-1"
+          title={SECTION_LABELS[s]}
+        >
+          <motion.div
+            className={`rounded-full transition-all duration-300 ${
+              active === i
+                ? "bg-cyan-400 w-2 h-5 sm:w-2.5 sm:h-6"
+                : "bg-neutral-600 w-2 h-2 sm:w-2.5 sm:h-2.5 group-hover:bg-neutral-400"
+            }`}
+          />
+          <span className={`hidden lg:block text-[9px] transition-colors whitespace-nowrap ${active === i ? "text-cyan-400" : "text-neutral-600"}`}>
+            {SECTION_LABELS[s]}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── SECTION: Hero ──────────────────────────────────────────────────────
 
 function HeroSection() {
+  const stats = [
+    { value: "10", label: "Core Agents", icon: <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
+    { value: "24", label: "Specialists", icon: <HiOutlineUsers className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
+    { value: "5", label: "Orchestration", icon: <HiOutlineArrowPath className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
+    { value: "100%", label: "Self-Hosted", icon: <HiOutlineLockClosed className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
+  ];
+
   return (
-    <section className="relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-cyan-400/5 rounded-full blur-3xl"/>
-        <div className="absolute top-40 right-10 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl"/>
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]"/>
-      </div>
+    <SectionContent>
+      <div className="text-center space-y-8 lg:space-y-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300"
+        >
+          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"/>
+          Enterprise AI Platform &middot; Self-Hosted &middot; Zero Cloud Dependency
+        </motion.div>
 
-      <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-16 md:pt-32 md:pb-24">
-        <div className="text-center space-y-8 max-w-5xl mx-auto">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"/>
-            Self-Hosted · Enterprise-Ready · 100% Private
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl leading-[1.05]">
+        <div className="max-w-5xl mx-auto">
+          <motion.h1
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-4 lg:mb-6"
+          >
             The AI Platform That{" "}
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">Remembers</span>,{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">Collaborates</span>,{" "}
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">Protects</span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="max-w-3xl mx-auto text-lg md:text-xl leading-8 text-neutral-400">
-            JEBAT combines <strong className="text-white">eternal memory</strong>,{" "}
-            <strong className="text-white">multi-agent orchestration</strong> across 8 local LLMs, and{" "}
-            <strong className="text-white">enterprise security</strong> into one self-hosted platform.
-            <br className="hidden md:block"/>
-            Download, install, and own your AI — no cloud dependency.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black hover:from-cyan-300 hover:to-blue-400 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              Download JEBAT
-              <svg className="w-4 h-4 transition group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-            </a>
-            <a href="/chat" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-              Try Chat Demo
-            </a>
-            <a href="/gelanggang" className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition flex items-center gap-2">
-              🏛️ Watch Gelanggang
-            </a>
-          </div>
-
-          {/* Trust Stats */}
-          <div className="pt-12 grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-            {[
-              { value: "10", label: "Core Agents", icon: "🤖" },
-              { value: "24", label: "Specialists", icon: "👥" },
-              { value: "8", label: "Local LLMs", icon: "⚡" },
-              { value: "5", label: "LLM Providers", icon: "🌐" },
-              { value: "100%", label: "Self-Hosted", icon: "🔒" },
-            ].map((stat, i) => (
-              <div key={i} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 hover:border-cyan-400/20 transition">
-                <div className="text-2xl mb-2">{stat.icon}</div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
-                <div className="text-xs text-neutral-500">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+            <span className="block mt-1 sm:mt-2">
+              <motion.span
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent"
+              >
+                Remembers,
+              </motion.span>{" "}
+              <motion.span
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.35 }}
+                className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
+              >
+                Collaborates,
+              </motion.span>{" "}
+              <motion.span
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+                className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent"
+              >
+                Protects.
+              </motion.span>
+            </span>
+          </motion.h1>
         </div>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6 }}
+          className="max-w-3xl mx-auto text-base lg:text-lg text-neutral-400 leading-relaxed"
+        >
+          JEBAT is the enterprise-grade, self-hosted AI orchestration platform that combines{" "}
+          <strong className="text-white">eternal memory</strong>,{" "}
+          <strong className="text-white">multi-agent collaboration</strong>, and{" "}
+          <strong className="text-white">military-grade security</strong> into one unified system.
+          Deploy on your infrastructure. Own your data. No cloud dependency.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.7 }}
+          className="flex flex-wrap justify-center gap-3 lg:gap-4"
+        >
+          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
+            <HiOutlineRocketLaunch className="w-5 h-5" />
+            Deploy JEBAT
+            <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </a>
+          <a href="/chat" className="rounded-full border border-white/15 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
+            <HiOutlineChatBubbleLeftRight className="w-5 h-5" />
+            Try Live Chat
+          </a>
+          <a href="/portal" className="rounded-full border border-white/15 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-medium text-white hover:bg-white/10 transition flex items-center gap-2">
+            <HiOutlineBuildingOffice className="w-5 h-5" />
+            Enterprise Portal
+          </a>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.8 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 max-w-4xl mx-auto pt-4"
+        >
+          {stats.map((stat, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ scale: 1.05, borderColor: "rgba(34,211,238,0.3)" }}
+              className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 lg:p-5"
+            >
+              <div className="mb-2">{stat.icon}</div>
+              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
+              <div className="text-xs text-neutral-500">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
-    </section>
+    </SectionContent>
   );
 }
+
+// ─── SECTION: Platform ──────────────────────────────────────────────────
 
 function PlatformSection() {
+  const pillars = [
+    {
+      icon: <HiOutlineCpuChip className="w-6 h-6 lg:w-7 lg:h-7 text-white" />,
+      title: "Jebat Agent",
+      subtitle: "Your Unified AI Workspace",
+      desc: "Deploy your entire AI workspace in 30 seconds. IDE integration, 8 local LLMs, channel setup, and migration from OpenClaw/Hermes — all automated.",
+      features: ["30-second setup wizard", "8 local LLM deployment", "IDE integration (VS Code, Zed, Cursor)", "Channel setup (Telegram, Discord, WhatsApp)", "OpenClaw/Hermes migration"],
+      gradient: "from-cyan-400 to-blue-500",
+      cta: "View Agent Docs",
+      link: "/agent",
+    },
+    {
+      icon: <HiOutlineServerStack className="w-6 h-6 lg:w-7 lg:h-7 text-white" />,
+      title: "Jebat Core",
+      subtitle: "The Platform Backbone",
+      desc: "5-layer cognitive memory, 40+ specialized skills, multi-agent orchestration, and the gateway that routes across 5 LLM providers with intelligent failover.",
+      features: ["M0-M4 eternal memory system", "40+ optimized skills", "Multi-agent orchestration", "CyberSec scanning & hardening", "Gateway with provider routing"],
+      gradient: "from-purple-400 to-pink-500",
+      cta: "Explore Core",
+      link: "/portal",
+    },
+  ];
+
   return (
-    <section id="platform" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">Platform Overview</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">Two Pillars. One Platform.</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">JEBAT is built on two powerful components that work together seamlessly.</p>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* Jebat Agent Card */}
-        <div className="group relative rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/5 to-transparent p-8 hover:border-cyan-400/30 transition-all duration-300">
-          <div className="absolute top-6 right-6">
-            <span className="rounded-full bg-cyan-400/10 text-cyan-400 px-3 py-1 text-xs font-medium border border-cyan-400/20">Agent</span>
-          </div>
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-cyan-500/20">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold mb-3">Jebat Agent</h3>
-          <p className="text-neutral-400 mb-6 leading-relaxed">
-            The unified AI agent combining OpenClaw control plane and Hermes capture-first methodology.
-            Setup your entire workspace in 30 seconds with one command.
-          </p>
-          <div className="space-y-3 mb-6">
-            {["30-second setup wizard", "IDE integration (VS Code, Zed, Cursor)", "Channel setup (Telegram, Discord, WhatsApp)", "Local model deployment (8 models)", "Migration from OpenClaw/Hermes"].map((f, i) => (
-              <div key={i} className="flex items-start gap-3 text-sm text-neutral-300">
-                <svg className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                {f}
+    <SectionContent>
+      <SectionHeader
+        badge="Platform Architecture"
+        title="Two Pillars. One Platform."
+        subtitle="JEBAT is built on two powerful components that work together seamlessly to deliver enterprise-grade AI capabilities."
+      />
+      <div className="grid gap-5 lg:gap-6 grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto">
+        {pillars.map((p, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15 + i * 0.15 }}
+            whileHover={{ y: -4 }}
+            className="group relative rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8 hover:border-cyan-400/20 transition-colors"
+          >
+            <div className="flex items-start justify-between mb-6">
+              <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-gradient-to-br ${p.gradient} flex items-center justify-center shadow-lg`}>
+                {p.icon}
               </div>
-            ))}
-          </div>
-          <div className="rounded-xl bg-black/40 border border-white/5 p-4 font-mono text-sm">
-            <span className="text-cyan-400">$</span> <span className="text-white">npx jebat-agent --full</span>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-6">
-            <a href="/agent" className="inline-flex items-center gap-2 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 px-4 py-2 text-sm font-medium hover:bg-cyan-400/20 transition">
-              Learn More →
+              <span className={`rounded-full bg-gradient-to-r ${p.gradient} text-white px-3 py-1 text-xs font-medium`}>{p.title}</span>
+            </div>
+            <h3 className="text-xl lg:text-2xl font-bold mb-1 lg:mb-2">{p.title}</h3>
+            <p className="text-sm lg:text-base text-cyan-400 mb-3 lg:mb-4">{p.subtitle}</p>
+            <p className="text-sm lg:text-base text-neutral-400 leading-relaxed mb-6">{p.desc}</p>
+            <div className="space-y-2 lg:space-y-3 mb-6">
+              {p.features.map((f, j) => (
+                <div key={j} className="flex items-start gap-3 text-sm text-neutral-300">
+                  <HiOutlineCheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                  {f}
+                </div>
+              ))}
+            </div>
+            <a href={p.link} className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${p.gradient} px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition`}>
+              {p.cta} <HiOutlineArrowRight className="w-4 h-4" />
             </a>
-            <a href="https://www.npmjs.com/package/jebat-agent" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 text-neutral-300 px-4 py-2 text-sm hover:bg-white/5 transition">
-              npm →
-            </a>
-          </div>
-        </div>
-
-        {/* Jebat Core Card */}
-        <div className="group relative rounded-3xl border border-white/10 bg-gradient-to-br from-purple-400/5 to-transparent p-8 hover:border-purple-400/30 transition-all duration-300">
-          <div className="absolute top-6 right-6">
-            <span className="rounded-full bg-purple-400/10 text-purple-400 px-3 py-1 text-xs font-medium border border-purple-400/20">Core</span>
-          </div>
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/20">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold mb-3">Jebat Core</h3>
-          <p className="text-neutral-400 mb-6 leading-relaxed">
-            The platform backbone — IDE context injection, MCP server, memory system, skill registry,
-            and the gateway that routes everything.
-          </p>
-          <div className="space-y-3 mb-6">
-            {["5-layer cognitive memory (M0-M4)", "40+ specialized skills", "Multi-agent orchestration", "CyberSec scanning & hardening", "Gateway with provider routing"].map((f, i) => (
-              <div key={i} className="flex items-start gap-3 text-sm text-neutral-300">
-                <svg className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                {f}
-              </div>
-            ))}
-          </div>
-          <div className="rounded-xl bg-black/40 border border-white/5 p-4 font-mono text-sm">
-            <span className="text-purple-400">$</span> <span className="text-white">npx jebat-core doctor</span>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-6">
-            <a href="/portal" className="inline-flex items-center gap-2 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 px-4 py-2 text-sm font-medium hover:bg-purple-400/20 transition">
-              Enterprise Portal →
-            </a>
-            <a href="https://www.npmjs.com/package/jebat-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 text-neutral-300 px-4 py-2 text-sm hover:bg-white/5 transition">
-              npm →
-            </a>
-          </div>
-        </div>
+          </motion.div>
+        ))}
       </div>
-    </section>
+    </SectionContent>
   );
 }
 
-function AgentsRegistry() {
+// ─── SECTION: Agents ────────────────────────────────────────────────────
+
+function AgentsSection() {
   const coreAgents = [
-    { name: "Panglima", role: "Orchestration & Command", provider: "Anthropic", model: "claude-sonnet-4", color: "cyan", icon: "⚔️", desc: "The commander — routes tasks, manages specialists, orchestrates workflows" },
-    { name: "Tukang", role: "Development & Implementation", provider: "Ollama", model: "qwen2.5-coder", color: "blue", icon: "🔨", desc: "The builder — writes code, implements features, fixes bugs" },
-    { name: "Hulubalang", role: "Security Audit & Pentest", provider: "Ollama", model: "hermes-sec-v2", color: "red", icon: "🛡️", desc: "The guardian — security reviews, penetration testing, vulnerability analysis" },
-    { name: "Pengawal", role: "CyberSec Defense", provider: "Ollama", model: "hermes-sec-v2", color: "orange", icon: "🔰", desc: "The defender — real-time threat detection, security monitoring, incident response" },
-    { name: "Pawang", role: "Research & Investigation", provider: "Anthropic", model: "claude-sonnet-4", color: "purple", icon: "🔮", desc: "The researcher — deep investigation, documentation, comparative analysis" },
-    { name: "Syahbandar", role: "Operations & Automation", provider: "Ollama", model: "qwen2.5-coder", color: "green", icon: "⚙️", desc: "The operator — CI/CD, automation, deployments, system administration" },
-    { name: "Bendahara", role: "Database & Schema", provider: "Ollama", model: "qwen2.5-coder", color: "yellow", icon: "🗄️", desc: "The treasurer — database design, SQL migrations, query optimization" },
-    { name: "Hikmat", role: "Memory & Context", provider: "Anthropic", model: "claude-sonnet-4", color: "pink", icon: "🧠", desc: "The wise — 5-layer eternal memory (M0-M4), cross-session continuity" },
-    { name: "Penganalisis", role: "Analytics & KPI Review", provider: "Anthropic", model: "claude-sonnet-4", color: "indigo", icon: "📊", desc: "The analyst — KPI tracking, funnel analysis, experiments, reporting" },
-    { name: "Penyemak", role: "QA & Validation", provider: "Anthropic", model: "claude-sonnet-4", color: "emerald", icon: "✅", desc: "The inspector — testing, verification, regression review, release confidence" },
+    { name: "Panglima", role: "Orchestration", model: "Claude 4", color: "cyan" },
+    { name: "Tukang", role: "Development", model: "Qwen Coder", color: "purple" },
+    { name: "Hulubalang", role: "Security Audit", model: "Hermes Sec", color: "red" },
+    { name: "Pengawal", role: "CyberSec", model: "Hermes Sec", color: "orange" },
+    { name: "Pawang", role: "Research", model: "Claude 4", color: "emerald" },
+    { name: "Syahbandar", role: "Operations", model: "Qwen Coder", color: "blue" },
+    { name: "Bendahara", role: "Database", model: "Qwen Coder", color: "indigo" },
+    { name: "Hikmat", role: "Memory", model: "Claude 4", color: "pink" },
+    { name: "Penganalisis", role: "Analytics", model: "Claude 4", color: "yellow" },
+    { name: "Penyemak", role: "QA", model: "Claude 4", color: "teal" },
   ];
 
   const colorMap: Record<string, string> = {
-    cyan: "from-cyan-400/10 to-cyan-600/5 border-cyan-400/20",
-    blue: "from-blue-400/10 to-blue-600/5 border-blue-400/20",
-    red: "from-red-400/10 to-red-600/5 border-red-400/20",
-    orange: "from-orange-400/10 to-orange-600/5 border-orange-400/20",
-    purple: "from-purple-400/10 to-purple-600/5 border-purple-400/20",
-    green: "from-green-400/10 to-green-600/5 border-green-400/20",
-    yellow: "from-yellow-400/10 to-yellow-600/5 border-yellow-400/20",
-    pink: "from-pink-400/10 to-pink-600/5 border-pink-400/20",
-    indigo: "from-indigo-400/10 to-indigo-600/5 border-indigo-400/20",
-    emerald: "from-emerald-400/10 to-emerald-600/5 border-emerald-400/20",
+    cyan: "from-cyan-400 to-blue-500", purple: "from-purple-400 to-pink-500", red: "from-red-400 to-rose-500",
+    orange: "from-orange-400 to-amber-500", emerald: "from-emerald-400 to-teal-500", blue: "from-blue-400 to-indigo-500",
+    indigo: "from-indigo-400 to-purple-500", pink: "from-pink-400 to-rose-500", yellow: "from-yellow-400 to-orange-500",
+    teal: "from-teal-400 to-emerald-500",
   };
 
-  const badgeMap: Record<string, string> = {
-    cyan: "bg-cyan-400/10 text-cyan-400 border-cyan-400/20",
-    blue: "bg-blue-400/10 text-blue-400 border-blue-400/20",
-    red: "bg-red-400/10 text-red-400 border-red-400/20",
-    orange: "bg-orange-400/10 text-orange-400 border-orange-400/20",
-    purple: "bg-purple-400/10 text-purple-400 border-purple-400/20",
-    green: "bg-green-400/10 text-green-400 border-green-400/20",
-    yellow: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20",
-    pink: "bg-pink-400/10 text-pink-400 border-pink-400/20",
-    indigo: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
-    emerald: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20",
-  };
-
-  return (
-    <section id="agents-registry" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">Core Agents Registry</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">10 Core Agents. One Platform.</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Each agent has a specialized role, provider, and model — orchestrated by Panglima for maximum effectiveness.</p>
-      </div>
-
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {coreAgents.map((agent, i) => (
-          <div key={i} className={`group relative rounded-2xl border bg-gradient-to-br ${colorMap[agent.color]} p-6 hover:scale-[1.02] transition-all duration-300`}>
-            <div className="flex items-start justify-between mb-3">
-              <div className="text-3xl">{agent.icon}</div>
-              <span className={`rounded-full ${badgeMap[agent.color]} px-2.5 py-0.5 text-xs font-medium border`}>
-                {agent.provider}
-              </span>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-1">{agent.name}</h3>
-            <p className="text-xs text-cyan-400 font-mono mb-2">{agent.model}</p>
-            <p className="text-sm text-neutral-400 mb-3 leading-relaxed">{agent.desc}</p>
-            <div className="text-xs text-neutral-500 uppercase tracking-wider">{agent.role}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center mt-10">
-        <a href="#specialists" className="inline-flex items-center gap-2 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 px-6 py-3 text-sm font-medium hover:bg-cyan-400/20 transition">
-          View All 24 Specialists Below ↓
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function SpecialistsGrid() {
   const specialists = [
-    { name: "Tukang Web", role: "Browser UI & Frontend", category: "Delivery", icon: "🌐" },
-    { name: "Pembina Aplikasi", role: "Cross-Layer App Delivery", category: "Delivery", icon: "📱" },
-    { name: "Khidmat Pelanggan", role: "Onboarding & Support", category: "Growth", icon: "💬" },
-    { name: "Senibina Antara Muka", role: "UI/UX & Responsive Design", category: "Design", icon: "🎨" },
-    { name: "Penyebar Reka Bentuk", role: "Design Systems & Tokens", category: "Design", icon: "✨" },
-    { name: "Pengkarya Kandungan", role: "Content Systems & Scripts", category: "Growth", icon: "📝" },
-    { name: "Jurutulis Jualan", role: "Copywriting & CTA Framing", category: "Growth", icon: "✍️" },
-    { name: "Penjejak Carian", role: "SEO & Metadata", category: "Growth", icon: "🔍" },
-    { name: "Penggerak Pasaran", role: "Marketing & Campaigns", category: "Growth", icon: "📣" },
-    { name: "Strategi Jenama", role: "Positioning & Brand Voice", category: "Strategy", icon: "🏷️" },
-    { name: "Strategi Produk", role: "Feature Framing & Roadmap", category: "Strategy", icon: "🎯" },
-    { name: "Penulis Cadangan", role: "Proposals & SOWs", category: "Strategy", icon: "📄" },
-    { name: "Penggerak Jualan", role: "Sales Collateral & One-Pagers", category: "Strategy", icon: "💼" },
-    { name: "Perisai", role: "Security Hardening", category: "Security", icon: "🛡️" },
-    { name: "Serangan", role: "Penetration Testing", category: "Security", icon: "⚔️" },
-    { name: "Hulubalang", role: "Security Audit & Pentest", category: "Security", icon: "🔒" },
-    { name: "Pengawal", role: "CyberSec Defense", category: "Security", icon: "🔰" },
-    { name: "Tukang", role: "Full-Stack Development", category: "Delivery", icon: "🔨" },
-    { name: "Bendahara", role: "Database & Migrations", category: "Delivery", icon: "🗄️" },
-    { name: "Syahbandar", role: "Ops, CI/CD & Deploy", category: "Delivery", icon: "⚙️" },
-    { name: "Penyemak", role: "QA & Validation", category: "Quality", icon: "✅" },
-    { name: "Pawang", role: "Research & Docs", category: "Knowledge", icon: "🔮" },
-    { name: "Penganalisis", role: "KPI & Funnel Analysis", category: "Quality", icon: "📊" },
-    { name: "Hikmat", role: "Memory Consolidation", category: "Knowledge", icon: "🧠" },
-  ];
-
-  const categoryColors: Record<string, string> = {
-    Delivery: "border-cyan-400/20 bg-cyan-400/5 text-cyan-400",
-    Security: "border-red-400/20 bg-red-400/5 text-red-400",
-    Growth: "border-purple-400/20 bg-purple-400/5 text-purple-400",
-    Strategy: "border-amber-400/20 bg-amber-400/5 text-amber-400",
-    Quality: "border-green-400/20 bg-green-400/5 text-green-400",
-    Design: "border-pink-400/20 bg-pink-400/5 text-pink-400",
-    Knowledge: "border-indigo-400/20 bg-indigo-400/5 text-indigo-400",
-  };
-
-  return (
-    <section id="specialists" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-purple-400/20 bg-purple-400/5 px-4 py-1.5 text-sm text-purple-300 mb-4">Specialist Agents</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">24 Specialist Agents</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Domain experts spawned on-demand for specialized tasks across delivery, security, growth, strategy, and quality.</p>
-      </div>
-
-      {/* Category Legend */}
-      <div className="flex flex-wrap justify-center gap-3 mb-10">
-        {Object.entries(categoryColors).map(([cat, cls]) => (
-          <span key={cat} className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${cls}`}>
-            {cat}
-          </span>
-        ))}
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {specialists.map((s, i) => (
-          <div key={i} className="group flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 hover:border-cyan-400/20 hover:bg-white/[0.04] transition-all duration-200">
-            <div className="text-xl flex-shrink-0">{s.icon}</div>
-            <div className="min-w-0">
-              <h4 className="text-sm font-semibold text-white truncate">{s.name}</h4>
-              <p className="text-xs text-neutral-500">{s.role}</p>
-              <span className={`inline-block mt-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${categoryColors[s.category]}`}>
-                {s.category}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center mt-10">
-        <a href="#features" className="inline-flex items-center gap-2 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 px-6 py-3 text-sm font-medium hover:bg-purple-400/20 transition">
-          Explore All Features ↓
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function FeaturesSection() {
-  const orchestrationModes = [
-    { name: "Multi-Agent Debate", desc: "Multiple agents argue positions, LLM-as-Judge reaches consensus", icon: "🗣️" },
-    { name: "Consensus Building", desc: "Agents converge on shared understanding through structured rounds", icon: "🤝" },
-    { name: "Sequential Chain", desc: "Step-by-step pipeline: research → implement → verify → deploy", icon: "🔗" },
-    { name: "Parallel Analysis", desc: "Independent workers investigate simultaneously for speed", icon: "⚡" },
-    { name: "Hierarchical Review", desc: "Multi-level review with escalating authority and scope", icon: "📋" },
-  ];
-
-  const llmModels = [
-    { name: "Gemma 4", provider: "Google", icon: "💎" },
-    { name: "Qwen2.5:14B", provider: "Alibaba", icon: "🔷" },
-    { name: "Hermes3", provider: "NousResearch", icon: "🔥" },
-    { name: "Phi-3", provider: "Microsoft", icon: "🧩" },
-    { name: "Llama 3.1:8B", provider: "Meta", icon: "🦙" },
-    { name: "Mistral", provider: "Mistral AI", icon: "💨" },
-    { name: "CodeLlama:7B", provider: "Meta", icon: "🐪" },
-    { name: "TinyLlama", provider: "TinyLlama", icon: "🔹" },
-  ];
-
-  const llmProviders = [
-    { name: "Anthropic", models: "Claude Sonnet 4", icon: "🟠" },
-    { name: "OpenAI", models: "GPT-4o, o1, o3", icon: "🔵" },
-    { name: "Gemini", models: "Gemini 2.5 Pro", icon: "🟣" },
-    { name: "Ollama", models: "8 Local Models", icon: "🦙" },
-    { name: "ZAI", models: "Zhipu GLM", icon: "🔶" },
+    "Tukang Web", "Pembina Aplikasi", "Khidmat Pelanggan", "Senibina UI/UX",
+    "Penyebar Reka Bentuk", "Penasihat Keselamatan", "Juru Audit", "Penjaga Kualiti",
+    "Perancang Strategik", "Analis Risiko", "Pemikir Kritis", "Pemeriksa Kualiti",
+    "Pereka Grafik", "Penulis Kandungan", "Jurubahasa", "Penyusun Data",
   ];
 
   return (
-    <section id="features" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-emerald-400/20 bg-emerald-400/5 px-4 py-1.5 text-sm text-emerald-300 mb-4">New Features</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">Platform Features</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Every component built for performance, security, and developer experience.</p>
-      </div>
+    <SectionContent>
+      <SectionHeader
+        badge="Agent Registry"
+        title="34 AI Agents. One Platform."
+        subtitle="10 core agents orchestrate 24 specialists — each with distinct roles, providers, and models optimized for enterprise tasks."
+      />
 
-      {/* Orchestration Modes */}
-      <div className="mb-16">
-        <h3 className="text-2xl font-bold mb-6 text-center">5 Orchestration Modes</h3>
-        <div className="grid gap-4 md:grid-cols-5">
-          {orchestrationModes.map((mode, i) => (
-            <div key={i} className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center hover:border-cyan-400/20 transition">
-              <div className="text-2xl mb-2">{mode.icon}</div>
-              <h4 className="text-sm font-semibold text-white mb-1">{mode.name}</h4>
-              <p className="text-xs text-neutral-500">{mode.desc}</p>
-            </div>
+      <div className="mb-10 lg:mb-14 max-w-5xl mx-auto">
+        <div className="flex items-center gap-2 mb-4 lg:mb-6 justify-center">
+          <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} />
+          <h3 className="text-lg lg:text-xl font-semibold">10 Core Agents</h3>
+        </div>
+        <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+          {coreAgents.map((a, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.05 + i * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              className="group relative rounded-xl lg:rounded-2xl border border-white/10 bg-white/[0.02] p-4 lg:p-5 text-center hover:border-cyan-400/20 transition-colors"
+            >
+              <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br ${colorMap[a.color]} mx-auto mb-2 lg:mb-3 flex items-center justify-center text-xs lg:text-sm font-bold text-white shadow-lg`}>
+                {a.name.substring(0, 2).toUpperCase()}
+              </div>
+              <h4 className="text-xs lg:text-sm font-bold mb-0.5">{a.name}</h4>
+              <p className="text-[9px] lg:text-[10px] text-neutral-500 mb-2">{a.role}</p>
+              <span className="inline-block rounded-full bg-white/5 border border-white/10 px-2 py-0.5 text-[8px] lg:text-[10px] text-neutral-400">{a.model}</span>
+            </motion.div>
           ))}
         </div>
       </div>
 
-      {/* LLM Models & Providers */}
-      <div className="grid gap-10 lg:grid-cols-2 mb-16">
-        {/* Local Models */}
-        <div>
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-cyan-400">8</span> Local LLM Models
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {llmModels.map((m, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg border border-white/5 bg-black/20 p-3 hover:border-cyan-400/20 transition">
-                <span className="text-lg">{m.icon}</span>
-                <div>
-                  <div className="text-sm font-medium text-white">{m.name}</div>
-                  <div className="text-xs text-neutral-500">{m.provider}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div>
+        <div className="flex items-center gap-2 mb-4 lg:mb-6 justify-center">
+          <HiOutlineUsers className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} />
+          <h3 className="text-lg lg:text-xl font-semibold">24 Specialist Agents</h3>
         </div>
-
-        {/* Providers */}
-        <div>
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-purple-400">5</span> LLM Providers
-          </h3>
-          <div className="space-y-3">
-            {llmProviders.map((p, i) => (
-              <div key={i} className="flex items-center gap-4 rounded-lg border border-white/5 bg-black/20 p-4 hover:border-purple-400/20 transition">
-                <span className="text-xl">{p.icon}</span>
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-white">{p.name}</div>
-                  <div className="text-xs text-neutral-500">{p.models}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="grid gap-2 lg:gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-8">
+          {specialists.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 + i * 0.03 }}
+              whileHover={{ scale: 1.05, borderColor: "rgba(34,211,238,0.3)" }}
+              className="rounded-lg border border-white/5 bg-white/[0.02] p-2 lg:p-3 text-center text-[9px] lg:text-xs text-neutral-400 hover:border-cyan-400/20 transition-colors"
+            >
+              {s}
+            </motion.div>
+          ))}
         </div>
       </div>
-
-      {/* Feature Grid */}
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {[
-          {
-            icon: "📝",
-            title: "Markdown Rendering",
-            desc: "Full tables, code blocks with syntax highlighting, headers, lists, and inline formatting in all AI responses.",
-            color: "cyan",
-          },
-          {
-            icon: "✨",
-            title: "Shimmer Animations",
-            desc: "Smooth shimmer loading states while AI thinks — beautiful, not frustrating. Know when work is happening.",
-            color: "purple",
-          },
-          {
-            icon: "🎯",
-            title: "Confidence Scoring (ConfMAD)",
-            desc: "Every response includes confidence metrics using ConfMAD paradigm. Know when the AI is certain or uncertain.",
-            color: "emerald",
-          },
-          {
-            icon: "⚖️",
-            title: "LLM-as-Judge Consensus",
-            desc: "A designated judge model evaluates competing agent outputs and reaches consensus for higher accuracy.",
-            color: "amber",
-          },
-          {
-            icon: "🔄",
-            title: "Retry Logic",
-            desc: "Automatic retry with exponential backoff for model loading failures. Resilient by default.",
-            color: "blue",
-          },
-          {
-            icon: "⚡",
-            title: "LRUCache Optimization",
-            desc: "Intelligent caching reduces response latency by 40-60%. Frequently accessed results served instantly.",
-            color: "green",
-          },
-        ].map((f, i) => (
-          <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] p-6 hover:border-cyan-400/20 transition">
-            <div className="text-2xl mb-3">{f.icon}</div>
-            <h4 className="text-base font-semibold text-white mb-2">{f.title}</h4>
-            <p className="text-sm text-neutral-400 leading-relaxed">{f.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Customer Portal CTA */}
-      <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-400/5 to-purple-400/5 p-8 text-center">
-        <h3 className="text-xl font-bold mb-2">Customer Portal</h3>
-        <p className="text-neutral-400 mb-4 max-w-xl mx-auto">Self-service portal for customers with usage analytics, billing, and support — all self-hosted.</p>
-        <a href="/portal" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-black px-6 py-3 text-sm font-semibold hover:from-cyan-300 hover:to-blue-400 transition shadow-lg shadow-cyan-500/20">
-          Open Customer Portal →
-        </a>
-      </div>
-    </section>
+    </SectionContent>
   );
 }
 
-function AgentSection() {
-  return (
-    <section id="agent" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">Jebat Agent</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">One Command. Full Setup.</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Configure your IDE, connect channels, deploy local models — all in 30 seconds.</p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {[
-          {
-            icon: "⚡",
-            title: "Quick Setup",
-            desc: "Interactive wizard or one-liner. Full workspace with skills and config in seconds.",
-            cmd: "npx jebat-agent --quick",
-          },
-          {
-            icon: "💻",
-            title: "IDE Integration",
-            desc: "Inject JEBAT context into VS Code, Zed, Cursor, Claude Desktop, or Gemini CLI.",
-            cmd: "npx jebat-agent --ide vscode",
-          },
-          {
-            icon: "📱",
-            title: "Channel Setup",
-            desc: "Connect Telegram, Discord, WhatsApp, or Slack with guided configuration.",
-            cmd: "npx jebat-agent --channel telegram",
-          },
-          {
-            icon: "🤖",
-            title: "Local Models",
-            desc: "Deploy Qwen2.5, Gemma 4, Phi-3, Hermes3 via Ollama or AirLLM on your VPS.",
-            cmd: "npx jebat-agent --local-model qwen2.5",
-          },
-          {
-            icon: "🔄",
-            title: "Migration",
-            desc: "Migrate from OpenClaw/Hermes automatically. Configs, skills, workspace — all converted.",
-            cmd: "npx jebat-agent --migrate",
-          },
-          {
-            icon: "🔧",
-            title: "Management",
-            desc: "Gateway control, agent health checks, skill listing, and deployment helpers.",
-            cmd: "npx jebat-gateway status",
-          },
-        ].map((item, i) => (
-          <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-            <div className="text-3xl mb-4">{item.icon}</div>
-            <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-            <p className="text-sm text-neutral-400 mb-4 leading-relaxed">{item.desc}</p>
-            <div className="rounded-lg bg-black/40 border border-white/5 p-3 font-mono text-xs text-cyan-300">{item.cmd}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center mt-10">
-        <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 px-6 py-3 text-sm font-medium hover:bg-cyan-400/20 transition">
-          Get Started on GitHub →
-        </a>
-      </div>
-    </section>
-  );
-}
+// ─── SECTION: Core Engine ───────────────────────────────────────────────
 
 function CoreSection() {
+  const features = [
+    { icon: <HiOutlineCog6Tooth className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5-Layer Memory (M0-M4)", desc: "Eternal cognitive memory with heat-based retention, cross-session continuity, and intelligent forgetting." },
+    { icon: <HiOutlineBolt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "40+ Specialized Skills", desc: "Optimized skill templates for token efficiency, from code generation to security auditing." },
+    { icon: <HiOutlineArrowPath className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Intelligent Routing", desc: "Gateway routes across 5 LLM providers with automatic failover, load balancing, and cost optimization." },
+    { icon: <HiOutlineShieldCheck className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Enterprise Security", desc: "Prompt injection defense, command sanitization, complete audit trails, and secrets management." },
+    { icon: <HiOutlineChartBar className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Performance Module", desc: "LRUCache (40-60% latency reduction), ConnectionPool (30% faster), RequestDeduplicator (30% cost savings)." },
+    { icon: <HiOutlineGlobeAlt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5 LLM Providers", desc: "Anthropic, OpenAI, Gemini, Ollama (8 local models), and ZAI — all integrated with intelligent fallback." },
+  ];
+
+  const providers = [
+    { name: "Anthropic", models: "Claude 4, Sonnet, Opus", gradient: "from-green-400 to-emerald-500" },
+    { name: "OpenAI", models: "GPT-4o, GPT-4, 3.5", gradient: "from-blue-400 to-cyan-500" },
+    { name: "Ollama", models: "8 Local Models", gradient: "from-purple-400 to-pink-500" },
+    { name: "Gemini", models: "Pro, Flash", gradient: "from-yellow-400 to-orange-500" },
+    { name: "ZAI", models: "Zhipu Models", gradient: "from-red-400 to-rose-500" },
+  ];
+
   return (
-    <section id="core" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-purple-400/20 bg-purple-400/5 px-4 py-1.5 text-sm text-purple-300 mb-4">Jebat Core</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">The Platform Backbone</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Memory, skills, agents, security — everything that makes JEBAT intelligent.</p>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {[
-          { title: "Eternal Memory", desc: "5-layer cognitive stack (M0-M4) with heat-based retention. Cross-session continuity.", icon: "🧠" },
-          { title: "Skill Registry", desc: "40+ specialized skills optimized for token efficiency and real-world patterns.", icon: "🛠️" },
-          { title: "Agent Orchestration", desc: "Multi-agent routing with 5 modes: Debate, Consensus, Sequential, Parallel, Hierarchical.", icon: "🎭" },
-          { title: "CyberSec Suite", desc: "Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest).", icon: "🛡️" },
-          { title: "Gateway Router", desc: "Provider routing across 5 LLM backends with fallback chains and load balancing.", icon: "🌐" },
-          { title: "IDE Context", desc: "Inject JEBAT into any editor. VS Code, Cursor, Zed, JetBrains, Neovim, and more.", icon: "📝" },
-          { title: "LRUCache", desc: "Intelligent caching reduces response latency by 40-60% for frequently accessed results.", icon: "⚡" },
-          { title: "Confidence Scoring", desc: "ConfMAD paradigm provides confidence metrics on every AI response.", icon: "🎯" },
-          { title: "LLM-as-Judge", desc: "Designated judge model evaluates competing outputs for consensus-driven accuracy.", icon: "⚖️" },
-        ].map((item, i) => (
-          <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-            <div className="text-3xl mb-4">{item.icon}</div>
-            <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-            <p className="text-sm text-neutral-400 leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center mt-10">
-        <a href="/portal" className="inline-flex items-center gap-2 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 px-6 py-3 text-sm font-medium hover:bg-purple-400/20 transition">
-          Explore Enterprise Portal →
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function ChatSection() {
-  return (
-    <section id="chat" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-emerald-400/20 bg-emerald-400/5 px-4 py-1.5 text-sm text-emerald-300 mb-4">Live Chat</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">Chat with Your Agents</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Manus/Kimi-style interface with LLM-to-LLM debates, BYOK support, and local models.</p>
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Chat Preview */}
-        <div className="rounded-3xl border border-white/10 bg-[#0a0a0a] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
-            <div className="w-3 h-3 rounded-full bg-red-400/60"/>
-            <div className="w-3 h-3 rounded-full bg-amber-400/60"/>
-            <div className="w-3 h-3 rounded-full bg-green-400/60"/>
-            <span className="ml-2 text-xs text-neutral-500 font-mono">jebat.chat</span>
-          </div>
-          <div className="p-6 space-y-4 min-h-[400px]">
-            {/* User message */}
-            <div className="flex justify-end">
-              <div className="rounded-2xl bg-blue-600 text-white px-4 py-3 max-w-[80%] text-sm">
-                Explain how multi-agent orchestration works in JEBAT
+    <SectionContent>
+      <SectionHeader
+        badge="Core Engine"
+        title="The Brain Behind JEBAT"
+        subtitle="Jebat Core is the platform backbone — the multi-agent orchestration engine that powers the entire ecosystem."
+      />
+      <div className="space-y-8 lg:space-y-10">
+        {/* Features Grid */}
+        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.08 }}
+              className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
+            >
+              <div className="mt-0.5">{f.icon}</div>
+              <div>
+                <h3 className="font-semibold text-sm lg:text-base mb-1">{f.title}</h3>
+                <p className="text-xs lg:text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
               </div>
-            </div>
-            {/* AI message */}
-            <div className="flex justify-start">
-              <div className="rounded-2xl bg-[#1f1f1f] text-neutral-200 px-4 py-3 max-w-[85%] text-sm leading-relaxed">
-                <p className="mb-2">JEBAT's Gelanggang system connects multiple agents across different LLM providers:</p>
-                <ol className="list-decimal list-inside space-y-1 text-neutral-400">
-                  <li><strong className="text-white">Panglima</strong> — Orchestrator (routes tasks)</li>
-                  <li><strong className="text-white">Tukang</strong> — Builder (implements solutions)</li>
-                  <li><strong className="text-white">Hulubalang</strong> — Guardian (security review)</li>
-                  <li><strong className="text-white">Penyemak</strong> — QA (validates output)</li>
-                </ol>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Providers + Terminal Row */}
+        <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2">
+          {/* Provider Network */}
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
+            <div className="text-center mb-5">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <HiOutlineGlobeAlt className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-lg font-bold">Provider Network</h3>
               </div>
+              <p className="text-sm text-neutral-400">Intelligent routing across 5 LLM backends</p>
             </div>
-            {/* LLM-to-LLM indicator */}
-            <div className="flex justify-center">
-              <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded-full px-3 py-1">
-                🤖 Qwen2.5 → Hermes3 discussion
-              </span>
-            </div>
-            {/* LLM 1 */}
-            <div className="flex justify-start">
-              <div className="rounded-2xl bg-[#1f1f1f] border-l-2 border-purple-500 text-neutral-200 px-4 py-3 max-w-[85%] text-sm">
-                <p className="text-xs text-purple-400 mb-1 font-medium">Qwen2.5 14B</p>
-                The key advantage is cross-provider diversity. Each agent can use a different model, providing diverse perspectives.
-              </div>
-            </div>
-            {/* LLM 2 */}
-            <div className="flex justify-start">
-              <div className="rounded-2xl bg-[#1f1f1f] border-l-2 border-cyan-500 text-neutral-200 px-4 py-3 max-w-[85%] text-sm">
-                <p className="text-xs text-cyan-400 mb-1 font-medium">Hermes3 8B</p>
-                Agreed. Plus the memory layer (M0-M4) ensures context persists across the entire conversation chain.
-              </div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              {providers.map((p, i) => (
+                <motion.div
+                  key={i}
+                  whileHover={{ scale: 1.05 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center"
+                >
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${p.gradient} mx-auto mb-2 flex items-center justify-center text-sm font-bold text-white`}>
+                    {p.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  <h4 className="text-xs font-semibold mb-1">{p.name}</h4>
+                  <p className="text-[10px] text-neutral-500">{p.models}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
-          {/* Input */}
-          <div className="p-4 border-t border-white/5 bg-[#0a0a0a]">
-            <div className="flex gap-3">
-              <input className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-cyan-400/50" placeholder="Message Jebat..." readOnly/>
-              <button className="bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl px-4 py-3 transition">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-              </button>
+
+          {/* Terminal */}
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <HiOutlineCommandLine className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-lg font-bold">System Health</h3>
+            </div>
+            <div className="rounded-lg bg-black/30 border border-white/5 p-4 font-mono text-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-cyan-400">$</span> <span className="text-white">npx jebat-core doctor</span>
+              </div>
+              <div className="text-neutral-500 space-y-2">
+                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Memory system: 5-layer (M0-M4)</div>
+                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Skills: 40+ installed</div>
+                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Gateway: 5 providers connected</div>
+                <div className="flex items-center gap-2 text-emerald-400 font-semibold"><HiOutlineCheckCircle className="w-4 h-4 flex-shrink-0" /> System healthy</div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </SectionContent>
+  );
+}
 
-        {/* Chat Features */}
-        <div className="space-y-6">
-          {[
-            {
-              icon: "🤖",
-              title: "LLM-to-LLM Chat",
-              desc: "Watch two AI models debate any topic. Great for idea exploration and getting multiple perspectives automatically.",
-            },
-            {
-              icon: "🔑",
-              title: "BYOK Support",
-              desc: "Bring Your Own Key — use GPT-4o, Claude, or any OpenAI-compatible model alongside local models.",
-            },
-            {
-              icon: "🌐",
-              title: "8 Local Models",
-              desc: "Gemma 4, Qwen2.5 14B, Hermes3, Phi-3, Llama 3.1, Mistral, CodeLlama, and TinyLlama — all running locally.",
-            },
-            {
-              icon: "🧠",
-              title: "Memory Context",
-              desc: "Chat with full conversation history. JEBAT remembers preferences, decisions, and context across sessions.",
-            },
-          ].map((feature, i) => (
-            <div key={i} className="flex gap-4 p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/20 transition">
-              <div className="text-2xl flex-shrink-0">{feature.icon}</div>
-              <div>
-                <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
-                <p className="text-sm text-neutral-400 leading-relaxed">{feature.desc}</p>
+// ─── SECTION: Orchestration ─────────────────────────────────────────────
+
+function OrchestrationSection() {
+  const modes = [
+    { icon: <HiOutlineChatBubbleLeftRight className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Multi-Agent Debate", desc: "Advocate vs Critic → Rebuttals → Confidence → Moderator conclusion. Research-backed MAD paradigm.", rounds: "4 Rounds", time: "~2-5 min", gradient: "from-cyan-400 to-blue-500" },
+    { icon: <HiOutlineUsers className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Consensus Building", desc: "Share perspectives → Find agreement → Final synthesized conclusion. Collaborative approach.", rounds: "3 Rounds", time: "~1.5-3 min", gradient: "from-emerald-400 to-teal-500" },
+    { icon: <HiOutlineArrowPath className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Sequential Chain", desc: "Model 1 starts → Model 2 builds → Model 1 refines. Linear knowledge building.", rounds: "3 Steps", time: "~1-2 min", gradient: "from-blue-400 to-indigo-500" },
+    { icon: <HiOutlineBolt className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Parallel Analysis", desc: "Both analyze independently → Comparison table with synthesis. Unbiased perspectives.", rounds: "2 Phases", time: "~1-2 min", gradient: "from-yellow-400 to-orange-500" },
+    { icon: <HiOutlineBuildingOffice className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Hierarchical Review", desc: "Senior delegates → Junior completes → Senior reviews. Quality control pattern.", rounds: "3 Steps", time: "~1.5-3 min", gradient: "from-purple-400 to-pink-500" },
+  ];
+
+  return (
+    <SectionContent>
+      <SectionHeader
+        badge="Orchestration Engine"
+        title="5 Research-Backed Orchestration Modes"
+        subtitle="Based on AutoGen, ChatDev 2.0, and MAD Paradigm papers. Choose the right pattern for your use case."
+      />
+      <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+        {modes.map((m, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 + i * 0.1 }}
+            whileHover={{ y: -4 }}
+            className="group relative rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8 hover:border-cyan-400/20 transition-colors"
+          >
+            <div className="flex items-start justify-between mb-4 lg:mb-6">
+              <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-gradient-to-br ${m.gradient} flex items-center justify-center shadow-lg`}>
+                {m.icon}
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] lg:text-xs text-neutral-500">{m.rounds}</div>
+                <div className="text-[10px] lg:text-xs text-neutral-600">{m.time}</div>
               </div>
             </div>
+            <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">{m.title}</h3>
+            <p className="text-sm lg:text-base text-neutral-400 leading-relaxed">{m.desc}</p>
+            <a href="/chat" className="mt-4 lg:mt-6 inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition text-xs lg:text-sm font-medium">
+              Try in Chat <HiOutlineArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </motion.div>
+        ))}
+      </div>
+    </SectionContent>
+  );
+}
+
+// ─── SECTION: Why Choose Us ─────────────────────────────────────────────
+
+function WhySection() {
+  const reasons = [
+    { icon: <HiOutlineLockClosed className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "100% Self-Hosted", desc: "Your data never leaves your infrastructure. No cloud, no third-party, no vendor lock-in. Complete sovereignty over your AI.", metric: "0 data breaches", stat: "Privacy-first" },
+    { icon: <HiOutlineBolt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "40-60% Faster", desc: "LRUCache, ConnectionPool, RequestDeduplicator, and SmartRouter — enterprise performance optimizations out of the box.", metric: "<2s local avg", stat: "Latency" },
+    { icon: <HiOutlineCog6Tooth className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Eternal Memory", desc: "5-layer cognitive memory (M0-M4) with heat-based retention. JEBAT remembers across sessions — unlike ChatGPT or Claude.", metric: "M0-M4 layers", stat: "Memory" },
+    { icon: <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "34 AI Agents", desc: "10 core agents orchestrate 24 specialists. From security audits to code review, research to customer service — all automated.", metric: "10 + 24", stat: "Agents" },
+    { icon: <HiOutlineGlobeAlt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5 LLM Providers", desc: "Anthropic, OpenAI, Gemini, Ollama (8 local models), and ZAI. Intelligent routing with automatic failover.", metric: "5 backends", stat: "Providers" },
+    { icon: <HiOutlineBanknotes className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Cost Effective", desc: "Run 8 local LLMs for free. Intelligent routing minimizes cloud API costs. No subscription fees, no per-token charges.", metric: "$0 local", stat: "Cost" },
+  ];
+
+  return (
+    <SectionContent>
+      <SectionHeader
+        badge="Why JEBAT"
+        title="Why Enterprise Teams Choose JEBAT"
+        subtitle="Built for organizations that demand privacy, performance, and control over their AI infrastructure."
+      />
+      <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+        {reasons.map((r, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 + i * 0.1 }}
+            whileHover={{ y: -4 }}
+            className="group relative rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8 hover:border-cyan-400/20 transition-colors"
+          >
+            <div className="flex items-start justify-between mb-4 lg:mb-6">
+              <div className="mt-0.5">{r.icon}</div>
+              <div className="text-right">
+                <div className="text-lg lg:text-xl font-bold text-cyan-400">{r.metric}</div>
+                <div className="text-[10px] lg:text-xs text-neutral-500">{r.stat}</div>
+              </div>
+            </div>
+            <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">{r.title}</h3>
+            <p className="text-sm lg:text-base text-neutral-400 leading-relaxed">{r.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+    </SectionContent>
+  );
+}
+
+// ─── SECTION: Live Chat ─────────────────────────────────────────────────
+
+function ChatSection() {
+  const features = [
+    { icon: <HiOutlineChatBubbleLeftRight className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Real-Time AI Chat", desc: "Chat with 8 local LLMs or cloud providers. Markdown rendering with tables, code blocks, and headers." },
+    { icon: <HiOutlineArrowPath className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5 Orchestration Modes", desc: "Switch between Debate, Consensus, Sequential, Parallel, and Hierarchical modes directly in chat." },
+    { icon: <HiOutlineUsers className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Personalized Experience", desc: "Onboarding flow remembers your name, role, and use cases. AI tailors responses to you." },
+    { icon: <HiOutlineCog6Tooth className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Session Persistence", desc: "Conversations survive page refresh. Settings remembered. Last conversation auto-loads on return." },
+    { icon: <HiOutlineBolt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Warm Model Button", desc: "Pre-load large models (9.6GB) before chatting. Smart retry logic handles model loading gracefully." },
+    { icon: <HiOutlineKey className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "BYOK Support", desc: "Bring Your Own Key for OpenAI and Anthropic. Or use 8 free local models — no API key needed." },
+  ];
+
+  return (
+    <SectionContent>
+      <SectionHeader
+        badge="Live Demo"
+        title="Experience JEBAT Chat"
+        subtitle="Try our live chat interface with 8 local LLMs, 5 orchestration modes, and enterprise-grade features. No signup, no API key required."
+      />
+      <div className="space-y-8 lg:space-y-10">
+        {/* Features Grid */}
+        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.08 }}
+              className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
+            >
+              <div className="mt-0.5">{f.icon}</div>
+              <div>
+                <h3 className="font-semibold text-sm lg:text-base mb-1">{f.title}</h3>
+                <p className="text-xs lg:text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+              </div>
+            </motion.div>
           ))}
-          <a href="/chat" className="block rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-5 text-center hover:bg-cyan-400/10 transition">
-            <span className="text-cyan-400 font-medium">Try the full chat experience →</span>
+        </div>
+
+        {/* Chat Mockup + CTA */}
+        <div className="flex flex-col items-center gap-6">
+          {/* Chat Mockup */}
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
+            <div className="rounded-xl bg-black/40 border border-white/5 overflow-hidden">
+              <div className="p-4 border-b border-white/5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">AI</div>
+                <div>
+                  <div className="text-sm font-semibold">Jebat Chat</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400"/>
+                    <span className="text-[10px] text-emerald-400">Online · 8 models ready</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="flex justify-end">
+                  <div className="rounded-2xl rounded-br-md bg-blue-600/20 border border-blue-500/20 px-4 py-3 max-w-[80%]">
+                    <p className="text-sm">Compare Python vs JavaScript for backend development</p>
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-4 py-3 max-w-[85%]">
+                    <p className="text-sm mb-2 font-semibold">## Python vs JavaScript: Backend</p>
+                    <div className="rounded-lg bg-black/30 p-3 mb-2 font-mono text-xs overflow-x-auto">
+                      <div className="text-cyan-400">| Feature | Python | JavaScript |</div>
+                      <div className="text-neutral-600">|---------|--------|------------|</div>
+                      <div className="text-neutral-400">| Typing | Strong | Dynamic |</div>
+                      <div className="text-neutral-400">| Async | asyncio | Native |</div>
+                      <div className="text-neutral-400">| ML/AI | Excellent | Growing |</div>
+                    </div>
+                    <p className="text-xs text-neutral-400">Python excels in AI/ML ecosystems while JavaScript dominates full-stack development...</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t border-white/5 flex items-center gap-2">
+                <div className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-neutral-500">Message Jebat...</div>
+                <button className="rounded-full bg-cyan-400/20 p-2">
+                  <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-cyan-400" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <a href="/chat" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
+            <HiOutlinePlay className="w-5 h-5" />
+            Launch Chat Interface
+            <HiOutlineArrowRight className="w-4 h-4" />
           </a>
         </div>
       </div>
-
-      <div className="text-center mt-10">
-        <a href="/chat" className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 px-6 py-3 text-sm font-medium hover:bg-emerald-400/20 transition">
-          Launch Chat Interface →
-        </a>
-      </div>
-    </section>
+    </SectionContent>
   );
 }
 
-function SecuritySection() {
+// ─── SECTION: CTA ───────────────────────────────────────────────────────
+
+function CTASection() {
   return (
-    <section id="security" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <span className="inline-block rounded-full border border-red-400/20 bg-red-400/5 px-4 py-1.5 text-sm text-red-300 mb-4">Security</span>
-        <h2 className="text-3xl font-bold md:text-5xl mb-4">Enterprise-Grade Security</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Zero-trust architecture with prompt injection defense, command sanitization, and complete audit trails. 100% self-hosted — no cloud dependency.</p>
-      </div>
-
-      {/* Core Security Features */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
-        {[
-          { title: "Prompt Injection Defense", desc: "Input sanitization, context isolation, pattern detection, adversarial testing", color: "red", icon: "🛡️" },
-          { title: "Command Sanitization", desc: "Whitelist-only execution, argument escaping, timeout enforcement, shell safety", color: "orange", icon: "🔒" },
-          { title: "Complete Audit Trails", desc: "Tamper-evident operation logs, JSON format, immutable history, full traceability", color: "yellow", icon: "📋" },
-          { title: "Secrets Management", desc: "Secure token handling, credential masking, auto-rotation, vault integration", color: "green", icon: "🔑" },
-        ].map((item, i) => (
-          <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center">
-            <div className="text-4xl mb-4">{item.icon}</div>
-            <h3 className="font-semibold text-white mb-2">{item.title}</h3>
-            <p className="text-xs text-neutral-400 leading-relaxed">{item.desc}</p>
+    <SectionContent>
+      <div className="text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/5 to-purple-400/5 p-8 lg:p-12 max-w-4xl mx-auto"
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20 mx-auto mb-4 lg:mb-6">
+            <HiOutlineRocketLaunch className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
           </div>
-        ))}
-      </div>
-
-      {/* CyberSec Suite */}
-      <div className="mb-12">
-        <h3 className="text-xl font-bold mb-6 text-center">CyberSec Suite — 4 Security Agents</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { name: "Hulubalang", role: "Security Audit & Pentest", desc: "Vulnerability scanning, pentesting, security review with structured findings", icon: "⚔️" },
-            { name: "Pengawal", role: "CyberSec Defense", desc: "Real-time threat detection, security monitoring, incident response protocols", icon: "🔰" },
-            { name: "Perisai", role: "Security Hardening", desc: "System hardening, configuration audit, attack surface reduction", icon: "🛡️" },
-            { name: "Serangan", role: "Penetration Testing", desc: "Offensive security, red-team simulations, exploit analysis", icon: "🗡️" },
-          ].map((agent, i) => (
-            <div key={i} className="rounded-xl border border-red-400/10 bg-red-400/[0.02] p-5 text-center hover:border-red-400/30 transition">
-              <div className="text-2xl mb-2">{agent.icon}</div>
-              <h4 className="text-sm font-semibold text-white mb-1">{agent.name}</h4>
-              <p className="text-xs text-red-400 mb-2">{agent.role}</p>
-              <p className="text-xs text-neutral-500">{agent.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Self-Hosted Badge */}
-      <div className="rounded-2xl border border-emerald-400/20 bg-gradient-to-r from-emerald-400/5 to-cyan-400/5 p-8 text-center">
-        <div className="text-4xl mb-3">🔒</div>
-        <h3 className="text-xl font-bold mb-2">100% Self-Hosted. No Cloud Dependency.</h3>
-        <p className="text-neutral-400 max-w-2xl mx-auto mb-6">
-          Every model runs locally. Every byte of data stays on your infrastructure. No telemetry, no data exfiltration, no vendor lock-in.
-          Complete sovereignty over your AI operations.
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          {["No Cloud API Calls Required", "No Data Leaves Your Server", "No Vendor Lock-In", "No Telemetry", "SOC2 Ready", "GDPR Compliant"].map((badge, i) => (
-            <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-400">
-              ✓ {badge}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="text-center mt-10">
-        <a href="#features" className="inline-flex items-center gap-2 rounded-full bg-red-400/10 border border-red-400/20 text-red-400 px-6 py-3 text-sm font-medium hover:bg-red-400/20 transition">
-          See All Security Features ↓
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function CLIDemo() {
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-12">
-        <span className="inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">npm CLI</span>
-        <h2 className="text-3xl font-bold md:text-4xl mb-4">Try from Your Terminal</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400">Two packages. Zero installation. Start in seconds.</p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* jebat-agent terminal */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
-            <div className="w-3 h-3 rounded-full bg-red-400/60"/>
-            <div className="w-3 h-3 rounded-full bg-amber-400/60"/>
-            <div className="w-3 h-3 rounded-full bg-green-400/60"/>
-            <span className="ml-2 text-xs text-neutral-500 font-mono">jebat-agent</span>
-          </div>
-          <div className="p-6 space-y-4">
-            <details className="group rounded-lg border border-white/5 bg-black/20">
-              <summary className="cursor-pointer px-4 py-3 text-sm font-mono text-cyan-300 hover:text-cyan-200 transition flex items-center justify-between">
-                <span>$ npx jebat-agent --help</span>
-                <svg className="w-4 h-4 text-neutral-500 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
-              </summary>
-              <pre className="px-4 pb-4 text-xs text-neutral-400 whitespace-pre-wrap font-mono leading-relaxed border-t border-white/5 pt-3">
-{`jebat-agent v1.0.3
-
-USAGE:
-  npx jebat-agent [options]
-
-OPTIONS:
-  --quick          Quick setup (gateway only)
-  --full           Full setup (workspace + skills)
-  --ide <ide>      IDE integration
-  --channel <ch>   Channel setup
-  --local-model <m> Setup local model
-  --migrate        Migrate from OpenClaw/Hermes`}
-              </pre>
-            </details>
-            <details className="group rounded-lg border border-white/5 bg-black/20">
-              <summary className="cursor-pointer px-4 py-3 text-sm font-mono text-cyan-300 hover:text-cyan-200 transition flex items-center justify-between">
-                <span>$ npx jebat-agent --full</span>
-                <svg className="w-4 h-4 text-neutral-500 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
-              </summary>
-              <pre className="px-4 pb-4 text-xs text-neutral-400 whitespace-pre-wrap font-mono leading-relaxed border-t border-white/5 pt-3">
-{`🚀 Setting up Jebat...
-
-1/5 Creating directory structure...
-   ✓ Created ~/.jebat
-
-2/5 Generating gateway config...
-   ✓ Gateway config generated
-
-3/5 Setting up workspace and skills...
-   ✓ Workspace and skills configured
-
-4/5 Creating environment file...
-   ✓ Environment file created
-
-5/5 Validating setup...
-   ✓ Validation passed
-
-✅ Jebat setup complete!`}
-              </pre>
-            </details>
-          </div>
-        </div>
-
-        {/* jebat-core terminal */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
-            <div className="w-3 h-3 rounded-full bg-red-400/60"/>
-            <div className="w-3 h-3 rounded-full bg-amber-400/60"/>
-            <div className="w-3 h-3 rounded-full bg-green-400/60"/>
-            <span className="ml-2 text-xs text-neutral-500 font-mono">jebat-core</span>
-          </div>
-          <div className="p-6 space-y-4">
-            <details className="group rounded-lg border border-white/5 bg-black/20">
-              <summary className="cursor-pointer px-4 py-3 text-sm font-mono text-purple-300 hover:text-purple-200 transition flex items-center justify-between">
-                <span>$ npx jebat-core doctor</span>
-                <svg className="w-4 h-4 text-neutral-500 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
-              </summary>
-              <pre className="px-4 pb-4 text-xs text-neutral-400 whitespace-pre-wrap font-mono leading-relaxed border-t border-white/5 pt-3">
-{`🩺 JEBAT Doctor — Workspace Health Check
-
-✅ Core files: 5/5
-✅ Gateway: http://localhost:18789
-✅ Skills directory found (40+ skills)
-✅ Memory: 4 daily files
-✅ JEBAT home: ~/.jebat
-
-✅ All checks passed. JEBAT is healthy.`}
-              </pre>
-            </details>
-            <details className="group rounded-lg border border-white/5 bg-black/20">
-              <summary className="cursor-pointer px-4 py-3 text-sm font-mono text-purple-300 hover:text-purple-200 transition flex items-center justify-between">
-                <span>$ npx jebat-core status</span>
-                <svg className="w-4 h-4 text-neutral-500 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
-              </summary>
-              <pre className="px-4 pb-4 text-xs text-neutral-400 whitespace-pre-wrap font-mono leading-relaxed border-t border-white/5 pt-3">
-{`📡 JEBAT System Status
-
-✅ Online Gateway (http://localhost:18789)
-✅ Healthy VPS (jebat.online)
-✅ Healthy WebUI (/webui/)
-✅ Ollama Server (8 models)
-
-✅ npm: jebat-core@3.0.0`}
-              </pre>
-            </details>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-white/5">
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-10 md:grid-cols-5">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              <div>
-                <span className="text-lg font-bold">JEBAT</span>
-                <span className="ml-2 text-[10px] text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v3.0.0</span>
-              </div>
-            </div>
-            <p className="text-sm text-neutral-400 mb-6 max-w-sm leading-relaxed">
-              The self-hosted AI platform that remembers, collaborates, and protects.
-              Built by <a href="https://nusabyte.my" className="text-cyan-300 hover:text-cyan-200 transition">NusaByte</a> for teams who need an AI operator — not just a chatbot.
-            </p>
-            <div className="flex flex-wrap gap-3 mb-6">
-              {["Self-Hosted", "SOC2 Ready", "GDPR Compliant", "MIT License"].map((badge, i) => (
-                <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-400">
-                  {badge}
-                </span>
-              ))}
-            </div>
-            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">Ready to Own Your AI?</h2>
+          <p className="text-neutral-400 text-base lg:text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+            Download JEBAT today and experience the future of self-hosted AI. No subscriptions, no cloud dependency, no limits. Deploy on your infrastructure in 30 seconds.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 lg:gap-4 mb-8">
+            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              <span>Star on GitHub</span>
+              Deploy on GitHub
+              <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </a>
+            <a href="/chat" className="rounded-full border border-white/15 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
+              <HiOutlinePlay className="w-5 h-5" />
+              Try Live Demo
             </a>
           </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Platform</h4>
-            <div className="space-y-3 text-sm text-neutral-500">
-              <a href="#agents-registry" className="block transition hover:text-white">Core Agents</a>
-              <a href="#specialists" className="block transition hover:text-white">Specialists</a>
-              <a href="#features" className="block transition hover:text-white">Features</a>
-              <a href="#agent" className="block transition hover:text-white">Jebat Agent</a>
-              <a href="#core" className="block transition hover:text-white">Jebat Core</a>
-              <a href="#chat" className="block transition hover:text-white">Chat Interface</a>
-              <a href="#security" className="block transition hover:text-white">Security</a>
-              <a href="/gelanggang" className="block transition hover:text-white">Gelanggang Demo</a>
-            </div>
+          <div className="flex flex-wrap justify-center gap-4 lg:gap-6 text-xs lg:text-sm text-neutral-500">
+            <span className="flex items-center gap-1.5">
+              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-400" />
+              Free & Open Source
+            </span>
+            <span className="flex items-center gap-1.5">
+              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-400" />
+              No Credit Card
+            </span>
+            <span className="flex items-center gap-1.5">
+              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-400" />
+              30-Second Setup
+            </span>
           </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Resources</h4>
-            <div className="space-y-3 text-sm text-neutral-500">
-              <a href="/portal" className="block transition hover:text-white">Customer Portal</a>
-              <a href="/guides" className="block transition hover:text-white">Guides</a>
-              <a href="/onboarding" className="block transition hover:text-white">Onboarding</a>
-              <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Documentation</a>
-              <a href="https://github.com/nusabyte-my/jebat-core/issues" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Report Issues</a>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Company</h4>
-            <div className="space-y-3 text-sm text-neutral-500">
-              <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">nusabyte.my</a>
-              <a href="https://github.com/nusabyte-my" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">GitHub Organization</a>
-              <a href="https://jebat.online" className="block transition hover:text-white">jebat.online</a>
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
-      <div className="border-t border-white/5">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-xs text-neutral-600">
-              © 2026 <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">NusaByte</a>.
-              Owner: <a href="https://nusabyte.my" target="_blank" rel="noopener noreferrer" className="text-neutral-400 transition hover:text-cyan-300">humm1ngb1rd</a>.
-              All rights reserved.
-            </div>
-            <div className="flex items-center gap-4 text-xs text-neutral-600">
-              <a href="https://github.com/nusabyte-my/jebat-core/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="transition hover:text-white">MIT License</a>
-              <span>·</span>
-              <span>Built in Malaysia</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
+    </SectionContent>
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────
+// ─── Feature CTA Section ────────────────────────────────────────────────
 
-export default function HomePage() {
+interface FeatureCardData {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}
+
+function FeatureCTASection({
+  agentName,
+  agentRole,
+  agentGradient,
+  agentInitials,
+  badge,
+  title,
+  subtitle,
+  features,
+  primaryCta,
+  secondaryCta,
+  primaryHref,
+  secondaryHref,
+  stats,
+  themeColor,
+}: {
+  agentName: string;
+  agentRole: string;
+  agentGradient: string;
+  agentInitials: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  features: FeatureCardData[];
+  primaryCta: string;
+  secondaryCta: string;
+  primaryHref: string;
+  secondaryHref: string;
+  stats: { value: string; label: string }[];
+  themeColor: string;
+}) {
   return (
-    <main className="min-h-screen bg-[#050505] text-neutral-100 overflow-x-hidden">
+    <SectionContent>
+      <div className="space-y-10 lg:space-y-12">
+        {/* Agent Header */}
+        <div className="text-center space-y-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className={`inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br ${agentGradient} shadow-lg mx-auto mb-4`}
+          >
+            <span className="text-2xl lg:text-3xl font-bold text-white">{agentInitials}</span>
+          </motion.div>
+          <div className="text-sm text-neutral-400">
+            <span className={`font-semibold ${themeColor}`}>{agentName}</span> · {agentRole}
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
+            {badge}
+          </span>
+        </div>
+
+        {/* Title & Subtitle */}
+        <div className="text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">{title}</h2>
+          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">{subtitle}</p>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.1 }}
+              whileHover={{ y: -4 }}
+              className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 hover:border-cyan-400/20 transition-colors"
+            >
+              <div className="mb-4">{f.icon}</div>
+              <h3 className="font-semibold text-base mb-2">{f.title}</h3>
+              <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-wrap justify-center gap-3 lg:gap-4">
+          <a href={primaryHref} className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
+            {primaryCta}
+            <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </a>
+          <a href={secondaryHref} className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
+            {secondaryCta}
+            <HiOutlineArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+
+        {/* Stats */}
+        <div className="flex flex-wrap justify-center gap-6 lg:gap-10">
+          {stats.map((s, i) => (
+            <div key={i} className="text-center">
+              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{s.value}</div>
+              <div className="text-xs text-neutral-500">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SectionContent>
+  );
+}
+
+// ─── Updated Sections ───────────────────────────────────────────────────
+
+function AgentCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Tukang"
+      agentRole="Development & Engineering"
+      agentGradient="from-purple-400 to-pink-500"
+      agentInitials="TK"
+      badge="Jebat Agent"
+      title="Deploy Your AI Workspace in 30 Seconds"
+      subtitle="Jebat Agent — Setup wizard, IDE integration, 8 local LLMs, channel automation, and OpenClaw migration. Everything you need to run AI on your infrastructure."
+      features={[
+        { icon: <HiOutlineWrenchScrewdriver className="w-6 h-6 text-purple-400" />, title: "30-Second Setup", desc: "One command deploys your entire AI workspace with skills, config, and IDE integration." },
+        { icon: <HiOutlineCodeBracket className="w-6 h-6 text-purple-400" />, title: "IDE Integration", desc: "VS Code, Zed, Cursor, Claude Desktop, Gemini CLI — works with your favorite editor." },
+        { icon: <HiOutlineCpuChip className="w-6 h-6 text-purple-400" />, title: "8 Local LLMs", desc: "Gemma 4, Qwen2.5, Hermes3, Phi-3, Llama 3.1, Mistral, CodeLlama, TinyLlama." },
+      ]}
+      primaryCta="Deploy Now"
+      secondaryCta="View on npm"
+      primaryHref="/agent/"
+      secondaryHref="https://www.npmjs.com/package/jebat-agent"
+      stats={[
+        { value: "30s", label: "Setup Time" },
+        { value: "40+", label: "Skills" },
+        { value: "8", label: "Local LLMs" },
+      ]}
+      themeColor="text-purple-400"
+    />
+  );
+}
+
+function PortalCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Panglima"
+      agentRole="Orchestration & Command"
+      agentGradient="from-cyan-400 to-blue-500"
+      agentInitials="PL"
+      badge="Enterprise Portal"
+      title="Real-Time AI Command Center"
+      subtitle="Monitor all 34 agents, track usage analytics, measure performance metrics, and manage your AI team from a single dashboard."
+      features={[
+        { icon: <HiOutlineChartBar className="w-6 h-6 text-cyan-400" />, title: "Live Analytics", desc: "Real-time usage tracking, token consumption, response times, and cost analysis." },
+        { icon: <HiOutlineUsers className="w-6 h-6 text-cyan-400" />, title: "Agent Monitoring", desc: "Status, health, and activity for all 10 core agents and 24 specialists." },
+        { icon: <HiOutlineCog6Tooth className="w-6 h-6 text-cyan-400" />, title: "Performance Metrics", desc: "Latency, cache hit rates, throughput, and system health indicators." },
+      ]}
+      primaryCta="Open Portal"
+      secondaryCta="Explore Features"
+      primaryHref="/portal/"
+      secondaryHref="/agent/"
+      stats={[
+        { value: "10", label: "Core Agents" },
+        { value: "24", label: "Specialists" },
+        { value: "Live", label: "Analytics" },
+      ]}
+      themeColor="text-cyan-400"
+    />
+  );
+}
+
+function ChatCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Hikmat"
+      agentRole="Memory & Knowledge"
+      agentGradient="from-pink-400 to-rose-500"
+      agentInitials="HK"
+      badge="Live Chat"
+      title="AI Chat That Remembers You"
+      subtitle="5 orchestration modes, 8 local LLMs, markdown rendering with tables, session persistence, and personalized onboarding that adapts to your role."
+      features={[
+        { icon: <HiOutlineArrowPath className="w-6 h-6 text-pink-400" />, title: "5 Orchestration Modes", desc: "Debate, Consensus, Sequential, Parallel, Hierarchical — switch modes instantly." },
+        { icon: <HiOutlineDocumentText className="w-6 h-6 text-pink-400" />, title: "Markdown Rendering", desc: "Tables, code blocks, headers, lists — beautiful AI responses with full formatting." },
+        { icon: <HiOutlineCog6Tooth className="w-6 h-6 text-pink-400" />, title: "Session Persistence", desc: "Conversations survive refresh. Settings remembered. Last chat auto-loads." },
+      ]}
+      primaryCta="Start Chatting"
+      secondaryCta="View Features"
+      primaryHref="/chat/"
+      secondaryHref="/portal/"
+      stats={[
+        { value: "5", label: "Modes" },
+        { value: "8", label: "Local LLMs" },
+        { value: "∞", label: "Memory" },
+      ]}
+      themeColor="text-pink-400"
+    />
+  );
+}
+
+function GelanggangCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Penganalisis"
+      agentRole="Analytics & Insights"
+      agentGradient="from-yellow-400 to-orange-500"
+      agentInitials="PA"
+      badge="LLM Arena"
+      title="Watch AI Models Compete in Real-Time"
+      subtitle="Gelanggang — the LLM-to-LLM arena where models debate, collaborate, and compete. Research-backed orchestration patterns from AutoGen and MAD Paradigm."
+      features={[
+        { icon: <HiOutlineChatBubbleLeftRight className="w-6 h-6 text-yellow-400" />, title: "Live Debates", desc: "Watch models argue, rebut, and reach consensus in real-time conversations." },
+        { icon: <HiOutlineChartBar className="w-6 h-6 text-yellow-400" />, title: "Model Comparison", desc: "Side-by-side analysis of different models on the same topic." },
+        { icon: <HiOutlineBolt className="w-6 h-6 text-yellow-400" />, title: "Research-Backed", desc: "Based on AutoGen, ChatDev 2.0, and MAD Paradigm papers." },
+      ]}
+      primaryCta="Enter Arena"
+      secondaryCta="Learn More"
+      primaryHref="/gelanggang/"
+      secondaryHref="/chat/"
+      stats={[
+        { value: "Live", label: "Debates" },
+        { value: "8", label: "Models" },
+        { value: "Real", label: "Time" },
+      ]}
+      themeColor="text-yellow-400"
+    />
+  );
+}
+
+function SecurityCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Hulubalang"
+      agentRole="Security Audit & Compliance"
+      agentGradient="from-red-400 to-rose-500"
+      agentInitials="HB"
+      badge="CyberSec Suite"
+      title="Military-Grade Security Infrastructure"
+      subtitle="Four-layer security: Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest). Prompt injection defense, command sanitization, and complete audit trails."
+      features={[
+        { icon: <HiOutlineShieldCheck className="w-6 h-6 text-red-400" />, title: "Injection Defense", desc: "Automatic detection and blocking of prompt injection attacks." },
+        { icon: <HiOutlineClipboardDocumentCheck className="w-6 h-6 text-red-400" />, title: "Complete Audit Trails", desc: "Every action logged for compliance, review, and incident response." },
+        { icon: <HiOutlineKey className="w-6 h-6 text-red-400" />, title: "Secrets Management", desc: "API keys and credentials never exposed. Encrypted storage and rotation." },
+      ]}
+      primaryCta="View Security"
+      secondaryCta="CyberSec Suite"
+      primaryHref="/security/"
+      secondaryHref="/portal/"
+      stats={[
+        { value: "4", label: "Security Tools" },
+        { value: "0", label: "Breaches" },
+        { value: "100%", label: "Audit" },
+      ]}
+      themeColor="text-red-400"
+    />
+  );
+}
+
+function GuidesCTASection() {
+  return (
+    <FeatureCTASection
+      agentName="Syahbandar"
+      agentRole="Operations & Infrastructure"
+      agentGradient="from-blue-400 to-indigo-500"
+      agentInitials="SB"
+      badge="Setup Guides"
+      title="Step-by-Step Deployment Guides"
+      subtitle="Comprehensive documentation for IDE integration, channel setup, model deployment, migration from OpenClaw/Hermes, and production hardening."
+      features={[
+        { icon: <HiOutlineBookOpen className="w-6 h-6 text-blue-400" />, title: "Step-by-Step Guides", desc: "Clear instructions for every setup scenario, from beginner to advanced." },
+        { icon: <HiOutlineCommandLine className="w-6 h-6 text-blue-400" />, title: "CLI Commands", desc: "Copy-paste ready commands for quick setup and automation." },
+        { icon: <HiOutlineArrowPath className="w-6 h-6 text-blue-400" />, title: "Migration Paths", desc: "Seamless migration from OpenClaw and Hermes with zero downtime." },
+      ]}
+      primaryCta="Read Guides"
+      secondaryCta="Quick Start"
+      primaryHref="/guides/"
+      secondaryHref="https://github.com/nusabyte-my/jebat-core"
+      stats={[
+        { value: "10+", label: "Guides" },
+        { value: "CLI", label: "Commands" },
+        { value: "Zero", label: "Downtime" },
+      ]}
+      themeColor="text-blue-400"
+    />
+  );
+}
+
+// ─── Section Order ──────────────────────────────────────────────────────
+
+const SECTION_COMPONENTS = [
+  HeroSection, AgentCTASection, PortalCTASection, ChatCTASection,
+  GelanggangCTASection, SecurityCTASection, GuidesCTASection, CTASection,
+];
+
+// ─── Main Page ──────────────────────────────────────────────────────────
+
+export default function LandingV2() {
+  return (
+    <div className="h-screen w-screen bg-[#050505] text-white overflow-x-hidden">
+      <AgentNetworkBackground />
       <Navbar />
-      <HeroSection />
-      <PlatformSection />
-      <AgentsRegistry />
-      <SpecialistsGrid />
-      <FeaturesSection />
-      <AgentSection />
-      <CoreSection />
-      <ChatSection />
-      <SecuritySection />
-      <CLIDemo />
-      <Footer />
-    </main>
+      <SideDots />
+
+      <div className="h-screen w-screen overflow-y-auto snap-y snap-mandatory scroll-smooth">
+        {SECTIONS.map((sectionId, i) => {
+          const Component = SECTION_COMPONENTS[i];
+          return (
+            <motion.section
+              key={sectionId}
+              id={`section-${sectionId}`}
+              className="h-screen w-screen snap-start"
+            >
+              <Component />
+            </motion.section>
+          );
+        })}
+      </div>
+    </div>
   );
 }

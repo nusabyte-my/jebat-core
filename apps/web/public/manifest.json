@@ -1,0 +1,26 @@
+{
+  "name": "JEBAT AI Agent Platform",
+  "short_name": "JEBAT",
+  "description": "Enterprise-grade, self-hosted AI orchestration platform with 10 core agents, 24 specialists, 5 orchestration modes, 8 local LLMs, and military-grade security.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

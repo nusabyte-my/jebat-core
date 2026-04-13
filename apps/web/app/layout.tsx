@@ -41,6 +41,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="theme-color" content="#050505"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
