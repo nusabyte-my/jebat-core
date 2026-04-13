@@ -478,6 +478,22 @@
             border-color: var(--accent);
         }
 
+        .export-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 6px;
+            color: #60a5fa;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .export-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
         .send-btn {
             background: var(--accent);
             color: white;
@@ -2269,6 +2285,25 @@ Write a brief conclusion in Markdown format (2-3 sentences) summarizing the key 
         </div>
     </div>
 
+        function exportChat() {
+            const conv = conversations.find(c => c.id === currentConvId);
+            if (!conv || conv.messages.length === 0) {
+                alert('No messages to export');
+                return;
+            }
+            let text = `# Jebat Chat Export\n# Date: ${new Date().toISOString()}\n\n`;
+            conv.messages.forEach(m => {
+                const role = m.role === 'user' ? 'You' : (m.model || 'AI');
+                text += `## ${role}\n\n${m.content}\n\n---\n\n`;
+            });
+            const blob = new Blob([text], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jebat-chat-${new Date().toISOString().split('T')[0]}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>

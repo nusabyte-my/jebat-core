@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Allow all crawlers
+Sitemap: https://jebat.online/sitemap.xml
