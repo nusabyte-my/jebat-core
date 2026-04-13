@@ -1,7 +1,7 @@
 {
   "name": "jebat-agent",
-  "version": "3.0.0",
-  "description": "Jebat Agent — 30-second setup for AI agent workspace with 8 local LLM models (Gemma 4, Qwen2.5, Hermes3, Phi-3), IDE integration, multi-agent orchestration, markdown rendering, and enterprise security.",
+  "version": "3.0.1",
+  "description": "Jebat Agent \u2014 30-second setup for AI agent workspace with 8 local LLM models (Gemma 4, Qwen2.5, Hermes3, Phi-3), IDE integration, multi-agent orchestration, markdown rendering, and enterprise security.",
   "main": "index.js",
   "bin": {
     "jebat-agent": "./index.js",
@@ -36,5 +36,10 @@
     "execa": "^8.0.1",
     "fs-extra": "^11.2.0",
     "inquirer": "^9.2.12"
-  }
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "templates/"
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "jebat-core",
-  "version": "3.0.0",
-  "description": "JEBAT Core — Multi-agent orchestration platform with 5 LLM-to-LLM orchestration modes (Debate, Consensus, Sequential, Parallel, Hierarchical), markdown rendering, 10 core agents, 24 specialists, 8 local LLMs, enterprise security, and self-hosted AI platform.",
+  "version": "3.0.1",
+  "description": "JEBAT Core \u2014 Multi-agent orchestration platform with 5 LLM-to-LLM orchestration modes (Debate, Consensus, Sequential, Parallel, Hierarchical), markdown rendering, 10 core agents, 24 specialists, 8 local LLMs, enterprise security, and self-hosted AI platform.",
   "type": "module",
   "bin": {
     "jebat-core": "./bin/jebatcore.js"
@@ -20,7 +20,8 @@
     "TOOLS.md",
     "USER.md",
     "validate-workspace.ps1",
-    "scripts"
+    "scripts",
+    "README.md"
   ],
   "repository": {
     "type": "git",
