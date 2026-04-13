@@ -257,6 +257,10 @@ function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 lg:gap-3">
+          <a href="/status" className="hidden sm:inline-flex items-center gap-1 lg:gap-2 rounded-full border border-white/10 bg-white/5 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm text-white hover:bg-white/10 transition">
+            <HiOutlineChartBar className="w-3.5 h-3.5" />
+            Status
+          </a>
           <a href="/chat" className="hidden sm:inline-flex items-center gap-1 lg:gap-2 rounded-full border border-white/10 bg-white/5 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm text-white hover:bg-white/10 transition">
             <HiOutlineChatBubbleLeftRight className="w-3.5 h-3.5" />
             Try Chat
