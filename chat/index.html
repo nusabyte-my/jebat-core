@@ -368,6 +368,35 @@
             cursor: not-allowed;
         }
 
+        /* Shimmer Tech Joke */
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .shimmer-text {
+            background: linear-gradient(90deg, var(--text-secondary) 0%, var(--cyan-300, #7dd3fc) 25%, var(--text-secondary) 50%, var(--cyan-300, #7dd3fc) 75%, var(--text-secondary) 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+        .tech-joke {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            text-align: center;
+            padding: 0 20px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .tech-joke.visible {
+            opacity: 1;
+        }
+
         /* Typing Indicator */
         .typing-indicator {
             display: flex;
@@ -559,6 +588,7 @@
             </div>
 
             <div class="chat-messages" id="chatMessages">
+                <div class="tech-joke" id="techJoke"></div>
                 <div class="welcome" id="welcomeScreen">
                     <div class="welcome-logo">J</div>
                     <h1>What can I help with?</h1>
@@ -762,6 +792,7 @@
             
             // Disable send, show cancel
             document.getElementById('sendBtn').disabled = true;
+            startJokeRotation();
             
             try {
                 let response;
@@ -790,6 +821,7 @@
                 }
             } finally {
                 isStreaming = false;
+                stopJokeRotation();
                 document.getElementById('sendBtn').disabled = false;
                 abortController = null;
             }
@@ -811,6 +843,7 @@
             const name2 = model2.includes('/') ? model2.split('/')[1] : model2;
             
             document.getElementById('sendBtn').disabled = true;
+            startJokeRotation();
             
             try {
                 // LLM 1 speaks first
@@ -921,6 +954,7 @@
         }
 
         function showTyping() {
+            startJokeRotation();
             const container = document.getElementById('chatMessages');
             const typing = document.createElement('div');
             typing.className = 'message';
@@ -943,6 +977,7 @@
         }
 
         function hideTyping() {
+            stopJokeRotation();
             const typing = document.getElementById('typingIndicator');
             if (typing) typing.remove();
         }
