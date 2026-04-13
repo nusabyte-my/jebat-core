@@ -229,7 +229,7 @@ echo "some text" | npx jebat-core token-analyze
 npx jebat-core deploy
 ```
 
-**Package:** [jebat-core@2.0.0](https://www.npmjs.com/package/jebat-core) on npm
+**Package:** [jebat-core@3.0.0](https://www.npmjs.com/package/jebat-core) on npm
 
 ---
 
@@ -244,7 +244,7 @@ npx jebat-core deploy
 | **Collaboration Patterns** | 4 (Sequential, Parallel, Consensus, Adversarial) |
 | **Security Tools Cataloged** | 18 MCP servers |
 | **Vulnerability Auto-Fix Types** | 6 |
-| **npm Package** | [jebat-core@2.0.0](https://www.npmjs.com/package/jebat-core) |
+| **npm Package** | [jebat-core@3.0.0](https://www.npmjs.com/package/jebat-core) |
 | **Roadmap Completion** | 100% |
 | **License** | MIT |
 

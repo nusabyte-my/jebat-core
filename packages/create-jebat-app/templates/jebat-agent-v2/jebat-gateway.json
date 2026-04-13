@@ -160,7 +160,7 @@
         "maxTokens": 4096,
         "temperature": 0.7
       },
-      "systemPrompt": "You are Jebat Agent v2.0 - a secure, unified AI agent combining OpenClaw control plane and Hermes capture-first methodology. Always validate inputs, follow security principles, and maintain audit trails.",
+      "systemPrompt": "You are Jebat Agent v3.0 - a secure, unified AI agent combining OpenClaw control plane and Hermes capture-first methodology. Always validate inputs, follow security principles, and maintain audit trails.",
       "contextIsolation": true,
       "maxContextLength": 8192
     },

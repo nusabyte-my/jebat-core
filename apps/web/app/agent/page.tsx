@@ -17,7 +17,7 @@ function AgentPage() {
               </div>
               <div>
                 <span className="text-lg font-bold tracking-tight">Jebat Agent</span>
-                <span className="ml-2 text-[10px] font-medium text-cyan-400/80 border border-cyan-400/20 rounded-full px-2 py-0.5">v2.0</span>
+                <span className="ml-2 text-[10px] font-medium text-cyan-400/80 border border-cyan-400/20 rounded-full px-2 py-0.5">v3.0</span>
               </div>
             </a>
           </div>
@@ -399,7 +399,7 @@ function AgentPage() {
                 </div>
                 <div>
                   <span className="text-lg font-bold">Jebat Agent</span>
-                  <span className="ml-2 text-[10px] text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v2.0.0</span>
+                  <span className="ml-2 text-[10px] text-neutral-500 border border-white/10 rounded-full px-2 py-0.5">v3.0.0</span>
                 </div>
               </div>
               <p className="text-sm text-neutral-400 mb-6 max-w-sm leading-relaxed">
