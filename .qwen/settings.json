@@ -66,7 +66,22 @@
       "Bash(- *)",
       "Bash(https://jebat.online/gelanggang/)",
       "Bash(https://jebat.online/chat/)",
-      "Bash(mit *)"
+      "Bash(mit *)",
+      "Bash(python)",
+      "Bash(with)",
+      "Bash(as *)",
+      "Bash(content *)",
+      "Bash(old_avatar *)",
+      "Bash(new_avatar *)",
+      "Bash(old_avatar, *)",
+      "Bash(old_stats *)",
+      "Bash(new_stats *)",
+      "Bash(old_stats, *)",
+      "Bash(old_feature_icon *)",
+      "Bash(new_feature_icon *)",
+      "Bash(old_why_icon *)",
+      "Bash(4, *)",
+      "Bash(].map)"
     ]
   },
   "$version": 3

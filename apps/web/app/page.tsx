@@ -39,7 +39,7 @@ import {
 // ─── Data ───────────────────────────────────────────────────────────────
 
 const SECTIONS = [
-  "hero", "agent", "portal", "chat", "gelanggang", "security", "guides", "cta",
+  "hero", "agent", "portal", "chat", "gelanggang", "why", "security", "guides", "cta",
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number];
@@ -50,6 +50,7 @@ const SECTION_LABELS: Record<SectionId, string> = {
   portal: "Portal",
   chat: "Chat",
   gelanggang: "Arena",
+  why: "Why JEBAT",
   security: "Security",
   guides: "Guides",
   cta: "Get Started",
@@ -1029,9 +1030,11 @@ function FeatureCTASection({
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className={`inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br ${agentGradient} shadow-lg mx-auto mb-4`}
+            className={`inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-[#0a0a0a] border-2 border-transparent bg-gradient-to-br ${agentGradient} p-[2px] mx-auto mb-4`}
           >
-            <span className="text-2xl lg:text-3xl font-bold text-white">{agentInitials}</span>
+            <div className="w-full h-full rounded-2xl bg-[#0a0a0a] flex items-center justify-center">
+              <span className={`text-xl lg:text-2xl font-bold bg-gradient-to-br ${agentGradient} bg-clip-text text-transparent`}>{agentInitials}</span>
+            </div>
           </motion.div>
           <div className="text-sm text-neutral-400">
             <span className={`font-semibold ${themeColor}`}>{agentName}</span> · {agentRole}
@@ -1060,7 +1063,7 @@ function FeatureCTASection({
               whileHover={{ y: -4 }}
               className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 hover:border-cyan-400/20 transition-colors"
             >
-              <div className="mb-4">{f.icon}</div>
+              <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10">{f.icon}</div>
               <h3 className="font-semibold text-base mb-2">{f.title}</h3>
               <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
             </motion.div>
@@ -1211,6 +1214,73 @@ function GelanggangCTASection() {
   );
 }
 
+// ─── Why Choose JEBAT Section ───────────────────────────────────────────
+
+function WhyChooseSection() {
+  const reasons = [
+    { icon: <HiOutlineLockClosed className="w-8 h-8 text-cyan-400" />, title: "100% Self-Hosted", desc: "Your data never leaves your infrastructure. No cloud, no third-party, no vendor lock-in." },
+    { icon: <HiOutlineBolt className="w-8 h-8 text-cyan-400" />, title: "40-60% Faster", desc: "LRUCache, ConnectionPool, RequestDeduplicator, and SmartRouter optimizations." },
+    { icon: <HiOutlineCog6Tooth className="w-8 h-8 text-cyan-400" />, title: "Eternal Memory", desc: "5-layer cognitive memory (M0-M4) with heat-based retention across sessions." },
+    { icon: <HiOutlineCpuChip className="w-8 h-8 text-cyan-400" />, title: "34 AI Agents", desc: "10 core agents orchestrate 24 specialists for comprehensive coverage." },
+    { icon: <HiOutlineGlobeAlt className="w-8 h-8 text-cyan-400" />, title: "5 LLM Providers", desc: "Anthropic, OpenAI, Gemini, Ollama (8 local models), and ZAI with intelligent routing." },
+    { icon: <HiOutlineBanknotes className="w-8 h-8 text-cyan-400" />, title: "Cost Effective", desc: "Run 8 local LLMs for free. No subscription fees, no per-token charges." },
+  ];
+
+  return (
+    <SectionContent>
+      <div className="space-y-10 lg:space-y-12">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
+            Why Choose JEBAT
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">
+            Built for Enterprise,{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Designed for Privacy</span>
+          </h2>
+          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">
+            JEBAT combines enterprise-grade AI capabilities with complete data sovereignty. No cloud dependency, no vendor lock-in, no compromises.
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+          {reasons.map((r, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.1 }}
+              whileHover={{ y: -4, borderColor: "rgba(34,211,238,0.2)" }}
+              className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8"
+            >
+              <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10">{r.icon}</div>
+              <h3 className="font-semibold text-base lg:text-lg mb-2">{r.title}</h3>
+              <p className="text-sm text-neutral-500 leading-relaxed">{r.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Trust Stats */}
+        <div className="flex flex-wrap justify-center gap-4 lg:gap-6 pt-6">
+          {[
+            { value: "99.97%", label: "Uptime", icon: "📊" },
+            { value: "50+", label: "Skills", icon: "⚡" },
+            { value: "8", label: "Local LLMs", icon: "🧠" },
+            { value: "0", label: "Data Breaches", icon: "🔒" },
+          ].map((stat, i) => (
+            <div key={i} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-4 text-center">
+              <div className="text-xl mb-2">{stat.icon}</div>
+              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
+              <div className="text-xs text-neutral-500">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SectionContent>
+  );
+}
+
 function SecurityCTASection() {
   return (
     <FeatureCTASection
@@ -1273,7 +1343,7 @@ function GuidesCTASection() {
 
 const SECTION_COMPONENTS = [
   HeroSection, AgentCTASection, PortalCTASection, ChatCTASection,
-  GelanggangCTASection, SecurityCTASection, GuidesCTASection, CTASection,
+  GelanggangCTASection, WhyChooseSection, SecurityCTASection, GuidesCTASection, CTASection,
 ];
 
 // ─── Main Page ──────────────────────────────────────────────────────────
