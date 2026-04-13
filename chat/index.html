@@ -285,6 +285,54 @@
             color: var(--text-secondary);
         }
 
+        /* Model Loading Status */
+        .model-loading-info {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        .model-loading-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #7dd3fc;
+        }
+        .model-loading-icon {
+            font-size: 16px;
+        }
+        .model-loading-eta {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+        .model-loading-attempt {
+            color: #64748b;
+            font-size: 10px;
+            margin-left: auto;
+        }
+        .model-loading-bar {
+            margin-top: 8px;
+            height: 3px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .model-loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .model-loading-error {
+            color: #f59e0b;
+        }
+        .model-loading-error .model-loading-icon {
+            animation: pulse 1s infinite;
+        }
+
         /* Markdown Styling */
         .message-content.markdown {
             line-height: 1.7;
@@ -785,6 +833,9 @@
                         <option value="openai/gpt-4o">GPT-4o (BYOK)</option>
                         <option value="anthropic/claude-sonnet-4-20250514">Claude 4 (BYOK)</option>
                     </select>
+                    <button class="warm-model-btn" onclick="warmModel('primary')" title="Pre-load model to avoid timeout">
+                        ⚡ Warm Up Model
+                    </button>
                 </div>
 
                 <div class="setting-group" id="llm2Group" style="display: none;">
@@ -1187,6 +1238,40 @@ Always respond in Markdown format. Use headers, bold, lists, tables, and code bl
                 console.log('Available models:', data.models);
             } catch (e) {
                 console.log('Ollama connection test:', e.message);
+            }
+        }
+
+        async function warmModel(type) {
+            const modelId = type === 'primary' ? 'primaryModel' : 'secondaryModel';
+            const model = document.getElementById(modelId).value;
+            const modelName = model.includes('/') ? model.split('/')[1] : model;
+            const btn = event.target;
+            
+            btn.classList.add('warming');
+            btn.textContent = '⏳ Loading...';
+            
+            try {
+                const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: [{ role: 'user', content: 'hi' }],
+                        stream: false
+                    })
+                });
+                const data = await res.json();
+                btn.classList.remove('warming');
+                btn.textContent = '✅ Model Ready!';
+                setTimeout(() => {
+                    btn.textContent = '⚡ Warm Up Model';
+                }, 3000);
+            } catch (e) {
+                btn.classList.remove('warming');
+                btn.textContent = '❌ Failed - Retry';
+                setTimeout(() => {
+                    btn.textContent = '⚡ Warm Up Model';
+                }, 3000);
             }
         }
 
@@ -1900,15 +1985,35 @@ Write a brief conclusion in Markdown format (2-3 sentences) summarizing the key 
             renderMessages();
         }
 
+        // Model size map for smarter retry logic
+        const MODEL_SIZES = {
+            'tinyllama': { size: '637MB', loadTime: '5-10s', tier: 'tiny' },
+            'phi3': { size: '2.2GB', loadTime: '10-20s', tier: 'small' },
+            'hermes3:latest': { size: '4.7GB', loadTime: '20-40s', tier: 'medium' },
+            'llama3.1:8b': { size: '4.9GB', loadTime: '20-40s', tier: 'medium' },
+            'mistral': { size: '4.4GB', loadTime: '20-40s', tier: 'medium' },
+            'codellama:7b': { size: '3.8GB', loadTime: '15-30s', tier: 'medium' },
+            'qwen2.5:14b': { size: '9GB', loadTime: '30-60s', tier: 'large' },
+            'gemma4:latest': { size: '9.6GB', loadTime: '40-90s', tier: 'large' },
+        };
+
         async function callOllama(model, message, conv) {
             const modelName = model.includes('/') ? model.split('/')[1] : model;
-            console.log('📡 Calling Ollama:', modelName, 'at', `${OLLAMA_URL}/api/chat`);
+            const modelInfo = MODEL_SIZES[modelName] || { size: 'Unknown', loadTime: '30-60s', tier: 'medium' };
+            console.log('📡 Calling Ollama:', modelName, `(${modelInfo.size})`, 'at', `${OLLAMA_URL}/api/chat`);
             
-            // Try up to 3 times (models may need to load into memory)
-            for (let attempt = 1; attempt <= 3; attempt++) {
+            // Smart retry: more attempts for large models with longer delays
+            const maxRetries = modelInfo.tier === 'large' ? 5 : 3;
+            const retryDelay = modelInfo.tier === 'large' ? 5000 : (modelInfo.tier === 'medium' ? 3000 : 2000);
+            
+            // Update thinking message with model loading info
+            updateModelLoadingStatus(modelName, modelInfo, 0);
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 if (attempt > 1) {
-                    console.log(`🔄 Retry ${attempt}/3 for ${modelName}...`);
-                    await sleep(2000);
+                    console.log(`🔄 Retry ${attempt}/${maxRetries} for ${modelName}...`);
+                    updateModelLoadingStatus(modelName, modelInfo, attempt);
+                    await sleep(retryDelay);
                 }
                 
                 try {
@@ -1931,16 +2036,61 @@ Write a brief conclusion in Markdown format (2-3 sentences) summarizing the key 
                     const data = await res.json();
                     const response = data.message?.content?.trim() || '';
                     
-                    if (!response && attempt < 3) {
-                        console.log('⚠️ Empty response, retrying...');
+                    if (!response && attempt < maxRetries) {
+                        console.log('⚠️ Empty response, model still loading...');
                         continue;
                     }
                     
                     console.log('✅ Got response:', response.substring(0, 50) || '(empty)');
-                    return response || `I apologize, but I couldn't generate a response for "${modelName}". The model may still be loading.`;
+                    hideLoadingStatus();
+                    return response || `I apologize, but I couldn't generate a response for "${modelName}". The model may still be loading. Please try again in a moment.`;
                 } catch (e) {
-                    if (attempt === 3) throw e;
+                    if (attempt === maxRetries) throw e;
                     console.log(`⚠️ Attempt ${attempt} failed: ${e.message}`);
+                    updateModelErrorStatus(modelName, modelInfo, e.message);
+                }
+            }
+        }
+
+        function updateModelLoadingStatus(modelName, modelInfo, attempt) {
+            const thinkingEl = document.getElementById('thinkingMessage');
+            if (thinkingEl) {
+                const statusEl = thinkingEl.querySelector('.model-loading-info');
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="model-loading-text">
+                            <span class="model-loading-icon">⏳</span>
+                            <span>Loading ${modelName} (${modelInfo.size}) into memory... <span class="model-loading-eta">${modelInfo.loadTime}</span></span>
+                            ${attempt > 0 ? `<span class="model-loading-attempt">Attempt ${attempt + 1}</span>` : ''}
+                        </div>
+                        <div class="model-loading-bar">
+                            <div class="model-loading-progress" style="width: ${Math.min((attempt / 5) * 100, 95)}%"></div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function hideLoadingStatus() {
+            const thinkingEl = document.getElementById('thinkingMessage');
+            if (thinkingEl) {
+                const statusEl = thinkingEl.querySelector('.model-loading-info');
+                if (statusEl) statusEl.remove();
+            }
+        }
+
+        function updateModelErrorStatus(modelName, modelInfo, errorMsg) {
+            const thinkingEl = document.getElementById('thinkingMessage');
+            if (thinkingEl) {
+                const statusEl = thinkingEl.querySelector('.model-loading-info');
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="model-loading-text model-loading-error">
+                            <span class="model-loading-icon">⚠️</span>
+                            <span>${modelName} not loaded yet (${modelInfo.size})</span>
+                            <span class="model-loading-eta">Retrying...</span>
+                        </div>
+                    `;
                 }
             }
         }
