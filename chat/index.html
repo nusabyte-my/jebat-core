@@ -735,17 +735,19 @@
         function renderMessages() {
             const container = document.getElementById('chatMessages');
             const conv = conversations.find(c => c.id === currentConvId);
-            const welcomeEl = document.getElementById('welcomeScreen');
-            if (!welcomeEl) return;
+            if (!conv) return;
             
-            if (!conv || conv.messages.length === 0) {
-                welcomeEl.style.display = 'flex';
+            // Clear container but preserve any thinking indicators
+            const thinkingEl = document.getElementById('thinkingMessage');
+            container.innerHTML = '';
+            
+            if (conv.messages.length === 0) {
+                // Re-add welcome screen if needed
+                container.innerHTML = document.getElementById('welcomeScreen')?.outerHTML || '';
                 return;
             }
             
-            welcomeEl.style.display = 'none';
-            container.innerHTML = '';
-            
+            // Re-render all messages
             conv.messages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `message ${msg.role} ${msg.isLLMChat ? 'llm-chat' : ''}`;
@@ -759,6 +761,11 @@
                 `;
                 container.appendChild(div);
             });
+            
+            // Re-add thinking indicator if it exists
+            if (thinkingEl && thinkingEl.parentNode) {
+                container.appendChild(thinkingEl);
+            }
             container.scrollTop = container.scrollHeight;
         }
 
