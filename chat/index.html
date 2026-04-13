@@ -1291,23 +1291,32 @@ Always respond in Markdown format. Use headers, bold, lists, tables, and code bl
             const conv = conversations.find(c => c.id === id);
             renderConversations();
             renderMessages();
-            document.getElementById('welcomeScreen').style.display = conv.messages.length === 0 ? 'flex' : 'none';
         }
 
         function renderMessages() {
             const container = document.getElementById('chatMessages');
             const conv = conversations.find(c => c.id === currentConvId);
+            const welcomeEl = document.getElementById('welcomeScreen');
             if (!conv) return;
             
             // Clear container but preserve any thinking indicators
             const thinkingEl = document.getElementById('thinkingMessage');
-            container.innerHTML = '';
             
             if (conv.messages.length === 0) {
-                // Re-add welcome screen if needed
-                container.innerHTML = document.getElementById('welcomeScreen')?.outerHTML || '';
+                // Show welcome screen, hide messages
+                if (welcomeEl) welcomeEl.style.display = 'flex';
+                // Remove all messages but keep welcome
+                const messages = container.querySelectorAll('.message');
+                messages.forEach(m => m.remove());
                 return;
             }
+            
+            // Hide welcome screen
+            if (welcomeEl) welcomeEl.style.display = 'none';
+            
+            // Remove all existing messages
+            const existingMsgs = container.querySelectorAll('.message');
+            existingMsgs.forEach(m => m.remove());
             
             // Re-render all messages
             conv.messages.forEach(msg => {
