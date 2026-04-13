@@ -855,74 +855,136 @@
         }
 
         async function sendLLMToLLMChat(topic, conv) {
-            hideTyping();
-            isStreaming = true;
-
+            const container = document.getElementById('chatMessages');
             const model1 = document.getElementById('primaryModel').value;
             const model2 = document.getElementById('secondaryModel').value;
             const name1 = model1.includes('/') ? model1.split('/')[1] : model1;
             const name2 = model2.includes('/') ? model2.split('/')[1] : model2;
-            
+
+            isStreaming = true;
             document.getElementById('sendBtn').disabled = true;
             startJokes();
             
             try {
-                // LLM 1 speaks first
+                // LLM 1 speaks first - show thinking with shimmer
+                let thinkingDiv = document.createElement('div');
+                thinkingDiv.className = 'message assistant';
+                thinkingDiv.id = 'thinkingMessage';
+                thinkingDiv.innerHTML = `
+                    <div class="message-header">
+                        <div class="avatar ai">${name1.substring(0, 2).toUpperCase()}</div>
+                        <span class="message-role">${name1}</span>
+                        <span class="ml-2 text-xs text-cyan-400 animate-pulse">Thinking...</span>
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
+                    </div>
+                `;
+                container.appendChild(thinkingDiv);
+                container.scrollTop = container.scrollHeight;
+                
                 const prompt1 = `Another AI wants to discuss: "${topic}". Share your thoughts (keep it concise, 2-3 sentences).`;
                 const response1 = await callOllama(model1, prompt1, conv);
                 
+                thinkingDiv.remove();
                 conv.messages.push({
                     role: 'assistant',
                     content: response1,
-                    model: model1.split('/')[1],
+                    model: name1,
                     isLLMChat: true,
-                    model1: model1.split('/')[1],
-                    model2: model2.split('/')[1]
+                    model1: name1,
+                    model2: name2
                 });
-                
                 renderMessages();
                 await sleep(500);
                 
-                // LLM 2 responds
+                // LLM 2 responds - show thinking with shimmer
+                thinkingDiv = document.createElement('div');
+                thinkingDiv.className = 'message assistant';
+                thinkingDiv.id = 'thinkingMessage';
+                thinkingDiv.innerHTML = `
+                    <div class="message-header">
+                        <div class="avatar ai">${name2.substring(0, 2).toUpperCase()}</div>
+                        <span class="message-role">${name2}</span>
+                        <span class="ml-2 text-xs text-cyan-400 animate-pulse">Thinking...</span>
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
+                    </div>
+                `;
+                container.appendChild(thinkingDiv);
+                container.scrollTop = container.scrollHeight;
+                
                 const prompt2 = `Model A said: "${response1}". What's your perspective? (keep it concise, 2-3 sentences)`;
                 const response2 = await callOllama(model2, prompt2, conv);
                 
+                thinkingDiv.remove();
                 conv.messages.push({
                     role: 'assistant',
                     content: response2,
-                    model: model2.split('/')[1],
+                    model: name2,
                     isLLMChat: true,
-                    model1: model1.split('/')[1],
-                    model2: model2.split('/')[1]
+                    model1: name1,
+                    model2: name2
                 });
-                
                 renderMessages();
                 await sleep(500);
                 
-                // LLM 1 final response
+                // LLM 1 final response - show thinking with shimmer
+                thinkingDiv = document.createElement('div');
+                thinkingDiv.className = 'message assistant';
+                thinkingDiv.id = 'thinkingMessage';
+                thinkingDiv.innerHTML = `
+                    <div class="message-header">
+                        <div class="avatar ai">${name1.substring(0, 2).toUpperCase()}</div>
+                        <span class="message-role">${name1}</span>
+                        <span class="ml-2 text-xs text-cyan-400 animate-pulse">Replying...</span>
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
+                    </div>
+                `;
+                container.appendChild(thinkingDiv);
+                container.scrollTop = container.scrollHeight;
+                
                 const prompt3 = `Model B responded: "${response2}". Any counterpoints? (keep it brief)`;
                 const response3 = await callOllama(model1, prompt3, conv);
                 
+                thinkingDiv.remove();
                 conv.messages.push({
                     role: 'assistant',
                     content: response3,
-                    model: model1.split('/')[1],
+                    model: name1,
                     isLLMChat: true,
-                    model1: model1.split('/')[1],
-                    model2: model2.split('/')[1]
+                    model1: name1,
+                    model2: name2
                 });
-                
                 renderMessages();
             } catch (error) {
-                conv.messages.push({
-                    role: 'system',
-                    content: `LLM Chat Error: ${error.message}`
-                });
-                renderMessages();
+                console.error('❌ LLM Chat Error:', error);
+                const thinkingEl = document.getElementById('thinkingMessage');
+                if (thinkingEl) {
+                    thinkingEl.querySelector('.message-content').innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
+                }
             } finally {
-                hideTyping();
+                stopJokes();
                 isStreaming = false;
-                stopJokes(); updateSendButton(true);
+                document.getElementById('sendBtn').disabled = false;
             }
         }
 
