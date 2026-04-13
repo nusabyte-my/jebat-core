@@ -1922,7 +1922,7 @@ Write a brief conclusion in Markdown format (2-3 sentences) summarizing the key 
                                 ...conv.messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
                             ],
                             stream: false,
-                            options: { num_predict: 512 }
+                            options: { num_predict: 2048 }
                         })
                     });
 
