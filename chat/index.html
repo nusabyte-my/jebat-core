@@ -368,11 +368,7 @@
             cursor: not-allowed;
         }
 
-        .chat-messages {
-            position: relative;
-        }
-
-        /* Shimmer Tech Joke */
+        /* Shimmer Tech Joke - appears inline next to thinking AI */
         @keyframes shimmer {
             0% { background-position: -200% center; }
             100% { background-position: 200% center; }
@@ -384,26 +380,11 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: shimmer 3s linear infinite;
-        }
-        .chat-messages {
-            position: relative;
-        }
-        .tech-joke {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-            padding: 0 20px;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            pointer-events: none;
-            z-index: 50;
-        }
-        .tech-joke.visible {
-            opacity: 1;
+            font-size: 12px;
+            font-style: italic;
+            display: block;
+            margin-top: 8px;
+            max-width: 500px;
         }
 
         /* Typing Indicator */
@@ -597,7 +578,6 @@
             </div>
 
             <div class="chat-messages" id="chatMessages">
-                <div class="tech-joke" id="techJoke"></div>
                 <div class="welcome" id="welcomeScreen">
                     <div class="welcome-logo">J</div>
                     <h1>What can I help with?</h1>
@@ -673,24 +653,23 @@
         ];
         let jokeIdx = 0, jokeTimer = null;
 
-        function showJoke() {
-            const el = document.getElementById('techJoke');
-            if (!el) return;
-            el.innerHTML = `<span class="shimmer-text">💡 ${techJokes[jokeIdx % techJokes.length]}</span>`;
-            el.classList.add('visible');
+        function getNextJoke() {
+            const joke = techJokes[jokeIdx % techJokes.length];
             jokeIdx++;
-        }
-        function hideJoke() {
-            const el = document.getElementById('techJoke');
-            if (el) el.classList.remove('visible');
+            return joke;
         }
         function startJokes() {
-            showJoke();
-            jokeTimer = setInterval(() => { hideJoke(); setTimeout(showJoke, 500); }, 8000);
+            // Joke will be injected into the thinking message
+            jokeTimer = setInterval(() => {
+                // Update any thinking indicators with new joke
+                const thinkingEls = document.querySelectorAll('.thinking-joke');
+                thinkingEls.forEach(el => {
+                    el.innerHTML = `<span class="shimmer-text">💡 ${getNextJoke()}</span>`;
+                });
+            }, 8000);
         }
         function stopJokes() {
             if (jokeTimer) { clearInterval(jokeTimer); jokeTimer = null; }
-            hideJoke();
         }
 
         async function loadModels() {
@@ -765,23 +744,21 @@
             }
             
             welcomeEl.style.display = 'none';
+            container.innerHTML = '';
             
-            // Build messages HTML without removing techJoke
-            const techJoke = document.getElementById('techJoke');
-            const messagesHtml = conv.messages.map(msg => `
-                <div class="message ${msg.role} ${msg.isLLMChat ? 'llm-chat' : ''}">
+            conv.messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `message ${msg.role} ${msg.isLLMChat ? 'llm-chat' : ''}`;
+                div.innerHTML = `
                     <div class="message-header">
                         <div class="avatar ${msg.role}">${msg.role === 'user' ? 'U' : msg.role === 'system' ? '⚙' : 'AI'}</div>
                         <span class="message-role">${msg.role === 'user' ? 'You' : msg.model || 'Jebat'}</span>
                         ${msg.isLLMChat ? `<span class="llm-indicator">${msg.model1} → ${msg.model2}</span>` : ''}
                     </div>
                     <div class="message-content">${msg.content}</div>
-                </div>
-            `).join('');
-            
-            // Preserve techJoke and rebuild
-            const jokeHtml = techJoke ? techJoke.outerHTML : '';
-            container.innerHTML = jokeHtml + '<div class="welcome" id="welcomeScreen" style="display:none">' + welcomeEl.innerHTML + '</div>' + messagesHtml;
+                `;
+                container.appendChild(div);
+            });
             container.scrollTop = container.scrollHeight;
         }
 
@@ -819,12 +796,32 @@
             console.log('🚀 Sending message...');
             console.log('  Model:', model, '->', modelName);
             console.log('  Provider:', provider);
-            console.log('  OLLAMA_URL:', OLLAMA_URL);
 
-            // Show thinking state
-            showTyping();
+            // Add thinking message with shimmer joke
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'message assistant';
+            thinkingDiv.id = 'thinkingMessage';
+            thinkingDiv.innerHTML = `
+                <div class="message-header">
+                    <div class="avatar ai">AI</div>
+                    <span class="message-role">${modelName}</span>
+                    <span class="ml-2 text-xs text-cyan-400 animate-pulse">Thinking...</span>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <div class="thinking-joke shimmer-text">💡 ${getNextJoke()}</div>
+                </div>
+            `;
+            container.appendChild(thinkingDiv);
+            container.scrollTop = container.scrollHeight;
+
             isStreaming = true;
             document.getElementById('sendBtn').disabled = true;
+            startJokes();
             
             try {
                 let response;
@@ -834,7 +831,10 @@
                     response = await callBYOK(provider, message, conv);
                 }
 
-                hideTyping();
+                // Remove thinking message
+                const thinkingEl = document.getElementById('thinkingMessage');
+                if (thinkingEl) thinkingEl.remove();
+
                 conv.messages.push({
                     role: 'assistant',
                     content: response,
@@ -843,12 +843,10 @@
                 renderMessages();
             } catch (error) {
                 console.error('❌ Error:', error);
-                hideTyping();
-                conv.messages.push({
-                    role: 'system',
-                    content: `Error: ${error.message}`
-                });
-                renderMessages();
+                const thinkingEl = document.getElementById('thinkingMessage');
+                if (thinkingEl) {
+                    thinkingEl.querySelector('.message-content').innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
+                }
             } finally {
                 stopJokes();
                 isStreaming = false;
