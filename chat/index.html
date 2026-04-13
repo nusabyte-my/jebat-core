@@ -724,12 +724,105 @@
     </div>
 
     <script>
+        // Session Storage Keys
+        const STORAGE_KEYS = {
+            CONVERSATIONS: 'jebat_conversations',
+            CURRENT_CONV: 'jebat_current_conv',
+            SETTINGS: 'jebat_settings',
+            MAX_CONVERSATIONS: 50
+        };
+
         // State
         let currentMode = 'chat'; // 'chat' or 'llm'
         let conversations = [];
         let currentConvId = null;
         let isStreaming = false;
-        
+
+        // Session Management
+        function saveSession() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+                localStorage.setItem(STORAGE_KEYS.CURRENT_CONV, JSON.stringify(currentConvId));
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
+                    primaryModel: document.getElementById('primaryModel')?.value || '',
+                    secondaryModel: document.getElementById('secondaryModel')?.value || '',
+                    orchestrationMode: document.getElementById('orchestrationMode')?.value || 'debate',
+                    apiProvider: document.getElementById('apiProvider')?.value || 'local',
+                    currentMode: currentMode
+                }));
+            } catch (e) {
+                console.warn('Failed to save session:', e.message);
+                // If storage is full, trim old conversations
+                if (conversations.length > 10) {
+                    conversations = conversations.slice(-20);
+                    saveSession();
+                }
+            }
+        }
+
+        function loadSession() {
+            try {
+                // Load conversations
+                const savedConvs = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
+                if (savedConvs) {
+                    conversations = JSON.parse(savedConvs);
+                    // Trim if too many
+                    if (conversations.length > STORAGE_KEYS.MAX_CONVERSATIONS) {
+                        conversations = conversations.slice(-STORAGE_KEYS.MAX_CONVERSATIONS);
+                    }
+                }
+
+                // Load current conversation
+                const savedCurrent = localStorage.getItem(STORAGE_KEYS.CURRENT_CONV);
+                if (savedCurrent) {
+                    currentConvId = JSON.parse(savedCurrent);
+                    // Verify it still exists
+                    if (!conversations.find(c => c.id === currentConvId)) {
+                        currentConvId = null;
+                    }
+                }
+
+                // Load settings
+                const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    // Apply settings after DOM is ready
+                    setTimeout(() => {
+                        if (settings.primaryModel && document.getElementById('primaryModel')) {
+                            document.getElementById('primaryModel').value = settings.primaryModel;
+                        }
+                        if (settings.secondaryModel && document.getElementById('secondaryModel')) {
+                            document.getElementById('secondaryModel').value = settings.secondaryModel;
+                        }
+                        if (settings.orchestrationMode && document.getElementById('orchestrationMode')) {
+                            document.getElementById('orchestrationMode').value = settings.orchestrationMode;
+                            updateOrchestrationInfo();
+                        }
+                        if (settings.apiProvider && document.getElementById('apiProvider')) {
+                            document.getElementById('apiProvider').value = settings.apiProvider;
+                            toggleBYOK();
+                        }
+                        if (settings.currentMode) {
+                            switchMode(settings.currentMode);
+                        }
+                    }, 100);
+                }
+
+                return conversations.length > 0;
+            } catch (e) {
+                console.warn('Failed to load session:', e.message);
+                return false;
+            }
+        }
+
+        function clearAllSessions() {
+            localStorage.removeItem(STORAGE_KEYS.CONVERSATIONS);
+            localStorage.removeItem(STORAGE_KEYS.CURRENT_CONV);
+            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+            conversations = [];
+            currentConvId = null;
+        }
+
         // Configure markdown renderer
         marked.setOptions({
             breaks: true,
@@ -746,9 +839,15 @@
             ? '/ollama' 
             : '/ollama';
 
-        // Initialize
+        // Initialize - Load session or create new
         document.addEventListener('DOMContentLoaded', () => {
-            newChat();
+            const hasSession = loadSession();
+            if (!hasSession || !currentConvId) {
+                newChat();
+            } else {
+                renderConversations();
+                loadConversation(currentConvId);
+            }
             loadModels();
         });
 
@@ -812,6 +911,7 @@
 
         function switchMode(mode) {
             currentMode = mode;
+            saveSession();
             document.querySelectorAll('.mode-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
@@ -827,6 +927,7 @@
         }
 
         function updateOrchestrationInfo() {
+            saveSession();
             const mode = document.getElementById('orchestrationMode').value;
             const info = document.getElementById('orchestrationInfo');
             
@@ -952,6 +1053,7 @@
             // Add user message
             conv.messages.push({ role: 'user', content: message });
             renderMessages();
+            saveSession();
 
             if (currentMode === 'llm') {
                 await sendLLMToLLMChat(message, conv);
@@ -1014,6 +1116,7 @@
                     model: modelName
                 });
                 renderMessages();
+                saveSession();
             } catch (error) {
                 console.error('❌ Error:', error);
                 const thinkingEl = document.getElementById('thinkingMessage');
