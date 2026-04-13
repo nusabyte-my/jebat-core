@@ -368,6 +368,10 @@
             cursor: not-allowed;
         }
 
+        .chat-messages {
+            position: relative;
+        }
+
         /* Shimmer Tech Joke */
         @keyframes shimmer {
             0% { background-position: -200% center; }
@@ -381,17 +385,22 @@
             -webkit-text-fill-color: transparent;
             animation: shimmer 3s linear infinite;
         }
+        .chat-messages {
+            position: relative;
+        }
         .tech-joke {
-            position: absolute;
-            bottom: 80px;
+            position: fixed;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             max-width: 600px;
+            width: 100%;
             text-align: center;
             padding: 0 20px;
             opacity: 0;
             transition: opacity 0.5s ease;
             pointer-events: none;
+            z-index: 50;
         }
         .tech-joke.visible {
             opacity: 1;
@@ -747,15 +756,19 @@
         function renderMessages() {
             const container = document.getElementById('chatMessages');
             const conv = conversations.find(c => c.id === currentConvId);
+            const welcomeEl = document.getElementById('welcomeScreen');
+            if (!welcomeEl) return;
             
             if (!conv || conv.messages.length === 0) {
-                document.getElementById('welcomeScreen').style.display = 'flex';
+                welcomeEl.style.display = 'flex';
                 return;
             }
             
-            document.getElementById('welcomeScreen').style.display = 'none';
+            welcomeEl.style.display = 'none';
             
-            container.innerHTML = conv.messages.map(msg => `
+            // Build messages HTML without removing techJoke
+            const techJoke = document.getElementById('techJoke');
+            const messagesHtml = conv.messages.map(msg => `
                 <div class="message ${msg.role} ${msg.isLLMChat ? 'llm-chat' : ''}">
                     <div class="message-header">
                         <div class="avatar ${msg.role}">${msg.role === 'user' ? 'U' : msg.role === 'system' ? '⚙' : 'AI'}</div>
@@ -766,6 +779,9 @@
                 </div>
             `).join('');
             
+            // Preserve techJoke and rebuild
+            const jokeHtml = techJoke ? techJoke.outerHTML : '';
+            container.innerHTML = jokeHtml + '<div class="welcome" id="welcomeScreen" style="display:none">' + welcomeEl.innerHTML + '</div>' + messagesHtml;
             container.scrollTop = container.scrollHeight;
         }
 

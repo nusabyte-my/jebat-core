@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jebat Chat Test</title>
+    <style>
+        body { font-family: monospace; background: #0a0a0a; color: #e5e5e5; padding: 20px; }
+        .ok { color: #10b981; }
+        .err { color: #ef4444; }
+        pre { background: #1a1a1a; padding: 10px; border-radius: 8px; overflow-x: auto; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 5px; }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Jebat Chat API Test</h1>
+    
+    <h2>1. Test Ollama API (direct)</h2>
+    <button onclick="testOllama()">Test /ollama/api/chat</button>
+    <pre id="ollama-result"></pre>
+
+    <h2>2. Test Ollama Models</h2>
+    <button onclick="testModels()">Test /ollama/api/tags</button>
+    <pre id="models-result"></pre>
+
+    <h2>3. Test Chat Flow (like the chat page)</h2>
+    <div>
+        <select id="model">
+            <option value="tinyllama">TinyLlama (fast test)</option>
+            <option value="qwen2.5:14b">Qwen2.5 14B</option>
+            <option value="phi3">Phi-3</option>
+        </select>
+        <input id="message" value="Say hello in 3 words" style="padding: 10px; width: 300px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 8px;">
+        <button onclick="testChat()">Send Message</button>
+    </div>
+    <pre id="chat-result"></pre>
+
+    <script>
+        const OLLAMA_URL = '/ollama';
+
+        async function testOllama() {
+            const result = document.getElementById('ollama-result');
+            result.textContent = '⏳ Testing...';
+            try {
+                const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'tinyllama',
+                        messages: [{ role: 'user', content: 'Say hello' }],
+                        stream: false
+                    })
+                });
+                const data = await res.json();
+                result.className = 'ok';
+                result.textContent = `✅ OK! Response: ${data.message?.content || 'No content'}`;
+            } catch(e) {
+                result.className = 'err';
+                result.textContent = `❌ Error: ${e.message}`;
+            }
+        }
+
+        async function testModels() {
+            const result = document.getElementById('models-result');
+            result.textContent = '⏳ Testing...';
+            try {
+                const res = await fetch(`${OLLAMA_URL}/api/tags`);
+                const data = await res.json();
+                result.className = 'ok';
+                result.textContent = `✅ OK! Models: ${data.models?.map(m => m.name).join(', ') || 'none found'}`;
+            } catch(e) {
+                result.className = 'err';
+                result.textContent = `❌ Error: ${e.message}`;
+            }
+        }
+
+        async function testChat() {
+            const model = document.getElementById('model').value;
+            const message = document.getElementById('message').value;
+            const result = document.getElementById('chat-result');
+            result.textContent = `⏳ Sending to ${model}: "${message}"...`;
+            try {
+                const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: 'system', content: 'You are Jebat Agent, a helpful AI assistant.' },
+                            { role: 'user', content: message }
+                        ],
+                        stream: false
+                    })
+                });
+                const data = await res.json();
+                result.className = 'ok';
+                result.textContent = `✅ Response from ${model}:\n\n${data.message?.content || 'No response'}`;
+            } catch(e) {
+                result.className = 'err';
+                result.textContent = `❌ Error: ${e.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
