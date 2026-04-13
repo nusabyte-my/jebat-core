@@ -6,10 +6,10 @@ _Mimpi terakhir: 2026-04-05 / Dream #1 complete (sessionsSinceDream: 0)_
 
 ## Projek Aktif (Active Projects)
 - [jebat-core](vault/projects/jebat-core.md) — live on VPS, 2 containers healthy, skills updated
-- [sh4dow.bot](vault/projects/sh4dow-bot.md) — web control UI, single-page, OpenClaw-style
+- [sh4dow.bot](vault/projects/sh4dow-bot.md) — web control UI, single-page, Jebat Gateway-style
 
 ## Pasukan Aktif (Active Skills)
-- **Panglima** — capture-first operator mode (replaces hermes-agent)
+- **Panglima** — capture-first operator mode (replaces jebat-agent)
 - **Hikmat** — vault search, Mimpi, micro-learning
 - **Agent Dispatch** — multi-domain routing, sequencing, verification planning
 - **Hulubalang** — security, pentest, CTF, hardening

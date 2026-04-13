@@ -11,7 +11,7 @@
 
 - likes assistants that actually implement
 - prefers CLI-first workflows
-- wants Hermes-style project capture before edits
+- wants Jebat Agent-style project capture before edits
 - values local tooling, multi-agent orchestration, and durable setup
 - communicates casually and directly — match the energy
 

@@ -1,7 +1,7 @@
 {
   "name": "jebat-agent",
   "version": "3.0.0",
-  "description": "Quick setup wizard for Jebat Gateway and Jebat Agent integration",
+  "description": "Jebat Agent — 30-second setup for AI agent workspace with 8 local LLM models (Gemma 4, Qwen2.5, Hermes3, Phi-3), IDE integration, multi-agent orchestration, markdown rendering, and enterprise security.",
   "main": "index.js",
   "bin": {
     "jebat-agent": "./index.js",

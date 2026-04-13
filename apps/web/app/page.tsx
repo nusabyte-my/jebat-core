@@ -32,11 +32,13 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-1 text-sm">
           {[
             { href: "#platform", label: "Platform" },
-            { href: "#agent", label: "Agent" },
-            { href: "#core", label: "Core" },
+            { href: "#agents-registry", label: "Agents" },
+            { href: "#specialists", label: "Specialists" },
+            { href: "#features", label: "Features" },
             { href: "#chat", label: "Chat" },
             { href: "#security", label: "Security" },
             { href: "/gelanggang", label: "Gelanggang" },
+            { href: "/portal", label: "Portal" },
           ].map(link => (
             <a key={link.href} href={link.href} className="px-3 py-2 text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5">
               {link.label}
@@ -65,11 +67,13 @@ function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden bg-[#050505]/98 border-t border-white/5 px-6 py-4 space-y-2">
-          {["#platform", "#agent", "#core", "#chat", "#security", "/gelanggang"].map(href => (
+          {["#platform", "#agents-registry", "#specialists", "#features", "#agent", "#core", "#chat", "#security"].map(href => (
             <a key={href} href={href} className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>
-              {href.replace("#", "").replace("/", "").charAt(0).toUpperCase() + href.replace("#", "").replace("/", "").slice(1)}
+              {href.replace("#", "").replace("-", " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
             </a>
           ))}
+          <a href="/gelanggang" className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>Gelanggang</a>
+          <a href="/portal" className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>Portal</a>
         </div>
       )}
     </nav>
@@ -128,10 +132,11 @@ function HeroSection() {
           </div>
 
           {/* Trust Stats */}
-          <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+          <div className="pt-12 grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
             {[
-              { value: "8", label: "Local LLM Models", icon: "🤖" },
-              { value: "40+", label: "Optimized Skills", icon: "⚡" },
+              { value: "10", label: "Core Agents", icon: "🤖" },
+              { value: "24", label: "Specialists", icon: "👥" },
+              { value: "8", label: "Local LLMs", icon: "⚡" },
               { value: "5", label: "LLM Providers", icon: "🌐" },
               { value: "100%", label: "Self-Hosted", icon: "🔒" },
             ].map((stat, i) => (
@@ -236,6 +241,308 @@ function PlatformSection() {
   );
 }
 
+function AgentsRegistry() {
+  const coreAgents = [
+    { name: "Panglima", role: "Orchestration & Command", provider: "Anthropic", model: "claude-sonnet-4", color: "cyan", icon: "⚔️", desc: "The commander — routes tasks, manages specialists, orchestrates workflows" },
+    { name: "Tukang", role: "Development & Implementation", provider: "Ollama", model: "qwen2.5-coder", color: "blue", icon: "🔨", desc: "The builder — writes code, implements features, fixes bugs" },
+    { name: "Hulubalang", role: "Security Audit & Pentest", provider: "Ollama", model: "hermes-sec-v2", color: "red", icon: "🛡️", desc: "The guardian — security reviews, penetration testing, vulnerability analysis" },
+    { name: "Pengawal", role: "CyberSec Defense", provider: "Ollama", model: "hermes-sec-v2", color: "orange", icon: "🔰", desc: "The defender — real-time threat detection, security monitoring, incident response" },
+    { name: "Pawang", role: "Research & Investigation", provider: "Anthropic", model: "claude-sonnet-4", color: "purple", icon: "🔮", desc: "The researcher — deep investigation, documentation, comparative analysis" },
+    { name: "Syahbandar", role: "Operations & Automation", provider: "Ollama", model: "qwen2.5-coder", color: "green", icon: "⚙️", desc: "The operator — CI/CD, automation, deployments, system administration" },
+    { name: "Bendahara", role: "Database & Schema", provider: "Ollama", model: "qwen2.5-coder", color: "yellow", icon: "🗄️", desc: "The treasurer — database design, SQL migrations, query optimization" },
+    { name: "Hikmat", role: "Memory & Context", provider: "Anthropic", model: "claude-sonnet-4", color: "pink", icon: "🧠", desc: "The wise — 5-layer eternal memory (M0-M4), cross-session continuity" },
+    { name: "Penganalisis", role: "Analytics & KPI Review", provider: "Anthropic", model: "claude-sonnet-4", color: "indigo", icon: "📊", desc: "The analyst — KPI tracking, funnel analysis, experiments, reporting" },
+    { name: "Penyemak", role: "QA & Validation", provider: "Anthropic", model: "claude-sonnet-4", color: "emerald", icon: "✅", desc: "The inspector — testing, verification, regression review, release confidence" },
+  ];
+
+  const colorMap: Record<string, string> = {
+    cyan: "from-cyan-400/10 to-cyan-600/5 border-cyan-400/20",
+    blue: "from-blue-400/10 to-blue-600/5 border-blue-400/20",
+    red: "from-red-400/10 to-red-600/5 border-red-400/20",
+    orange: "from-orange-400/10 to-orange-600/5 border-orange-400/20",
+    purple: "from-purple-400/10 to-purple-600/5 border-purple-400/20",
+    green: "from-green-400/10 to-green-600/5 border-green-400/20",
+    yellow: "from-yellow-400/10 to-yellow-600/5 border-yellow-400/20",
+    pink: "from-pink-400/10 to-pink-600/5 border-pink-400/20",
+    indigo: "from-indigo-400/10 to-indigo-600/5 border-indigo-400/20",
+    emerald: "from-emerald-400/10 to-emerald-600/5 border-emerald-400/20",
+  };
+
+  const badgeMap: Record<string, string> = {
+    cyan: "bg-cyan-400/10 text-cyan-400 border-cyan-400/20",
+    blue: "bg-blue-400/10 text-blue-400 border-blue-400/20",
+    red: "bg-red-400/10 text-red-400 border-red-400/20",
+    orange: "bg-orange-400/10 text-orange-400 border-orange-400/20",
+    purple: "bg-purple-400/10 text-purple-400 border-purple-400/20",
+    green: "bg-green-400/10 text-green-400 border-green-400/20",
+    yellow: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20",
+    pink: "bg-pink-400/10 text-pink-400 border-pink-400/20",
+    indigo: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
+    emerald: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20",
+  };
+
+  return (
+    <section id="agents-registry" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="text-center mb-16">
+        <span className="inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">Core Agents Registry</span>
+        <h2 className="text-3xl font-bold md:text-5xl mb-4">10 Core Agents. One Platform.</h2>
+        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Each agent has a specialized role, provider, and model — orchestrated by Panglima for maximum effectiveness.</p>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {coreAgents.map((agent, i) => (
+          <div key={i} className={`group relative rounded-2xl border bg-gradient-to-br ${colorMap[agent.color]} p-6 hover:scale-[1.02] transition-all duration-300`}>
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-3xl">{agent.icon}</div>
+              <span className={`rounded-full ${badgeMap[agent.color]} px-2.5 py-0.5 text-xs font-medium border`}>
+                {agent.provider}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1">{agent.name}</h3>
+            <p className="text-xs text-cyan-400 font-mono mb-2">{agent.model}</p>
+            <p className="text-sm text-neutral-400 mb-3 leading-relaxed">{agent.desc}</p>
+            <div className="text-xs text-neutral-500 uppercase tracking-wider">{agent.role}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center mt-10">
+        <a href="#specialists" className="inline-flex items-center gap-2 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 px-6 py-3 text-sm font-medium hover:bg-cyan-400/20 transition">
+          View All 24 Specialists Below ↓
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function SpecialistsGrid() {
+  const specialists = [
+    { name: "Tukang Web", role: "Browser UI & Frontend", category: "Delivery", icon: "🌐" },
+    { name: "Pembina Aplikasi", role: "Cross-Layer App Delivery", category: "Delivery", icon: "📱" },
+    { name: "Khidmat Pelanggan", role: "Onboarding & Support", category: "Growth", icon: "💬" },
+    { name: "Senibina Antara Muka", role: "UI/UX & Responsive Design", category: "Design", icon: "🎨" },
+    { name: "Penyebar Reka Bentuk", role: "Design Systems & Tokens", category: "Design", icon: "✨" },
+    { name: "Pengkarya Kandungan", role: "Content Systems & Scripts", category: "Growth", icon: "📝" },
+    { name: "Jurutulis Jualan", role: "Copywriting & CTA Framing", category: "Growth", icon: "✍️" },
+    { name: "Penjejak Carian", role: "SEO & Metadata", category: "Growth", icon: "🔍" },
+    { name: "Penggerak Pasaran", role: "Marketing & Campaigns", category: "Growth", icon: "📣" },
+    { name: "Strategi Jenama", role: "Positioning & Brand Voice", category: "Strategy", icon: "🏷️" },
+    { name: "Strategi Produk", role: "Feature Framing & Roadmap", category: "Strategy", icon: "🎯" },
+    { name: "Penulis Cadangan", role: "Proposals & SOWs", category: "Strategy", icon: "📄" },
+    { name: "Penggerak Jualan", role: "Sales Collateral & One-Pagers", category: "Strategy", icon: "💼" },
+    { name: "Perisai", role: "Security Hardening", category: "Security", icon: "🛡️" },
+    { name: "Serangan", role: "Penetration Testing", category: "Security", icon: "⚔️" },
+    { name: "Hulubalang", role: "Security Audit & Pentest", category: "Security", icon: "🔒" },
+    { name: "Pengawal", role: "CyberSec Defense", category: "Security", icon: "🔰" },
+    { name: "Tukang", role: "Full-Stack Development", category: "Delivery", icon: "🔨" },
+    { name: "Bendahara", role: "Database & Migrations", category: "Delivery", icon: "🗄️" },
+    { name: "Syahbandar", role: "Ops, CI/CD & Deploy", category: "Delivery", icon: "⚙️" },
+    { name: "Penyemak", role: "QA & Validation", category: "Quality", icon: "✅" },
+    { name: "Pawang", role: "Research & Docs", category: "Knowledge", icon: "🔮" },
+    { name: "Penganalisis", role: "KPI & Funnel Analysis", category: "Quality", icon: "📊" },
+    { name: "Hikmat", role: "Memory Consolidation", category: "Knowledge", icon: "🧠" },
+  ];
+
+  const categoryColors: Record<string, string> = {
+    Delivery: "border-cyan-400/20 bg-cyan-400/5 text-cyan-400",
+    Security: "border-red-400/20 bg-red-400/5 text-red-400",
+    Growth: "border-purple-400/20 bg-purple-400/5 text-purple-400",
+    Strategy: "border-amber-400/20 bg-amber-400/5 text-amber-400",
+    Quality: "border-green-400/20 bg-green-400/5 text-green-400",
+    Design: "border-pink-400/20 bg-pink-400/5 text-pink-400",
+    Knowledge: "border-indigo-400/20 bg-indigo-400/5 text-indigo-400",
+  };
+
+  return (
+    <section id="specialists" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="text-center mb-16">
+        <span className="inline-block rounded-full border border-purple-400/20 bg-purple-400/5 px-4 py-1.5 text-sm text-purple-300 mb-4">Specialist Agents</span>
+        <h2 className="text-3xl font-bold md:text-5xl mb-4">24 Specialist Agents</h2>
+        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Domain experts spawned on-demand for specialized tasks across delivery, security, growth, strategy, and quality.</p>
+      </div>
+
+      {/* Category Legend */}
+      <div className="flex flex-wrap justify-center gap-3 mb-10">
+        {Object.entries(categoryColors).map(([cat, cls]) => (
+          <span key={cat} className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${cls}`}>
+            {cat}
+          </span>
+        ))}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {specialists.map((s, i) => (
+          <div key={i} className="group flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 hover:border-cyan-400/20 hover:bg-white/[0.04] transition-all duration-200">
+            <div className="text-xl flex-shrink-0">{s.icon}</div>
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-white truncate">{s.name}</h4>
+              <p className="text-xs text-neutral-500">{s.role}</p>
+              <span className={`inline-block mt-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${categoryColors[s.category]}`}>
+                {s.category}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center mt-10">
+        <a href="#features" className="inline-flex items-center gap-2 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 px-6 py-3 text-sm font-medium hover:bg-purple-400/20 transition">
+          Explore All Features ↓
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  const orchestrationModes = [
+    { name: "Multi-Agent Debate", desc: "Multiple agents argue positions, LLM-as-Judge reaches consensus", icon: "🗣️" },
+    { name: "Consensus Building", desc: "Agents converge on shared understanding through structured rounds", icon: "🤝" },
+    { name: "Sequential Chain", desc: "Step-by-step pipeline: research → implement → verify → deploy", icon: "🔗" },
+    { name: "Parallel Analysis", desc: "Independent workers investigate simultaneously for speed", icon: "⚡" },
+    { name: "Hierarchical Review", desc: "Multi-level review with escalating authority and scope", icon: "📋" },
+  ];
+
+  const llmModels = [
+    { name: "Gemma 4", provider: "Google", icon: "💎" },
+    { name: "Qwen2.5:14B", provider: "Alibaba", icon: "🔷" },
+    { name: "Hermes3", provider: "NousResearch", icon: "🔥" },
+    { name: "Phi-3", provider: "Microsoft", icon: "🧩" },
+    { name: "Llama 3.1:8B", provider: "Meta", icon: "🦙" },
+    { name: "Mistral", provider: "Mistral AI", icon: "💨" },
+    { name: "CodeLlama:7B", provider: "Meta", icon: "🐪" },
+    { name: "TinyLlama", provider: "TinyLlama", icon: "🔹" },
+  ];
+
+  const llmProviders = [
+    { name: "Anthropic", models: "Claude Sonnet 4", icon: "🟠" },
+    { name: "OpenAI", models: "GPT-4o, o1, o3", icon: "🔵" },
+    { name: "Gemini", models: "Gemini 2.5 Pro", icon: "🟣" },
+    { name: "Ollama", models: "8 Local Models", icon: "🦙" },
+    { name: "ZAI", models: "Zhipu GLM", icon: "🔶" },
+  ];
+
+  return (
+    <section id="features" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="text-center mb-16">
+        <span className="inline-block rounded-full border border-emerald-400/20 bg-emerald-400/5 px-4 py-1.5 text-sm text-emerald-300 mb-4">New Features</span>
+        <h2 className="text-3xl font-bold md:text-5xl mb-4">Platform Features</h2>
+        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Every component built for performance, security, and developer experience.</p>
+      </div>
+
+      {/* Orchestration Modes */}
+      <div className="mb-16">
+        <h3 className="text-2xl font-bold mb-6 text-center">5 Orchestration Modes</h3>
+        <div className="grid gap-4 md:grid-cols-5">
+          {orchestrationModes.map((mode, i) => (
+            <div key={i} className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center hover:border-cyan-400/20 transition">
+              <div className="text-2xl mb-2">{mode.icon}</div>
+              <h4 className="text-sm font-semibold text-white mb-1">{mode.name}</h4>
+              <p className="text-xs text-neutral-500">{mode.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* LLM Models & Providers */}
+      <div className="grid gap-10 lg:grid-cols-2 mb-16">
+        {/* Local Models */}
+        <div>
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <span className="text-cyan-400">8</span> Local LLM Models
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {llmModels.map((m, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-white/5 bg-black/20 p-3 hover:border-cyan-400/20 transition">
+                <span className="text-lg">{m.icon}</span>
+                <div>
+                  <div className="text-sm font-medium text-white">{m.name}</div>
+                  <div className="text-xs text-neutral-500">{m.provider}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Providers */}
+        <div>
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <span className="text-purple-400">5</span> LLM Providers
+          </h3>
+          <div className="space-y-3">
+            {llmProviders.map((p, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-lg border border-white/5 bg-black/20 p-4 hover:border-purple-400/20 transition">
+                <span className="text-xl">{p.icon}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-white">{p.name}</div>
+                  <div className="text-xs text-neutral-500">{p.models}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Grid */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {[
+          {
+            icon: "📝",
+            title: "Markdown Rendering",
+            desc: "Full tables, code blocks with syntax highlighting, headers, lists, and inline formatting in all AI responses.",
+            color: "cyan",
+          },
+          {
+            icon: "✨",
+            title: "Shimmer Animations",
+            desc: "Smooth shimmer loading states while AI thinks — beautiful, not frustrating. Know when work is happening.",
+            color: "purple",
+          },
+          {
+            icon: "🎯",
+            title: "Confidence Scoring (ConfMAD)",
+            desc: "Every response includes confidence metrics using ConfMAD paradigm. Know when the AI is certain or uncertain.",
+            color: "emerald",
+          },
+          {
+            icon: "⚖️",
+            title: "LLM-as-Judge Consensus",
+            desc: "A designated judge model evaluates competing agent outputs and reaches consensus for higher accuracy.",
+            color: "amber",
+          },
+          {
+            icon: "🔄",
+            title: "Retry Logic",
+            desc: "Automatic retry with exponential backoff for model loading failures. Resilient by default.",
+            color: "blue",
+          },
+          {
+            icon: "⚡",
+            title: "LRUCache Optimization",
+            desc: "Intelligent caching reduces response latency by 40-60%. Frequently accessed results served instantly.",
+            color: "green",
+          },
+        ].map((f, i) => (
+          <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] p-6 hover:border-cyan-400/20 transition">
+            <div className="text-2xl mb-3">{f.icon}</div>
+            <h4 className="text-base font-semibold text-white mb-2">{f.title}</h4>
+            <p className="text-sm text-neutral-400 leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Customer Portal CTA */}
+      <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-400/5 to-purple-400/5 p-8 text-center">
+        <h3 className="text-xl font-bold mb-2">Customer Portal</h3>
+        <p className="text-neutral-400 mb-4 max-w-xl mx-auto">Self-service portal for customers with usage analytics, billing, and support — all self-hosted.</p>
+        <a href="/portal" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-black px-6 py-3 text-sm font-semibold hover:from-cyan-300 hover:to-blue-400 transition shadow-lg shadow-cyan-500/20">
+          Open Customer Portal →
+        </a>
+      </div>
+    </section>
+  );
+}
+
 function AgentSection() {
   return (
     <section id="agent" className="mx-auto max-w-7xl px-6 py-20">
@@ -292,6 +599,12 @@ function AgentSection() {
           </div>
         ))}
       </div>
+
+      <div className="text-center mt-10">
+        <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 px-6 py-3 text-sm font-medium hover:bg-cyan-400/20 transition">
+          Get Started on GitHub →
+        </a>
+      </div>
     </section>
   );
 }
@@ -309,10 +622,13 @@ function CoreSection() {
         {[
           { title: "Eternal Memory", desc: "5-layer cognitive stack (M0-M4) with heat-based retention. Cross-session continuity.", icon: "🧠" },
           { title: "Skill Registry", desc: "40+ specialized skills optimized for token efficiency and real-world patterns.", icon: "🛠️" },
-          { title: "Agent Orchestration", desc: "Multi-agent routing with Gelanggang — watch agents debate across providers.", icon: "🎭" },
+          { title: "Agent Orchestration", desc: "Multi-agent routing with 5 modes: Debate, Consensus, Sequential, Parallel, Hierarchical.", icon: "🎭" },
           { title: "CyberSec Suite", desc: "Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest).", icon: "🛡️" },
           { title: "Gateway Router", desc: "Provider routing across 5 LLM backends with fallback chains and load balancing.", icon: "🌐" },
           { title: "IDE Context", desc: "Inject JEBAT into any editor. VS Code, Cursor, Zed, JetBrains, Neovim, and more.", icon: "📝" },
+          { title: "LRUCache", desc: "Intelligent caching reduces response latency by 40-60% for frequently accessed results.", icon: "⚡" },
+          { title: "Confidence Scoring", desc: "ConfMAD paradigm provides confidence metrics on every AI response.", icon: "🎯" },
+          { title: "LLM-as-Judge", desc: "Designated judge model evaluates competing outputs for consensus-driven accuracy.", icon: "⚖️" },
         ].map((item, i) => (
           <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
             <div className="text-3xl mb-4">{item.icon}</div>
@@ -320,6 +636,12 @@ function CoreSection() {
             <p className="text-sm text-neutral-400 leading-relaxed">{item.desc}</p>
           </div>
         ))}
+      </div>
+
+      <div className="text-center mt-10">
+        <a href="/portal" className="inline-flex items-center gap-2 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 px-6 py-3 text-sm font-medium hover:bg-purple-400/20 transition">
+          Explore Enterprise Portal →
+        </a>
       </div>
     </section>
   );
@@ -431,6 +753,12 @@ function ChatSection() {
           </a>
         </div>
       </div>
+
+      <div className="text-center mt-10">
+        <a href="/chat" className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 px-6 py-3 text-sm font-medium hover:bg-emerald-400/20 transition">
+          Launch Chat Interface →
+        </a>
+      </div>
     </section>
   );
 }
@@ -441,15 +769,16 @@ function SecuritySection() {
       <div className="text-center mb-16">
         <span className="inline-block rounded-full border border-red-400/20 bg-red-400/5 px-4 py-1.5 text-sm text-red-300 mb-4">Security</span>
         <h2 className="text-3xl font-bold md:text-5xl mb-4">Enterprise-Grade Security</h2>
-        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Zero-trust architecture with prompt injection defense, command sanitization, and complete audit trails.</p>
+        <p className="max-w-2xl mx-auto text-neutral-400 text-lg">Zero-trust architecture with prompt injection defense, command sanitization, and complete audit trails. 100% self-hosted — no cloud dependency.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Core Security Features */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
         {[
-          { title: "Prompt Injection Defense", desc: "Input sanitization, context isolation, pattern detection", color: "red", icon: "🛡️" },
-          { title: "Command Sanitization", desc: "Whitelist-only execution, argument escaping, timeout enforcement", color: "orange", icon: "🔒" },
-          { title: "Audit Logging", desc: "Complete operation trails, tamper-evident logs, JSON format", color: "yellow", icon: "📋" },
-          { title: "Secrets Management", desc: "Secure token handling, credential masking, auto-rotation", color: "green", icon: "🔑" },
+          { title: "Prompt Injection Defense", desc: "Input sanitization, context isolation, pattern detection, adversarial testing", color: "red", icon: "🛡️" },
+          { title: "Command Sanitization", desc: "Whitelist-only execution, argument escaping, timeout enforcement, shell safety", color: "orange", icon: "🔒" },
+          { title: "Complete Audit Trails", desc: "Tamper-evident operation logs, JSON format, immutable history, full traceability", color: "yellow", icon: "📋" },
+          { title: "Secrets Management", desc: "Secure token handling, credential masking, auto-rotation, vault integration", color: "green", icon: "🔑" },
         ].map((item, i) => (
           <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center">
             <div className="text-4xl mb-4">{item.icon}</div>
@@ -457,6 +786,49 @@ function SecuritySection() {
             <p className="text-xs text-neutral-400 leading-relaxed">{item.desc}</p>
           </div>
         ))}
+      </div>
+
+      {/* CyberSec Suite */}
+      <div className="mb-12">
+        <h3 className="text-xl font-bold mb-6 text-center">CyberSec Suite — 4 Security Agents</h3>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { name: "Hulubalang", role: "Security Audit & Pentest", desc: "Vulnerability scanning, pentesting, security review with structured findings", icon: "⚔️" },
+            { name: "Pengawal", role: "CyberSec Defense", desc: "Real-time threat detection, security monitoring, incident response protocols", icon: "🔰" },
+            { name: "Perisai", role: "Security Hardening", desc: "System hardening, configuration audit, attack surface reduction", icon: "🛡️" },
+            { name: "Serangan", role: "Penetration Testing", desc: "Offensive security, red-team simulations, exploit analysis", icon: "🗡️" },
+          ].map((agent, i) => (
+            <div key={i} className="rounded-xl border border-red-400/10 bg-red-400/[0.02] p-5 text-center hover:border-red-400/30 transition">
+              <div className="text-2xl mb-2">{agent.icon}</div>
+              <h4 className="text-sm font-semibold text-white mb-1">{agent.name}</h4>
+              <p className="text-xs text-red-400 mb-2">{agent.role}</p>
+              <p className="text-xs text-neutral-500">{agent.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Self-Hosted Badge */}
+      <div className="rounded-2xl border border-emerald-400/20 bg-gradient-to-r from-emerald-400/5 to-cyan-400/5 p-8 text-center">
+        <div className="text-4xl mb-3">🔒</div>
+        <h3 className="text-xl font-bold mb-2">100% Self-Hosted. No Cloud Dependency.</h3>
+        <p className="text-neutral-400 max-w-2xl mx-auto mb-6">
+          Every model runs locally. Every byte of data stays on your infrastructure. No telemetry, no data exfiltration, no vendor lock-in.
+          Complete sovereignty over your AI operations.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {["No Cloud API Calls Required", "No Data Leaves Your Server", "No Vendor Lock-In", "No Telemetry", "SOC2 Ready", "GDPR Compliant"].map((badge, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-400">
+              ✓ {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="text-center mt-10">
+        <a href="#features" className="inline-flex items-center gap-2 rounded-full bg-red-400/10 border border-red-400/20 text-red-400 px-6 py-3 text-sm font-medium hover:bg-red-400/20 transition">
+          See All Security Features ↓
+        </a>
       </div>
     </section>
   );
@@ -618,6 +990,9 @@ function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-white mb-4">Platform</h4>
             <div className="space-y-3 text-sm text-neutral-500">
+              <a href="#agents-registry" className="block transition hover:text-white">Core Agents</a>
+              <a href="#specialists" className="block transition hover:text-white">Specialists</a>
+              <a href="#features" className="block transition hover:text-white">Features</a>
               <a href="#agent" className="block transition hover:text-white">Jebat Agent</a>
               <a href="#core" className="block transition hover:text-white">Jebat Core</a>
               <a href="#chat" className="block transition hover:text-white">Chat Interface</a>
@@ -629,6 +1004,7 @@ function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-white mb-4">Resources</h4>
             <div className="space-y-3 text-sm text-neutral-500">
+              <a href="/portal" className="block transition hover:text-white">Customer Portal</a>
               <a href="/guides" className="block transition hover:text-white">Guides</a>
               <a href="/onboarding" className="block transition hover:text-white">Onboarding</a>
               <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="block transition hover:text-white">Documentation</a>
@@ -674,6 +1050,9 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <PlatformSection />
+      <AgentsRegistry />
+      <SpecialistsGrid />
+      <FeaturesSection />
       <AgentSection />
       <CoreSection />
       <ChatSection />

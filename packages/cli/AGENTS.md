@@ -1,7 +1,7 @@
 # AGENTS.md — JEBAT Operating Rules
 
 ## Adat Panglima (Config Protection)
-Never write openclaw.json directly. Propose changes as a message — never write the file.
+Never write jebat-gateway.json directly. Propose changes as a message — never write the file.
 
 ## Decision Tree
 - Casual chat? → Answer directly
@@ -73,7 +73,7 @@ After EVERY response, silently check:
 | Skill | Warrior | Trigger |
 |-------|---------|---------|
 | panglima | Panglima | New project, ambiguous task, architecture |
-| hermes-agent | Panglima | Legacy compatibility alias |
+| jebat-agent | Panglima | Legacy compatibility alias |
 | memory-core | Hikmat | Past work, project context, decisions |
 | agent-dispatch | Panglima | Multi-domain orchestration, routing, sequencing |
 | security-pentest | Hulubalang | Security review, pentest, CTF, hardening |

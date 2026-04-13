@@ -3,14 +3,14 @@
 ## Local Runtime Notes
 
 - Primary workspace: `C:\Users\shaid\Desktop\jebatcore`
-- State dir: `~/.openclaw`
-- Gateway config: `~/.openclaw/openclaw.json`
+- State dir: `~/.jebat-gateway`
+- Gateway config: `~/.jebat-gateway/jebat-gateway.json`
 - Gateway service port: `18789`
 
-## Model Routing (OpenClaw)
+## Model Routing (Jebat Gateway)
 
 - Primary: Google Gemini Flash (`google-gemini-cli/gemini-3-flash-preview`)
-- Fallbacks: Gemini Pro → ZAI GLM → Ollama Hermes/Qwen/Llama
+- Fallbacks: Gemini Pro → ZAI GLM → Ollama Jebat Agent/Qwen/Llama
 - In Claude Code: Claude Opus 4.6 (default), Sonnet 4.6 (1M context) available
 
 ## Environment
@@ -24,7 +24,7 @@
 
 - `JEBATCore` is the main assistant identity
 - Panglima is the primary capture-first operating mode
-- Hermes remains a compatibility alias, not a separate core
+- Jebat Agent remains a compatibility alias, not a separate core
 - Workspace skills are the preferred way to add repeatable behaviors
 - Claude Code is the primary interface for this workspace
 - External IDEs and clients should use the adapter layer in `adapters/`
@@ -44,7 +44,7 @@
 ## sh4dow.bot — Web Control UI
 
 - **Repo:** https://github.com/nusabyte-my/sh4dow.bot
-- **Type:** Single-page frontend control panel (OpenClaw-style 3-column layout)
+- **Type:** Single-page frontend control panel (Jebat Gateway-style 3-column layout)
 - **Gateway:** `sh4dow-gateway` on port `18789`
 - **Primary API:** `https://bot.sh4dow.tech/api` (Ollama endpoint)
 - **Providers supported:**
@@ -76,7 +76,7 @@
 - **Nginx:** `/etc/nginx/sites-enabled/jebat.online`
 - **Other sites:** cashewcapital.my, evolveplayboost, wirasiber.my, mailcow stack
 
-## Agent Aliases (OpenClaw)
+## Agent Aliases (Jebat Gateway)
 
 - `JEBAT Core` → zai/glm-5
 - `JEBAT Builder` → ollama/qwen2.5-coder:7b

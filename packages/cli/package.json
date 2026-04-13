@@ -1,7 +1,7 @@
 {
   "name": "jebat-core",
   "version": "3.0.0",
-  "description": "JEBAT — The LLM Ecosystem That Remembers Everything. CLI for IDE setup, workspace configuration, and agent management.",
+  "description": "JEBAT Core — Multi-agent orchestration platform with 5 LLM-to-LLM orchestration modes (Debate, Consensus, Sequential, Parallel, Hierarchical), markdown rendering, 10 core agents, 24 specialists, 8 local LLMs, enterprise security, and self-hosted AI platform.",
   "type": "module",
   "bin": {
     "jebat-core": "./bin/jebatcore.js"

@@ -13,16 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JEBAT — The LLM Ecosystem That Remembers Everything",
+  title: "JEBAT AI Agent Platform — Multi-Agent Orchestration & Self-Hosted AI",
   description:
-    "Eternal memory. Multi-agent orchestration. 6 thinking modes. CyberSec assistant. Self-hosted, privacy-first. Built by NusaByte.",
+    "JEBAT is the enterprise AI agent platform with multi-agent orchestration, 10 core agents, 24 specialists, 5 orchestration modes, 8 local LLM models, and 5 providers (Anthropic, OpenAI, Gemini, Ollama, ZAI). 100% self-hosted, no cloud dependency. Built by NusaByte, Malaysia AI Platform.",
   keywords: [
-    "JEBAT", "AI assistant", "LLM", "memory", "agent orchestration",
-    "cybersecurity", "self-hosted", "NusaByte", "OpenClaw", "Pengawal",
+    "JEBAT AI Agent Platform", "Multi-Agent Orchestration", "Self-Hosted AI",
+    "Enterprise AI", "LLM Debate", "Local Models", "Ollama", "Malaysia AI Platform",
+    "Anthropic Claude", "OpenAI", "Gemini", "ZAI", "ConfMAD", "LLM-as-Judge",
+    "Prompt Injection Defense", "CyberSec AI", "NusaByte", "Privacy-First AI",
   ],
   openGraph: {
-    title: "JEBAT — AI Ecosystem",
-    description: "The LLM Ecosystem That Remembers Everything",
+    title: "JEBAT — Self-Hosted Multi-Agent AI Platform",
+    description: "10 core agents, 24 specialists, 8 local LLMs, 5 providers. 100% self-hosted enterprise AI.",
     type: "website",
     url: "https://jebat.online",
   },
@@ -38,6 +40,58 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://jebat.online#organization",
+                  "name": "NusaByte",
+                  "url": "https://nusabyte.my",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://jebat.online/logo.png",
+                  },
+                  "sameAs": [
+                    "https://github.com/nusabyte-my/jebat-core",
+                    "https://github.com/nusabyte-my",
+                  ],
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "@id": "https://jebat.online#software",
+                  "name": "JEBAT AI Agent Platform",
+                  "applicationCategory": "BusinessApplication",
+                  "operatingSystem": "Linux, macOS, Windows",
+                  "url": "https://jebat.online",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "MYR",
+                  },
+                  "featureList": [
+                    "Multi-Agent Orchestration",
+                    "Self-Hosted AI",
+                    "8 Local LLM Models",
+                    "5 LLM Providers",
+                    "Enterprise Security",
+                    "LLM-as-Judge Consensus",
+                    "Confidence Scoring (ConfMAD)",
+                    "Markdown Rendering",
+                    "LRUCache Optimization",
+                    "Customer Portal",
+                  ],
+                  "provider": { "@id": "https://jebat.online#organization" },
+                },
+              ],
+            }),
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
