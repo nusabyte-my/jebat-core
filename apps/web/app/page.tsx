@@ -15,7 +15,7 @@ function Navbar() {
   return (
     <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5" : "bg-transparent"}`}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-3">
+        <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -27,7 +27,7 @@ function Navbar() {
             <span className="text-lg font-bold tracking-tight">JEBAT</span>
             <span className="ml-2 text-[10px] font-medium text-cyan-400/80 border border-cyan-400/20 rounded-full px-2 py-0.5">v3.0</span>
           </div>
-        </div>
+        </a>
 
         <div className="hidden md:flex items-center gap-1 text-sm">
           {[
@@ -186,9 +186,14 @@ function PlatformSection() {
           <div className="rounded-xl bg-black/40 border border-white/5 p-4 font-mono text-sm">
             <span className="text-cyan-400">$</span> <span className="text-white">npx jebat-agent --full</span>
           </div>
-          <a href="https://www.npmjs.com/package/jebat-agent" target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition text-sm font-medium">
-            View on npm →
-          </a>
+          <div className="flex flex-wrap gap-3 mt-6">
+            <a href="/agent" className="inline-flex items-center gap-2 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-400 px-4 py-2 text-sm font-medium hover:bg-cyan-400/20 transition">
+              Learn More →
+            </a>
+            <a href="https://www.npmjs.com/package/jebat-agent" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 text-neutral-300 px-4 py-2 text-sm hover:bg-white/5 transition">
+              npm →
+            </a>
+          </div>
         </div>
 
         {/* Jebat Core Card */}
@@ -217,9 +222,14 @@ function PlatformSection() {
           <div className="rounded-xl bg-black/40 border border-white/5 p-4 font-mono text-sm">
             <span className="text-purple-400">$</span> <span className="text-white">npx jebat-core doctor</span>
           </div>
-          <a href="https://www.npmjs.com/package/jebat-core" target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition text-sm font-medium">
-            View on npm →
-          </a>
+          <div className="flex flex-wrap gap-3 mt-6">
+            <a href="/portal" className="inline-flex items-center gap-2 rounded-full bg-purple-400/10 border border-purple-400/20 text-purple-400 px-4 py-2 text-sm font-medium hover:bg-purple-400/20 transition">
+              Enterprise Portal →
+            </a>
+            <a href="https://www.npmjs.com/package/jebat-core" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 text-neutral-300 px-4 py-2 text-sm hover:bg-white/5 transition">
+              npm →
+            </a>
+          </div>
         </div>
       </div>
     </section>
