@@ -57,14 +57,17 @@ npx jebat-gateway start
 
 ---
 
-## 📦 npm Packages
+## 📦 npm Packages (5 Packages)
 
-JEBAT provides two complementary npm packages:
+The complete JEBAT ecosystem available via npm:
 
 | Package | Version | Purpose | Command |
 |---------|---------|---------|---------|
-| **[jebat-agent](https://www.npmjs.com/package/jebat-agent)** | `3.0.0` | Setup wizard, local model deployment, IDE integration | `npx jebat-agent` |
-| **[jebat-core](https://www.npmjs.com/package/jebat-core)** | `3.0.0` | Platform core, memory system, skill registry, gateway | `npx jebat-core` |
+| **[jebat-agent](https://www.npmjs.com/package/jebat-agent)** | `3.0.1` | Setup wizard, 8 local LLMs, IDE integration | `npx jebat-agent` |
+| **[jebat-core](https://www.npmjs.com/package/jebat-core)** | `3.0.1` | Platform core, 10 agents, 24 specialists | `npx jebat-core` |
+| **[jebat-security](https://www.npmjs.com/package/jebat-security)** | `1.0.1` | CyberSec suite: Hulubalang, Pengawal, Perisai, Serangan | `npx jebat-security` |
+| **[jebat-gelanggang](https://www.npmjs.com/package/jebat-gelanggang)** | `1.0.0` | LLM-to-LLM Arena with 5 orchestration modes | `npx jebat-gelanggang` |
+| **[jebat-guides](https://www.npmjs.com/package/jebat-guides)** | `1.0.0` | Setup guides: IDE, models, channels, migration | `npx jebat-guides` |
 
 ---
 
