@@ -800,6 +800,11 @@
             const modelName = model.includes('/') ? model.split('/')[1] : model;
             const container = document.getElementById('chatMessages');
 
+            console.log('🚀 Sending message...');
+            console.log('  Model:', model, '->', modelName);
+            console.log('  Provider:', provider);
+            console.log('  OLLAMA_URL:', OLLAMA_URL);
+
             // Show thinking state
             showTyping();
             isStreaming = true;
@@ -821,6 +826,7 @@
                 });
                 renderMessages();
             } catch (error) {
+                console.error('❌ Error:', error);
                 hideTyping();
                 conv.messages.push({
                     role: 'system',
@@ -908,6 +914,7 @@
 
         async function callOllama(model, message, conv) {
             const modelName = model.includes('/') ? model.split('/')[1] : model;
+            console.log('📡 Calling Ollama:', modelName, 'at', `${OLLAMA_URL}/api/chat`);
             
             const res = await fetch(`${OLLAMA_URL}/api/chat`, {
                 method: 'POST',
@@ -925,6 +932,7 @@
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             
             const data = await res.json();
+            console.log('✅ Got response:', data.message?.content?.substring(0, 50));
             return data.message?.content || 'No response';
         }
 
