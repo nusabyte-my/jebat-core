@@ -637,6 +637,21 @@
                     </select>
                 </div>
 
+                <div class="setting-group" id="orchestrationGroup" style="display: none;">
+                    <label class="setting-label">Orchestration Mode</label>
+                    <select class="setting-select" id="orchestrationMode" onchange="updateOrchestrationInfo()">
+                        <option value="debate">⚖️ Multi-Agent Debate</option>
+                        <option value="consensus">🤝 Consensus Building</option>
+                        <option value="sequential">🔗 Sequential Chain</option>
+                        <option value="parallel">⚡ Parallel Analysis</option>
+                        <option value="hierarchical">🏛️ Hierarchical Review</option>
+                    </select>
+                    <div id="orchestrationInfo" class="mt-3 p-3 rounded-lg bg-black/30 border border-white/5 text-xs text-neutral-400">
+                        <strong class="text-cyan-300">⚖️ Multi-Agent Debate</strong>
+                        <p class="mt-1">Model 1 advocates, Model 2 critiques. 4 rounds: positions → rebuttals → confidence → moderator conclusion.</p>
+                    </div>
+                </div>
+
                 <div class="setting-group">
                     <label class="setting-label">API Provider</label>
                     <select class="setting-select" id="apiProvider" onchange="toggleBYOK()">
@@ -801,12 +816,64 @@
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
             document.getElementById('llm2Group').style.display = mode === 'llm' ? 'block' : 'none';
+            document.getElementById('orchestrationGroup').style.display = mode === 'llm' ? 'block' : 'none';
             
             if (mode === 'llm') {
                 document.getElementById('chatInput').placeholder = 'Start a topic for LLM discussion...';
+                updateOrchestrationInfo();
             } else {
                 document.getElementById('chatInput').placeholder = 'Message Jebat...';
             }
+        }
+
+        function updateOrchestrationInfo() {
+            const mode = document.getElementById('orchestrationMode').value;
+            const info = document.getElementById('orchestrationInfo');
+            
+            const descriptions = {
+                debate: {
+                    title: '⚖️ Multi-Agent Debate',
+                    desc: 'Model 1 advocates, Model 2 critiques. 4 rounds: positions → rebuttals → confidence → moderator conclusion.',
+                    color: 'text-cyan-300',
+                    rounds: '4 Rounds',
+                    time: '~2-5 min'
+                },
+                consensus: {
+                    title: '🤝 Consensus Building',
+                    desc: 'Both models collaborate to find common ground. 3 rounds: initial → refinement → final agreement.',
+                    color: 'text-emerald-300',
+                    rounds: '3 Rounds',
+                    time: '~1.5-3 min'
+                },
+                sequential: {
+                    title: '🔗 Sequential Chain',
+                    desc: 'Model 1 starts, Model 2 builds on it, Model 1 refines. Linear knowledge building.',
+                    color: 'text-blue-300',
+                    rounds: '3 Turns',
+                    time: '~1-2 min'
+                },
+                parallel: {
+                    title: '⚡ Parallel Analysis',
+                    desc: 'Both models analyze independently, then compare perspectives side-by-side with synthesis.',
+                    color: 'text-yellow-300',
+                    rounds: '2 Phases',
+                    time: '~1-2 min'
+                },
+                hierarchical: {
+                    title: '🏛️ Hierarchical Review',
+                    desc: 'Model 1 (Senior) delegates to Model 2 (Junior), then reviews and provides feedback.',
+                    color: 'text-purple-300',
+                    rounds: '3 Steps',
+                    time: '~1.5-3 min'
+                }
+            };
+            
+            const d = descriptions[mode];
+            info.innerHTML = `
+                <strong class="${d.color}">${d.title}</strong>
+                <span class="ml-2 text-[10px] text-neutral-500">(${d.rounds} · ${d.time})</span>
+                <p class="mt-1">${d.desc}</p>
+            `;
         }
 
         function toggleBYOK() {
@@ -960,16 +1027,277 @@
             }
         }
 
+        // ==================== Orchestration Modes ====================
+
+        async function runDebateMode(topic, conv, model1, model2, name1, name2, container) {
+            // Multi-Agent Debate (MAD) Paradigm - Research-backed
+            const roles = {
+                advocate: "You are the PROponent. Argue strongly in favor. Provide evidence and reasoning.",
+                critic: "You are the CRITIC. Analyze weaknesses, counterarguments, and flaws."
+            };
+            
+            let responses = [];
+            
+            try {
+                // Round 1: Independent Positions
+                responses[0] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Debate Topic: "${topic}"**\n\n${roles.advocate}\n\nPresent your position in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} (Advocate)\n\n${responses[0]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, round: 1 });
+                renderMessages();
+                await sleep(300);
+                
+                responses[1] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Debate Topic: "${topic}"**\n\n${roles.critic}\n\nProvide counterarguments in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} (Critic)\n\n${responses[1]}`, model: name2, isLLMChat: true, model1: name1, model2: name2, round: 1 });
+                renderMessages();
+                await sleep(300);
+                
+                // Round 2: Rebuttal
+                responses[2] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Debate: "${topic}"**\n\n${roles.advocate}\n\nThe critic argued: "${responses[1].substring(0, 300)}..."\n\nRebut in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Rebuttal\n\n${responses[2]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, round: 2 });
+                renderMessages();
+                await sleep(300);
+                
+                responses[3] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Debate: "${topic}"**\n\n${roles.critic}\n\nThe advocate countered: "${responses[2].substring(0, 300)}..."\n\nFinal critique in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} - Final Critique\n\n${responses[3]}`, model: name2, isLLMChat: true, model1: name1, model2: name2, round: 2 });
+                renderMessages();
+                await sleep(300);
+                
+                // Round 3: Confidence Assessment
+                responses[4] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `Rate your confidence (0-100%) that your position on "${topic}" is correct. Explain briefly in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Confidence\n\n${responses[4]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, round: 3 });
+                renderMessages();
+                await sleep(300);
+                
+                responses[5] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `Rate your confidence (0-100%) that your position on "${topic}" is correct. Explain briefly in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} - Confidence\n\n${responses[5]}`, model: name2, isLLMChat: true, model1: name1, model2: name2, round: 3 });
+                renderMessages();
+                await sleep(500);
+                
+                // Conclusion
+                await showModeratorConclusion(container, topic, responses, name1, name2, model1, conv);
+            } catch (error) {
+                handleError(container, error);
+            } finally {
+                finishLLMChat();
+            }
+        }
+
+        async function runConsensusMode(topic, conv, model1, model2, name1, name2, container) {
+            // Consensus Building - Collaborative approach
+            let responses = [];
+            
+            try {
+                // Round 1: Initial Perspectives
+                responses[0] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nShare your perspective. Be open to finding common ground. Present in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Initial View\n\n${responses[0]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, round: 1 });
+                renderMessages();
+                await sleep(300);
+                
+                responses[1] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Topic: "${topic}"**\n\n${name1} said: "${responses[0].substring(0, 300)}..."\n\nFind areas of agreement and add your perspective in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} - Building Consensus\n\n${responses[1]}`, model: name2, isLLMChat: true, model1: name1, model2: name2, round: 1 });
+                renderMessages();
+                await sleep(300);
+                
+                // Round 2: Refinement
+                responses[2] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nBased on both perspectives, refine your view to find common ground. Markdown format.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Refined View\n\n${responses[2]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, round: 2 });
+                renderMessages();
+                await sleep(300);
+                
+                // Round 3: Final Agreement
+                await showConsensusConclusion(container, topic, responses, name1, name2, model1, conv);
+            } catch (error) {
+                handleError(container, error);
+            } finally {
+                finishLLMChat();
+            }
+        }
+
+        async function runSequentialMode(topic, conv, model1, model2, name1, name2, container) {
+            // Sequential Chain - Linear knowledge building
+            let responses = [];
+            
+            try {
+                // Step 1: Model 1 starts
+                responses[0] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nProvide your initial analysis in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Step 1\n\n${responses[0]}`, model: name1, isLLMChat: true, model1: name1, model2: name2 });
+                renderMessages();
+                await sleep(300);
+                
+                // Step 2: Model 2 builds
+                responses[1] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Topic: "${topic}"**\n\nBuilding on ${name1}'s analysis: "${responses[0].substring(0, 300)}..."\n\nAdd your insights and extend the analysis in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} - Step 2\n\n${responses[1]}`, model: name2, isLLMChat: true, model1: name1, model2: name2 });
+                renderMessages();
+                await sleep(300);
+                
+                // Step 3: Model 1 refines
+                responses[2] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nRefine the combined analysis. Provide final synthesis in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Final Synthesis\n\n${responses[2]}`, model: name1, isLLMChat: true, model1: name1, model2: name2 });
+            } catch (error) {
+                handleError(container, error);
+            } finally {
+                finishLLMChat();
+            }
+        }
+
+        async function runParallelMode(topic, conv, model1, model2, name1, name2, container) {
+            // Parallel Analysis - Independent then compare
+            let responses = [];
+            
+            try {
+                // Phase 1: Independent Analysis (shown sequentially for UI)
+                responses[0] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nProvide your independent analysis in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} - Independent Analysis\n\n${responses[0]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, phase: 1 });
+                renderMessages();
+                await sleep(300);
+                
+                responses[1] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Topic: "${topic}"**\n\nProvide your independent analysis in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} - Independent Analysis\n\n${responses[1]}`, model: name2, isLLMChat: true, model1: name1, model2: name2, phase: 1 });
+                renderMessages();
+                await sleep(500);
+                
+                // Phase 2: Comparison & Synthesis
+                await showParallelComparison(container, topic, responses, name1, name2, model1, conv);
+            } catch (error) {
+                handleError(container, error);
+            } finally {
+                finishLLMChat();
+            }
+        }
+
+        async function runHierarchicalMode(topic, conv, model1, model2, name1, name2, container) {
+            // Hierarchical Review - Senior delegates to Junior, then reviews
+            let responses = [];
+            
+            try {
+                // Step 1: Senior delegates
+                responses[0] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nAs the senior reviewer, delegate this task to ${name2}. Define what you want analyzed in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} (Senior) - Delegation\n\n${responses[0]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, step: 1 });
+                renderMessages();
+                await sleep(300);
+                
+                // Step 2: Junior completes
+                responses[1] = await llmThinkAndRespond(container, model2, name2, name1,
+                    `**Topic: "${topic}"**\n\n${name1} (Senior) delegated: "${responses[0].substring(0, 300)}..."\n\nComplete the analysis and report back in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name2} (Junior) - Analysis\n\n${responses[1]}`, model: name2, isLLMChat: true, model1: name1, model2: name2, step: 2 });
+                renderMessages();
+                await sleep(300);
+                
+                // Step 3: Senior reviews
+                responses[2] = await llmThinkAndRespond(container, model1, name1, name2,
+                    `**Topic: "${topic}"**\n\nReview ${name2}'s work: "${responses[1].substring(0, 300)}..."\n\nProvide feedback and final assessment in Markdown.`, conv);
+                conv.messages.push({ role: 'assistant', content: `### ${name1} (Senior) - Review\n\n${responses[2]}`, model: name1, isLLMChat: true, model1: name1, model2: name2, step: 3 });
+            } catch (error) {
+                handleError(container, error);
+            } finally {
+                finishLLMChat();
+            }
+        }
+
+        // Helper functions for orchestration
+        async function showConsensusConclusion(container, topic, responses, name1, name2, model1, conv) {
+            const thinkingDiv = createThinkingMessage(container, '🤝', 'Consensus', 'Finding common ground...');
+            
+            const prompt = `**Consensus Building Summary**\n\nTopic: ${topic}\n\n${name1} initially: "${responses[0]?.substring(0, 200)}"\n${name2} responded: "${responses[1]?.substring(0, 200)}"\n${name1} refined: "${responses[2]?.substring(0, 200)}"\n\nAs a neutral facilitator, provide a consensus conclusion in Markdown:\n1. **Areas of Agreement**\n2. **Remaining Differences**\n3. **Synthesized Conclusion**\n\nUse tables and lists where appropriate.`;
+            
+            const conclusion = await callOllama(model1, prompt, conv);
+            thinkingDiv.remove();
+            conv.messages.push({ role: 'system', content: conclusion, model: 'Consensus' });
+            renderMessages();
+        }
+
+        async function showParallelComparison(container, topic, responses, name1, name2, model1, conv) {
+            const thinkingDiv = createThinkingMessage(container, '⚡', 'Comparison', 'Analyzing differences...');
+            
+            const prompt = `**Parallel Analysis Comparison**\n\nTopic: ${topic}\n\n${name1} analyzed: "${responses[0]?.substring(0, 200)}"\n${name2} analyzed: "${responses[1]?.substring(0, 200)}"\n\nCompare both analyses in Markdown:\n1. **Similarities**\n2. **Key Differences**\n3. **Unique Insights from Each**\n4. **Combined Recommendation**\n\nUse a comparison table.`;
+            
+            const comparison = await callOllama(model1, prompt, conv);
+            thinkingDiv.remove();
+            conv.messages.push({ role: 'system', content: comparison, model: 'Comparison' });
+            renderMessages();
+        }
+
+        function createThinkingMessage(container, icon, role, status) {
+            const div = document.createElement('div');
+            div.className = 'message system';
+            div.id = 'thinkingMessage';
+            div.innerHTML = `
+                <div class="message-header">
+                    <div class="avatar system">${icon}</div>
+                    <span class="message-role">${role}</span>
+                    <span class="ml-2 text-xs text-purple-400 animate-pulse">${status}</span>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div;
+        }
+
+        function handleError(container, error) {
+            console.error('❌ LLM Chat Error:', error);
+            const thinkingEl = document.getElementById('thinkingMessage');
+            if (thinkingEl) {
+                thinkingEl.querySelector('.message-content').innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
+            }
+        }
+
+        function finishLLMChat() {
+            stopJokes();
+            isStreaming = false;
+            document.getElementById('sendBtn').disabled = false;
+        }
+
         async function sendLLMToLLMChat(topic, conv) {
             const container = document.getElementById('chatMessages');
             const model1 = document.getElementById('primaryModel').value;
             const model2 = document.getElementById('secondaryModel').value;
             const name1 = model1.includes('/') ? model1.split('/')[1] : model1;
             const name2 = model2.includes('/') ? model2.split('/')[1] : model2;
+            const mode = document.getElementById('orchestrationMode').value;
 
             isStreaming = true;
             document.getElementById('sendBtn').disabled = true;
             startJokes();
+            
+            // Route to appropriate orchestration pattern
+            switch(mode) {
+                case 'debate':
+                    await runDebateMode(topic, conv, model1, model2, name1, name2, container);
+                    break;
+                case 'consensus':
+                    await runConsensusMode(topic, conv, model1, model2, name1, name2, container);
+                    break;
+                case 'sequential':
+                    await runSequentialMode(topic, conv, model1, model2, name1, name2, container);
+                    break;
+                case 'parallel':
+                    await runParallelMode(topic, conv, model1, model2, name1, name2, container);
+                    break;
+                case 'hierarchical':
+                    await runHierarchicalMode(topic, conv, model1, model2, name1, name2, container);
+                    break;
+            }
             
             // Assign roles based on research-backed MAD paradigm
             const roles = {
@@ -1063,25 +1391,7 @@
         }
 
         async function showModeratorConclusion(container, topic, responses, name1, name2, model1, conv) {
-            const thinkingDiv = document.createElement('div');
-            thinkingDiv.className = 'message system';
-            thinkingDiv.id = 'thinkingMessage';
-            thinkingDiv.innerHTML = `
-                <div class="message-header">
-                    <div class="avatar system">⚖️</div>
-                    <span class="message-role">Moderator Synthesis</span>
-                    <span class="ml-2 text-xs text-purple-400 animate-pulse">Analyzing debate...</span>
-                </div>
-                <div class="message-content">
-                    <div class="typing-indicator">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(thinkingDiv);
-            container.scrollTop = container.scrollHeight;
+            const thinkingDiv = createThinkingMessage(container, '⚖️', 'Moderator', 'Analyzing debate...');
             
             const moderatorPrompt = `**Multi-Agent Debate Summary Request**
 
