@@ -1,6 +1,6 @@
 "use client";
 
-import {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]useState } from "react";
+import { useState } from "react";
 
 // ─── Components ──────────────────────────────────────────────────────────
 
@@ -13,7 +13,7 @@ function Navbar() {
   }
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]crolled ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5" : "bg-transparent"}`}>
+    <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#050505]/95 backdrop-blur-xl border-b border-white/5" : "bg-transparent"}`}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20">
@@ -31,15 +31,15 @@ function Navbar() {
 
         <div className="hidden md:flex items-center gap-1 text-sm">
           {[
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]href: "#platform", label: "Platform" },
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]href: "/agent", label: "Agent" },
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]href: "#core", label: "Core" },
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]href: "#chat", label: "Chat" },
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]href: "#security", label: "Security" },
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]href: "/gelanggang", label: "Gelanggang" },
+            { href: "#platform", label: "Platform" },
+            { href: "#agent", label: "Agent" },
+            { href: "#core", label: "Core" },
+            { href: "#chat", label: "Chat" },
+            { href: "#security", label: "Security" },
+            { href: "/gelanggang", label: "Gelanggang" },
           ].map(link => (
-            <a key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]ink.href} href={link.href} className="px-3 py-2 text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5">
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]ink.label}
+            <a key={link.href} href={link.href} className="px-3 py-2 text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5">
+              {link.label}
             </a>
           ))}
         </div>
@@ -57,17 +57,17 @@ function Navbar() {
           </a>
           <button className="md:hidden text-white" onClick={() => setMobileOpen(!mobileOpen)}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]obileOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>}
+              {mobileOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>}
             </svg>
           </button>
         </div>
       </div>
 
-      {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]obileOpen && (
+      {mobileOpen && (
         <div className="md:hidden bg-[#050505]/98 border-t border-white/5 px-6 py-4 space-y-2">
           {["#platform", "#agent", "#core", "#chat", "#security", "/gelanggang"].map(href => (
-            <a key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]ref} href={href} className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]ref.replace("#", "").replace("/", "").charAt(0).toUpperCase() + href.replace("#", "").replace("/", "").slice(1)}
+            <a key={href} href={href} className="block py-2 text-neutral-400 hover:text-white transition" onClick={() => setMobileOpen(false)}>
+              {href.replace("#", "").replace("/", "").charAt(0).toUpperCase() + href.replace("#", "").replace("/", "").slice(1)}
             </a>
           ))}
         </div>
@@ -79,7 +79,7 @@ function Navbar() {
 function HeroSection() {
   return (
     <section className="relative overflow-hidden">
-      {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Background effects */}
+      {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-cyan-400/5 rounded-full blur-3xl"/>
         <div className="absolute top-40 right-10 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl"/>
@@ -88,30 +88,30 @@ function HeroSection() {
 
       <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-16 md:pt-32 md:pb-24">
         <div className="text-center space-y-8 max-w-5xl mx-auto">
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Badge */}
+          {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"/>
             Self-Hosted · Enterprise-Ready · 100% Private
           </div>
 
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Headline */}
+          {/* Headline */}
           <h1 className="text-5xl font-bold tracking-tight md:text-7xl lg:text-8xl leading-[1.05]">
-            The AI Platform That{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"] "}
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">Remembers</span>,{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"] "}
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">Collaborates</span>,{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"] "}
+            The AI Platform That{" "}
+            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">Remembers</span>,{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">Collaborates</span>,{" "}
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">Protects</span>
           </h1>
 
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Subheadline */}
+          {/* Subheadline */}
           <p className="max-w-3xl mx-auto text-lg md:text-xl leading-8 text-neutral-400">
-            JEBAT combines <strong className="text-white">eternal memory</strong>,{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"] "}
-            <strong className="text-white">multi-agent orchestration</strong> across 8 local LLMs, and{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"] "}
+            JEBAT combines <strong className="text-white">eternal memory</strong>,{" "}
+            <strong className="text-white">multi-agent orchestration</strong> across 8 local LLMs, and{" "}
             <strong className="text-white">enterprise security</strong> into one self-hosted platform.
             <br className="hidden md:block"/>
             Download, install, and own your AI — no cloud dependency.
           </p>
 
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* CTAs */}
+          {/* CTAs */}
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black hover:from-cyan-300 hover:to-blue-400 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
@@ -127,18 +127,18 @@ function HeroSection() {
             </a>
           </div>
 
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Trust Stats */}
+          {/* Trust Stats */}
           <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]value: "8", label: "Local LLM Models", icon: "🤖" },
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]value: "40+", label: "Optimized Skills", icon: "⚡" },
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]value: "5", label: "LLM Providers", icon: "🌐" },
-              {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]value: "100%", label: "Self-Hosted", icon: "🔒" },
+              { value: "8", label: "Local LLM Models", icon: "🤖" },
+              { value: "40+", label: "Optimized Skills", icon: "⚡" },
+              { value: "5", label: "LLM Providers", icon: "🌐" },
+              { value: "100%", label: "Self-Hosted", icon: "🔒" },
             ].map((stat, i) => (
-              <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 hover:border-cyan-400/20 transition">
-                <div className="text-2xl mb-2">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tat.icon}</div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tat.value}</div>
-                <div className="text-xs text-neutral-500">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tat.label}</div>
+              <div key={i} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 hover:border-cyan-400/20 transition">
+                <div className="text-2xl mb-2">{stat.icon}</div>
+                <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-xs text-neutral-500">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -158,7 +158,7 @@ function PlatformSection() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Jebat Agent Card */}
+        {/* Jebat Agent Card */}
         <div className="group relative rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/5 to-transparent p-8 hover:border-cyan-400/30 transition-all duration-300">
           <div className="absolute top-6 right-6">
             <span className="rounded-full bg-cyan-400/10 text-cyan-400 px-3 py-1 text-xs font-medium border border-cyan-400/20">Agent</span>
@@ -177,9 +177,9 @@ function PlatformSection() {
           </p>
           <div className="space-y-3 mb-6">
             {["30-second setup wizard", "IDE integration (VS Code, Zed, Cursor)", "Channel setup (Telegram, Discord, WhatsApp)", "Local model deployment (8 models)", "Migration from OpenClaw/Hermes"].map((f, i) => (
-              <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="flex items-start gap-3 text-sm text-neutral-300">
+              <div key={i} className="flex items-start gap-3 text-sm text-neutral-300">
                 <svg className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]}
+                {f}
               </div>
             ))}
           </div>
@@ -191,7 +191,7 @@ function PlatformSection() {
           </a>
         </div>
 
-        {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Jebat Core Card */}
+        {/* Jebat Core Card */}
         <div className="group relative rounded-3xl border border-white/10 bg-gradient-to-br from-purple-400/5 to-transparent p-8 hover:border-purple-400/30 transition-all duration-300">
           <div className="absolute top-6 right-6">
             <span className="rounded-full bg-purple-400/10 text-purple-400 px-3 py-1 text-xs font-medium border border-purple-400/20">Core</span>
@@ -208,9 +208,9 @@ function PlatformSection() {
           </p>
           <div className="space-y-3 mb-6">
             {["5-layer cognitive memory (M0-M4)", "40+ specialized skills", "Multi-agent orchestration", "CyberSec scanning & hardening", "Gateway with provider routing"].map((f, i) => (
-              <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="flex items-start gap-3 text-sm text-neutral-300">
+              <div key={i} className="flex items-start gap-3 text-sm text-neutral-300">
                 <svg className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]}
+                {f}
               </div>
             ))}
           </div>
@@ -274,11 +274,11 @@ function AgentSection() {
             cmd: "npx jebat-gateway status",
           },
         ].map((item, i) => (
-          <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-            <div className="text-3xl mb-4">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.icon}</div>
-            <h3 className="text-lg font-semibold text-white mb-2">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.title}</h3>
-            <p className="text-sm text-neutral-400 mb-4 leading-relaxed">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.desc}</p>
-            <div className="rounded-lg bg-black/40 border border-white/5 p-3 font-mono text-xs text-cyan-300">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.cmd}</div>
+          <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+            <div className="text-3xl mb-4">{item.icon}</div>
+            <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+            <p className="text-sm text-neutral-400 mb-4 leading-relaxed">{item.desc}</p>
+            <div className="rounded-lg bg-black/40 border border-white/5 p-3 font-mono text-xs text-cyan-300">{item.cmd}</div>
           </div>
         ))}
       </div>
@@ -297,17 +297,17 @@ function CoreSection() {
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {[
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Eternal Memory", desc: "5-layer cognitive stack (M0-M4) with heat-based retention. Cross-session continuity.", icon: "🧠" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Skill Registry", desc: "40+ specialized skills optimized for token efficiency and real-world patterns.", icon: "🛠️" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Agent Orchestration", desc: "Multi-agent routing with Gelanggang — watch agents debate across providers.", icon: "🎭" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "CyberSec Suite", desc: "Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest).", icon: "🛡️" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Gateway Router", desc: "Provider routing across 5 LLM backends with fallback chains and load balancing.", icon: "🌐" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "IDE Context", desc: "Inject JEBAT into any editor. VS Code, Cursor, Zed, JetBrains, Neovim, and more.", icon: "📝" },
+          { title: "Eternal Memory", desc: "5-layer cognitive stack (M0-M4) with heat-based retention. Cross-session continuity.", icon: "🧠" },
+          { title: "Skill Registry", desc: "40+ specialized skills optimized for token efficiency and real-world patterns.", icon: "🛠️" },
+          { title: "Agent Orchestration", desc: "Multi-agent routing with Gelanggang — watch agents debate across providers.", icon: "🎭" },
+          { title: "CyberSec Suite", desc: "Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest).", icon: "🛡️" },
+          { title: "Gateway Router", desc: "Provider routing across 5 LLM backends with fallback chains and load balancing.", icon: "🌐" },
+          { title: "IDE Context", desc: "Inject JEBAT into any editor. VS Code, Cursor, Zed, JetBrains, Neovim, and more.", icon: "📝" },
         ].map((item, i) => (
-          <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-            <div className="text-3xl mb-4">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.icon}</div>
-            <h3 className="text-lg font-semibold text-white mb-2">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.title}</h3>
-            <p className="text-sm text-neutral-400 leading-relaxed">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.desc}</p>
+          <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+            <div className="text-3xl mb-4">{item.icon}</div>
+            <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+            <p className="text-sm text-neutral-400 leading-relaxed">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -325,7 +325,7 @@ function ChatSection() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Chat Preview */}
+        {/* Chat Preview */}
         <div className="rounded-3xl border border-white/10 bg-[#0a0a0a] overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
             <div className="w-3 h-3 rounded-full bg-red-400/60"/>
@@ -334,13 +334,13 @@ function ChatSection() {
             <span className="ml-2 text-xs text-neutral-500 font-mono">jebat.chat</span>
           </div>
           <div className="p-6 space-y-4 min-h-[400px]">
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* User message */}
+            {/* User message */}
             <div className="flex justify-end">
               <div className="rounded-2xl bg-blue-600 text-white px-4 py-3 max-w-[80%] text-sm">
                 Explain how multi-agent orchestration works in JEBAT
               </div>
             </div>
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* AI message */}
+            {/* AI message */}
             <div className="flex justify-start">
               <div className="rounded-2xl bg-[#1f1f1f] text-neutral-200 px-4 py-3 max-w-[85%] text-sm leading-relaxed">
                 <p className="mb-2">JEBAT's Gelanggang system connects multiple agents across different LLM providers:</p>
@@ -352,20 +352,20 @@ function ChatSection() {
                 </ol>
               </div>
             </div>
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* LLM-to-LLM indicator */}
+            {/* LLM-to-LLM indicator */}
             <div className="flex justify-center">
               <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded-full px-3 py-1">
                 🤖 Qwen2.5 → Hermes3 discussion
               </span>
             </div>
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* LLM 1 */}
+            {/* LLM 1 */}
             <div className="flex justify-start">
               <div className="rounded-2xl bg-[#1f1f1f] border-l-2 border-purple-500 text-neutral-200 px-4 py-3 max-w-[85%] text-sm">
                 <p className="text-xs text-purple-400 mb-1 font-medium">Qwen2.5 14B</p>
                 The key advantage is cross-provider diversity. Each agent can use a different model, providing diverse perspectives.
               </div>
             </div>
-            {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* LLM 2 */}
+            {/* LLM 2 */}
             <div className="flex justify-start">
               <div className="rounded-2xl bg-[#1f1f1f] border-l-2 border-cyan-500 text-neutral-200 px-4 py-3 max-w-[85%] text-sm">
                 <p className="text-xs text-cyan-400 mb-1 font-medium">Hermes3 8B</p>
@@ -373,7 +373,7 @@ function ChatSection() {
               </div>
             </div>
           </div>
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Input */}
+          {/* Input */}
           <div className="p-4 border-t border-white/5 bg-[#0a0a0a]">
             <div className="flex gap-3">
               <input className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-cyan-400/50" placeholder="Message Jebat..." readOnly/>
@@ -384,7 +384,7 @@ function ChatSection() {
           </div>
         </div>
 
-        {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* Chat Features */}
+        {/* Chat Features */}
         <div className="space-y-6">
           {[
             {
@@ -408,11 +408,11 @@ function ChatSection() {
               desc: "Chat with full conversation history. JEBAT remembers preferences, decisions, and context across sessions.",
             },
           ].map((feature, i) => (
-            <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="flex gap-4 p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/20 transition">
-              <div className="text-2xl flex-shrink-0">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]eature.icon}</div>
+            <div key={i} className="flex gap-4 p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/20 transition">
+              <div className="text-2xl flex-shrink-0">{feature.icon}</div>
               <div>
-                <h4 className="font-semibold text-white mb-1">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]eature.title}</h4>
-                <p className="text-sm text-neutral-400 leading-relaxed">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]eature.desc}</p>
+                <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
+                <p className="text-sm text-neutral-400 leading-relaxed">{feature.desc}</p>
               </div>
             </div>
           ))}
@@ -436,15 +436,15 @@ function SecuritySection() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Prompt Injection Defense", desc: "Input sanitization, context isolation, pattern detection", color: "red", icon: "🛡️" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Command Sanitization", desc: "Whitelist-only execution, argument escaping, timeout enforcement", color: "orange", icon: "🔒" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Audit Logging", desc: "Complete operation trails, tamper-evident logs, JSON format", color: "yellow", icon: "📋" },
-          {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]title: "Secrets Management", desc: "Secure token handling, credential masking, auto-rotation", color: "green", icon: "🔑" },
+          { title: "Prompt Injection Defense", desc: "Input sanitization, context isolation, pattern detection", color: "red", icon: "🛡️" },
+          { title: "Command Sanitization", desc: "Whitelist-only execution, argument escaping, timeout enforcement", color: "orange", icon: "🔒" },
+          { title: "Audit Logging", desc: "Complete operation trails, tamper-evident logs, JSON format", color: "yellow", icon: "📋" },
+          { title: "Secrets Management", desc: "Secure token handling, credential masking, auto-rotation", color: "green", icon: "🔑" },
         ].map((item, i) => (
-          <div key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center">
-            <div className="text-4xl mb-4">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.icon}</div>
-            <h3 className="font-semibold text-white mb-2">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.title}</h3>
-            <p className="text-xs text-neutral-400 leading-relaxed">{["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]tem.desc}</p>
+          <div key={i} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center">
+            <div className="text-4xl mb-4">{item.icon}</div>
+            <h3 className="font-semibold text-white mb-2">{item.title}</h3>
+            <p className="text-xs text-neutral-400 leading-relaxed">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -462,7 +462,7 @@ function CLIDemo() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* jebat-agent terminal */}
+        {/* jebat-agent terminal */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
             <div className="w-3 h-3 rounded-full bg-red-400/60"/>
@@ -520,7 +520,7 @@ OPTIONS:
           </div>
         </div>
 
-        {["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]* jebat-core terminal */}
+        {/* jebat-core terminal */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
             <div className="w-3 h-3 rounded-full bg-red-400/60"/>
@@ -594,7 +594,7 @@ function Footer() {
             </p>
             <div className="flex flex-wrap gap-3 mb-6">
               {["Self-Hosted", "SOC2 Ready", "GDPR Compliant", "MIT License"].map((badge, i) => (
-                <span key={["#platform", "/agent", "#core", "#chat", "#security", "/gelanggang"]} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-400">
+                <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-400">
                   {badge}
                 </span>
               ))}
@@ -608,7 +608,7 @@ function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-white mb-4">Platform</h4>
             <div className="space-y-3 text-sm text-neutral-500">
-              <a href="/agent" className="block transition hover:text-white">Jebat Agent</a>
+              <a href="#agent" className="block transition hover:text-white">Jebat Agent</a>
               <a href="#core" className="block transition hover:text-white">Jebat Core</a>
               <a href="#chat" className="block transition hover:text-white">Chat Interface</a>
               <a href="#security" className="block transition hover:text-white">Security</a>
