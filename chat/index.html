@@ -649,6 +649,41 @@
             loadModels();
         });
 
+        // Tech jokes/quotes while thinking
+        const techJokes = [
+            "Why do programmers prefer dark mode? Because light attracts bugs.",
+            '"There are only two hard things in CS: cache invalidation and naming things." — Phil Karlton',
+            "A SQL query walks into a bar, sees two tables, and asks... Can I JOIN you?",
+            '"First, solve the problem. Then, write the code." — John Johnson',
+            "Why do Java developers wear glasses? Because they can't C#.",
+            '"It works on my machine." — Every developer, ever',
+            "!false — It's funny because it's true.",
+            '"The computer was born to solve problems that did not exist before." — Bill Gates',
+            "Why do programmers mix up Halloween and Christmas? Because Oct 31 == Dec 25.",
+            '"Debugging is twice as hard as writing the code." — Brian Kernighan',
+        ];
+        let jokeIdx = 0, jokeTimer = null;
+
+        function showJoke() {
+            const el = document.getElementById('techJoke');
+            if (!el) return;
+            el.innerHTML = `<span class="shimmer-text">💡 ${techJokes[jokeIdx % techJokes.length]}</span>`;
+            el.classList.add('visible');
+            jokeIdx++;
+        }
+        function hideJoke() {
+            const el = document.getElementById('techJoke');
+            if (el) el.classList.remove('visible');
+        }
+        function startJokes() {
+            showJoke();
+            jokeTimer = setInterval(() => { hideJoke(); setTimeout(showJoke, 500); }, 8000);
+        }
+        function stopJokes() {
+            if (jokeTimer) { clearInterval(jokeTimer); jokeTimer = null; }
+            hideJoke();
+        }
+
         async function loadModels() {
             try {
                 const res = await fetch(`${OLLAMA_URL}/api/tags`);
@@ -792,7 +827,7 @@
             
             // Disable send, show cancel
             document.getElementById('sendBtn').disabled = true;
-            startJokeRotation();
+            startJokes();
             
             try {
                 let response;
@@ -821,7 +856,7 @@
                 }
             } finally {
                 isStreaming = false;
-                stopJokeRotation();
+                stopJokes();
                 document.getElementById('sendBtn').disabled = false;
                 abortController = null;
             }
@@ -843,7 +878,7 @@
             const name2 = model2.includes('/') ? model2.split('/')[1] : model2;
             
             document.getElementById('sendBtn').disabled = true;
-            startJokeRotation();
+            startJokes();
             
             try {
                 // LLM 1 speaks first
@@ -954,7 +989,7 @@
         }
 
         function showTyping() {
-            startJokeRotation();
+            startJokes();
             const container = document.getElementById('chatMessages');
             const typing = document.createElement('div');
             typing.className = 'message';
@@ -977,7 +1012,7 @@
         }
 
         function hideTyping() {
-            stopJokeRotation();
+            stopJokes();
             const typing = document.getElementById('typingIndicator');
             if (typing) typing.remove();
         }
