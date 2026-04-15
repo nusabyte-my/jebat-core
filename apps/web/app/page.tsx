@@ -39,7 +39,7 @@ import {
 // ─── Data ───────────────────────────────────────────────────────────────
 
 const SECTIONS = [
-  "hero", "agent", "portal", "chat", "gelanggang", "why", "security", "guides", "cta",
+  "hero", "agent", "portal", "chat", "gelanggang", "why", "integrations", "testimonials", "security", "guides", "cta",
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number];
@@ -51,6 +51,8 @@ const SECTION_LABELS: Record<SectionId, string> = {
   chat: "Chat",
   gelanggang: "Arena",
   why: "Why JEBAT",
+  integrations: "Providers",
+  testimonials: "Reviews",
   security: "Security",
   guides: "Guides",
   cta: "Get Started",
@@ -183,7 +185,7 @@ function AgentNetworkBackground() {
 
 function SectionContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 lg:py-8 overflow-y-auto ${className}`}>
+    <div className={`w-full min-h-[100dvh] md:min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 ${className}`}>
       <div className="max-w-6xl mx-auto w-full relative z-10">
         {children}
       </div>
@@ -331,7 +333,7 @@ function SideDots() {
   };
 
   return (
-    <div className="fixed right-3 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 sm:gap-3">
+    <div className="fixed right-3 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-2 sm:gap-3">
       {SECTIONS.map((s, i) => (
         <button
           key={s}
@@ -931,6 +933,132 @@ function ChatSection() {
   );
 }
 
+// ─── SECTION: Integrations ──────────────────────────────────────────────
+
+function IntegrationsSection() {
+  const providers = [
+    { name: "Anthropic", models: "Claude 4, Sonnet, Opus", gradient: "from-green-400 to-emerald-500", icon: "A" },
+    { name: "OpenAI", models: "GPT-4o, GPT-4, 3.5", gradient: "from-blue-400 to-cyan-500", icon: "O" },
+    { name: "Ollama", models: "8 Local Models", gradient: "from-purple-400 to-pink-500", icon: "Ol" },
+    { name: "Gemini", models: "Pro, Flash", gradient: "from-yellow-400 to-orange-500", icon: "G" },
+    { name: "ZAI", models: "Zhipu Models", gradient: "from-red-400 to-rose-500", icon: "Z" },
+  ];
+
+  return (
+    <SectionContent>
+      <div className="space-y-10 lg:space-y-12">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
+            LLM Providers
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">
+            5 Providers,{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Intelligent Routing</span>
+          </h2>
+          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">
+            Connect to any LLM provider with automatic failover, load balancing, and cost optimization. Run 8 models locally with Ollama for complete privacy.
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 max-w-6xl mx-auto">
+          {providers.map((p, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.1 }}
+              whileHover={{ y: -4, scale: 1.05 }}
+              className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 text-center"
+            >
+              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${p.gradient} mx-auto mb-4 flex items-center justify-center text-lg font-bold text-white shadow-lg`}>
+                {p.icon}
+              </div>
+              <h3 className="font-bold text-base mb-1">{p.name}</h3>
+              <p className="text-xs text-neutral-500">{p.models}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-4 lg:gap-8 pt-4">
+          {[
+            { value: "5", label: "Providers", icon: "🔌" },
+            { value: "13+", label: "Models", icon: "🧠" },
+            { value: "8", label: "Local LLMs", icon: "🏠" },
+            { value: "Auto", label: "Failover", icon: "⚡" },
+          ].map((stat, i) => (
+            <div key={i} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-4 text-center">
+              <div className="text-xl mb-2">{stat.icon}</div>
+              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
+              <div className="text-xs text-neutral-500">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SectionContent>
+  );
+}
+
+// ─── SECTION: Testimonials ──────────────────────────────────────────────
+
+function TestimonialsSection() {
+  const testimonials = [
+    { quote: "JEBAT transformed how our team works with AI. Self-hosted, secure, and incredibly fast.", author: "Alex Chen", role: "CTO, TechCorp", avatar: "AC" },
+    { quote: "The multi-agent orchestration is game-changing. We went from 1 AI to 34 working together.", author: "Sarah Kim", role: "Lead Engineer, DataFlow", avatar: "SK" },
+    { quote: "No cloud dependency was the deal-breaker. JEBAT gives us complete control over our AI infrastructure.", author: "Mike Torres", role: "Security Director, FinServe", avatar: "MT" },
+  ];
+
+  return (
+    <SectionContent>
+      <div className="space-y-10 lg:space-y-12">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
+            Trusted by Teams
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">
+            What Engineers{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Are Saying</span>
+          </h2>
+        </div>
+
+        <div className="grid gap-6 lg:gap-8 grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto">
+          {testimonials.map((t, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.15 }}
+              whileHover={{ y: -4 }}
+              className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8"
+            >
+              <div className="flex items-center gap-1 mb-4">
+                {[1,2,3,4,5].map(s => (
+                  <svg key={s} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                ))}
+              </div>
+              <blockquote className="text-sm lg:text-base text-neutral-300 leading-relaxed mb-6">
+                "{t.quote}"
+              </blockquote>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
+                  {t.avatar}
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">{t.author}</div>
+                  <div className="text-xs text-neutral-500">{t.role}</div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </SectionContent>
+  );
+}
+
 // ─── SECTION: CTA ───────────────────────────────────────────────────────
 
 function CTASection() {
@@ -1343,26 +1471,26 @@ function GuidesCTASection() {
 
 const SECTION_COMPONENTS = [
   HeroSection, AgentCTASection, PortalCTASection, ChatCTASection,
-  GelanggangCTASection, WhyChooseSection, SecurityCTASection, GuidesCTASection, CTASection,
+  GelanggangCTASection, WhyChooseSection, IntegrationsSection, TestimonialsSection, SecurityCTASection, GuidesCTASection, CTASection,
 ];
 
 // ─── Main Page ──────────────────────────────────────────────────────────
 
 export default function LandingV2() {
   return (
-    <div className="h-screen w-screen bg-[#050505] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden">
       <AgentNetworkBackground />
       <Navbar />
       <SideDots />
 
-      <div className="h-screen w-screen overflow-y-auto snap-y snap-mandatory scroll-smooth">
+      <div className="min-h-screen w-full md:snap-y md:snap-mandatory md:scroll-smooth">
         {SECTIONS.map((sectionId, i) => {
           const Component = SECTION_COMPONENTS[i];
           return (
             <motion.section
               key={sectionId}
               id={`section-${sectionId}`}
-              className="h-screen w-screen snap-start"
+              className="min-h-screen w-full md:snap-start"
             >
               <Component />
             </motion.section>

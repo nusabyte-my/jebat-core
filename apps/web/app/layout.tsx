@@ -95,7 +95,22 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                  console.log('[PWA] Service Worker registered');
+                }).catch((err) => {
+                  console.log('[PWA] Service Worker registration failed:', err);
+                });
+              });
+            }
+          `
+        }} />
+      </body>
     </html>
   );
 }
