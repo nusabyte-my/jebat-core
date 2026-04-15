@@ -1,6 +1,6 @@
 {
   "name": "jebat-security",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "JEBAT Security CLI \u2014 Enterprise penetration testing, vulnerability scanning, and compliance auditing. Four-layer security: Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest).",
   "main": "bin/jebat-security.js",
   "bin": {

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 const BANNER = `
-██╗███████╗██████╗  █████╗ ████████╗    ██████╗ ██████╗ ██████╗ ███████╗
-██║██╔════╝██╔══██╗██╔══██╗╚══██╔══╝   ██╔════╝██╔═══██╗██╔══██╗██╔════╝
-██║█████╗  ██████╔╝███████║   ██║      ██║     ██║   ██║██████╔╝█████╗  
-██║██╔══╝  ██╔══██╗██╔══██║   ██║      ██║     ██║   ██║██╔══██╗██╔══╝  
-╚█████╔╝███████╗██████╔╝██║  ██║   ██║  ╚██████╗╚██████╔╝██║  ██║███████╗
- ╚════╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
-                    Security CLI v1.0.2
+  __  __    ___    _____   _    ____      ____   ____   _   _    ____  
+ |  \\/  |  / _ \\  | ____| | |  / ___|    / ___| / ___| | \\ | |  / ___| 
+ | |\\/| | | | | | |  _|   | | | |       | |  _  | |   |  \\| | | |  _  
+ | |  | | | |_| | | |___  | | | |___    | |_| | | |___ | |\\  | | |_| | 
+ |_|  |_|  \\___/  |_____| |_|  \\____|    \\____|  \\____||_| \\_|  \\____| 
+                                                                       
+                          Security CLI v1.0.4
 `;
 const COMMANDS = {
   audit: { desc: "Run Hulubalang security audit", usage: "jebat-security audit [target]" },
@@ -28,10 +28,10 @@ function printHelp() {
     console.log(`                 ${info.usage}\n`);
   });
   console.log("Security Suite:");
-  console.log("  🔍 Hulubalang  - Security audit & compliance");
-  console.log("  🛡️  Pengawal    - CyberSec defense & scanning");
-  console.log("  🔒 Perisai     - System hardening & compliance");
-  console.log("  ⚔️  Serangan    - Penetration testing & red team");
+  console.log("  🔍 Hulubalang   - Security audit & compliance");
+  console.log("  🛡️  Pengawal     - CyberSec defense & scanning");
+  console.log("  🔒 Perisai      - System hardening & compliance");
+  console.log("  ⚔️  Serangan     - Penetration testing & red team");
   console.log("\nLearn more: https://jebat.online/security");
 }
 function runCommand(cmd) {
@@ -47,5 +47,5 @@ function runCommand(cmd) {
 }
 const cmd = process.argv[2];
 if (!cmd || cmd === "--help" || cmd === "-h") { printHelp(); process.exit(0); }
-if (cmd === "--version" || cmd === "-v") { console.log("jebat-security@1.0.2"); process.exit(0); }
+if (cmd === "--version" || cmd === "-v") { console.log("jebat-security@1.0.4"); process.exit(0); }
 runCommand(cmd);
