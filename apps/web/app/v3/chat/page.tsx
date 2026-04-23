@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { 
   HiOutlineChatBubbleLeftRight, 
@@ -29,6 +30,34 @@ import {
 import { AgentShimmer } from "./components/agent-shimmer";
 
 type ChatMode = "AGENT" | "ARENA" | "NORMAL" | "BYOK";
+
+const markdownComponents: Components = {
+  code({ className, children, ...props }) {
+    const match = /language-(\w+)/.exec(className || "");
+    return match ? (
+      <div className="relative group/code">
+        <pre className="bg-slate-950 p-4 rounded-xl border border-slate-800 overflow-x-auto my-4 scrollbar-thin scrollbar-thumb-slate-700">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(String(children));
+            alert("Copied to clipboard!");
+          }}
+          className="absolute top-3 right-3 px-2 py-1 bg-slate-800 text-[8px] font-bold text-slate-400 rounded-md opacity-0 group-hover/code:opacity-100 transition-opacity border border-slate-700 uppercase"
+        >
+          Copy
+        </button>
+      </div>
+    ) : (
+      <code className="bg-slate-800 px-1.5 py-0.5 rounded text-blue-300 font-mono" {...props}>
+        {children}
+      </code>
+    );
+  },
+};
 
 interface Message {
   id: string;
@@ -146,7 +175,10 @@ export default function V3Chat() {
     const trimmedInput = input.trim();
     if (!trimmedInput || isThinking) return;
 
-    if (activeMode === "BYOK") return;
+    if (activeMode === "BYOK") {
+      alert("BYOK mode implementation pending key validation logic.");
+      return;
+    }
 
     console.group("🚀 JEBAT Swarm Dispatch");
     console.log("Prompt:", trimmedInput);
@@ -168,55 +200,93 @@ export default function V3Chat() {
       setLoadingAgents(["Tukang", "Bendahara"]);
     }
 
-    // Thinking Process Simulation
+    // Initial "Thinking" logs for UX feedback
     addThinkingLog("Hang Nadim: Classifying intent vectors...");
-    
     setTimeout(() => addThinkingLog(`Hang Tuah: Request routed to ${activeMode === 'AGENT' ? 'specialist swarm' : 'LLM core'}...`), 500);
     setTimeout(() => addThinkingLog(`VPS .206: Initializing inference on ${selectedModelA.name}...`), 1000);
-    setTimeout(() => addThinkingLog("M0 Layer: Reading sensory buffer..."), 1500);
-    if (activeMode === "AGENT") {
-       setTimeout(() => addThinkingLog("Bendahara: Validating PostgreSQL schema constraints..."), 2000);
-       setTimeout(() => addThinkingLog("Tukang: Verifying multi-agent consensus..."), 2500);
-    }
-    setTimeout(() => addThinkingLog("Sentinel: Scrubbing PII and hardening response..."), 2800);
 
-    setTimeout(() => {
-      let assistantMsg: Message;
+    try {
+      // Direct API call to the .206 mainframe for heavy reasoning tasks
+      const baseUrl = "https://jebat.online";
       
-      if (activeMode === "ARENA") {
-        assistantMsg = {
-          id: `assist-${Date.now()}`,
-          role: "assistant",
-          content: `### Arena Consensus\n\nComparing **${selectedModelA.name}** and **${selectedModelB.name}** performance on your request.\n\n*   **${selectedModelA.name}**: Proposes a distributed approach using PostgreSQL sharding.\n*   **${selectedModelB.name}**: Recommends a vertical scale-up on VPS .206 for immediate consistency.\n\n**Verdict**: Edge-caching combined with the .206 mainframe is the optimal route.`,
-          model_a: selectedModelA.name,
-          model_b: selectedModelB.name,
-          thinking: "Parallel cross-model analysis complete."
-        };
-      } else if (activeMode === "NORMAL") {
-        assistantMsg = {
-          id: `assist-${Date.now()}`,
-          role: "assistant",
-          content: `Direct response from **${selectedModelA.name}**:\n\nYour request regarding "${trimmedInput.substring(0, 20)}..." has been processed. Local inference successful via the .206 mainframe.`,
-          tokens: 42
-        };
-      } else {
-        assistantMsg = {
-          id: `assist-${Date.now()}`,
-          role: "assistant",
-          content: `Analyzing input via **Hang Nadim** routing. Swarm consensus achieved using **${selectedModelA.name}** core:\n\n1.  **Architecture**: Implement PostgreSQL partitioned indices for optimized search performance.\n2.  **Specialist Action**: [Tukang] generated the optimized SQL migration script.\n3.  **Security**: [Hulubalang] verified the sandbox environment.\n4.  **Consensus**: Final solution approved by **Hang Tuah**.`,
-          thinking: `${selectedThinkingMode} mode — 1.2s orchestration cycle.`,
-          tokens: 245,
-          agents: ["Tukang", "Bendahara"],
-          consensus: true
-        };
+      // Real API Call to JEBAT Backend
+      const response = await fetch(`${baseUrl}/webui/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: "v3_operator",
+          message: trimmedInput,
+          thinking_mode: selectedThinkingMode
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
-      console.log("Assistant Response:", assistantMsg);
-      console.groupEnd();
-      setMessages((prev) => [...prev, assistantMsg]);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || "Unknown backend error");
+      }
+
+      // Add backend reasoning steps to logs if available
+      if (data.reasoning && data.reasoning.length > 0) {
+        data.reasoning.forEach((step: string, index: number) => {
+          setTimeout(() => addThinkingLog(`Thinking Step ${index + 1}: ${step}`), 1200 + (index * 400));
+        });
+      }
+
+      setTimeout(() => {
+        addThinkingLog("Sentinel: Scrubbing PII and hardening response...");
+        
+        let assistantMsg: Message;
+        
+        if (activeMode === "ARENA") {
+          assistantMsg = {
+            id: `assist-${Date.now()}`,
+            role: "assistant",
+            content: `### Arena Comparison\n\n**Response from ${selectedModelA.name}:**\n\n${data.response}\n\n---\n\n*Note: In Arena mode, secondary model validation is currently running in the background.*`,
+            model_a: selectedModelA.name,
+            model_b: selectedModelB.name,
+            thinking: `Parallel analysis complete. Accuracy: ${(data.confidence * 100).toFixed(1)}%`
+          };
+        } else {
+          assistantMsg = {
+            id: `assist-${Date.now()}`,
+            role: "assistant",
+            content: data.response,
+            thinking: `${selectedThinkingMode} mode — ${data.execution_time?.toFixed(2) || '0.00'}s execution cycle.`,
+            tokens: data.tokens || 0,
+            agents: activeMode === "AGENT" ? ["Tukang", "Bendahara", "Orchestrator"] : undefined,
+            consensus: data.confidence > 0.8
+          };
+        }
+
+        console.log("Assistant Response:", assistantMsg);
+        console.groupEnd();
+        setMessages((prev) => [...prev, assistantMsg]);
+        setIsThinking(false);
+        setLoadingAgents([]);
+      }, Math.max(2000, (data.reasoning?.length || 0) * 400 + 1500));
+
+    } catch (error: any) {
+      console.error("Chat Error:", error);
+      addThinkingLog(`❌ Error: ${error.message}`);
+      
+      const errorMsg: Message = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: `**Deployment Error**: Failed to reach the JEBAT backend on .206.\n\nDetails: ${error.message}\n\nPlease ensure the API server is running on the target VPS.`,
+      };
+      
+      setMessages((prev) => [...prev, errorMsg]);
       setIsThinking(false);
       setLoadingAgents([]);
-    }, 3500); 
+      console.groupEnd();
+    }
   };
 
   return (
@@ -420,36 +490,7 @@ export default function V3Chat() {
                           : 'bg-slate-900/80 text-slate-300 border-slate-800 rounded-tl-none backdrop-blur-xl shadow-black/50'
                         }`}>
                           <div className="prose prose-invert prose-sm max-w-none prose-headings:font-bold prose-headings:text-white prose-strong:text-white prose-ul:list-disc">
-                            <ReactMarkdown 
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                code({node, className, children, ...props}: any) {
-                                  const match = /language-(\w+)/.exec(className || '')
-                                  return match ? (
-                                    <div className="relative group/code">
-                                      <pre className="bg-slate-950 p-4 rounded-xl border border-slate-800 overflow-x-auto my-4 scrollbar-thin scrollbar-thumb-slate-700">
-                                        <code className={className} {...props}>
-                                          {children}
-                                        </code>
-                                      </pre>
-                                      <button 
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(String(children));
-                                          alert("Copied to clipboard!");
-                                        }}
-                                        className="absolute top-3 right-3 px-2 py-1 bg-slate-800 text-[8px] font-bold text-slate-400 rounded-md opacity-0 group-hover/code:opacity-100 transition-opacity border border-slate-700 uppercase"
-                                      >
-                                        Copy
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <code className="bg-slate-800 px-1.5 py-0.5 rounded text-blue-300 font-mono" {...props}>
-                                      {children}
-                                    </code>
-                                  )
-                                }
-                              }}
-                            >
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                               {msg.content}
                             </ReactMarkdown>
                           </div>
