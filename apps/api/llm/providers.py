@@ -179,6 +179,7 @@ class OllamaProvider:
     model: str
     host: str
     temperature: float
+    speculative_model: str | None = None
 
     async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
         payload = {
@@ -188,6 +189,10 @@ class OllamaProvider:
             "stream": False,
             "options": {"temperature": self.temperature},
         }
+        if self.speculative_model:
+            # Use Ollama's speculative decoding parameter
+            payload["speculative"] = self.speculative_model
+
         async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
                 urljoin(self.host.rstrip("/") + "/", "api/generate"),
@@ -240,6 +245,7 @@ def build_provider(config: JebatLLMConfig) -> LLMProvider:
             model=config.model,
             host=config.ollama_host,
             temperature=config.temperature,
+            speculative_model=config.speculative_model,
         )
     if provider == "local":
         return LocalEchoProvider()

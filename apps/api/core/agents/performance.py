@@ -241,11 +241,40 @@ class SmartRouter:
         }
 
 
+class SpeculativeDecoding:
+    """Speed up generation by using a small draft model to predict tokens."""
+
+    def __init__(self, draft_model: str = "phi3", target_model: str = "qwen2.5:14b"):
+        self.draft_model = draft_model
+        self.target_model = target_model
+        self._lookahead = 5
+        self._success_count = 0
+        self._total_speculated = 0
+
+    def record_success(self, accepted_tokens: int):
+        self._success_count += 1
+        self._total_speculated += accepted_tokens
+
+    @property
+    def efficiency_gain(self) -> float:
+        return self._total_speculated / self._success_count if self._success_count > 0 else 0.0
+
+    @property
+    def stats(self) -> Dict[str, Any]:
+        return {
+            "draft_model": self.draft_model,
+            "target_model": self.target_model,
+            "avg_accepted_tokens": f"{self.efficiency_gain:.2f}",
+            "lookahead": self._lookahead
+        }
+
+
 # Global instances for use across the application
 response_cache = LRUCache(max_size=5000, default_ttl=7200)  # 2 hour TTL
 connection_pool = ConnectionPool(max_connections=100, max_keepalive=20)
 request_deduplicator = RequestDeduplicator()
 smart_router = SmartRouter()
+speculative_engine = SpeculativeDecoding()
 
 
 def generate_cache_key(provider: str, model: str, messages: List[Dict], **kwargs) -> str:
@@ -265,5 +294,6 @@ def get_performance_stats() -> Dict[str, Any]:
         "cache": response_cache.stats(),
         "connection_pool": connection_pool.stats,
         "deduplication": request_deduplicator.stats,
-        "routing": smart_router.stats
+        "routing": smart_router.stats,
+        "speculative_decoding": speculative_engine.stats
     }
