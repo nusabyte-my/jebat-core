@@ -1,329 +1,289 @@
-# ⚔️ JEBAT — The LLM Ecosystem That Remembers Everything
+# 🗡️ JEBATCore — AI Agent Operating System
 
-<p align="center">
-  <img src="https://img.shields.io/npm/v/jebat-agent.svg?label=jebat-agent" alt="jebat-agent version" />
-  <img src="https://img.shields.io/npm/v/jebat-core.svg?label=jebat-core" alt="jebat-core version" />
-  <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python" />
-  <img src="https://img.shields.io/badge/next.js-16-black" alt="Next.js" />
-  <img src="https://img.shields.io/badge/fastapi-0.115-009688" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" />
-</p>
+**Because warriors remember everything that matters.**
 
-<p align="center">
-  <strong>Eternal Memory · Multi-Agent Orchestration · Autonomous Security</strong><br />
-  <em>Self-hosted, enterprise-ready, privacy-first. Built by <a href="https://nusabyte.my">NusaByte</a>.</em>
-</p>
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/nusabyte-my/jebat-core)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-green.svg)](https://nodejs.org)
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org)
 
-<p align="center">
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-packages">npm Packages</a> •
-  <a href="#-jebat-agent">Jebat Agent</a> •
-  <a href="#-jebat-core">Jebat Core</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-roadmap">Roadmap</a>
-</p>
+---
+
+JEBATCore is an **AI agent operating system** that installs context, rules, design systems, and skills into your IDE and project — plus provides a local MCP server for structured asset delivery. It works with any LLM provider (Claude, GPT, Gemini, Ollama) and is optimized for token efficiency on both input and output.
 
 ---
 
 ## 🚀 Quick Start
 
-### Option 1: Setup Wizard (Recommended)
+### Install via CLI
 
 ```bash
-# Full setup with workspace, skills, and IDE integration
-npx jebat-agent --full
+# Install with defaults (auto-detects IDEs)
+npx jebatcore install --yes
 
-# Quick setup (gateway only)
-npx jebat-agent --quick
+# Interactive wizard
+npx jebatcore install
+
+# Dry run to preview changes
+npx jebatcore install --dry-run --yes
 ```
 
-### Option 2: Manual Install
+### What Gets Installed
+
+| Target | What |
+|--------|------|
+| **IDE context files** | System prompts, rules, and agent configs for VS Code, Cursor, Zed, JetBrains, Neovim, and more |
+| **Project context** | `.cursorrules`, `CLAUDE.md`, `AGENTS.md` — AI agents read these automatically |
+| **MCP server** | Local Model Context Protocol server with tools for serving JEBAT assets |
+| **Skills** | 23+ specialized skills (dev, security, design, marketing, strategy) |
+| **Design systems** | Vercel, Cursor, Supabase — drop into any project for AI-consistent UI |
+
+---
+
+## 📦 Ecosystem
+
+### Token Optimization
+
+| Layer | What | Savings |
+|-------|------|---------|
+| **Input compression** | Context shrinking, prompt optimization | 25-50% |
+| **Output fluff stripping** | Removes greetings, filler, sycophancy | 30-60% |
+| **MCP caching** | Response caching for repeated calls | Variable |
+| **Budget management** | Per-operation token limits with tracking | Controlled |
 
 ```bash
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core
-npx jebat-core install
+npx jebatcore token-analyze --file AGENTS.md --model claude
+npx jebatcore token-compress --file context.txt --level aggressive --target-tokens 3000
+npx jebatcore output-fluff --file llm-response.txt
+npx jebatcore token-budget --budget implementation
 ```
 
-### Option 3: Try the Chat
+### Design Systems
 
-Visit **[jebat.online/chat](https://jebat.online/chat)** or run:
+Three production-ready systems from [awesome-design-md](https://github.com/VoltAgent/awesome-design-md):
+
+| System | Style | Key Traits |
+|--------|-------|------------|
+| **Vercel** (Geist) | Minimalist developer infra | Shadow-as-border, Geist font, white canvas |
+| **Cursor** | Warm craft minimalism | Cream `#f2f1ed`, jjannon serif, oklab borders |
+| **Supabase** | Dark-mode-native | `#171717` void, emerald green, Circular font |
 
 ```bash
-npx jebat-agent --full
-npx jebat-gateway start
+npx jebatcore design-system --list
+npx jebatcore design-system --name vercel
 ```
 
----
+### Icon Catalog
 
-## 📦 npm Packages (5 Packages)
-
-The complete JEBAT ecosystem available via npm:
-
-| Package | Version | Purpose | Command |
-|---------|---------|---------|---------|
-| **[jebat-agent](https://www.npmjs.com/package/jebat-agent)** | `3.0.1` | Setup wizard, 8 local LLMs, IDE integration | `npx jebat-agent` |
-| **[jebat-core](https://www.npmjs.com/package/jebat-core)** | `3.0.1` | Platform core, 10 agents, 24 specialists | `npx jebat-core` |
-| **[jebat-security](https://www.npmjs.com/package/jebat-security)** | `1.0.1` | CyberSec suite: Hulubalang, Pengawal, Perisai, Serangan | `npx jebat-security` |
-| **[jebat-gelanggang](https://www.npmjs.com/package/jebat-gelanggang)** | `1.0.0` | LLM-to-LLM Arena with 5 orchestration modes | `npx jebat-gelanggang` |
-| **[jebat-guides](https://www.npmjs.com/package/jebat-guides)** | `1.0.0` | Setup guides: IDE, models, channels, migration | `npx jebat-guides` |
-
----
-
-## 🤖 Jebat Agent
-
-**The unified AI agent** combining OpenClaw control plane and Hermes capture-first methodology.
-
-### Installation
+100+ tech logos from [developer-icons](https://github.com/xandemon/developer-icons) for UI/UX enhancement:
 
 ```bash
-# Interactive setup
-npx jebat-agent
-
-# Full workspace setup
-npx jebat-agent --full
-
-# IDE integration
-npx jebat-agent --ide vscode
-npx jebat-agent --ide zed
-npx jebat-agent --ide claude
-
-# Channel setup
-npx jebat-agent --channel telegram
-npx jebat-agent --channel discord
-
-# Local model deployment
-npx jebat-agent --local-model qwen2.5
-npx jebat-agent --local-model gemma4
-
-# Migration from OpenClaw/Hermes
-npx jebat-agent --migrate
+npx jebatcore icon-search --query react
+npx jebatcore icon-search --list-all
 ```
 
-### Features
+### Skill Manager
 
-| Feature | Description | Command |
-|---------|-------------|---------|
-| **30-Second Setup** | Full workspace with skills and config | `npx jebat-agent --full` |
-| **8 Local LLMs** | Deploy Qwen2.5, Gemma 4, Hermes3, Phi-3, and more | `npx jebat-agent --local-model qwen2.5` |
-| **IDE Integration** | VS Code, Zed, Cursor, Claude Desktop, Gemini CLI | `npx jebat-agent --ide vscode` |
-| **Channel Setup** | Telegram, Discord, WhatsApp, Slack | `npx jebat-agent --channel telegram` |
-| **Migration** | Automatic OpenClaw/Hermes conversion | `npx jebat-agent --migrate` |
-
-### Management Commands
+Anthropic-compatible [SKILL.md](https://agentskills.io) format with SHA-256 integrity:
 
 ```bash
-npx jebat-gateway start      # Start gateway server
-npx jebat-gateway status     # Check gateway status
-npx jebat-gateway restart    # Restart gateway
-npx jebat-gateway logs       # View gateway logs
-npx jebat-setup health       # Check agent health
-npx jebat-setup skills       # List available skills
-npx jebat-setup test         # Test agent connectivity
+npx jebatcore skill-list                # List all 23 skills
+npx jebatcore skill --skill panglima    # View full skill content
+npx jebatcore skill-search --query react
+npx jebatcore skill-create --skill my-api --description "REST API patterns"
+npx jebatcore skill-verify              # Integrity check
 ```
 
-### Supported Local Models
+**23 Skills across 12 categories:**
 
-| Model | Size | Provider | Best For |
-|-------|------|----------|----------|
-| **Qwen2.5 14B** | 9GB | Ollama | Best overall performance |
-| **Gemma 4** | 9.6GB | Ollama | Google's latest all-rounder |
-| **Hermes3 8B** | 4.7GB | Ollama | Complex reasoning |
-| **Phi-3** | 2.2GB | Ollama | Fast responses |
-| **Llama 3.1 8B** | 4.9GB | Ollama | General purpose |
-| **Mistral** | 4.4GB | Ollama | Balanced performance |
-| **CodeLlama 7B** | 3.8GB | Ollama | Code generation |
-| **TinyLlama** | 637MB | Ollama | Lightweight testing |
+| Category | Skills |
+|----------|--------|
+| jebat-native | panglima, memory-core, hermes-agent |
+| development | fullstack, web-developer, app-development |
+| orchestration | agent-dispatch |
+| security | security-pentest |
+| database | database |
+| automation | automation |
+| design | ui-ux |
+| growth | marketing, seo |
+| strategy | brand-strategy, product-strategy |
+| commercial | proposal-writing, sales-enablement |
+| content | content-creation, copywriting |
+| quality | qa-validation |
 
 ---
 
-## 🏗️ Jebat Core
-
-**The platform backbone** — memory system, skill registry, multi-agent orchestration, and gateway.
-
-### Installation
-
-```bash
-# Install JEBAT context to IDEs
-npx jebat-core install
-
-# Workspace health check
-npx jebat-core doctor
-
-# Check system status
-npx jebat-core status
-
-# List installed skills
-npx jebat-core skill-list
-
-# Deploy to VPS
-npx jebat-core deploy
-```
-
-### Core Components
-
-| Component | Description |
-|-----------|-------------|
-| **Memory System** | 5-layer cognitive stack (M0-M4) with heat-based retention |
-| **Skill Registry** | 40+ specialized skills optimized for token efficiency |
-| **Agent Orchestration** | Multi-agent routing with Gelanggang arena |
-| **CyberSec Suite** | Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest) |
-| **Gateway Router** | Provider routing across 5 LLM backends with fallback chains |
-| **IDE Context** | Inject JEBAT into any editor (VS Code, Cursor, Zed, JetBrains, Neovim) |
-
-### Agent Registry
-
-| Agent | Role | Provider | Model |
-|-------|------|----------|-------|
-| **Panglima** | Orchestration | Anthropic | claude-sonnet-4 |
-| **Tukang** | Development | Ollama | qwen2.5-coder:7b |
-| **Hulubalang** | Security | Ollama | hermes-sec-v2 |
-| **Pengawal** | CyberSec | Ollama | hermes-sec-v2 |
-| **Pawang** | Research | Anthropic | claude-sonnet-4 |
-| **Syahbandar** | Operations | Ollama | qwen2.5-coder:7b |
-| **Bendahara** | Database | Ollama | qwen2.5-coder:7b |
-| **Hikmat** | Memory | Anthropic | claude-sonnet-4 |
-| **Penganalisis** | Analytics | Anthropic | claude-sonnet-4 |
-| **Penyemak** | QA | Anthropic | claude-sonnet-4 |
-
-Plus **24+ specialist agents**: Tukang Web, Pembina Aplikasi, Senibina Antara Muka, Penyebar Reka Bentuk, and more.
-
----
-
-## 🏛️ Architecture
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     JEBAT Platform v3.0                     │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │  Jebat Agent│    │ Jebat Core  │    │   Gelanggang│     │
-│  │  (npm)      │    │  (npm)      │    │   (Arena)   │     │
-│  │             │    │             │    │             │     │
-│  │ • Setup     │◄──►│ • Memory    │◄──►│ • LLM-to-LLM│     │
-│  │ • Models    │    │ • Skills    │    │ • Debates   │     │
-│  │ • Channels  │    │ • Gateway   │    │ • Patterns  │     │
-│  └─────────────┘    └─────────────┘    └─────────────┘     │
-│         │                  │                  │              │
-│         ▼                  ▼                  ▼              │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              LLM Providers (5)                       │   │
-│  │  Anthropic  ·  OpenAI  ·  Ollama  ·  Gemini  ·  ZAI │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                    JEBATCore                         │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  ┌──────────────┐    ┌──────────────┐               │
+│  │  CLI Engine  │    │  MCP Server  │               │
+│  │  (Node.js)   │    │  (stdio)     │               │
+│  └──────┬───────┘    └──────┬───────┘               │
+│         │                   │                        │
+│  ┌──────┴───────────────────┴───────┐               │
+│  │         Core Libraries            │               │
+│  ├───────────────────────────────────┤               │
+│  │  • install.js   (file deploy)     │               │
+│  │  • detect.js    (IDE scanning)    │               │
+│  │  • cli.js       (arg routing)      │               │
+│  │  • mcp-server.js  (asset server)   │               │
+│  │  • token-utils.js  (counting)      │               │
+│  │  • context-compression.js          │               │
+│  │  • skill-manager.js  (lifecycle)   │               │
+│  └───────────────────────────────────┘               │
+│                     │                                │
+│  ┌──────────────────┴──────────────────┐            │
+│  │         Assets & Config             │            │
+│  ├─────────────────────────────────────┤            │
+│  │  • vault/ (playbooks, templates)     │            │
+│  │  • skills/ (23 SKILL.md files)       │            │
+│  │  • adapters/ (IDE-specific configs)  │            │
+│  │  • docs/ (token optimization guide)  │            │
+│  └─────────────────────────────────────┘            │
+│                                                      │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ⭐ Features
+## 📋 CLI Commands
 
-### Memory System
-- **5-Layer Cognitive Stack** (M0-M4) with heat-based retention
-- Cross-session continuity and intelligent forgetting
-- Semantic recall and vector search
+### Core
 
-### Multi-Agent Orchestration
-- **4 Collaboration Patterns**: Sequential, Parallel, Consensus, Adversarial
-- **15+ Message Types** for agent communication
-- Cross-provider LLM communication
-- Gelanggang (LLM-to-LLM Arena)
+| Command | Description |
+|---------|-------------|
+| `jebatcore install` | Install context files and MCP setup |
+| `jebatcore detect` | Scan for installed IDEs |
+| `jebatcore prompt` | Print universal system prompt |
+| `jebatcore doctor` | Diagnose workspace setup |
 
-### Enterprise Security
-- Prompt injection defense
-- Command sanitization
-- Complete audit trails
-- Secrets management
+### Token Optimization
 
-### Performance Optimizations
-- **LRUCache** for model responses (40-60% latency reduction)
-- **ConnectionPool** for LLM providers (30% faster requests)
-- **RequestDeduplicator** (30% cost savings)
-- **SmartRouter** for fastest provider routing (25% improvement)
+| Command | Description |
+|---------|-------------|
+| `token-analyze` | Count tokens for any text/file |
+| `token-compress` | Compress context with configurable levels |
+| `token-compress-prompt` | Optimize system prompts |
+| `token-budget` | View per-operation token budgets |
+| `output-fluff` | Analyze and strip LLM output filler |
 
----
+### Design & Icons
 
-## 🌐 Live Demos
+| Command | Description |
+|---------|-------------|
+| `design-system --list` | List available design systems |
+| `design-system --name <system>` | View full design spec |
+| `icon-search --query <term>` | Search tech logos |
+| `icon-search --list-all` | Full icon catalog |
 
-| Page | URL | Description |
-|------|-----|-------------|
-| **Landing** | [jebat.online](https://jebat.online) | Main landing with feature overview |
-| **Agent** | [jebat.online/agent](https://jebat.online/agent/) | Dedicated agent documentation |
-| **Portal** | [jebat.online/portal](https://jebat.online/portal/) | Enterprise customer portal |
-| **Chat** | [jebat.online/chat](https://jebat.online/chat/) | AI chat with 8 local models |
-| **Gelanggang** | [jebat.online/gelanggang](https://jebat.online/gelanggang/) | Multi-agent LLM arena |
-| **Guides** | [jebat.online/guides](https://jebat.online/guides/) | Setup and usage guides |
+### Skills
 
----
-
-## 🛣️ Roadmap
-
-### Phase 1: Foundation (Weeks 1-4) ✅
-- [x] Performance optimization module
-- [x] Model caching integration
-- [x] Connection pooling
-- [x] Customer portal MVP
-- [x] CDN for static assets
-
-### Phase 2: Enterprise (Weeks 5-8)
-- [ ] Multi-tenancy architecture
-- [ ] Role-based access control
-- [ ] Audit trails implementation
-- [ ] Agent sandboxing
-- [ ] Webhook system
-
-### Phase 3: Customer Experience (Weeks 9-12)
-- [ ] Khidmat Pelanggan agent
-- [ ] Personalization engine
-- [ ] Multi-channel notifications
-- [ ] Help center integration
-- [ ] Feedback system
-
-### Phase 4: Integration (Weeks 13-16)
-- [ ] SSO/SAML integration
-- [ ] SIEM integration
-- [ ] Custom reports engine
-- [ ] REST API v2
-- [ ] SDK libraries
-
-### Phase 5: Scale (Weeks 17-20)
-- [ ] Auto-scaling
-- [ ] Load balancing
-- [ ] Distributed tracing
-- [ ] Advanced analytics
+| Command | Description |
+|---------|-------------|
+| `skill-list` | List all installed skills |
+| `skill --skill <name>` | View skill content + integrity |
+| `skill-search --query <term>` | Search skills by tag |
+| `skill-create --skill <name>` | Author new skill |
+| `skill-install --source <path>` | Install from path |
+| `skill-remove --skill <name>` | Remove skill |
+| `skill-verify` | SHA-256 integrity check |
 
 ---
 
-## 📊 Success Metrics
+## 🔧 Supported IDEs
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| **Uptime** | 99.99% | 99.9% |
-| **Response Time** | <2s local, <5s cloud | 2.1s avg |
-| **Cache Hit Rate** | >70% | 65% |
-| **Throughput** | 100+ tasks/s | 47 req/s |
-| **Customer NPS** | >50 | — |
+| IDE | Extension | MCP | Both |
+|-----|-----------|-----|------|
+| VS Code | ✅ | ✅ | ✅ |
+| Cursor | ✅ | ✅ | ✅ |
+| Windsurf | ✅ | ✅ | ✅ |
+| Zed | ✅ | ✅ | ✅ |
+| VSCodium | ✅ | ✅ | ✅ |
+| JetBrains | ✅ | — | ✅ |
+| Neovim | ✅ | — | ✅ |
+| Sublime Text | ✅ | — | ✅ |
+| Trae | ✅ | — | ✅ |
+| Antigravity | ✅ | — | ✅ |
+
+---
+
+## 📁 Project Structure
+
+```
+jebat-core/
+├── bin/                    # CLI entry point
+├── lib/                    # Core libraries
+│   ├── cli.js              # CLI router
+│   ├── install.js          # File deployment
+│   ├── detect.js           # IDE detection
+│   ├── mcp-server.js       # MCP stdio server
+│   ├── token-utils.js      # Token counting & budgets
+│   ├── context-compression.js  # Input-side compression
+│   ├── skill-manager.js    # Skill lifecycle
+│   └── token-config.json   # Token defaults
+├── adapters/               # IDE-specific configs
+│   ├── profiles/           # Specialized agent profiles
+│   ├── cursor/             # .cursorrules
+│   ├── vscode/             # copilot-instructions.md
+│   ├── zed/                # system-prompt.md
+│   └── generic/            # JEBAT.md (universal)
+├── skills/                 # 23 Anthropic-compatible skills
+│   ├── _core/              # Shared CODEX_CORE.md
+│   ├── panglima/           # Orchestration
+│   ├── fullstack/          # Development
+│   └── ...
+├── vault/                  # Playbooks, templates, checklists
+│   ├── design-systems/     # Vercel, Cursor, Supabase
+│   ├── references/         # Icon catalog
+│   ├── playbooks/          # Workflow guides
+│   ├── templates/          # Brief templates
+│   └── checklists/         # Verification checklists
+└── docs/
+    └── TOKEN-OPTIMIZATION.md  # Complete guide
+```
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```bash
+# Clone
+git clone https://github.com/nusabyte-my/jebat-core.git
+cd jebat-core
+
+# Test CLI
+node bin/jebatcore.js help
+
+# Dry run install
+npm run cli:dry-run
+
+# Validate structure
+powershell -NoProfile -ExecutionPolicy Bypass -File .\validate-workspace.ps1
+```
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+**MIT License** — see [LICENSE](LICENSE) for details.
 
 ---
 
-<p align="center">
-  Built with ❤️ in Malaysia by <a href="https://nusabyte.my">NusaByte</a>
-</p>
+## 🙏 Credits
+
+- **Hang Jebat** — Legendary Malay warrior who inspired the name
+- [awesome-design-md](https://github.com/VoltAgent/awesome-design-md) — Design system collection
+- [developer-icons](https://github.com/xandemon/developer-icons) — Tech logo icon set
+- [Agent Skills](https://agentskills.io) — SKILL.md standard (Anthropic)
+- [skilld](https://github.com/harlan-zw/skilld) — NPM skill packaging inspiration
+
+---
+
+**🗡️ JEBATCore** — *Because warriors remember everything that matters.*
+
+Made by [NusaByte](https://github.com/nusabyte-my).
