@@ -1,1502 +1,612 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   HiOutlineCpuChip,
   HiOutlineServerStack,
-  HiOutlineUsers,
   HiOutlineShieldCheck,
   HiOutlineBolt,
-  HiOutlineChatBubbleLeftRight,
-  HiOutlineRocketLaunch,
-  HiOutlineGlobeAlt,
-  HiOutlineLockClosed,
-  HiOutlineDocumentText,
-  HiOutlineCommandLine,
   HiOutlineCube,
-  HiOutlineCog6Tooth,
-  HiOutlineCheckCircle,
   HiOutlineArrowRight,
-  HiOutlinePlay,
-  HiOutlineEye,
-  HiOutlineSquares2X2,
-  HiOutlineArrowPath,
-  HiOutlineSignal,
-  HiOutlineMagnifyingGlass,
-  HiOutlineClipboardDocumentCheck,
-  HiOutlineKey,
-  HiOutlineBanknotes,
-  HiOutlineChartBar,
+  HiOutlineLockClosed,
+  HiOutlineGlobeAlt,
+  HiOutlineCommandLine,
   HiOutlineAcademicCap,
-  HiOutlineBuildingOffice,
-  HiOutlineCodeBracket,
+  HiOutlineScale,
+  HiOutlineUsers,
+  HiOutlineArrowPath,
+  HiOutlineEye,
+  HiOutlineFingerPrint,
+  HiOutlineUserCircle,
+  HiOutlineCircleStack,
+  HiOutlineChatBubbleLeftRight,
   HiOutlineWrenchScrewdriver,
-  HiOutlineQueueList,
-  HiOutlineBookOpen,
+  HiOutlinePaintBrush,
+  HiOutlineCodeBracket,
+  HiOutlineChartBar,
+  HiOutlineBugAnt,
+  HiOutlineLightBulb,
+  HiOutlineCog6Tooth
 } from "react-icons/hi2";
-
-// ─── Data ───────────────────────────────────────────────────────────────
-
-const SECTIONS = [
-  "hero", "agent", "portal", "chat", "gelanggang", "why", "integrations", "testimonials", "security", "guides", "cta",
-] as const;
-
-type SectionId = (typeof SECTIONS)[number];
-
-const SECTION_LABELS: Record<SectionId, string> = {
-  hero: "Home",
-  agent: "Agent",
-  portal: "Portal",
-  chat: "Chat",
-  gelanggang: "Arena",
-  why: "Why JEBAT",
-  integrations: "Providers",
-  testimonials: "Reviews",
-  security: "Security",
-  guides: "Guides",
-  cta: "Get Started",
-};
-
-const ICON_SIZE = "1.25rem";
-const ICON_CLASS = "text-cyan-400 flex-shrink-0";
-
-// ─── Background Animation ───────────────────────────────────────────────
-
-function AgentNetworkBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const nodesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number; size: number; label: string }>>([]);
-  const mouseRef = useRef({ x: -9999, y: -9999 });
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const labels = ["Panglima", "Tukang", "Hulubalang", "Pengawal", "Pawang", "Syahbandar", "Bendahara", "Hikmat", "Penganalisis", "Penyemak"];
-    const nodes = labels.map((label) => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      size: 2 + Math.random() * 2,
-      label,
-    }));
-    nodesRef.current = nodes;
-
-    const handleMouse = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener("mousemove", handleMouse);
-
-    let animId: number;
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      nodes.forEach((n) => {
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
-        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-        const dx = mouseRef.current.x - n.x;
-        const dy = mouseRef.current.y - n.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 200) {
-          n.vx += dx * 0.00003;
-          n.vy += dy * 0.00003;
-        }
-        n.vx *= 0.999;
-        n.vy *= 0.999;
-      });
-
-      const connectionDist = 180;
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < connectionDist) {
-            const opacity = (1 - dist / connectionDist) * 0.12;
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-        }
-      }
-
-      nodes.forEach((n) => {
-        const dx = mouseRef.current.x - n.x;
-        const dy = mouseRef.current.y - n.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 250) {
-          const opacity = (1 - dist / 250) * 0.25;
-          ctx.beginPath();
-          ctx.moveTo(n.x, n.y);
-          ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
-          ctx.strokeStyle = `rgba(34, 211, 238, ${opacity})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      });
-
-      nodes.forEach((n) => {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size + 3, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(59, 130, 246, 0.08)";
-        ctx.fill();
-      });
-
-      animId = requestAnimationFrame(animate);
-    };
-    animate();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", handleMouse);
-      cancelAnimationFrame(animId);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.5 }}
-    />
-  );
-}
-
-// ─── Section Wrapper ────────────────────────────────────────────────────
-
-function SectionContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`w-full min-h-[100dvh] md:min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 ${className}`}>
-      <div className="max-w-6xl mx-auto w-full relative z-10">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function SectionHeader({ badge, title, subtitle }: { badge: string; title: string; subtitle: string }) {
-  return (
-    <div className="text-center mb-10 lg:mb-16">
-      <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
-        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
-        {badge}
-      </span>
-      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-3 lg:mb-4">{title}</h2>
-      <p className="max-w-2xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">{subtitle}</p>
-    </div>
-  );
-}
-
-// ─── Navbar ─────────────────────────────────────────────────────────────
-
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
-
-  const scrollTo = (id: string) => {
-    setMobileOpen(false);
-    const el = document.getElementById(`section-${id}`);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
-  return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-[#050505]/90 backdrop-blur-xl border-b border-white/5" : "bg-transparent"
-      }`}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-        <a href="/" className="flex items-center gap-2 lg:gap-3 group">
-          <motion.div
-            className="flex items-center justify-center w-7 h-7 lg:w-9 lg:h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-          >
-            <HiOutlineCpuChip className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
-          </motion.div>
-          <div className="flex items-center gap-1 lg:gap-2">
-            <span className="text-base lg:text-lg font-bold tracking-tight">JEBAT</span>
-            <span className="hidden sm:inline text-[10px] font-medium text-cyan-400/80 border border-cyan-400/20 rounded-full px-2 py-0.5">v3.0</span>
-          </div>
-        </a>
-
-        <div className="hidden xl:flex items-center gap-1">
-          {SECTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => scrollTo(s)}
-              className="px-3 py-2 text-xs lg:text-sm text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5"
-            >
-              {SECTION_LABELS[s]}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 lg:gap-3">
-          <a href="/status" className="hidden sm:inline-flex items-center gap-1 lg:gap-2 rounded-full border border-white/10 bg-white/5 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm text-white hover:bg-white/10 transition">
-            <HiOutlineChartBar className="w-3.5 h-3.5" />
-            Status
-          </a>
-          <a href="/chat" className="hidden sm:inline-flex items-center gap-1 lg:gap-2 rounded-full border border-white/10 bg-white/5 px-3 lg:px-4 py-1.5 lg:py-2 text-xs lg:text-sm text-white hover:bg-white/10 transition">
-            <HiOutlineChatBubbleLeftRight className="w-3.5 h-3.5" />
-            Try Chat
-          </a>
-          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-3 lg:px-5 py-1.5 lg:py-2 text-xs lg:text-sm font-semibold text-black hover:from-cyan-300 hover:to-blue-400 transition shadow-lg shadow-cyan-500/20">
-            Get Started
-          </a>
-          <button className="xl:hidden text-white p-1" onClick={() => setMobileOpen(!mobileOpen)}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>}
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="xl:hidden bg-[#050505]/98 border-t border-white/5 px-4 sm:px-6 py-4 space-y-1"
-        >
-          {SECTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => scrollTo(s)}
-              className="block w-full text-left px-3 py-2 text-sm text-neutral-400 hover:text-white transition rounded-lg hover:bg-white/5"
-            >
-              {SECTION_LABELS[s]}
-            </button>
-          ))}
-        </motion.div>
-      )}
-    </motion.nav>
-  );
-}
-
-// ─── Side Dots ──────────────────────────────────────────────────────────
-
-function SideDots() {
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = SECTIONS.indexOf(entry.target.id.replace("section-", "") as SectionId);
-            if (idx >= 0) setActive(idx);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById(`section-${s}`);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(`section-${id}`);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
-  return (
-    <div className="fixed right-3 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-2 sm:gap-3">
-      {SECTIONS.map((s, i) => (
-        <button
-          key={s}
-          onClick={() => scrollTo(s)}
-          className="group flex flex-col items-center gap-1"
-          title={SECTION_LABELS[s]}
-        >
-          <motion.div
-            className={`rounded-full transition-all duration-300 ${
-              active === i
-                ? "bg-cyan-400 w-2 h-5 sm:w-2.5 sm:h-6"
-                : "bg-neutral-600 w-2 h-2 sm:w-2.5 sm:h-2.5 group-hover:bg-neutral-400"
-            }`}
-          />
-          <span className={`hidden lg:block text-[9px] transition-colors whitespace-nowrap ${active === i ? "text-cyan-400" : "text-neutral-600"}`}>
-            {SECTION_LABELS[s]}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ─── SECTION: Hero ──────────────────────────────────────────────────────
-
-function HeroSection() {
-  const stats = [
-    { value: "10", label: "Core Agents", icon: <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
-    { value: "24", label: "Specialists", icon: <HiOutlineUsers className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
-    { value: "5", label: "Orchestration", icon: <HiOutlineArrowPath className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
-    { value: "100%", label: "Self-Hosted", icon: <HiOutlineLockClosed className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} /> },
-  ];
-
-  return (
-    <SectionContent>
-      <div className="text-center space-y-8 lg:space-y-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300"
-        >
-          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"/>
-          Enterprise AI Platform &middot; Self-Hosted &middot; Zero Cloud Dependency
-        </motion.div>
-
-        <div className="max-w-5xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-4 lg:mb-6"
-          >
-            The AI Platform That{" "}
-            <span className="block mt-1 sm:mt-2">
-              <motion.span
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent"
-              >
-                Remembers,
-              </motion.span>{" "}
-              <motion.span
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.35 }}
-                className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
-              >
-                Collaborates,
-              </motion.span>{" "}
-              <motion.span
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
-                className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent"
-              >
-                Protects.
-              </motion.span>
-            </span>
-          </motion.h1>
-        </div>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-          className="max-w-3xl mx-auto text-base lg:text-lg text-neutral-400 leading-relaxed"
-        >
-          JEBAT is the enterprise-grade, self-hosted AI orchestration platform that combines{" "}
-          <strong className="text-white">eternal memory</strong>,{" "}
-          <strong className="text-white">multi-agent collaboration</strong>, and{" "}
-          <strong className="text-white">military-grade security</strong> into one unified system.
-          Deploy on your infrastructure. Own your data. No cloud dependency.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.7 }}
-          className="flex flex-wrap justify-center gap-3 lg:gap-4"
-        >
-          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
-            <HiOutlineRocketLaunch className="w-5 h-5" />
-            Deploy JEBAT
-            <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </a>
-          <a href="/chat" className="rounded-full border border-white/15 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
-            <HiOutlineChatBubbleLeftRight className="w-5 h-5" />
-            Try Live Chat
-          </a>
-          <a href="/portal" className="rounded-full border border-white/15 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-medium text-white hover:bg-white/10 transition flex items-center gap-2">
-            <HiOutlineBuildingOffice className="w-5 h-5" />
-            Enterprise Portal
-          </a>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.8 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 max-w-4xl mx-auto pt-4"
-        >
-          {stats.map((stat, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ scale: 1.05, borderColor: "rgba(34,211,238,0.3)" }}
-              className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 lg:p-5"
-            >
-              <div className="mb-2">{stat.icon}</div>
-              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
-              <div className="text-xs text-neutral-500">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Platform ──────────────────────────────────────────────────
-
-function PlatformSection() {
-  const pillars = [
-    {
-      icon: <HiOutlineCpuChip className="w-6 h-6 lg:w-7 lg:h-7 text-white" />,
-      title: "Jebat Agent",
-      subtitle: "Your Unified AI Workspace",
-      desc: "Deploy your entire AI workspace in 30 seconds. IDE integration, 8 local LLMs, channel setup, and migration from OpenClaw/Hermes — all automated.",
-      features: ["30-second setup wizard", "8 local LLM deployment", "IDE integration (VS Code, Zed, Cursor)", "Channel setup (Telegram, Discord, WhatsApp)", "OpenClaw/Hermes migration"],
-      gradient: "from-cyan-400 to-blue-500",
-      cta: "View Agent Docs",
-      link: "/agent",
-    },
-    {
-      icon: <HiOutlineServerStack className="w-6 h-6 lg:w-7 lg:h-7 text-white" />,
-      title: "Jebat Core",
-      subtitle: "The Platform Backbone",
-      desc: "5-layer cognitive memory, 40+ specialized skills, multi-agent orchestration, and the gateway that routes across 5 LLM providers with intelligent failover.",
-      features: ["M0-M4 eternal memory system", "40+ optimized skills", "Multi-agent orchestration", "CyberSec scanning & hardening", "Gateway with provider routing"],
-      gradient: "from-purple-400 to-pink-500",
-      cta: "Explore Core",
-      link: "/portal",
-    },
-  ];
-
-  return (
-    <SectionContent>
-      <SectionHeader
-        badge="Platform Architecture"
-        title="Two Pillars. One Platform."
-        subtitle="JEBAT is built on two powerful components that work together seamlessly to deliver enterprise-grade AI capabilities."
-      />
-      <div className="grid gap-5 lg:gap-6 grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto">
-        {pillars.map((p, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.15 + i * 0.15 }}
-            whileHover={{ y: -4 }}
-            className="group relative rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8 hover:border-cyan-400/20 transition-colors"
-          >
-            <div className="flex items-start justify-between mb-6">
-              <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-gradient-to-br ${p.gradient} flex items-center justify-center shadow-lg`}>
-                {p.icon}
-              </div>
-              <span className={`rounded-full bg-gradient-to-r ${p.gradient} text-white px-3 py-1 text-xs font-medium`}>{p.title}</span>
-            </div>
-            <h3 className="text-xl lg:text-2xl font-bold mb-1 lg:mb-2">{p.title}</h3>
-            <p className="text-sm lg:text-base text-cyan-400 mb-3 lg:mb-4">{p.subtitle}</p>
-            <p className="text-sm lg:text-base text-neutral-400 leading-relaxed mb-6">{p.desc}</p>
-            <div className="space-y-2 lg:space-y-3 mb-6">
-              {p.features.map((f, j) => (
-                <div key={j} className="flex items-start gap-3 text-sm text-neutral-300">
-                  <HiOutlineCheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-                  {f}
-                </div>
-              ))}
-            </div>
-            <a href={p.link} className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${p.gradient} px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition`}>
-              {p.cta} <HiOutlineArrowRight className="w-4 h-4" />
-            </a>
-          </motion.div>
-        ))}
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Agents ────────────────────────────────────────────────────
-
-function AgentsSection() {
-  const coreAgents = [
-    { name: "Panglima", role: "Orchestration", model: "Claude 4", color: "cyan" },
-    { name: "Tukang", role: "Development", model: "Qwen Coder", color: "purple" },
-    { name: "Hulubalang", role: "Security Audit", model: "Hermes Sec", color: "red" },
-    { name: "Pengawal", role: "CyberSec", model: "Hermes Sec", color: "orange" },
-    { name: "Pawang", role: "Research", model: "Claude 4", color: "emerald" },
-    { name: "Syahbandar", role: "Operations", model: "Qwen Coder", color: "blue" },
-    { name: "Bendahara", role: "Database", model: "Qwen Coder", color: "indigo" },
-    { name: "Hikmat", role: "Memory", model: "Claude 4", color: "pink" },
-    { name: "Penganalisis", role: "Analytics", model: "Claude 4", color: "yellow" },
-    { name: "Penyemak", role: "QA", model: "Claude 4", color: "teal" },
-  ];
-
-  const colorMap: Record<string, string> = {
-    cyan: "from-cyan-400 to-blue-500", purple: "from-purple-400 to-pink-500", red: "from-red-400 to-rose-500",
-    orange: "from-orange-400 to-amber-500", emerald: "from-emerald-400 to-teal-500", blue: "from-blue-400 to-indigo-500",
-    indigo: "from-indigo-400 to-purple-500", pink: "from-pink-400 to-rose-500", yellow: "from-yellow-400 to-orange-500",
-    teal: "from-teal-400 to-emerald-500",
-  };
-
-  const specialists = [
-    "Tukang Web", "Pembina Aplikasi", "Khidmat Pelanggan", "Senibina UI/UX",
-    "Penyebar Reka Bentuk", "Penasihat Keselamatan", "Juru Audit", "Penjaga Kualiti",
-    "Perancang Strategik", "Analis Risiko", "Pemikir Kritis", "Pemeriksa Kualiti",
-    "Pereka Grafik", "Penulis Kandungan", "Jurubahasa", "Penyusun Data",
-  ];
-
-  return (
-    <SectionContent>
-      <SectionHeader
-        badge="Agent Registry"
-        title="34 AI Agents. One Platform."
-        subtitle="10 core agents orchestrate 24 specialists — each with distinct roles, providers, and models optimized for enterprise tasks."
-      />
-
-      <div className="mb-10 lg:mb-14 max-w-5xl mx-auto">
-        <div className="flex items-center gap-2 mb-4 lg:mb-6 justify-center">
-          <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} />
-          <h3 className="text-lg lg:text-xl font-semibold">10 Core Agents</h3>
-        </div>
-        <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-          {coreAgents.map((a, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.05 + i * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              className="group relative rounded-xl lg:rounded-2xl border border-white/10 bg-white/[0.02] p-4 lg:p-5 text-center hover:border-cyan-400/20 transition-colors"
-            >
-              <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br ${colorMap[a.color]} mx-auto mb-2 lg:mb-3 flex items-center justify-center text-xs lg:text-sm font-bold text-white shadow-lg`}>
-                {a.name.substring(0, 2).toUpperCase()}
-              </div>
-              <h4 className="text-xs lg:text-sm font-bold mb-0.5">{a.name}</h4>
-              <p className="text-[9px] lg:text-[10px] text-neutral-500 mb-2">{a.role}</p>
-              <span className="inline-block rounded-full bg-white/5 border border-white/10 px-2 py-0.5 text-[8px] lg:text-[10px] text-neutral-400">{a.model}</span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2 mb-4 lg:mb-6 justify-center">
-          <HiOutlineUsers className={ICON_CLASS} style={{ fontSize: ICON_SIZE }} />
-          <h3 className="text-lg lg:text-xl font-semibold">24 Specialist Agents</h3>
-        </div>
-        <div className="grid gap-2 lg:gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-8">
-          {specialists.map((s, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 + i * 0.03 }}
-              whileHover={{ scale: 1.05, borderColor: "rgba(34,211,238,0.3)" }}
-              className="rounded-lg border border-white/5 bg-white/[0.02] p-2 lg:p-3 text-center text-[9px] lg:text-xs text-neutral-400 hover:border-cyan-400/20 transition-colors"
-            >
-              {s}
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Core Engine ───────────────────────────────────────────────
-
-function CoreSection() {
-  const features = [
-    { icon: <HiOutlineCog6Tooth className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5-Layer Memory (M0-M4)", desc: "Eternal cognitive memory with heat-based retention, cross-session continuity, and intelligent forgetting." },
-    { icon: <HiOutlineBolt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "40+ Specialized Skills", desc: "Optimized skill templates for token efficiency, from code generation to security auditing." },
-    { icon: <HiOutlineArrowPath className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Intelligent Routing", desc: "Gateway routes across 5 LLM providers with automatic failover, load balancing, and cost optimization." },
-    { icon: <HiOutlineShieldCheck className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Enterprise Security", desc: "Prompt injection defense, command sanitization, complete audit trails, and secrets management." },
-    { icon: <HiOutlineChartBar className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Performance Module", desc: "LRUCache (40-60% latency reduction), ConnectionPool (30% faster), RequestDeduplicator (30% cost savings)." },
-    { icon: <HiOutlineGlobeAlt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5 LLM Providers", desc: "Anthropic, OpenAI, Gemini, Ollama (8 local models), and ZAI — all integrated with intelligent fallback." },
-  ];
-
-  const providers = [
-    { name: "Anthropic", models: "Claude 4, Sonnet, Opus", gradient: "from-green-400 to-emerald-500" },
-    { name: "OpenAI", models: "GPT-4o, GPT-4, 3.5", gradient: "from-blue-400 to-cyan-500" },
-    { name: "Ollama", models: "8 Local Models", gradient: "from-purple-400 to-pink-500" },
-    { name: "Gemini", models: "Pro, Flash", gradient: "from-yellow-400 to-orange-500" },
-    { name: "ZAI", models: "Zhipu Models", gradient: "from-red-400 to-rose-500" },
-  ];
-
-  return (
-    <SectionContent>
-      <SectionHeader
-        badge="Core Engine"
-        title="The Brain Behind JEBAT"
-        subtitle="Jebat Core is the platform backbone — the multi-agent orchestration engine that powers the entire ecosystem."
-      />
-      <div className="space-y-8 lg:space-y-10">
-        {/* Features Grid */}
-        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.08 }}
-              className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
-            >
-              <div className="mt-0.5">{f.icon}</div>
-              <div>
-                <h3 className="font-semibold text-sm lg:text-base mb-1">{f.title}</h3>
-                <p className="text-xs lg:text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Providers + Terminal Row */}
-        <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2">
-          {/* Provider Network */}
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
-            <div className="text-center mb-5">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <HiOutlineGlobeAlt className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-lg font-bold">Provider Network</h3>
-              </div>
-              <p className="text-sm text-neutral-400">Intelligent routing across 5 LLM backends</p>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {providers.map((p, i) => (
-                <motion.div
-                  key={i}
-                  whileHover={{ scale: 1.05 }}
-                  className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center"
-                >
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${p.gradient} mx-auto mb-2 flex items-center justify-center text-sm font-bold text-white`}>
-                    {p.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <h4 className="text-xs font-semibold mb-1">{p.name}</h4>
-                  <p className="text-[10px] text-neutral-500">{p.models}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* Terminal */}
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <HiOutlineCommandLine className="w-5 h-5 text-cyan-400" />
-              <h3 className="text-lg font-bold">System Health</h3>
-            </div>
-            <div className="rounded-lg bg-black/30 border border-white/5 p-4 font-mono text-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-cyan-400">$</span> <span className="text-white">npx jebat-core doctor</span>
-              </div>
-              <div className="text-neutral-500 space-y-2">
-                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Memory system: 5-layer (M0-M4)</div>
-                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Skills: 40+ installed</div>
-                <div className="flex items-center gap-2"><HiOutlineCheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Gateway: 5 providers connected</div>
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold"><HiOutlineCheckCircle className="w-4 h-4 flex-shrink-0" /> System healthy</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Orchestration ─────────────────────────────────────────────
-
-function OrchestrationSection() {
-  const modes = [
-    { icon: <HiOutlineChatBubbleLeftRight className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Multi-Agent Debate", desc: "Advocate vs Critic → Rebuttals → Confidence → Moderator conclusion. Research-backed MAD paradigm.", rounds: "4 Rounds", time: "~2-5 min", gradient: "from-cyan-400 to-blue-500" },
-    { icon: <HiOutlineUsers className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Consensus Building", desc: "Share perspectives → Find agreement → Final synthesized conclusion. Collaborative approach.", rounds: "3 Rounds", time: "~1.5-3 min", gradient: "from-emerald-400 to-teal-500" },
-    { icon: <HiOutlineArrowPath className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Sequential Chain", desc: "Model 1 starts → Model 2 builds → Model 1 refines. Linear knowledge building.", rounds: "3 Steps", time: "~1-2 min", gradient: "from-blue-400 to-indigo-500" },
-    { icon: <HiOutlineBolt className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Parallel Analysis", desc: "Both analyze independently → Comparison table with synthesis. Unbiased perspectives.", rounds: "2 Phases", time: "~1-2 min", gradient: "from-yellow-400 to-orange-500" },
-    { icon: <HiOutlineBuildingOffice className="w-6 h-6 lg:w-7 lg:h-7 text-white" />, title: "Hierarchical Review", desc: "Senior delegates → Junior completes → Senior reviews. Quality control pattern.", rounds: "3 Steps", time: "~1.5-3 min", gradient: "from-purple-400 to-pink-500" },
-  ];
-
-  return (
-    <SectionContent>
-      <SectionHeader
-        badge="Orchestration Engine"
-        title="5 Research-Backed Orchestration Modes"
-        subtitle="Based on AutoGen, ChatDev 2.0, and MAD Paradigm papers. Choose the right pattern for your use case."
-      />
-      <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-        {modes.map((m, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 + i * 0.1 }}
-            whileHover={{ y: -4 }}
-            className="group relative rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8 hover:border-cyan-400/20 transition-colors"
-          >
-            <div className="flex items-start justify-between mb-4 lg:mb-6">
-              <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-gradient-to-br ${m.gradient} flex items-center justify-center shadow-lg`}>
-                {m.icon}
-              </div>
-              <div className="text-right">
-                <div className="text-[10px] lg:text-xs text-neutral-500">{m.rounds}</div>
-                <div className="text-[10px] lg:text-xs text-neutral-600">{m.time}</div>
-              </div>
-            </div>
-            <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">{m.title}</h3>
-            <p className="text-sm lg:text-base text-neutral-400 leading-relaxed">{m.desc}</p>
-            <a href="/chat" className="mt-4 lg:mt-6 inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition text-xs lg:text-sm font-medium">
-              Try in Chat <HiOutlineArrowRight className="w-3.5 h-3.5" />
-            </a>
-          </motion.div>
-        ))}
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Why Choose Us ─────────────────────────────────────────────
-
-function WhySection() {
-  const reasons = [
-    { icon: <HiOutlineLockClosed className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "100% Self-Hosted", desc: "Your data never leaves your infrastructure. No cloud, no third-party, no vendor lock-in. Complete sovereignty over your AI.", metric: "0 data breaches", stat: "Privacy-first" },
-    { icon: <HiOutlineBolt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "40-60% Faster", desc: "LRUCache, ConnectionPool, RequestDeduplicator, and SmartRouter — enterprise performance optimizations out of the box.", metric: "<2s local avg", stat: "Latency" },
-    { icon: <HiOutlineCog6Tooth className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Eternal Memory", desc: "5-layer cognitive memory (M0-M4) with heat-based retention. JEBAT remembers across sessions — unlike ChatGPT or Claude.", metric: "M0-M4 layers", stat: "Memory" },
-    { icon: <HiOutlineCpuChip className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "34 AI Agents", desc: "10 core agents orchestrate 24 specialists. From security audits to code review, research to customer service — all automated.", metric: "10 + 24", stat: "Agents" },
-    { icon: <HiOutlineGlobeAlt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5 LLM Providers", desc: "Anthropic, OpenAI, Gemini, Ollama (8 local models), and ZAI. Intelligent routing with automatic failover.", metric: "5 backends", stat: "Providers" },
-    { icon: <HiOutlineBanknotes className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Cost Effective", desc: "Run 8 local LLMs for free. Intelligent routing minimizes cloud API costs. No subscription fees, no per-token charges.", metric: "$0 local", stat: "Cost" },
-  ];
-
-  return (
-    <SectionContent>
-      <SectionHeader
-        badge="Why JEBAT"
-        title="Why Enterprise Teams Choose JEBAT"
-        subtitle="Built for organizations that demand privacy, performance, and control over their AI infrastructure."
-      />
-      <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-        {reasons.map((r, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 + i * 0.1 }}
-            whileHover={{ y: -4 }}
-            className="group relative rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8 hover:border-cyan-400/20 transition-colors"
-          >
-            <div className="flex items-start justify-between mb-4 lg:mb-6">
-              <div className="mt-0.5">{r.icon}</div>
-              <div className="text-right">
-                <div className="text-lg lg:text-xl font-bold text-cyan-400">{r.metric}</div>
-                <div className="text-[10px] lg:text-xs text-neutral-500">{r.stat}</div>
-              </div>
-            </div>
-            <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">{r.title}</h3>
-            <p className="text-sm lg:text-base text-neutral-400 leading-relaxed">{r.desc}</p>
-          </motion.div>
-        ))}
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Live Chat ─────────────────────────────────────────────────
-
-function ChatSection() {
-  const features = [
-    { icon: <HiOutlineChatBubbleLeftRight className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Real-Time AI Chat", desc: "Chat with 8 local LLMs or cloud providers. Markdown rendering with tables, code blocks, and headers." },
-    { icon: <HiOutlineArrowPath className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "5 Orchestration Modes", desc: "Switch between Debate, Consensus, Sequential, Parallel, and Hierarchical modes directly in chat." },
-    { icon: <HiOutlineUsers className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Personalized Experience", desc: "Onboarding flow remembers your name, role, and use cases. AI tailors responses to you." },
-    { icon: <HiOutlineCog6Tooth className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Session Persistence", desc: "Conversations survive page refresh. Settings remembered. Last conversation auto-loads on return." },
-    { icon: <HiOutlineBolt className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "Warm Model Button", desc: "Pre-load large models (9.6GB) before chatting. Smart retry logic handles model loading gracefully." },
-    { icon: <HiOutlineKey className={ICON_CLASS} style={{ fontSize: "1.5rem" }} />, title: "BYOK Support", desc: "Bring Your Own Key for OpenAI and Anthropic. Or use 8 free local models — no API key needed." },
-  ];
-
-  return (
-    <SectionContent>
-      <SectionHeader
-        badge="Live Demo"
-        title="Experience JEBAT Chat"
-        subtitle="Try our live chat interface with 8 local LLMs, 5 orchestration modes, and enterprise-grade features. No signup, no API key required."
-      />
-      <div className="space-y-8 lg:space-y-10">
-        {/* Features Grid */}
-        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.08 }}
-              className="flex items-start gap-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] hover:border-cyan-400/20 transition-colors"
-            >
-              <div className="mt-0.5">{f.icon}</div>
-              <div>
-                <h3 className="font-semibold text-sm lg:text-base mb-1">{f.title}</h3>
-                <p className="text-xs lg:text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Chat Mockup + CTA */}
-        <div className="flex flex-col items-center gap-6">
-          {/* Chat Mockup */}
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6">
-            <div className="rounded-xl bg-black/40 border border-white/5 overflow-hidden">
-              <div className="p-4 border-b border-white/5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">AI</div>
-                <div>
-                  <div className="text-sm font-semibold">Jebat Chat</div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400"/>
-                    <span className="text-[10px] text-emerald-400">Online · 8 models ready</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex justify-end">
-                  <div className="rounded-2xl rounded-br-md bg-blue-600/20 border border-blue-500/20 px-4 py-3 max-w-[80%]">
-                    <p className="text-sm">Compare Python vs JavaScript for backend development</p>
-                  </div>
-                </div>
-                <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-4 py-3 max-w-[85%]">
-                    <p className="text-sm mb-2 font-semibold">## Python vs JavaScript: Backend</p>
-                    <div className="rounded-lg bg-black/30 p-3 mb-2 font-mono text-xs overflow-x-auto">
-                      <div className="text-cyan-400">| Feature | Python | JavaScript |</div>
-                      <div className="text-neutral-600">|---------|--------|------------|</div>
-                      <div className="text-neutral-400">| Typing | Strong | Dynamic |</div>
-                      <div className="text-neutral-400">| Async | asyncio | Native |</div>
-                      <div className="text-neutral-400">| ML/AI | Excellent | Growing |</div>
-                    </div>
-                    <p className="text-xs text-neutral-400">Python excels in AI/ML ecosystems while JavaScript dominates full-stack development...</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 border-t border-white/5 flex items-center gap-2">
-                <div className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-neutral-500">Message Jebat...</div>
-                <button className="rounded-full bg-cyan-400/20 p-2">
-                  <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-cyan-400" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <a href="/chat" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
-            <HiOutlinePlay className="w-5 h-5" />
-            Launch Chat Interface
-            <HiOutlineArrowRight className="w-4 h-4" />
-          </a>
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Integrations ──────────────────────────────────────────────
-
-function IntegrationsSection() {
-  const providers = [
-    { name: "Anthropic", models: "Claude 4, Sonnet, Opus", gradient: "from-green-400 to-emerald-500", icon: "A" },
-    { name: "OpenAI", models: "GPT-4o, GPT-4, 3.5", gradient: "from-blue-400 to-cyan-500", icon: "O" },
-    { name: "Ollama", models: "8 Local Models", gradient: "from-purple-400 to-pink-500", icon: "Ol" },
-    { name: "Gemini", models: "Pro, Flash", gradient: "from-yellow-400 to-orange-500", icon: "G" },
-    { name: "ZAI", models: "Zhipu Models", gradient: "from-red-400 to-rose-500", icon: "Z" },
-  ];
-
-  return (
-    <SectionContent>
-      <div className="space-y-10 lg:space-y-12">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
-            LLM Providers
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">
-            5 Providers,{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Intelligent Routing</span>
-          </h2>
-          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">
-            Connect to any LLM provider with automatic failover, load balancing, and cost optimization. Run 8 models locally with Ollama for complete privacy.
-          </p>
-        </div>
-
-        <div className="grid gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 max-w-6xl mx-auto">
-          {providers.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.1 }}
-              whileHover={{ y: -4, scale: 1.05 }}
-              className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 text-center"
-            >
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${p.gradient} mx-auto mb-4 flex items-center justify-center text-lg font-bold text-white shadow-lg`}>
-                {p.icon}
-              </div>
-              <h3 className="font-bold text-base mb-1">{p.name}</h3>
-              <p className="text-xs text-neutral-500">{p.models}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-4 lg:gap-8 pt-4">
-          {[
-            { value: "5", label: "Providers", icon: "🔌" },
-            { value: "13+", label: "Models", icon: "🧠" },
-            { value: "8", label: "Local LLMs", icon: "🏠" },
-            { value: "Auto", label: "Failover", icon: "⚡" },
-          ].map((stat, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-4 text-center">
-              <div className="text-xl mb-2">{stat.icon}</div>
-              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
-              <div className="text-xs text-neutral-500">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: Testimonials ──────────────────────────────────────────────
-
-function TestimonialsSection() {
-  const testimonials = [
-    { quote: "JEBAT transformed how our team works with AI. Self-hosted, secure, and incredibly fast.", author: "Alex Chen", role: "CTO, TechCorp", avatar: "AC" },
-    { quote: "The multi-agent orchestration is game-changing. We went from 1 AI to 34 working together.", author: "Sarah Kim", role: "Lead Engineer, DataFlow", avatar: "SK" },
-    { quote: "No cloud dependency was the deal-breaker. JEBAT gives us complete control over our AI infrastructure.", author: "Mike Torres", role: "Security Director, FinServe", avatar: "MT" },
-  ];
-
-  return (
-    <SectionContent>
-      <div className="space-y-10 lg:space-y-12">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
-            Trusted by Teams
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">
-            What Engineers{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Are Saying</span>
-          </h2>
-        </div>
-
-        <div className="grid gap-6 lg:gap-8 grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto">
-          {testimonials.map((t, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.15 }}
-              whileHover={{ y: -4 }}
-              className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8"
-            >
-              <div className="flex items-center gap-1 mb-4">
-                {[1,2,3,4,5].map(s => (
-                  <svg key={s} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                ))}
-              </div>
-              <blockquote className="text-sm lg:text-base text-neutral-300 leading-relaxed mb-6">
-                "{t.quote}"
-              </blockquote>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
-                  {t.avatar}
-                </div>
-                <div>
-                  <div className="font-semibold text-sm">{t.author}</div>
-                  <div className="text-xs text-neutral-500">{t.role}</div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── SECTION: CTA ───────────────────────────────────────────────────────
-
-function CTASection() {
-  return (
-    <SectionContent>
-      <div className="text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="rounded-2xl lg:rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/5 to-purple-400/5 p-8 lg:p-12 max-w-4xl mx-auto"
-        >
-          <div className="inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20 mx-auto mb-4 lg:mb-6">
-            <HiOutlineRocketLaunch className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">Ready to Own Your AI?</h2>
-          <p className="text-neutral-400 text-base lg:text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-            Download JEBAT today and experience the future of self-hosted AI. No subscriptions, no cloud dependency, no limits. Deploy on your infrastructure in 30 seconds.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3 lg:gap-4 mb-8">
-            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener noreferrer" className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              Deploy on GitHub
-              <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </a>
-            <a href="/chat" className="rounded-full border border-white/15 px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
-              <HiOutlinePlay className="w-5 h-5" />
-              Try Live Demo
-            </a>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4 lg:gap-6 text-xs lg:text-sm text-neutral-500">
-            <span className="flex items-center gap-1.5">
-              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-400" />
-              Free & Open Source
-            </span>
-            <span className="flex items-center gap-1.5">
-              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-400" />
-              No Credit Card
-            </span>
-            <span className="flex items-center gap-1.5">
-              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-400" />
-              30-Second Setup
-            </span>
-          </div>
-        </motion.div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── Feature CTA Section ────────────────────────────────────────────────
-
-interface FeatureCardData {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}
-
-function FeatureCTASection({
-  agentName,
-  agentRole,
-  agentGradient,
-  agentInitials,
-  badge,
-  title,
-  subtitle,
-  features,
-  primaryCta,
-  secondaryCta,
-  primaryHref,
-  secondaryHref,
-  stats,
-  themeColor,
-}: {
-  agentName: string;
-  agentRole: string;
-  agentGradient: string;
-  agentInitials: string;
-  badge: string;
-  title: string;
-  subtitle: string;
-  features: FeatureCardData[];
-  primaryCta: string;
-  secondaryCta: string;
-  primaryHref: string;
-  secondaryHref: string;
-  stats: { value: string; label: string }[];
-  themeColor: string;
-}) {
-  return (
-    <SectionContent>
-      <div className="space-y-10 lg:space-y-12">
-        {/* Agent Header */}
-        <div className="text-center space-y-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className={`inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-[#0a0a0a] border-2 border-transparent bg-gradient-to-br ${agentGradient} p-[2px] mx-auto mb-4`}
-          >
-            <div className="w-full h-full rounded-2xl bg-[#0a0a0a] flex items-center justify-center">
-              <span className={`text-xl lg:text-2xl font-bold bg-gradient-to-br ${agentGradient} bg-clip-text text-transparent`}>{agentInitials}</span>
-            </div>
-          </motion.div>
-          <div className="text-sm text-neutral-400">
-            <span className={`font-semibold ${themeColor}`}>{agentName}</span> · {agentRole}
-          </div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
-            {badge}
-          </span>
-        </div>
-
-        {/* Title & Subtitle */}
-        <div className="text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">{title}</h2>
-          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">{subtitle}</p>
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid gap-4 lg:gap-5 grid-cols-1 md:grid-cols-3">
-          {features.map((f, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 hover:border-cyan-400/20 transition-colors"
-            >
-              <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10">{f.icon}</div>
-              <h3 className="font-semibold text-base mb-2">{f.title}</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* CTAs */}
-        <div className="flex flex-wrap justify-center gap-3 lg:gap-4">
-          <a href={primaryHref} className="group rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-8 py-4 text-base font-semibold text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition">
-            {primaryCta}
-            <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </a>
-          <a href={secondaryHref} className="rounded-full border border-white/15 px-8 py-4 text-base font-medium text-white flex items-center gap-2 hover:bg-white/10 transition">
-            {secondaryCta}
-            <HiOutlineArrowRight className="w-4 h-4" />
-          </a>
-        </div>
-
-        {/* Stats */}
-        <div className="flex flex-wrap justify-center gap-6 lg:gap-10">
-          {stats.map((s, i) => (
-            <div key={i} className="text-center">
-              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{s.value}</div>
-              <div className="text-xs text-neutral-500">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-// ─── Updated Sections ───────────────────────────────────────────────────
-
-function AgentCTASection() {
-  return (
-    <FeatureCTASection
-      agentName="Tukang"
-      agentRole="Development & Engineering"
-      agentGradient="from-purple-400 to-pink-500"
-      agentInitials="TK"
-      badge="Jebat Agent"
-      title="Deploy Your AI Workspace in 30 Seconds"
-      subtitle="Jebat Agent — Setup wizard, IDE integration, 8 local LLMs, channel automation, and OpenClaw migration. Everything you need to run AI on your infrastructure."
-      features={[
-        { icon: <HiOutlineWrenchScrewdriver className="w-6 h-6 text-purple-400" />, title: "30-Second Setup", desc: "One command deploys your entire AI workspace with skills, config, and IDE integration." },
-        { icon: <HiOutlineCodeBracket className="w-6 h-6 text-purple-400" />, title: "IDE Integration", desc: "VS Code, Zed, Cursor, Claude Desktop, Gemini CLI — works with your favorite editor." },
-        { icon: <HiOutlineCpuChip className="w-6 h-6 text-purple-400" />, title: "8 Local LLMs", desc: "Gemma 4, Qwen2.5, Hermes3, Phi-3, Llama 3.1, Mistral, CodeLlama, TinyLlama." },
-      ]}
-      primaryCta="Deploy Now"
-      secondaryCta="View on npm"
-      primaryHref="/agent/"
-      secondaryHref="https://www.npmjs.com/package/jebat-agent"
-      stats={[
-        { value: "30s", label: "Setup Time" },
-        { value: "40+", label: "Skills" },
-        { value: "8", label: "Local LLMs" },
-      ]}
-      themeColor="text-purple-400"
-    />
-  );
-}
-
-function PortalCTASection() {
-  return (
-    <FeatureCTASection
-      agentName="Panglima"
-      agentRole="Orchestration & Command"
-      agentGradient="from-cyan-400 to-blue-500"
-      agentInitials="PL"
-      badge="Enterprise Portal"
-      title="Real-Time AI Command Center"
-      subtitle="Monitor all 34 agents, track usage analytics, measure performance metrics, and manage your AI team from a single dashboard."
-      features={[
-        { icon: <HiOutlineChartBar className="w-6 h-6 text-cyan-400" />, title: "Live Analytics", desc: "Real-time usage tracking, token consumption, response times, and cost analysis." },
-        { icon: <HiOutlineUsers className="w-6 h-6 text-cyan-400" />, title: "Agent Monitoring", desc: "Status, health, and activity for all 10 core agents and 24 specialists." },
-        { icon: <HiOutlineCog6Tooth className="w-6 h-6 text-cyan-400" />, title: "Performance Metrics", desc: "Latency, cache hit rates, throughput, and system health indicators." },
-      ]}
-      primaryCta="Open Portal"
-      secondaryCta="Explore Features"
-      primaryHref="/portal/"
-      secondaryHref="/agent/"
-      stats={[
-        { value: "10", label: "Core Agents" },
-        { value: "24", label: "Specialists" },
-        { value: "Live", label: "Analytics" },
-      ]}
-      themeColor="text-cyan-400"
-    />
-  );
-}
-
-function ChatCTASection() {
-  return (
-    <FeatureCTASection
-      agentName="Hikmat"
-      agentRole="Memory & Knowledge"
-      agentGradient="from-pink-400 to-rose-500"
-      agentInitials="HK"
-      badge="Live Chat"
-      title="AI Chat That Remembers You"
-      subtitle="5 orchestration modes, 8 local LLMs, markdown rendering with tables, session persistence, and personalized onboarding that adapts to your role."
-      features={[
-        { icon: <HiOutlineArrowPath className="w-6 h-6 text-pink-400" />, title: "5 Orchestration Modes", desc: "Debate, Consensus, Sequential, Parallel, Hierarchical — switch modes instantly." },
-        { icon: <HiOutlineDocumentText className="w-6 h-6 text-pink-400" />, title: "Markdown Rendering", desc: "Tables, code blocks, headers, lists — beautiful AI responses with full formatting." },
-        { icon: <HiOutlineCog6Tooth className="w-6 h-6 text-pink-400" />, title: "Session Persistence", desc: "Conversations survive refresh. Settings remembered. Last chat auto-loads." },
-      ]}
-      primaryCta="Start Chatting"
-      secondaryCta="View Features"
-      primaryHref="/chat/"
-      secondaryHref="/portal/"
-      stats={[
-        { value: "5", label: "Modes" },
-        { value: "8", label: "Local LLMs" },
-        { value: "∞", label: "Memory" },
-      ]}
-      themeColor="text-pink-400"
-    />
-  );
-}
-
-function GelanggangCTASection() {
-  return (
-    <FeatureCTASection
-      agentName="Penganalisis"
-      agentRole="Analytics & Insights"
-      agentGradient="from-yellow-400 to-orange-500"
-      agentInitials="PA"
-      badge="LLM Arena"
-      title="Watch AI Models Compete in Real-Time"
-      subtitle="Gelanggang — the LLM-to-LLM arena where models debate, collaborate, and compete. Research-backed orchestration patterns from AutoGen and MAD Paradigm."
-      features={[
-        { icon: <HiOutlineChatBubbleLeftRight className="w-6 h-6 text-yellow-400" />, title: "Live Debates", desc: "Watch models argue, rebut, and reach consensus in real-time conversations." },
-        { icon: <HiOutlineChartBar className="w-6 h-6 text-yellow-400" />, title: "Model Comparison", desc: "Side-by-side analysis of different models on the same topic." },
-        { icon: <HiOutlineBolt className="w-6 h-6 text-yellow-400" />, title: "Research-Backed", desc: "Based on AutoGen, ChatDev 2.0, and MAD Paradigm papers." },
-      ]}
-      primaryCta="Enter Arena"
-      secondaryCta="Learn More"
-      primaryHref="/gelanggang/"
-      secondaryHref="/chat/"
-      stats={[
-        { value: "Live", label: "Debates" },
-        { value: "8", label: "Models" },
-        { value: "Real", label: "Time" },
-      ]}
-      themeColor="text-yellow-400"
-    />
-  );
-}
-
-// ─── Why Choose JEBAT Section ───────────────────────────────────────────
-
-function WhyChooseSection() {
-  const reasons = [
-    { icon: <HiOutlineLockClosed className="w-8 h-8 text-cyan-400" />, title: "100% Self-Hosted", desc: "Your data never leaves your infrastructure. No cloud, no third-party, no vendor lock-in." },
-    { icon: <HiOutlineBolt className="w-8 h-8 text-cyan-400" />, title: "40-60% Faster", desc: "LRUCache, ConnectionPool, RequestDeduplicator, and SmartRouter optimizations." },
-    { icon: <HiOutlineCog6Tooth className="w-8 h-8 text-cyan-400" />, title: "Eternal Memory", desc: "5-layer cognitive memory (M0-M4) with heat-based retention across sessions." },
-    { icon: <HiOutlineCpuChip className="w-8 h-8 text-cyan-400" />, title: "34 AI Agents", desc: "10 core agents orchestrate 24 specialists for comprehensive coverage." },
-    { icon: <HiOutlineGlobeAlt className="w-8 h-8 text-cyan-400" />, title: "5 LLM Providers", desc: "Anthropic, OpenAI, Gemini, Ollama (8 local models), and ZAI with intelligent routing." },
-    { icon: <HiOutlineBanknotes className="w-8 h-8 text-cyan-400" />, title: "Cost Effective", desc: "Run 8 local LLMs for free. No subscription fees, no per-token charges." },
-  ];
-
-  return (
-    <SectionContent>
-      <div className="space-y-10 lg:space-y-12">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-sm text-cyan-300 mb-4">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"/>
-            Why Choose JEBAT
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4 lg:mb-6">
-            Built for Enterprise,{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Designed for Privacy</span>
-          </h2>
-          <p className="max-w-3xl mx-auto text-neutral-400 text-base lg:text-lg leading-relaxed">
-            JEBAT combines enterprise-grade AI capabilities with complete data sovereignty. No cloud dependency, no vendor lock-in, no compromises.
-          </p>
-        </div>
-
-        <div className="grid gap-6 lg:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-          {reasons.map((r, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 + i * 0.1 }}
-              whileHover={{ y: -4, borderColor: "rgba(34,211,238,0.2)" }}
-              className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-6 lg:p-8"
-            >
-              <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10">{r.icon}</div>
-              <h3 className="font-semibold text-base lg:text-lg mb-2">{r.title}</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">{r.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Trust Stats */}
-        <div className="flex flex-wrap justify-center gap-4 lg:gap-6 pt-6">
-          {[
-            { value: "99.97%", label: "Uptime", icon: "📊" },
-            { value: "50+", label: "Skills", icon: "⚡" },
-            { value: "8", label: "Local LLMs", icon: "🧠" },
-            { value: "0", label: "Data Breaches", icon: "🔒" },
-          ].map((stat, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-4 text-center">
-              <div className="text-xl mb-2">{stat.icon}</div>
-              <div className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{stat.value}</div>
-              <div className="text-xs text-neutral-500">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </SectionContent>
-  );
-}
-
-function SecurityCTASection() {
-  return (
-    <FeatureCTASection
-      agentName="Hulubalang"
-      agentRole="Security Audit & Compliance"
-      agentGradient="from-red-400 to-rose-500"
-      agentInitials="HB"
-      badge="CyberSec Suite"
-      title="Military-Grade Security Infrastructure"
-      subtitle="Four-layer security: Hulubalang (audit), Pengawal (defense), Perisai (hardening), Serangan (pentest). Prompt injection defense, command sanitization, and complete audit trails."
-      features={[
-        { icon: <HiOutlineShieldCheck className="w-6 h-6 text-red-400" />, title: "Injection Defense", desc: "Automatic detection and blocking of prompt injection attacks." },
-        { icon: <HiOutlineClipboardDocumentCheck className="w-6 h-6 text-red-400" />, title: "Complete Audit Trails", desc: "Every action logged for compliance, review, and incident response." },
-        { icon: <HiOutlineKey className="w-6 h-6 text-red-400" />, title: "Secrets Management", desc: "API keys and credentials never exposed. Encrypted storage and rotation." },
-      ]}
-      primaryCta="View Security"
-      secondaryCta="CyberSec Suite"
-      primaryHref="/security/"
-      secondaryHref="/portal/"
-      stats={[
-        { value: "4", label: "Security Tools" },
-        { value: "0", label: "Breaches" },
-        { value: "100%", label: "Audit" },
-      ]}
-      themeColor="text-red-400"
-    />
-  );
-}
-
-function GuidesCTASection() {
-  return (
-    <FeatureCTASection
-      agentName="Syahbandar"
-      agentRole="Operations & Infrastructure"
-      agentGradient="from-blue-400 to-indigo-500"
-      agentInitials="SB"
-      badge="Setup Guides"
-      title="Step-by-Step Deployment Guides"
-      subtitle="Comprehensive documentation for IDE integration, channel setup, model deployment, migration from OpenClaw/Hermes, and production hardening."
-      features={[
-        { icon: <HiOutlineBookOpen className="w-6 h-6 text-blue-400" />, title: "Step-by-Step Guides", desc: "Clear instructions for every setup scenario, from beginner to advanced." },
-        { icon: <HiOutlineCommandLine className="w-6 h-6 text-blue-400" />, title: "CLI Commands", desc: "Copy-paste ready commands for quick setup and automation." },
-        { icon: <HiOutlineArrowPath className="w-6 h-6 text-blue-400" />, title: "Migration Paths", desc: "Seamless migration from OpenClaw and Hermes with zero downtime." },
-      ]}
-      primaryCta="Read Guides"
-      secondaryCta="Quick Start"
-      primaryHref="/guides/"
-      secondaryHref="https://github.com/nusabyte-my/jebat-core"
-      stats={[
-        { value: "10+", label: "Guides" },
-        { value: "CLI", label: "Commands" },
-        { value: "Zero", label: "Downtime" },
-      ]}
-      themeColor="text-blue-400"
-    />
-  );
-}
-
-// ─── Section Order ──────────────────────────────────────────────────────
-
-const SECTION_COMPONENTS = [
-  HeroSection, AgentCTASection, PortalCTASection, ChatCTASection,
-  GelanggangCTASection, WhyChooseSection, IntegrationsSection, TestimonialsSection, SecurityCTASection, GuidesCTASection, CTASection,
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { SpecialistModal, Specialist } from "./components/SpecialistModal";
+
+const SPECIALISTS_DATA: Specialist[] = [
+  {
+    name: "Tukang",
+    role: "Development",
+    color: "purple",
+    skill: "Fullstack Engineering",
+    details: ["Next.js Optimization", "Python API Design", "Rust Core Integration", "CI/CD Orchestration"],
+    metrics: [{ label: "Accuracy", val: "98.4%" }, { label: "Latency", val: "1.2s" }, { label: "Trust", val: "High" }]
+  },
+  {
+    name: "Hulubalang",
+    role: "Sec-Audit",
+    color: "red",
+    skill: "Vulnerability Scanning",
+    details: ["Pentest Automation", "Vulnerability Research", "Threat Modeling", "Kernel Hardening"],
+    metrics: [{ label: "Threat Detection", val: "99.9%" }, { label: "Response", val: "0.2s" }, { label: "Level", val: "Military" }]
+  },
+  {
+    name: "Hikmat",
+    role: "Memory",
+    color: "pink",
+    skill: "Context Retention",
+    details: ["5-Layer Consolidation", "Vector Search Opt", "Semantic Mapping", "Eternal Retention"],
+    metrics: [{ label: "Recall Speed", val: "42ms" }, { label: "Consistency", val: "100%" }, { label: "Layers", val: "M0-M4" }]
+  },
+  {
+    name: "Bendahara",
+    role: "Database",
+    color: "orange",
+    skill: "Schema Management",
+    details: ["PostgreSQL Partitioning", "Redis Edge Sync", "ACID Verification", "Data Provenance"],
+    metrics: [{ label: "Transaction", val: "ACID" }, { label: "Uptime", val: "99.99%" }, { label: "Scaling", val: "Auto" }]
+  },
+  {
+    name: "Pawang",
+    role: "Research",
+    color: "emerald",
+    skill: "Web Extraction",
+    details: ["Real-time Discovery", "Deep Web Crawling", "Source Verification", "Synthesis Engine"],
+    metrics: [{ label: "Coverage", val: "Global" }, { label: "Truth Score", val: "96%" }, { label: "Depth", val: "Full" }]
+  },
+  {
+    name: "Syahbandar",
+    role: "Operations",
+    color: "cyan",
+    skill: "Docker & CI/CD",
+    details: ["Container Swarm", "Node Auto-scaling", "Health Checks", "Traffic Routing"],
+    metrics: [{ label: "Efficiency", val: "94%" }, { label: "Stability", val: "Peak" }, { label: "Nodes", val: "Managed" }]
+  },
+  {
+    name: "Penganalisis",
+    role: "Analytics",
+    color: "teal",
+    skill: "Token Usage Monitoring",
+    details: ["Cost Projection", "Performance Profiling", "Bottle-neck ID", "Consensus Audit"],
+    metrics: [{ label: "Granularity", val: "Per-Token" }, { label: "Insights", val: "Live" }, { label: "Value", val: "High" }]
+  },
+  {
+    name: "Penyemak",
+    role: "Verification",
+    color: "amber",
+    skill: "QA Logic Testing",
+    details: ["Chain-of-Thought Audit", "Cross-model Verification", "Edge Case Detection", "Consensus Build"],
+    metrics: [{ label: "Reliability", val: "99.9%" }, { label: "Coverage", val: "100%" }, { label: "Pass Rate", val: "Opt" }]
+  },
 ];
 
-// ─── Main Page ──────────────────────────────────────────────────────────
+const THINKING_MODES = [
+  { name: "FAST", icon: <HiOutlineBolt />, speed: "Instant", speedClass: "bg-emerald-500/20 text-emerald-400", desc: "Quick, intuitive responses for simple questions and immediate answers" },
+  { name: "DELIBERATE", icon: <HiOutlineAcademicCap />, speed: "Fast", speedClass: "bg-cyan-500/20 text-cyan-400", desc: "Balanced reasoning with logical analysis for most development tasks" },
+  { name: "DEEP", icon: <HiOutlineLightBulb />, speed: "Medium", speedClass: "bg-amber-500/20 text-amber-400", desc: "Complex multi-layered analysis for challenging problems" },
+  { name: "STRATEGIC", icon: <HiOutlineScale />, speed: "Medium", speedClass: "bg-amber-500/20 text-amber-400", desc: "Long-term planning and architectural decision-making" },
+  { name: "CREATIVE", icon: <HiOutlinePaintBrush />, speed: "Medium", speedClass: "bg-amber-500/20 text-amber-400", desc: "Innovative lateral thinking for novel solutions" },
+  { name: "CRITICAL", icon: <HiOutlineEye />, speed: "Slow", speedClass: "bg-red-500/20 text-red-400", desc: "Analytical evaluation and quality assessment" },
+];
 
-export default function LandingV2() {
+const PRODUCTS = [
+  { icon: <HiOutlineChatBubbleLeftRight />, title: "AI Chat", desc: "ChatGPT-style interface with multiple AI models. Ultra-Think deep reasoning with 6 thinking modes.", features: ["7 AI Models", "Ultra-Think Reasoning", "Code Syntax Highlight", "Chat History & Export", "BYOK Support"] },
+  { icon: <HiOutlineWrenchScrewdriver />, title: "AI Builder", desc: "Build websites from natural language. Describe your idea and watch AI create it instantly.", features: ["Natural Language Building", "6 Project Templates", "Live Preview", "Code Export", "Responsive Design"] },
+  { icon: <HiOutlinePaintBrush />, title: "Immersive Builder", desc: "Next-gen visual builder with AI assistance. Drag, drop, and chat to create stunning sites.", features: ["Visual Drag & Drop", "AI Design Assistant", "Infinite Canvas", "Real-time Preview", "Design System Gen"] },
+  { icon: <HiOutlineBugAnt />, title: "AI Pentest", desc: "Sentinel CLI-style AI-powered security testing. Find vulnerabilities intelligently.", features: ["AI Vulnerability Scan", "Network Analysis", "Web App Testing", "Security Reports", "Compliance Checking"] },
+  { icon: <HiOutlineCodeBracket />, title: "Code Assistant", desc: "AI pair programmer that helps you write better code faster. Supports 50+ languages.", features: ["Code Generation", "Bug Detection & Fix", "Refactoring Suggest", "Auto-Documentation", "50+ Languages"] },
+  { icon: <HiOutlineChartBar />, title: "Analytics", desc: "Real-time analytics dashboard for your AI usage. Track costs, performance, and insights.", features: ["Usage Tracking", "Cost Management", "Performance Metrics", "Model Comparison", "API Monitoring"] },
+];
+
+export default function V4Landing() {
+  const [scrolled, setScrolled] = useState(false);
+  const [hoveredSpecialist, setHoveredSpecialist] = useState<Specialist | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden">
-      <AgentNetworkBackground />
-      <Navbar />
-      <SideDots />
+    <main className="min-h-screen bg-slate-950">
+      <SpecialistModal
+        specialist={hoveredSpecialist}
+        isOpen={!!hoveredSpecialist}
+        onClose={() => setHoveredSpecialist(null)}
+      />
 
-      <div className="min-h-screen w-full md:snap-y md:snap-mandatory md:scroll-smooth">
-        {SECTIONS.map((sectionId, i) => {
-          const Component = SECTION_COMPONENTS[i];
-          return (
-            <motion.section
-              key={sectionId}
-              id={`section-${sectionId}`}
-              className="min-h-screen w-full md:snap-start"
-            >
-              <Component />
-            </motion.section>
-          );
-        })}
-      </div>
-    </div>
+      {/* ─── Top Navigation ─────────────────────────────── */}
+      <nav className={`fixed top-0 inset-x-0 z-[100] transition-all duration-300 border-b ${
+        scrolled ? "bg-slate-950/80 backdrop-blur-xl border-slate-800 py-4" : "bg-transparent border-transparent py-6"
+      }`}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+             <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
+                <HiOutlineCpuChip />
+             </div>
+             <span className="font-bold text-white tracking-tighter text-xl">JEBAT.ONLINE</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+             <Link href="/v4" className="hover:text-emerald-500 transition">Command</Link>
+             <Link href="/v4/portal" className="hover:text-emerald-500 transition">Portal</Link>
+             <Link href="/v4/chat" className="hover:text-emerald-500 transition">Unified Chat</Link>
+             <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" className="hover:text-emerald-500 transition">Source</a>
+          </div>
+          <Link href="/v4" className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-tighter hover:bg-emerald-500 transition-colors shadow-xl">
+             Launch App
+          </Link>
+        </div>
+      </nav>
+
+      {/* ─── Hero: The Vision ─────────────────────────────── */}
+      <section className="relative pt-48 pb-20 overflow-hidden border-b border-slate-800/50">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center space-y-10 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-md"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Enterprise AI Infrastructure v4.01</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-6xl lg:text-[100px] font-bold tracking-tight text-white font-heading leading-[0.95]"
+          >
+            Orchestrate the <br />
+            <span className="bg-gradient-to-r from-emerald-400 via-emerald-600 to-cyan-400 bg-clip-text text-transparent">
+              Autonomous Future
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-slate-400 text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed"
+          >
+            JEBAT combines Ultra-Think reasoning, eternal memory, and multi-domain agents
+            to create the most advanced AI development ecosystem ever built — deployed on your private infrastructure.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-4"
+          >
+            <Link href="/v4" className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-3 group">
+              LAUNCH COMMAND <HiOutlineArrowRight className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" className="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 rounded-2xl font-bold transition-all flex items-center gap-3">
+              <HiOutlineCommandLine className="text-emerald-400" /> VIEW SOURCE
+            </a>
+          </motion.div>
+
+          {/* Hero Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mt-16 p-8 bg-slate-900/50 border border-slate-800 rounded-[32px] backdrop-blur-xl"
+          >
+            <div className="text-center">
+              <div className="text-3xl lg:text-4xl font-bold text-emerald-400">5</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Memory Layers</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl lg:text-4xl font-bold text-emerald-400">6</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Thinking Modes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl lg:text-4xl font-bold text-emerald-400">34</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Specialist Agents</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl lg:text-4xl font-bold text-emerald-400">100%</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Open Source</div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── Core Infrastructure: The 6 Pillars ─────────────────────────────── */}
+      <section className="py-32 bg-slate-950/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-20">
+          <div className="text-center space-y-4">
+            <h2 className="text-xs font-bold text-emerald-500 uppercase tracking-[0.3em]">Core Infrastructure</h2>
+            <p className="text-4xl lg:text-5xl font-bold text-white tracking-tight">Engineered for the 0.1%</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <HiOutlineBolt />,
+                title: "Eternal Memory",
+                desc: "5-layer (M0-M4) memory architecture with heat-based consolidation for multi-year context preservation.",
+                color: "emerald"
+              },
+              {
+                icon: <HiOutlineAcademicCap />,
+                title: "Ultra-Think™",
+                desc: "6 reasoning modes including Strategic and Critical, delivering verified consensus through multi-agent chains.",
+                color: "blue"
+              },
+              {
+                icon: <HiOutlineUsers />,
+                title: "Swarm Intelligence",
+                desc: "A massive matrix of 34 specialized agents. Panglima coordinates while specialists execute domain-specific tasks.",
+                color: "purple"
+              },
+              {
+                icon: <HiOutlineArrowPath />,
+                title: "Ultra-Loop™",
+                desc: "Perpetual execution cycles. The system continuously perceives, reflects, and optimizes in the background.",
+                color: "cyan"
+              },
+              {
+                icon: <HiOutlineShieldCheck />,
+                title: "Sentinel Security",
+                desc: "Military-grade hardening. Automated PII masking, air-gap compatibility, and exhaustive audit trails.",
+                color: "red"
+              },
+              {
+                icon: <HiOutlineLockClosed />,
+                title: "Data Sovereignty",
+                desc: "Absolute ownership. Primary reasoning powered by local Ollama instances on private VPS .206 mainframe.",
+                color: "orange"
+              }
+            ].map((p, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -8 }}
+                className="p-8 rounded-[40px] bg-slate-900/50 border border-slate-800/50 group hover:border-emerald-500/30 hover:bg-slate-900 transition-all shadow-sm"
+              >
+                <div className={`w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-2xl text-${p.color}-500 mb-8 group-hover:scale-110 transition-transform`}>
+                  {p.icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">{p.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{p.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Thinking Modes: 6 Modes ─────────────────────────────── */}
+      <section className="py-32 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-20">
+          <div className="text-center space-y-4">
+            <h2 className="text-xs font-bold text-blue-500 uppercase tracking-[0.3em]">Ultra-Think</h2>
+            <p className="text-4xl lg:text-5xl font-bold text-white tracking-tight">6 Thinking Modes</p>
+            <p className="text-slate-400 max-w-2xl mx-auto">Choose the right thinking mode for any task — from instant responses to deep analytical reasoning.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {THINKING_MODES.map((mode, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ scale: 1.05 }}
+                className="p-8 rounded-[32px] bg-slate-900/50 border border-slate-800/50 hover:border-emerald-500/30 transition-all text-center"
+              >
+                <div className="text-4xl mb-4 flex justify-center">{mode.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-3">{mode.name}</h3>
+                <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold mb-4 ${mode.speedClass}`}>{mode.speed}</span>
+                <p className="text-slate-500 text-sm leading-relaxed">{mode.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Swarm Matrix: The 34 Specialists ─────────────────────────────── */}
+      <section className="py-24 border-y border-slate-800/50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="space-y-4 max-w-2xl">
+               <h2 className="text-xs font-bold text-purple-500 uppercase tracking-[0.3em]">Agent Roles</h2>
+               <p className="text-4xl lg:text-5xl font-bold text-white tracking-tight">The Orchestration Swarm</p>
+               <p className="text-slate-400 leading-relaxed">
+                  JEBAT dispatches specialized agents for every domain. Hover over a specialist to view detailed skillsets
+                  optimized for the <span className="text-white font-bold underline decoration-emerald-500/50">VPS .206 Mainframe</span>.
+               </p>
+            </div>
+            <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex items-center gap-4 shadow-2xl shadow-purple-500/5">
+               <div className="text-2xl font-bold text-white">34</div>
+               <div className="text-[10px] font-bold text-slate-500 uppercase leading-tight">Verified <br /> Specialist Roles</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6 text-center">
+            {SPECIALISTS_DATA.map((agent, i) => (
+              <motion.div
+                key={i}
+                onMouseEnter={() => setHoveredSpecialist(agent)}
+                onMouseLeave={() => setHoveredSpecialist(null)}
+                whileHover={{ scale: 1.02, borderColor: "rgba(16, 185, 129, 0.4)" }}
+                className="p-6 rounded-[32px] bg-slate-900/30 border border-slate-800/50 hover:bg-slate-800/50 transition-all cursor-pointer relative shadow-xl"
+              >
+                <div className={`w-10 h-10 rounded-xl bg-slate-800 mx-auto mb-4 flex items-center justify-center text-lg font-bold text-${agent.color}-400 shadow-lg`}>
+                   <HiOutlineUserCircle />
+                </div>
+                <h4 className="text-sm font-bold text-white uppercase tracking-tighter">{agent.name}</h4>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{agent.role}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="text-center">
+             <Link href="/v4/agents" className="text-[10px] font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-[0.3em]">View full 34-agent hierarchy</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Product Showcase: Complete AI Suite ─────────────────────────────── */}
+      <section className="py-32 overflow-hidden border-t border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-20">
+          <div className="text-center space-y-4">
+            <h2 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.3em]">Products</h2>
+            <p className="text-4xl lg:text-5xl font-bold text-white tracking-tight">Complete AI Suite</p>
+            <p className="text-slate-400 max-w-2xl mx-auto">Everything you need to build, create, and secure with AI — all in one platform.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {PRODUCTS.map((product, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -8 }}
+                className="p-8 rounded-[40px] bg-slate-900/50 border border-slate-800/50 hover:border-emerald-500/30 transition-all shadow-sm"
+              >
+                <div className="text-4xl mb-6 text-emerald-500">{product.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-4">{product.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed mb-6">{product.desc}</p>
+                <ul className="space-y-2">
+                  {product.features.map((feature, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm text-slate-300">
+                      <span className="text-emerald-500">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Features Section ─────────────────────────────── */}
+      <section className="py-32 bg-slate-950/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-20">
+          <div className="text-center space-y-4">
+            <h2 className="text-xs font-bold text-purple-500 uppercase tracking-[0.3em]">Features</h2>
+            <p className="text-4xl lg:text-5xl font-bold text-white tracking-tight">Powerful Capabilities</p>
+            <p className="text-slate-400 max-w-2xl mx-auto">Built with cutting-edge AI technology to supercharge your development workflow.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { icon: <HiOutlineCpuChip />, title: "JEBAT Cortex", desc: "Deep reasoning engine with multiple thinking modes for complex problem-solving.", features: ["Deliberate Mode", "Creative Mode", "Critical Mode", "Strategic Mode"] },
+              { icon: <HiOutlineArrowPath />, title: "JEBAT Continuum", desc: "Continuous processing loop with context preservation and iterative refinement.", features: ["Perpetual Execution", "Context Preservation", "Iterative Improvement", "Auto-Recovery"] },
+              { icon: <HiOutlineCircleStack />, title: "Eternal Memory", desc: "5-layer memory system with heat-based consolidation and importance scoring.", features: ["Sensory Buffer (M0)", "Episodic Memory (M1)", "Semantic Memory (M2)", "Conceptual (M3)"] },
+              { icon: <HiOutlineUsers />, title: "Multi-Agent System", desc: "Specialized agents for different domains working together seamlessly.", features: ["Code Analysis", "Security Review", "Documentation", "Testing Agent"] },
+              { icon: <HiOutlineCog6Tooth />, title: "Plugin Architecture", desc: "Extend JEBAT with custom plugins for any use case with sandboxed execution.", features: ["Dynamic Loading", "Sandboxed Execution", "Version Management", "Dependency Resolution"] },
+              { icon: <HiOutlineChartBar />, title: "Analytics Dashboard", desc: "Real-time monitoring and insights into your AI assistant's performance.", features: ["Live Metrics", "Usage Analytics", "Performance Tracking", "Custom Alerts"] },
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -8 }}
+                className="p-8 rounded-[40px] bg-slate-900/50 border border-slate-800/50 hover:border-emerald-500/30 transition-all shadow-sm"
+              >
+                <div className="text-4xl mb-6 text-emerald-500">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-white mb-4">{feature.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed mb-6">{feature.desc}</p>
+                <ul className="space-y-2">
+                  {feature.features.map((item, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm text-slate-300">
+                      <span className="text-emerald-500">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Ultra-Think Engine ─────────────────────────────── */}
+      <section className="py-32 overflow-hidden border-t border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="flex-1 space-y-8">
+              <div className="space-y-4">
+                <div className="inline-block px-3 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-500 uppercase tracking-widest">Advanced Reasoning</div>
+                <h2 className="text-4xl lg:text-6xl font-bold text-white tracking-tighter font-heading leading-tight">Ultra-Think™ Engine</h2>
+                <p className="text-slate-400 text-lg leading-relaxed font-sans">
+                  Go beyond simple prompts. JEBAT&apos;s Ultra-Think module implements 6 distinct reasoning modes utilizing <span className="text-white font-bold">Parallel VPS Inference</span>.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { label: "Chain-of-Thought (CoT)", val: "100%", color: "emerald" },
+                  { label: "Multi-Agent Consensus", val: "Verified", color: "blue" },
+                  { label: "Context Window Utility", val: "Optimized", color: "purple" }
+                ].map((stat, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-tighter text-slate-500 font-heading">
+                      <span>{stat.label}</span>
+                      <span className={`text-${stat.color}-400`}>{stat.val}</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden shadow-inner">
+                      <div className={`h-full bg-${stat.color}-500 w-full opacity-30 shadow-[0_0_8px_rgba(var(--tw-color-${stat.color}-500),0.5)]`}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 relative">
+              <div className="w-full aspect-square max-w-md mx-auto rounded-[56px] bg-gradient-to-br from-emerald-600/50 to-blue-600/50 p-[1px] shadow-3xl">
+                 <div className="w-full h-full rounded-[56px] bg-slate-950 p-10 flex flex-col justify-between relative overflow-hidden">
+                    <div className="space-y-4 font-mono text-[11px] leading-relaxed">
+                       <p className="text-emerald-500 flex items-center gap-2 underline underline-offset-4 decoration-emerald-500/30 font-bold"><HiOutlineCommandLine /> jebat --think "Architect VPS redundancy"</p>
+                       <p className="text-slate-500 mt-6 animate-pulse">› [Hang Tuah] Dispatching specialists...</p>
+                       <p className="text-blue-500">› [Tukang] Optimizing Ollama config on .206...</p>
+                       <p className="text-purple-500">› [Bendahara] Verifying PG schema sync...</p>
+                       <div className="pt-6 border-t border-slate-800 mt-4">
+                          <p className="text-white font-bold uppercase tracking-widest text-[9px]">Swarm Decision:</p>
+                          <p className="text-white text-xs mt-2 font-medium leading-relaxed italic">&ldquo;Implement automated failover between VPS .206 and primary GPU cluster.&rdquo;</p>
+                       </div>
+                    </div>
+                    <div className="h-32 bg-gradient-to-t from-blue-500/10 to-transparent absolute bottom-0 left-0 right-0 pointer-events-none"></div>
+                 </div>
+              </div>
+              <div className="absolute -top-6 -right-6 p-6 rounded-[32px] bg-slate-900 border border-slate-800 shadow-2xl backdrop-blur-xl">
+                 <HiOutlineAcademicCap className="text-4xl text-emerald-500 mb-2" />
+                 <p className="text-[10px] font-bold text-white uppercase tracking-widest">Reasoning V4.01</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Infrastructure Sovereignty ─────────────────────────────── */}
+      <section className="py-24 relative overflow-hidden bg-slate-950">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-20">
+          <div className="flex-1 space-y-8 relative z-10">
+             <h2 className="text-4xl lg:text-6xl font-bold text-white tracking-tight">Data Sovereignty <br /> by Design</h2>
+             <p className="text-slate-400 text-lg leading-relaxed font-sans">
+                Primary reasoning is executed on the <span className="text-white font-bold">VPS .206 Ollama Mainframe</span>. Your data remains in the private perimeter.
+             </p>
+             <div className="space-y-6">
+                <div className="flex gap-4 p-6 rounded-[24px] bg-slate-900 border border-slate-800 shadow-xl">
+                   <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-xl">
+                      <HiOutlineGlobeAlt />
+                   </div>
+                   <div>
+                      <h4 className="font-bold text-white mb-1">Local-First Execution</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">Hardware-accelerated inference on VPS .206 using Ollama backend.</p>
+                   </div>
+                </div>
+                <div className="flex gap-4 p-6 rounded-[24px] bg-slate-900 border border-slate-800 shadow-xl">
+                   <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 text-xl">
+                      <HiOutlineScale />
+                   </div>
+                   <div>
+                      <h4 className="font-bold text-white mb-1">Persistent Storage</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">PostgreSQL foundation ensures data durability and cross-agent memory consistency.</p>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <div className="flex-1 relative w-full flex justify-center">
+             <div className="relative w-80 h-80 lg:w-96 lg:h-96">
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-[100px] animate-pulse"></div>
+                <div className="absolute inset-4 border border-emerald-500/20 rounded-full"></div>
+                <div className="absolute inset-16 border border-emerald-500/40 rounded-full"></div>
+
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-600 rounded-[32px] shadow-2xl flex flex-col items-center justify-center text-white border border-white/20">
+                   <span className="text-xs font-bold uppercase tracking-tighter mb-1">VPS</span>
+                   <span className="text-xl font-bold">.206</span>
+                </div>
+
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 p-2 bg-slate-900 rounded-lg border border-slate-800 text-[9px] font-bold text-white shadow-xl uppercase tracking-widest">Ollama Mainframe</div>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-4 p-2 bg-slate-900 rounded-lg border border-slate-800 text-[9px] font-bold text-white shadow-xl uppercase tracking-widest">PostgreSQL persistent</div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-12 p-2 bg-slate-900 rounded-lg border border-slate-800 text-[9px] font-bold text-white shadow-xl uppercase tracking-widest">Redis Cache</div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-12 p-2 bg-slate-900 rounded-lg border border-slate-800 text-[9px] font-bold text-white shadow-xl uppercase tracking-widest">Memory Layers</div>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Trust & Deployment ─────────────────────────────── */}
+      <section className="py-24 bg-emerald-600 relative overflow-hidden shadow-inner">
+         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+
+         <div className="max-w-4xl mx-auto px-6 text-center relative z-10 space-y-12">
+            <h2 className="text-5xl lg:text-7xl font-bold text-white tracking-tight font-heading leading-tight italic">Deploy to Production <br /> in 30 Seconds</h2>
+            <p className="text-emerald-100 text-lg lg:text-xl font-sans opacity-90 max-w-2xl mx-auto leading-relaxed">
+              Connect your private <span className="text-white font-bold">VPS .206 Mainframe</span> in seconds. One command. Full sovereignty.
+            </p>
+            <div className="bg-black/30 backdrop-blur-xl rounded-[32px] p-8 font-mono text-white text-sm lg:text-2xl inline-block border border-white/10 shadow-3xl group hover:scale-[1.02] transition-transform cursor-copy">
+               <span className="text-emerald-400 mr-4 font-bold">$</span> npx jebat-agent setup <span className="text-blue-300">--mainframe=.206</span>
+            </div>
+            <div className="pt-8">
+              <Link href="/v4/portal" className="px-12 py-6 bg-white text-emerald-600 hover:bg-emerald-50 rounded-[28px] font-bold transition-all shadow-3xl flex items-center gap-4 mx-auto w-fit text-lg group uppercase tracking-widest">
+                ACCESS THE PORTAL <HiOutlineArrowRight className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+         </div>
+      </section>
+
+      {/* ─── Footer ─────────────────────────────── */}
+      <footer className="py-24 border-t border-slate-800 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-16">
+          <div className="col-span-1 md:col-span-2 space-y-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-xl">
+                <HiOutlineCpuChip />
+              </div>
+              <span className="font-bold text-white tracking-tighter text-2xl font-heading uppercase">JEBAT.ONLINE</span>
+            </div>
+            <p className="text-slate-500 text-sm max-w-sm leading-relaxed font-medium italic">
+              &ldquo;The last AI platform you will ever need.&rdquo;
+              Empowering enterprise with sovereign agent intelligence and private mainframe orchestration.
+            </p>
+            <div className="flex items-center gap-4 bg-slate-900/50 p-3 rounded-xl border border-slate-800 w-fit">
+               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Ollama Mainframe .206 ACTIVE</span>
+            </div>
+          </div>
+          <div className="space-y-6">
+             <h4 className="text-xs font-bold text-white uppercase tracking-widest border-l-2 border-emerald-500 pl-4">Platform</h4>
+             <ul className="text-[11px] font-bold text-slate-500 space-y-4 uppercase tracking-tighter">
+                <li><Link href="/v4" className="hover:text-emerald-500 transition">Command Center</Link></li>
+                <li><Link href="/v4/portal" className="hover:text-emerald-500 transition">Enterprise Portal</Link></li>
+                <li><Link href="/v4/chat" className="hover:text-emerald-500 transition">Unified Chat</Link></li>
+                <li><Link href="/v4/security" className="hover:text-emerald-500 transition">Security Audit</Link></li>
+             </ul>
+          </div>
+          <div className="space-y-6">
+             <h4 className="text-xs font-bold text-white uppercase tracking-widest border-l-2 border-blue-500 pl-4">Engineering</h4>
+             <ul className="text-[11px] font-bold text-slate-500 space-y-4 uppercase tracking-tighter">
+                <li><a href="#" className="hover:text-blue-500 transition">Sovereignty Model</a></li>
+                <li><a href="#" className="hover:text-blue-500 transition">Memory Layers</a></li>
+                <li><a href="#" className="hover:text-blue-500 transition">Swarm Protocols</a></li>
+                <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" className="hover:text-blue-500 transition">PostgreSQL Sync</a></li>
+             </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-24 text-center text-slate-600 text-[10px] uppercase tracking-widest font-bold border-t border-slate-900 mt-20">
+           &copy; 2026 NUSABYTE &middot; ALL RIGHTS RESERVED &middot; OPTIMIZED FOR VPS .206 &middot; MALAYSIA
+        </div>
+      </footer>
+    </main>
   );
 }

@@ -1,32 +1,38 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
-  title: "JEBAT AI Agent Platform — Multi-Agent Orchestration & Self-Hosted AI",
+  metadataBase: new URL("https://jebat.online"),
+  title: "JEBAT | Sovereign AI Control Plane",
   description:
-    "JEBAT is the enterprise AI agent platform with multi-agent orchestration, 10 core agents, 24 specialists, 5 orchestration modes, 8 local LLM models, and 5 providers (Anthropic, OpenAI, Gemini, Ollama, ZAI). 100% self-hosted, no cloud dependency. Built by NusaByte, Malaysia AI Platform.",
+    "JEBAT is a sovereign AI control plane for governed agents, model routing, private memory, and operator workflows across self-hosted, VPC, and private infrastructure deployments.",
   keywords: [
-    "JEBAT AI Agent Platform", "Multi-Agent Orchestration", "Self-Hosted AI",
-    "Enterprise AI", "LLM Debate", "Local Models", "Ollama", "Malaysia AI Platform",
-    "Anthropic Claude", "OpenAI", "Gemini", "ZAI", "ConfMAD", "LLM-as-Judge",
-    "Prompt Injection Defense", "CyberSec AI", "NusaByte", "Privacy-First AI",
+    "JEBAT",
+    "Sovereign AI",
+    "AI control plane",
+    "Private AI infrastructure",
+    "Multi-agent orchestration",
+    "Self-hosted AI",
+    "Operator console",
+    "NusaByte",
   ],
   openGraph: {
-    title: "JEBAT — Self-Hosted Multi-Agent AI Platform",
-    description: "10 core agents, 24 specialists, 8 local LLMs, 5 providers. 100% self-hosted enterprise AI.",
+    title: "JEBAT | Sovereign AI Control Plane",
+    description:
+      "Private AI infrastructure for teams that need governed automation, self-hosted model routing, and operator-grade control surfaces.",
     type: "website",
     url: "https://jebat.online",
+    siteName: "JEBAT",
+  },
+  twitter: {
+    card: "summary",
+    title: "JEBAT | Sovereign AI Control Plane",
+    description:
+      "Private AI infrastructure for governed agents, model routing, memory, and operator workflows.",
+  },
+  icons: {
+    icon: "/favicon.svg",
   },
 };
 
@@ -38,10 +44,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
     >
       <head>
-        <meta name="theme-color" content="#050505"/>
+        <meta name="theme-color" content="#020617"/>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
         <script
@@ -57,7 +65,7 @@ export default function RootLayout({
                   "url": "https://nusabyte.my",
                   "logo": {
                     "@type": "ImageObject",
-                    "url": "https://jebat.online/logo.png",
+                    "url": "https://jebat.online/favicon.svg",
                   },
                   "sameAs": [
                     "https://github.com/nusabyte-my/jebat-core",
@@ -67,26 +75,17 @@ export default function RootLayout({
                 {
                   "@type": "SoftwareApplication",
                   "@id": "https://jebat.online#software",
-                  "name": "JEBAT AI Agent Platform",
+                  "name": "JEBAT Control Plane",
                   "applicationCategory": "BusinessApplication",
                   "operatingSystem": "Linux, macOS, Windows",
                   "url": "https://jebat.online",
-                  "offers": {
-                    "@type": "Offer",
-                    "price": "0",
-                    "priceCurrency": "MYR",
-                  },
                   "featureList": [
-                    "Multi-Agent Orchestration",
-                    "Self-Hosted AI",
-                    "8 Local LLM Models",
-                    "5 LLM Providers",
-                    "Enterprise Security",
-                    "LLM-as-Judge Consensus",
-                    "Confidence Scoring (ConfMAD)",
-                    "Markdown Rendering",
-                    "LRUCache Optimization",
-                    "Customer Portal",
+                    "Governed multi-agent orchestration",
+                    "Private model routing and failover",
+                    "Operator WebUI and CLI control surfaces",
+                    "Persistent memory and runtime context",
+                    "Security-oriented control and audit posture",
+                    "Self-hosted and private infrastructure deployment",
                   ],
                   "provider": { "@id": "https://jebat.online#organization" },
                 },
@@ -96,20 +95,8 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegistration />
         {children}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then((reg) => {
-                  console.log('[PWA] Service Worker registered');
-                }).catch((err) => {
-                  console.log('[PWA] Service Worker registration failed:', err);
-                });
-              });
-            }
-          `
-        }} />
       </body>
     </html>
   );

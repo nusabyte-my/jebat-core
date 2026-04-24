@@ -1,6 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import {
+  HiOutlineCpuChip,
+  HiOutlineUsers,
+  HiOutlineLightBulb,
+  HiOutlineServer,
+  HiOutlineCircleStack,
+  HiOutlineArrowRight,
+  HiOutlineChatBubbleLeftRight,
+  HiOutlineCog6Tooth,
+  HiOutlineWrenchScrewdriver,
+  HiOutlineShieldCheck
+} from "react-icons/hi2";
 
 interface GatewayStatus {
   api: string;
@@ -59,128 +73,194 @@ export default function DashboardPage() {
   }, []);
 
   const stats = [
-    { label: "Skills Installed", value: "72", icon: "🗡️" },
-    { label: "Active Agents", value: "17", icon: "⚔️" },
-    { label: "Thinking Modes", value: "6", icon: "🔥" },
-    { label: "Providers", value: "6", icon: "🤖" },
+    { label: "Skills Installed", value: "72", icon: <HiOutlineCog6Tooth className="text-emerald-400" /> },
+    { label: "Active Agents", value: "17", icon: <HiOutlineUsers className="text-purple-400" /> },
+    { label: "Thinking Modes", value: "6", icon: <HiOutlineLightBulb className="text-amber-400" /> },
+    { label: "Providers", value: "6", icon: <HiOutlineServer className="text-blue-400" /> },
   ];
 
   return (
-    <main className="min-h-screen bg-[#050505] text-neutral-100">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <main className="min-h-screen bg-slate-950">
+      {/* ─── Top Navigation ─────────────────────────────── */}
+      <nav className={`fixed top-0 inset-x-0 z-[100] transition-all duration-300 border-b ${
+        "bg-slate-950/80 backdrop-blur-xl border-slate-800 py-4"
+      }`}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xl">⚔️</span>
-            <span className="font-semibold tracking-tight">JEBAT Dashboard</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
+              <HiOutlineCpuChip />
+            </div>
+            <span className="font-bold text-white tracking-tighter text-xl">JEBAT Dashboard</span>
           </div>
           <div className="flex items-center gap-4">
             <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
-              gateway?.api === "online" ? "bg-emerald-400/10 text-emerald-300" : "bg-amber-400/10 text-amber-300"
+              gateway?.api === "online" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
             }`}>
               <span className={`h-2 w-2 rounded-full ${gateway?.api === "online" ? "bg-emerald-400" : "bg-amber-400"}`} />
               {gateway?.api === "online" ? "Online" : "Offline"}
             </span>
-            <a href="/" className="text-sm text-neutral-400 transition hover:text-white">← Home</a>
+            <Link href="/" className="text-[10px] font-bold text-slate-500 hover:text-white transition uppercase tracking-widest">← Home</Link>
           </div>
         </div>
       </nav>
 
-      <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {stats.map((s) => (
-            <div key={s.label} className="card-hover rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-              <div className="text-2xl mb-2">{s.icon}</div>
-              <div className="text-2xl font-bold">{s.value}</div>
-              <div className="text-xs text-neutral-500">{s.label}</div>
-            </div>
-          ))}
-        </div>
+      {/* ─── Quick Stats ─────────────────────────────── */}
+      <section className="pt-48 pb-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-12">
+          <div className="space-y-4">
+            <h2 className="text-xs font-bold text-emerald-500 uppercase tracking-[0.3em]">System Overview</h2>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight">Command Dashboard</h1>
+          </div>
 
-        {/* Gateway Status */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-          <h2 className="mb-4 text-lg font-semibold">Gateway Status</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="bg-slate-900/50 border border-slate-800 rounded-[32px] p-6 shadow-xl hover:border-emerald-500/30 transition-all"
+              >
+                <div className="mb-4">{s.icon}</div>
+                <div className="text-3xl font-bold text-white">{s.value}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Gateway Status ─────────────────────────────── */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-8">
+          <h2 className="text-xl font-bold text-white uppercase tracking-widest">Gateway Status</h2>
           {loading ? (
-            <div className="text-sm text-neutral-500">Checking services...</div>
+            <div className="text-sm text-slate-500">Checking services...</div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-                <div className="text-xs text-neutral-500">API (:8000)</div>
-                <div className={`text-sm font-medium ${gateway?.api === "online" ? "text-emerald-300" : "text-amber-300"}`}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <motion.div
+                whileHover={{ y: -4 }}
+                className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-6 shadow-xl"
+              >
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">API (:8000)</div>
+                <div className={`text-sm font-medium ${gateway?.api === "online" ? "text-emerald-400" : "text-amber-400"}`}>
                   {gateway?.api === "online" ? "✅ Healthy" : "⚠️ Offline"}
                 </div>
-              </div>
-              <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-                <div className="text-xs text-neutral-500">WebUI (:8787)</div>
-                <div className={`text-sm font-medium ${gateway?.webui === "online" ? "text-emerald-300" : "text-amber-300"}`}>
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -4 }}
+                className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-6 shadow-xl"
+              >
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">WebUI (:8787)</div>
+                <div className={`text-sm font-medium ${gateway?.webui === "online" ? "text-emerald-400" : "text-amber-400"}`}>
                   {gateway?.webui === "online" ? "✅ Healthy" : "⚠️ Offline"}
                 </div>
-              </div>
-              <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-                <div className="text-xs text-neutral-500">Containers</div>
-                <div className="text-sm font-medium text-neutral-300">{gateway?.containers}</div>
-              </div>
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -4 }}
+                className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-6 shadow-xl"
+              >
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Containers</div>
+                <div className="text-sm font-medium text-white">{gateway?.containers}</div>
+              </motion.div>
             </div>
           )}
         </div>
+      </section>
 
-        {/* Memory Layers */}
-        {memory && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-            <h2 className="mb-4 text-lg font-semibold">Memory Layers</h2>
-            <div className="space-y-3">
-              {memory.layers.map((layer) => (
-                <div key={layer.name} className="flex items-center gap-4">
-                  <div className="w-32 text-sm text-neutral-300">{layer.name}</div>
+      {/* ─── Memory Layers ─────────────────────────────── */}
+      {memory && (
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-8">
+            <h2 className="text-xl font-bold text-white uppercase tracking-widest">Memory Layers</h2>
+            <div className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-8 shadow-xl space-y-6">
+              {memory.layers.map((layer, i) => (
+                <motion.div
+                  key={layer.name}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-center gap-4"
+                >
+                  <div className="w-32 text-sm text-slate-300">{layer.name}</div>
                   <div className="flex-1">
-                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-300 transition-all"
-                        style={{ width: `${Math.max(0, layer.heat)}%` }}
+                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.max(0, layer.heat)}%` }}
+                        className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                       />
                     </div>
                   </div>
-                  <div className="w-20 text-right text-sm text-neutral-400">{layer.count} items</div>
-                  <div className="w-16 text-right text-xs text-neutral-500">H:{layer.heat}</div>
-                </div>
+                  <div className="w-20 text-right text-sm text-slate-400 font-mono">{layer.count} items</div>
+                  <div className="w-16 text-right text-xs text-slate-500 font-bold">H:{layer.heat}</div>
+                </motion.div>
               ))}
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Quick Actions */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-          <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            <a href="/demo" className="card-hover rounded-xl border border-white/5 bg-black/20 p-4 flex items-center gap-3">
-              <span className="text-xl">💬</span>
-              <div>
-                <div className="text-sm font-medium">Test Chat</div>
-                <div className="text-xs text-neutral-500">Try the AI assistant</div>
+        {/* ─── Quick Actions ───────────────────────────── */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-8">
+          <h2 className="text-xl font-bold text-white uppercase tracking-widest">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-6 shadow-xl hover:border-emerald-500/30 transition-all cursor-pointer"
+            >
+              <Link href="/v3/chat" className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400">
+                  <HiOutlineChatBubbleLeftRight className="text-xl" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white">Test Chat</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest">Try the AI assistant</div>
+                </div>
+                <HiOutlineArrowRight className="ml-auto text-slate-500 group-hover:text-emerald-500 transition-colors" />
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-6 shadow-xl hover:border-emerald-500/30 transition-all cursor-pointer"
+            >
+              <Link href="/setup" className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-blue-400">
+                  <HiOutlineCog6Tooth className="text-xl" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white">Setup Wizard</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest">Re-run onboarding</div>
+                </div>
+                <HiOutlineArrowRight className="ml-auto text-slate-500 group-hover:text-blue-500 transition-colors" />
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="rounded-[32px] border border-slate-800 bg-slate-900/50 p-6 shadow-xl hover:border-emerald-500/30 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400">
+                  <HiOutlineWrenchScrewdriver className="text-xl" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white">Run Doctor</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest">Workspace health check</div>
+                </div>
+                <HiOutlineArrowRight className="ml-auto text-slate-500 group-hover:text-amber-500 transition-colors" />
               </div>
-            </a>
-            <a href="/setup" className="card-hover rounded-xl border border-white/5 bg-black/20 p-4 flex items-center gap-3">
-              <span className="text-xl">⚙️</span>
-              <div>
-                <div className="text-sm font-medium">Setup Wizard</div>
-                <div className="text-xs text-neutral-500">Re-run onboarding</div>
-              </div>
-            </a>
-            <div className="card-hover rounded-xl border border-white/5 bg-black/20 p-4 flex items-center gap-3 cursor-pointer">
-              <span className="text-xl">🩺</span>
-              <div>
-                <div className="text-sm font-medium">Run Doctor</div>
-                <div className="text-xs text-neutral-500">Workspace health check</div>
-              </div>
-            </div>
+            </motion.div>
           </div>
         </div>
+      </section>
 
-        {/* Installed Skills */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-          <h2 className="mb-4 text-lg font-semibold">Installed Skills</h2>
-          <div className="flex flex-wrap gap-2">
+      {/* ─── Installed Skills ───────────────────────────── */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-8">
+          <h2 className="text-xl font-bold text-white uppercase tracking-widest">Installed Skills</h2>
+          <div className="flex flex-wrap gap-3">
             {[
               "Panglima", "Hikmat", "Tukang", "Tukang Web", "Hulubalang", "Pawang", "Syahbandar",
               "Bendahara", "Penyemak", "Senibina Antara Muka", "Penyebar Reka Bentuk",
@@ -188,13 +268,17 @@ export default function DashboardPage() {
               "Penganalisis", "Strategi Jenama", "Strategi Produk", "Khidmat Pelanggan",
               "Penulis Cadangan", "Penggerak Jualan", "Pengawal", "Perisai", "Serangan",
             ].map((skill) => (
-              <span key={skill} className="rounded-full border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-neutral-300">
+              <motion.div
+                key={skill}
+                whileHover={{ scale: 1.05 }}
+                className="rounded-full border border-slate-800 bg-slate-900/50 px-4 py-2 text-xs text-slate-300 hover:border-emerald-500/30 hover:text-white transition-all"
+              >
                 {skill}
-              </span>
+              </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
