@@ -206,8 +206,10 @@ export default function V3Chat() {
     setTimeout(() => addThinkingLog(`VPS .206: Initializing inference on ${selectedModelA.name}...`), 1000);
 
     try {
-      // Direct API call to the .206 mainframe for heavy reasoning tasks
-      const baseUrl = "https://jebat.online";
+      // Use the direct subdomain to bypass IP/CORS issues if possible, 
+      // or fallback to the verified /webui path on the current origin.
+      // Given DNS lag on jebat.online, we'll try the most reliable path.
+      const baseUrl = window.location.origin;
       
       // Real API Call to JEBAT Backend
       const response = await fetch(`${baseUrl}/webui/api/chat`, {
@@ -279,7 +281,7 @@ export default function V3Chat() {
       const errorMsg: Message = {
         id: `error-${Date.now()}`,
         role: "assistant",
-        content: `**Deployment Error**: Failed to reach the JEBAT backend on .206.\n\nDetails: ${error.message}\n\nPlease ensure the API server is running on the target VPS.`,
+        content: `**Deployment Error**: Failed to reach the JEBAT backend.\n\nDetails: ${error.message}\n\nPlease ensure the API server is running on the target mainframe.`,
       };
       
       setMessages((prev) => [...prev, errorMsg]);
