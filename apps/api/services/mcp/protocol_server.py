@@ -90,6 +90,9 @@ class MCPProtocolServer:
         self.decision_engine = None
         self.error_recovery = None
 
+        # Register built-in web tools
+        self._register_default_tools()
+
         # Server state
         self.server = None
         self._is_running = False
@@ -115,6 +118,33 @@ class MCPProtocolServer:
                 self.capabilities.add(MCPCapability(cap_name))
             except ValueError:
                 logger.warning(f"Unknown capability: {cap_name}")
+
+    def _register_default_tools(self):
+        """Register built-in web tools."""
+        self.tools["web.search"] = {
+            "name": "web.search",
+            "description": "Search the web for current information",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"},
+                    "limit": {"type": "integer", "description": "Max results", "default": 5},
+                },
+                "required": ["query"],
+            },
+        }
+        self.tools["web.fetch"] = {
+            "name": "web.fetch",
+            "description": "Fetch and read the text content of a URL",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "URL to fetch"},
+                    "max_length": {"type": "integer", "description": "Max text length", "default": 20000},
+                },
+                "required": ["url"],
+            },
+        }
 
     def register_memory_system(self, memory_system):
         """Register external memory system for integration"""
@@ -234,6 +264,60 @@ class MCPProtocolServer:
         except Exception as e:
             logger.error(f"Error processing message: {e}")
             return str({"status": "error", "message": str(e)})
+
+    def register_tool(self, name: str, description: str, schema: Dict[str, Any], handler: Optional[Callable] = None):
+        """Register a tool with the protocol server."""
+        self.tools[name] = {
+            "name": name,
+            "description": description,
+            "inputSchema": schema,
+            "handler": handler,
+        }
+
+    async def execute_tool(self, name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a registered tool by name."""
+        tool = self.tools.get(name)
+        if not tool:
+            return {"success": False, "error": f"Unknown tool: {name}"}
+
+        # Built-in web tools
+        if name == "web.search":
+            try:
+                from ...skills.web_search import WebSearchSkill
+                skill = WebSearchSkill()
+                result = await skill.execute(
+                    query=str(arguments.get("query", "")),
+                    limit=int(arguments.get("limit", 5)),
+                )
+                if not result.success:
+                    return {"success": False, "error": result.error}
+                return {"success": True, "results": result.results, "engine": result.engine}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+        if name == "web.fetch":
+            try:
+                from ...skills.web_fetch import WebFetchSkill
+                skill = WebFetchSkill()
+                result = await skill.execute(
+                    url=str(arguments.get("url", "")),
+                    max_length=int(arguments.get("max_length", 20000)),
+                )
+                if not result.success:
+                    return {"success": False, "error": result.error}
+                return {"success": True, "url": result.url, "title": result.title, "text": result.text}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+        # Custom handler
+        handler = tool.get("handler")
+        if handler:
+            try:
+                return await handler(**arguments)
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+
+        return {"success": False, "error": f"No handler for tool: {name}"}
 
     def get_status(self) -> Dict[str, Any]:
         """Get server status"""

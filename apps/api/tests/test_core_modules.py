@@ -286,6 +286,56 @@ class TestMCPServer(unittest.TestCase):
         self.assertIsNotNone(Skill)
         self.assertIsNotNone(SkillRegistry)
 
+    def test_services_package_imports_without_fastapi(self):
+        """Services package should import lazily without fastapi."""
+        import apps.api.services as svc
+        self.assertIsNotNone(svc)
+
+    def test_protocol_server_registers_web_tools(self):
+        from apps.api.services.mcp import MCPProtocolServer
+        srv = MCPProtocolServer()
+        self.assertIn("web.search", srv.tools)
+        self.assertIn("web.fetch", srv.tools)
+        status = srv.get_status()
+        self.assertIn("web.search", status["tools"])
+        self.assertIn("web.fetch", status["tools"])
+
+
+class TestNativeToolSupport(unittest.TestCase):
+    """Test native tool-calling provider support."""
+
+    def test_supports_native_tools(self):
+        from apps.api.llm.providers import supports_native_tools
+        self.assertTrue(supports_native_tools("openrouter"))
+        self.assertTrue(supports_native_tools("ollama"))
+        self.assertTrue(supports_native_tools("anthropic"))
+        self.assertFalse(supports_native_tools("openai"))
+        self.assertFalse(supports_native_tools("google"))
+        self.assertFalse(supports_native_tools("local"))
+
+    def test_openai_schema_has_function_type(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        schema = reg.to_openai_schema()
+        for entry in schema:
+            self.assertEqual(entry["type"], "function")
+            self.assertIn("name", entry["function"])
+
+    def test_anthropic_schema_has_input_schema(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        schema = reg.to_anthropic_schema()
+        for entry in schema:
+            self.assertIn("input_schema", entry)
+            self.assertNotIn("type", entry)  # Anthropic doesn't wrap in {type: function}
+
+    def test_native_tool_providers_constant(self):
+        from apps.api.llm.providers import NATIVE_TOOL_PROVIDERS
+        self.assertIsInstance(NATIVE_TOOL_PROVIDERS, frozenset)
+        self.assertIn("ollama", NATIVE_TOOL_PROVIDERS)
+
 
 class TestToolCalling(unittest.IsolatedAsyncioTestCase):
     """Test LLM tool-calling mechanism."""

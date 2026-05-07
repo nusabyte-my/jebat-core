@@ -207,9 +207,17 @@ async def generate_with_tools(
 ) -> tuple[str, str, list[ToolCallResult]]:
     """Generate response with optional tool execution loop.
 
+    Prefers native function-calling for providers that support it
+    (OpenRouter, Ollama, Anthropic).  Falls back to prompt-injection
+    for all other providers (Google, OpenAI Responses API, local).
+
     Returns (final_text, provider_name, list_of_tool_results).
     """
-    from .providers import generate_with_failover  # lazy to avoid httpx at import time
+    from .providers import (  # lazy to avoid httpx at import time
+        generate_with_failover,
+        generate_with_native_tools,
+        supports_native_tools,
+    )
 
     registry = tool_registry or ToolRegistry()
     if not registry.list_tools():
@@ -217,12 +225,52 @@ async def generate_with_tools(
         return text, provider, []
 
     base_system = (system_prompt or "You are JEBAT.").strip()
-    tool_system = f"{base_system}\n\n{registry.prompt_block()}"
+    use_native = supports_native_tools(config.provider)
+
+    # Choose the right schema format for native calling
+    if use_native:
+        if config.provider.lower() == "anthropic":
+            native_schema = registry.to_anthropic_schema()
+        else:
+            native_schema = registry.to_openai_schema()
+    else:
+        native_schema = None
+
     conversation_prompt = prompt
     tool_results: list[ToolCallResult] = []
     provider_used = config.provider
 
     for _ in range(max_rounds):
+        if use_native and native_schema:
+            # ── Native tool-calling path ────────────────────────────
+            text, tool_calls, provider_used = await generate_with_native_tools(
+                config, conversation_prompt, base_system, native_schema,
+            )
+            if tool_calls:
+                # Provider returned structured tool calls
+                for tc in tool_calls:
+                    result = await execute_tool_call(registry, tc["name"], tc["arguments"])
+                    tool_results.append(result)
+                # Feed results back for next round
+                tool_output_parts = []
+                for tr in tool_results:
+                    out = tr.result if tr.result else f"ERROR: {tr.error}"
+                    tool_output_parts.append(f"Tool `{tr.tool_name}` returned:\n{out}")
+                conversation_prompt = (
+                    f"Original user request:\n{prompt}\n\n"
+                    + "\n\n".join(tool_output_parts)
+                    + "\n\nUse these tool results to answer the original request directly. "
+                    "If another tool is absolutely required, call it."
+                )
+                continue
+            # No tool calls — text is the final answer
+            if text:
+                return text, provider_used, tool_results
+            # Empty text and no tool calls — fall through to prompt-injection
+            use_native = False
+
+        # ── Prompt-injection fallback path ──────────────────────────
+        tool_system = f"{base_system}\n\n{registry.prompt_block()}"
         text, provider_used = await generate_with_failover(config, conversation_prompt, tool_system)
         call = parse_tool_call(text)
         if not call:
@@ -239,6 +287,7 @@ async def generate_with_tools(
             "If another tool is absolutely required, return another tool JSON call."
         )
 
+    # Max rounds exhausted — ask for final answer
     final_text, provider_used = await generate_with_failover(
         config,
         f"Original user request:\n{prompt}\n\nTool results:\n"
