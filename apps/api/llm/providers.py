@@ -44,35 +44,67 @@ class OpenAIProvider:
             raise RuntimeError("openai package is not installed") from exc
 
         client = AsyncOpenAI(api_key=self.api_key)
-        response = await client.responses.create(
+        response = await client.chat.completions.create(
             model=self.model,
-            input=[
-                {
-                    "role": "system",
-                    "content": [{"type": "input_text", "text": system_prompt or "You are JEBAT."}],
-                },
-                {
-                    "role": "user",
-                    "content": [{"type": "input_text", "text": prompt}],
-                },
+            messages=[
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
             ],
             temperature=self.temperature,
-            max_output_tokens=self.max_tokens,
+            max_tokens=self.max_tokens,
         )
-        text = getattr(response, "output_text", "") or ""
-        if text:
-            return text.strip()
-        # Conservative fallback parsing for SDK differences
-        output = getattr(response, "output", []) or []
-        parts: list[str] = []
-        for item in output:
-            for content in getattr(item, "content", []) or []:
-                maybe_text = getattr(content, "text", "")
-                if isinstance(maybe_text, str) and maybe_text:
-                    parts.append(maybe_text)
-        if parts:
-            return "\n".join(parts).strip()
+        if response.choices:
+            content = response.choices[0].message.content
+            if content:
+                return content.strip()
         raise RuntimeError("OpenAI response did not contain text output")
+
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Generate with OpenAI native tool calling via Chat Completions API.
+
+        Returns (text_or_empty, tool_calls).
+        """
+        try:
+            from openai import AsyncOpenAI
+        except ImportError as exc:
+            raise RuntimeError("openai package is not installed") from exc
+
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        if tools:
+            kwargs["tools"] = tools
+
+        client = AsyncOpenAI(api_key=self.api_key)
+        response = await client.chat.completions.create(**kwargs)
+
+        if not response.choices:
+            return "", []
+
+        message = response.choices[0].message
+        text = (message.content or "").strip()
+        raw_calls = message.tool_calls or []
+        tool_calls: list[dict[str, Any]] = []
+        for tc in raw_calls:
+            name = tc.function.name
+            try:
+                args = json.loads(tc.function.arguments)
+            except json.JSONDecodeError:
+                args = {}
+            if name:
+                tool_calls.append({"name": name, "arguments": args})
+        return text, tool_calls
 
 
 @dataclass(slots=True)
@@ -156,8 +188,16 @@ class GoogleProvider:
     temperature: float
     max_tokens: int
 
+    def _model_name(self) -> str:
+        return self.model if self.model.startswith("gemini") else f"gemini-{self.model}"
+
+    def _base_url(self, action: str = "generateContent") -> str:
+        return (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self._model_name()}:{action}?key={self.api_key}"
+        )
+
     async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
-        model_name = self.model if self.model.startswith("gemini") else f"gemini/{self.model}"
         payload = {
             "system_instruction": {"parts": [{"text": system_prompt or "You are JEBAT."}]},
             "contents": [{"parts": [{"text": prompt}]}],
@@ -166,12 +206,8 @@ class GoogleProvider:
                 "maxOutputTokens": self.max_tokens,
             },
         }
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{model_name}:generateContent?key={self.api_key}"
-        )
         async with _httpx().AsyncClient(timeout=180) as client:
-            response = await client.post(url, json=payload)
+            response = await client.post(self._base_url(), json=payload)
             response.raise_for_status()
         data = response.json()
         candidates = data.get("candidates", [])
@@ -185,6 +221,55 @@ class GoogleProvider:
         if parts:
             return "\n".join(parts).strip()
         raise RuntimeError("Google response did not contain text output")
+
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Generate with Gemini native function calling.
+
+        Expects tools in Gemini format::
+
+            [{"function_declarations": [{"name": ..., "description": ..., "parameters": {...}}]}]
+
+        Returns (text_or_empty, tool_calls).
+        """
+        payload: dict[str, Any] = {
+            "system_instruction": {"parts": [{"text": system_prompt or "You are JEBAT."}]},
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": self.temperature,
+                "maxOutputTokens": self.max_tokens,
+            },
+        }
+        if tools:
+            payload["tools"] = tools
+
+        async with _httpx().AsyncClient(timeout=180) as client:
+            response = await client.post(self._base_url(), json=payload)
+            response.raise_for_status()
+        data = response.json()
+
+        candidates = data.get("candidates", [])
+        text_parts: list[str] = []
+        tool_calls: list[dict[str, Any]] = []
+        for candidate in candidates:
+            content = candidate.get("content", {})
+            for part in content.get("parts", []):
+                # Text part
+                text = part.get("text")
+                if isinstance(text, str) and text:
+                    text_parts.append(text)
+                # Function call part
+                fc = part.get("functionCall")
+                if isinstance(fc, dict):
+                    name = fc.get("name", "")
+                    args = fc.get("args", {})
+                    if name:
+                        tool_calls.append({"name": name, "arguments": args if isinstance(args, dict) else {}})
+        return "\n".join(text_parts).strip(), tool_calls
 
 
 @dataclass(slots=True)
@@ -426,7 +511,7 @@ async def generate_with_failover(
     raise RuntimeError("all providers failed: " + "; ".join(errors))
 
 
-NATIVE_TOOL_PROVIDERS = frozenset({"openrouter", "ollama", "anthropic"})
+NATIVE_TOOL_PROVIDERS = frozenset({"openai", "openrouter", "ollama", "anthropic", "google"})
 
 
 def supports_native_tools(provider_name: str) -> bool:

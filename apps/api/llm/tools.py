@@ -131,6 +131,23 @@ class ToolRegistry:
         """Return Ollama chat-compatible tool schemas."""
         return self.to_openai_schema()
 
+    def to_google_schema(self) -> list[dict[str, Any]]:
+        """Return Gemini function-calling compatible tool schemas.
+
+        Gemini expects::
+
+            [{"function_declarations": [{"name": ..., "description": ..., "parameters": {...}}]}]
+        """
+        declarations = [
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": tool.parameters,
+            }
+            for tool in self._tools.values()
+        ]
+        return [{"function_declarations": declarations}]
+
 
 async def _web_search_handler(**kwargs: Any) -> str:
     from ..skills.web_search import WebSearchSkill
@@ -229,9 +246,13 @@ async def generate_with_tools(
 
     # Choose the right schema format for native calling
     if use_native:
-        if config.provider.lower() == "anthropic":
+        provider_lower = config.provider.lower()
+        if provider_lower == "anthropic":
             native_schema = registry.to_anthropic_schema()
+        elif provider_lower == "google":
+            native_schema = registry.to_google_schema()
         else:
+            # OpenAI, OpenRouter, Ollama all use OpenAI-compatible format
             native_schema = registry.to_openai_schema()
     else:
         native_schema = None

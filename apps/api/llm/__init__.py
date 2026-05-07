@@ -25,6 +25,7 @@ __all__ = [
     "parse_tool_call",
     "execute_tool_call",
     "generate_with_tools",
+    "stream_generate",
 ]
 
 
@@ -83,4 +84,8 @@ def __getattr__(name: str):
             "execute_tool_call": execute_tool_call,
             "generate_with_tools": generate_with_tools,
         }[name]
+    if name == "stream_generate":
+        from .streaming import stream_generate
+
+        return stream_generate
     raise AttributeError(name)

@@ -9,6 +9,7 @@ Endpoints:
 - GET  /api/v1/metrics             - System metrics
 - GET  /api/v1/models              - List models (OpenAI-compatible, used by Zed)
 - POST /api/v1/chat/completions    - Chat completions (OpenAI-compatible, used by Zed)
+                                     Supports ``stream=true`` for SSE streaming
 - GET  /api/v1/memories            - List memories
 - POST /api/v1/memories            - Store memory
 - GET  /api/v1/agents              - List agents
@@ -22,6 +23,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..auth import (
@@ -584,7 +586,11 @@ async def openai_chat_completion(request: OpenAIChatRequest):
 
     This is the primary endpoint used by Zed editor.
     Accepts standard OpenAI request format and returns OpenAI-compatible response.
+
+    When ``stream=true``, returns Server-Sent Events (SSE) in OpenAI streaming
+    format (``data: {...}`` lines with ``chat.completion.chunk`` objects).
     """
+    import json as _json
     import time
     import uuid
 
@@ -602,15 +608,47 @@ async def openai_chat_completion(request: OpenAIChatRequest):
         system_messages = [m for m in request.messages if m.role == "system"]
         system_prompt = system_messages[-1].content if system_messages else None
 
+        completion_id = f"chatcmpl-{uuid.uuid4().hex[:8]}"
+        created = int(time.time())
+
         # ── Direct tool-calling path ────────────────────────────────
         if request.model in {"jebat-direct", "jebat-tools"}:
-            from ...llm.config import load_llm_config, JebatLLMConfig
+            from ...llm.config import load_llm_config
             from ...llm.tools import ToolRegistry, generate_with_tools
 
             config = load_llm_config()
             registry = ToolRegistry()
             registry.register_defaults()
 
+            # ── Streaming: direct path ──────────────────────────────
+            if request.stream:
+                from ...llm.streaming import stream_generate
+
+                async def _stream_direct():
+                    yield f"data: {_json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'index': 0, 'delta': {'role': 'assistant'}, 'finish_reason': None}]})}\n\n"
+                    async for chunk in stream_generate(config, prompt, system_prompt or "You are JEBAT, an advanced AI assistant."):
+                        payload = {
+                            "id": completion_id,
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": request.model,
+                            "choices": [{"index": 0, "delta": {"content": chunk}, "finish_reason": None}],
+                        }
+                        yield f"data: {_json.dumps(payload)}\n\n"
+                    yield f"data: {_json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
+                    yield "data: [DONE]\n\n"
+
+                return StreamingResponse(
+                    _stream_direct(),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "X-Accel-Buffering": "no",
+                    },
+                )
+
+            # ── Non-streaming: direct path ──────────────────────────
             text, provider_used, tool_results = await generate_with_tools(
                 config=config,
                 prompt=prompt,
@@ -619,9 +657,9 @@ async def openai_chat_completion(request: OpenAIChatRequest):
             )
 
             return {
-                "id": f"chatcmpl-{uuid.uuid4().hex[:8]}",
+                "id": completion_id,
                 "object": "chat.completion",
-                "created": int(time.time()),
+                "created": created,
                 "model": request.model,
                 "choices": [
                     {
@@ -663,6 +701,38 @@ async def openai_chat_completion(request: OpenAIChatRequest):
         }
         thinking_mode = mode_map.get(request.model, ThinkingMode.DELIBERATE)
 
+        # ── Streaming: Ultra-Think path ─────────────────────────────
+        if request.stream:
+            from ...llm.config import load_llm_config
+            from ...llm.streaming import stream_generate
+
+            config = load_llm_config()
+
+            async def _stream_think():
+                yield f"data: {_json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'index': 0, 'delta': {'role': 'assistant'}, 'finish_reason': None}]})}\n\n"
+                async for chunk in stream_generate(config, prompt, system_prompt or "You are JEBAT, an advanced AI assistant."):
+                    payload = {
+                        "id": completion_id,
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": request.model,
+                        "choices": [{"index": 0, "delta": {"content": chunk}, "finish_reason": None}],
+                    }
+                    yield f"data: {_json.dumps(payload)}\n\n"
+                yield f"data: {_json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(
+                _stream_think(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no",
+                },
+            )
+
+        # ── Non-streaming: Ultra-Think path ─────────────────────────
         result = await jebat_components["ultra_think"].think(
             problem=prompt,
             mode=thinking_mode,
@@ -670,9 +740,9 @@ async def openai_chat_completion(request: OpenAIChatRequest):
         )
 
         return {
-            "id": f"chatcmpl-{uuid.uuid4().hex[:8]}",
+            "id": completion_id,
             "object": "chat.completion",
-            "created": int(time.time()),
+            "created": created,
             "model": request.model,
             "choices": [
                 {

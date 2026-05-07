@@ -306,11 +306,11 @@ class TestNativeToolSupport(unittest.TestCase):
 
     def test_supports_native_tools(self):
         from apps.api.llm.providers import supports_native_tools
+        self.assertTrue(supports_native_tools("openai"))
         self.assertTrue(supports_native_tools("openrouter"))
         self.assertTrue(supports_native_tools("ollama"))
         self.assertTrue(supports_native_tools("anthropic"))
-        self.assertFalse(supports_native_tools("openai"))
-        self.assertFalse(supports_native_tools("google"))
+        self.assertTrue(supports_native_tools("google"))
         self.assertFalse(supports_native_tools("local"))
 
     def test_openai_schema_has_function_type(self):
@@ -330,6 +330,20 @@ class TestNativeToolSupport(unittest.TestCase):
         for entry in schema:
             self.assertIn("input_schema", entry)
             self.assertNotIn("type", entry)  # Anthropic doesn't wrap in {type: function}
+
+    def test_google_schema_has_function_declarations(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        schema = reg.to_google_schema()
+        self.assertIsInstance(schema, list)
+        self.assertEqual(len(schema), 1)
+        decls = schema[0]["function_declarations"]
+        self.assertTrue(len(decls) >= 2)
+        for decl in decls:
+            self.assertIn("name", decl)
+            self.assertIn("description", decl)
+            self.assertIn("parameters", decl)
 
     def test_native_tool_providers_constant(self):
         from apps.api.llm.providers import NATIVE_TOOL_PROVIDERS
@@ -468,6 +482,198 @@ class TestToolCalling(unittest.IsolatedAsyncioTestCase):
         result = await execute_tool_call(reg, "echo", {"msg": "hello"})
         self.assertEqual(result.result, "echo: hello")
         self.assertEqual(result.error, "")
+
+
+class TestStreamingImport(unittest.IsolatedAsyncioTestCase):
+    """Test streaming module import and local provider streaming."""
+
+    def test_streaming_module_imports(self):
+        from apps.api.llm.streaming import stream_generate
+        self.assertIsNotNone(stream_generate)
+
+    def test_streaming_via_package_init(self):
+        from apps.api.llm import stream_generate
+        self.assertIsNotNone(stream_generate)
+
+    async def test_stream_local_provider(self):
+        from apps.api.llm.streaming import stream_generate
+        from apps.api.llm.config import JebatLLMConfig
+
+        config = JebatLLMConfig(provider="local")
+        chunks = []
+        async for chunk in stream_generate(config, "Hello world", "System"):
+            chunks.append(chunk)
+        self.assertTrue(len(chunks) >= 1)
+        full_text = "".join(chunks)
+        self.assertIn("Hello world", full_text)
+
+    async def test_stream_unsupported_provider_yields_error(self):
+        from apps.api.llm.streaming import stream_generate
+        from apps.api.llm.config import JebatLLMConfig
+
+        config = JebatLLMConfig(provider="nonexistent_provider")
+        chunks = []
+        async for chunk in stream_generate(config, "test"):
+            chunks.append(chunk)
+        full_text = "".join(chunks)
+        self.assertIn("Streaming error", full_text)
+
+
+class TestGoogleSchemaShape(unittest.TestCase):
+    """Test Google/Gemini tool schema shape."""
+
+    def test_google_schema_shape(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        schema = reg.to_google_schema()
+        self.assertIsInstance(schema, list)
+        self.assertEqual(len(schema), 1)
+        self.assertIn("function_declarations", schema[0])
+        decls = schema[0]["function_declarations"]
+        names = [d["name"] for d in decls]
+        self.assertIn("web_search", names)
+        self.assertIn("web_fetch", names)
+
+    def test_google_schema_differs_from_openai(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        google = reg.to_google_schema()
+        openai = reg.to_openai_schema()
+        # Google wraps in function_declarations, OpenAI wraps in {type: function}
+        self.assertNotEqual(google, openai)
+        self.assertIn("function_declarations", google[0])
+        self.assertEqual(openai[0]["type"], "function")
+
+
+class TestToolCallingIntegration(unittest.IsolatedAsyncioTestCase):
+    """Integration tests for the tool-calling loop with mocked LLM responses."""
+
+    async def test_generate_with_tools_no_tools_registered(self):
+        """When no tools are registered, should just call generate_with_failover."""
+        from apps.api.llm.tools import ToolRegistry, generate_with_tools
+        from apps.api.llm.config import JebatLLMConfig
+
+        config = JebatLLMConfig(provider="local")
+        text, provider, results = await generate_with_tools(
+            config, "Hello", "You are JEBAT.",
+        )
+        self.assertEqual(provider, "local")
+        self.assertEqual(results, [])
+        self.assertIn("Hello", text)
+
+    async def test_generate_with_tools_prompt_injection_no_tool_call(self):
+        """Local provider returns plain text — no tool call parsed."""
+        from apps.api.llm.tools import ToolRegistry, generate_with_tools
+        from apps.api.llm.config import JebatLLMConfig
+
+        config = JebatLLMConfig(provider="local")
+        reg = ToolRegistry()
+        reg.register_defaults()
+        text, provider, results = await generate_with_tools(
+            config, "What is 2+2?", "You are JEBAT.", tool_registry=reg,
+        )
+        self.assertEqual(provider, "local")
+        self.assertEqual(results, [])
+        # Local echo provider returns the prompt back
+        self.assertIn("2+2", text)
+
+    async def test_parse_tool_call_embedded_in_text(self):
+        """Tool call JSON embedded in surrounding text should be extracted."""
+        from apps.api.llm.tools import parse_tool_call
+        text = 'I need to search for this.\n{"tool": "web_search", "arguments": {"query": "test"}}\nLet me check.'
+        result = parse_tool_call(text)
+        self.assertIsNotNone(result)
+        name, args = result
+        self.assertEqual(name, "web_search")
+        self.assertEqual(args["query"], "test")
+
+    async def test_execute_tool_call_with_custom_handler(self):
+        """Custom tool handler should be called with correct arguments."""
+        from apps.api.llm.tools import ToolRegistry, ToolDefinition, execute_tool_call
+
+        call_log = []
+
+        async def mock_handler(**kwargs):
+            call_log.append(kwargs)
+            return f"result for {kwargs.get('input', '')}"
+
+        reg = ToolRegistry()
+        reg.register(ToolDefinition(
+            name="mock_tool",
+            description="A mock tool",
+            parameters={
+                "type": "object",
+                "properties": {"input": {"type": "string"}},
+                "required": ["input"],
+            },
+            handler=mock_handler,
+        ))
+        result = await execute_tool_call(reg, "mock_tool", {"input": "test_value"})
+        self.assertEqual(result.result, "result for test_value")
+        self.assertEqual(result.error, "")
+        self.assertEqual(len(call_log), 1)
+        self.assertEqual(call_log[0]["input"], "test_value")
+
+    async def test_tool_registry_multiple_tools(self):
+        """Registry should handle multiple custom tools."""
+        from apps.api.llm.tools import ToolRegistry, ToolDefinition
+
+        async def handler_a(**kwargs):
+            return "a"
+
+        async def handler_b(**kwargs):
+            return "b"
+
+        reg = ToolRegistry()
+        reg.register(ToolDefinition("tool_a", "Tool A", {"type": "object", "properties": {}}, handler_a))
+        reg.register(ToolDefinition("tool_b", "Tool B", {"type": "object", "properties": {}}, handler_b))
+        self.assertEqual(len(reg.list_tools()), 2)
+        self.assertIsNotNone(reg.get("tool_a"))
+        self.assertIsNotNone(reg.get("tool_b"))
+        self.assertIsNone(reg.get("tool_c"))
+
+    async def test_generate_with_tools_max_rounds_exhausted(self):
+        """When max_rounds is 0, should still produce a final answer."""
+        from apps.api.llm.tools import ToolRegistry, generate_with_tools
+        from apps.api.llm.config import JebatLLMConfig
+
+        config = JebatLLMConfig(provider="local")
+        reg = ToolRegistry()
+        reg.register_defaults()
+        text, provider, results = await generate_with_tools(
+            config, "Search for cats", "You are JEBAT.",
+            tool_registry=reg, max_rounds=0,
+        )
+        # With 0 rounds, should go straight to final answer
+        self.assertEqual(provider, "local")
+        self.assertIsInstance(text, str)
+
+    def test_all_native_providers_have_generate_with_tools(self):
+        """All providers in NATIVE_TOOL_PROVIDERS should have generate_with_tools method."""
+        from apps.api.llm.providers import (
+            NATIVE_TOOL_PROVIDERS,
+            OpenAIProvider,
+            OpenRouterProvider,
+            OllamaProvider,
+            AnthropicProvider,
+            GoogleProvider,
+        )
+        provider_classes = {
+            "openai": OpenAIProvider,
+            "openrouter": OpenRouterProvider,
+            "ollama": OllamaProvider,
+            "anthropic": AnthropicProvider,
+            "google": GoogleProvider,
+        }
+        for name in NATIVE_TOOL_PROVIDERS:
+            cls = provider_classes.get(name)
+            self.assertIsNotNone(cls, f"No class mapped for native provider: {name}")
+            self.assertTrue(
+                hasattr(cls, "generate_with_tools"),
+                f"{cls.__name__} missing generate_with_tools method",
+            )
 
 
 if __name__ == "__main__":
