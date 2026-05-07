@@ -229,5 +229,196 @@ class TestWebSkills(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.error, "Empty query")
 
 
+
+
+class TestChatHistory(unittest.TestCase):
+    """Test chat history persistence."""
+
+    def test_chat_history_append_and_load(self):
+        import tempfile
+        from pathlib import Path
+        from apps.api.llm.history import ChatHistoryStore
+
+        with tempfile.TemporaryDirectory() as td:
+            history_path = Path(td) / "chat_history.jsonl"
+            store = ChatHistoryStore(history_path)
+
+            store.append("session-a", "user", "hello")
+            store.append("session-a", "assistant", "hi there")
+            store.append("session-b", "user", "other session")
+
+            rows = store.load("session-a", limit=10)
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0].role, "user")
+            self.assertEqual(rows[0].content, "hello")
+            self.assertEqual(rows[1].role, "assistant")
+            self.assertEqual(rows[1].content, "hi there")
+
+    def test_chat_history_limit(self):
+        import tempfile
+        from pathlib import Path
+        from apps.api.llm.history import ChatHistoryStore
+
+        with tempfile.TemporaryDirectory() as td:
+            history_path = Path(td) / "chat_history.jsonl"
+            store = ChatHistoryStore(history_path)
+
+            for i in range(6):
+                store.append("session-limit", "user", f"msg-{i}")
+
+            rows = store.load("session-limit", limit=3)
+            self.assertEqual(len(rows), 3)
+            self.assertEqual(rows[0].content, "msg-3")
+            self.assertEqual(rows[1].content, "msg-4")
+            self.assertEqual(rows[2].content, "msg-5")
+
+
+class TestMCPServer(unittest.TestCase):
+    """Test MCP server import safety."""
+
+    def test_mcp_server_imports_without_deps(self):
+        """MCP server module should import even without mcp/jebat_dev."""
+        import apps.api.mcp.server as mcp_server
+        self.assertIsNotNone(mcp_server.JEBATMCPServer)
+
+    def test_mcp_skill_registry_import(self):
+        from apps.api.mcp import Skill, SkillRegistry
+        self.assertIsNotNone(Skill)
+        self.assertIsNotNone(SkillRegistry)
+
+
+class TestToolCalling(unittest.IsolatedAsyncioTestCase):
+    """Test LLM tool-calling mechanism."""
+
+    def test_tool_registry_import(self):
+        from apps.api.llm.tools import ToolRegistry, ToolDefinition
+        self.assertIsNotNone(ToolRegistry)
+        self.assertIsNotNone(ToolDefinition)
+
+    def test_register_defaults(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        names = [t.name for t in reg.list_tools()]
+        self.assertIn("web_search", names)
+        self.assertIn("web_fetch", names)
+
+    def test_openai_schema_shape(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        schema = reg.to_openai_schema()
+        self.assertIsInstance(schema, list)
+        self.assertTrue(len(schema) >= 2)
+        for entry in schema:
+            self.assertEqual(entry["type"], "function")
+            self.assertIn("function", entry)
+            func = entry["function"]
+            self.assertIn("name", func)
+            self.assertIn("description", func)
+            self.assertIn("parameters", func)
+
+    def test_anthropic_schema_shape(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        schema = reg.to_anthropic_schema()
+        self.assertIsInstance(schema, list)
+        self.assertTrue(len(schema) >= 2)
+        for entry in schema:
+            self.assertIn("name", entry)
+            self.assertIn("description", entry)
+            self.assertIn("input_schema", entry)
+
+    def test_ollama_schema_matches_openai(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        self.assertEqual(reg.to_ollama_schema(), reg.to_openai_schema())
+
+    def test_prompt_block_contains_tools(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        reg.register_defaults()
+        block = reg.prompt_block()
+        self.assertIn("web_search", block)
+        self.assertIn("web_fetch", block)
+        self.assertIn('"tool"', block)
+
+    def test_prompt_block_empty_registry(self):
+        from apps.api.llm.tools import ToolRegistry
+        reg = ToolRegistry()
+        self.assertEqual(reg.prompt_block(), "")
+
+    def test_parse_tool_call_valid(self):
+        from apps.api.llm.tools import parse_tool_call
+        result = parse_tool_call('{"tool": "web_search", "arguments": {"query": "hello"}}')
+        self.assertIsNotNone(result)
+        name, args = result
+        self.assertEqual(name, "web_search")
+        self.assertEqual(args["query"], "hello")
+
+    def test_parse_tool_call_with_markdown(self):
+        from apps.api.llm.tools import parse_tool_call
+        text = '```json\n{"tool": "web_fetch", "arguments": {"url": "https://example.com"}}\n```'
+        result = parse_tool_call(text)
+        self.assertIsNotNone(result)
+        name, args = result
+        self.assertEqual(name, "web_fetch")
+        self.assertEqual(args["url"], "https://example.com")
+
+    def test_parse_tool_call_plain_text(self):
+        from apps.api.llm.tools import parse_tool_call
+        result = parse_tool_call("I don't need any tools for this question.")
+        self.assertIsNone(result)
+
+    def test_parse_tool_call_invalid_json(self):
+        from apps.api.llm.tools import parse_tool_call
+        result = parse_tool_call('{"tool": "web_search", "arguments": {broken}')
+        self.assertIsNone(result)
+
+    async def test_execute_unknown_tool(self):
+        from apps.api.llm.tools import ToolRegistry, execute_tool_call
+        reg = ToolRegistry()
+        result = await execute_tool_call(reg, "nonexistent_tool", {"x": 1})
+        self.assertEqual(result.tool_name, "nonexistent_tool")
+        self.assertIn("Unknown tool", result.error)
+        self.assertEqual(result.result, "")
+
+    async def test_execute_tool_handler_error(self):
+        from apps.api.llm.tools import ToolRegistry, ToolDefinition, execute_tool_call
+
+        async def bad_handler(**kwargs):
+            raise ValueError("intentional test error")
+
+        reg = ToolRegistry()
+        reg.register(ToolDefinition(
+            name="bad_tool",
+            description="A tool that always fails",
+            parameters={"type": "object", "properties": {}},
+            handler=bad_handler,
+        ))
+        result = await execute_tool_call(reg, "bad_tool", {})
+        self.assertIn("intentional test error", result.error)
+        self.assertEqual(result.result, "")
+
+    async def test_execute_tool_success(self):
+        from apps.api.llm.tools import ToolRegistry, ToolDefinition, execute_tool_call
+
+        async def echo_handler(**kwargs):
+            return f"echo: {kwargs.get('msg', '')}"
+
+        reg = ToolRegistry()
+        reg.register(ToolDefinition(
+            name="echo",
+            description="Echoes input",
+            parameters={"type": "object", "properties": {"msg": {"type": "string"}}},
+            handler=echo_handler,
+        ))
+        result = await execute_tool_call(reg, "echo", {"msg": "hello"})
+        self.assertEqual(result.result, "echo: hello")
+        self.assertEqual(result.error, "")
+
+
 if __name__ == "__main__":
     unittest.main()

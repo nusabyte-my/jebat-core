@@ -5,10 +5,14 @@ from dataclasses import dataclass
 from typing import Protocol
 from urllib.parse import urljoin
 
-import httpx
-
 from .auth import get_provider_secret
 from .config import JebatLLMConfig
+
+
+def _httpx():
+    """Lazy-import httpx so the module can be imported without the dependency."""
+    import httpx as _mod
+    return _mod
 
 
 class LLMProvider(Protocol):
@@ -120,7 +124,7 @@ class GoogleProvider:
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model_name}:generateContent?key={self.api_key}"
         )
-        async with httpx.AsyncClient(timeout=180) as client:
+        async with _httpx().AsyncClient(timeout=180) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
         data = response.json()
@@ -154,7 +158,7 @@ class OpenRouterProvider:
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
-        async with httpx.AsyncClient(timeout=180) as client:
+        async with _httpx().AsyncClient(timeout=180) as client:
             response = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={
@@ -193,7 +197,7 @@ class OllamaProvider:
             # Use Ollama's speculative decoding parameter
             payload["speculative"] = self.speculative_model
 
-        async with httpx.AsyncClient(timeout=180) as client:
+        async with _httpx().AsyncClient(timeout=180) as client:
             response = await client.post(
                 urljoin(self.host.rstrip("/") + "/", "api/generate"),
                 json=payload,

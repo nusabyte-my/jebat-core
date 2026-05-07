@@ -792,9 +792,21 @@ async def check_workstation(payload: WorkstationActionRequest, request: Request)
 @webui_router.post("/webui/api/chat", dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))])
 @webui_router.post("/webui/api/v3/chat", dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))])
 async def chat(message: ChatMessage, request: Request):
-    """Process chat message with Ultra-Think (Streaming with Legacy Fallback)"""
+    """Process chat message.
+
+    Modes:
+    - ``direct`` — straight LLM call with tool-calling (web search/fetch).
+    - ``fast|deliberate|deep|strategic|creative|critical`` — Ultra-Think reasoning.
+    - ``?fallback=true`` — non-streaming Ultra-Think fallback.
+    """
     is_fallback = request.query_params.get("fallback") == "true"
-    
+    mode_key = (message.thinking_mode or "deliberate").lower()
+
+    # ── Direct LLM + tool-calling path ──────────────────────────────
+    if mode_key == "direct":
+        return await _direct_chat(message)
+
+    # ── Legacy non-streaming fallback ───────────────────────────────
     if is_fallback:
         try:
             from ...features.ultra_think import ThinkingMode, create_ultra_think
@@ -813,6 +825,7 @@ async def chat(message: ChatMessage, request: Request):
             logger.error(f"Fallback chat error: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
+    # ── Streaming Ultra-Think path ──────────────────────────────────
     async def chat_generator():
         try:
             from ...features.ultra_think import ThinkingMode, create_ultra_think
@@ -825,9 +838,7 @@ async def chat(message: ChatMessage, request: Request):
                 "creative": ThinkingMode.CREATIVE,
                 "critical": ThinkingMode.CRITICAL,
             }
-            thinking_mode = mode_map.get(
-                message.thinking_mode.lower(), ThinkingMode.DELIBERATE
-            )
+            thinking_mode = mode_map.get(mode_key, ThinkingMode.DELIBERATE)
 
             thinker = await create_ultra_think(
                 config={"max_thoughts": 15, "default_mode": message.thinking_mode}
@@ -880,6 +891,112 @@ async def chat(message: ChatMessage, request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
         }
+    )
+
+
+async def _direct_chat(message: ChatMessage):
+    """Direct LLM chat with tool-calling (web search / web fetch)."""
+    import time as _time
+
+    async def direct_generator():
+        t0 = _time.monotonic()
+        try:
+            from ...llm.config import load_llm_config, JebatLLMConfig
+            from ...llm.history import ChatHistoryStore
+            from ...llm.tools import ToolRegistry, generate_with_tools
+
+            config = load_llm_config()
+            # Apply runtime overrides if set
+            effective_provider = RUNTIME_OVERRIDES.get("provider") or config.provider
+            effective_model = RUNTIME_OVERRIDES.get("model") or config.model
+            config = JebatLLMConfig(
+                provider=effective_provider,
+                model=effective_model,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                ollama_host=config.ollama_host,
+                fallback_providers=config.fallback_providers,
+                history_path=config.history_path,
+            )
+
+            registry = ToolRegistry()
+            registry.register_defaults()
+
+            # Load conversation history for context
+            session_id = message.user_id
+            history_store = ChatHistoryStore(config.history_path)
+            history_turns = history_store.load(session_id, limit=12)
+            history_context = ""
+            if history_turns:
+                history_lines = [f"{t.role}: {t.content}" for t in history_turns]
+                history_context = (
+                    "\n\nConversation history:\n"
+                    + "\n".join(history_lines)
+                    + "\n\nCurrent message:\n"
+                )
+
+            prompt_with_history = history_context + message.message
+
+            yield json.dumps({"type": "status", "step": "generating", "message": "Generating response..."}) + "\n"
+
+            text, provider_used, tool_results = await asyncio.wait_for(
+                generate_with_tools(
+                    config=config,
+                    prompt=prompt_with_history,
+                    system_prompt=(
+                        "You are JEBAT, an advanced AI assistant. "
+                        "Answer clearly and helpfully. Use tools when you need current information."
+                    ),
+                    tool_registry=registry,
+                ),
+                timeout=120.0,
+            )
+
+            # Persist conversation turns
+            history_store.append(session_id, "user", message.message)
+            history_store.append(session_id, "assistant", text)
+
+            # Report tool usage
+            for tr in tool_results:
+                yield json.dumps({
+                    "type": "tool_use",
+                    "tool": tr.tool_name,
+                    "arguments": tr.arguments,
+                    "success": bool(tr.result),
+                    "error": tr.error or None,
+                }) + "\n"
+
+            # Stream the response word by word
+            words = text.split(" ")
+            for i, word in enumerate(words):
+                yield json.dumps({
+                    "type": "content",
+                    "delta": word + " ",
+                    "is_final": i == len(words) - 1,
+                }) + "\n"
+                await asyncio.sleep(0.015)
+
+            elapsed = round(_time.monotonic() - t0, 3)
+            yield json.dumps({
+                "type": "final",
+                "success": True,
+                "provider": provider_used,
+                "tools_used": len(tool_results),
+                "execution_time": elapsed,
+            }) + "\n"
+
+        except Exception as e:
+            logger.error(f"Direct chat error: {e}")
+            yield json.dumps({"type": "error", "message": str(e)}) + "\n"
+
+    return StreamingResponse(
+        direct_generator(),
+        media_type="application/x-ndjson",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
     )
 
 

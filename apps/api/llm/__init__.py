@@ -19,6 +19,12 @@ __all__ = [
     "default_skills_path",
     "select_relevant_skills",
     "build_skill_prompt",
+    "ToolDefinition",
+    "ToolCallResult",
+    "ToolRegistry",
+    "parse_tool_call",
+    "execute_tool_call",
+    "generate_with_tools",
 ]
 
 
@@ -65,5 +71,16 @@ def __getattr__(name: str):
             "build_skill_registry": build_skill_registry,
             "default_skills_path": default_skills_path,
             "select_relevant_skills": select_relevant_skills,
+        }[name]
+    if name in {"ToolDefinition", "ToolCallResult", "ToolRegistry", "parse_tool_call", "execute_tool_call", "generate_with_tools"}:
+        from .tools import ToolDefinition, ToolCallResult, ToolRegistry, parse_tool_call, execute_tool_call, generate_with_tools
+
+        return {
+            "ToolDefinition": ToolDefinition,
+            "ToolCallResult": ToolCallResult,
+            "ToolRegistry": ToolRegistry,
+            "parse_tool_call": parse_tool_call,
+            "execute_tool_call": execute_tool_call,
+            "generate_with_tools": generate_with_tools,
         }[name]
     raise AttributeError(name)

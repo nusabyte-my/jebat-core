@@ -558,6 +558,8 @@ async def list_models():
             {"id": "jebat-pro", "object": "model", "owned_by": "jebat"},
             {"id": "jebat-fast", "object": "model", "owned_by": "jebat"},
             {"id": "jebat-deep", "object": "model", "owned_by": "jebat"},
+            {"id": "jebat-direct", "object": "model", "owned_by": "jebat"},
+            {"id": "jebat-tools", "object": "model", "owned_by": "jebat"},
             {"id": "jebat-llm", "object": "model", "owned_by": "llamacpp"},
             {"id": "gemma4", "object": "model", "owned_by": "ollama"},
             {"id": "hermes3", "object": "model", "owned_by": "ollama"},
@@ -586,15 +588,7 @@ async def openai_chat_completion(request: OpenAIChatRequest):
     import time
     import uuid
 
-    if not jebat_components.get("ultra_think"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Ultra-Think not initialized",
-        )
-
     try:
-        from apps.api.features.ultra_think import ThinkingMode
-
         # Extract the last user message as the prompt
         user_messages = [m for m in request.messages if m.role == "user"]
         if not user_messages:
@@ -604,7 +598,64 @@ async def openai_chat_completion(request: OpenAIChatRequest):
             )
         prompt = user_messages[-1].content
 
-        # Map model name to thinking mode
+        # Extract system prompt if present
+        system_messages = [m for m in request.messages if m.role == "system"]
+        system_prompt = system_messages[-1].content if system_messages else None
+
+        # ── Direct tool-calling path ────────────────────────────────
+        if request.model in {"jebat-direct", "jebat-tools"}:
+            from ...llm.config import load_llm_config, JebatLLMConfig
+            from ...llm.tools import ToolRegistry, generate_with_tools
+
+            config = load_llm_config()
+            registry = ToolRegistry()
+            registry.register_defaults()
+
+            text, provider_used, tool_results = await generate_with_tools(
+                config=config,
+                prompt=prompt,
+                system_prompt=system_prompt or "You are JEBAT, an advanced AI assistant.",
+                tool_registry=registry,
+            )
+
+            return {
+                "id": f"chatcmpl-{uuid.uuid4().hex[:8]}",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": request.model,
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": text,
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": len(prompt.split()),
+                    "completion_tokens": len(text.split()),
+                    "total_tokens": len(prompt.split()) + len(text.split()),
+                },
+                "jebat_meta": {
+                    "provider": provider_used,
+                    "tools_used": [
+                        {"tool": tr.tool_name, "success": bool(tr.result)}
+                        for tr in tool_results
+                    ],
+                },
+            }
+
+        # ── Ultra-Think reasoning path ──────────────────────────────
+        from ...features.ultra_think import ThinkingMode
+
+        if not jebat_components.get("ultra_think"):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Ultra-Think not initialized",
+            )
+
         mode_map = {
             "jebat-fast": ThinkingMode.FAST,
             "jebat-pro": ThinkingMode.DELIBERATE,
@@ -612,7 +663,6 @@ async def openai_chat_completion(request: OpenAIChatRequest):
         }
         thinking_mode = mode_map.get(request.model, ThinkingMode.DELIBERATE)
 
-        # Run thinking session
         result = await jebat_components["ultra_think"].think(
             problem=prompt,
             mode=thinking_mode,

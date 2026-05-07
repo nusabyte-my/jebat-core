@@ -41,8 +41,12 @@ except ImportError:
     MCP_AVAILABLE = False
     print("MCP library not installed. Install with: pip install mcp")
 
-from jebat_dev.brain import DevBrain
-from jebat_dev.sandbox import DevSandbox
+try:
+    from jebat_dev.brain import DevBrain
+    from jebat_dev.sandbox import DevSandbox
+except ImportError:
+    DevBrain = None
+    DevSandbox = None
 
 logging.basicConfig(
     level=logging.INFO,
@@ -66,9 +70,15 @@ class JEBATMCPServer:
             config: Server configuration
         """
         self.config = config or {}
-        self.brain = DevBrain()
-        self.sandbox = DevSandbox()
-        self.brain.initialize_skills(self.sandbox)
+
+        if DevBrain is not None and DevSandbox is not None:
+            self.brain = DevBrain()
+            self.sandbox = DevSandbox()
+            self.brain.initialize_skills(self.sandbox)
+        else:
+            self.brain = None
+            self.sandbox = None
+            logger.info("jebat_dev not available — dev tools disabled, web tools still active")
 
         # MCP Server instance
         if MCP_AVAILABLE:
@@ -234,6 +244,44 @@ class JEBATMCPServer:
                         "required": ["error"],
                     },
                 ),
+                Tool(
+                    name="web.search",
+                    description="Search the web for current information",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Search query",
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of results (default 5)",
+                                "default": 5,
+                            },
+                        },
+                        "required": ["query"],
+                    },
+                ),
+                Tool(
+                    name="web.fetch",
+                    description="Fetch and read the text content of a URL",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "description": "URL to fetch",
+                            },
+                            "max_length": {
+                                "type": "integer",
+                                "description": "Maximum text length (default 20000)",
+                                "default": 20000,
+                            },
+                        },
+                        "required": ["url"],
+                    },
+                ),
             ]
 
         @self.server.call_tool()
@@ -252,6 +300,17 @@ class JEBATMCPServer:
         arguments: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Execute a specific tool."""
+
+        # ── Web tools (always available) ───────────────────────────
+        if name == "web.search":
+            return await self._handle_web_search(arguments)
+
+        if name == "web.fetch":
+            return await self._handle_web_fetch(arguments)
+
+        # ── Dev tools (require jebat_dev) ──────────────────────────
+        if not self.brain or not self.sandbox:
+            return {"success": False, "error": f"Dev tools unavailable (jebat_dev not installed): {name}"}
 
         if name == "code.read":
             content = await self.sandbox.read_file(arguments["path"])
@@ -350,6 +409,52 @@ class JEBATMCPServer:
         else:
             return {"success": False, "error": f"Unknown tool: {name}"}
 
+    async def _handle_web_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute web search via WebSearchSkill."""
+        try:
+            from ..skills.web_search import WebSearchSkill
+
+            skill = WebSearchSkill()
+            result = await skill.execute(
+                query=str(arguments.get("query", "")),
+                limit=int(arguments.get("limit", 5)),
+            )
+            if not result.success:
+                return {"success": False, "error": result.error}
+            return {
+                "success": True,
+                "query": arguments.get("query", ""),
+                "results": result.results,
+                "engine": result.engine,
+            }
+        except Exception as e:
+            logger.exception("web.search failed")
+            return {"success": False, "error": str(e)}
+
+    async def _handle_web_fetch(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute web fetch via WebFetchSkill."""
+        try:
+            from ..skills.web_fetch import WebFetchSkill
+
+            skill = WebFetchSkill()
+            result = await skill.execute(
+                url=str(arguments.get("url", "")),
+                max_length=int(arguments.get("max_length", 20000)),
+            )
+            if not result.success:
+                return {"success": False, "error": result.error}
+            return {
+                "success": True,
+                "url": result.url,
+                "title": result.title,
+                "text": result.text,
+                "content_type": result.content_type,
+                "metadata": result.metadata,
+            }
+        except Exception as e:
+            logger.exception("web.fetch failed")
+            return {"success": False, "error": str(e)}
+
     def _register_resources(self):
         """Register MCP resources."""
 
@@ -388,6 +493,8 @@ class JEBATMCPServer:
                 return json.dumps(
                     {
                         "tools": [
+                            "web.search",
+                            "web.fetch",
                             "code.read",
                             "code.write",
                             "code.generate",
