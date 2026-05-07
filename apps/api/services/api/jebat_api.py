@@ -845,6 +845,61 @@ async def auth_audit(limit: int = Query(100, ge=1, le=500)):
     return {"events": list_audit_events(limit=limit)}
 
 
+# ==================== Web Tools ====================
+
+
+class WebFetchRequest(BaseModel):
+    url: str = Field(..., description="URL to fetch")
+    timeout: float = Field(30.0, ge=1.0, le=120.0)
+    max_length: int = Field(50000, ge=1000, le=200000)
+    include_metadata: bool = False
+
+
+class WebSearchRequest(BaseModel):
+    query: str = Field(..., description="Search query")
+    limit: int = Field(10, ge=1, le=20)
+    engine: str = Field("auto", description="auto, duckduckgo, brave, or searxng")
+    timeout: float = Field(15.0, ge=1.0, le=60.0)
+
+
+@app.post(
+    "/api/v1/web/fetch",
+    tags=["Web Tools"],
+    dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))],
+)
+async def web_fetch(request: WebFetchRequest):
+    """Fetch a URL and extract readable text content."""
+    from ...skills import WebFetchSkill
+
+    skill = WebFetchSkill()
+    result = await skill.execute(
+        url=request.url,
+        timeout=request.timeout,
+        max_length=request.max_length,
+        include_metadata=request.include_metadata,
+    )
+    return result.__dict__
+
+
+@app.post(
+    "/api/v1/web/search",
+    tags=["Web Tools"],
+    dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))],
+)
+async def web_search(request: WebSearchRequest):
+    """Search the web using DuckDuckGo, Brave, or SearXNG."""
+    from ...skills import WebSearchSkill
+
+    skill = WebSearchSkill()
+    result = await skill.execute(
+        query=request.query,
+        limit=request.limit,
+        engine=request.engine,
+        timeout=request.timeout,
+    )
+    return result.__dict__
+
+
 # ==================== Run Server ====================
 
 

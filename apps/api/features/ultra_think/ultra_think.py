@@ -219,11 +219,32 @@ class UltraThink:
             "probabilistic_reasoning": True,
         }
 
+        # LLM config (lazy-loaded)
+        self._llm_config = None
+
         logger.info(
             "Ultra-Think initialized with DB persistence: %s, Memory integration: %s",
             enable_db_persistence,
             enable_memory_integration,
         )
+
+    async def _llm_generate(self, prompt: str, system_prompt: str = "") -> str:
+        """Call LLM provider with failover. Returns generated text."""
+        try:
+            from ...llm.config import load_llm_config
+            from ...llm.providers import generate_with_failover
+
+            if self._llm_config is None:
+                self._llm_config = load_llm_config()
+
+            text, provider = await generate_with_failover(
+                self._llm_config, prompt, system_prompt,
+            )
+            logger.debug("LLM response from %s (%d chars)", provider, len(text))
+            return text
+        except Exception as e:
+            logger.warning("LLM call failed, using fallback: %s", e)
+            return ""
 
     async def think(
         self,
@@ -476,49 +497,20 @@ class UltraThink:
     ):
         """Understand and frame the problem"""
         problem = trace.problem_statement
+        ctx_str = ""
+        if context:
+            ctx_str = f"\n\nAdditional context: {context}"
 
-        # Parse and understand the problem
+        response = await self._llm_generate(
+            prompt=f"Analyze this problem and identify the key elements, constraints, and goals:\n\n{problem}{ctx_str}",
+            system_prompt="You are a precise analytical thinker. Break down the problem into its core components. Be concise — 2-4 sentences.",
+        )
+
         thought = ThoughtNode(
-            content=f"Problem Understanding: {problem}",
+            content=response or f"Problem Understanding: {problem}",
             phase=ThinkingPhase.ORIENTATION,
             confidence=0.8,
             metadata={"phase": "orientation"},
-        )
-        trace.add_thought(thought)
-
-        # Retrieve relevant memories if enabled
-        if self.enable_memory_integration and self.memory_manager and user_id:
-            try:
-                # TODO: Retrieve relevant context from memory
-                # memories = await self.memory_manager.search_memories(
-                #     query=problem, user_id=user_id, limit=5
-                # )
-                thought = ThoughtNode(
-                    content="Retrieved relevant memories for context",
-                    phase=ThinkingPhase.ORIENTATION,
-                    confidence=0.75,
-                    supporting_evidence=["memory_retrieval"],
-                    metadata={"memory_integration": True},
-                )
-                trace.add_thought(thought)
-            except Exception as e:
-                logger.warning(f"Memory retrieval failed in orientation: {e}")
-
-        # Identify key components
-        thought = ThoughtNode(
-            content=f"Key elements identified in problem",
-            phase=ThinkingPhase.ORIENTATION,
-            confidence=0.7,
-            metadata={"component": "analysis"},
-        )
-        trace.add_thought(thought)
-
-        # Set thinking goals
-        thought = ThoughtNode(
-            content=f"Thinking goal: Analyze and provide reasoned response",
-            phase=ThinkingPhase.ORIENTATION,
-            confidence=0.9,
-            metadata={"goal": "primary"},
         )
         trace.add_thought(thought)
 
@@ -529,27 +521,15 @@ class UltraThink:
         user_id: Optional[str] = None,
     ):
         """Gather relevant information and perspectives"""
-        # Retrieve relevant memories if available and enabled
-        if self.enable_memory_integration and self.memory_manager and user_id:
-            try:
-                # TODO: Retrieve relevant context from memory
-                # memories = await self.memory_manager.search_memories(
-                #     query=trace.problem_statement, user_id=user_id, limit=5
-                # )
-                thought = ThoughtNode(
-                    content="Explored relevant knowledge and context from memory",
-                    phase=ThinkingPhase.EXPLORATION,
-                    confidence=0.7,
-                    supporting_evidence=["memory_retrieval"],
-                    metadata={"exploration_type": "memory", "user_id": user_id},
-                )
-                trace.add_thought(thought)
-            except Exception as e:
-                logger.warning(f"Memory retrieval failed in exploration: {e}")
+        prior = "\n".join(f"- {t.content}" for t in trace.thoughts[-3:])
 
-        # Consider multiple perspectives
+        response = await self._llm_generate(
+            prompt=f"Given this problem analysis:\n{prior}\n\nExplore different perspectives, relevant knowledge, and possible approaches. Consider at least 2 distinct angles.",
+            system_prompt="You are a broad thinker exploring multiple perspectives. Be concise — 3-5 sentences covering different angles.",
+        )
+
         thought = ThoughtNode(
-            content="Considering multiple perspectives on the problem",
+            content=response or "Exploring multiple perspectives on the problem",
             phase=ThinkingPhase.EXPLORATION,
             confidence=0.75,
             metadata={"exploration_type": "perspectives"},
@@ -558,62 +538,50 @@ class UltraThink:
 
     async def _analysis_phase(self, trace: ThinkingTrace, mode: ThinkingMode):
         """Break down and examine components"""
-        # Apply chain-of-thought reasoning
-        if self.techniques["chain_of_thought"]:
-            thought = ThoughtNode(
-                content="Breaking down problem using chain-of-thought reasoning",
-                phase=ThinkingPhase.ANALYSIS,
-                confidence=0.8,
-                metadata={"technique": "chain_of_thought"},
-            )
-            trace.add_thought(thought)
+        prior = "\n".join(f"- {t.content}" for t in trace.thoughts[-4:])
+        techniques = [k for k, v in self.techniques.items() if v]
 
-        # Apply first principles thinking
-        if self.techniques["first_principles"]:
-            thought = ThoughtNode(
-                content="Analyzing from first principles",
-                phase=ThinkingPhase.ANALYSIS,
-                confidence=0.75,
-                metadata={"technique": "first_principles"},
-            )
-            trace.add_thought(thought)
+        response = await self._llm_generate(
+            prompt=f"Based on this thinking so far:\n{prior}\n\nApply rigorous analysis using these techniques: {', '.join(techniques)}. Identify strengths, weaknesses, and key insights.",
+            system_prompt="You are a critical analyst. Apply structured reasoning. Identify both supporting evidence and counter-arguments. Be concise — 3-5 sentences.",
+        )
 
-        # Generate counter-arguments
-        if self.techniques["counterfactual"]:
-            thought = ThoughtNode(
-                content="Considering counter-arguments and alternative views",
-                phase=ThinkingPhase.ANALYSIS,
-                confidence=0.7,
-                counter_arguments=["alternative_interpretations"],
-                metadata={"technique": "counterfactual"},
-            )
-            trace.add_thought(thought)
+        thought = ThoughtNode(
+            content=response or "Analyzing problem components",
+            phase=ThinkingPhase.ANALYSIS,
+            confidence=0.8,
+            metadata={"techniques": techniques},
+        )
+        trace.add_thought(thought)
 
     async def _synthesis_phase(self, trace: ThinkingTrace, mode: ThinkingMode):
         """Combine insights into conclusions"""
-        # Synthesize analysis into coherent conclusion
+        prior = "\n".join(f"[{t.phase.value}] {t.content}" for t in trace.thoughts[-6:])
+
+        response = await self._llm_generate(
+            prompt=f"Synthesize these thinking steps into a coherent preliminary conclusion:\n{prior}\n\nWhat is the most well-supported answer? Are there viable alternatives?",
+            system_prompt="You are synthesizing analysis into a clear conclusion. State the primary conclusion and one alternative. Be concise — 3-5 sentences.",
+        )
+
         thought = ThoughtNode(
-            content="Synthesizing analysis into coherent conclusion",
+            content=response or "Synthesizing analysis into conclusion",
             phase=ThinkingPhase.SYNTHESIS,
             confidence=0.75,
             metadata={"synthesis_type": "integration"},
         )
         trace.add_thought(thought)
 
-        # Consider alternative conclusions
-        thought = ThoughtNode(
-            content="Evaluating alternative conclusions",
-            phase=ThinkingPhase.SYNTHESIS,
-            confidence=0.7,
-            metadata={"synthesis_type": "alternatives"},
-        )
-        trace.add_thought(thought)
-
     async def _verification_phase(self, trace: ThinkingTrace, mode: ThinkingMode):
         """Check and validate reasoning"""
-        # Verify logical consistency
+        prior = "\n".join(f"[{t.phase.value}] {t.content}" for t in trace.thoughts[-5:])
+
+        response = await self._llm_generate(
+            prompt=f"Verify this reasoning chain for logical consistency, biases, and errors:\n{prior}\n\nAre there any flaws? Is the conclusion well-supported?",
+            system_prompt="You are a verification specialist. Check for logical fallacies, unsupported claims, and cognitive biases. Be concise — 2-4 sentences.",
+        )
+
         thought = ThoughtNode(
-            content="Verifying logical consistency of reasoning",
+            content=response or "Verifying logical consistency",
             phase=ThinkingPhase.VERIFICATION,
             confidence=0.8,
             supporting_evidence=["logic_check"],
@@ -621,40 +589,27 @@ class UltraThink:
         )
         trace.add_thought(thought)
 
-        # Check for biases and errors
-        thought = ThoughtNode(
-            content="Checking for cognitive biases and reasoning errors",
-            phase=ThinkingPhase.VERIFICATION,
-            confidence=0.75,
-            metadata={"verification_type": "bias_check"},
-        )
-        trace.add_thought(thought)
-
     async def _reflection_phase(self, trace: ThinkingTrace, mode: ThinkingMode):
         """Metacognitive evaluation of thinking process"""
-        # Evaluate thinking quality
+        prior = "\n".join(f"[{t.phase.value}] {t.content}" for t in trace.thoughts[-6:])
+
+        response = await self._llm_generate(
+            prompt=f"Reflect on this thinking process:\n{prior}\n\nHow confident should we be? What could improve the analysis?",
+            system_prompt="You are a metacognitive evaluator. Assess thinking quality and confidence level. Be concise — 2-3 sentences.",
+        )
+
         thought = ThoughtNode(
-            content="Reflecting on thinking process quality",
+            content=response or "Reflecting on thinking quality",
             phase=ThinkingPhase.REFLECTION,
             confidence=0.7,
             metadata={"reflection_type": "metacognition"},
         )
         trace.add_thought(thought)
 
-        # Identify areas for improvement
-        thought = ThoughtNode(
-            content="Identifying areas for thinking improvement",
-            phase=ThinkingPhase.REFLECTION,
-            confidence=0.65,
-            metadata={"reflection_type": "improvement"},
-        )
-        trace.add_thought(thought)
-
     async def _generate_conclusion(
         self, trace: ThinkingTrace
     ) -> Tuple[str, float, List[Tuple[str, float]]]:
-        """Generate final conclusion from thinking trace"""
-        # Aggregate confidence from all thoughts
+        """Generate final conclusion from thinking trace using LLM"""
         if trace.thoughts:
             avg_confidence = sum(t.confidence for t in trace.thoughts) / len(
                 trace.thoughts
@@ -662,14 +617,27 @@ class UltraThink:
         else:
             avg_confidence = 0.5
 
-        # Generate primary conclusion
-        conclusion = f"Based on {len(trace.thoughts)} thinking steps, I conclude with {avg_confidence:.1%} confidence."
+        # Build full reasoning chain for the LLM
+        chain = "\n".join(
+            f"[{t.phase.value}] {t.content}" for t in trace.thoughts
+        )
 
-        # Generate alternatives
-        alternatives = [
-            ("Alternative interpretation 1", avg_confidence * 0.7),
-            ("Alternative interpretation 2", avg_confidence * 0.5),
-        ]
+        response = await self._llm_generate(
+            prompt=(
+                f"Problem: {trace.problem_statement}\n\n"
+                f"Reasoning chain:\n{chain}\n\n"
+                f"Based on this analysis, provide a clear, direct answer to the original problem."
+            ),
+            system_prompt=(
+                "You are providing the final answer after deep analysis. "
+                "Be direct and comprehensive. Answer the question fully. "
+                "Do not reference the thinking process — just give the answer."
+            ),
+        )
+
+        conclusion = response or f"Based on {len(trace.thoughts)} thinking steps, I conclude with {avg_confidence:.1%} confidence."
+
+        alternatives: List[Tuple[str, float]] = []
 
         return conclusion, avg_confidence, alternatives
 

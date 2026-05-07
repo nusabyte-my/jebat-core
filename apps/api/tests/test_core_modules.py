@@ -199,5 +199,35 @@ class TestDatabaseSafety(unittest.IsolatedAsyncioTestCase):
         self.assertIn("error", result)
 
 
+class TestWebSkills(unittest.IsolatedAsyncioTestCase):
+    """Test webfetch/websearch skills."""
+
+    def test_web_skills_import(self):
+        from apps.api.skills import WebFetchSkill, WebSearchSkill
+        self.assertEqual(WebFetchSkill.name, "web_fetch")
+        self.assertEqual(WebSearchSkill.name, "web_search")
+
+    async def test_web_fetch_rejects_invalid_scheme(self):
+        from apps.api.skills import WebFetchSkill
+        skill = WebFetchSkill()
+        result = await skill.execute(url="file:///etc/passwd")
+        self.assertFalse(result.success)
+        self.assertIn("Invalid URL scheme", result.error)
+
+    async def test_web_fetch_rejects_missing_host(self):
+        from apps.api.skills import WebFetchSkill
+        skill = WebFetchSkill()
+        result = await skill.execute(url="https://")
+        self.assertFalse(result.success)
+        self.assertIn("no host", result.error)
+
+    async def test_web_search_rejects_empty_query(self):
+        from apps.api.skills import WebSearchSkill
+        skill = WebSearchSkill()
+        result = await skill.execute(query="")
+        self.assertFalse(result.success)
+        self.assertEqual(result.error, "Empty query")
+
+
 if __name__ == "__main__":
     unittest.main()
