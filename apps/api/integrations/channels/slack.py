@@ -11,7 +11,7 @@ Features:
 - Channel configuration
 
 Usage:
-    from jebat.integrations.channels.slack import SlackChannel
+    from ...integrations.channels.slack import SlackChannel
 
     channel = SlackChannel(
         bot_token="xoxb-YOUR-TOKEN",
@@ -259,7 +259,7 @@ class SlackChannel:
             # Process with Ultra-Think
             if self.ultra_loop and self.ultra_loop.ultra_think:
                 try:
-                    from jebat.features.ultra_think import ThinkingMode
+                    from ...features.ultra_think import ThinkingMode
 
                     result = await self.ultra_loop.ultra_think.think(
                         problem=text,

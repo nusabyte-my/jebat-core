@@ -30,6 +30,7 @@ class AgentPersonality(str, Enum):
     PROFESSIONAL = "professional"
     FRIENDLY = "friendly"
     CONCISE = "concise"
+    CREATIVE = "creative"
     DETAILED = "detailed"
     TECHNICAL = "technical"
 

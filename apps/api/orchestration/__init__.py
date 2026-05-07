@@ -1,5 +1,5 @@
 """
-⚙️ JEBAT Workflow Orchestration
+JEBAT Workflow Orchestration
 
 Advanced workflow orchestration for JEBAT:
 - DAG-based workflow engine
@@ -7,15 +7,15 @@ Advanced workflow orchestration for JEBAT:
 - Dependency resolution
 - Conditional branching
 - State persistence
-
-Part of Q3 2026 Roadmap
 """
 
-from .condition_engine import ConditionEngine
-from .dependency_resolver import DependencyResolver
-from .state_manager import StateManager
-from .task_scheduler import TaskScheduler
 from .workflow_engine import WorkflowEngine
+
+# Planned modules — not yet implemented
+ConditionEngine = None
+DependencyResolver = None
+StateManager = None
+TaskScheduler = None
 
 __all__ = [
     "WorkflowEngine",

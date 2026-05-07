@@ -11,7 +11,7 @@ Features:
 - Thread support
 
 Usage:
-    from jebat.integrations.channels.discord import DiscordChannel
+    from ...integrations.channels.discord import DiscordChannel
 
     channel = DiscordChannel(
         bot_token="YOUR_BOT_TOKEN",
@@ -156,7 +156,7 @@ class DiscordChannel:
                 return
 
             try:
-                from jebat.features.ultra_think import ThinkingMode
+                from ...features.ultra_think import ThinkingMode
 
                 thinking_mode = ThinkingMode(mode.lower())
                 result = await self.ultra_loop.ultra_think.think(
@@ -287,7 +287,7 @@ class DiscordChannel:
         # Process through Ultra-Loop if connected
         if self.ultra_loop:
             try:
-                from jebat.features.ultra_think import ThinkingMode
+                from ...features.ultra_think import ThinkingMode
 
                 result = await self.ultra_loop.ultra_think.think(
                     problem=content,

@@ -4,7 +4,6 @@ JEBAT Ultra-Think
 Deep reasoning and analysis system.
 """
 
-from .database_repository import UltraThinkRepository
 from .ultra_think import (
     ThinkingMode,
     ThinkingPhase,
@@ -14,6 +13,11 @@ from .ultra_think import (
     UltraThink,
     create_ultra_think,
 )
+
+try:
+    from .database_repository import UltraThinkRepository
+except ImportError:
+    UltraThinkRepository = None
 
 __all__ = [
     "UltraThink",

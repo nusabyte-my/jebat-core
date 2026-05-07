@@ -4,7 +4,6 @@ JEBAT Ultra-Loop
 Continuous processing and learning system.
 """
 
-from .database_repository import UltraLoopRepository
 from .ultra_loop import (
     LoopContext,
     LoopMetrics,
@@ -12,6 +11,11 @@ from .ultra_loop import (
     UltraLoop,
     create_ultra_loop,
 )
+
+try:
+    from .database_repository import UltraLoopRepository
+except ImportError:
+    UltraLoopRepository = None
 
 __all__ = [
     "UltraLoop",

@@ -11,7 +11,7 @@ Features:
 - Webhook handling
 
 Usage:
-    from jebat.integrations.channels.whatsapp import WhatsAppChannel
+    from ...integrations.channels.whatsapp import WhatsAppChannel
 
     channel = WhatsAppChannel(
         phone_number_id="YOUR_PHONE_NUMBER_ID",

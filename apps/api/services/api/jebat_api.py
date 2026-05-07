@@ -20,10 +20,25 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from ..auth import (
+    apply_security_headers,
+    auth_required,
+    create_operator_token,
+    current_auth_context,
+    get_cors_settings,
+    list_audit_events,
+    list_operator_tokens,
+    log_security_event,
+    require_permissions,
+    require_operator_token,
+    revoke_operator_token,
+    rotate_operator_token,
+)
+from ...features.rbac import Permission
 from .security_console import router as security_console_router
 
 # Configure logging
@@ -38,19 +53,31 @@ app = FastAPI(
     title="JEBAT API",
     description="JEBAT AI Assistant - REST API",
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url=None if auth_required() else "/api/docs",
+    redoc_url=None if auth_required() else "/api/redoc",
+    openapi_url=None if auth_required() else "/openapi.json",
 )
+
+cors_origins, cors_allow_credentials = get_cors_settings()
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=cors_allow_credentials,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
-app.include_router(security_console_router)
+app.include_router(
+    security_console_router,
+    dependencies=[Depends(require_permissions(Permission.SECURITY_SCAN))],
+)
+
+
+@app.middleware("http")
+async def add_api_security_headers(request, call_next):
+    response = await call_next(request)
+    return apply_security_headers(response)
 
 
 # ==================== Models ====================
@@ -158,6 +185,42 @@ class SkillInfo(BaseModel):
     source: str = "vps"
 
 
+class AuthMeResponse(BaseModel):
+    token_id: str
+    subject: str
+    source: str
+    roles: List[str]
+    permissions: List[str]
+    expires_at: Optional[str] = None
+
+
+class OperatorTokenCreateRequest(BaseModel):
+    name: str = Field(..., min_length=3, max_length=120)
+    roles: List[str] = Field(default_factory=lambda: ["operator"])
+    expires_in_days: Optional[int] = Field(None, ge=1, le=3650)
+
+
+class OperatorTokenMaterialResponse(BaseModel):
+    token: str
+    record: Dict[str, Any]
+
+
+class OperatorTokenRevokeResponse(BaseModel):
+    id: str
+    revoked_at: Optional[str]
+    already_revoked: bool = False
+
+
+class AuditEventResponse(BaseModel):
+    timestamp: str
+    action: str
+    actor: Optional[str] = None
+    actor_token_id: Optional[str] = None
+    actor_roles: List[str] = Field(default_factory=list)
+    resource: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+
 # ==================== Global State ====================
 
 # These will be initialized when the API starts
@@ -257,7 +320,7 @@ async def root():
         "name": "JEBAT API",
         "version": "1.0.0",
         "description": "JEBAT AI Assistant REST API",
-        "docs": "/api/docs",
+        "docs": None if auth_required() else "/api/docs",
         "health": "/api/v1/health",
         "status": "/api/v1/status",
     }
@@ -270,21 +333,34 @@ async def health_check():
 
     Returns the health status of all system components.
     """
+    has_memory = bool(jebat_components.get("memory_manager"))
+
+    db_health = {"healthy": False, "error": "disabled"}
+    try:
+        from ...database import check_database_health
+        from ...config import settings
+        if settings.database.enabled:
+            db_health = await check_database_health()
+    except Exception:
+        pass
+
     health = {
-        "healthy": True,
-        "database": True,  # Would check actual DB connection
-        "redis": True,  # Would check actual Redis connection
+        "healthy": has_memory,
+        "memory_manager": has_memory,
+        "database": db_health.get("healthy", False),
+        "redis": False,
         "timestamp": datetime.utcnow().isoformat(),
     }
-
-    # Check components
-    if not jebat_components.get("memory_manager"):
-        health["healthy"] = False
 
     return health
 
 
-@app.get("/api/v1/status", response_model=StatusResponse, tags=["Status"])
+@app.get(
+    "/api/v1/status",
+    response_model=StatusResponse,
+    tags=["Status"],
+    dependencies=[Depends(require_permissions(Permission.API_READ))],
+)
 async def get_status():
     """
     Get system status.
@@ -324,7 +400,12 @@ async def get_status():
     }
 
 
-@app.get("/api/v1/metrics", response_model=MetricsResponse, tags=["Metrics"])
+@app.get(
+    "/api/v1/metrics",
+    response_model=MetricsResponse,
+    tags=["Metrics"],
+    dependencies=[Depends(require_permissions(Permission.API_READ))],
+)
 async def get_metrics():
     """
     Get system metrics.
@@ -355,7 +436,12 @@ async def get_metrics():
     }
 
 
-@app.get("/api/v1/memories", response_model=List[MemoryResponse], tags=["Memory"])
+@app.get(
+    "/api/v1/memories",
+    response_model=List[MemoryResponse],
+    tags=["Memory"],
+    dependencies=[Depends(require_permissions(Permission.MEMORY_READ))],
+)
 async def list_memories(
     user_id: str = Query(..., description="User identifier"),
     limit: int = Query(10, ge=1, le=100, description="Maximum results"),
@@ -400,11 +486,16 @@ async def list_memories(
         logger.error(f"List memories error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail="failed to list memories",
         )
 
 
-@app.post("/api/v1/memories", response_model=MemoryResponse, tags=["Memory"])
+@app.post(
+    "/api/v1/memories",
+    response_model=MemoryResponse,
+    tags=["Memory"],
+    dependencies=[Depends(require_permissions(Permission.MEMORY_WRITE))],
+)
 async def store_memory(request: MemoryStoreRequest):
     """
     Store a memory.
@@ -446,16 +537,20 @@ async def store_memory(request: MemoryStoreRequest):
         logger.error(f"Store memory error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail="failed to store memory",
         )
 
 
-@app.get("/api/v1/models", tags=["OpenAI Compatible"])
+@app.get(
+    "/api/v1/models",
+    tags=["OpenAI Compatible"],
+    dependencies=[Depends(require_permissions(Permission.API_READ))],
+)
 async def list_models():
     """
     List available models (OpenAI-compatible).
 
-    Zed calls this endpoint to discover available models.
+    Zed and the V3 Chat frontend call this endpoint to discover available models.
     """
     return {
         "object": "list",
@@ -463,11 +558,24 @@ async def list_models():
             {"id": "jebat-pro", "object": "model", "owned_by": "jebat"},
             {"id": "jebat-fast", "object": "model", "owned_by": "jebat"},
             {"id": "jebat-deep", "object": "model", "owned_by": "jebat"},
+            {"id": "jebat-llm", "object": "model", "owned_by": "llamacpp"},
+            {"id": "gemma4", "object": "model", "owned_by": "ollama"},
+            {"id": "hermes3", "object": "model", "owned_by": "ollama"},
+            {"id": "phi3", "object": "model", "owned_by": "ollama"},
+            {"id": "qwen2.5", "object": "model", "owned_by": "ollama"},
+            {"id": "llama3.1", "object": "model", "owned_by": "ollama"},
+            {"id": "codellama", "object": "model", "owned_by": "ollama"},
+            {"id": "mistral", "object": "model", "owned_by": "ollama"},
+            {"id": "tinyllama", "object": "model", "owned_by": "ollama"},
         ],
     }
 
 
-@app.post("/api/v1/chat/completions", tags=["OpenAI Compatible"])
+@app.post(
+    "/api/v1/chat/completions",
+    tags=["OpenAI Compatible"],
+    dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))],
+)
 async def openai_chat_completion(request: OpenAIChatRequest):
     """
     OpenAI-compatible chat completions endpoint.
@@ -539,11 +647,15 @@ async def openai_chat_completion(request: OpenAIChatRequest):
         logger.error(f"OpenAI chat completion error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail="chat completion failed",
         )
 
 
-@app.get("/api/v1/agents", tags=["Agents"])
+@app.get(
+    "/api/v1/agents",
+    tags=["Agents"],
+    dependencies=[Depends(require_permissions(Permission.API_READ))],
+)
 async def list_agents():
     """
     List available agents.
@@ -588,7 +700,11 @@ async def list_agents():
     return result
 
 
-@app.get("/api/v1/skills", tags=["Skills"])
+@app.get(
+    "/api/v1/skills",
+    tags=["Skills"],
+    dependencies=[Depends(require_permissions(Permission.API_READ))],
+)
 async def list_skills():
     """
     List available skills from VPS.
@@ -644,6 +760,89 @@ async def list_skills():
         "source": "vps",
         "path": skills_dir,
     }
+
+
+@app.get(
+    "/api/v1/auth/me",
+    response_model=AuthMeResponse,
+    tags=["Auth"],
+    dependencies=[Depends(require_operator_token)],
+)
+async def auth_me(request: Request):
+    context = current_auth_context(request)
+    return AuthMeResponse(
+        token_id=context.token_id,
+        subject=context.subject,
+        source=context.source,
+        roles=list(context.roles),
+        permissions=list(context.permissions),
+        expires_at=context.expires_at,
+    )
+
+
+@app.get(
+    "/api/v1/auth/tokens",
+    tags=["Auth"],
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def auth_list_tokens():
+    return {"tokens": list_operator_tokens()}
+
+
+@app.post(
+    "/api/v1/auth/tokens",
+    response_model=OperatorTokenMaterialResponse,
+    tags=["Auth"],
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def auth_create_token(payload: OperatorTokenCreateRequest, request: Request):
+    actor = current_auth_context(request)
+    result = create_operator_token(
+        name=payload.name,
+        roles=payload.roles,
+        expires_in_days=payload.expires_in_days,
+        actor=actor,
+    )
+    return OperatorTokenMaterialResponse(**result)
+
+
+@app.post(
+    "/api/v1/auth/tokens/{token_id}/rotate",
+    response_model=OperatorTokenMaterialResponse,
+    tags=["Auth"],
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def auth_rotate_token(token_id: str, request: Request):
+    actor = current_auth_context(request)
+    try:
+        result = rotate_operator_token(token_id, actor=actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return OperatorTokenMaterialResponse(**result)
+
+
+@app.post(
+    "/api/v1/auth/tokens/{token_id}/revoke",
+    response_model=OperatorTokenRevokeResponse,
+    tags=["Auth"],
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def auth_revoke_token(token_id: str, request: Request):
+    actor = current_auth_context(request)
+    try:
+        result = revoke_operator_token(token_id, actor=actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return OperatorTokenRevokeResponse(**result)
+
+
+@app.get(
+    "/api/v1/auth/audit",
+    tags=["Auth"],
+    dependencies=[Depends(require_permissions(Permission.ADMIN_AUDIT))],
+)
+async def auth_audit(limit: int = Query(100, ge=1, le=500)):
+    return {"events": list_audit_events(limit=limit)}
 
 
 # ==================== Run Server ====================

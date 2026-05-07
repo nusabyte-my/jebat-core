@@ -12,6 +12,7 @@
 
 import asyncio
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -785,7 +786,7 @@ async def example_usage():
         port=5432,
         database="jebat_db",
         username="jebat",
-        password="jebat_secure_password",
+        password=os.getenv("JEBAT_DATABASE_PASSWORD", ""),
         pool_size=10,
         max_overflow=10,
     )

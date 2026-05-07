@@ -26,7 +26,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from jebat.llm import (
+from ..llm import (
     build_skill_prompt,
     build_skill_registry,
     ChatHistoryStore,
@@ -81,9 +81,9 @@ class JEBATCLI:
 
         try:
             # Import JEBAT components
-            from jebat import MemoryManager
-            from jebat.features.ultra_loop import create_ultra_loop
-            from jebat.features.ultra_think import create_ultra_think
+            from .. import MemoryManager
+            from ..features.ultra_loop import create_ultra_loop
+            from ..features.ultra_think import create_ultra_think
 
             # Initialize Memory Manager
             self.memory_manager = MemoryManager()
@@ -227,7 +227,7 @@ class JEBATCLI:
         self.print(f"\n Thinking about: {question[:80]}...", "bold blue")
         self.print(f"  Mode: {mode}", "yellow")
 
-        from jebat.features.ultra_think import ThinkingMode
+        from ..features.ultra_think import ThinkingMode
 
         try:
             thinking_mode = ThinkingMode(mode.lower())
@@ -259,7 +259,7 @@ class JEBATCLI:
 
         self.print(f"\n Storing memory: {text[:80]}...", "bold blue")
 
-        from jebat.core.memory.layers import MemoryLayer
+        from ..core.memory.layers import MemoryLayer
 
         memory_id = await self.memory_manager.store(
             content=text,

@@ -10,8 +10,8 @@ import yaml
 
 @dataclass(frozen=True, slots=True)
 class JebatLLMConfig:
-    provider: str = "openai"
-    model: str = "gpt-5.4"
+    provider: str = "ollama"
+    model: str = "llama3.2"
     temperature: float = 0.2
     max_tokens: int = 1200
     ollama_host: str = "http://127.0.0.1:11434"
@@ -23,8 +23,8 @@ class JebatLLMConfig:
 def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
     raw = _load_yaml_config(config_path)
 
-    provider = os.getenv("JEBAT_LLM_PROVIDER", raw.get("provider", "openai"))
-    model = os.getenv("JEBAT_LLM_MODEL", raw.get("model", "gpt-5.4"))
+    provider = os.getenv("JEBAT_LLM_PROVIDER", raw.get("provider", "ollama"))
+    model = os.getenv("JEBAT_LLM_MODEL", raw.get("model", "llama3.2"))
     temperature = float(os.getenv("JEBAT_LLM_TEMPERATURE", raw.get("temperature", 0.2)))
     max_tokens = int(os.getenv("JEBAT_LLM_MAX_TOKENS", raw.get("max_tokens", 1200)))
     ollama_host = os.getenv("OLLAMA_HOST", raw.get("ollama_host", "http://127.0.0.1:11434"))

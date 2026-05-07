@@ -62,28 +62,61 @@ class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 
-# Database URL should be configured from environment
-DATABASE_URL = (
-    "postgresql+asyncpg://jebat:jebat_secure_password@localhost:5432/jebat_db"
-)
+def _get_database_url() -> str:
+    """Get database URL from environment, never hardcoded."""
+    import os
+    return os.getenv(
+        "JEBAT_DATABASE_URL",
+        "sqlite+aiosqlite:///jebat.db",
+    )
 
-# Create async engine
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True,
-    pool_recycle=3600,
-)
 
-# Create async session factory
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,
-)
+def _create_engine():
+    """Create async engine from environment config."""
+    from ..config import settings
+
+    return create_async_engine(
+        _get_database_url(),
+        echo=settings.debug,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+    )
+
+
+# Lazy engine — only created when actually used
+_engine = None
+
+
+def get_engine():
+    """Get or create the database engine."""
+    global _engine
+    if _engine is None:
+        _engine = _create_engine()
+    return _engine
+
+
+def get_async_session_factory():
+    """Get async session factory."""
+    return async_sessionmaker(
+        get_engine(),
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+
+
+# Backward-compatible aliases (lazy)
+class _LazySessionLocal:
+    """Lazy proxy so importing models.py doesn't immediately connect to DB."""
+
+    def __call__(self, *args, **kwargs):
+        return get_async_session_factory()(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(get_async_session_factory(), name)
+
+
+AsyncSessionLocal = _LazySessionLocal()
 
 
 # ==================== Enum Types ====================

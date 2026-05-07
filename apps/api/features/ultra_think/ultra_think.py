@@ -22,7 +22,10 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from .database_repository import UltraThinkRepository
+try:
+    from .database_repository import UltraThinkRepository
+except ImportError:
+    UltraThinkRepository = None
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +183,14 @@ class UltraThink:
         self.enable_db_persistence = enable_db_persistence
         self.enable_memory_integration = enable_memory_integration
 
-        # Database repository
-        self.db_repo = UltraThinkRepository() if enable_db_persistence else None
+        # Database repository (None if sqlalchemy not installed)
+        self.db_repo = None
+        if enable_db_persistence and UltraThinkRepository is not None:
+            try:
+                self.db_repo = UltraThinkRepository()
+            except Exception:
+                logger.debug("DB persistence unavailable for Ultra-Think")
+                self.db_repo = None
 
         # Thinking parameters
         self.max_thoughts = self.config.get("max_thoughts", 50)

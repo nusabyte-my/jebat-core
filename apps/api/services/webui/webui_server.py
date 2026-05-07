@@ -8,12 +8,14 @@ import asyncio
 import json
 import logging
 import tempfile
+from urllib.parse import urlparse
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import (
     APIRouter,
+    Depends,
     FastAPI,
     HTTPException,
     Request,
@@ -21,14 +23,28 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
+
+from ...features.rbac import Permission
+from ..auth import (
+    create_operator_token,
+    current_auth_context,
+    ensure_websocket_token,
+    list_audit_events,
+    list_operator_tokens,
+    log_security_event,
+    require_operator_token,
+    require_permissions,
+    revoke_operator_token,
+    rotate_operator_token,
+)
 
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Router for WebUI
-webui_router = APIRouter(tags=["webui"])
+webui_router = APIRouter(tags=["webui"], dependencies=[Depends(require_operator_token)])
 
 # Store for active connections
 active_connections: Dict[str, WebSocket] = {}
@@ -79,6 +95,12 @@ class WorkstationConnectRequest(BaseModel):
 
 class WorkstationActionRequest(BaseModel):
     workstation: str
+
+
+class AdminTokenCreateRequest(BaseModel):
+    name: str
+    roles: List[str] = ["operator"]
+    expires_in_days: Optional[int] = None
 
 
 CHANNEL_CONNECTIONS: Dict[str, Dict[str, Any]] = {}
@@ -152,6 +174,13 @@ def _provider_env_targets(provider: str) -> list[str]:
     return mapping.get(provider, [])
 
 
+def _validate_ollama_host(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise HTTPException(status_code=400, detail="ollama host must be a valid http or https URL")
+    return value
+
+
 def _read_provider_auth_store() -> Dict[str, str]:
     data = _read_json(_data_path("provider_auth.json"), {})
     return data if isinstance(data, dict) else {}
@@ -195,36 +224,36 @@ def _provider_model_catalog() -> dict[str, dict[str, Any]]:
             "label": "OpenAI",
             "supports_custom": False,
             "models": [
-                "gpt-5.4",
-                "gpt-5.4-mini",
-                "gpt-5.3-codex",
-                "gpt-5.2",
+                "gpt-4o",
+                "gpt-4o-mini",
+                "gpt-4-turbo",
+                "o3-mini",
             ],
         },
         "google": {
             "label": "Google",
             "supports_custom": False,
             "models": [
-                "gemini-3-flash-preview",
-                "gemini-3.1-pro-preview",
                 "gemini-2.5-pro",
+                "gemini-2.5-flash",
+                "gemini-2.0-flash",
             ],
         },
         "anthropic": {
             "label": "Anthropic",
             "supports_custom": False,
             "models": [
-                "claude-sonnet-4-5",
-                "claude-opus-4-1",
-                "claude-3-7-sonnet-latest",
+                "claude-sonnet-4-20250514",
+                "claude-3-5-sonnet-20241022",
+                "claude-3-5-haiku-20241022",
             ],
         },
         "openrouter": {
             "label": "OpenRouter",
             "supports_custom": True,
             "models": [
-                "openai/gpt-5.4",
-                "anthropic/claude-sonnet-4-5",
+                "openai/gpt-4o",
+                "anthropic/claude-sonnet-4-20250514",
                 "google/gemini-2.5-pro",
             ],
         },
@@ -232,10 +261,10 @@ def _provider_model_catalog() -> dict[str, dict[str, Any]]:
             "label": "Ollama",
             "supports_custom": True,
             "models": [
-                "hermes3:8b",
+                "llama3.2:latest",
                 "qwen2.5-coder:7b",
-                "hermes-sec-v2:latest",
-                "llama3:8b",
+                "hermes3:8b",
+                "deepseek-r1:8b",
             ],
         },
         "local": {
@@ -300,7 +329,7 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
 
     try:
         if channel == "telegram":
-            from jebat.integrations.channels.telegram import create_telegram_channel
+            from ...integrations.channels.telegram import create_telegram_channel
 
             instance = await create_telegram_channel(bot_token=config["bot_token"])
             await instance.start()
@@ -308,7 +337,7 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
             state["status"] = "active"
             state["active"] = True
         elif channel == "whatsapp":
-            from jebat.integrations.channels.whatsapp import WhatsAppChannel
+            from ...integrations.channels.whatsapp import WhatsAppChannel
 
             instance = WhatsAppChannel(
                 phone_number_id=config["phone_number_id"],
@@ -320,7 +349,7 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
             state["status"] = "active"
             state["active"] = True
         elif channel == "slack":
-            from jebat.integrations.channels.slack import SlackChannel
+            from ...integrations.channels.slack import SlackChannel
 
             instance = SlackChannel(
                 bot_token=config["bot_token"],
@@ -331,7 +360,7 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
             state["status"] = "active"
             state["active"] = True
         elif channel == "discord":
-            from jebat.integrations.channels.discord import DiscordChannel
+            from ...integrations.channels.discord import DiscordChannel
 
             instance = DiscordChannel(bot_token=config["bot_token"])
             task = asyncio.create_task(instance.start())
@@ -436,7 +465,17 @@ async def get_setup():
     return _get_setup_html()
 
 
-@webui_router.get("/webui/api/status")
+@webui_router.get(
+    "/webui/admin",
+    response_class=HTMLResponse,
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def get_admin():
+    """Serve operator admin page."""
+    return _get_admin_html()
+
+
+@webui_router.get("/webui/api/status", dependencies=[Depends(require_permissions(Permission.API_READ))])
 async def get_status():
     """Get system status"""
     return {
@@ -454,21 +493,21 @@ async def get_status():
     }
 
 
-@webui_router.get("/webui/api/console-meta")
+@webui_router.get("/webui/api/console-meta", dependencies=[Depends(require_permissions(Permission.API_READ))])
 async def get_console_meta():
     """Return UI metadata grounded in repo assets."""
     return _console_meta()
 
 
-@webui_router.get("/webui/api/runtime")
+@webui_router.get("/webui/api/runtime", dependencies=[Depends(require_permissions(Permission.API_READ))])
 async def get_runtime():
     """Return live runtime info for the WebUI shell."""
     await _ensure_connection_state()
     return _runtime_state()
 
 
-@webui_router.post("/webui/api/runtime")
-async def update_runtime(payload: RuntimeControlRequest):
+@webui_router.post("/webui/api/runtime", dependencies=[Depends(require_permissions(Permission.ADMIN_CONFIG))])
+async def update_runtime(payload: RuntimeControlRequest, request: Request):
     """Set a preferred provider/model override for the live WebUI shell."""
     await _ensure_connection_state()
     state = _runtime_state()
@@ -494,11 +533,17 @@ async def update_runtime(payload: RuntimeControlRequest):
     RUNTIME_OVERRIDES["provider"] = provider
     RUNTIME_OVERRIDES["model"] = model
     _persist_runtime_state()
+    log_security_event(
+        action="webui.runtime.update",
+        actor=current_auth_context(request),
+        resource="webui.runtime",
+        details={"provider": provider, "model": model},
+    )
     return _runtime_state()
 
 
-@webui_router.post("/webui/api/provider-auth")
-async def update_provider_auth(payload: ProviderAuthRequest):
+@webui_router.post("/webui/api/provider-auth", dependencies=[Depends(require_permissions(Permission.ADMIN_CONFIG))])
+async def update_provider_auth(payload: ProviderAuthRequest, request: Request):
     """Store provider auth or host data for the WebUI runtime."""
     await _ensure_connection_state()
     provider = payload.provider.strip().lower()
@@ -511,13 +556,19 @@ async def update_provider_auth(payload: ProviderAuthRequest):
         value = (payload.host or payload.secret or "").strip()
         if not value:
             raise HTTPException(status_code=400, detail="missing host for ollama")
-        store["OLLAMA_HOST"] = value
+        store["OLLAMA_HOST"] = _validate_ollama_host(value)
     else:
         value = (payload.secret or "").strip()
         if not value:
             raise HTTPException(status_code=400, detail="missing API key")
         store[targets[0]] = value
     _write_provider_auth_store(store)
+    log_security_event(
+        action="webui.provider_auth.update",
+        actor=current_auth_context(request),
+        resource="webui.provider_auth",
+        details={"provider": provider, "configured_targets": targets},
+    )
     return {
         "ok": True,
         "provider": provider,
@@ -526,7 +577,67 @@ async def update_provider_auth(payload: ProviderAuthRequest):
     }
 
 
-@webui_router.get("/webui/api/channels/connect")
+@webui_router.get("/webui/api/admin/tokens", dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))])
+async def admin_list_tokens(request: Request):
+    actor = current_auth_context(request)
+    log_security_event(
+        action="webui.admin.tokens.read",
+        actor=actor,
+        resource="webui.admin.tokens",
+        details={},
+    )
+    return {"tokens": list_operator_tokens()}
+
+
+@webui_router.post("/webui/api/admin/tokens", dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))])
+async def admin_create_token(payload: AdminTokenCreateRequest, request: Request):
+    actor = current_auth_context(request)
+    result = create_operator_token(
+        name=payload.name,
+        roles=payload.roles,
+        expires_in_days=payload.expires_in_days,
+        actor=actor,
+    )
+    return result
+
+
+@webui_router.post(
+    "/webui/api/admin/tokens/{token_id}/rotate",
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def admin_rotate_token(token_id: str, request: Request):
+    actor = current_auth_context(request)
+    try:
+        return rotate_operator_token(token_id, actor=actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@webui_router.post(
+    "/webui/api/admin/tokens/{token_id}/revoke",
+    dependencies=[Depends(require_permissions(Permission.ADMIN_USERS))],
+)
+async def admin_revoke_token(token_id: str, request: Request):
+    actor = current_auth_context(request)
+    try:
+        return revoke_operator_token(token_id, actor=actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@webui_router.get("/webui/api/admin/audit", dependencies=[Depends(require_permissions(Permission.ADMIN_AUDIT))])
+async def admin_audit_events(request: Request, limit: int = 100):
+    actor = current_auth_context(request)
+    log_security_event(
+        action="webui.admin.audit.read",
+        actor=actor,
+        resource="webui.admin.audit",
+        details={"limit": limit},
+    )
+    return {"events": list_audit_events(limit=max(1, min(limit, 500)))}
+
+
+@webui_router.get("/webui/api/channels/connect", dependencies=[Depends(require_permissions(Permission.API_READ))])
 async def get_channel_connections():
     """Return channel connection status and requirements."""
     await _ensure_connection_state()
@@ -540,8 +651,8 @@ async def get_channel_connections():
     }
 
 
-@webui_router.post("/webui/api/channels/connect")
-async def connect_channel(payload: ChannelConnectRequest):
+@webui_router.post("/webui/api/channels/connect", dependencies=[Depends(require_permissions(Permission.API_WRITE))])
+async def connect_channel(payload: ChannelConnectRequest, request: Request):
     """Store channel connection intent/config summary for the console."""
     await _ensure_connection_state()
     catalog = {item["id"]: item for item in _channel_catalog()}
@@ -567,6 +678,12 @@ async def connect_channel(payload: ChannelConnectRequest):
         if not missing
         else _sanitize_channel_state(channel, CHANNEL_CONNECTIONS[channel])
     )
+    log_security_event(
+        action="webui.channel.connect",
+        actor=current_auth_context(request),
+        resource=f"webui.channel.{channel}",
+        details={"missing": missing, "config_keys": sorted(payload.config.keys())},
+    )
     return {
         "ok": True,
         "channel": channel,
@@ -575,7 +692,7 @@ async def connect_channel(payload: ChannelConnectRequest):
     }
 
 
-@webui_router.get("/webui/api/workstations/connect")
+@webui_router.get("/webui/api/workstations/connect", dependencies=[Depends(require_permissions(Permission.API_READ))])
 async def get_workstation_connections():
     """Return workstation connection status."""
     await _ensure_connection_state()
@@ -589,8 +706,8 @@ async def get_workstation_connections():
     }
 
 
-@webui_router.post("/webui/api/workstations/connect")
-async def connect_workstation(payload: WorkstationConnectRequest):
+@webui_router.post("/webui/api/workstations/connect", dependencies=[Depends(require_permissions(Permission.API_WRITE))])
+async def connect_workstation(payload: WorkstationConnectRequest, request: Request):
     """Store workstation connection intent/config summary for the console."""
     await _ensure_connection_state()
     catalog = {item["id"]: item for item in _workstation_catalog()}
@@ -611,6 +728,12 @@ async def connect_workstation(payload: WorkstationConnectRequest):
         state["status"] = "connected" if (state["ssh_host"] or state["path"]) else "pending"
     WORKSTATION_CONNECTIONS[workstation] = state
     _persist_workstation_state()
+    log_security_event(
+        action="webui.workstation.connect",
+        actor=current_auth_context(request),
+        resource=f"webui.workstation.{workstation}",
+        details={"status": state["status"]},
+    )
     return {
         "ok": True,
         "workstation": workstation,
@@ -618,8 +741,8 @@ async def connect_workstation(payload: WorkstationConnectRequest):
     }
 
 
-@webui_router.post("/webui/api/workstations/check")
-async def check_workstation(payload: WorkstationActionRequest):
+@webui_router.post("/webui/api/workstations/check", dependencies=[Depends(require_permissions(Permission.API_WRITE))])
+async def check_workstation(payload: WorkstationActionRequest, request: Request):
     """Run a lightweight health check for a stored workstation profile."""
     await _ensure_connection_state()
     workstation = payload.workstation.strip().lower()
@@ -653,6 +776,12 @@ async def check_workstation(payload: WorkstationActionRequest):
     state["health"] = health
     state["updated_at"] = _now_iso()
     _persist_workstation_state()
+    log_security_event(
+        action="webui.workstation.check",
+        actor=current_auth_context(request),
+        resource=f"webui.workstation.{workstation}",
+        details={"ok": health.get("ok", False)},
+    )
     return {
         "ok": True,
         "workstation": workstation,
@@ -660,68 +789,105 @@ async def check_workstation(payload: WorkstationActionRequest):
     }
 
 
-@webui_router.post("/webui/api/chat")
-async def chat(message: ChatMessage):
-    """Process chat message with Ultra-Think"""
-    try:
-        from jebat.features.ultra_think import ThinkingMode, create_ultra_think
+@webui_router.post("/webui/api/chat", dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))])
+@webui_router.post("/webui/api/v3/chat", dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))])
+async def chat(message: ChatMessage, request: Request):
+    """Process chat message with Ultra-Think (Streaming with Legacy Fallback)"""
+    is_fallback = request.query_params.get("fallback") == "true"
+    
+    if is_fallback:
+        try:
+            from ...features.ultra_think import ThinkingMode, create_ultra_think
+            thinker = await create_ultra_think(config={"max_thoughts": 10})
+            result = await asyncio.wait_for(
+                thinker.think(problem=message.message, mode=ThinkingMode.FAST, timeout=20.0),
+                timeout=25.0,
+            )
+            return JSONResponse({
+                "success": True,
+                "response": result.conclusion,
+                "confidence": result.confidence,
+                "execution_time": result.execution_time
+            })
+        except Exception as e:
+            logger.error(f"Fallback chat error: {e}")
+            return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
-        # Map thinking mode string to enum
-        mode_map = {
-            "fast": ThinkingMode.FAST,
-            "deliberate": ThinkingMode.DELIBERATE,
-            "deep": ThinkingMode.DEEP,
-            "strategic": ThinkingMode.STRATEGIC,
-            "creative": ThinkingMode.CREATIVE,
-            "critical": ThinkingMode.CRITICAL,
+    async def chat_generator():
+        try:
+            from ...features.ultra_think import ThinkingMode, create_ultra_think
+
+            mode_map = {
+                "fast": ThinkingMode.FAST,
+                "deliberate": ThinkingMode.DELIBERATE,
+                "deep": ThinkingMode.DEEP,
+                "strategic": ThinkingMode.STRATEGIC,
+                "creative": ThinkingMode.CREATIVE,
+                "critical": ThinkingMode.CRITICAL,
+            }
+            thinking_mode = mode_map.get(
+                message.thinking_mode.lower(), ThinkingMode.DELIBERATE
+            )
+
+            thinker = await create_ultra_think(
+                config={"max_thoughts": 15, "default_mode": message.thinking_mode}
+            )
+
+            # 1. Start: Signal thinking
+            yield json.dumps({"type": "status", "step": "thinking", "message": "Ultra-Think initializing..."}) + "\n"
+            
+            result = await asyncio.wait_for(
+                thinker.think(problem=message.message, mode=thinking_mode, timeout=30.0),
+                timeout=35.0,
+            )
+
+            # 2. Progress: Send reasoning steps
+            for idx, step in enumerate(result.reasoning_steps):
+                yield json.dumps({"type": "reasoning", "index": idx, "content": step}) + "\n"
+                await asyncio.sleep(0.05) # Small UX delay
+
+            # 3. Content: Stream the conclusion word by word
+            words = result.conclusion.split(" ")
+            current_text = ""
+            for i, word in enumerate(words):
+                current_text += (word + " ")
+                yield json.dumps({
+                    "type": "content", 
+                    "delta": word + " ",
+                    "is_final": i == len(words) - 1
+                }) + "\n"
+                # Control streaming speed for enterprise aesthetic
+                await asyncio.sleep(0.02)
+
+            # 4. Final: Send metadata
+            yield json.dumps({
+                "type": "final",
+                "success": True,
+                "confidence": result.confidence,
+                "thinking_steps": len(result.reasoning_steps),
+                "execution_time": result.execution_time,
+            }) + "\n"
+
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            yield json.dumps({"type": "error", "message": str(e)}) + "\n"
+
+    return StreamingResponse(
+        chat_generator(), 
+        media_type="application/x-ndjson",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
         }
-        thinking_mode = mode_map.get(
-            message.thinking_mode.lower(), ThinkingMode.DELIBERATE
-        )
-
-        # Create thinker and process
-        thinker = await create_ultra_think(
-            config={"max_thoughts": 15, "default_mode": message.thinking_mode}
-        )
-
-        # Run thinking in executor to avoid blocking
-        result = await asyncio.wait_for(
-            thinker.think(problem=message.message, mode=thinking_mode, timeout=30.0),
-            timeout=35.0,
-        )
-
-        return {
-            "success": True,
-            "response": result.conclusion,
-            "confidence": result.confidence,
-            "thinking_steps": len(result.reasoning_steps),
-            "reasoning": result.reasoning_steps[:5],
-            "alternatives": result.alternatives,
-            "execution_time": result.execution_time,
-        }
-    except asyncio.TimeoutError:
-        return {
-            "success": False,
-            "error": "Thinking timed out. Please try again with a simpler question or 'fast' mode.",
-            "response": "I'm taking too long to think about this. Please try again!",
-            "confidence": 0.0,
-            "thinking_steps": 0,
-        }
-    except Exception as e:
-        logger.error(f"Chat error: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "response": "Sorry, I encountered an error processing your message.",
-            "confidence": 0.0,
-        }
+    )
 
 
-@webui_router.post("/webui/api/think")
+@webui_router.post("/webui/api/think", dependencies=[Depends(require_permissions(Permission.AGENT_EXECUTE))])
 async def think(request: ThinkRequest):
     """Run Ultra-Think session"""
     try:
-        from jebat.features.ultra_think import ThinkingMode, create_ultra_think
+        from ...features.ultra_think import ThinkingMode, create_ultra_think
 
         mode_map = {
             "fast": ThinkingMode.FAST,
@@ -755,25 +921,32 @@ async def think(request: ThinkRequest):
         }
     except Exception as e:
         logger.error(f"Think error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="think request failed")
 
 
-@webui_router.get("/webui/api/memory/stats")
+@webui_router.get("/webui/api/memory/stats", dependencies=[Depends(require_permissions(Permission.MEMORY_READ))])
 async def get_memory_stats():
     """Get memory system statistics"""
     try:
-        from jebat.core.memory import MemoryManager
+        from ...core.memory import MemoryManager
 
         manager = MemoryManager()
         stats = manager.get_memory_stats()
         return {"success": True, "stats": stats}
     except Exception as e:
-        return {"success": False, "error": str(e), "stats": {}}
+        logger.error(f"Memory stats error: {e}")
+        return {"success": False, "error": "failed to load memory stats", "stats": {}}
 
 
 @webui_router.websocket("/webui/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
     """WebSocket endpoint for real-time communication"""
+    try:
+        ensure_websocket_token(websocket)
+    except Exception:
+        await websocket.close(code=1008, reason="operator token required")
+        return
+
     await websocket.accept()
     active_connections[user_id] = websocket
     logger.info(f"WebSocket connected: {user_id}")
@@ -794,7 +967,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 
             if message_data.get("type") == "chat":
                 try:
-                    from jebat.features.ultra_think import (
+                    from ...features.ultra_think import (
                         ThinkingMode,
                         create_ultra_think,
                     )
@@ -911,6 +1084,10 @@ def _get_setup_html():
     return HTMLResponse(content=_setup_html())
 
 
+def _get_admin_html():
+    return HTMLResponse(content=_home_html(initial_section="admin"))
+
+
 def _console_meta() -> dict[str, Any]:
     jebat_gateway_template = REPO_ROOT / "integrations" / "jebat-gateway" / "jebat-gateway.template.json"
     jebat_gateway_data = json.loads(jebat_gateway_template.read_text()) if jebat_gateway_template.exists() else {}
@@ -922,7 +1099,7 @@ def _console_meta() -> dict[str, Any]:
 
     skill_root = REPO_ROOT / "jebat-tokguru"
     try:
-        from jebat.llm.skills import build_skill_registry, summarize_skill
+        from ...llm.skills import build_skill_registry, summarize_skill
 
         registry = build_skill_registry(skill_root)
         all_skills = registry.get_all_skills()
@@ -1015,7 +1192,7 @@ def _console_meta() -> dict[str, Any]:
 
 
 def _runtime_state() -> dict[str, Any]:
-    from jebat.llm import list_provider_auth_status, load_llm_config, select_best_provider
+    from ...llm import list_provider_auth_status, load_llm_config, select_best_provider
 
     config = load_llm_config()
     catalog = _provider_model_catalog()
@@ -1096,7 +1273,7 @@ def _workstation_catalog() -> list[dict[str, Any]]:
 
 
 # HTML templates (simplified for reliability)
-def _home_html():
+def _home_html(initial_section: str = "overview"):
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1161,23 +1338,28 @@ button,input,select{font:inherit}a{text-decoration:none;color:inherit}
 <div class="drawer-backdrop" id="drawerBackdrop"><aside class="drawer"><button class="ghost-btn" id="drawerClose" style="margin-bottom:14px">Close</button><div id="drawerContent"></div></aside></div>
 <script>
 const sections = [
-  {id:'overview', label:'Bridge', meta:'surface'},
-  {id:'livechat', label:'Jebat Agent', meta:'session'},
-  {id:'control', label:'Models', meta:'router'},
-  {id:'doctor', label:'Pulse', meta:'health'},
-  {id:'channels', label:'Channels', meta:'adapters'},
-  {id:'workstation', label:'Stations', meta:'connect'},
-  {id:'quickstart', label:'Quick Start', meta:'npx'},
-  {id:'integrations', label:'Links', meta:'bundle'},
-  {id:'agents', label:'Cells', meta:'roles'},
-  {id:'skills', label:'Skills', meta:'toolkit'},
-  {id:'learning', label:'Learning', meta:'adaptive'},
-  {id:'setup', label:'Boot', meta:'guide'}
+  {id:'overview', label:'Infrastructure', meta:'bridge'},
+  {id:'livechat', label:'Jebat Agent', meta:'terminal'},
+  {id:'control', label:'Model Plane', meta:'routing'},
+  {id:'doctor', label:'Telemetry', meta:'health'},
+  {id:'channels', label:'Connectivity', meta:'adapters'},
+  {id:'workstation', label:'Operator Surface', meta:'nodes'},
+  {id:'admin', label:'Governance', meta:'iam', permission:'admin:users'},
+  {id:'quickstart', label:'Implementation', meta:'npx'},
+  {id:'integrations', label:'Artifacts', meta:'bundle'},
+  {id:'agents', label:'Operator Cells', meta:'swarm'},
+  {id:'skills', label:'Capability Matrix', meta:'toolkit'},
+  {id:'learning', label:'Cognitive Loop', meta:'evolution'},
+  {id:'setup', label:'Onboarding', meta:'provision'}
 ];
+const initialSection = __INITIAL_SECTION__;
 let consoleMeta = null;
 let runtime = null;
 let channelState = null;
 let workstationState = null;
+let sessionState = null;
+let adminTokens = [];
+let adminAudit = null;
 const skillForgePrompts = {
   base: `Create a new AI skill for: [skill idea]
 
@@ -1302,10 +1484,18 @@ function skillForgeDrawer(skill){
 }
 function navMarkup(active){
   const filter = (document.getElementById('navFilter')?.value || '').toLowerCase();
-  return sections.filter(item => !filter || item.label.toLowerCase().includes(filter) || item.meta.toLowerCase().includes(filter)).map(item => `<a class="nav-item ${item.id===active?'active':''}" href="#${item.id}" data-section="${item.id}"><span>${item.label}</span><span class="nav-meta">${item.meta}</span></a>`).join('');
+  return visibleSections().filter(item => !filter || item.label.toLowerCase().includes(filter) || item.meta.toLowerCase().includes(filter)).map(item => `<a class="nav-item ${item.id===active?'active':''}" href="#${item.id}" data-section="${item.id}"><span>${item.label}</span><span class="nav-meta">${item.meta}</span></a>`).join('');
 }
 function setHash(section){history.replaceState(null,'',`#${section}`);}
-function currentSection(){const id=location.hash.replace('#','');return sections.some(s=>s.id===id)?id:'overview';}
+function hasPermission(permission){ return !!sessionState?.permissions?.includes(permission); }
+function visibleSections(){ return sections.filter(section => !section.permission || hasPermission(section.permission)); }
+function currentSection(){
+  const id = location.hash.replace('#','');
+  const available = visibleSections();
+  if(available.some(section => section.id === id)) return id;
+  if(available.some(section => section.id === initialSection)) return initialSection;
+  return 'overview';
+}
 function renderStatusStrip(){
   const pills = [
     ['Provider', runtime?.provider?.effective || 'unknown'],
@@ -1329,7 +1519,7 @@ function renderOverview(){
   </div></div>
   <div class="stack">
     <article class="wide-card"><div class="card-label">Runtime lattice</div><h3>Live provider state</h3><div class="kv"><div class="kv-item"><label>Configured provider</label><strong>${escapeHtml(runtime.provider.configured)}</strong></div><div class="kv-item"><label>Effective provider</label><strong>${escapeHtml(runtime.provider.effective)}</strong></div><div class="kv-item"><label>Effective model</label><strong>${escapeHtml(runtime.provider.model)}</strong></div></div></article>
-    <article class="wide-card"><div class="card-label">Jebat Gateway core</div><h3>Control pattern</h3><p>Primary model: ${escapeHtml(consoleMeta.openclaw.primary_model || 'unknown')}</p><p>Fallbacks: ${escapeHtml((consoleMeta.openclaw.fallback_models || []).join(', '))}</p></article>
+    <article class="wide-card"><div class="card-label">Jebat Gateway core</div><h3>Control pattern</h3><p>Primary model: ${escapeHtml(consoleMeta['jebat-gateway']?.primary_model || 'unknown')}</p><p>Fallbacks: ${escapeHtml((consoleMeta['jebat-gateway']?.fallback_models || []).join(', '))}</p></article>
   </div></section>`;
 }
 function renderLiveChat(){
@@ -1403,7 +1593,7 @@ function renderWorkstation(){
       : '';
     return `<li><strong>${escapeHtml(name)}</strong><span>${escapeHtml(item.status)} / ${escapeHtml(item.path || '')}${escapeHtml(remote)}${escapeHtml(deploy)}${escapeHtml(health)}</span><div style="margin-top:10px" class="toolbar-inline"><button class="ghost-btn" data-workstation-copy="${escapeHtml(connectCommand)}">Copy connect command</button>${connectLink}<button class="ghost-btn" data-workstation-check="${escapeHtml(name)}">Health check</button></div><pre style="margin-top:12px">${escapeHtml(connectCommand || 'Save a host or path to generate a connect command.')}</pre></li>`;
   }).join('') || '<li><strong>None</strong><span>No workstation connections stored from the shell yet.</span></li>';
-  return `<section class="hero"><div class="eyebrow">Station mesh</div><h1>Align local and remote workstations in one shell.</h1><p>Track every operator surface JEBATCore is meant to use: local CLI, Jebat Gateway runtime, VS Code, and the live VPS deployment.</p></section><section class="layout"><div class="stack"><section class="grid">${cards}</section><article class="wide-card"><div class="card-label">Connect flow</div><h3>How to connect a station to JEBATCore</h3><ul class="list"><li><strong>1. Pick a station type</strong><span>Choose CLI, Jebat Gateway, VS Code, or VPS in the form.</span></li><li><strong>2. Save the real path or host</strong><span>Use a local path for CLI and VS Code, or an SSH host for VPS.</span></li><li><strong>3. Generate the connect command</strong><span>After save, the shell prints the exact command or link for that station.</span></li><li><strong>4. Run health check</strong><span>Use the health button to confirm the saved station is reachable.</span></li></ul></article></div><article class="wide-card"><div class="card-label">Station link</div><h3>Connect a workstation to JEBATCore</h3><p class="small-note">Recommended values: <code>~/.local/bin/jebat-cli</code> for CLI, <code>~/.openclaw</code> for OpenClaw, <code>~/.config/Code/User</code> for VS Code, and your SSH host for VPS.</p><form class="control-form" id="workstationForm"><select class="select" id="workstationType" name="workstation">${(workstationState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="path" placeholder="Path or host, for example jebat.online or ~/.local/bin/jebat-cli"><input class="input" name="notes" placeholder="Notes, for example primary laptop or production node"><div class="control-grid" id="workstationRemoteFields" style="display:none"><input class="input" name="ssh_host" placeholder="SSH host, for example 72.62.255.206"><input class="input" name="ssh_user" placeholder="SSH user, for example root"></div><input class="input" id="workstationDeployPath" name="deploy_path" placeholder="Deploy path on remote host, for example /root/jebat-core" style="display:none"><button class="btn primary" type="submit">Save station link</button></form><ul class="list" style="margin-top:14px">${connected}</ul></article></section>`;
+  return `<section class="hero"><div class="eyebrow">Station mesh</div><h1>Align local and remote workstations in one shell.</h1><p>Track every operator surface JEBATCore is meant to use: local CLI, Jebat Gateway runtime, VS Code, and the live VPS deployment.</p></section><section class="layout"><div class="stack"><section class="grid">${cards}</section><article class="wide-card"><div class="card-label">Connect flow</div><h3>How to connect a station to JEBATCore</h3><ul class="list"><li><strong>1. Pick a station type</strong><span>Choose CLI, Jebat Gateway, VS Code, or VPS in the form.</span></li><li><strong>2. Save the real path or host</strong><span>Use a local path for CLI and VS Code, or an SSH host for VPS.</span></li><li><strong>3. Generate the connect command</strong><span>After save, the shell prints the exact command or link for that station.</span></li><li><strong>4. Run health check</strong><span>Use the health button to confirm the saved station is reachable.</span></li></ul></article></div><article class="wide-card"><div class="card-label">Station link</div><h3>Connect a workstation to JEBATCore</h3><p class="small-note">Recommended values: <code>~/.local/bin/jebat-cli</code> for CLI, <code>~/.jebat</code> for Jebat Gateway, <code>~/.config/Code/User</code> for VS Code, and your SSH host for VPS.</p><form class="control-form" id="workstationForm"><select class="select" id="workstationType" name="workstation">${(workstationState?.available || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>`).join('')}</select><input class="input" name="path" placeholder="Path or host, for example jebat.online or ~/.local/bin/jebat-cli"><input class="input" name="notes" placeholder="Notes, for example primary laptop or production node"><div class="control-grid" id="workstationRemoteFields" style="display:none"><input class="input" name="ssh_host" placeholder="SSH host, for example 72.62.255.206"><input class="input" name="ssh_user" placeholder="SSH user, for example root"></div><input class="input" id="workstationDeployPath" name="deploy_path" placeholder="Deploy path on remote host, for example /root/jebat-core" style="display:none"><button class="btn primary" type="submit">Save station link</button></form><ul class="list" style="margin-top:14px">${connected}</ul></article></section>`;
 }
 function renderQuickStart(){
   return `<section class="hero"><div class="eyebrow">One-Command Setup</div><h1>Get started with Jebat in 30 seconds.</h1><p>No manual configuration needed. Use the <code>npx jebat-agent</code> command for instant setup with sensible defaults.</p><div class="hero-actions"><button class="btn primary" onclick="copyToClipboard('npx jebat-agent')">Copy Command</button><a class="btn" href="https://github.com/nusabyte-my/jebat-core/blob/main/INTEGRATION_GUIDE.md" target="_blank" rel="noreferrer">Full Guide</a></div></section>
@@ -1436,11 +1626,39 @@ function renderQuickStart(){
   </div></article>
   </section>`;
 }
+function renderAdmin(){
+  const sessionRoles = (sessionState?.roles || []).map(role => `<span class="chip ok">${escapeHtml(role)}</span>`).join('') || '<span class="chip">none</span>';
+  const sessionPermissions = (sessionState?.permissions || []).slice(0, 8).map(permission => `<span class="chip">${escapeHtml(permission)}</span>`).join('') || '<span class="chip">none</span>';
+  const tokenRows = adminTokens.length
+    ? adminTokens.map(token => {
+        const roles = (token.roles || []).join(', ') || 'operator';
+        const expires = token.expires_at || 'never';
+        const status = token.revoked_at ? `revoked ${token.revoked_at}` : (token.last_used_at ? `active / last used ${token.last_used_at}` : 'active / unused');
+        return `<li><strong>${escapeHtml(token.name || token.id)}</strong><span>${escapeHtml(roles)} / expires ${escapeHtml(expires)} / ${escapeHtml(status)}</span><div class="toolbar-inline" style="margin-top:10px"><button class="ghost-btn" data-admin-rotate="${escapeHtml(token.id)}" ${token.revoked_at ? 'disabled' : ''}>Rotate</button><button class="ghost-btn" data-admin-revoke="${escapeHtml(token.id)}" ${token.revoked_at ? 'disabled' : ''}>Revoke</button></div></li>`;
+      }).join('')
+    : '<li><strong>No managed tokens</strong><span>Create an operator token for platform, security, or support workflows.</span></li>';
+  const auditBody = !hasPermission('admin:audit')
+    ? '<div class="empty">Audit review requires the <code>admin:audit</code> permission.</div>'
+    : adminAudit?.error
+    ? `<div class="empty">${escapeHtml(adminAudit.error)}</div>`
+    : (adminAudit?.events || []).length
+    ? `<ul class="list">${adminAudit.events.slice(0, 20).map(event => `<li><strong>${escapeHtml(event.action || 'event')}</strong><span>${escapeHtml(event.timestamp || '')} / ${escapeHtml(event.actor?.subject || 'system')} / ${escapeHtml(event.resource || '')}</span></li>`).join('')}</ul>`
+    : '<div class="empty">No audit events loaded yet.</div>';
+  return `<section class="hero"><div class="eyebrow">Operator access</div><h1>Manage tokens, review audit events, and inspect the active session.</h1><p>This admin rail keeps token lifecycle and operator visibility inside the same secured WebUI shell. Managed tokens are hashed server-side and audited on create, rotate, revoke, bootstrap, and logout.</p><div class="hero-actions"><button class="btn primary" id="adminRefreshButton">Refresh admin state</button><button class="btn" id="logoutButton">Logout</button></div></section>
+  <section class="layout"><div class="stack">
+    <article class="wide-card"><div class="card-label">Session</div><h3>Current operator context</h3><div class="kv"><div class="kv-item"><label>Subject</label><strong>${escapeHtml(sessionState?.subject || 'unknown')}</strong></div><div class="kv-item"><label>Source</label><strong>${escapeHtml(sessionState?.source || 'unknown')}</strong></div><div class="kv-item"><label>Token</label><strong>${escapeHtml(sessionState?.token_id || 'unknown')}</strong></div></div><div class="provider-meta" style="margin-top:14px">${sessionRoles}</div><div class="provider-meta" style="margin-top:10px">${sessionPermissions}</div></article>
+    <article class="wide-card"><div class="card-label">Create token</div><h3>Issue a managed operator token</h3><form class="control-form" id="adminTokenForm"><div class="control-grid"><input class="input" name="name" placeholder="Token name, for example SecOps On-Call"><input class="input" name="roles" placeholder="Roles, comma separated, for example operator,auditor"></div><div class="control-grid"><input class="input" name="expires_in_days" type="number" min="1" placeholder="Expires in days (optional)"><button class="btn primary" type="submit">Create token</button></div><p class="small-note">Built-in roles: <code>super_admin</code>, <code>admin</code>, <code>operator</code>, <code>developer</code>, <code>analyst</code>, <code>auditor</code>, <code>viewer</code>.</p></form></article>
+  </div>
+  <div class="stack">
+    <article class="wide-card"><div class="card-label">Managed tokens</div><h3>Active access inventory</h3><ul class="list">${tokenRows}</ul></article>
+    <article class="wide-card"><div class="card-label">Audit trail</div><h3>Recent auth-sensitive events</h3><div id="adminAuditPanel">${auditBody}</div></article>
+  </div></section>`;
+}
 function renderIntegrations(){
   return `<section class="hero"><div class="eyebrow">Versioned connections</div><h1>Integration assets grounded in the repo.</h1><p>This is the repo-backed integration layer, not UI filler. It shows the Jebat Gateway bundle and the docs that support MCP and IDE workflows.</p></section><section class="grid">${(runtime.workspace.integrations||[]).map(item => `<article class="grid-card"><div class="card-label">${escapeHtml(item.state)}</div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.path)}</p></article>`).join('')}</section>`;
 }
 function renderAgents(){
-  return `<section class="hero"><div class="eyebrow">Cell topology</div><h1>Jebat Agent and Jebat Gateway roles as visible operator cells.</h1><p>The shell exposes the Jebat Gateway role map while keeping Jebat Agent visible as an explicit mode, not buried in prompt text or hidden routing.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta.openclaw.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta.openclaw.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Cell</div><h3>${escapeHtml(name)}</h3><p>${escapeHtml(agentRole(name))}</p><div class="mini-card" style="margin-top:14px"><strong>Runtime presence</strong><span>Visible in the Jebat Gateway bundle agent list and available to the shell runtime.</span></div></article>`).join('')}</div></section>`;
+  return `<section class="hero"><div class="eyebrow">Cell topology</div><h1>Jebat Agent and Jebat Gateway roles as visible operator cells.</h1><p>The shell exposes the Jebat Gateway role map while keeping Jebat Agent visible as an explicit mode, not buried in prompt text or hidden routing.</p></section><section class="wide-card"><div class="toolbar-inline"><input id="agentFilter" class="input" placeholder="Search agents by name"><span class="status-pill"><i class="dot"></i><span>${(consoleMeta['jebat-gateway']?.agent_names||[]).length} agents</span></span></div><div class="grid" id="agentGrid">${(consoleMeta['jebat-gateway']?.agent_names||[]).map(name => `<article class="grid-card"><div class="card-label">Cell</div><h3>${escapeHtml(name)}</h3><p>${escapeHtml(agentRole(name))}</p><div class="mini-card" style="margin-top:14px"><strong>Runtime presence</strong><span>Visible in the Jebat Gateway bundle agent list and available to the shell runtime.</span></div></article>`).join('')}</div></section>`;
 }
 function renderSkills(){
   const skills = consoleMeta.skills.top || [];
@@ -1453,18 +1671,28 @@ function renderLearning(){
 }
 function renderSetup(){
   return `<section class="hero"><div class="eyebrow">Boot sequence</div><h1>Connect channels and stations without guesswork.</h1><p>This page mirrors the versioned setup guide and gives you one clean operator reference for Telegram, WhatsApp, Discord, Slack, CLI, Jebat Gateway, VS Code, and VPS setup.</p><div class="hero-actions"><a class="btn primary" href="#channels">Open channels</a><a class="btn" href="#workstation">Open stations</a><a class="btn" href="https://github.com/nusabyte-my/jebat-core/blob/main/docs/SETUP_CHANNELS_AND_WORKSTATIONS.md" target="_blank" rel="noreferrer">Open repo guide</a></div></section>
-  <section class="layout"><article class="wide-card"><div class="card-label">Channels</div><h3>Messaging setup</h3><ul class="list"><li><strong>Telegram</strong><span>Needs <code>bot_token</code> from <code>@BotFather</code>.</span></li><li><strong>WhatsApp</strong><span>Needs <code>phone_number_id</code>, <code>access_token</code>, <code>verify_token</code> from Meta.</span></li><li><strong>Discord</strong><span>Needs <code>bot_token</code>, <code>guild_id</code>.</span></li><li><strong>Slack</strong><span>Needs <code>bot_token</code>, <code>app_token</code>.</span></li></ul></article><article class="wide-card"><div class="card-label">Workstations</div><h3>Operator stations</h3><ul class="list"><li><strong>CLI</strong><span>Suggested path: <code>~/.local/bin/jebat-cli</code></span></li><li><strong>OpenClaw</strong><span>Suggested path: <code>~/.openclaw</code></span></li><li><strong>VS Code</strong><span>Suggested path: <code>~/.config/Code/User</code></span></li><li><strong>VPS</strong><span>Suggested host: <code>jebat.online</code> or your SSH target.</span></li></ul></article></section>`;
+  <section class="layout"><article class="wide-card"><div class="card-label">Channels</div><h3>Messaging setup</h3><ul class="list"><li><strong>Telegram</strong><span>Needs <code>bot_token</code> from <code>@BotFather</code>.</span></li><li><strong>WhatsApp</strong><span>Needs <code>phone_number_id</code>, <code>access_token</code>, <code>verify_token</code> from Meta.</span></li><li><strong>Discord</strong><span>Needs <code>bot_token</code>, <code>guild_id</code>.</span></li><li><strong>Slack</strong><span>Needs <code>bot_token</code>, <code>app_token</code>.</span></li></ul></article><article class="wide-card"><div class="card-label">Workstations</div><h3>Operator stations</h3><ul class="list"><li><strong>CLI</strong><span>Suggested path: <code>~/.local/bin/jebat-cli</code></span></li><li><strong>Jebat Gateway</strong><span>Suggested path: <code>~/.jebat</code></span></li><li><strong>VS Code</strong><span>Suggested path: <code>~/.config/Code/User</code></span></li><li><strong>VPS</strong><span>Suggested host: <code>jebat.online</code> or your SSH target.</span></li></ul></article></section>`;
 }
 function renderSection(section){
   const view = document.getElementById('view');
   document.getElementById('navList').innerHTML = navMarkup(section);
-  const renderers = {overview:renderOverview,livechat:renderLiveChat,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,quickstart:renderQuickStart,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning,setup:renderSetup};
+  const renderers = {overview:renderOverview,livechat:renderLiveChat,doctor:renderDoctor,control:renderControl,channels:renderChannels,workstation:renderWorkstation,admin:renderAdmin,quickstart:renderQuickStart,integrations:renderIntegrations,agents:renderAgents,skills:renderSkills,learning:renderLearning,setup:renderSetup};
   view.innerHTML = renderers[section] ? renderers[section]() : renderOverview();
   bindDynamicUI();
 }
 function bindDynamicUI(){
-  document.querySelectorAll('[data-section]').forEach(btn => btn.onclick = () => { setHash(btn.dataset.section); renderSection(btn.dataset.section); });
-  document.querySelectorAll('[data-section-jump]').forEach(btn => btn.onclick = () => { setHash(btn.dataset.sectionJump); renderSection(btn.dataset.sectionJump); });
+  document.querySelectorAll('[data-section]').forEach(btn => btn.onclick = async () => {
+    const section = btn.dataset.section;
+    setHash(section);
+    if(section === 'admin' && hasPermission('admin:users')){ await refreshAdminState(hasPermission('admin:audit')); }
+    renderSection(section);
+  });
+  document.querySelectorAll('[data-section-jump]').forEach(btn => btn.onclick = async () => {
+    const section = btn.dataset.sectionJump;
+    setHash(section);
+    if(section === 'admin' && hasPermission('admin:users')){ await refreshAdminState(hasPermission('admin:audit')); }
+    renderSection(section);
+  });
   const navFilter = document.getElementById('navFilter');
   if(navFilter){navFilter.oninput = () => { document.getElementById('navList').innerHTML = navMarkup(currentSection()); bindDynamicUI(); }; }
   const form = document.getElementById('runtimeForm');
@@ -1476,6 +1704,9 @@ function bindDynamicUI(){
   const authProvider = document.getElementById('authProvider');
   const authSecret = document.getElementById('authSecret');
   const providerAuthHint = document.getElementById('providerAuthHint');
+  const adminTokenForm = document.getElementById('adminTokenForm');
+  const adminRefreshButton = document.getElementById('adminRefreshButton');
+  const logoutButton = document.getElementById('logoutButton');
   function syncRuntimeModelUI(){
     if(!providerSelect || !modelSelect || !customModelInput || !modelHint || !runtime) return;
     const provider = providerSelect.value;
@@ -1505,8 +1736,61 @@ function bindDynamicUI(){
     const text = await res.text();
     try { return JSON.parse(text); } catch { return {ok:false, error:text}; }
   }
+  async function refreshAdminState(loadAudit = false){
+    const tokenRes = await fetch('/webui/api/admin/tokens');
+    const tokenData = await parseApiResponse(tokenRes);
+    if(!tokenRes.ok){
+      alert(tokenData.detail || tokenData.error || 'Failed to load admin tokens');
+      return false;
+    }
+    adminTokens = tokenData.tokens || [];
+    if(loadAudit && hasPermission('admin:audit')){
+      const auditRes = await fetch('/webui/api/admin/audit?limit=50');
+      const auditData = await parseApiResponse(auditRes);
+      adminAudit = auditRes.ok ? auditData : {error: auditData.detail || auditData.error || 'Failed to load audit events'};
+    }else if(!hasPermission('admin:audit')){
+      adminAudit = {error:'Current session does not include admin:audit.'};
+    }
+    return true;
+  }
   if(form){form.onsubmit = async (event) => { event.preventDefault(); const provider = providerSelect?.value || ''; const supportsCustom = !!(runtime?.providers?.catalog?.[provider]?.supports_custom); const selectedModel = supportsCustom && customModelInput?.value.trim() ? customModelInput.value.trim() : (modelSelect?.value || ''); const payload = {provider, model: selectedModel}; const res = await fetch('/webui/api/runtime', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); const data = await parseApiResponse(res); if(!res.ok){ alert(data.detail || data.error || 'Failed to update runtime'); return; } runtime = data; renderStatusStrip(); renderSection('control'); };}
   if(providerAuthForm){providerAuthForm.onsubmit = async (event) => { event.preventDefault(); const provider = authProvider?.value || ''; const secret = authSecret?.value || ''; const payload = provider === 'ollama' ? {provider, host: secret} : {provider, secret}; const res = await fetch('/webui/api/provider-auth', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}); const data = await parseApiResponse(res); if(!res.ok){ alert(data.detail || data.error || 'Failed to save provider auth'); return; } runtime = data.runtime; authSecret.value = ''; renderStatusStrip(); renderSection('control'); };}
+  if(adminRefreshButton){adminRefreshButton.onclick = async () => { if(await refreshAdminState(true)){ renderSection('admin'); } };}
+  if(logoutButton){logoutButton.onclick = async () => { const res = await fetch('/webui/api/logout', {method:'POST'}); const data = await parseApiResponse(res); if(!res.ok){ alert(data.detail || data.error || 'Failed to logout'); return; } location.assign('/webui'); };}
+  if(adminTokenForm){adminTokenForm.onsubmit = async (event) => {
+    event.preventDefault();
+    const fd = new FormData(adminTokenForm);
+    const name = String(fd.get('name') || '').trim();
+    const roles = String(fd.get('roles') || '').split(',').map(item => item.trim()).filter(Boolean);
+    const expiresRaw = String(fd.get('expires_in_days') || '').trim();
+    const payload = {name, roles: roles.length ? roles : ['operator'], expires_in_days: expiresRaw ? Number(expiresRaw) : null};
+    const res = await fetch('/webui/api/admin/tokens', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const data = await parseApiResponse(res);
+    if(!res.ok){ alert(data.detail || data.error || 'Failed to create token'); return; }
+    adminTokenForm.reset();
+    await refreshAdminState(hasPermission('admin:audit'));
+    renderSection('admin');
+    openDrawer('Managed token created', `<p>Store this token securely. It will not be shown again after this response.</p><pre>${escapeHtml(data.token || '')}</pre>`);
+  };}
+  document.querySelectorAll('[data-admin-rotate]').forEach(btn => btn.onclick = async () => {
+    const tokenId = btn.dataset.adminRotate || '';
+    if(!tokenId) return;
+    const res = await fetch(`/webui/api/admin/tokens/${encodeURIComponent(tokenId)}/rotate`, {method:'POST'});
+    const data = await parseApiResponse(res);
+    if(!res.ok){ alert(data.detail || data.error || 'Failed to rotate token'); return; }
+    await refreshAdminState(hasPermission('admin:audit'));
+    renderSection('admin');
+    openDrawer('Managed token rotated', `<p>The previous secret is no longer valid. Store the new token securely.</p><pre>${escapeHtml(data.token || '')}</pre>`);
+  });
+  document.querySelectorAll('[data-admin-revoke]').forEach(btn => btn.onclick = async () => {
+    const tokenId = btn.dataset.adminRevoke || '';
+    if(!tokenId) return;
+    const res = await fetch(`/webui/api/admin/tokens/${encodeURIComponent(tokenId)}/revoke`, {method:'POST'});
+    const data = await parseApiResponse(res);
+    if(!res.ok){ alert(data.detail || data.error || 'Failed to revoke token'); return; }
+    await refreshAdminState(hasPermission('admin:audit'));
+    renderSection('admin');
+  });
   const channelForm = document.getElementById('channelForm');
   if(channelForm){channelForm.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(channelForm); const channel = fd.get('channel'); const available = (channelState?.available || []).find(item => item.id === channel); const required = available?.required || []; const values = [fd.get('field1'), fd.get('field2'), fd.get('field3')]; const config = {}; required.forEach((key, idx) => config[key] = values[idx] || ''); const res = await fetch('/webui/api/channels/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({channel, config})}); channelState = await fetch('/webui/api/channels/connect').then(r => r.json()); runtime = await fetch('/webui/api/runtime').then(r => r.json()); renderStatusStrip(); renderSection('channels'); };}
   const workstationForm = document.getElementById('workstationForm');
@@ -1545,7 +1829,7 @@ function bindDynamicUI(){
   if(shellChatForm){shellChatForm.onsubmit = async (event) => { event.preventDefault(); const input = document.getElementById('shellChatInput'); const mode = document.getElementById('shellChatMode'); const log = document.getElementById('shellChatLog'); const message = input.value.trim(); if(!message) return; log.insertAdjacentHTML('beforeend', `<div class="chat-entry user"><strong>You</strong><div>${escapeHtml(message)}</div></div>`); input.value=''; log.scrollTop = log.scrollHeight; const res = await fetch('/webui/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_id:'shell_user', message, thinking_mode: mode.value})}); const data = await res.json(); log.insertAdjacentHTML('beforeend', `<div class="chat-entry"><strong>JEBATCore</strong><div>${escapeHtml(data.response || data.error || 'No response')}</div></div>`); log.scrollTop = log.scrollHeight; };}
   const agentFilter = document.getElementById('agentFilter');
   if(agentFilter){agentFilter.oninput = () => { const q = agentFilter.value.toLowerCase(); document.querySelectorAll('#agentGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
-  document.querySelectorAll('[data-agent]').forEach(btn => btn.onclick = () => { const name = btn.dataset.agent; openDrawer(name, `<p>Jebat Gateway bundle agent visible in the runtime template.</p><pre>${escapeHtml(JSON.stringify(consoleMeta.openclaw.agent_names, null, 2))}</pre>`); });
+  document.querySelectorAll('[data-agent]').forEach(btn => btn.onclick = () => { const name = btn.dataset.agent; openDrawer(name, `<p>Jebat Gateway bundle agent visible in the runtime template.</p><pre>${escapeHtml(JSON.stringify(consoleMeta['jebat-gateway']?.agent_names || [], null, 2))}</pre>`); });
   const skillFilter = document.getElementById('skillFilter');
   if(skillFilter){skillFilter.oninput = () => { const q = skillFilter.value.toLowerCase(); document.querySelectorAll('#skillGrid .grid-card').forEach(card => { card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none'; }); };}
   document.querySelectorAll('[data-skill]').forEach(btn => btn.onclick = () => {
@@ -1632,15 +1916,38 @@ function bindDynamicUI(){
   if(backdrop){backdrop.onclick = (event) => { if(event.target === backdrop){ closeDrawer(); } };}
 }
 async function boot(){
-  const [metaRes, runtimeRes, channelRes, workstationRes] = await Promise.all([fetch('/webui/api/console-meta'), fetch('/webui/api/runtime'), fetch('/webui/api/channels/connect'), fetch('/webui/api/workstations/connect')]);
+  const [metaRes, runtimeRes, channelRes, workstationRes, sessionRes] = await Promise.all([fetch('/webui/api/console-meta'), fetch('/webui/api/runtime'), fetch('/webui/api/channels/connect'), fetch('/webui/api/workstations/connect'), fetch('/webui/api/session')]);
   consoleMeta = await metaRes.json();
   runtime = await runtimeRes.json();
   channelState = await channelRes.json();
   workstationState = await workstationRes.json();
+  sessionState = await sessionRes.json();
+  if(currentSection() === 'admin' && hasPermission('admin:users')){
+    const tokenRes = await fetch('/webui/api/admin/tokens');
+    adminTokens = tokenRes.ok ? ((await tokenRes.json()).tokens || []) : [];
+    if(hasPermission('admin:audit')){
+      const auditRes = await fetch('/webui/api/admin/audit?limit=50');
+      adminAudit = auditRes.ok ? await auditRes.json() : {error:'Failed to load audit events'};
+    }else{
+      adminAudit = {error:'Current session does not include admin:audit.'};
+    }
+  }
   renderStatusStrip();
   renderSection(currentSection());
 }
-window.addEventListener('hashchange', () => renderSection(currentSection()));
+window.addEventListener('hashchange', async () => {
+  if(currentSection() === 'admin' && hasPermission('admin:users')){
+    const tokenRes = await fetch('/webui/api/admin/tokens');
+    adminTokens = tokenRes.ok ? ((await tokenRes.json()).tokens || []) : [];
+    if(hasPermission('admin:audit')){
+      const auditRes = await fetch('/webui/api/admin/audit?limit=50');
+      adminAudit = auditRes.ok ? await auditRes.json() : {error:'Failed to load audit events'};
+    }else{
+      adminAudit = {error:'Current session does not include admin:audit.'};
+    }
+  }
+  renderSection(currentSection());
+});
 boot();
 setInterval(async () => {
   try{
@@ -1653,7 +1960,7 @@ setInterval(async () => {
 }, 15000);
 </script>
 </body>
-</html>"""
+</html>""".replace("__INITIAL_SECTION__", json.dumps(initial_section))
 
 
 def _chat_html():

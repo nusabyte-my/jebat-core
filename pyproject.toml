@@ -9,14 +9,20 @@ description = "JEBAT AI assistant platform"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "fastapi>=0.109.0",
+  "uvicorn[standard]>=0.27.0",
+  "pydantic>=2.5.3",
   "httpx>=0.26.0",
   "openai>=1.10.0",
+  "anthropic>=0.8.1",
   "pyyaml>=6.0.1",
+  "python-dotenv>=1.0.0",
   "rich>=13.7.0",
 ]
 
 [project.scripts]
-jebat = "jebat.cli.jebat_cli:run"
+jebat = "apps.api.cli.jebat_cli:run"
+jebat-server = "apps.api.main:main"
 
 [tool.setuptools.packages.find]
-include = ["jebat*"]
+include = ["apps*"]

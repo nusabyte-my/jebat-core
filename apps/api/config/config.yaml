@@ -20,9 +20,9 @@ core:
   cache:
     tiers: 3
     max_size_mb: 1000
-    hot_threshold: 10ms
-    warm_threshold: 100ms
-    cold_threshold: 500ms
+    hot_threshold_ms: 10
+    warm_threshold_ms: 100
+    cold_threshold_ms: 500
 
   agents:
     max_concurrent: 10
@@ -78,22 +78,22 @@ integrations:
     timeout: 30
 
 database:
-  enabled: false  # Set to true when database is configured
-  type: sqlite  # Options: sqlite, postgresql, mysql
-  connection_string: "sqlite:///jebat.db"
+  enabled: false  # Set to true when PostgreSQL is configured
+  type: postgresql  # Models use PostgreSQL-specific types (UUID, INET, ARRAY)
+  connection_string: ""  # Set via JEBAT_DATABASE_URL env var
   pool_size: 5
 
 llm:
-  provider: openai
-  model: gpt-5.4
+  provider: ollama
+  model: llama3.2
   temperature: 0.2
   max_tokens: 1200
   ollama_host: "http://127.0.0.1:11434"
   fallback_providers:
+    - openai
     - google
     - anthropic
     - openrouter
-    - ollama
     - local
   history_path: ".jebat/chat_history.jsonl"
 

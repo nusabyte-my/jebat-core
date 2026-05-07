@@ -22,7 +22,7 @@ from typing import Optional
 import pandas as pd
 import streamlit as st
 
-from jebat.analytics.engine import AnalyticsEngine, get_analytics_engine
+from .engine import AnalyticsEngine, get_analytics_engine
 
 
 def format_timestamp(ts: Optional[datetime]) -> str:

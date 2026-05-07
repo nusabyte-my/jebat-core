@@ -12,7 +12,7 @@ Features:
 - Predictive analytics
 
 Usage:
-    from jebat.analytics import AnalyticsEngine
+    from apps.api.analytics.engine import AnalyticsEngine
 
     engine = AnalyticsEngine()
     await engine.track_event("chat_completion", {"user_id": "123", "duration": 1.5})

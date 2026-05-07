@@ -17,7 +17,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from jebat.cli.jebat_cli import main as cli_main
+from .jebat_cli import main as cli_main
 
 if __name__ == "__main__":
     result = asyncio.run(cli_main())

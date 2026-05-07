@@ -19,7 +19,10 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from .database_repository import UltraLoopRepository
+try:
+    from .database_repository import UltraLoopRepository
+except ImportError:
+    UltraLoopRepository = None
 
 logger = logging.getLogger(__name__)
 
@@ -130,8 +133,14 @@ class UltraLoop:
         self.cache_manager = cache_manager
         self.enable_db_persistence = enable_db_persistence
 
-        # Database repository
-        self.db_repo = UltraLoopRepository() if enable_db_persistence else None
+        # Database repository (None if sqlalchemy not installed)
+        self.db_repo = None
+        if enable_db_persistence and UltraLoopRepository is not None:
+            try:
+                self.db_repo = UltraLoopRepository()
+            except Exception:
+                logger.debug("DB persistence unavailable for Ultra-Loop")
+                self.db_repo = None
 
         # Loop control
         self._is_running = False
@@ -340,7 +349,7 @@ class UltraLoop:
                 for plan in plans:
                     try:
                         # Create task for agent execution
-                        from jebat.core.agents.orchestrator import (
+                        from ...core.agents.orchestrator import (
                             AgentTask,
                             TaskPriority,
                         )

@@ -41,15 +41,15 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
-from jebat.database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
-from jebat.database.models import SecurityEvent, SecurityPolicy, AuditLog, User
-from jebat.core.decision.engine import DecisionEngine
+from ...database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
+from ...database.models import SecurityEvent, SecurityPolicy, AuditLog, User
+from ...core.decision.engine import DecisionEngine
 try:
-    from jebat.error_recovery.system import ErrorRecoverySystem
+    from ...error_recovery.system import ErrorRecoverySystem
 except ImportError:
     ErrorRecoverySystem = None
-from jebat.core.cache.smart_cache import CacheManager
-from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
+from ...core.cache.smart_cache import CacheManager
+from ...skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -1977,13 +1977,13 @@ class SentinelSecuritySystem:
 
 async def example_usage():
     """Example usage of Sentinel Security System."""
-    from jebat.database.repositories import (
+    from ...database.repositories import (
         SecurityEventRepository,
         SecurityPolicyRepository,
         AuditLogRepository,
         UserRepository,
     )
-    from jebat.database.models import AsyncSessionLocal
+    from ...database.models import AsyncSessionLocal
 
     # Create mock repositories (in production, these would be real)
     async with AsyncSessionLocal() as session:
@@ -2071,15 +2071,15 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
-from jebat.database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
-from jebat.database.models import SecurityEvent, SecurityPolicy, AuditLog, User
-from jebat.core.decision.engine import DecisionEngine
+from ...database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
+from ...database.models import SecurityEvent, SecurityPolicy, AuditLog, User
+from ...core.decision.engine import DecisionEngine
 try:
-    from jebat.error_recovery.system import ErrorRecoverySystem
+    from ...error_recovery.system import ErrorRecoverySystem
 except ImportError:
     ErrorRecoverySystem = None
-from jebat.core.cache.smart_cache import CacheManager
-from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
+from ...core.cache.smart_cache import CacheManager
+from ...skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
 
 # Configure logging
 logger = logging.getLogger(__name__)
