@@ -854,6 +854,23 @@ async def main():
     llm_auth_parser = subparsers.add_parser("llm-auth", help="Show provider authentication status")
     llm_auth_parser.add_argument("--missing-only", action="store_true", help="Show only missing provider auth")
     subparsers.add_parser("llm-best-provider", help="Show the best configured provider")
+
+    # Auth commands — credential storage
+    auth_parser = subparsers.add_parser("auth", help="Manage credentials (OS keyring, env, encrypted)")
+    auth_subparsers = auth_parser.add_subparsers(dest="auth_action")
+    auth_set = auth_subparsers.add_parser("set", help="Store a credential")
+    auth_set.add_argument("provider", help="Provider name (openai, anthropic, ...)")
+    auth_set.add_argument("key_type", choices=["api_key"], help="Credential type")
+    auth_set.add_argument("value", help="The credential value")
+    auth_get = auth_subparsers.add_parser("get", help="Retrieve a credential")
+    auth_get.add_argument("provider", help="Provider name")
+    auth_get.add_argument("key_type", choices=["api_key"], help="Credential type")
+    auth_delete = auth_subparsers.add_parser("delete", help="Remove a credential")
+    auth_delete.add_argument("provider", help="Provider name")
+    auth_delete.add_argument("key_type", choices=["api_key"], help="Credential type")
+    auth_list = auth_subparsers.add_parser("list", help="List stored credentials")
+    auth_which = auth_subparsers.add_parser("which", help="Show which backend is active")
+
     doctor_parser = subparsers.add_parser("doctor", help="Check LLM/provider health")
     doctor_parser.add_argument("--probe", action="store_true", help="Send a real test prompt using the configured provider flow")
     subparsers.add_parser("mode-guide", help="Print the local JEBAT assistant guide path")
@@ -1195,6 +1212,45 @@ async def main():
 
         elif args.command == "llm-best-provider":
             await cli.cmd_llm_best_provider()
+
+        elif args.command == "auth":
+            from jebat.features.auth.auth import _store, _retrieve, _delete, _active_backend
+            if args.auth_action == "set":
+                backend = _store(args.provider, args.key_type, args.value)
+                print(f"  Stored {args.key_type} for {args.provider} → {backend}")
+            elif args.auth_action == "get":
+                val = _retrieve(args.provider, args.key_type)
+                if val:
+                    masked = val[:4] + "****" + val[-4:] if len(val) > 8 else "****"
+                    print(f"  {args.key_type} for {args.provider}: {masked}")
+                else:
+                    print(f"  No {args.key_type} found for {args.provider}")
+            elif args.auth_action == "delete":
+                success = _delete(args.provider, args.key_type)
+                if success:
+                    print(f"  Removed {args.key_type} for {args.provider}")
+                else:
+                    print(f"  No {args.key_type} found for {args.provider}")
+            elif args.auth_action == "list":
+                # Probe known providers through retrieve
+                from jebat.features.auth.auth import SUPPORTED_PROVIDERS
+                probers = ["api_key"]
+                found = []
+                for prov in SUPPORTED_PROVIDERS:
+                    for kt in probers:
+                        if _retrieve(prov, kt):
+                            found.append({"provider": prov, "key_type": kt})
+                if not found:
+                    print("  No credentials stored in fast path — check env/auth.enc/keyring")
+                else:
+                    print(f"  Stored credentials ({len(found)}):")
+                    for c in found:
+                        print(f"    {c['provider']}/{c['key_type']}")
+            elif args.auth_action == "which":
+                backend = _active_backend()
+                print(f"  Active credential backend: {backend}")
+            else:
+                auth_parser.print_help()
 
         elif args.command == "doctor":
             await cli.cmd_doctor(args.probe)
