@@ -38,6 +38,8 @@ from jebat.llm import (
     select_best_provider,
 )
 
+from jebat.tools.base import BaseTool, ToolRegistry
+
 # Rich for beautiful CLI output
 try:
     from rich.console import Console
@@ -158,6 +160,157 @@ class JEBATCLI:
             self.print(f"  Avg Thoughts/Session: {avg_thoughts:.1f}")
 
         self.print("\n" + "=" * 60 + "\n", "bold blue")
+
+    async def cmd_init(
+        self,
+        provider: str | None = None,
+        key: str | None = None,
+        model: str | None = None,
+        no_probe: bool = False,
+        force: bool = False,
+    ):
+        """First-run setup wizard — configure LLM provider and API key.
+
+        Walks the user through:
+        1. Pick a provider (interactive if not passed via --provider)
+        2. Enter API key (or endpoint for ollama/llamacpp)
+        3. Pick default model
+        4. Write to ~/.jebat/secrets.env
+        5. Create ~/.jebat/config.yaml if missing
+        6. Test connectivity (unless --no-probe)
+        """
+        from jebat.features.auth.auth import SUPPORTED_PROVIDERS, _store_env, _read_env_file, _write_env_file
+        from jebat.llm.auth import PROVIDER_ENV_MAP
+
+        self.print("\n" + "=" * 54, "bold blue")
+        self.print("  JEBAT First-Run Setup", "bold blue")
+        self.print("=" * 54, "bold blue")
+
+        # ── Check if already configured ───────────────────────────
+        existing = _read_env_file()
+        if existing and not force:
+            self.print("\n  Secrets already exist in ~/.jebat/secrets.env:", "yellow")
+            for k in sorted(existing):
+                masked = existing[k][:4] + "***" if len(existing[k]) > 4 else "****"
+                self.print(f"    {k}={masked}")
+            self.print("\n  Use --force to overwrite. Continuing with existing config for probe test.", "dim")
+            provider = provider or "openai"
+        else:
+            # ── Step 1: Pick provider ──────────────────────────────
+            if not provider:
+                self.print("\n  Supported providers:", "bold")
+                for i, p in enumerate(SUPPORTED_PROVIDERS, 1):
+                    env_vars = PROVIDER_ENV_MAP.get(p, ())
+                    env_hint = f"  (needs {' or '.join(env_vars)})" if env_vars else ""
+                    self.print(f"    {i}. {p}{env_hint}")
+
+                choice = input("\n  Enter provider name (or number): ").strip()
+                if choice.isdigit() and 1 <= int(choice) <= len(SUPPORTED_PROVIDERS):
+                    provider = SUPPORTED_PROVIDERS[int(choice) - 1]
+                else:
+                    provider = choice.lower()
+                    if provider not in SUPPORTED_PROVIDERS:
+                        provider = "openai"
+                        self.print(f"  Unrecognised — defaulting to: {provider}", "yellow")
+                self.print(f"  Selected: {provider}", "green")
+
+            # ── Step 2: API key ────────────────────────────────────
+            env_vars = PROVIDER_ENV_MAP.get(provider, ())
+            env_key_name = env_vars[0] if env_vars else f"{provider.upper()}_API_KEY"
+            is_local = provider in ("local", "llamacpp", "ollama")
+
+            if not key:
+                if is_local:
+                    prompt = f"  {provider} endpoint (e.g., http://localhost:11434): "
+                else:
+                    prompt = f"  {provider.upper()} API key: "
+                key = input(prompt).strip()
+
+            if key:
+                # Write to secrets.env
+                if is_local:
+                    if provider == "ollama":
+                        _write_env_file({"OLLAMA_HOST": key})
+                    elif provider == "llamacpp":
+                        _write_env_file({"LLAMA_CPP_HOST": key})
+                    else:
+                        _write_env_file({env_key_name: key})
+                else:
+                    _store_env(provider, "api_key", key)
+            else:
+                self.print("  No key provided — skipping write. Set later with:", "yellow")
+                self.print(f"    echo '{env_key_name}=your-key' >> ~/.jebat/secrets.env", "dim")
+
+        # ── Step 3: Default model ─────────────────────────────────
+        if not model:
+            default_models = {
+                "openai": "gpt-4o",
+                "anthropic": "claude-sonnet-4",
+                "google": "gemini-2.5-pro",
+                "openrouter": "openai/gpt-4o",
+                "deepseek": "deepseek-chat",
+                "groq": "llama-3.3-70b",
+                "together": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                "mistral": "mistral-large",
+                "cohere": "command-r-plus",
+                "ollama": "llama3.2",
+                "custom": "default",
+            }
+            model = default_models.get(provider, "gpt-4o")
+            model_input = input(f"  Default model [{model}]: ").strip()
+            if model_input:
+                model = model_input
+
+        # ── Step 4: Write config.yaml if missing ──────────────────
+        config_path = Path.home() / ".jebat" / "config.yaml"
+        if not config_path.exists() or force:
+            config_content = (
+                f"# JEBAT configuration — auto-generated by `jebat init`\n"
+                f"model:\n"
+                f"  provider: {provider}\n"
+                f"  model: {model}\n"
+                f"  temperature: 0.2\n"
+                f"\nfeatures:\n"
+                f"  terminal:\n"
+                f"    enabled: true\n"
+                f"    timeout: 300\n"
+                f"    dangerous_commands: confirm\n"
+                f"  browser:\n"
+                f"    enabled: false\n"
+                f"  mcp:\n"
+                f"    enabled: true\n"
+            )
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.write_text(config_content, encoding="utf-8")
+            self.print(f"\n  Config written: {config_path}", "green")
+        else:
+            self.print(f"\n  Config exists: {config_path}  (use --force to overwrite)", "dim")
+
+        # ── Step 5: Connectivity test ─────────────────────────────
+        if not no_probe:
+            self.print("\n  Testing connectivity...", "bold")
+            from jebat.llm.auth import _ensure_secrets_loaded
+            _ensure_secrets_loaded()
+
+            try:
+                import time
+                test_start = time.time()
+                result = await generate_with_failover(
+                    prompt="Reply with the single word: pong",
+                    system_prompt="You are a connectivity test. Reply with exactly one word: pong.",
+                    provider_override=provider,
+                    model_override=model,
+                )
+                test_elapsed = time.time() - test_start
+                self.print(f"  Connected! ({test_elapsed:.1f}s)", "green")
+                self.print(f"  Response: {str(result.text)[:200]}", "dim")
+            except Exception as e:
+                self.print(f"  Connection failed: {e}", "red")
+                self.print("  You can retry later with:  jebat doctor --probe", "dim")
+
+        self.print("\n" + "=" * 54, "bold blue")
+        self.print("  Setup complete! Try:  jebat agent 'hello!'", "bold green")
+        self.print("=" * 54 + "\n", "bold blue")
 
     async def cmd_loop_start(self, cycles: int = 0):
         """Start Ultra-Loop"""
@@ -328,6 +481,8 @@ class JEBATCLI:
         provider_override: str | None = None,
         model_override: str | None = None,
         skill_names: list[str] | None = None,
+        yolo: bool = False,
+        stream: bool = False,
     ):
         """Run chat completion via configured LLM provider."""
         config = load_llm_config()
@@ -345,18 +500,32 @@ class JEBATCLI:
                 f"  Skills: {', '.join(skill.name for skill in selected_skills)}",
                 "cyan",
             )
-        response, used_provider = await generate_with_failover(
-            config=config,
-            prompt=active_prompt,
-            system_prompt=(
-                "You are JEBAT, a pragmatic multi-provider AI development assistant. "
-                "Use any provided JEBAT skills as operating guidance."
-            ),
+
+        sys_prompt = (
+            "You are JEBAT, a pragmatic multi-provider AI development assistant. "
+            "Use any provided JEBAT skills as operating guidance."
         )
+        self.print("\n Response:", "bold green")
+
+        if stream:
+            from jebat.llm.stream_output import StreamPrinter, generate_streaming_with_failover
+            printer = StreamPrinter(console=self.console)
+            response, used_provider = await generate_streaming_with_failover(
+                config=config,
+                prompt=active_prompt,
+                system_prompt=sys_prompt,
+                printer=printer,
+            )
+        else:
+            response, used_provider = await generate_with_failover(
+                config=config,
+                prompt=active_prompt,
+                system_prompt=sys_prompt,
+            )
+            self.print(response)
+
         if used_provider != config.provider:
             self.print(f"  Fallback Used: {used_provider}", "yellow")
-        self.print("\n Response:", "bold green")
-        self.print(response)
 
     async def cmd_chat_project(
         self,
@@ -365,6 +534,7 @@ class JEBATCLI:
         provider_override: str | None = None,
         model_override: str | None = None,
         skill_names: list[str] | None = None,
+        yolo: bool = False,
     ):
         """Run project-aware chat."""
         config = self._override_config(load_llm_config(), provider_override, model_override)
@@ -403,53 +573,49 @@ class JEBATCLI:
         project_path: str | None = None,
         session_id: str | None = None,
         skill_names: list[str] | None = None,
+        yolo: bool = False,
     ):
-        """Interactive REPL chat with history."""
-        config = self._override_config(load_llm_config(), provider_override, model_override)
-        history = ChatHistoryStore(config.history_path)
-        session = session_id or uuid.uuid4().hex[:12]
-        project_context = build_project_context(project_path or ".") if project_path else None
-        pinned_skills = skill_names or []
-        self.print(f"\n  REPL session: {session}", "bold blue")
-        self.print("  Type '/exit' to quit.\n", "cyan")
-        while True:
-            try:
-                user_input = input("jebat> ").strip()
-            except EOFError:
-                break
-            if not user_input:
-                continue
-            if user_input in {"/exit", "/quit"}:
-                break
-            prior_turns = history.load(session, limit=12)
-            transcript = []
-            for turn in prior_turns:
-                transcript.append(f"{turn.role}: {turn.content}")
-            if project_context:
-                transcript.append(f"project: {project_context.summary}")
-            transcript.append(f"user: {user_input}")
-            full_prompt = "\n".join(transcript)
-            active_prompt, selected_skills = build_skill_prompt(
-                full_prompt,
-                requested_skills=pinned_skills,
-                auto_discover=not bool(pinned_skills),
-            )
-            response, used_provider = await generate_with_failover(
-                config=config,
-                prompt=active_prompt,
-                system_prompt=(
-                    "You are JEBAT, continuing a CLI conversation with short but useful replies. "
-                    "Use provided JEBAT skills when they are present."
-                ),
-            )
-            history.append(session, "user", user_input)
-            history.append(session, "assistant", response)
-            if selected_skills:
-                self.print(
-                    f"[{used_provider}] skills={', '.join(skill.name for skill in selected_skills)}",
-                    "cyan",
-                )
-            self.print(f"[{used_provider}] {response}", "green")
+        """Interactive REPL chat with AgentLoop tool-calling."""
+        from jebat.features.repl.repl import ReplLoop
+
+        # Build system prompt with optional skill context
+        system_prompt = "You are JEBAT, a pragmatic engineering assistant. Be direct, use tools when appropriate, and keep responses actionable."
+        if skill_names:
+            skill_lines = []
+            for sname in skill_names:
+                try:
+                    _prompt, _skills = build_skill_prompt(
+                        f"use skill {sname}",
+                        requested_skills=[sname],
+                        auto_discover=False,
+                    )
+                    if _skills:
+                        skill_lines.append(f"- {_skills[0].name}: {_skills[0].description}")
+                except Exception:
+                    skill_lines.append(f"- {sname}")
+            system_prompt += "\n\nPinned skills:\n" + "\n".join(skill_lines)
+
+        # Create and run the ReplLoop — it handles everything
+        repl = ReplLoop(
+            session_id=session_id,
+            ephemeral=False,
+            system_prompt=system_prompt,
+        )
+
+        # Set provider/model overrides on the REPL
+        if provider_override:
+            repl._provider_override = provider_override
+        if model_override:
+            repl._model_override = model_override
+        
+        # YOLO mode — skip all tool approval prompts
+        if yolo:
+            from jebat.core.agent_loop import SafetyMode
+            repl._safety_mode = SafetyMode.DANGEROUS
+            self.print("  YOLO MODE ON — all tool calls auto-approved (dangerous)", "bold red")
+
+        # The ReplLoop.run() is the main loop — it connects to AgentLoop
+        await repl.run()
 
     async def cmd_llm_providers(self):
         """Show supported providers."""
@@ -467,6 +633,7 @@ class JEBATCLI:
             "temperature": config.temperature,
             "max_tokens": config.max_tokens,
             "ollama_host": config.ollama_host,
+            "llamacpp_host": config.llamacpp_host,
             "fallback_providers": list(config.fallback_providers),
             "history_path": config.history_path,
         }
@@ -519,6 +686,12 @@ class JEBATCLI:
             style = "green" if ok else "red"
             self.print(f"  Ollama: {detail}", style)
 
+        llamacpp_item = next((item for item in auth_items if item.provider == "llamacpp"), None)
+        if llamacpp_item and llamacpp_item.configured:
+            ok, detail = self._check_llamacpp(config.llamacpp_host)
+            style = "green" if ok else "red"
+            self.print(f"  llama.cpp: {detail}", style)
+
         if probe:
             response, used_provider = await generate_with_failover(
                 config=config,
@@ -540,6 +713,15 @@ class JEBATCLI:
 
         models = payload.get("models", [])
         return True, f"online ({len(models)} models)"
+
+    def _check_llamacpp(self, host: str) -> tuple[bool, str]:
+        """Check whether the llama.cpp OpenAI-compatible API responds."""
+        target = f"{host.rstrip('/')}/health"
+        try:
+            with urllib.request.urlopen(target, timeout=3):
+                return True, "online"
+        except (urllib.error.URLError, TimeoutError) as exc:
+            return False, f"offline ({exc})"
 
     async def cmd_skills_list(self, category: str | None = None):
         """List available JEBAT skills."""
@@ -631,6 +813,14 @@ async def main():
     # Status command
     subparsers.add_parser("status", help="Show system status")
 
+    # Init command — first-run setup wizard
+    init_parser = subparsers.add_parser("init", help="First-run setup: configure LLM provider and API key")
+    init_parser.add_argument("--provider", help="Provider name (openai, anthropic, google, openrouter, groq, deepseek, ollama, custom)")
+    init_parser.add_argument("--key", help="API key (or endpoint for ollama/llamacpp)")
+    init_parser.add_argument("--model", help="Default model (e.g., gpt-4o, claude-sonnet-4)")
+    init_parser.add_argument("--no-probe", action="store_true", help="Skip the connectivity test ping")
+    init_parser.add_argument("--force", action="store_true", help="Overwrite existing configuration without asking")
+
     # Loop commands
     loop_parser = subparsers.add_parser("loop", help="Ultra-Loop control")
     loop_subparsers = loop_parser.add_subparsers(dest="loop_command")
@@ -682,6 +872,8 @@ async def main():
     chat_parser.add_argument("--provider", help="Override provider for this request")
     chat_parser.add_argument("--model", help="Override model for this request")
     chat_parser.add_argument("--skill", action="append", default=[], help="Force one or more JEBAT skills")
+    chat_parser.add_argument("--yolo", action="store_true", help="YOLO mode — auto-approve ALL tool calls (like --dangerously-skip-permissions)")
+    chat_parser.add_argument("--stream", action="store_true", help="Stream tokens live as they arrive (character-by-character output)")
 
     chat_project_parser = subparsers.add_parser("chat-project", help="Chat with JEBAT using current project context")
     chat_project_parser.add_argument("prompt", help="Prompt to send")
@@ -690,17 +882,148 @@ async def main():
     chat_project_parser.add_argument("--model", help="Override model for this request")
     chat_project_parser.add_argument("--skill", action="append", default=[], help="Force one or more JEBAT skills")
 
-    repl_parser = subparsers.add_parser("chat-repl", help="Interactive chat session with history")
+    repl_parser = subparsers.add_parser("chat-repl", help="Interactive chat session with AgentLoop tool-calling")
     repl_parser.add_argument("--provider", help="Override provider for this session")
     repl_parser.add_argument("--model", help="Override model for this session")
     repl_parser.add_argument("--project-path", help="Optional project path for context")
     repl_parser.add_argument("--session-id", help="Reuse an existing session id")
     repl_parser.add_argument("--skill", action="append", default=[], help="Pin one or more JEBAT skills for the session")
+    repl_parser.add_argument("--yolo", action="store_true", help="YOLO mode — auto-approve ALL tool calls")
+    repl_parser.add_argument("--stream", action="store_true", help="Stream tokens live as they arrive")
+
+    # Tools command — list registered tools
+    tools_parser = subparsers.add_parser("tools", help="List and inspect registered tools")
+    tools_subparsers = tools_parser.add_subparsers(dest="tools_command")
+    tools_list = tools_subparsers.add_parser("list", help="List all registered tools")
+    tools_list.add_argument("--tier", help="Filter by safety tier (auto/confirm/dangerous)")
+    tools_inspect = tools_subparsers.add_parser("inspect", help="Show tool details")
+    tools_inspect.add_argument("name", help="Tool name to inspect")
+
+    # MCP command — manage MCP server connections
+    mcp_parser = subparsers.add_parser("mcp", help="MCP server management")
+    mcp_subparsers = mcp_parser.add_subparsers(dest="mcp_command")
+    mcp_connect = mcp_subparsers.add_parser("connect", help="Connect to an MCP server")
+    mcp_connect.add_argument("server_url", help="Server URL or command (stdio:// or http://)")
+    mcp_connect.add_argument("--name", help="Custom name for this server")
+    mcp_list = mcp_subparsers.add_parser("list", help="List connected MCP servers and their tools")
+    mcp_start_all = mcp_subparsers.add_parser("start-all", help="Start all configured MCP servers")
+    mcp_serve = mcp_subparsers.add_parser("serve", help="Start JEBAT as MCP server (for IDE integration)")
+    mcp_serve.add_argument("--transport", default="stdio", choices=["stdio", "http", "streamable-http"], help="Transport mode (stdio for IDEs, http for remote, streamable-http for MCP 2025-03-26)")
+    mcp_serve.add_argument("--port", type=int, default=8099, help="HTTP port (for http transport)")
+    mcp_serve.add_argument("--host", default="127.0.0.1", help="HTTP host (for http transport)")
+    mcp_ide_config = mcp_subparsers.add_parser("ide-config", help="Print IDE configuration templates for JEBAT MCP")
+
+    # Search command — web search from CLI
+    search_parser = subparsers.add_parser("search", help="Search the web")
+    search_parser.add_argument("query", help="Search query")
+    search_parser.add_argument("--engine", default="searxng", help="Search engine (searxng, duckduckgo, brave)")
+    search_parser.add_argument("--limit", type=int, default=5, help="Max results")
+
+    # Agent command — one-shot agent execution
+    agent_parser = subparsers.add_parser("agent", help="Run a one-shot agent task with tool-calling")
+    agent_parser.add_argument("prompt", help="Task prompt")
+    agent_parser.add_argument("--provider", help="Override provider")
+    agent_parser.add_argument("--model", help="Override model")
+    agent_parser.add_argument("--yolo", action="store_true", help="YOLO mode — auto-approve ALL tool calls")
+    agent_parser.add_argument("--safety", default="auto", help="Safety tier (auto/confirm/dangerous)")
+    agent_parser.add_argument("--mode", help="Reasoning mode (fast/deliberate/deep/strategic/creative/critical)")
+    agent_parser.add_argument("--max-iterations", type=int, default=25, help="Max tool-calling iterations")
+    agent_parser.add_argument("--session", "-s", help="Resume a specific session by ID")
+    agent_parser.add_argument("--stream", action="store_true", help="Stream tokens as they arrive")
+
+    # Git command — PendekarGit (Code Warrior)
+    git_parser = subparsers.add_parser("git", help="Git operations: status, diff, log, commit, blame, branch, stash")
+    git_subparsers = git_parser.add_subparsers(dest="git_command")
+    git_status = git_subparsers.add_parser("status", help="Show working tree status")
+    git_diff = git_subparsers.add_parser("diff", help="Show staged or unstaged diff")
+    git_diff.add_argument("--staged", action="store_true", help="Show staged diff")
+    git_diff.add_argument("--stat", action="store_true", help="Show stat summary")
+    git_diff.add_argument("--file", help="Restrict diff to specific file")
+    git_log = git_subparsers.add_parser("log", help="Show commit history")
+    git_log.add_argument("-n", type=int, default=10, help="Number of commits")
+    git_log.add_argument("--author", help="Filter by author")
+    git_log.add_argument("--oneline", action="store_true", default=True, help="One-line format")
+    git_commit = git_subparsers.add_parser("commit", help="Commit staged changes")
+    git_commit.add_argument("-m", dest="message", help="Commit message")
+    git_commit.add_argument("--amend", action="store_true", help="Amend previous commit")
+    git_blame = git_subparsers.add_parser("blame", help="Show who wrote each line")
+    git_blame.add_argument("file", help="File to blame")
+    git_branch = git_subparsers.add_parser("branch", help="List/create/switch branches")
+    git_branch.add_argument("action", nargs="?", default="list", help="list/create/switch/delete")
+    git_branch.add_argument("name", nargs="?", help="Branch name")
+    git_stash = git_subparsers.add_parser("stash", help="Stash/pop/list stashes")
+    git_stash.add_argument("action", nargs="?", default="push", help="push/pop/list/drop")
+
+    # File operations command — read, write, patch, search
+    file_parser = subparsers.add_parser("file", help="File read/write/patch/search operations")
+    file_subparsers = file_parser.add_subparsers(dest="file_command")
+    file_read = file_subparsers.add_parser("read", help="Read a file with line numbers")
+    file_read.add_argument("path", help="File path to read")
+    file_read.add_argument("--offset", type=int, default=1, help="Start line (1-indexed)")
+    file_read.add_argument("--limit", type=int, default=500, help="Max lines to return")
+    file_write = file_subparsers.add_parser("write", help="Write content to a file (creates backup)")
+    file_write.add_argument("path", help="File path to write to")
+    file_write.add_argument("content", help="Content to write")
+    file_patch = file_subparsers.add_parser("patch", help="Find-and-replace edit in a file")
+    file_patch.add_argument("path", help="File path to edit")
+    file_patch.add_argument("old_string", help="Text to find")
+    file_patch.add_argument("new_string", help="Replacement text")
+    file_patch.add_argument("--all", dest="replace_all", action="store_true", help="Replace all occurrences")
+    file_search = file_subparsers.add_parser("search", help="Search file contents (regex) or find files by glob")
+    file_search.add_argument("pattern", help="Search pattern (regex for content, glob for files)")
+    file_search.add_argument("--dir", dest="search_dir", default=".", help="Directory to search in")
+    file_search.add_argument("--files", dest="search_files_mode", action="store_true", help="Search by file name (glob) instead of content")
+    file_search.add_argument("--limit", type=int, default=50, help="Max results")
+    file_undo = file_subparsers.add_parser("undo", help="Undo the last write to a file")
+    file_undo.add_argument("path", help="File path to undo")
+
+    # Free-models command — list free/cheap AI models via 9Router
+    freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
+    freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
+
+    # Cost tracking command
+    cost_parser = subparsers.add_parser("cost", help="Token cost dashboard and tracking")
+    cost_parser.add_argument("--summary", action="store_true", help="Show daily cost summary")
+    cost_parser.add_argument("--weekly", action="store_true", help="Show weekly cost summary")
+    cost_parser.add_argument("--export", action="store_true", help="Export cost data to JSON")
+
+    # Undo/Rollback command
+    undo_parser = subparsers.add_parser("undo", help="Undo file changes (rollback to backup)")
+    undo_parser.add_argument("path", nargs="?", help="File path to rollback")
+    undo_parser.add_argument("--list", action="store_true", help="List available backups")
+    undo_parser.add_argument("--diff", action="store_true", help="Show diff vs backup")
+    undo_parser.add_argument("--version", type=int, default=-1, help="Backup version (-1=latest)")
+    undo_parser.add_argument("--purge", action="store_true", help="Purge all backups")
+
+    # Telemetry command
+    telemetry_parser = subparsers.add_parser("telemetry", help="Opt-in usage analytics")
+    telemetry_parser.add_argument("--enable", action="store_true", help="Enable telemetry (opt-in)")
+    telemetry_parser.add_argument("--disable", action="store_true", help="Disable telemetry")
+    telemetry_parser.add_argument("--report", action="store_true", help="Show telemetry report")
+
+    # Sandbox command
+    sandbox_parser = subparsers.add_parser("sandbox", help="Docker sandbox for code execution")
+    sandbox_parser.add_argument("--check", action="store_true", help="Check if Docker is available")
+    sandbox_parser.add_argument("--run", help="Python code to execute in sandbox")
+    sandbox_parser.add_argument("--shell-cmd", dest="sandbox_command", help="Shell command to execute in sandbox")
+    sandbox_parser.add_argument("--network", action="store_true", help="Allow network in sandbox")
+
+    # Plugins command
+    plugins_parser = subparsers.add_parser("plugins", help="Manage JEBAT plugins")
+    plugins_parser.add_argument("--list", action="store_true", help="List discovered plugins")
+    plugins_parser.add_argument("--load", help="Load a specific plugin")
+    plugins_parser.add_argument("--load-all", action="store_true", help="Load all discovered plugins")
+    plugins_parser.add_argument("--install-git", help="Install plugin from Git URL")
+    plugins_parser.add_argument("--install-pip", help="Install plugin from pip")
+    plugins_parser.add_argument("--uninstall", help="Uninstall a plugin")
 
     args = parser.parse_args()
 
     if not args.command:
-        parser.print_help()
+        # Default: start the REPL directly (like Hermes, Claude Code, Codex)
+        from jebat.features.repl.repl import ReplLoop
+        repl = ReplLoop(ephemeral=False)
+        await repl.run()
         return 0
 
     cli = JEBATCLI()
@@ -708,6 +1031,9 @@ async def main():
     try:
         if args.command == "status":
             await cli.cmd_status()
+
+        elif args.command == "init":
+            await cli.cmd_init(args.provider, args.key, args.model, args.no_probe, args.force)
 
         elif args.command == "loop":
             if args.loop_command == "start":
@@ -762,28 +1088,359 @@ async def main():
                 skills_parser.print_help()
 
         elif args.command == "chat":
-            await cli.cmd_chat(args.prompt, args.provider, args.model, args.skill)
+            yolo = getattr(args, 'yolo', False)
+            stream = getattr(args, 'stream', False)
+            await cli.cmd_chat(args.prompt, args.provider, args.model, args.skill, yolo=yolo, stream=stream)
 
         elif args.command == "chat-project":
+            yolo = getattr(args, 'yolo', False)
             await cli.cmd_chat_project(
                 args.prompt,
                 args.project_path,
                 args.provider,
                 args.model,
                 args.skill,
+                yolo=yolo,
             )
 
         elif args.command == "chat-repl":
+            yolo = getattr(args, 'yolo', False)
             await cli.cmd_chat_repl(
                 provider_override=args.provider,
                 model_override=args.model,
                 project_path=args.project_path,
                 session_id=args.session_id,
                 skill_names=args.skill,
+                yolo=yolo,
             )
 
-        else:
-            parser.print_help()
+        elif args.command == "tools":
+            from jebat.tools import TOOL_REGISTRY
+            # Trigger tool imports
+            try:
+                from jebat.core.agent_loop import AgentLoop
+                tmp = AgentLoop.__new__(AgentLoop)
+                tmp._tools_imported = False
+                tmp._ensure_tools_imported()
+            except Exception:
+                pass
+            if args.tools_command == "inspect":
+                tdef = TOOL_REGISTRY.get(args.name)
+                if tdef:
+                    cli.print(f"  Tool: {tdef.name}", "bold cyan")
+                    cli.print(f"  Safety tier: {tdef.safety_tier or 'auto'}")
+                    cli.print(f"  Timeout: {tdef.timeout}s")
+                    cli.print(f"  Description: {tdef.description or 'N/A'}")
+                    cli.print(f"  Schema: {json.dumps(tdef.schema, indent=2)}")
+                else:
+                    cli.print(f"  Tool '{args.name}' not found", "red")
+            else:
+                # List mode (default)
+                tier_filter = getattr(args, 'tier', None)
+                for name, tdef in sorted(TOOL_REGISTRY.items()):
+                    tier = tdef.safety_tier or "auto"
+                    if tier_filter and tier != tier_filter:
+                        continue
+                    desc = (tdef.description or "N/A")[:60]
+                    cli.print(f"  {name} [{tier}] -- {desc}")
+
+        elif args.command == "mcp":
+            from jebat.features.mcp.mcp_client import MCPClient
+            mgr = MCPClient()
+            if args.mcp_command == "connect":
+                server_name = args.name or "dynamic"
+                # Dynamically add a server config and start it
+                srv_cfg = {
+                    "name": server_name,
+                    "transport": "http" if args.server_url.startswith("http") else "stdio",
+                    "url": args.server_url if args.server_url.startswith("http") else None,
+                    "command": args.server_url if not args.server_url.startswith("http") else None,
+                    "enabled": True,
+                }
+                parsed = mgr._parse_server_config(srv_cfg)
+                mgr._servers[server_name] = parsed
+                await mgr.start_server(server_name)
+                tools = mgr.list_discovered_tools(server_name)
+                cli.print(f"  Connected: {server_name}")
+                cli.print(f"  Tools discovered: {len(tools)}")
+                for t in tools:
+                    cli.print(f"    - {t.name}: {t.description[:60]}")
+            elif args.mcp_command == "list":
+                server_names = list(mgr._servers.keys())
+                if not server_names:
+                    cli.print("  No MCP servers configured.", "yellow")
+                else:
+                    for name in server_names:
+                        tools = mgr.list_discovered_tools(name)
+                        transport = mgr._servers[name].transport.value
+                        cli.print(f"  {name} ({transport}) -- {len(tools)} tools")
+            elif args.mcp_command == "start-all":
+                await mgr.start_all()
+                total_tools = len(mgr.list_discovered_tools())
+                cli.print(f"  All MCP servers started. Total tools: {total_tools}")
+            elif args.mcp_command == "serve":
+                from jebat.features.mcp.mcp_server import MCPServer, TransportMode, run_server
+                if args.transport == "streamable-http":
+                    from jebat.features.mcp.mcp_transport import StreamableHTTPTransport
+                    cli.print(f"  Starting JEBAT MCP server (Streamable HTTP, MCP 2025-03-26)...")
+                    server = MCPServer(transport=TransportMode.HTTP, http_port=args.port, host=args.host)
+                    transport = StreamableHTTPTransport(server, host=args.host, port=args.port)
+                    await transport.run()
+                else:
+                    cli.print(f"  Starting JEBAT MCP server ({args.transport} transport)...")
+                    run_server(transport=args.transport, port=args.port, host=args.host)
+            elif args.mcp_command == "ide-config":
+                from jebat.features.mcp.mcp_server import print_ide_configs
+                print_ide_configs()
+            else:
+                mcp_parser.print_help()
+
+        elif args.command == "search":
+            from jebat.features.search.web_search import search_web
+            results = await search_web(query=args.query, engine=args.engine, limit=args.limit)
+            if isinstance(results, dict) and "results" in results:
+                for i, r in enumerate(results["results"][:args.limit], 1):
+                    title = r.get("title", "")
+                    url = r.get("url", "")
+                    snippet = r.get("snippet", "")[:120]
+                    cli.print(f"  {i}. {title}", "bold")
+                    cli.print(f"     {url}", "cyan")
+                    cli.print(f"     {snippet}", "dim")
+            else:
+                cli.print(f"  {results}")
+
+        elif args.command == "agent":
+            from jebat.core.agent_loop import AgentLoop, SafetyMode
+            safety_map = {"auto": SafetyMode.AUTO, "confirm": SafetyMode.CONFIRM, "dangerous": SafetyMode.DANGEROUS}
+            yolo = getattr(args, 'yolo', False)
+            # YOLO mode overrides safety to dangerous
+            safety = SafetyMode.DANGEROUS if yolo else safety_map.get(args.safety, SafetyMode.AUTO)
+            loop = AgentLoop(
+                provider_override=args.provider,
+                model_override=args.model,
+                max_iterations=args.max_iterations,
+                safety_mode=safety,
+                session_id=getattr(args, 'session', None),
+            )
+            if getattr(args, 'stream', False):
+                import sys
+                async def _stream_write(chunk):
+                    sys.stdout.write(chunk)
+                    sys.stdout.flush()
+                result = await loop.run(user_message=args.prompt, mode=args.mode, stream_callback=_stream_write)
+                cli.print()  # trailing newline after stream
+            else:
+                result = await loop.run(user_message=args.prompt, mode=args.mode)
+                cli.print(f"\n{result.final_response}", "green")
+            if result.tool_calls_made:
+                cli.print(f"\n  Tool calls: {len(result.tool_calls_made)}", "dim")
+                for step in result.tool_calls_made:
+                    status = "OK" if step.error is None else "ERR"
+                    cli.print(f"    [{status}] {step.tool_name} -- {step.duration_ms}ms", "dim")
+            cli.print(f"  Sessions: {result.session_id} | Iterations: {result.iterations_used} | Provider: {result.provider_used} | Tokens: {result.tokens_used.get('total_tokens', 0)}", "dim")
+
+        elif args.command == "git":
+            # PendekarGit — Git operations
+            from jebat.features.git.git_tools import (
+                git_status, git_diff, git_log, git_commit,
+                git_blame, git_branch, git_stash
+            )
+            git_cmd = getattr(args, 'git_command', None)
+            if not git_cmd:
+                cli.print("  Usage: jebat git <status|diff|log|commit|blame|branch|stash>", "yellow")
+                return 1
+            
+            dispatch = {
+                "status": lambda: git_status(short=True),
+                "diff": lambda: git_diff(
+                    target="staged" if getattr(args, 'staged', False) else "unstaged",
+                    file=getattr(args, 'file', None),
+                    stat=getattr(args, 'stat', False),
+                ),
+                "log": lambda: git_log(
+                    count=getattr(args, 'n', 10),
+                    author=getattr(args, 'author', None),
+                    oneline=getattr(args, 'oneline', True),
+                ),
+                "commit": lambda: git_commit(
+                    message=getattr(args, 'message', None),
+                    amend=getattr(args, 'amend', False),
+                ),
+                "blame": lambda: git_blame(file=args.file),
+                "branch": lambda: git_branch(
+                    action=getattr(args, 'action', 'list'),
+                    name=getattr(args, 'name', None),
+                ),
+                "stash": lambda: git_stash(action=getattr(args, 'action', 'push')),
+            }
+            handler = dispatch.get(git_cmd)
+            if handler:
+                result = handler()
+                if result.get("success"):
+                    cli.print(result.get("stdout", "OK"), "green")
+                else:
+                    cli.print(result.get("stderr", "Unknown git error"), "red")
+            else:
+                cli.print(f"  Unknown git subcommand: {git_cmd}", "red")
+                return 1
+
+        elif args.command == "file":
+            from jebat.fileops import read_file, write_file, patch_file, search_files
+            cmd = getattr(args, 'file_command', None)
+            if not cmd:
+                file_parser.print_help()
+            elif cmd == "read":
+                result = read_file(args.path, offset=args.offset, limit=args.limit)
+                print(result.get("content", ""))
+            elif cmd == "write":
+                result = write_file(args.path, args.content)
+                if result.get("written"):
+                    print(f"  OK: wrote {result.get('bytes', 0)} bytes to {result['path']}")
+                else:
+                    print(f"  FAIL: {result.get('error', 'unknown')}")
+            elif cmd == "patch":
+                result = patch_file(args.path, args.old_string, args.new_string, replace_all=getattr(args, 'replace_all', False))
+                if result.get("patched"):
+                    print(f"  OK: {result.get('matches', 0)} replacement(s)")
+                else:
+                    print(f"  FAIL: {result.get('error', 'unknown')}")
+            elif cmd == "search":
+                target = "files" if getattr(args, 'search_files_mode', False) else "content"
+                result = search_files(args.pattern, target=target, path=getattr(args, 'search_dir', '.'), limit=args.limit)
+                for m in result.get("matches", []):
+                    if isinstance(m, dict):
+                        print(f"  {m.get('file', '')}:{m.get('line', '')}  {m.get('text', '')[:120]}")
+                    else:
+                        print(f"  {m}")
+            elif cmd == "undo":
+                from jebat.fileops.write import undo_write
+                result = undo_write(args.path)
+                if result.get("restored"):
+                    print(f"  OK: restored {result['path']}")
+                else:
+                    print(f"  FAIL: {result.get('error', 'unknown')}")
+            else:
+                file_parser.print_help()
+
+        elif args.command == "free-models":
+            from jebat.llm.ninerouter_provider import list_free_models, print_ninerouter_setup
+            if args.setup:
+                print_ninerouter_setup()
+            else:
+                cli.print("  Free/Cheap AI Models via 9Router:", "bold cyan")
+                models = list_free_models()
+                for m in models:
+                    tier_color = {"free": "green", "cheap": "yellow", "free-credits": "cyan"}.get(m["tier"], "white")
+                    cli.print(f"  {m['model']} ({m['tier']}) {m['provider']} — {m['notes']}", tier_color)
+
+        elif args.command == "cost":
+            from jebat.features.cost_tracking.cost_tracking import get_daily_summary, get_weekly_summary, format_summary, export_to_json
+            if args.weekly:
+                summary = get_weekly_summary()
+                print(format_summary(summary, "weekly"))
+            elif args.export:
+                path = export_to_json()
+                print(f"  Exported to: {path}")
+            else:
+                summary = get_daily_summary()
+                print(format_summary(summary, "daily"))
+
+        elif args.command == "undo":
+            from jebat.features.undo.undo import undo, list_backups, diff_backup, purge_backups
+            if args.purge:
+                result = purge_backups()
+                print(f"  Purged {result['purged']} backup files")
+            elif args.list and args.path:
+                backups = list_backups(args.path)
+                if not backups:
+                    print(f"  No backups found for {args.path}")
+                else:
+                    print(f"  Backups for {args.path}:")
+                    for b in backups:
+                        print(f"    {b.get('backup_file', '')} — {b.get('operation', '')} — {b.get('timestamp', '')}")
+            elif args.diff and args.path:
+                diff = diff_backup(args.path, args.version)
+                print(diff)
+            elif args.path:
+                result = undo(args.path, args.version)
+                if result.success:
+                    print(f"  Restored {result.restored_path} — {result.message}")
+                else:
+                    print(f"  Undo failed: {result.message}")
+            else:
+                print("  Usage: jebat undo <path> [--list|--diff|--purge|--version N]")
+
+        elif args.command == "telemetry":
+            from jebat.features.telemetry.telemetry import enable_telemetry, disable_telemetry, format_telemetry_report, load_config
+            if args.enable:
+                config = enable_telemetry()
+                print(f"  Telemetry ENABLED — categories: {', '.join(config.categories)}")
+            elif args.disable:
+                config = disable_telemetry()
+                print(f"  Telemetry DISABLED")
+            elif args.report:
+                print(format_telemetry_report())
+            else:
+                config = load_config()
+                print(f"  Telemetry status: {'ENABLED' if config.enabled else 'DISABLED'}")
+                if config.enabled:
+                    print(f"  Categories: {', '.join(config.categories)}")
+
+        elif args.command == "sandbox":
+            from jebat.features.sandbox.sandbox import check_docker_available, sandbox_exec_python, sandbox_exec_command
+            if args.check:
+                available = check_docker_available()
+                print(f"  Docker available: {available}")
+            elif args.run:
+                result = sandbox_exec_python(args.run, network=args.network)
+                print(f"  Exit code: {result.exit_code}")
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr)
+            elif getattr(args, 'sandbox_command', None):  # avoid collision with args.command
+                result = sandbox_exec_command(args.sandbox_command, network=args.network)
+                print(f"  Exit code: {result.exit_code}")
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr)
+            else:
+                print("  Usage: jebat sandbox [--check|--run 'code'|--command 'cmd'] [--network]")
+
+        elif args.command == "plugins":
+            from jebat.features.plugins.plugins import discover_local_plugins, discover_pip_plugins, load_plugin, load_all_plugins, install_from_git, install_from_pip, uninstall_plugin
+            if args.list:
+                local = discover_local_plugins()
+                pip = discover_pip_plugins()
+                print(f"  Local plugins ({len(local)}):")
+                for p in local:
+                    print(f"    {p}")
+                print(f"  Pip plugins ({len(pip)}):")
+                for p in pip:
+                    print(f"    {p}")
+            elif args.load:
+                status = load_plugin(args.load)
+                if status.loaded:
+                    print(f"  Plugin '{status.name}' loaded — {status.tools_registered} tools registered")
+                else:
+                    print(f"  Failed: {status.error}")
+            elif args.load_all:
+                statuses = load_all_plugins()
+                for s in statuses:
+                    icon = "OK" if s.loaded else "FAIL"
+                    print(f"  [{icon}] {s.name} — {s.tools_registered} tools ({s.error or 'loaded'})")
+            elif args.install_git:
+                status = install_from_git(args.install_git)
+                print(f"  Plugin installed: {status.name} — {status.tools_registered} tools")
+            elif args.install_pip:
+                status = install_from_pip(args.install_pip)
+                print(f"  Plugin installed: {status.name} — {status.tools_registered} tools")
+            elif args.uninstall:
+                result = uninstall_plugin(args.uninstall)
+                print(f"  {result.get('status', 'unknown')}: {result}")
+            else:
+                print("  Usage: jebat plugins [--list|--load|--load-all|--install-git|--install-pip|--uninstall]")
 
         return 0
 
