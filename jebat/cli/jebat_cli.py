@@ -1204,6 +1204,7 @@ async def main():
     cost_parser.add_argument("--summary", action="store_true", help="Show daily cost summary")
     cost_parser.add_argument("--weekly", action="store_true", help="Show weekly cost summary")
     cost_parser.add_argument("--export", action="store_true", help="Export cost data to JSON")
+    cost_parser.add_argument("--live", action="store_true", help="Live token saver stats: cache hit rate, daily burn, model breakdown")
 
     # Undo/Rollback command
     undo_parser = subparsers.add_parser("undo", help="Undo file changes (rollback to backup)")
@@ -1237,6 +1238,10 @@ async def main():
                               help="Prompt profile: cavement (aggressive savings), lean (default), deep (max context)")
     orch_parser.add_argument("-o", "--output", choices=["summary", "full"], default="summary",
                               help="Output format: summary or full result")
+    orch_parser.add_argument("--execute", action="store_true",
+                              help="Actually execute agents via AgentLoop (not just plan)")
+    orch_parser.add_argument("--model", type=str, default="",
+                              help="Override model for all agents (auto-selects based on profile if empty)")
 
     # Demo/showcase command — fast 10-command overview
     subparsers.add_parser("demo", help="Run a 10-command showcase of JEBAT features")
@@ -2099,7 +2104,10 @@ async def main():
 
         elif args.command == "cost":
             from jebat.features.cost_tracking.cost_tracking import get_daily_summary, get_weekly_summary, format_summary, export_to_json
-            if args.weekly:
+            if args.live:
+                from jebat.features.token_saver import format_live_summary
+                print(format_live_summary())
+            elif args.weekly:
                 summary = get_weekly_summary()
                 print(format_summary(summary, "weekly"))
             elif args.export:
@@ -2180,17 +2188,33 @@ async def main():
                 roles=args.roles,
                 max_agents=args.max_agents,
                 profile=args.profile,
+                execute=args.execute if hasattr(args, "execute") else False,
+                model_override=args.model if hasattr(args, "model") else "",
             )
             roles_used = result.get("roles_used", [])
             role_labels = [
                 r.replace("_", " ").title() for r in roles_used
             ]
-            print(f"  [bold cyan]Swarm Orchestrator[/bold cyan]")
-            print(f"  Mode: [green]{result['mode']}[/green] | Profile: {result['profile']}")
+            # Header
+            executed_label = "[EXECUTING]" if result.get("executed") else ""
+            print(f"  [bold cyan]Swarm Orchestrator[/bold cyan] {executed_label}")
+            print(f"  Mode: [green]{result['mode']}[/green] | Profile: {result['profile']} | Model: {result.get('model', 'auto')}")
             print(f"  Roles deployed: {', '.join(role_labels)}")
+            # Output: full mode with responses
             if args.output == "full" and isinstance(result.get("result"), dict):
                 r = result["result"]
-                if r.get("prompt"):
+                if r.get("executed") and r.get("status") == "completed":
+                    print(f"\n  {'─' * 60}")
+                    print(f"  [green]{r.get('role_name', '')} Response[/green]")
+                    print(f"  {'─' * 60}")
+                    resp = r.get("response", "")
+                    if resp:
+                        for line in resp.split("\n")[:40]:
+                            print(f"  {line}")
+                        lines = resp.split("\n")
+                        if len(lines) > 40:
+                            print(f"  ... ({len(lines)} total lines)")
+                elif r.get("prompt"):
                     print(f"\n  {'─' * 60}")
                     print(f"  [yellow]Agent Prompt for {r.get('role_name', '')}[/yellow]")
                     print(f"  {'─' * 60}")
@@ -2201,17 +2225,44 @@ async def main():
                     role_name = agent_result.get("role_name", agent_result.get("role", f"Agent {i+1}"))
                     desc = agent_result.get("description", "")
                     tools = agent_result.get("toolsets", [])
+                    model = agent_result.get("model", "")
+                    status = agent_result.get("status", "")
                     print(f"\n  {'─' * 60}")
-                    print(f"  [yellow]{role_name}[/yellow] — {desc}")
-                    print(f"  Tools: {', '.join(tools)}")
-                    if args.output == "full" and agent_result.get("prompt"):
+                    status_label = ""
+                    if status == "completed":
+                        status_label = " [green](done)[/green]"
+                    elif status == "error":
+                        status_label = f" [red](error: {agent_result.get('error', '')})[/red]"
+                    print(f"  [yellow]{role_name}[/yellow] — {desc}{status_label}")
+                    print(f"  Tools: {', '.join(tools)} | Model: {model}")
+                    if args.output == "full" and agent_result.get("response"):
+                        print(f"  {'─' * 40}")
+                        resp = agent_result.get("response", "")
+                        for line in resp.split("\n")[:30]:
+                            print(f"  │ {line}")
+                        if len(resp.split("\n")) > 30:
+                            total_lines = len(resp.split("\n"))
+                            print(f"  │ ... ({total_lines} total lines)")
+                    elif args.output == "full" and agent_result.get("prompt"):
                         print(f"  {'─' * 40}")
                         for line in agent_result["prompt"].split("\n"):
                             print(f"  │ {line}")
             elif args.output == "full":
-                print(f"\n  {json.dumps(result, indent=2, default=str)}")
+                # Show synthesis if taming_sari was applied
+                if result.get("taming_sari"):
+                    print(f"\n  [bold yellow]Taming Sari Synthesis[/bold yellow]")
+                    print(f"  {result.get('synthesis', '')}")
+                    if result.get("contradictions"):
+                        print(f"\n  [red]Contradictions found:[/red]")
+                        for c in result.get("contradictions", []):
+                            print(f"  • {c}")
+                print(f"\n  {json.dumps(result, indent=2, default=str)[:2000]}")
             else:
                 print(f"\n  Goal: {result['goal'][:120]}")
+                # Show synthesis in summary mode too if available
+                if result.get("synthesis"):
+                    print(f"\n  [yellow]Taming Sari:[/yellow] {result['synthesis'][:300]}")
+            print()
 
         elif args.command == "plugins":
             from jebat.features.plugins.plugins import discover_local_plugins, discover_pip_plugins, load_plugin, load_all_plugins, install_from_git, install_from_pip, uninstall_plugin

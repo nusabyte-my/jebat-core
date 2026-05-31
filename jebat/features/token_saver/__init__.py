@@ -261,3 +261,90 @@ def compress_conversation(
             break
     
     return result
+
+# ── Cost-aware model selection ──────────────────────────────────────────────
+# Maps profiles to recommended models. cavement = cheap/free, lean = balanced,
+# deep = premium. Used by swarm dispatcher to auto-select model per profile.
+
+PROFILE_MODELS: dict[str, str] = {
+    "cavement": "kr/claude-sonnet-4.5",
+    "lean": "claude-sonnet-4",
+    "deep": "claude-sonnet-4",
+}
+
+FALLBACK_MODEL = "claude-sonnet-4"
+
+def model_for_profile(profile: str) -> str:
+    """Return the recommended model for a given prompt profile.
+    
+    cavement -> free/cheap tier (kr/*)
+    lean     -> balanced paid (sonnet)
+    deep     -> premium paid (sonnet/opus)
+    """
+    return PROFILE_MODELS.get(profile, FALLBACK_MODEL)
+
+
+def is_cheap_model(provider: str, model: str) -> bool:
+    """Check if a model+provider pair is free/cheap tier."""
+    free_prefixes = ("kr/", "oc/", "vtx/")
+    free_models = ("llama3", "mistral")
+    if any(model.startswith(p) for p in free_prefixes):
+        return True
+    if model in free_models:
+        return True
+    return False
+
+
+def format_live_summary() -> str:
+    """Format a human-readable live cost summary with cache breakdown.
+    
+    Reads today's token_saver records and produces a compact terminal-friendly
+    report including cache hit rate, estimated savings, and daily burn.
+    """
+    try:
+        summary = summarize_savings(days=1)
+    except Exception:
+        return "  No cost data available yet. Run `jebat cost --live` after some usage."
+
+    lines = []
+    lines.append("  Token Saver - Live Summary")
+    lines.append(f"  Records today: {summary['records']}")
+    lines.append(f"  Total tokens:  {summary['total_tokens']:,}")
+    lines.append(f"  Prompt tokens: {summary['total_prompt_tokens']:,}")
+    lines.append(f"  Completion:    {summary['total_completion_tokens']:,}")
+    lines.append(f"  Cached tokens: {summary['cached_tokens']:,}")
+    if summary['total_prompt_tokens'] > 0:
+        lines.append(f"  Cache hit rate: {summary['cache_hit_rate_pct']}%")
+    lines.append(f"  Fresh tokens:  {summary['fresh_tokens']:,}")
+    lines.append(f"  Burned:        ${summary['total_cost_usd']:.4f}")
+    lines.append(f"  Cache savings:  ${summary['estimated_cache_savings_usd']:.4f}")
+
+    # Per-model breakdown
+    try:
+        from datetime import datetime
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        records = get_daily_log(date_str)
+        model_buckets = {}
+        for rec in records:
+            m = rec.get("model", "unknown")
+            if m not in model_buckets:
+                model_buckets[m] = {"prompt": 0, "completion": 0, "cached": 0, "cost": 0.0, "count": 0}
+            bucket = model_buckets[m]
+            bucket["prompt"] += rec.get("prompt_tokens", 0)
+            bucket["completion"] += rec.get("completion_tokens", 0)
+            bucket["cached"] += rec.get("cached_tokens", 0)
+            bucket["cost"] += rec.get("cost_usd", 0.0)
+            bucket["count"] += 1
+
+        if model_buckets:
+            lines.append("")
+            lines.append("  -- Per-model breakdown --")
+            for model_name, b in sorted(model_buckets.items(), key=lambda x: -x[1]["cost"]):
+                lines.append(
+                    f"  {model_name}: {b['prompt']:,}p / {b['completion']:,}c / "
+                    f"${b['cost']:.4f} ({b['count']} calls)"
+                )
+    except Exception:
+        pass
+
+    return "\n".join(lines)
