@@ -977,6 +977,27 @@ async def main():
     file_undo = file_subparsers.add_parser("undo", help="Undo the last write to a file")
     file_undo.add_argument("path", help="File path to undo")
 
+    # --- NEW: exec and wiki subcommands ---
+
+    # Terminal execution command
+    exec_parser = subparsers.add_parser("exec", help="Run shell commands (foreground or background)")
+    exec_parser.add_argument("cmd", nargs="?", help="Shell command to run")
+    exec_parser.add_argument("--bg", action="store_true", help="Run in background")
+    exec_parser.add_argument("--poll", metavar="SESSION_ID", help="Poll background process")
+    exec_parser.add_argument("--wait", metavar="SESSION_ID", help="Wait for background process")
+    exec_parser.add_argument("--kill", metavar="SESSION_ID", help="Kill background process")
+    exec_parser.add_argument("--list-bg", action="store_true", help="List background processes")
+    exec_parser.add_argument("--pty", action="store_true", help="Run in pseudo-terminal mode")
+
+    # Wiki / Knowledge Base command
+    wiki_parser = subparsers.add_parser("wiki", help="Knowledge base: create, read, edit, search, list")
+    wiki_parser.add_argument("action", nargs="?", default="list",
+                            choices=["create", "read", "edit", "delete", "list", "search", "link", "stats"],
+                            help="Wiki action")
+    wiki_parser.add_argument("title", nargs="?", help="Page title")
+    wiki_parser.add_argument("content", nargs="?", help="Page content (for create)")
+    wiki_parser.add_argument("--query", help="Search query (for search)")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -1321,6 +1342,121 @@ async def main():
                     print(f"  FAIL: {result.get('error', 'unknown')}")
             else:
                 file_parser.print_help()
+
+        elif args.command == "exec":
+            from jebat.terminal import get_executor
+            executor = get_executor()
+
+            if args.list_bg:
+                result = executor.list_bg()
+                for p in result["processes"]:
+                    print(f"  {p['session_id']}: {p['command'][:60]} ({p['status']})")
+            elif args.poll:
+                result = await executor.poll(args.poll)
+                print(f"  Session: {result.get('session_id')} | Status: {result.get('status')}")
+                if result.get("output_tail"):
+                    print("  --- tail ---")
+                    print(result["output_tail"])
+            elif args.wait:
+                result = await executor.wait(args.wait)
+                print(f"  Session: {result.get('session_id')} | Status: {result.get('status')} | Exit: {result.get('exit_code')}")
+                if result.get("output"):
+                    print(result["output"])
+            elif args.kill:
+                result = await executor.kill(args.kill)
+                print(f"  {result['session_id']}: {result.get('status')}")
+            elif args.cmd:
+                if args.bg:
+                    result = await executor.start_bg(args.cmd)
+                    if result.get("session_id"):
+                        print(f"  Started: {result['session_id']} — {result['command'][:60]}")
+                    else:
+                        print(f"  FAIL: {result.get('error')}")
+                else:
+                    result = await executor.run(args.cmd, pty=args.pty)
+                    if result.get("error"):
+                        print(f"  FAIL: {result['error']}")
+                    else:
+                        print(result["output"])
+                        print(f"\n  [exit={result['exit_code']} | {result['duration_ms']}ms]")
+            else:
+                exec_parser.print_help()
+
+        elif args.command == "wiki":
+            from jebat.features.wiki import WikiStore
+            wiki = WikiStore()
+
+            action = args.action
+            if action == "list":
+                result = wiki.list_pages()
+                if result["count"] == 0:
+                    print("  No wiki pages yet. Create one with: jebat wiki create \"My Title\" \"content\"")
+                else:
+                    print(f"  Wiki — {result['count']} page(s):")
+                    for p in result["pages"]:
+                        print(f"    {p['title']} ({p['size_bytes']}b)")
+            elif action == "create":
+                if not args.title:
+                    print("  Usage: jebat wiki create <title> <content>")
+                else:
+                    content = args.content or "(empty)"
+                    result = wiki.create_page(args.title, content)
+                    if result.get("error"):
+                        print(f"  FAIL: {result['error']}")
+                    else:
+                        print(f"  Created: {result['title']} ({result['size_bytes']} bytes)")
+            elif action == "read":
+                if not args.title:
+                    print("  Usage: jebat wiki read <title>")
+                else:
+                    result = wiki.read_page(args.title)
+                    if result.get("error"):
+                        print(f"  Not found: {args.title}")
+                    else:
+                        print(f"  {result['title']} ({result['size_bytes']}b, updated {result.get('updated_at', 0):.0f})")
+                        print("  " + "-" * 40)
+                        print(result["content"])
+            elif action == "edit":
+                if not args.title or not args.content:
+                    print("  Usage: jebat wiki edit <title> <content>")
+                else:
+                    result = wiki.update_page(args.title, args.content)
+                    if result.get("error"):
+                        print(f"  FAIL: {result['error']}")
+                    else:
+                        print(f"  Updated: {result['title']} ({result['size_bytes']} bytes)")
+            elif action == "delete":
+                if not args.title:
+                    print("  Usage: jebat wiki delete <title>")
+                else:
+                    result = wiki.delete_page(args.title)
+                    if result.get("error"):
+                        print(f"  FAIL: {result['error']}")
+                    else:
+                        print(f"  Deleted: {result['title']}")
+            elif action == "search":
+                query = args.query or args.title
+                if not query:
+                    print("  Usage: jebat wiki search --query <search terms>")
+                else:
+                    result = wiki.search(query)
+                    print(f"  Search '{query}': {result['count']} match(es)")
+                    for m in result["matches"]:
+                        print(f"    {m['title']} — {m['snippet']}")
+            elif action == "link":
+                if not args.title:
+                    print("  Usage: jebat wiki link <title>")
+                else:
+                    result = wiki.get_backlinks(args.title)
+                    links = result["backlinks"]
+                    print(f"  Pages linking to '{args.title}': {len(links)}")
+                    for src in links:
+                        print(f"    {src}")
+            elif action == "stats":
+                stats = wiki.get_stats()
+                print(f"  Wiki stats: {stats['page_count']} pages, {stats['total_size_bytes']} bytes, {stats['backlink_count']} backlinks")
+                if stats["last_updated"]:
+                    print(f"  Last updated: {stats['last_updated']['title']} ({stats['last_updated']['updated_at']:.0f})")
 
         elif args.command == "free-models":
             from jebat.llm.ninerouter_provider import list_free_models, print_ninerouter_setup
