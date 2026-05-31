@@ -1,18 +1,28 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI - Command Line Interface
+JEBAT CLI v5.0.0 — Command Line Interface
 
-Control JEBAT AI Assistant from the command line.
+40 subcommands: status, init, loop, think, memory, config,
+llm-providers, llm-config, llm-auth, llm-best-provider, auth, doctor,
+mode-guide, skills, chat, chat-project, chat-repl, tools, mcp, search,
+agent, git, file, exec, wiki, delegate, cron, safety, session, todo,
+social, tts, free-models, cost, undo, telemetry, sandbox, plugins
 
-Usage:
-    jebat status              - Show system status
-    jebat loop start          - Start Ultra-Loop
-    jebat loop stop           - Stop Ultra-Loop
-    jebat loop status         - Show Ultra-Loop status
-    jebat think <question>    - Run thinking session
-    jebat memory store <text> - Store a memory
-    jebat memory search <q>   - Search memories
-    jebat config              - Show configuration
+Usage examples:
+    jebat status                  - Show system status
+    jebat init                    - First-run setup
+    jebat chat "hello"            - One-shot chat
+    jebat chat-repl               - Interactive REPL
+    jebat file read path/to/file  - Read a file
+    jebat exec "ls -la"           - Run shell command
+    jebat wiki search "topic"     - Search knowledge base
+    jebat delegate "fix bug"      - Spawn subagent
+    jebat cron add "daily check"  - Schedule recurring task
+    jebat session search "query"  - Search past conversations
+    jebat todo add "task"         - Add personal task
+    jebat social send "hello"     - Send to Telegram/Discord/Twitter
+    jebat tts "hello world"       - Text to speech
+    jebat auth set provider key   - Store credentials in keyring
 """
 
 import argparse
@@ -22,9 +32,13 @@ import uuid
 import sys
 import urllib.error
 import urllib.request
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+# Suppress runpy RuntimeWarning when package is imported before __main__ execution
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*found in sys.modules.*")
 
 from jebat.llm import (
     build_skill_prompt,
@@ -804,7 +818,7 @@ class JEBATCLI:
 async def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="JEBAT  JEBAT - AI Assistant CLI",
+        description="JEBAT v5.0.0 — 40-CLI AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nOps: file, exec, wiki, agent, search, tools, mcp\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

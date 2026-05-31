@@ -1,9 +1,9 @@
-# JEBAT — CLI AI Agent
+# JEBAT v5.0.0 — CLI AI Agent
 
 > *\"Mimpi yang menjadi nyata ketika pejuang melaksanakan.\"*
 > Dreams become reality when warriors execute.
 
-JEBAT is a full-featured CLI AI agent built in Python. It combines an LLM-powered
+JEBAT is a full-featured CLI AI agent built in Python with 40 CLI subcommands. It combines an LLM-powered
 agent loop (ReAct), 97 registered tools, MCP server/client, free-tier AI routing,
 and a cybersecurity toolkit — all in one terminal command.
 
@@ -11,6 +11,7 @@ and a cybersecurity toolkit — all in one terminal command.
 
 | Feature | JEBAT | Hermes | Claude Code | Codex | OpenClaw |
 |---------|-------|--------|-------------|-------|----------|
+| CLI Subcommands | 40 | ~30 | ~15 | ~10 | ~10 |
 | ReAct Agent Loop | Built-in | Built-in | Built-in | Built-in | Built-in |
 | Free AI (no API key) | 9Router proxy | No | No | No | No |
 | CyberSec toolkit | CVE/Shodan/nmap | No | No | No | No |
