@@ -61,7 +61,7 @@ echo ""
 sleep 1
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  JEBAT — Mimpi menjadi nyata. Kaboosh!"
+echo "  JEBAT — No announcement. Just results."
 echo "  pip install jebat  |  docker pull jebat"
 echo "  github.com/humm1ngb1rd/jebat"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

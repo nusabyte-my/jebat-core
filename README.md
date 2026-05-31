@@ -1,9 +1,9 @@
 # JEBAT v6.0.0 — CLI AI Agent
 
-> *\"Mimpi yang menjadi nyata apabila pejuang melaksanakan. Kaboosh!\"*
+> *"No announcement. Just results."*
 > Dreams become reality when warriors execute.
 
-JEBAT is a full-featured CLI AI agent built in Python with 41 CLI subcommands. It combines an LLM-powered
+JEBAT is a full-featured CLI AI agent built in Python with 42 CLI subcommands. It combines an LLM-powered
 agent loop (ReAct), 97 registered tools, MCP server/client, free-tier AI routing,
 and a cybersecurity + pentest toolkit — all in one terminal command. 107k LOC, 64 tests, zero VC.
 
@@ -103,7 +103,7 @@ source jebat-core/shell/jebat-completion.bash  # bash
 source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 
-## 41 CLI Subcommands
+## 42 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -152,7 +152,7 @@ source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 40 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 42 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation
@@ -331,4 +331,4 @@ Private — NusaByte proprietary. Built by humm1ngb1rd (Shaidan Shaari).
 
 ---
 
-*\"Kaboosh!\" — humm1ngb1rd's signature. Ghost in the machine.*
+*"No announcement. Just results." — humm1ngb1rd. Ghost in the machine.*
