@@ -77,9 +77,17 @@ jebat cron list
 # Safety and audit
 jebat safety audit
 jebat safety classify "rm -rf /tmp/logs"
+
+# Session history and cross-session search (FTS5)
+jebat session list
+jebat session search "delegation OR wiki"
+
+# Shell autocomplete (bash/zsh)
+source jebat-core/shell/jebat-completion.bash  # bash
+source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 
-## 29 CLI Subcommands
+## 30 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -105,6 +113,7 @@ jebat safety classify "rm -rf /tmp/logs"
 | `delegate` | Spawn subagents for parallel task execution |
 | `cron` | Schedule recurring tasks (add, list, run, pause, remove) |
 | `safety` | Security: audit log, sandbox, command classification |
+| `session` | Session history: list, search past conversations (FTS5) |
 | `mcp` | MCP server management (serve, ide-config) |
 | `search` | Web search (SearXNG, Google/Bing API) |
 | `agent` | One-shot agent task with tool-calling |
@@ -120,7 +129,7 @@ jebat safety classify "rm -rf /tmp/logs"
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 29 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 30 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation
@@ -131,8 +140,9 @@ jebat-core/
       cron/           # Scheduled tasks (6 tools)
       security/       # 3-tier safety, audit log, sandbox mode
       fileops/        # File operations (6 tools)
-      wiki/           # Knowledge base with FTS5 search
+      wiki/           # Knowledge base with FTS5 search + RAG injection
       terminal/       # Async terminal executor (foreground/background/PTY)
+      session/        # Session persistence + FTS5 cross-session search
       image_gen/      # Image generation (1 tool)
       mcp/            # MCP client + server (5 server tools)
       plugins/        # TukangPlugin — plugin system (6 tools)

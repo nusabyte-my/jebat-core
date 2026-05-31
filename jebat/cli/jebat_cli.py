@@ -1048,6 +1048,15 @@ async def main():
     classify_cmd = safety_subparsers.add_parser("classify", help="Classify command safety tier")
     classify_cmd.add_argument("command", help="Command to classify")
 
+    # Session commands — list and search history
+    session_parser = subparsers.add_parser("session", help="Session management: list, search past conversations")
+    session_subparsers = session_parser.add_subparsers(dest="session_action")
+    session_subparsers.add_parser("list", help="List recent sessions")
+    session_search_cmd = session_subparsers.add_parser("search", help="Search across all sessions (FTS5)")
+    session_search_cmd.add_argument("query", help="Search query (supports boolean expressions: 'term1 OR term2')")
+    session_search_cmd.add_argument("--role-filter", help="Filter by role: user,assistant (comma-separated)")
+    session_search_cmd.add_argument("--limit", type=int, default=10, help="Max results (default: 10)")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -1675,6 +1684,42 @@ async def main():
             else:
                 safety_parser.print_help()
                 print(f"  Sandbox mode: {'ON (dry-run)' if is_sandbox() else 'OFF'}")
+
+        elif args.command == "session":
+            from jebat.session.session_manager import SessionManager
+            sm = SessionManager()
+
+            if args.session_action == "list":
+                sessions = sm.list_sessions(limit=20)
+                if not sessions:
+                    print("  No sessions found")
+                else:
+                    print(f"  Recent sessions ({len(sessions)}):\n")
+                    for s in sessions:
+                        title = s["title"][:60]
+                        msg_count = s["msg_count"]
+                        from datetime import datetime
+                        updated_str = datetime.fromtimestamp(s["updated_at"]).strftime("%Y-%m-%d %H:%M")
+                        # Truncate UUID for display
+                        short_id = s["id"][:8]
+                        print(f"  [{short_id}] {title} — {msg_count} msgs, last: {updated_str}")
+
+            elif args.session_action == "search":
+                results = sm.search_messages(args.query, limit=args.limit, role_filter=args.role_filter)
+                if not results:
+                    print(f"  No results for: '{args.query}'")
+                else:
+                    print(f"  Session search results for '{args.query}' ({len(results)}):\n")
+                    for r in results:
+                        role = r["role"]
+                        snippet = r["snippet"] or r["content"][:80]
+                        session_ref = f"[{r['session_id'][:8]}] {r['session_title']}"
+                        print(f"  [{role}] {session_ref}")
+                        print(f"    {snippet}")
+                        print()
+
+            else:
+                session_parser.print_help()
 
         elif args.command == "free-models":
             from jebat.llm.ninerouter_provider import list_free_models, print_ninerouter_setup

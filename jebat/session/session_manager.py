@@ -5,6 +5,7 @@ cross-session message recall.
 """
 
 import json
+import re
 import sqlite3
 import time
 import uuid
@@ -107,6 +108,76 @@ class SessionManager:
                 "tool_calls": r["tool_calls"],
                 "tokens": r["tokens"],
                 "created_at": r["created_at"],
+            }
+            for r in rows
+        ]
+
+    def list_sessions(self, limit: int = 20) -> list[dict[str, Any]]:
+        """List recent sessions, newest first."""
+        cur = self.conn.execute(
+            """SELECT s.id, s.title, s.created_at, s.updated_at,
+                      COUNT(m.id) as msg_count
+               FROM sessions s
+               LEFT JOIN messages m ON m.session_id = s.id
+               GROUP BY s.id
+               ORDER BY s.updated_at DESC
+               LIMIT ?""",
+            (limit,),
+        )
+        rows = cur.fetchall()
+        return [
+            {
+                "id": r["id"],
+                "title": r["title"] or "(untitled)",
+                "created_at": r["created_at"],
+                "updated_at": r["updated_at"],
+                "msg_count": r["msg_count"],
+            }
+            for r in rows
+        ]
+
+    def search_messages(
+        self, query: str, limit: int = 10, role_filter: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Full-text search across all sessions' messages using FTS5.
+
+        Args:
+            query: FTS5 search query (supports boolean expressions).
+            limit: Maximum results to return.
+            role_filter: Optional comma-separated roles to filter by.
+
+        Returns:
+            List of matching messages with session context.
+        """
+        sql = """SELECT m.id, m.session_id, s.title as session_title,
+                        m.role, m.content, m.created_at,
+                        snippet(messages_fts, 3, '<b>', '</b>', '...', 64) as snippet
+                 FROM messages_fts
+                 JOIN messages m ON messages_fts.rowid = m.id
+                 JOIN sessions s ON m.session_id = s.id
+                 WHERE messages_fts MATCH ?"""
+        params: list[Any] = [query]
+
+        if role_filter:
+            roles = [r.strip() for r in role_filter.split(",")]
+            placeholders = ", ".join(["?" for _ in roles])
+            sql += f" AND m.role IN ({placeholders})"
+            params.extend(roles)
+
+        sql += " ORDER BY rank LIMIT ?"
+        params.append(limit)
+
+        cur = self.conn.execute(sql, params)
+        rows = cur.fetchall()
+        return [
+            {
+                "id": r["id"],
+                "session_id": r["session_id"],
+                "session_title": r["session_title"] or "(untitled)",
+                "role": r["role"],
+                "content": r["content"][:500],
+                "created_at": r["created_at"],
+                "snippet": re.sub(r'<[^>]+>', '', r["snippet"] or "").strip(),
             }
             for r in rows
         ]
