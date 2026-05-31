@@ -779,6 +779,50 @@ class JEBATCLI:
         guide_path = Path(__file__).resolve().parents[2] / "JEBAT_ASSISTANT_GUIDE.md"
         self.print(str(guide_path))
 
+    async def cmd_demo(self):
+        """Run a 10-command JEBAT showcase — fast, no-LLM overview."""
+        import sys, subprocess
+
+        self.print("\nJEBAT v6.0.0 — Demo Showcase", "bold cyan")
+        self.print("zero-cost CLI agent with 41 subcommands, pentest engine, and more", "dim")
+        self.print("")
+
+        commands = [
+            ("status",      "System health & env check",       ["status"]),
+            ("init",        "Setup wizard (--help)",            ["init", "--help"]),
+            ("config",      "Show configuration",               ["config"]),
+            ("llm-auth",    "Check provider credentials",       ["llm-auth"]),
+            ("llm-providers","List 20+ supported LLM providers",["llm-providers"]),
+            ("wiki list",   "Knowledge base entries",           ["wiki", "list"]),
+            ("todo list",   "Task tracker",                     ["todo", "list"]),
+            ("search",      "Web search (demo query)",          ["search", "JEBAT CLI agent"]),
+            ("pentest",     "List scan profiles",               ["pentest", "-t", "example.com", "--list-profiles"]),
+            ("doctor",      "LLM health check",                 ["doctor"]),
+        ]
+
+        for i, (label, desc, argv) in enumerate(commands, 1):
+            self.print(f"  {i:2d}. {label} — {desc}", "cyan")
+            try:
+                cmd = [sys.executable, "-m", "jebat.cli.jebat_cli"] + argv
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                output = (result.stdout + result.stderr).strip()
+                if output:
+                    lines = output.split("\n")
+                    if len(lines) > 6:
+                        output = "\n".join(lines[:5]) + f"\n  ... ({len(lines)} lines total)"
+                    for line in output.split("\n"):
+                        if line.strip():
+                            self.print(f"     {line.strip()}", "dim")
+            except subprocess.TimeoutExpired:
+                self.print(f"     timed out — skipping", "yellow")
+            except Exception as e:
+                self.print(f"     {e}", "red")
+            self.print("")
+
+        self.print("10 commands demo complete.", "bold green")
+        self.print("JEBAT: 41 subcommands, 37 modules, 107K LOC.", "dim")
+        self.print("Next: 'jebat init' to configure your LLM, 'jebat chat \"hello\"' to test.", "dim")
+
     def _override_config(self, config, provider_override: str | None, model_override: str | None):
         return type(config)(
             provider=provider_override or config.provider,
@@ -1304,6 +1348,9 @@ async def main():
 
         elif args.command == "mode-guide":
             await cli.cmd_mode_guide()
+
+        elif args.command == "demo":
+            await cli.cmd_demo()
 
         elif args.command == "skills":
             if args.skills_command == "list":
