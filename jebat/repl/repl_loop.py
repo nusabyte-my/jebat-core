@@ -11,6 +11,7 @@ import sys
 from typing import Callable
 
 from .repl_session import ReplSession
+from .tool_handler import handle_tool_call
 
 
 class ReplLoop:
@@ -92,6 +93,8 @@ class ReplLoop:
             print("  /help    — show this help")
             print("  /history — show session history")
             print("  /clear   — clear screen")
+            print("  /tool    — invoke a registered tool (/tool name key=val ...)")
+            print("  /tools   — list registered tools")
             print("  /exit    — quit REPL")
         elif command == "/history":
             msgs = self._session.load_history(limit=20)
@@ -104,5 +107,34 @@ class ReplLoop:
         elif command == "/clear":
             sys.stdout.write("\033[2J\033[H")
             sys.stdout.flush()
+        elif command == "/tool":
+            # /tool tool_name key=val key=val ...
+            self._handle_tool(arg)
+        elif command == "/tools":
+            from ..tools import TOOL_REGISTRY
+
+            names = sorted(TOOL_REGISTRY.keys())
+            print(f"Registered tools ({len(names)}):")
+            for n in names:
+                print(f"  {n}")
         else:
             print(f"Unknown command: {command}. Type /help for available commands.")
+
+    def _handle_tool(self, arg: str) -> None:
+        """Parse '/tool name key=val ...' and dispatch."""
+        parts = arg.strip().split()
+        if not parts:
+            print("Usage: /tool <name> [key=val ...]")
+            return
+
+        tool_name = parts[0]
+        args: dict[str, str] = {}
+        for kv in parts[1:]:
+            if "=" in kv:
+                k, v = kv.split("=", 1)
+                args[k] = v
+            else:
+                args[kv] = ""
+
+        result = handle_tool_call(tool_name, args)
+        print(result)
