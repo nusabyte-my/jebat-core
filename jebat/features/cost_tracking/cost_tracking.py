@@ -480,3 +480,60 @@ register_tool(
     handler=get_pricing,
     schema={},
 )
+
+
+# ── Profile Export/Import ──────────────────────────────────────────────────
+
+_PROFILES_EXPORT_FIELDS = (
+    "current_profile", "cost_limit_daily", "cost_limit_weekly",
+    "last_tuned", "total_spent_today", "total_spent_this_week",
+    "recommended_profile", "tune_errors",
+)
+
+
+def export_profiles(path: str = "") -> str:
+    """Export current profile state to a JSON file. Returns path written."""
+    data = {"version": 1, "exported_at": __import__("time").time(), "profiles": {}}
+    for profile_name in ["cavement", "lean", "deep"]:
+        data["profiles"][profile_name] = tune_prompt_profile(profile_name)
+    data["recommendation"] = recommend_profile()
+    if not path:
+        path = os.path.join(
+            os.path.dirname(__file__), f"profiles_{int(__import__('time').time())}.json"
+        )
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w") as f:
+        __import__("json").dump(data, f, indent=2)
+    return path
+
+
+def import_profiles(path: str) -> dict:
+    """Import profile state from a JSON file. Returns parsed data."""
+    with open(path) as f:
+        data = __import__("json").load(f)
+    return {
+        "version": data.get("version", 0),
+        "profiles": data.get("profiles", {}),
+        "recommendation": data.get("recommendation", {}),
+        "file": path,
+    }
+
+
+def profile_info(detail: str = "short") -> dict:
+    """Show current profile information."""
+    rec = recommend_profile()
+    info = {
+        "current_profile": rec.get("current_profile", "lean"),
+        "recommended_profile": rec.get("recommended_profile", "lean"),
+        "cost_today": rec.get("cost_today", 0.0),
+        "cost_this_week": rec.get("cost_this_week", 0.0),
+        "action": rec.get("action", "keep"),
+"daily_limit": BUDGET_CAPS["daily_critical"],
+        "weekly_limit": BUDGET_CAPS["weekly_critical"],
+    }
+    if detail == "full":
+        profiles_data = {}
+        for pn in ["cavement", "lean", "deep"]:
+            profiles_data[pn] = tune_prompt_profile(pn)
+        info["profiles"] = profiles_data
+    return info

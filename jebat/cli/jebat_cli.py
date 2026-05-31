@@ -1206,6 +1206,27 @@ async def main():
     cost_parser.add_argument("--export", action="store_true", help="Export cost data to JSON")
     cost_parser.add_argument("--live", action="store_true", help="Live token saver stats: cache hit rate, daily burn, model breakdown")
 
+    # Profile command — show, tune, export, import profiles
+    profile_parser = subparsers.add_parser("profile", help="Profile management: show, tune, export, import prompt/cost profiles")
+    profile_subparsers = profile_parser.add_subparsers(dest="profile_action", required=False)
+    profile_show = profile_subparsers.add_parser("show", help="Show current profile state")
+    profile_show.add_argument("--detail", choices=["short", "full"], default="short", help="Detail level")
+    profile_show.add_argument("--profile-name", default="", help="Profile name to inspect (cavement/lean/deep)")
+    profile_tune = profile_subparsers.add_parser("tune", help="Analyze cost data and recommend profile change")
+    profile_tune.add_argument("--apply", action="store_true", help="Apply the recommended profile change")
+    profile_export = profile_subparsers.add_parser("export", help="Export profile state to JSON")
+    profile_export.add_argument("-o", "--output", default="", help="Output path (default: auto-generated)")
+    profile_import = profile_subparsers.add_parser("import", help="Import profile state from JSON")
+    profile_import.add_argument("path", help="Path to JSON file")
+
+    # Cache command — swarm result cache management
+    cache_parser = subparsers.add_parser("cache", help="Swarm cache management: stats, invalidate")
+    cache_subparsers = cache_parser.add_subparsers(dest="cache_action", required=False)
+    cache_stats = cache_subparsers.add_parser("stats", help="Show swarm cache statistics")
+    cache_inval = cache_subparsers.add_parser("invalidate", help="Clear swarm cache entries")
+    cache_inval.add_argument("--max-age", type=int, default=0, help="Only clear entries older than N seconds (0 = all)")
+    cache_inval.add_argument("--all", action="store_true", help="Invalidate all cached results")
+
     # Undo/Rollback command
     undo_parser = subparsers.add_parser("undo", help="Undo file changes (rollback to backup)")
     undo_parser.add_argument("path", nargs="?", help="File path to rollback")
@@ -2116,6 +2137,53 @@ async def main():
             else:
                 summary = get_daily_summary()
                 print(format_summary(summary, "daily"))
+
+        elif args.command == "profile":
+            from jebat.features.cost_tracking.cost_tracking import profile_info, export_profiles, import_profiles
+            action = getattr(args, "profile_action", "show") or "show"
+            if action == "show":
+                info = profile_info(detail=getattr(args, "detail", "short"))
+                print(f"  Current profile: [{info.get('current_profile', 'lean')}]")
+                print(f"  Recommended:     [{info.get('recommended_profile', 'lean')}]  ({info.get('action', 'keep')})")
+                print(f"  Cost today:      ~${info.get('cost_today', 0):.2f} / ${info.get('daily_limit', 0):.2f}")
+                print(f"  Cost this week:  ~${info.get('cost_this_week', 0):.2f} / ${info.get('weekly_limit', 0):.2f}")
+                if info.get("profiles"):
+                    print("  Profiles:")
+                    for pn, pd in info["profiles"].items():
+                        print(f"    {pn}: {pd}")
+            elif action == "tune":
+                rec = info.get("recommendation") if isinstance(info, dict) else info
+                if getattr(args, "apply", False):
+                    print(f"  Applying profile: {rec}")
+                else:
+                    print(f"  Recommended: {rec}")
+            elif action == "export":
+                path = export_profiles(getattr(args, "output", ""))
+                print(f"  Profiles exported to: {path}")
+            elif action == "import":
+                data = import_profiles(getattr(args, "path", ""))
+                n = len(data.get("profiles", {}))
+                print(f"  Imported {n} profiles from {data.get('file', '')}")
+            else:
+                print("  Usage: jebat profile [show|tune|export|import]")
+
+        elif args.command == "cache":
+            from jebat.core.agents.swarm import cache_stats, cache_invalidate
+            action = getattr(args, "cache_action", "stats") or "stats"
+            if action == "stats":
+                stats = cache_stats()
+                print(f"  Swarm cache: {stats.get('count', 0)} entries, {stats.get('total_size', 0)} bytes")
+                entries = stats.get("entries", {})
+                if entries:
+                    newest = min(e["age_seconds"] for e in entries.values())
+                    oldest = max(e["age_seconds"] for e in entries.values())
+                    print(f"  Age range: {newest:.0f}s (newest) to {oldest:.0f}s (oldest)")
+            elif action == "invalidate":
+                max_age = getattr(args, "max_age", 0)
+                removed = cache_invalidate(max_age_seconds=max_age)
+                print(f"  Invalidated {removed} cached entries")
+            else:
+                print("  Usage: jebat cache [stats|invalidate]")
 
         elif args.command == "undo":
             from jebat.features.undo.undo import undo, list_backups, diff_backup, purge_backups

@@ -375,6 +375,50 @@ provider_override=provider_override)
 
     return out
 
+
+def cache_stats() -> dict:
+    """Return swarm cache statistics: file count, total size, first/last modified."""
+    _ensure_cache_dir()
+    files = {}
+    now = __import__("time").time()
+    for fname in os.listdir(SWARM_CACHE_DIR):
+        if fname.endswith(".json"):
+            fpath = os.path.join(SWARM_CACHE_DIR, fname)
+            try:
+                st = os.stat(fpath)
+                files[fname[:-5]] = {"size": st.st_size, "mtime": st.st_mtime, "age_seconds": now - st.st_mtime}
+            except OSError:
+                pass
+    return {
+        "count": len(files),
+        "total_size": sum(f["size"] for f in files.values()),
+        "entries": files,
+    }
+
+
+def cache_invalidate(max_age_seconds: int = 0) -> int:
+    """Invalidate cached swarm results. If max_age_seconds > 0, only remove entries older than that.
+    Returns count of files removed.
+    """
+    _ensure_cache_dir()
+    count = 0
+    now = __import__("time").time()
+    for fname in os.listdir(SWARM_CACHE_DIR):
+        if not fname.endswith(".json"):
+            continue
+        fpath = os.path.join(SWARM_CACHE_DIR, fname)
+        try:
+            if max_age_seconds > 0:
+                st = os.stat(fpath)
+                if (now - st.st_mtime) < max_age_seconds:
+                    continue
+            os.remove(fpath)
+            count += 1
+        except OSError:
+            pass
+    return count
+
+
 # ── LEGENDARY: Taming Sari reduction ────────────────────────────────────────
 # When deep+consensus mode runs with execute=True, the Taming Sari layer
 # merges conflicting outputs, flags contradictions, and synthesizes a final
