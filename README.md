@@ -59,9 +59,17 @@ jebat file read README.md
 jebat file write /tmp/test.txt "hello world"
 jebat file patch /tmp/test.txt "hello" "goodbye"
 jebat file search "TODO" --dir src/
+
+# Run shell commands
+jebat exec "echo Hello from JEBAT"
+
+# Wiki / knowledge base
+jebat wiki create "my-page" "Knowledge is power"
+jebat wiki read my-page
+jebat wiki search --query "power"
 ```
 
-## 24 CLI Subcommands
+## 26 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -82,6 +90,8 @@ jebat file search "TODO" --dir src/
 | `chat-repl` | Interactive REPL with AgentLoop tool-calling |
 | `tools` | List and inspect registered tools |
 | `file` | File operations: read, write, patch, search, undo |
+| `exec` | Run shell commands (foreground or background) |
+| `wiki` | Knowledge base: create, read, edit, search pages |
 | `mcp` | MCP server management (serve, ide-config) |
 | `search` | Web search (SearXNG, Google/Bing API) |
 | `agent` | One-shot agent task with tool-calling |
@@ -97,7 +107,7 @@ jebat file search "TODO" --dir src/
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 23 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 26 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation
@@ -107,6 +117,8 @@ jebat-core/
       cost_tracking/  # Bendahara — token cost tracking (5 tools)
       cron/           # Scheduled tasks (6 tools)
       fileops/        # File operations (6 tools)
+      wiki/           # Knowledge base with FTS5 search
+      terminal/       # Async terminal executor (foreground/background/PTY)
       image_gen/      # Image generation (1 tool)
       mcp/            # MCP client + server (5 server tools)
       plugins/        # TukangPlugin — plugin system (6 tools)
