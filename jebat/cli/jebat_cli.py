@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI v5.0.0 — Command Line Interface
+JEBAT CLI v5.0.0 — Command Line Interface — 41 subcommands
 
-40 subcommands: status, init, loop, think, memory, config,
+Subcommands (41): status, init, loop, think, memory, config,
 llm-providers, llm-config, llm-auth, llm-best-provider, auth, doctor,
 mode-guide, skills, chat, chat-project, chat-repl, tools, mcp, search,
 agent, git, file, exec, wiki, delegate, cron, safety, session, todo,
-social, tts, free-models, cost, undo, telemetry, sandbox, plugins
+social, tts, free-models, cost, undo, telemetry, sandbox, plugins,
+pentest
 
 Usage examples:
     jebat status                  - Show system status
@@ -23,6 +24,7 @@ Usage examples:
     jebat social send "hello"     - Send to Telegram/Discord/Twitter
     jebat tts "hello world"       - Text to speech
     jebat auth set provider key   - Store credentials in keyring
+    jebat pentest -t example.com  - Run pentest scan
 """
 
 import argparse
@@ -818,7 +820,7 @@ class JEBATCLI:
 async def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="JEBAT v5.0.0 — 40-CLI AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nOps: file, exec, wiki, agent, search, tools, mcp\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
+        description="JEBAT v5.0.0 — 41-CLI AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nOps: file, exec, wiki, agent, search, tools, mcp\nPentest: pentest (quick/standard/full/vuln scan)\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -1188,6 +1190,18 @@ async def main():
     plugins_parser.add_argument("--install-git", help="Install plugin from Git URL")
     plugins_parser.add_argument("--install-pip", help="Install plugin from pip")
     plugins_parser.add_argument("--uninstall", help="Uninstall a plugin")
+
+    # Pentest command
+    pentest_parser = subparsers.add_parser("pentest", help="Pentest: scan targets, generate vulnerability reports")
+    pentest_parser.add_argument("-t", "--target", required=True, help="Target domain, IP, or URL")
+    pentest_parser.add_argument("-s", "--scan", default="quick", choices=["quick", "standard", "full", "vuln"],
+                                help="Scan profile (default: quick)")
+    pentest_parser.add_argument("-v", "--verbose", action="store_true", help="Show scan progress")
+    pentest_parser.add_argument("-o", "--output", default="report", choices=["report", "json", "both"],
+                                help="Output format (default: report)")
+    pentest_parser.add_argument("--list-profiles", action="store_true", help="List available scan profiles")
+    pentest_parser.add_argument("--shodan-key", help="Shodan API key for enhanced recon")
+    pentest_parser.add_argument("--orchestrate", action="store_true", help="Enable agent-based orchestrated analysis")
 
     args = parser.parse_args()
 
@@ -1815,6 +1829,66 @@ async def main():
             else:
                 safety_parser.print_help()
                 print(f"  Sandbox mode: {'ON (dry-run)' if is_sandbox() else 'OFF'}")
+
+        elif args.command == "pentest":
+            from jebat.features.pentest import PentestEngine, list_profiles, orchestrated_pentest
+
+            if args.list_profiles:
+                profiles = list_profiles()
+                print(f"\n  Available pentest scan profiles ({len(profiles)}):\n")
+                for p in profiles:
+                    print(f"  {p['name']:12} — {p['description']}")
+                print()
+                return 0
+
+            if args.orchestrate:
+                # Orchestrated mode: scan + agent analysis + consensus
+                print(f"\n  ⚔️  JEBAT TukangBesi — Orchestrated Pentest")
+                print(f"  Target: {args.target}")
+                print(f"  Scan: {args.scan} | Orchestration: ON (swarm agents)")
+                print()
+
+                result = await orchestrated_pentest(
+                    target=args.target,
+                    scan_type=args.scan,
+                    verbose=args.verbose,
+                )
+                print(f"\n  ⚡ Orchestrated scan complete")
+                print(f"  Score: {result['score']}/100 ({result['severity']})")
+                print(f"  Vulnerabilities: {result['vulnerabilities']}")
+                print(f"  Agents engaged: {', '.join(result['agents'])}")
+                print(f"  Recommendations: {result['recommendations']}")
+                print(f"  Report: {result['report_path']}")
+                return 0
+
+            print(f"\n  ⚔️  JEBAT TukangBesi — Pentesting {args.target}")
+            print(f"  Scan type: {args.scan}")
+            print()
+
+            engine = PentestEngine()
+            result = await engine.run_scan(
+                args.target,
+                scan_type=args.scan,
+                shodan_api_key=args.shodan_key,
+                verbose=args.verbose,
+            )
+
+            # Generate output
+            if args.output in ("report", "both"):
+                report = engine.generate_report(result, fmt="markdown")
+                print(report)
+                path = engine.save_report(result, fmt="markdown")
+                print(f"\n  Report saved: {path}")
+
+            if args.output in ("json", "both"):
+                json_report = engine.generate_report(result, fmt="json")
+                if args.output == "json":
+                    print(json_report)
+                path = engine.save_report(result, fmt="json")
+                print(f"  JSON report saved: {path}")
+
+            print(f"\n  ⚡ Scan complete — {result.duration_seconds:.1f}s — Score: {result.score}/100 ({result.severity})")
+            print(f"  Vulnerabilities: {len(result.vulnerabilities)} found")
 
         elif args.command == "session":
             from jebat.session.session_manager import SessionManager
