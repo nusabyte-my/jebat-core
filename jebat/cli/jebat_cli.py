@@ -1092,6 +1092,22 @@ async def main():
     # todo clear
     todo_subparsers.add_parser("clear", help="Remove all todos")
 
+    # Social commands — messaging platforms
+    social_parser = subparsers.add_parser("social", help="Send messages via Telegram, Twitter, Discord")
+    social_subparsers = social_parser.add_subparsers(dest="social_action")
+    # social send
+    social_send = social_subparsers.add_parser("send", help="Send a message")
+    social_send.add_argument("target", help="Destination (Telegram chat ID, Discord webhook URL, or 'self' for Twitter)")
+    social_send.add_argument("message", help="Message text")
+    social_send.add_argument("--platform", default="telegram", choices=["telegram", "twitter", "discord"], help="Target platform")
+    # social twitter-search
+    social_search = social_subparsers.add_parser("twitter-search", help="Search Twitter/X")
+    social_search.add_argument("query", help="Search query")
+    social_search.add_argument("--limit", type=int, default=10, help="Max tweets (default: 10)")
+    # social twitter-timeline
+    social_timeline = social_subparsers.add_parser("twitter-timeline", help="Get home timeline")
+    social_timeline.add_argument("--limit", type=int, default=20, help="Max tweets")
+
     # TTS commands — text-to-speech (Edge TTS free, OpenAI TTS with key)
     tts_parser = subparsers.add_parser("tts", help="Text-to-speech generation (edge, openai, voices)")
     tts_subparsers = tts_parser.add_subparsers(dest="tts_action")
@@ -1868,6 +1884,57 @@ async def main():
                 print(f"  Cleared {result['removed']} todos")
             else:
                 todo_parser.print_help()
+
+        elif args.command == "social":
+            from jebat.features.social_media.social_media import send_message, twitter_search, twitter_timeline
+            import asyncio, concurrent.futures
+
+            def _run_async(coro):
+                def run_in_thread():
+                    return asyncio.run(coro)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as e:
+                    return e.submit(run_in_thread).result()
+
+            if args.social_action == "send":
+                print(f"  Sending message via {args.platform}...")
+                try:
+                    result = _run_async(send_message(
+                        target=args.target,
+                        message=args.message,
+                        platform=args.platform,
+                    ))
+                    if result.get("status") == "sent":
+                        print(f"  Sent to {args.platform} — details: {result}")
+                    else:
+                        print(f"  Failed: {result.get('error', 'unknown')}")
+                except Exception as exc:
+                    print(f"  Error: {exc}")
+            elif args.social_action == "twitter-search":
+                print(f"  Searching Twitter for: {args.query}...")
+                try:
+                    tweets = _run_async(twitter_search(args.query, limit=args.limit))
+                    if not tweets:
+                        print("  No results")
+                    else:
+                        print(f"  {len(tweets)} tweets found:")
+                        for tw in tweets[:args.limit]:
+                            print(f"    @{tw.get('from_user','?'):>15} — {tw.get('text','')[:80]}")
+                except Exception as exc:
+                    print(f"  Error: {exc}")
+            elif args.social_action == "twitter-timeline":
+                print(f"  Fetching home timeline...")
+                try:
+                    tweets = _run_async(twitter_timeline(limit=args.limit))
+                    if not tweets:
+                        print("  No timeline tweets")
+                    else:
+                        print(f"  {len(tweets)} tweets:")
+                        for tw in tweets[:args.limit]:
+                            print(f"    @{tw.get('from_user','?'):>15} — {tw.get('text','')[:80]}")
+                except Exception as exc:
+                    print(f"  Error: {exc}")
+            else:
+                social_parser.print_help()
 
         elif args.command == "free-models":
             from jebat.llm.ninerouter_provider import list_free_models, print_ninerouter_setup
