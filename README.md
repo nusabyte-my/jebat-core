@@ -87,19 +87,21 @@ source jebat-core/shell/jebat-completion.bash  # bash
 source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 
-## 36 CLI Subcommands
+## 40 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
 | `status` | Show system status |
+| `init` | First-run setup: configure LLM provider and API key |
 | `loop` | Ultra-Loop control (iteration limit, mode) |
 | `think` | Run thinking session |
-| `memory` | Memory operations |
+| `memory` | Memory operations (read, write, search) |
 | `config` | Show configuration |
 | `llm-providers` | List supported LLM providers |
 | `llm-config` | Show resolved LLM configuration |
 | `llm-auth` | Show provider auth status |
 | `llm-best-provider` | Show best configured provider |
+| `auth` | Credential storage: set, get, delete, list, which (keyring/env/enc) |
 | `doctor` | Check LLM/provider health |
 | `mode-guide` | Print JEBAT assistant guide path |
 | `skills` | Inspect TokGuru skills |
@@ -118,22 +120,22 @@ source jebat-core/shell/jebat-completion.zsh   # zsh
 | `mcp` | MCP server management (serve, ide-config) |
 | `search` | Web search (SearXNG, Google/Bing API) |
 | `agent` | One-shot agent task with tool-calling |
+| `social` | Social media: send (Telegram/Discord/Twitter), search, timeline |
+| `git` | Git operations: status, diff, log, commit, branch |
 | `free-models` | List free/cheap AI models via 9Router |
 | `cost` | Token cost dashboard and tracking |
 | `undo` | Undo file changes (rollback to backup) |
+| `tts` | Text-to-speech: edge (free), openai, voices list |
 | `telemetry` | Opt-in usage analytics |
 | `sandbox` | Docker sandbox for code execution |
-|| `plugins` | Manage JEBAT plugins |
-|| `tts` | Text-to-speech generation (edge, openai) |
-|| `git` | Git operations: status, diff, log, commit, branch |
-|| `init` | First-run setup: configure LLM provider and API key |
+| `plugins` | Manage JEBAT plugins |
 
 ## Architecture
 
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 36 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 40 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation
