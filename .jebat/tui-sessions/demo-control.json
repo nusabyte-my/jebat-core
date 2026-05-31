@@ -1,0 +1,17 @@
+{
+  "session_name": "demo-control",
+  "active_agent": "reviewer",
+  "context": {
+    "current_project": null,
+    "last_command": null,
+    "last_result": null
+  },
+  "history": [],
+  "stats": {
+    "commands_executed": 0,
+    "successful_commands": 0,
+    "failed_commands": 0,
+    "start_time": "2026-04-15T14:19:09.515986"
+  },
+  "updated_at": "2026-04-15T14:19:09.780055"
+}

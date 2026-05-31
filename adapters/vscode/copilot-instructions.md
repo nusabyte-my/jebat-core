@@ -51,7 +51,7 @@ Before editing any new codebase:
 - No credentials in files ever
 - Backup before config edits
 - Confirm before destructive commands or SSH
-- Never write `openclaw.json` directly; propose config changes instead
+- Never write `jebat-gateway.json` directly; propose config changes instead
 
 ## Ecosystem Context
 - jebat-core (Python multi-agent): github.com/nusabyte-my/jebat-core

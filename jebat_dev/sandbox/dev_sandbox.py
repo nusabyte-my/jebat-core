@@ -11,9 +11,10 @@ Security:
 """
 
 import logging
+import os
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -39,7 +40,7 @@ class DevSandbox:
     """
 
     # Allowed paths
-    ALLOWED_PATHS = [
+    DEFAULT_ALLOWED_PATHS = [
         Path("C:/Users/shaid/Desktop/Dev").resolve(),
         Path("C:/Users/shaid/Desktop/Dev/jebat").resolve(),
         Path("C:/Users/shaid/Desktop/Dev/jebat_dev").resolve(),
@@ -86,7 +87,41 @@ class DevSandbox:
         """
         self.strict_mode = strict_mode
         self.execution_log: List[Dict] = []
+        self.ALLOWED_PATHS = self._build_allowed_paths()
         logger.info(f"DevSandbox initialized (strict={strict_mode})")
+
+    def _build_allowed_paths(self) -> List[Path]:
+        """Build allowed paths for the current environment."""
+        candidates = list(self.DEFAULT_ALLOWED_PATHS)
+
+        env_paths = os.environ.get("JEBAT_DEV_ALLOWED_PATHS", "")
+        for raw_path in env_paths.split(os.pathsep):
+            if raw_path.strip():
+                candidates.append(Path(raw_path.strip()).resolve())
+
+        cwd = Path.cwd().resolve()
+        candidates.extend(
+            [
+                cwd,
+                cwd.parent,
+                cwd / "jebat-core",
+                cwd / "projects",
+                Path.home() / ".jebat" / "workspace",
+            ]
+        )
+
+        unique: List[Path] = []
+        seen = set()
+        for path in candidates:
+            try:
+                resolved = path.resolve()
+            except Exception:
+                continue
+            if str(resolved) in seen:
+                continue
+            seen.add(str(resolved))
+            unique.append(resolved)
+        return unique
 
     def is_path_allowed(self, path: str) -> bool:
         """
@@ -141,7 +176,7 @@ class DevSandbox:
         Returns:
             ExecutionResult
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Validate command
         if not self.is_command_allowed(command):
@@ -172,7 +207,7 @@ class DevSandbox:
                 timeout=timeout,
             )
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             exec_result = ExecutionResult(
                 success=result.returncode == 0,
@@ -185,7 +220,7 @@ class DevSandbox:
             # Log execution
             self.execution_log.append(
                 {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "command": command,
                     "cwd": cwd,
                     "success": exec_result.success,

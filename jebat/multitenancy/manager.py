@@ -23,7 +23,7 @@ Usage:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -58,8 +58,8 @@ class Tenant:
     display_name: str = ""
     status: TenantStatus = TenantStatus.ACTIVE
     plan: PlanType = PlanType.FREE
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     config: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -97,7 +97,7 @@ class Usage:
     tenant_id: UUID
     metric: str
     value: int
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -225,7 +225,7 @@ class TenantManager:
             if hasattr(tenant, key):
                 setattr(tenant, key, value)
 
-        tenant.updated_at = datetime.utcnow()
+        tenant.updated_at = datetime.now(timezone.utc)
         return tenant
 
     async def set_quota(
@@ -257,7 +257,7 @@ class TenantManager:
             self.quotas[tenant_id] = {}
 
         quotas = self.plan_quotas.get(plan, {})
-        reset_at = datetime.utcnow() + timedelta(days=1)  # Daily reset
+        reset_at = datetime.now(timezone.utc) + timedelta(days=1)  # Daily reset
 
         for name, limit in quotas.items():
             self.quotas[tenant_id][name] = Quota(
@@ -294,9 +294,9 @@ class TenantManager:
             return True
 
         # Check reset
-        if quota.reset_at and datetime.utcnow() > quota.reset_at:
+        if quota.reset_at and datetime.now(timezone.utc) > quota.reset_at:
             quota.used = 0
-            quota.reset_at = datetime.utcnow() + timedelta(days=1)
+            quota.reset_at = datetime.now(timezone.utc) + timedelta(days=1)
 
         return not quota.is_exceeded()
 
@@ -368,7 +368,7 @@ class TenantManager:
         Returns:
             Usage summary by metric
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if period == "hour":
             start = now - timedelta(hours=1)

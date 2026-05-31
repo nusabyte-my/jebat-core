@@ -22,7 +22,7 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -37,7 +37,7 @@ class TrainingJob:
     job_id: str
     model_name: str
     status: str  # pending, running, completed, failed
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     progress: float = 0.0
     metrics: Dict[str, Any] = field(default_factory=dict)
@@ -51,7 +51,7 @@ class ModelVersion:
     model_id: str
     version: str
     base_model: str
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metrics: Dict[str, Any] = field(default_factory=dict)
     training_data_size: int = 0
     hyperparameters: Dict[str, Any] = field(default_factory=dict)
@@ -182,7 +182,7 @@ class AdvancedMLEngine:
 
             # Complete job
             job.status = "completed"
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             job.progress = 100.0
 
             # Create model version
@@ -248,7 +248,7 @@ class AdvancedMLEngine:
             return False
 
         job.status = "cancelled"
-        job.completed_at = datetime.utcnow()
+        job.completed_at = datetime.now(timezone.utc)
         logger.info(f"Cancelled training job: {job_id}")
         return True
 

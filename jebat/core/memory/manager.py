@@ -10,7 +10,7 @@ Central controller for 5-layer memory system with:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from .layers import (
@@ -70,12 +70,12 @@ class MemoryManager:
             Memory ID
         """
         memory = Memory(
-            memory_id=f"mem_{datetime.utcnow().timestamp()}",
+            memory_id=f"mem_{datetime.now(timezone.utc).timestamp()}",
             content=content,
             layer=layer,
             metadata=metadata or MemoryMetadata(user_id=user_id),
             heat=HeatScore(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         self.memories[layer].append(memory)
@@ -117,13 +117,38 @@ class MemoryManager:
 
     def get_stats(self) -> Dict:
         """Get memory statistics."""
-        return {
+        base_stats = {
             "total_memories": sum(len(mems) for mems in self.memories.values()),
             "by_layer": {
                 layer.value: len(mems) for layer, mems in self.memories.items()
             },
             "consolidation_interval": self.consolidation_interval,
         }
+        
+        # Add monitoring-specific metrics
+        monitoring_stats = {
+            "memory_monitoring": {
+                "total_memories": sum(len(mems) for mems in self.memories.values()),
+                "memories_by_layer": {
+                    layer.value: len(mems) for layer, mems in self.memories.items()
+                },
+                "consolidation_interval": self.consolidation_interval,
+                "layers_count": len(self.memories),
+                "avg_memories_per_layer": (
+                    sum(len(mems) for mems in self.memories.values()) /
+                    max(len(self.memories), 1)
+                ),
+                "total_embedding_dimensions": sum(
+                    getattr(layer, 'embedding_dimension', 0) 
+                    for layer in self.memories.keys()
+                ),
+                "consolidation_enabled": self.consolidation_interval > 0,
+            }
+        }
+        
+        # Merge base stats with monitoring stats
+        base_stats.update(monitoring_stats)
+        return base_stats
 
     async def start_consolidation(self):
         """Start automatic consolidation."""

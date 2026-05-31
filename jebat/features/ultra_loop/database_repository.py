@@ -10,7 +10,7 @@ Provides persistent storage for:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -68,7 +68,7 @@ class UltraLoopRepository:
                 user_id=user_id,
                 status="running",
                 metadata=metadata or {},
-                started_at=datetime.utcnow(),
+                started_at=datetime.now(timezone.utc),
             )
 
             session.add(cycle)
@@ -107,7 +107,7 @@ class UltraLoopRepository:
 
             cycle.status = status
             cycle.completed_at = (
-                datetime.utcnow() if status in ["completed", "failed"] else None
+                datetime.now(timezone.utc) if status in ["completed", "failed"] else None
             )
             if error_message:
                 cycle.error_message = error_message
@@ -157,8 +157,8 @@ class UltraLoopRepository:
                 status="completed",
                 inputs=inputs or {},
                 outputs=outputs or {},
-                started_at=datetime.utcnow(),
-                completed_at=datetime.utcnow(),
+                started_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(timezone.utc),
             )
 
             session.add(phase)
@@ -238,7 +238,7 @@ class UltraLoopRepository:
             Dictionary with statistics
         """
         async with self.session_factory() as session:
-            cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
 
             # Total cycles
             total_result = await session.execute(

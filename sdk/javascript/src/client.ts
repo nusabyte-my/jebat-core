@@ -35,6 +35,7 @@ export interface ChatResponse {
   thinkingSteps: number;
   executionTime: number;
   userId?: string;
+  swarmLead?: Record<string, any>;
 }
 
 export interface Memory {
@@ -163,6 +164,7 @@ export class JEBATClient {
       thinkingSteps: data.thinking_steps,
       executionTime: data.execution_time,
       userId: data.user_id,
+      swarmLead: data.swarm_lead,
     };
   }
 
@@ -236,6 +238,62 @@ export class JEBATClient {
    */
   async listAgents(): Promise<{ agents: any[]; total: number; status: string }> {
     return this.request('/api/v1/agents');
+  }
+
+  /**
+   * Execute a task through the JEBAT swarm orchestrator
+   */
+  async executeSwarm(input: {
+    description: string;
+    userId?: string;
+    executionMode?: 'single' | 'swarm' | 'consensus';
+    requiredCapabilities?: string[];
+    enableSearch?: boolean;
+    searchQueries?: string[];
+    maxAgents?: number;
+    parameters?: Record<string, any>;
+  }): Promise<any> {
+    return this.request('/api/v1/swarm/execute', {
+      method: 'POST',
+      body: JSON.stringify({
+        description: input.description,
+        user_id: input.userId ?? 'default',
+        execution_mode: input.executionMode ?? 'consensus',
+        required_capabilities: input.requiredCapabilities ?? [],
+        enable_search: input.enableSearch ?? true,
+        search_queries: input.searchQueries ?? [],
+        max_agents: input.maxAgents ?? 3,
+        parameters: input.parameters ?? {},
+      }),
+    });
+  }
+
+  /**
+   * Preview a task through the JEBAT swarm planner without executing it
+   */
+  async planSwarm(input: {
+    description: string;
+    userId?: string;
+    executionMode?: 'single' | 'swarm' | 'consensus';
+    requiredCapabilities?: string[];
+    enableSearch?: boolean;
+    searchQueries?: string[];
+    maxAgents?: number;
+    parameters?: Record<string, any>;
+  }): Promise<any> {
+    return this.request('/api/v1/swarm/plan', {
+      method: 'POST',
+      body: JSON.stringify({
+        description: input.description,
+        user_id: input.userId ?? 'default',
+        execution_mode: input.executionMode ?? 'consensus',
+        required_capabilities: input.requiredCapabilities ?? [],
+        enable_search: input.enableSearch ?? true,
+        search_queries: input.searchQueries ?? [],
+        max_agents: input.maxAgents ?? 3,
+        parameters: input.parameters ?? {},
+      }),
+    });
   }
 }
 

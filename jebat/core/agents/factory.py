@@ -6,7 +6,7 @@ Agent creation and template management.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -29,6 +29,7 @@ class AgentPersonality(str, Enum):
 
     PROFESSIONAL = "professional"
     FRIENDLY = "friendly"
+    CREATIVE = "creative"
     CONCISE = "concise"
     DETAILED = "detailed"
     TECHNICAL = "technical"
@@ -116,7 +117,7 @@ class AgentFactory:
             "personality": template.personality.value,
             "capabilities": template.capabilities,
             "model": template.model,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         logger.info(f"Created agent: {agent_id} ({template.name})")

@@ -17,7 +17,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -61,7 +61,7 @@ class ThoughtNode:
     counter_arguments: List[str] = field(default_factory=list)
     related_thoughts: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -87,7 +87,7 @@ class ThinkingTrace:
     thinking_mode: ThinkingMode = ThinkingMode.DELIBERATE
     thoughts: List[ThoughtNode] = field(default_factory=list)
     current_phase: ThinkingPhase = ThinkingPhase.ORIENTATION
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
     conclusion: Optional[str] = None
     confidence_score: float = 0.0
@@ -391,7 +391,7 @@ class UltraThink:
                     logger.warning(f"Failed to store thought in DB: {e}")
 
         # Generate conclusion
-        trace.end_time = datetime.utcnow()
+        trace.end_time = datetime.now(timezone.utc)
         conclusion, confidence, alternatives = await self._generate_conclusion(trace)
 
         trace.conclusion = conclusion
@@ -686,7 +686,40 @@ class UltraThink:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get thinking statistics"""
-        return self.stats.copy()
+        base_stats = self.stats.copy()
+        
+        # Add monitoring-specific metrics
+        monitoring_stats = {
+            "thinking_monitoring": {
+                "total_sessions": self.stats.get("total_sessions", 0),
+                "successful_sessions": self.stats.get("successful_sessions", 0),
+                "failed_sessions": self.stats.get("failed_sessions", 0),
+                "total_thoughts": self.stats.get("total_thoughts", 0),
+                "total_execution_time": self.stats.get("total_execution_time", 0.0),
+                "avg_thoughts_per_session": self.stats.get("avg_thoughts_per_session", 0.0),
+                "avg_execution_time": self.stats.get("avg_execution_time", 0.0),
+                "success_rate": (
+                    self.stats.get("successful_sessions", 0) / 
+                    max(self.stats.get("total_sessions", 1), 1)
+                ),
+                "thoughts_per_second": (
+                    self.stats.get("total_thoughts", 0) / 
+                    max(self.stats.get("total_execution_time", 1.0), 1.0)
+                ),
+                "enable_techniques_count": sum(
+                    1 for enabled in self.techniques.values() if enabled
+                ),
+                "total_techniques": len(self.techniques),
+                "techniques_enabled_ratio": (
+                    sum(1 for enabled in self.techniques.values() if enabled) /
+                    max(len(self.techniques), 1)
+                ),
+            }
+        }
+        
+        # Merge base stats with monitoring stats
+        base_stats.update(monitoring_stats)
+        return base_stats
 
     def enable_technique(self, technique: str):
         """Enable a thinking technique"""

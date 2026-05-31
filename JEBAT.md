@@ -8,7 +8,7 @@
 
 ## 🌟 What is JEBAT?
 
-JEBAT is a **self-hosted, privacy-first AI assistant** that combines the multi-channel gateway architecture of OpenClaw with advanced cognitive memory systems. Named after the legendary Malay warrior Hang Jebat, known for his unwavering loyalty and strength.
+JEBAT is a **self-hosted, privacy-first AI assistant** that combines the multi-channel gateway architecture of Jebat Gateway with advanced cognitive memory systems. Named after the legendary Malay warrior Hang Jebat, known for his unwavering loyalty and strength.
 
 ### Core Philosophy
 
@@ -454,7 +454,7 @@ MIT License - See LICENSE file
 ## 🙏 Acknowledgments
 
 JEBAT is inspired by:
-- **OpenClaw** - Gateway architecture and multi-channel design
+- **Jebat Gateway** - Gateway architecture and multi-channel design
 - **MemContext** - Multi-modal memory with precision
 - **CORE** - Cognitive orchestration framework
 - **MemFuse** - Production-ready memory patterns

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI v6.0.0 — Command Line Interface — 41 subcommands
+JEBAT CLI v6.0.0 — Command Line Interface — 43 subcommands
 
 Subcommands (41): status, init, loop, think, memory, config,
 llm-providers, llm-config, llm-auth, llm-best-provider, auth, doctor,
@@ -784,7 +784,7 @@ class JEBATCLI:
         import sys, subprocess
 
         self.print("\nJEBAT v6.0.0 — Demo Showcase", "bold cyan")
-        self.print("zero-cost CLI agent with 41 subcommands, pentest engine, and more", "dim")
+        self.print("zero-cost CLI agent with 43 subcommands, pentest engine, and more", "dim")
         self.print("")
 
         commands = [
@@ -820,7 +820,7 @@ class JEBATCLI:
             self.print("")
 
         self.print("10 commands demo complete.", "bold green")
-        self.print("JEBAT: 41 subcommands, 37 modules, 107K LOC.", "dim")
+        self.print("JEBAT: 43 subcommands, 37 modules, 107K LOC.", "dim")
         self.print("Next: 'jebat init' to configure your LLM, 'jebat chat \"hello\"' to test.", "dim")
 
     def _override_config(self, config, provider_override: str | None, model_override: str | None):
@@ -1225,6 +1225,18 @@ async def main():
     sandbox_parser.add_argument("--run", help="Python code to execute in sandbox")
     sandbox_parser.add_argument("--shell-cmd", dest="sandbox_command", help="Shell command to execute in sandbox")
     sandbox_parser.add_argument("--network", action="store_true", help="Allow network in sandbox")
+
+    # Orchestrate command — swarm-based multi-agent delegation
+    orch_parser = subparsers.add_parser("orchestrate", help="Swarm: dispatch tasks to specialized agents (Hang Tuah, Hulubalang, Bendahara, TukangBesi)")
+    orch_parser.add_argument("-g", "--goal", required=True, help="Task goal to orchestrate")
+    orch_parser.add_argument("-m", "--mode", choices=["auto", "swarm", "consensus", "single"], default="auto",
+                              help="Execution mode: auto (classifier decides), swarm (parallel), consensus (vote), single (best agent)")
+    orch_parser.add_argument("-r", "--roles", nargs="+", help="Specific roles to deploy (e.g., pentest security devops)")
+    orch_parser.add_argument("--max-agents", type=int, default=3, help="Maximum agents to deploy (default: 3)")
+    orch_parser.add_argument("--profile", choices=["cavement", "lean", "deep"], default="lean",
+                              help="Prompt profile: cavement (aggressive savings), lean (default), deep (max context)")
+    orch_parser.add_argument("-o", "--output", choices=["summary", "full"], default="summary",
+                              help="Output format: summary or full result")
 
     # Demo/showcase command — fast 10-command overview
     subparsers.add_parser("demo", help="Run a 10-command showcase of JEBAT features")
@@ -2159,6 +2171,47 @@ async def main():
                     print(result.stderr)
             else:
                 print("  Usage: jebat sandbox [--check|--run 'code'|--command 'cmd'] [--network]")
+
+        elif args.command == "orchestrate":
+            from jebat.core.agents.swarm import run_orchestration, ROLE_DESCRIPTIONS
+            result = await run_orchestration(
+                goal=args.goal,
+                mode=args.mode,
+                roles=args.roles,
+                max_agents=args.max_agents,
+                profile=args.profile,
+            )
+            roles_used = result.get("roles_used", [])
+            role_labels = [
+                r.replace("_", " ").title() for r in roles_used
+            ]
+            print(f"  [bold cyan]Swarm Orchestrator[/bold cyan]")
+            print(f"  Mode: [green]{result['mode']}[/green] | Profile: {result['profile']}")
+            print(f"  Roles deployed: {', '.join(role_labels)}")
+            if args.output == "full" and isinstance(result.get("result"), dict):
+                r = result["result"]
+                if r.get("prompt"):
+                    print(f"\n  {'─' * 60}")
+                    print(f"  [yellow]Agent Prompt for {r.get('role_name', '')}[/yellow]")
+                    print(f"  {'─' * 60}")
+                    for line in r["prompt"].split("\n"):
+                        print(f"  {line}")
+            elif isinstance(result.get("result"), list):
+                for i, agent_result in enumerate(result["result"]):
+                    role_name = agent_result.get("role_name", agent_result.get("role", f"Agent {i+1}"))
+                    desc = agent_result.get("description", "")
+                    tools = agent_result.get("toolsets", [])
+                    print(f"\n  {'─' * 60}")
+                    print(f"  [yellow]{role_name}[/yellow] — {desc}")
+                    print(f"  Tools: {', '.join(tools)}")
+                    if args.output == "full" and agent_result.get("prompt"):
+                        print(f"  {'─' * 40}")
+                        for line in agent_result["prompt"].split("\n"):
+                            print(f"  │ {line}")
+            elif args.output == "full":
+                print(f"\n  {json.dumps(result, indent=2, default=str)}")
+            else:
+                print(f"\n  Goal: {result['goal'][:120]}")
 
         elif args.command == "plugins":
             from jebat.features.plugins.plugins import discover_local_plugins, discover_pip_plugins, load_plugin, load_all_plugins, install_from_git, install_from_pip, uninstall_plugin

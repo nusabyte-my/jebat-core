@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .tldr_context import build_tldr_summary
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectContext:
@@ -12,9 +14,13 @@ class ProjectContext:
 
 def build_project_context(project_path: str | Path, max_files: int = 12) -> ProjectContext:
     root = Path(project_path).resolve()
+    tldr_summary = build_tldr_summary(root)
+    if tldr_summary:
+        return ProjectContext(root=str(root), summary=tldr_summary)
     files = _interesting_files(root, max_files=max_files)
     lines = [
         f"Project root: {root}",
+        "Context source: fallback file scan",
         f"Detected files ({len(files)} shown):",
     ]
     for item in files:

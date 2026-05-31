@@ -21,7 +21,7 @@ import logging
 import uuid
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
@@ -86,8 +86,8 @@ class WebSocketSession:
     state: ConnectionState = ConnectionState.CONNECTING
     user_id: Optional[str] = None
     channel: ChannelType = ChannelType.WEBSOCKET
-    connected_at: datetime = field(default_factory=datetime.utcnow)
-    last_activity: datetime = field(default_factory=datetime.utcnow)
+    connected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_activity: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     subscriptions: Set[str] = field(default_factory=set)
     metadata: Dict[str, Any] = field(default_factory=dict)
     capabilities: List[str] = field(default_factory=list)
@@ -97,13 +97,13 @@ class WebSocketSession:
         return self.state in [
             ConnectionState.CONNECTED,
             ConnectionState.AUTHENTICATED,
-        ] and (datetime.utcnow() - self.last_activity) < timedelta(
+        ] and (datetime.now(timezone.utc) - self.last_activity) < timedelta(
             minutes=timeout_minutes
         )
 
     def update_activity(self):
         """Update last activity timestamp"""
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -126,7 +126,7 @@ class WebSocketMessage:
     type: MessageType
     payload: Dict[str, Any]
     message_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     reply_to: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -150,7 +150,7 @@ class WebSocketMessage:
             message_id=data.get("message_id"),
             timestamp=datetime.fromisoformat(data["timestamp"])
             if "timestamp" in data
-            else datetime.utcnow(),
+            else datetime.now(timezone.utc),
             reply_to=data.get("reply_to"),
             metadata=data.get("metadata", {}),
         )
@@ -365,7 +365,7 @@ class WebSocketGateway:
                 payload={
                     "event": "connected",
                     "session_id": session_id,
-                    "server_time": datetime.utcnow().isoformat(),
+                    "server_time": datetime.now(timezone.utc).isoformat(),
                 },
             )
             await self._send_to_session(session, welcome_msg)
@@ -634,7 +634,7 @@ class WebSocketGateway:
         return {
             "content": f"I received your message: {message.payload.get('content', '')}",
             "session_id": session.session_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _handle_auth(self, session: WebSocketSession, message: WebSocketMessage):
@@ -657,7 +657,7 @@ class WebSocketGateway:
             # Update session state
             session.state = ConnectionState.AUTHENTICATED
             session.user_id = user_id
-            session.metadata["auth_time"] = datetime.utcnow().isoformat()
+            session.metadata["auth_time"] = datetime.now(timezone.utc).isoformat()
 
             # Add to user sessions
             async with self._sessions_lock:
@@ -748,7 +748,7 @@ class WebSocketGateway:
 
         pong_msg = WebSocketMessage(
             type=MessageType.PONG,
-            payload={"timestamp": datetime.utcnow().isoformat()},
+            payload={"timestamp": datetime.now(timezone.utc).isoformat()},
             reply_to=message.message_id,
         )
         await self._send_to_session(session, pong_msg)
@@ -828,7 +828,7 @@ class WebSocketGateway:
             payload={
                 "event": event_type,
                 "data": payload,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -852,7 +852,7 @@ class WebSocketGateway:
 
         notification_msg = WebSocketMessage(
             type=MessageType.NOTIFICATION,
-            payload={**notification, "timestamp": datetime.utcnow().isoformat()},
+            payload={**notification, "timestamp": datetime.now(timezone.utc).isoformat()},
         )
 
         for session_id in session_ids:

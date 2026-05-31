@@ -53,7 +53,7 @@ For any new project or ambiguous task:
 - Never write credentials into files
 - Backup config before editing
 - Confirm before destructive or external actions
-- Never write `openclaw.json` directly; propose changes only
+- Never write `jebat-gateway.json` directly; propose changes only
 
 ### Ecosystem
 - jebat-core: github.com/nusabyte-my/jebat-core

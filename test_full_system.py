@@ -17,7 +17,7 @@ import asyncio
 import logging
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
@@ -41,7 +41,7 @@ class IntegrationTestResult:
         self.duration = 0.0
         self.details = []
         self.errors = []
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(datetime.timezone.utc)
 
     def add_detail(self, detail: str):
         """Add a detail to the test result"""
@@ -56,12 +56,12 @@ class IntegrationTestResult:
     def mark_success(self):
         """Mark test as successful"""
         self.success = True
-        self.duration = (datetime.utcnow() - self.start_time).total_seconds()
+        self.duration = (datetime.now(datetime.timezone.utc) - self.start_time).total_seconds()
 
     def mark_failure(self):
         """Mark test as failed"""
         self.success = False
-        self.duration = (datetime.utcnow() - self.start_time).total_seconds()
+        self.duration = (datetime.now(datetime.timezone.utc) - self.start_time).total_seconds()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""

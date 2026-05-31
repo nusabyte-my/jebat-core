@@ -5,6 +5,51 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+# ── Secrets env loading ────────────────────────────────────────────────────
+
+_secrets_loaded = False
+
+
+def _ensure_secrets_loaded() -> None:
+    """Load ~/.jebat/secrets.env into os.environ once per process.
+
+    Called automatically by get_provider_secret and list_provider_auth_status,
+    so any code that checks provider keys automatically picks up secrets.env.
+    Also safe to call explicitly (idempotent).
+    """
+    global _secrets_loaded
+    if _secrets_loaded:
+        return
+    _secrets_loaded = True
+
+    candidates = [
+        Path.home() / ".jebat" / "secrets.env",
+        Path.cwd() / ".env",
+    ]
+    env_path = None
+    for p in candidates:
+        if p.exists():
+            env_path = p
+            break
+    if env_path is None:
+        return
+
+    try:
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                key = key.strip()
+                value = value.strip().strip("'\"")
+                if key and value and key not in os.environ:
+                    os.environ[key] = value
+    except Exception:
+        pass
+
+
+# ── Provider auth store (webui / container paths) ──────────────────────────
 
 def _provider_auth_store() -> dict[str, str]:
     candidates = [
@@ -39,6 +84,7 @@ PROVIDER_ENV_MAP = {
     "google": ("GOOGLE_API_KEY", "GEMINI_API_KEY"),
     "anthropic": ("ANTHROPIC_API_KEY",),
     "openrouter": ("OPENROUTER_API_KEY",),
+    "llamacpp": ("LLAMA_CPP_HOST",),
     "ollama": ("OLLAMA_HOST",),
     "local": (),
 }
@@ -48,12 +94,14 @@ PROVIDER_PRIORITY = (
     "google",
     "anthropic",
     "openrouter",
+    "llamacpp",
     "ollama",
     "local",
 )
 
 
 def get_provider_secret(provider: str) -> str:
+    _ensure_secrets_loaded()
     provider_name = provider.strip().lower()
     env_vars = PROVIDER_ENV_MAP.get(provider_name)
     if env_vars is None:
@@ -75,6 +123,7 @@ def get_provider_secret(provider: str) -> str:
 
 
 def list_provider_auth_status() -> list[ProviderAuthStatus]:
+    _ensure_secrets_loaded()
     statuses: list[ProviderAuthStatus] = []
     stored = _provider_auth_store()
     for provider, env_vars in PROVIDER_ENV_MAP.items():

@@ -357,7 +357,7 @@ jebat sentinel wake --mode defensive --target https://your-app.com
 
 ## 🎯 Unique Differentiators
 
-### vs. OpenClaw
+### vs. Jebat Gateway
 - ✅ **Eternal Memory** (5 layers with heat scoring)
 - ✅ **Model Forge** (abliteration + enhancement)
 - ✅ **Sentinel** (autonomous security)
@@ -460,7 +460,7 @@ Multi-agent deliberation for complex decisions.
 
 ### Architecture Influences
 
-**From OpenClaw:**
+**From Jebat Gateway:**
 - Multi-channel gateway pattern
 - WebSocket control plane
 - DM pairing security

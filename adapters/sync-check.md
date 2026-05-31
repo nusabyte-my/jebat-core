@@ -27,7 +27,7 @@ Run this check after changes to any of these:
 - canonical role list still matches the core
 - routing references still match the dispatch matrix
 - template and checklist references still exist
-- `openclaw.json` safety rule is preserved
+- `jebat-gateway.json` safety rule is preserved
 - Panglima is treated as the primary mode
 - Hermes is only described as compatibility, if mentioned at all
 

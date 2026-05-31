@@ -46,7 +46,7 @@ def select_relevant_skills(
     prompt: str,
     registry: SkillRegistry | None = None,
     requested_skills: Iterable[str] | None = None,
-    limit: int = 3,
+    limit: int = 2,
     auto_discover: bool = True,
 ) -> list[SelectedSkill]:
     active_registry = registry or build_skill_registry()
@@ -93,8 +93,9 @@ def build_skill_prompt(
     prompt: str,
     registry: SkillRegistry | None = None,
     requested_skills: Iterable[str] | None = None,
-    limit: int = 3,
+    limit: int = 2,
     auto_discover: bool = True,
+    full_guidance_limit: int = 1,
 ) -> tuple[str, list[SelectedSkill]]:
     selected = select_relevant_skills(
         prompt=prompt,
@@ -107,21 +108,23 @@ def build_skill_prompt(
         return prompt, []
 
     skill_sections = []
-    for skill in selected:
+    for index, skill in enumerate(selected):
         body = skill.content.strip()
-        if len(body) > 1200:
-            body = body[:1200].rstrip() + "\n..."
-        skill_sections.append(
-            "\n".join(
-                [
-                    f"Skill: {skill.name}",
-                    f"Category: {skill.category}",
-                    f"Description: {skill.description}",
-                    "Guidance:",
-                    body,
-                ]
-            )
-        )
+        guidance_limit = 1000 if index < full_guidance_limit else 220
+        if len(body) > guidance_limit:
+            body = body[:guidance_limit].rstrip() + ("\n..." if index < full_guidance_limit else "...")
+
+        section = [
+            f"Skill: {skill.name}",
+            f"Category: {skill.category}",
+            f"Description: {skill.description}",
+            f"Source: {skill.source_path}",
+        ]
+        if index < full_guidance_limit:
+            section.extend(["Guidance:", body])
+        else:
+            section.extend(["Summary:", body])
+        skill_sections.append("\n".join(section))
 
     enriched_prompt = (
         "Apply the following JEBAT skills when answering.\n\n"

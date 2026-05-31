@@ -17,6 +17,13 @@ Available design systems in `vault/design-systems/`:
 
 Additional DESIGN.md files from awesome-design-md collection available on request.
 
+## Preferred Design Skillset
+When the task touches brand identity or production-ready web assets, load the `design-agent` bundle from `jebat-tokguru`.
+
+Included design-agent skills:
+- `logo-generator` — SVG logo exploration and showcase generation
+- `web-asset-generator` — favicons, PWA icons, and Open Graph/social asset generation
+
 ## Icon System
 Use **developer-icons** (vault/references/developer-icons.md) for tech stack visualization:
 - Reference icons as `icon:Name` (e.g., `icon:React`, `icon:Node.js`, `icon:TailwindCSS`)

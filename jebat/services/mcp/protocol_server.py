@@ -8,7 +8,7 @@ providing tool discovery, resource access, and session management.
 import asyncio
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, Optional, Set
 
@@ -33,15 +33,15 @@ class MCPSession:
     def __init__(self, session_id: str, client_id: str):
         self.session_id = session_id
         self.client_id = client_id
-        self.created_at = datetime.utcnow()
-        self.last_activity = datetime.utcnow()
+        self.created_at = datetime.now(timezone.utc)
+        self.last_activity = datetime.now(timezone.utc)
         self.metadata: Dict[str, Any] = {}
         self.is_authenticated = False
 
     @property
     def is_expired(self, timeout_minutes: int = 30) -> bool:
         """Check if session has expired"""
-        delta = datetime.utcnow() - self.last_activity
+        delta = datetime.now(timezone.utc) - self.last_activity
         return delta.total_seconds() > (timeout_minutes * 60)
 
 
@@ -178,7 +178,7 @@ class MCPProtocolServer:
             try:
                 await asyncio.sleep(60)  # Check every minute
 
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 expired_sessions = [
                     session_id
                     for session_id, session in self.active_sessions.items()

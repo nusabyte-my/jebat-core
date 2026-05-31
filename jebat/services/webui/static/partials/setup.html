@@ -1,0 +1,108 @@
+<!-- setup partial -->
+<div class="container section-sm">
+  <h2>Setup</h2>
+  <p class="small muted" style="margin-bottom: var(--space-lg);">Environment health check. Verify all required runtimes, tools, and services are ready.</p>
+</div>
+
+<div class="container" style="margin-bottom: var(--space-lg);">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Environment Check</div>
+      <button class="btn btn-outline btn-sm" id="env-recheck">Re-check</button>
+    </div>
+    <div class="card-body" id="env-results">
+      <p>Click Re-check to verify your environment.</p>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="margin-bottom: var(--space-lg);">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Component Status</div></div>
+    <div class="card-body" id="comp-status">
+      Loading…
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="card-header"><div class="card-title">REST API Health</div></div>
+    <div class="card-body">
+      <button class="btn btn-outline btn-sm" id="health-check-btn">Ping Health Endpoint</button>
+      <span class="small muted" style="margin-left: var(--space-md);" id="health-result"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function runEnvCheck() {
+    const el = document.getElementById('env-results');
+    el.innerHTML = '<p>Checking environment…</p>';
+
+    // Build a check from available data sources
+    try {
+      const [status, runtime] = await Promise.all([API.status(), API.runtime()]);
+      const components = status.components || {};
+
+      const checks = [
+        { label: 'Python', svc: 'python', icon: '🐍' },
+        { label: 'Node.js', svc: 'node', icon: '⬢' },
+        { label: 'Git', svc: 'git', icon: '⎇' },
+        { label: 'Docker', svc: 'docker', icon: '🐳' },
+        { label: 'Ollama', svc: 'ollama', icon: '🦙' },
+        { label: 'JEBAT CLI', svc: 'jebat-cli', icon: '⚔' },
+        { label: '9-Router', svc: 'nine-router', icon: '🔀' },
+        { label: 'Gateway', svc: 'jebat-gateway', icon: '🌐' },
+        { label: 'LLM Provider', svc: runtime.provider.effective, icon: '🧠' },
+      ];
+
+      el.innerHTML = '<div class="stack-sm">' + checks.map(c => {
+        const comp = components[c.svc] || {};
+        const ok = comp.ok !== false && comp.status !== 'unavailable';
+        return `<div class="mini-card">
+          <strong>${c.icon} ${c.label}</strong>
+          <span class="${ok ? '' : 'text-danger'}">${ok ? (comp.info || comp.version || 'OK') : (comp.error || 'Not found')}</span>
+        </div>`;
+      }).join('') + '</div>';
+    } catch (e) {
+      el.innerHTML = `<p class="text-danger">Check failed: ${e.message}</p>`;
+    }
+  }
+
+  async function loadComponents() {
+    try {
+      const status = await API.status();
+      const components = status.components || {};
+      const names = Object.keys(components);
+      document.getElementById('comp-status').innerHTML = names.length === 0
+        ? '<p>No component data available.</p>'
+        : '<div class="stack-sm">' + names.map(name => {
+            const c = components[name];
+            const ok = c.ok !== false;
+            return `<div class="mini-card">
+              <strong>${name}</strong>
+              <span class="${ok ? '' : 'text-danger'}">${ok ? (c.info || 'OK') : (c.error || 'down')}</span>
+            </div>`;
+          }).join('') + '</div>';
+    } catch (_) {
+      document.getElementById('comp-status').innerHTML = '<p>Unavailable</p>';
+    }
+  }
+
+  document.getElementById('env-recheck').addEventListener('click', runEnvCheck);
+  document.getElementById('health-check-btn').addEventListener('click', async () => {
+    const el = document.getElementById('health-result');
+    el.textContent = 'Pinging…';
+    try {
+      const res = await API.get('/health');
+      el.textContent = `OK — uptime: ${res.uptime || '?'}`;
+      setTimeout(() => el.textContent = '', 5000);
+    } catch (e) {
+      el.textContent = `Failed: ${e.message}`;
+    }
+  });
+
+  loadComponents();
+  runEnvCheck();
+</script>

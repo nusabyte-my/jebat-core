@@ -99,7 +99,28 @@ class DecisionEngine:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get engine statistics."""
-        return {
+        base_stats = {
             "agents_registered": len(self.agent_registry),
             "decisions_made": len(self.decision_history),
         }
+        
+        # Add monitoring-specific metrics
+        monitoring_stats = {
+            "decision_monitoring": {
+                "agents_registered": len(self.agent_registry),
+                "decisions_made": len(self.decision_history),
+                "decisions_per_agent": {
+                    agent_id: count for agent_id, count in self.decision_history.items()
+                } if hasattr(self.decision_history, 'items') else {},
+                "total_decisions": len(self.decision_history) if isinstance(self.decision_history, (list, dict)) else 0,
+                "avg_decisions_per_agent": (
+                    len(self.decision_history) / max(len(self.agent_registry), 1)
+                    if isinstance(self.decision_history, (list, dict)) and len(self.agent_registry) > 0
+                    else 0
+                ),
+            }
+        }
+        
+        # Merge base stats with monitoring stats
+        base_stats.update(monitoring_stats)
+        return base_stats

@@ -20,7 +20,7 @@ import asyncio
 import logging
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -46,19 +46,19 @@ class TestResult:
         self.error = None
         self.duration = 0.0
         self.details = []
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
 
     def mark_success(self, details: List[str] = None):
         """Mark test as successful"""
         self.success = True
-        self.duration = (datetime.utcnow() - self.start_time).total_seconds()
+        self.duration = (datetime.now(timezone.utc) - self.start_time).total_seconds()
         self.details = details or []
 
     def mark_failure(self, error: Exception, details: List[str] = None):
         """Mark test as failed"""
         self.success = False
         self.error = str(error)
-        self.duration = (datetime.utcnow() - self.start_time).total_seconds()
+        self.duration = (datetime.now(timezone.utc) - self.start_time).total_seconds()
         self.details = details or []
 
 

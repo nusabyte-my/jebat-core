@@ -3,7 +3,7 @@
 
 Your Personal Development AI Assistant
 
-Inspired by OpenClaw architecture + Google Stitch MCP + JEBAT intelligence.
+Inspired by Jebat Gateway architecture + Google Stitch MCP + JEBAT intelligence.
 Works ONLY inside this Dev environment to help you build applications.
 
 Version: 1.0.0-dev

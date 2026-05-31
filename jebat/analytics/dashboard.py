@@ -16,7 +16,7 @@ Usage:
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 import pandas as pd
@@ -316,7 +316,7 @@ def render_event_log(engine: AnalyticsEngine, limit: int = 50):
 
         # Clear old events button
         if st.button("🗑️ Clear Events Older Than 1 Hour"):
-            cutoff = datetime.utcnow() - timedelta(hours=1)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
             engine.clear_events(older_than=cutoff)
             st.success("Events cleared!")
             st.rerun()
@@ -390,7 +390,7 @@ def main():
         """
         ---
         **JEBAT Analytics** | Last Updated: """
-        + datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     )
 
 

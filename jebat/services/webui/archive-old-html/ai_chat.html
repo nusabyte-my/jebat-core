@@ -1,0 +1,1237 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JEBAT AI Chat - Powerful AI Chatbot</title>
+        <meta
+            name="description"
+            content="Chat with multiple AI models - ChatGPT-style interface with Perplexity-level power"
+        />
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            :root {
+                --primary: #10a37f;
+                --primary-light: #1dd1a1;
+                --primary-dark: #0d8a6a;
+                --secondary: #6366f1;
+                --accent: #f59e0b;
+                --danger: #ef4444;
+                --success: #10b981;
+                --purple: #a855f7;
+                --pink: #ec4899;
+
+                --dark: #0f172a;
+                --dark-light: #1e293b;
+                --dark-lighter: #334155;
+                --gray: #64748b;
+                --gray-light: #94a3b8;
+                --light: #f1f5f9;
+                --white: #ffffff;
+
+                --gradient-primary: linear-gradient(
+                    135deg,
+                    #10a37f 0%,
+                    #6366f1 100%
+                );
+                --gradient-secondary: linear-gradient(
+                    135deg,
+                    #a855f7 0%,
+                    #ec4899 100%
+                );
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--dark);
+                color: var(--light);
+                line-height: 1.6;
+                overflow: hidden;
+            }
+
+            /* Layout */
+            .app-container {
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+            }
+
+            /* Hide sidebar by default for cleaner look */
+            .sidebar {
+                display: none;
+            }
+
+            .sidebar-header {
+                padding: 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .new-chat-btn {
+                width: 100%;
+                padding: 0.875rem 1rem;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                color: var(--light);
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-size: 0.95rem;
+                font-weight: 500;
+            }
+
+            .new-chat-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+            .chat-history {
+                flex: 1;
+                padding: 1rem;
+            }
+
+            .history-label {
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--gray);
+                margin-bottom: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .chat-item {
+                padding: 0.75rem 1rem;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+                margin-bottom: 0.5rem;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid transparent;
+            }
+
+            .chat-item:hover {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .chat-item.active {
+                background: rgba(16, 163, 127, 0.1);
+                border-color: rgba(16, 163, 127, 0.3);
+            }
+
+            /* Header */
+            header {
+                grid-column: 1 / -1;
+                background: var(--dark-light);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 1.5rem;
+            }
+
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .logo {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-size: 1.25rem;
+                font-weight: 800;
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .logo-icon {
+                font-size: 1.75rem;
+            }
+
+            /* Model Selector */
+            .model-selector {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .model-select {
+                padding: 0.5rem 1rem;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                color: var(--light);
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                outline: none;
+                transition: all 0.3s;
+            }
+
+            .model-select:hover {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+            .model-select:focus {
+                border-color: var(--primary);
+            }
+
+            .model-info {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.85rem;
+                color: var(--gray);
+            }
+
+            .model-badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 20px;
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .badge-free {
+                background: rgba(16, 185, 129, 0.2);
+                color: var(--success);
+            }
+            .badge-pro {
+                background: rgba(245, 158, 11, 0.2);
+                color: var(--accent);
+            }
+            .badge-premium {
+                background: rgba(99, 102, 241, 0.2);
+                color: var(--primary);
+            }
+
+            /* Main Chat Area */
+            .chat-area {
+                display: flex;
+                flex-direction: column;
+                height: calc(100vh - 60px);
+            }
+
+            .messages-container {
+                flex: 1;
+                overflow-y: auto;
+                padding: 2rem;
+            }
+
+            .message {
+                display: flex;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+                max-width: 900px;
+                margin-left: auto;
+                margin-right: auto;
+                animation: messageIn 0.3s ease;
+            }
+
+            @keyframes messageIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .message.user {
+                justify-content: flex-end;
+            }
+
+            .avatar {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                flex-shrink: 0;
+            }
+
+            .avatar.bot {
+                background: var(--gradient-primary);
+            }
+
+            .avatar.user {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .message-content {
+                flex: 1;
+                max-width: 100%;
+            }
+
+            .message-header {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .message-name {
+                font-weight: 600;
+                font-size: 0.95rem;
+            }
+
+            .message-text {
+                line-height: 1.7;
+                font-size: 0.95rem;
+            }
+
+            .message-text p {
+                margin-bottom: 1rem;
+            }
+
+            .message-text pre {
+                background: var(--dark-light);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                padding: 1rem;
+                overflow-x: auto;
+                margin: 1rem 0;
+                font-family: "Fira Code", monospace;
+                font-size: 0.85rem;
+                line-height: 1.8;
+            }
+
+            .message-text code {
+                font-family: "Fira Code", monospace;
+            }
+
+            .message-text :not(pre) > code {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 0.2rem 0.5rem;
+                border-radius: 4px;
+                font-size: 0.85em;
+            }
+
+            .message-actions {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 1rem;
+            }
+
+            .action-btn {
+                padding: 0.5rem 0.75rem;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 6px;
+                color: var(--gray-light);
+                cursor: pointer;
+                transition: all 0.3s;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: var(--light);
+            }
+
+            /* Input Area */
+            .input-area {
+                padding: 1.5rem 2rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                background: var(--dark);
+            }
+
+            .input-container {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .input-wrapper {
+                display: flex;
+                gap: 1rem;
+                align-items: flex-end;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
+                padding: 0.75rem 1rem;
+                transition: all 0.3s;
+            }
+
+            .input-wrapper:focus-within {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+            }
+
+            .chat-input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                color: var(--light);
+                font-size: 1rem;
+                resize: none;
+                font-family: inherit;
+                outline: none;
+                max-height: 200px;
+                min-height: 24px;
+                line-height: 1.5;
+            }
+
+            .chat-input::placeholder {
+                color: var(--gray);
+            }
+
+            .send-btn {
+                background: var(--primary);
+                border: none;
+                border-radius: 10px;
+                width: 40px;
+                height: 40px;
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                color: var(--white);
+            }
+
+            .send-btn:hover:not(:disabled) {
+                transform: scale(1.05);
+                box-shadow: 0 4px 20px rgba(16, 163, 127, 0.4);
+            }
+
+            .send-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .input-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 0.75rem;
+                font-size: 0.85rem;
+                color: var(--gray);
+            }
+
+            .input-tips {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .tip {
+                cursor: pointer;
+                transition: color 0.3s;
+            }
+
+            .tip:hover {
+                color: var(--primary-light);
+            }
+
+            /* Welcome Screen */
+            .welcome-screen {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                text-align: center;
+                padding: 2rem;
+            }
+
+            .welcome-icon {
+                font-size: 5rem;
+                margin-bottom: 2rem;
+                background: var(--gradient-primary);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .welcome-title {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 1rem;
+            }
+
+            .welcome-subtitle {
+                font-size: 1.125rem;
+                color: var(--gray-light);
+                max-width: 600px;
+                margin-bottom: 3rem;
+                line-height: 1.6;
+            }
+
+            .suggestion-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 1rem;
+                max-width: 900px;
+                width: 100%;
+            }
+
+            .suggestion-card {
+                padding: 1.25rem;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.3s;
+                text-align: left;
+            }
+
+            .suggestion-card:hover {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+                transform: translateY(-2px);
+            }
+
+            .suggestion-question {
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                font-size: 0.95rem;
+            }
+
+            .suggestion-desc {
+                font-size: 0.85rem;
+                color: var(--gray);
+                line-height: 1.5;
+            }
+
+            /* Typing Indicator */
+            .typing-indicator {
+                display: flex;
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+
+            .typing-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--gray);
+                animation: typing 1.4s infinite;
+            }
+
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+            @keyframes typing {
+                0%,
+                60%,
+                100% {
+                    transform: translateY(0);
+                }
+                30% {
+                    transform: translateY(-10px);
+                }
+            }
+
+            /* Scrollbar */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .app-container {
+                    grid-template-columns: 1fr;
+                }
+
+                .sidebar {
+                    display: none;
+                }
+
+                .messages-container {
+                    padding: 1rem;
+                }
+
+                .input-area {
+                    padding: 1rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <button class="new-chat-btn" onclick="newChat()">
+                        <span>+</span>
+                        New Chat
+                    </button>
+                </div>
+                <div class="chat-history">
+                    <div class="history-label">Today</div>
+                    <div class="chat-item active" onclick="loadChat(0)">
+                        💬 Current conversation
+                    </div>
+                    <div class="chat-item" onclick="loadChat(1)">
+                        📊 Data analysis project
+                    </div>
+                    <div class="chat-item" onclick="loadChat(2)">
+                        🐍 Python debugging help
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header>
+                <div class="header-left">
+                    <div class="logo">
+                        <span class="logo-icon">🗡️</span>
+                        JEBAT AI Chat
+                    </div>
+                    <div class="model-selector">
+                        <select
+                            class="model-select"
+                            id="modelSelect"
+                            onchange="changeModel()"
+                        >
+                            <option value="jebat-fast">JEBAT Fast ⚡</option>
+                            <option value="jebat-pro" selected>
+                                JEBAT Pro 🎯
+                            </option>
+                            <option value="jebat-deep">JEBAT Deep 🧠</option>
+                            <option value="gpt-4">GPT-4 Style 🔮</option>
+                            <option value="claude">Claude Style 🤖</option>
+                            <option value="llama">Llama Style 🦙</option>
+                            <option value="mistral">Mistral Style 🌪️</option>
+                        </select>
+                        <div class="model-info">
+                            <span class="model-badge badge-pro" id="modelBadge"
+                                >Pro</span
+                            >
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" onclick="toggleSidebar()">
+                        ☰
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Welcome Screen -->
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <div class="welcome-icon">🗡️</div>
+                        <h1 class="welcome-title">Welcome to JEBAT AI Chat</h1>
+                        <p class="welcome-subtitle">
+                            Experience the power of advanced AI reasoning.
+                            Choose your model and start chatting.
+                        </p>
+
+                        <div class="suggestion-grid">
+                            <div
+                                class="suggestion-card"
+                                onclick="
+                                    useSuggestion(
+                                        'Explain quantum computing in simple terms',
+                                    )
+                                "
+                            >
+                                <div class="suggestion-question">
+                                    💡 Explain a complex topic
+                                </div>
+                                <div class="suggestion-desc">
+                                    Quantum computing, blockchain, or AI
+                                    explained simply
+                                </div>
+                            </div>
+                            <div
+                                class="suggestion-card"
+                                onclick="
+                                    useSuggestion(
+                                        'Write a Python script to analyze CSV data',
+                                    )
+                                "
+                            >
+                                <div class="suggestion-question">
+                                    💻 Write code
+                                </div>
+                                <div class="suggestion-desc">
+                                    Python, JavaScript, or any language you need
+                                </div>
+                            </div>
+                            <div
+                                class="suggestion-card"
+                                onclick="
+                                    useSuggestion(
+                                        'Help me brainstorm ideas for a startup',
+                                    )
+                                "
+                            >
+                                <div class="suggestion-question">
+                                    🎨 Creative brainstorming
+                                </div>
+                                <div class="suggestion-desc">
+                                    Get innovative ideas and suggestions
+                                </div>
+                            </div>
+                            <div
+                                class="suggestion-card"
+                                onclick="
+                                    useSuggestion(
+                                        'Review this code for security issues',
+                                    )
+                                "
+                            >
+                                <div class="suggestion-question">
+                                    🔍 Code review
+                                </div>
+                                <div class="suggestion-desc">
+                                    Security, performance, and best practices
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <div class="input-container">
+                        <div class="input-wrapper">
+                            <textarea
+                                class="chat-input"
+                                id="chatInput"
+                                placeholder="Message JEBAT..."
+                                rows="1"
+                                onkeydown="handleKeyDown(event)"
+                                oninput="autoResize(this)"
+                            ></textarea>
+                            <button
+                                class="send-btn"
+                                id="sendBtn"
+                                onclick="sendMessage()"
+                            >
+                                ➤
+                            </button>
+                        </div>
+                        <div class="input-footer">
+                            <div class="input-tips">
+                                <span
+                                    class="tip"
+                                    onclick="useSuggestion('Be creative')"
+                                    >🎨 Creative</span
+                                >
+                                <span
+                                    class="tip"
+                                    onclick="useSuggestion('Be precise')"
+                                    >🎯 Precise</span
+                                >
+                                <span
+                                    class="tip"
+                                    onclick="useSuggestion('Show reasoning')"
+                                    >🧠 Show reasoning</span
+                                >
+                            </div>
+                            <div>
+                                Press Enter to send, Shift+Enter for new line
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // State
+            let conversations = [];
+            let currentModel = "jebat-pro";
+            let isGenerating = false;
+
+            // Model configurations
+            const models = {
+                "jebat-fast": {
+                    name: "JEBAT Fast",
+                    badge: "free",
+                    speed: "Instant",
+                    power: "Standard",
+                },
+                "jebat-pro": {
+                    name: "JEBAT Pro",
+                    badge: "pro",
+                    speed: "Fast",
+                    power: "Advanced",
+                },
+                "jebat-deep": {
+                    name: "JEBAT Deep",
+                    badge: "premium",
+                    speed: "Slow",
+                    power: "Maximum",
+                },
+                "gpt-4": {
+                    name: "GPT-4 Style",
+                    badge: "premium",
+                    speed: "Slow",
+                    power: "Maximum",
+                },
+                claude: {
+                    name: "Claude Style",
+                    badge: "pro",
+                    speed: "Fast",
+                    power: "Advanced",
+                },
+                llama: {
+                    name: "Llama Style",
+                    badge: "free",
+                    speed: "Fast",
+                    power: "Standard",
+                },
+                mistral: {
+                    name: "Mistral Style",
+                    badge: "free",
+                    speed: "Fast",
+                    power: "Standard",
+                },
+            };
+
+            // Auto-resize textarea
+            function autoResize(textarea) {
+                textarea.style.height = "auto";
+                textarea.style.height =
+                    Math.min(textarea.scrollHeight, 200) + "px";
+            }
+
+            // Handle Enter key
+            function handleKeyDown(event) {
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    sendMessage();
+                }
+            }
+
+            // Use suggestion
+            function useSuggestion(text) {
+                document.getElementById("chatInput").value = text;
+                sendMessage();
+            }
+
+            // Change model
+            function changeModel() {
+                const select = document.getElementById("modelSelect");
+                currentModel = select.value;
+
+                const model = models[currentModel];
+                const badge = document.getElementById("modelBadge");
+                badge.textContent =
+                    model.badge.charAt(0).toUpperCase() + model.badge.slice(1);
+                badge.className = `model-badge badge-${model.badge}`;
+            }
+
+            // Toggle sidebar
+            function toggleSidebar() {
+                const sidebar = document.querySelector(".sidebar");
+                sidebar.style.display =
+                    sidebar.style.display === "none" ? "flex" : "none";
+            }
+
+            // New chat
+            function newChat() {
+                conversations.unshift({
+                    id: Date.now(),
+                    title: "New conversation",
+                    messages: [],
+                });
+
+                document.getElementById("messagesContainer").innerHTML = `
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">🗡️</div>
+                    <h1 class="welcome-title">Welcome to JEBAT AI Chat</h1>
+                    <p class="welcome-subtitle">
+                        Experience the power of advanced AI reasoning. Choose your model and start chatting.
+                    </p>
+
+                    <div class="suggestion-grid">
+                        <div class="suggestion-card" onclick="useSuggestion('Explain quantum computing in simple terms')">
+                            <div class="suggestion-question">💡 Explain a complex topic</div>
+                            <div class="suggestion-desc">Quantum computing, blockchain, or AI explained simply</div>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Write a Python script to analyze CSV data')">
+                            <div class="suggestion-question">💻 Write code</div>
+                            <div class="suggestion-desc">Python, JavaScript, or any language you need</div>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Help me brainstorm ideas for a startup')">
+                            <div class="suggestion-question">🎨 Creative brainstorming</div>
+                            <div class="suggestion-desc">Get innovative ideas and suggestions</div>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Review this code for security issues')">
+                            <div class="suggestion-question">🔍 Code review</div>
+                            <div class="suggestion-desc">Security, performance, and best practices</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                updateChatHistory();
+            }
+
+            // Load chat
+            function loadChat(index) {
+                const items = document.querySelectorAll(".chat-item");
+                items.forEach((item, i) => {
+                    item.classList.toggle("active", i === index);
+                });
+            }
+
+            // Update chat history
+            function updateChatHistory() {
+                // Update sidebar chat list
+                const history = document.querySelector(".chat-history");
+                const todayChats = conversations
+                    .slice(0, 3)
+                    .map(
+                        (chat) => `
+                <div class="chat-item" onclick="loadChat(0)">
+                    💬 ${chat.title}
+                </div>
+            `,
+                    )
+                    .join("");
+
+                history.innerHTML = `
+                <div class="history-label">Today</div>
+                ${todayChats}
+            `;
+            }
+
+            // Add message
+            function addMessage(content, isUser = false) {
+                const container = document.getElementById("messagesContainer");
+                const welcomeScreen = document.getElementById("welcomeScreen");
+
+                if (welcomeScreen) {
+                    welcomeScreen.style.display = "none";
+                }
+
+                const messageDiv = document.createElement("div");
+                messageDiv.className = `message ${isUser ? "user" : "bot"}`;
+
+                const avatar = isUser ? "👤" : "🗡️";
+                const name = isUser ? "You" : models[currentModel].name;
+
+                messageDiv.innerHTML = `
+                ${!isUser ? `<div class="avatar bot">${avatar}</div>` : ""}
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-name">${name}</span>
+                    </div>
+                    <div class="message-text">${formatContent(content)}</div>
+                    ${
+                        !isUser
+                            ? `
+                        <div class="message-actions">
+                            <button class="action-btn" onclick="copyMessage(this)">
+                                📋 Copy
+                            </button>
+                            <button class="action-btn" onclick="regenerateResponse()">
+                                🔄 Regenerate
+                            </button>
+                            <button class="action-btn" onclick="shareMessage()">
+                                🔗 Share
+                            </button>
+                        </div>
+                    `
+                            : ""
+                    }
+                </div>
+                ${isUser ? `<div class="avatar user">${avatar}</div>` : ""}
+            `;
+
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            // Format content (handle code blocks, etc.)
+            function formatContent(content) {
+                // Convert markdown-style code blocks
+                content = content.replace(
+                    /```(\w+)?\n([\s\S]*?)```/g,
+                    '<pre><code class="language-$1">$2</code></pre>',
+                );
+                // Convert inline code
+                content = content.replace(/`([^`]+)`/g, "<code>$1</code>");
+                // Convert bold
+                content = content.replace(
+                    /\*\*([^*]+)\*\*/g,
+                    "<strong>$1</strong>",
+                );
+                // Convert line breaks
+                content = content.replace(/\n/g, "<br>");
+                return content;
+            }
+
+            // Show typing indicator
+            function showTyping() {
+                const container = document.getElementById("messagesContainer");
+                const typingDiv = document.createElement("div");
+                typingDiv.className = "message bot";
+                typingDiv.id = "typingIndicator";
+
+                typingDiv.innerHTML = `
+                <div class="avatar bot">🗡️</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+
+                container.appendChild(typingDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            // Remove typing indicator
+            function removeTyping() {
+                const typingIndicator =
+                    document.getElementById("typingIndicator");
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            // Send message
+            async function sendMessage() {
+                const input = document.getElementById("chatInput");
+                const message = input.value.trim();
+
+                if (!message || isGenerating) return;
+
+                // Add user message
+                addMessage(message, true);
+                input.value = "";
+                input.style.height = "auto";
+
+                // Show typing indicator
+                showTyping();
+                isGenerating = true;
+                document.getElementById("sendBtn").disabled = true;
+
+                // Simulate AI response (replace with actual API call)
+                const delay =
+                    currentModel === "jebat-fast"
+                        ? 1000
+                        : currentModel === "jebat-deep"
+                          ? 3000
+                          : 2000;
+
+                setTimeout(() => {
+                    removeTyping();
+                    generateResponse(message);
+                    isGenerating = false;
+                    document.getElementById("sendBtn").disabled = false;
+                }, delay);
+            }
+
+            // Generate AI response
+            function generateResponse(message) {
+                const lowerMessage = message.toLowerCase();
+
+                // Different response styles based on model
+                const modelResponses = {
+                    "jebat-fast": generateFastResponse,
+                    "jebat-pro": generateProResponse,
+                    "jebat-deep": generateDeepResponse,
+                    "gpt-4": generateGPT4Response,
+                    claude: generateClaudeResponse,
+                    llama: generateLlamaResponse,
+                    mistral: generateMistralResponse,
+                };
+
+                const generator =
+                    modelResponses[currentModel] || generateProResponse;
+                const response = generator(message);
+
+                addMessage(response, false);
+            }
+
+            // Response generators
+            function generateFastResponse(message) {
+                return `**Quick Answer:**\n\n${message} is an interesting topic! Here's a concise explanation:\n\n• Key point 1: This is a fast, efficient response\n• Key point 2: Designed for quick queries\n• Key point 3: Get answers in seconds\n\nNeed more details? Try switching to **JEBAT Pro** or **JEBAT Deep** mode!`;
+            }
+
+            function generateProResponse(message) {
+                const lowerMessage = message.toLowerCase();
+
+                if (
+                    lowerMessage.includes("python") ||
+                    lowerMessage.includes("code")
+                ) {
+                    return `Here's a Python solution for your request:\n\n\`\`\`python
+def analyze_data(filename):
+    import csv
+
+    results = []
+    with open(filename, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            results.append(row)
+
+    return results
+
+# Usage
+data = analyze_data('your_data.csv')
+print(f"Loaded {len(data)} records")
+\`\`\`\n\n**Explanation:**\n\n1. **Import CSV module** - Built-in Python library\n2. **Open file** - Safely read CSV data\n3. **Process rows** - Convert to dictionaries\n4. **Return results** - Easy to use data structure\n\nWould you like me to add error handling or additional features?`;
+                }
+
+                if (
+                    lowerMessage.includes("explain") ||
+                    lowerMessage.includes("what is")
+                ) {
+                    return `**Comprehensive Explanation:**\n\n${message} is a fascinating topic! Let me break it down:\n\n## Overview\nThis concept is important in modern technology and science.\n\n## Key Points\n\n1. **Fundamental Principle**: The basic idea behind this concept\n2. **Practical Application**: How it's used in real-world scenarios\n3. **Benefits**: Why it matters and what advantages it provides\n\n## Example\n\`\`\`javascript
+// Practical implementation
+const example = {
+    concept: 'Understanding complex topics',
+    approach: 'Break it down step by step',
+    result: 'Clear comprehension'
+};
+\`\`\`\n\n## Summary\nIn essence, this is about making complex ideas accessible and useful.\n\nWould you like me to dive deeper into any specific aspect?`;
+                }
+
+                return `**Detailed Response:**\n\nGreat question! Let me provide a comprehensive answer about **${message}**:\n\n## Analysis\n\nBased on my understanding, here are the key aspects:\n\n### 1. Main Concept\nThe core idea involves understanding the fundamental principles.\n\n### 2. Practical Application\nThis can be applied in various scenarios:\n- Use case 1: Efficiency improvement\n- Use case 2: Problem solving\n- Use case 3: Innovation\n\n### 3. Best Practices\n\`\`\`
+Recommendation 1: Start with basics
+Recommendation 2: Build incrementally
+Recommendation 3: Test thoroughly
+\`\`\`\n\n### 4. Next Steps\n1. Research more about the topic\n2. Practice with examples\n3. Apply to real projects\n\n**Confidence**: High\n**Model**: ${models[currentModel].name}\n\nWould you like me to elaborate on any point or provide specific examples?`;
+            }
+
+            function generateDeepResponse(message) {
+                return `**Deep Analysis with Ultra-Think Reasoning** 🧠\n\nLet me provide a comprehensive, multi-layered analysis of: **${message}**\n\n---\n\n## 🔍 Orientation Phase\n\nFirst, let's understand the context and scope of this question.\n\n### Context\n- Historical background and evolution\n- Current state of the field\n- Future implications\n\n---\n\n## 📊 Exploration Phase\n\n### Multiple Perspectives\n\n**Technical Perspective:**\nFrom a technical standpoint, this involves:\n1. Core mechanisms and principles\n2. Implementation details\n3. Performance considerations\n\n**Practical Perspective:**\nIn real-world applications:\n- Industry use cases\n- Success stories\n- Common challenges\n\n**Theoretical Perspective:**\nUnderlying theories include:\n- Foundational concepts\n- Mathematical frameworks\n- Research developments\n\n---\n\n## 🧠 Analysis Phase\n\n### Critical Evaluation\n\n**Strengths:**\n✅ Advantage 1: Significant improvement over alternatives\n✅ Advantage 2: Scalable and maintainable\n✅ Advantage 3: Well-documented and supported\n\n**Limitations:**\n⚠️ Limitation 1: May not suit all use cases\n⚠️ Limitation 2: Requires specific expertise\n⚠️ Limitation 3: Resource-intensive in some scenarios\n\n---\n\n## 💡 Synthesis Phase\n\n### Integrated Understanding\n\nBringing together all perspectives, we can see that:\n\n1. **Core Insight**: The fundamental truth about this topic\n2. **Practical Wisdom**: How to apply this knowledge effectively\n3. **Strategic Value**: Why this matters in the bigger picture\n\n### Code Example\n\`\`\`python
+class AdvancedImplementation:
+    def __init__(self):
+        self.principles = ['efficiency', 'scalability', 'maintainability']
+
+    def analyze(self, problem):
+        # Multi-faceted approach
+        technical = self.technical_analysis(problem)
+        practical = self.practical_analysis(problem)
+        theoretical = self.theoretical_analysis(problem)
+
+        return self.synthesize(technical, practical, theoretical)
+
+    def synthesize(self, *analyses):
+        # Combine insights
+        return {'comprehensive': True, 'insights': analyses}
+\`\`\`\n\n---\n\n## ✅ Verification Phase\n\n### Quality Checks\n\n- [x] Technical accuracy verified\n- [x] Practical applicability confirmed\n- [x] Theoretical foundations validated\n\n---\n\n## 🎯 Reflection Phase\n\n### Meta-Analysis\n\n**Confidence Level**: 92%\n**Reasoning Depth**: Deep (6 thinking phases)\n**Alternative Views Considered**: 3\n\n### Final Thoughts\n\nThis analysis demonstrates the power of structured, multi-perspective thinking. The topic is complex but becomes clear when examined from multiple angles.\n\n---\n\n**Thinking Process**: Complete\n**Modes Used**: Analytical, Strategic, Critical, Creative\n**Duration**: 3.2s (simulated)\n\nWould you like me to explore any specific aspect in even greater depth?`;
+            }
+
+            function generateGPT4Response(message) {
+                return `I'd be happy to help you with that!\n\n**${message}** is an interesting topic. Let me provide a helpful response:\n\n### Key Points\n\n1. **Understanding the Basics**: Start with foundational concepts\n2. **Building Knowledge**: Progressively add complexity\n3. **Practical Application**: Apply what you've learned\n\n### Example\n\nHere's a practical example to illustrate:\n\n\`\`\`javascript
+// Example implementation
+function solveProblem(input) {
+    // Step 1: Validate input
+    if (!input) return null;\n    \n    // Step 2: Process data\n    const result = processData(input);\n    \n    // Step 3: Return result\n    return result;\n}\n\`\`\`\n\n### Additional Resources\n\n- Documentation links\n- Tutorial videos\n- Practice exercises\n\nIs there anything specific you'd like me to clarify or expand upon?`;
+            }
+
+            function generateClaudeResponse(message) {
+                return `Thank you for your question about **${message}**!\n\nI'd approach this thoughtfully and carefully:\n\n## Thoughtful Analysis\n\nThis is a nuanced topic that benefits from careful consideration. Let me share my perspective:\n\n### What We Know\n\nBased on available information:\n- Fact 1: Established knowledge in the field\n- Fact 2: Widely accepted principles\n- Fact 3: Current best practices\n\n### Important Considerations\n\nWhen thinking about this, it's worth considering:\n\n1. **Context matters**: The specific situation influences the approach\n2. **Trade-offs exist**: Different approaches have different strengths\n3. **Evolution continues**: The field is always advancing\n\n### Balanced Perspective\n\nWhile there are multiple viewpoints, here's a balanced assessment:\n\n**Pros:**\n- Clear advantages in many scenarios\n- Well-tested approach\n- Strong community support\n\n**Cons:**\n- May not fit all use cases\n- Learning curve for beginners\n- Some limitations to consider\n\nI hope this thoughtful analysis helps! Feel free to ask follow-up questions.`;
+            }
+
+            function generateLlamaResponse(message) {
+                return `Here's my take on **${message}**:\n\n## Quick Overview\n\nThis is a cool topic! Let me break it down:\n\n### The Basics\n- Point 1: Straightforward explanation\n- Point 2: Key concept\n- Point 3: Important detail\n\n### Code Example\n\n\`\`\`python
+# Simple and clean
+def solution():
+    return "Here's the answer!"
+\`\`\`\n\n### Why It Matters\n\nThis stuff is useful because:\n✓ Practical applications\n✓ Easy to understand\n✓ Widely used\n\nHope that helps! 🦙`;
+            }
+
+            function generateMistralResponse(message) {
+                return `**Analysis: ${message}**\n\nLet me provide a concise, accurate response:\n\n**Key Information:**\n\n1. Core concept → Fundamental principle\n2. Application → Real-world use\n3. Benefits → Clear advantages\n\n**Technical Details:**\n\`\`\`
+Implementation: Efficient
+Performance: Optimized
+Quality: High
+\`\`\`\n\n**Conclusion:** This is a solid approach with proven results.\n\nQuestions? I'm here to help! 🌪️`;
+            }
+
+            // Copy message
+            function copyMessage(button) {
+                const messageText = button
+                    .closest(".message-content")
+                    .querySelector(".message-text").innerText;
+                navigator.clipboard.writeText(messageText).then(() => {
+                    button.textContent = "✓ Copied!";
+                    setTimeout(() => {
+                        button.textContent = "📋 Copy";
+                    }, 2000);
+                });
+            }
+
+            // Regenerate response
+            function regenerateResponse() {
+                // Get last user message and regenerate
+                const messages = document.querySelectorAll(".message.user");
+                if (messages.length > 0) {
+                    const lastMessage =
+                        messages[messages.length - 1].querySelector(
+                            ".message-text",
+                        ).innerText;
+                    addMessage("Regenerating response...", false);
+                    setTimeout(() => {
+                        generateResponse(lastMessage);
+                    }, 1000);
+                }
+            }
+
+            // Share message
+            function shareMessage() {
+                alert(
+                    "Share feature: This would generate a shareable link or export the conversation.",
+                );
+            }
+
+            // Initialize
+            newChat();
+        </script>
+    </body>
+</html>

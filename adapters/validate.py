@@ -23,7 +23,7 @@ REQUIRED_PATTERNS = [
     "vault/playbooks/dispatch-matrix.md",
     "vault/checklists/",
     "vault/templates/",
-    "openclaw.json",
+    "jebat-gateway.json",
 ]
 
 

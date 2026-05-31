@@ -48,7 +48,7 @@ Stack: Docker, Node.js, Python, PostgreSQL, Go, Zed, Cursor, Claude Code.
 - Write credentials into any file
 - Run destructive commands without confirmation
 - Backup config after editing (backup BEFORE)
-- Never write `openclaw.json` directly
+- Never write `jebat-gateway.json` directly
 
 ## Active Ecosystem
 - github.com/nusabyte-my/jebat-core — Python multi-agent

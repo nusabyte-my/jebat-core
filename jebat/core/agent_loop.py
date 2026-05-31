@@ -327,16 +327,17 @@ def _compact_conversation_history(
     max_tokens: int = DEFAULT_MAX_CONTEXT_TOKENS,
 ) -> list[dict[str, str]]:
     """Truncate conversation history to fit within a token budget.
-
+    
     Keeps the system message (if any) and the most recent N messages,
-    dropping oldest messages first. Uses a rough 4-chars-per-token estimate.
+    dropping oldest messages first. Uses real token estimation for accuracy.
     """
     if not messages:
         return []
 
-    # Rough token estimate: ~4 chars per token
+    from jebat.llm.token_usage import estimate_tokens
+    
     def msg_tokens(msg: dict[str, str]) -> int:
-        return len(msg.get("content", "")) // 4 + 1
+        return estimate_tokens(msg.get("content", ""))
 
     total = sum(msg_tokens(m) for m in messages)
     if total <= max_tokens:

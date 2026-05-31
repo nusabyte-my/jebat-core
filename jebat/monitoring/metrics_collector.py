@@ -12,7 +12,7 @@ Centralized metrics collection from all JEBAT systems:
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class SystemMetrics:
     active_channels: int = 0
     database_connected: bool = False
     redis_connected: bool = False
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -63,7 +63,7 @@ class UltraLoopMetrics:
     avg_cycle_time_ms: float = 0.0
     phase_distribution: Dict[str, int] = field(default_factory=dict)
     recent_errors: List[str] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -93,7 +93,7 @@ class UltraThinkMetrics:
     avg_confidence: float = 0.0
     mode_distribution: Dict[str, int] = field(default_factory=dict)
     avg_session_duration_ms: float = 0.0
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -125,7 +125,7 @@ class MemoryMetrics:
     low_heat_count: int = 0
     recent_stores: int = 0  # Last hour
     recent_retrievals: int = 0  # Last hour
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -153,7 +153,7 @@ class MetricsCollector:
 
     def __init__(self):
         """Initialize the metrics collector"""
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self._system_metrics = SystemMetrics()
         self._ultra_loop_metrics = UltraLoopMetrics()
         self._ultra_think_metrics = UltraThinkMetrics()
@@ -194,7 +194,7 @@ class MetricsCollector:
             disk = psutil.disk_usage("/")
 
             self._system_metrics = SystemMetrics(
-                uptime_seconds=(datetime.utcnow() - self.start_time).total_seconds(),
+                uptime_seconds=(datetime.now(timezone.utc) - self.start_time).total_seconds(),
                 cpu_percent=cpu_percent,
                 memory_percent=memory.percent,
                 memory_used_mb=memory.used / (1024 * 1024),
@@ -204,19 +204,19 @@ class MetricsCollector:
                 active_channels=active_channels,
                 database_connected=database_connected,
                 redis_connected=redis_connected,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
         except ImportError:
             # psutil not installed, use basic metrics
             self._system_metrics = SystemMetrics(
-                uptime_seconds=(datetime.utcnow() - self.start_time).total_seconds(),
+                uptime_seconds=(datetime.now(timezone.utc) - self.start_time).total_seconds(),
                 cpu_percent=0.0,
                 memory_percent=0.0,
                 active_agents=active_agents,
                 active_channels=active_channels,
                 database_connected=database_connected,
                 redis_connected=redis_connected,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
         except Exception as e:
             logger.warning(f"Failed to collect system metrics: {e}")
@@ -252,7 +252,7 @@ class MetricsCollector:
                     avg_cycle_time_ms=metrics.get("avg_cycle_time_ms", 0.0),
                     phase_distribution=metrics.get("phase_distribution", {}),
                     recent_errors=metrics.get("errors", [])[-10:],
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                 )
             except Exception as e:
                 logger.warning(f"Failed to collect Ultra-Loop metrics: {e}")
@@ -289,7 +289,7 @@ class MetricsCollector:
                     avg_confidence=stats.get("avg_confidence", 0.0),
                     mode_distribution=stats.get("mode_distribution", {}),
                     avg_session_duration_ms=stats.get("avg_session_duration_ms", 0.0),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                 )
             except Exception as e:
                 logger.warning(f"Failed to collect Ultra-Think metrics: {e}")
@@ -327,14 +327,14 @@ class MetricsCollector:
                     low_heat_count=stats.get("low_heat_count", 0),
                     recent_stores=stats.get("recent_stores", 0),
                     recent_retrievals=stats.get("recent_retrievals", 0),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                 )
             except Exception as e:
                 logger.warning(f"Failed to collect memory metrics: {e}")
         else:
             # Basic metrics without manager
             self._memory_metrics = MemoryMetrics(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
 
         return self._memory_metrics
@@ -357,7 +357,7 @@ class MetricsCollector:
             "ultra_loop": self._ultra_loop_metrics.to_dict(),
             "ultra_think": self._ultra_think_metrics.to_dict(),
             "memory": self._memory_metrics.to_dict(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def get_history(self) -> Dict[str, List[Dict[str, Any]]]:
@@ -375,11 +375,11 @@ class MetricsCollector:
 
     def get_uptime(self) -> timedelta:
         """Get system uptime"""
-        return datetime.utcnow() - self.start_time
+        return datetime.now(timezone.utc) - self.start_time
 
     def reset(self):
         """Reset all metrics"""
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self._system_history.clear()
         self._ultra_loop_history.clear()
         self._ultra_think_history.clear()

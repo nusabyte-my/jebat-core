@@ -1,1049 +1,666 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>JEBAT - Complete AI Platform</title>
-        <meta
-            name="description"
-            content="AI Chat, Web Builder, Pentesting, and more - All in one platform"
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap"
-            rel="stylesheet"
-        />
-        <style>
-            :root {
-                --primary: #6366f1;
-                --secondary: #10a37f;
-                --accent: #f59e0b;
-                --danger: #ef4444;
-                --purple: #a855f7;
-                --pink: #ec4899;
-                --cyan: #06b6d4;
-
-                --dark: #0f172a;
-                --dark-light: #1e293b;
-                --dark-lighter: #334155;
-                --gray: #64748b;
-                --gray-light: #94a3b8;
-                --light: #f1f5f9;
-                --white: #ffffff;
-
-                --gradient-primary: linear-gradient(
-                    135deg,
-                    #6366f1 0%,
-                    #10a37f 100%
-                );
-                --gradient-secondary: linear-gradient(
-                    135deg,
-                    #a855f7 0%,
-                    #ec4899 100%
-                );
-                --gradient-danger: linear-gradient(
-                    135deg,
-                    #ef4444 0%,
-                    #f59e0b 100%
-                );
-            }
-
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family: "Inter", sans-serif;
-                background: var(--dark);
-                color: var(--light);
-                line-height: 1.6;
-                overflow-x: hidden;
-            }
-
-            /* Navigation */
-            nav {
-                position: fixed;
-                top: 0;
-                width: 100%;
-                background: rgba(15, 23, 42, 0.9);
-                backdrop-filter: blur(20px);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                z-index: 1000;
-                padding: 1rem 0;
-            }
-
-            .nav-container {
-                max-width: 1400px;
-                margin: 0 auto;
-                padding: 0 2rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .logo {
-                font-size: 1.5rem;
-                font-weight: 900;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                background: var(--gradient-primary);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                text-decoration: none;
-            }
-
-            .logo-icon {
-                font-size: 2rem;
-            }
-
-            .nav-links {
-                display: flex;
-                gap: 2rem;
-                list-style: none;
-                align-items: center;
-            }
-
-            .nav-links a {
-                color: var(--gray-light);
-                text-decoration: none;
-                font-weight: 500;
-                transition: color 0.3s;
-            }
-
-            .nav-links a:hover {
-                color: var(--white);
-            }
-
-            .nav-cta {
-                background: var(--gradient-primary);
-                color: var(--white);
-                padding: 0.75rem 1.5rem;
-                border-radius: 10px;
-                text-decoration: none;
-                font-weight: 600;
-                transition: all 0.3s;
-            }
-
-            .nav-cta:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-            }
-
-            /* Hero Section */
-            .hero {
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-                padding-top: 80px;
-                background:
-                    radial-gradient(
-                        circle at 20% 50%,
-                        rgba(99, 102, 241, 0.15) 0%,
-                        transparent 50%
-                    ),
-                    radial-gradient(
-                        circle at 80% 80%,
-                        rgba(16, 163, 127, 0.15) 0%,
-                        transparent 50%
-                    );
-            }
-
-            .hero-content {
-                text-align: center;
-                max-width: 1000px;
-                z-index: 1;
-            }
-
-            .hero-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                background: rgba(99, 102, 241, 0.1);
-                border: 1px solid rgba(99, 102, 241, 0.3);
-                border-radius: 50px;
-                padding: 0.5rem 1.25rem;
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: var(--primary);
-                margin-bottom: 2rem;
-            }
-
-            .hero h1 {
-                font-size: clamp(2.5rem, 6vw, 5rem);
-                font-weight: 900;
-                line-height: 1.1;
-                margin-bottom: 1.5rem;
-            }
-
-            .gradient-text {
-                background: var(--gradient-primary);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            .hero p {
-                font-size: clamp(1.1rem, 2vw, 1.35rem);
-                color: var(--gray-light);
-                max-width: 700px;
-                margin: 0 auto 2.5rem;
-                line-height: 1.8;
-            }
-
-            .hero-buttons {
-                display: flex;
-                gap: 1rem;
-                justify-content: center;
-                flex-wrap: wrap;
-                margin-bottom: 3rem;
-            }
-
-            .btn {
-                padding: 1rem 2rem;
-                border-radius: 12px;
-                font-weight: 600;
-                text-decoration: none;
-                transition: all 0.3s;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.75rem;
-                cursor: pointer;
-                border: none;
-                font-size: 1rem;
-            }
-
-            .btn-primary {
-                background: var(--gradient-primary);
-                color: var(--white);
-                box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-            }
-
-            .btn-primary:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 40px rgba(99, 102, 241, 0.5);
-            }
-
-            .btn-secondary {
-                background: rgba(255, 255, 255, 0.05);
-                color: var(--light);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .btn-secondary:hover {
-                background: rgba(255, 255, 255, 0.1);
-                transform: translateY(-3px);
-            }
-
-            /* Products Grid */
-            .products {
-                padding: 8rem 0;
-            }
-
-            .section-header {
-                text-align: center;
-                margin-bottom: 4rem;
-            }
-
-            .section-label {
-                display: inline-block;
-                background: rgba(99, 102, 241, 0.1);
-                border: 1px solid rgba(99, 102, 241, 0.3);
-                border-radius: 50px;
-                padding: 0.5rem 1.25rem;
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: var(--primary);
-                margin-bottom: 1rem;
-            }
-
-            .section-title {
-                font-size: clamp(2rem, 4vw, 3rem);
-                font-weight: 800;
-                margin-bottom: 1rem;
-            }
-
-            .section-subtitle {
-                color: var(--gray-light);
-                font-size: 1.125rem;
-                max-width: 600px;
-                margin: 0 auto;
-            }
-
-            .products-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-                gap: 2rem;
-                max-width: 1400px;
-                margin: 0 auto;
-            }
-
-            .product-card {
-                background: var(--dark-light);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 24px;
-                padding: 2.5rem;
-                transition: all 0.4s;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .product-card::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: var(--gradient-primary);
-                transform: scaleX(0);
-                transition: transform 0.4s;
-            }
-
-            .product-card:hover {
-                transform: translateY(-8px);
-                border-color: rgba(99, 102, 241, 0.3);
-            }
-
-            .product-card:hover::before {
-                transform: scaleX(1);
-            }
-
-            .product-icon {
-                font-size: 3rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .product-title {
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 1rem;
-            }
-
-            .product-desc {
-                color: var(--gray-light);
-                margin-bottom: 1.5rem;
-                line-height: 1.7;
-            }
-
-            .product-features {
-                list-style: none;
-                margin-bottom: 2rem;
-            }
-
-            .product-features li {
-                padding: 0.6rem 0;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                color: var(--light);
-            }
-
-            .product-features li::before {
-                content: "✓";
-                color: var(--success);
-                font-weight: 700;
-            }
-
-            .product-actions {
-                display: flex;
-                gap: 0.75rem;
-            }
-
-            .btn-sm {
-                padding: 0.6rem 1.25rem;
-                font-size: 0.9rem;
-                border-radius: 8px;
-            }
-
-            /* API Settings Modal */
-            .modal {
-                position: fixed;
-                inset: 0;
-                background: rgba(15, 23, 42, 0.95);
-                backdrop-filter: blur(10px);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 2000;
-            }
-
-            .modal.active {
-                display: flex;
-            }
-
-            .modal-content {
-                background: var(--dark-light);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 24px;
-                max-width: 600px;
-                width: 90%;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-
-            .modal-header {
-                padding: 1.5rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .modal-title {
-                font-size: 1.25rem;
-                font-weight: 700;
-            }
-
-            .modal-close {
-                background: none;
-                border: none;
-                color: var(--gray);
-                font-size: 1.5rem;
-                cursor: pointer;
-            }
-
-            .modal-body {
-                padding: 1.5rem;
-            }
-
-            .api-group {
-                margin-bottom: 1.5rem;
-            }
-
-            .api-group-title {
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: var(--gray-light);
-                margin-bottom: 1rem;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }
-
-            .api-item {
-                background: rgba(255, 255, 255, 0.03);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 12px;
-                padding: 1rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .api-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 0.75rem;
-            }
-
-            .api-name {
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .api-badge {
-                padding: 0.2rem 0.5rem;
-                border-radius: 12px;
-                font-size: 0.7rem;
-                font-weight: 600;
-            }
-
-            .badge-free {
-                background: rgba(16, 185, 129, 0.2);
-                color: var(--success);
-            }
-
-            .badge-paid {
-                background: rgba(99, 102, 241, 0.2);
-                color: var(--primary);
-            }
-
-            .api-input {
-                width: 100%;
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 8px;
-                padding: 0.75rem;
-                color: var(--light);
-                font-size: 0.9rem;
-                font-family: "Fira Code", monospace;
-            }
-
-            .api-input:focus {
-                outline: none;
-                border-color: var(--primary);
-            }
-
-            /* Footer */
-            footer {
-                background: var(--dark-light);
-                padding: 4rem 0 2rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
-            }
-
-            .footer-grid {
-                display: grid;
-                grid-template-columns: 2fr repeat(3, 1fr);
-                gap: 3rem;
-                margin-bottom: 3rem;
-                max-width: 1400px;
-                margin-left: auto;
-                margin-right: auto;
-                padding: 0 2rem;
-            }
-
-            .footer-brand p {
-                color: var(--gray);
-                margin: 1rem 0;
-                line-height: 1.8;
-            }
-
-            .footer-title {
-                font-size: 1rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-            }
-
-            .footer-links {
-                list-style: none;
-            }
-
-            .footer-links li {
-                margin-bottom: 0.75rem;
-            }
-
-            .footer-links a {
-                color: var(--gray);
-                text-decoration: none;
-                transition: color 0.3s;
-            }
-
-            .footer-links a:hover {
-                color: var(--primary);
-            }
-
-            .footer-bottom {
-                text-align: center;
-                padding-top: 2rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
-                color: var(--gray);
-                font-size: 0.875rem;
-            }
-
-            /* Responsive */
-            @media (max-width: 768px) {
-                .nav-links {
-                    display: none;
-                }
-
-                .products-grid {
-                    grid-template-columns: 1fr;
-                }
-
-                .footer-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <!-- Navigation -->
-        <nav>
-            <div class="nav-container">
-                <a href="#" class="logo">
-                    <span class="logo-icon">🗡️</span>
-                    JEBAT
-                </a>
-                <ul class="nav-links">
-                    <li><a href="#products">Products</a></li>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#pricing">Pricing</a></li>
-                    <li><a href="#docs">Docs</a></li>
-                </ul>
-                <button class="nav-cta" onclick="openSettings()">
-                    ⚙️ API Settings
-                </button>
-            </div>
-        </nav>
-
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-content">
-                <span class="hero-badge">🚀 Complete AI Platform</span>
-                <h1>
-                    <span class="gradient-text">Build, Chat, Secure</span><br />
-                    Everything in One Platform
-                </h1>
-                <p>
-                    JEBAT combines AI Chat, Web Builder, Pentesting Tools, and
-                    more into one powerful platform. Choose your AI model, bring
-                    your own API key, or use our free options.
-                </p>
-                <div class="hero-buttons">
-                    <a href="#products" class="btn btn-primary">
-                        🎯 Explore Products
-                    </a>
-                    <button class="btn btn-secondary" onclick="openSettings()">
-                        🔑 Get API Keys
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Products Section -->
-        <section class="products" id="products">
-            <div class="section-header">
-                <span class="section-label">✨ Products</span>
-                <h2 class="section-title">Complete AI Suite</h2>
-                <p class="section-subtitle">
-                    Everything you need to build, create, and secure with AI
-                </p>
-            </div>
-
-            <div class="products-grid">
-                <!-- AI Chat -->
-                <div class="product-card">
-                    <div class="product-icon">💬</div>
-                    <h3 class="product-title">AI Chat</h3>
-                    <p class="product-desc">
-                        ChatGPT-style interface with multiple AI models. Choose
-                        from 7 different models or bring your own API key.
-                    </p>
-                    <ul class="product-features">
-                        <li>7 AI Models (Free & Paid)</li>
-                        <li>Ultra-Think Deep Reasoning</li>
-                        <li>Code Syntax Highlighting</li>
-                        <li>Chat History & Export</li>
-                        <li>Bring Your Own API Key</li>
-                    </ul>
-                    <div class="product-actions">
-                        <a
-                            href="jebat/services/webui/index.html?mode=chat"
-                            class="btn btn-primary btn-sm"
-                            >Launch Chat →</a
-                        >
-                    </div>
-                </div>
-
-                <!-- AI Builder -->
-                <div class="product-card">
-                    <div class="product-icon">🛠️</div>
-                    <h3 class="product-title">AI Builder</h3>
-                    <p class="product-desc">
-                        Build websites from natural language. Describe your idea
-                        and watch AI create it instantly with live preview.
-                    </p>
-                    <ul class="product-features">
-                        <li>Natural Language Building</li>
-                        <li>6 Project Templates</li>
-                        <li>Live Preview</li>
-                        <li>Code Export</li>
-                        <li>Responsive Design</li>
-                    </ul>
-                    <div class="product-actions">
-                        <a
-                            href="jebat/services/webui/index.html?mode=builder"
-                            class="btn btn-primary btn-sm"
-                            >Launch Builder →</a
-                        >
-                    </div>
-                </div>
-
-                <!-- Immersive Builder -->
-                <div class="product-card">
-                    <div class="product-icon">🎨</div>
-                    <h3 class="product-title">Immersive Builder</h3>
-                    <p class="product-desc">
-                        Next-gen visual builder with AI assistance. Drag, drop,
-                        and chat to create stunning websites.
-                    </p>
-                    <ul class="product-features">
-                        <li>Visual Drag & Drop</li>
-                        <li>AI Design Assistant</li>
-                        <li>Infinite Canvas</li>
-                        <li>Real-time Preview</li>
-                        <li>Design System Generator</li>
-                    </ul>
-                    <div class="product-actions">
-                        <a
-                            href="jebat/services/webui/immersive_builder.html"
-                            class="btn btn-primary btn-sm"
-                            >Launch Pro →</a
-                        >
-                    </div>
-                </div>
-
-                <!-- AI Pentest -->
-                <div class="product-card">
-                    <div class="product-icon">🛡️</div>
-                    <h3 class="product-title">AI Pentest</h3>
-                    <p class="product-desc">
-                        Sentinel CLI-style AI-powered security testing. Find
-                        vulnerabilities with intelligent scanning.
-                    </p>
-                    <ul class="product-features">
-                        <li>AI Vulnerability Scanning</li>
-                        <li>Network Analysis</li>
-                        <li>Web App Testing</li>
-                        <li>Security Reports</li>
-                        <li>Compliance Checking</li>
-                    </ul>
-                    <div class="product-actions">
-                        <a
-                            href="jebat/services/webui/ai_pentest.html"
-                            class="btn btn-primary btn-sm"
-                            >Launch Pentest →</a
-                        >
-                    </div>
-                </div>
-
-                <!-- Code Assistant -->
-                <div class="product-card">
-                    <div class="product-icon">💻</div>
-                    <h3 class="product-title">Code Assistant</h3>
-                    <p class="product-desc">
-                        AI pair programmer that helps you write better code
-                        faster. Supports 50+ languages.
-                    </p>
-                    <ul class="product-features">
-                        <li>Code Generation</li>
-                        <li>Bug Detection & Fix</li>
-                        <li>Refactoring Suggestions</li>
-                        <li>Auto-Documentation</li>
-                        <li>50+ Languages</li>
-                    </ul>
-                    <div class="product-actions">
-                        <a
-                            href="jebat/services/webui/code_assistant.html"
-                            class="btn btn-primary btn-sm"
-                            >Launch Assistant →</a
-                        >
-                    </div>
-                </div>
-
-                <!-- Analytics -->
-                <div class="product-card">
-                    <div class="product-icon">📊</div>
-                    <h3 class="product-title">Analytics</h3>
-                    <p class="product-desc">
-                        Real-time analytics dashboard for your AI usage. Track
-                        costs, performance, and insights.
-                    </p>
-                    <ul class="product-features">
-                        <li>Usage Tracking</li>
-                        <li>Cost Management</li>
-                        <li>Performance Metrics</li>
-                        <li>Model Comparison</li>
-                        <li>API Monitoring</li>
-                    </ul>
-                    <div class="product-actions">
-                        <a
-                            href="jebat/services/webui/analytics.html"
-                            class="btn btn-primary btn-sm"
-                            >View Analytics →</a
-                        >
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- API Settings Modal -->
-        <div class="modal" id="apiModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">⚙️ API Settings</h3>
-                    <button class="modal-close" onclick="closeSettings()">
-                        ×
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="api-group">
-                        <div class="api-group-title">
-                            Free AI Models (No API Key Required)
-                        </div>
-
-                        <div class="api-item">
-                            <div class="api-header">
-                                <div class="api-name">
-                                    🦙 Mistral AI
-                                    <span class="api-badge badge-free"
-                                        >FREE</span
-                                    >
-                                </div>
-                            </div>
-                            <p
-                                style="
-                                    font-size: 0.85rem;
-                                    color: var(--gray);
-                                    margin-bottom: 0.75rem;
-                                "
-                            >
-                                Open-weight models with excellent performance
-                            </p>
-                            <select class="api-input" id="mistralModel">
-                                <option value="mistral-tiny">
-                                    Mistral Tiny (Fastest)
-                                </option>
-                                <option value="mistral-small">
-                                    Mistral Small
-                                </option>
-                                <option value="mistral-medium" selected>
-                                    Mistral Medium (Recommended)
-                                </option>
-                                <option value="mistral-large">
-                                    Mistral Large (Most Powerful)
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="api-item">
-                            <div class="api-header">
-                                <div class="api-name">
-                                    🤗 Hugging Face
-                                    <span class="api-badge badge-free"
-                                        >FREE</span
-                                    >
-                                </div>
-                            </div>
-                            <p
-                                style="
-                                    font-size: 0.85rem;
-                                    color: var(--gray);
-                                    margin-bottom: 0.75rem;
-                                "
-                            >
-                                Access to thousands of open-source models
-                            </p>
-                            <input
-                                type="text"
-                                class="api-input"
-                                placeholder="HF_TOKEN (optional for higher limits)"
-                                id="hfToken"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="api-group">
-                        <div class="api-group-title">
-                            Premium AI Models (API Key Required)
-                        </div>
-
-                        <div class="api-item">
-                            <div class="api-header">
-                                <div class="api-name">
-                                    🔮 OpenAI
-                                    <span class="api-badge badge-paid"
-                                        >PAID</span
-                                    >
-                                </div>
-                            </div>
-                            <p
-                                style="
-                                    font-size: 0.85rem;
-                                    color: var(--gray);
-                                    margin-bottom: 0.75rem;
-                                "
-                            >
-                                GPT-4, GPT-3.5-Turbo
-                            </p>
-                            <input
-                                type="password"
-                                class="api-input"
-                                placeholder="sk-..."
-                                id="openaiKey"
-                            />
-                        </div>
-
-                        <div class="api-item">
-                            <div class="api-header">
-                                <div class="api-name">
-                                    🤖 Anthropic
-                                    <span class="api-badge badge-paid"
-                                        >PAID</span
-                                    >
-                                </div>
-                            </div>
-                            <p
-                                style="
-                                    font-size: 0.85rem;
-                                    color: var(--gray);
-                                    margin-bottom: 0.75rem;
-                                "
-                            >
-                                Claude 3, Claude 2
-                            </p>
-                            <input
-                                type="password"
-                                class="api-input"
-                                placeholder="sk-ant-..."
-                                id="anthropicKey"
-                            />
-                        </div>
-
-                        <div class="api-item">
-                            <div class="api-header">
-                                <div class="api-name">
-                                    🌊 Google
-                                    <span class="api-badge badge-paid"
-                                        >PAID</span
-                                    >
-                                </div>
-                            </div>
-                            <p
-                                style="
-                                    font-size: 0.85rem;
-                                    color: var(--gray);
-                                    margin-bottom: 0.75rem;
-                                "
-                            >
-                                Gemini Pro, Gemini Ultra
-                            </p>
-                            <input
-                                type="password"
-                                class="api-input"
-                                placeholder="AIza..."
-                                id="googleKey"
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        class="btn btn-primary"
-                        onclick="saveSettings()"
-                        style="width: 100%"
-                    >
-                        💾 Save Settings
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <footer>
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="#" class="logo">
-                        <span class="logo-icon">🗡️</span>
-                        JEBAT
-                    </a>
-                    <p>
-                        The complete AI-powered development ecosystem with
-                        Ultra-Think reasoning, eternal memory, and multi-domain
-                        agents.
-                    </p>
-                </div>
-                <div>
-                    <h4 class="footer-title">Products</h4>
-                    <ul class="footer-links">
-                        <li><a href="#">AI Chat</a></li>
-                        <li><a href="#">AI Builder</a></li>
-                        <li><a href="#">Immersive Builder</a></li>
-                        <li><a href="#">AI Pentest</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="footer-title">Resources</h4>
-                    <ul class="footer-links">
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">API Reference</a></li>
-                        <li><a href="#">Examples</a></li>
-                        <li><a href="#">Blog</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="footer-title">Company</h4>
-                    <ul class="footer-links">
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Contact</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>
-                    &copy; 2026 JEBAT. Open source under MIT License. Built with
-                    ❤️ for developers.
-                </p>
-            </div>
-        </footer>
-
-        <script>
-            // Modal functions
-            function openSettings() {
-                document.getElementById("apiModal").classList.add("active");
-                loadSettings();
-            }
-
-            function closeSettings() {
-                document.getElementById("apiModal").classList.remove("active");
-            }
-
-            // Close modal on outside click
-            document
-                .getElementById("apiModal")
-                .addEventListener("click", (e) => {
-                    if (e.target.id === "apiModal") {
-                        closeSettings();
-                    }
-                });
-
-            // Save settings to localStorage
-            function saveSettings() {
-                const settings = {
-                    mistralModel: document.getElementById("mistralModel").value,
-                    hfToken: document.getElementById("hfToken").value,
-                    openaiKey: document.getElementById("openaiKey").value,
-                    anthropicKey: document.getElementById("anthropicKey").value,
-                    googleKey: document.getElementById("googleKey").value,
-                };
-
-                localStorage.setItem(
-                    "jebat_api_settings",
-                    JSON.stringify(settings),
-                );
-
-                // Show success message
-                alert("✅ Settings saved successfully!");
-                closeSettings();
-            }
-
-            // Load settings from localStorage
-            function loadSettings() {
-                const saved = localStorage.getItem("jebat_api_settings");
-                if (saved) {
-                    const settings = JSON.parse(saved);
-                    document.getElementById("mistralModel").value =
-                        settings.mistralModel || "mistral-medium";
-                    document.getElementById("hfToken").value =
-                        settings.hfToken || "";
-                    document.getElementById("openaiKey").value =
-                        settings.openaiKey || "";
-                    document.getElementById("anthropicKey").value =
-                        settings.anthropicKey || "";
-                    document.getElementById("googleKey").value =
-                        settings.googleKey || "";
-                }
-            }
-
-            // Keyboard shortcuts
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") {
-                    closeSettings();
-                }
-            });
-
-            // Check URL params for mode
-            const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get("mode");
-            if (mode) {
-                setTimeout(() => {
-                    window.location.href = `jebat/services/webui/index.html?mode=${mode}`;
-                }, 100);
-            }
-        </script>
-    </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JEBAT — Sovereign AI Platform | Self-Hosted LLM Infrastructure</title>
+<meta name="description" content="JEBAT is a self-hosted sovereign AI platform. Run your own LLM infrastructure with Ultra-Think reasoning, eternal memory, AI security testing, code generation, and multi-agent orchestration. No cloud lock-in." />
+<meta name="keywords" content="sovereign AI, self-hosted LLM, local AI platform, private AI infrastructure, AI penetration testing, AI code generator, open source AI, MCP protocol, Ollama platform, AI agent framework" />
+<meta name="author" content="NusaByte" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://jebat.online/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="JEBAT" />
+<meta property="og:title" content="JEBAT — Sovereign AI Platform" />
+<meta property="og:description" content="Self-hosted AI platform with Ultra-Think reasoning, eternal memory, security testing, and multi-agent orchestration. Your data. Your models. Your infrastructure." />
+<meta property="og:url" content="https://jebat.online/" />
+<meta property="og:image" content="https://jebat.online/JebatLogo-transparent.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="JEBAT — Sovereign AI Platform" />
+<meta name="twitter:description" content="Self-hosted AI platform with Ultra-Think reasoning, eternal memory, security testing, and multi-agent orchestration. No cloud lock-in." />
+<meta name="twitter:image" content="https://jebat.online/JebatLogo-transparent.png" />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"JEBAT","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, Windows, macOS","description":"Sovereign AI platform for self-hosted LLM infrastructure with Ultra-Think reasoning, eternal memory, AI security testing, code generation, and multi-agent orchestration.","url":"https://jebat.online","softwareVersion":"2.0.0","license":"https://opensource.org/licenses/MIT","author":{"@type":"Organization","name":"NusaByte","url":"https://github.com/nusabyte-my"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Ultra-Think multi-phase LLM reasoning","Eternal memory system","6 LLM provider support","AI-powered penetration testing","AI code generation and website builder","MCP protocol server","Multi-agent orchestration","Self-hosted deployment","RBAC permissions","Streaming NDJSON responses"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is sovereign AI?","acceptedAnswer":{"@type":"Answer","text":"Sovereign AI means running artificial intelligence models entirely on your own infrastructure. Your data never leaves your servers, you choose which models to use, and no third-party vendor controls access or pricing."}},{"@type":"Question","name":"How does JEBAT differ from ChatGPT or Claude?","acceptedAnswer":{"@type":"Answer","text":"ChatGPT and Claude are cloud-only SaaS products. JEBAT runs on your hardware, supports 6 LLM providers including fully offline Ollama, includes persistent memory, security testing, code generation, and agent orchestration in one self-hosted platform."}},{"@type":"Question","name":"Can JEBAT run completely offline?","acceptedAnswer":{"@type":"Answer","text":"Yes. The default configuration uses Ollama as the LLM backend, which runs models locally. No API keys, no internet connection, no cloud dependency required."}},{"@type":"Question","name":"What is the difference between JEBAT and Ollama WebUI?","acceptedAnswer":{"@type":"Answer","text":"Ollama WebUI is a chat interface. JEBAT is a full AI platform with multi-phase reasoning, persistent memory, security testing, code generation, visual building, multi-agent orchestration, and MCP protocol support."}},{"@type":"Question","name":"Is JEBAT free and open source?","acceptedAnswer":{"@type":"Answer","text":"Yes. JEBAT is fully open source under the MIT license. Free to self-host with no usage fees."}}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+    --void: #0a0a0a;
+    --graphite: #141414;
+    --surface: #1a1a1a;
+    --emerald: #3ecf8e;
+    --emerald-dim: rgba(62,207,142,0.08);
+    --emerald-glow: rgba(62,207,142,0.25);
+    --cyan: #22d3ee;
+    --amber: #f59e0b;
+    --border-dim: #1f1f1f;
+    --border-mid: #2a2a2a;
+    --border-bright: #333;
+    --text: #fafafa;
+    --text-muted: #888;
+    --text-dim: #555;
+    --font-sans: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'Source Code Pro', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--text);font-family:var(--font-sans);line-height:1.5;overflow-x:hidden}
+section[id]{scroll-margin-top:72px}
+.mono{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:1.2px}
+.emerald{color:var(--emerald)}
+.container{max-width:1280px;margin:0 auto;padding:0 2rem}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;background:rgba(10,10,10,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-dim);z-index:1000;height:56px;display:flex;align-items:center}
+.nav-inner{max-width:1280px;width:100%;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:600;font-size:1rem}
+.logo-img{height:28px;width:auto;display:block}
+.logo span{color:var(--text-dim);font-family:var(--font-mono);font-size:10px;font-weight:400;margin-left:2px}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--void);background:var(--emerald);border:none;padding:8px 20px;border-radius:999px;text-decoration:none;transition:all 0.2s;letter-spacing:0.5px}
+.nav-cta:hover{background:#4ade80;box-shadow:0 0 20px var(--emerald-glow)}
+.mobile-menu-btn{display:none;background:none;border:1px solid var(--border-mid);color:var(--text);font-size:1.1rem;padding:4px 10px;border-radius:4px;cursor:pointer}
+
+/* HERO */
+.hero{padding:160px 0 80px;text-align:center;position:relative}
+.hero h1{font-size:clamp(48px,6vw,72px);line-height:1.0;letter-spacing:-0.04em;margin-bottom:24px;font-weight:500}
+.hero p{font-size:17px;color:var(--text-muted);max-width:620px;margin:0 auto 40px;line-height:1.7}
+.hero-actions{display:flex;justify-content:center;gap:14px;margin-bottom:70px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 28px;border-radius:999px;font-size:14px;font-weight:500;text-decoration:none;transition:all 0.2s;border:1px solid transparent;cursor:pointer}
+.btn-emerald{background:var(--emerald);color:var(--void)}
+.btn-emerald:hover{background:#4ade80;box-shadow:0 0 20px var(--emerald-glow)}
+.btn-outline{background:transparent;color:var(--text);border-color:var(--border-bright)}
+.btn-outline:hover{background:var(--graphite);border-color:var(--emerald)}
+
+/* TERMINAL */
+.console{max-width:860px;margin:0 auto;background:var(--void);border:1px solid var(--border-mid);border-radius:8px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.7);text-align:left}
+.console-header{background:var(--graphite);padding:10px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;gap:8px}
+.console-dot{width:10px;height:10px;border-radius:50%;background:var(--border-bright)}
+.console-dot.active{background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
+.console-body{padding:20px 24px;font-family:var(--font-mono);font-size:13px;color:#ccc;height:260px;overflow-y:auto;line-height:1.7}
+.console-line{opacity:0;animation:typeIn 0.3s ease forwards}
+@keyframes typeIn{to{opacity:1}}
+
+/* STATUS STRIP */
+.status-strip{border-top:1px solid var(--border-dim);border-bottom:1px solid var(--border-dim);background:var(--void);padding:14px 0;overflow:hidden}
+.strip-content{display:flex;gap:50px;animation:marquee 35s linear infinite;width:max-content}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.strip-item{display:flex;align-items:center;gap:10px;color:var(--text-muted)}
+.pulse-dot{width:6px;height:6px;background:var(--emerald);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%{opacity:0.4;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2);box-shadow:0 0 10px var(--emerald)}100%{opacity:0.4;transform:scale(0.8)}}
+
+/* SECTIONS */
+.section{padding:100px 0}
+.section-header{margin-bottom:60px;max-width:640px}
+.section-header.center{text-align:center;margin-left:auto;margin-right:auto}
+.section-header h2{font-size:clamp(28px,4vw,42px);margin-top:12px;margin-bottom:20px;font-weight:500;letter-spacing:-0.03em}
+.section-header p{color:var(--text-muted);font-size:15px;line-height:1.7}
+
+/* TABS */
+.tab-nav{display:flex;gap:0;border-bottom:1px solid var(--border-dim);overflow-x:auto;scrollbar-width:none}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-dim);background:none;border:none;padding:14px 20px;cursor:pointer;white-space:nowrap;transition:all 0.2s;position:relative;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.8px}
+.tab-btn:hover{color:var(--text-muted);background:rgba(255,255,255,0.02)}
+.tab-btn.active{color:var(--emerald)}
+.tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--emerald);box-shadow:0 0 8px var(--emerald-glow)}
+.tab-status{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px}
+.tab-status.live{background:var(--emerald-dim);color:var(--emerald)}
+.tab-status.soon{background:rgba(245,158,11,0.1);color:var(--amber)}
+.tab-status.planned{background:rgba(255,255,255,0.04);color:var(--text-dim)}
+.tab-panel{animation:fadeIn 0.3s ease}
+.tab-panel[hidden]{display:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* PRODUCT PANEL */
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border-dim);border:1px solid var(--border-dim);margin-top:40px}
+.panel{background:var(--void);padding:40px;transition:background 0.3s}
+.panel:hover{background:var(--graphite)}
+.panel-full{grid-column:1/-1}
+.panel-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--graphite);border:1px solid var(--border-mid);border-radius:8px;margin-bottom:20px}
+.panel-icon svg{width:24px;height:24px;fill:var(--emerald)}
+.panel h3{font-size:22px;font-weight:500;letter-spacing:-0.02em;margin-bottom:4px}
+.panel .codename{font-family:var(--font-mono);font-size:11px;color:var(--emerald);margin-bottom:16px;display:block}
+.panel p{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:20px}
+.feature-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
+.feature-tag{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);padding:5px 10px;background:var(--graphite);border:1px solid var(--border-dim);border-radius:4px;display:flex;align-items:center;gap:5px}
+.feature-tag .check{color:var(--emerald);font-weight:700}
+.panel-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-sm{font-size:12px;padding:8px 18px;border-radius:999px}
+.deploy-snippet{margin-top:20px;background:var(--graphite);border:1px solid var(--border-dim);border-radius:6px;padding:14px 18px;font-family:var(--font-mono);font-size:12px;color:var(--emerald);overflow-x:auto;white-space:pre;line-height:1.5}
+.waitlist-form{display:flex;gap:8px;margin-top:8px}
+.waitlist-input{flex:1;background:var(--graphite);border:1px solid var(--border-mid);border-radius:999px;padding:8px 16px;color:var(--text);font-family:var(--font-sans);font-size:13px}
+.waitlist-input:focus{outline:none;border-color:var(--emerald)}
+.waitlist-btn{background:var(--emerald-dim);color:var(--emerald);border:1px solid rgba(62,207,142,0.3);padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.waitlist-btn:hover{background:var(--emerald);color:var(--void)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-dim)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:13px;color:var(--text-muted)}
+.stat-value{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text)}
+.stat-value.emerald{color:var(--emerald)}
+.stat-value.amber{color:var(--amber)}
+.stat-value.cyan{color:var(--cyan)}
+
+/* STACK GRID */
+.stack-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border-dim);margin-top:40px}
+.stack-item{aspect-ratio:1;background:var(--void);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;filter:grayscale(1);opacity:0.4;transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}
+.stack-item:hover{filter:grayscale(0);opacity:1;background:var(--graphite);z-index:1;box-shadow:inset 0 0 20px var(--emerald-dim)}
+.stack-item svg{width:28px;height:28px;transition:transform 0.3s}
+.stack-item:hover svg{transform:scale(1.1)}
+.stack-item span{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px}
+.stack-item:hover span{color:var(--emerald)}
+
+/* SOVEREIGN SECTION */
+.sovereign-content{background:var(--graphite);border:1px solid var(--border-dim);border-radius:8px;padding:48px;margin-top:40px}
+.sovereign-content h3{font-size:20px;font-weight:500;margin-bottom:16px;letter-spacing:-0.02em}
+.sovereign-content p{font-size:14px;color:var(--text-muted);line-height:1.8;margin-bottom:14px}
+.sovereign-content p:last-child{margin-bottom:0}
+
+/* COMPARE TABLE */
+.compare-table{width:100%;border-collapse:collapse;margin-top:40px;font-size:13px}
+.compare-table th,.compare-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border-dim)}
+.compare-table th{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px}
+.compare-table td:first-child{font-weight:500;color:var(--text)}
+.compare-table td{color:var(--text-muted)}
+.compare-table tr:hover td{background:rgba(255,255,255,0.015)}
+.compare-highlight{color:var(--emerald)!important;font-weight:600!important}
+
+/* FOOTER */
+footer{padding:80px 0 50px;border-top:1px solid var(--border-dim);background:var(--void)}
+.footer-grid{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:40px;margin-bottom:60px}
+.footer-col h4{font-size:13px;margin-bottom:20px;color:var(--text);font-weight:500}
+.footer-col ul{list-style:none}
+.footer-col li{margin-bottom:10px}
+.footer-col a{color:var(--text-muted);text-decoration:none;font-size:13px;transition:color 0.2s}
+.footer-col a:hover{color:var(--emerald)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:30px;border-top:1px solid var(--border-dim)}
+
+/* RESPONSIVE */
+@media(max-width:1024px){.stack-grid{grid-template-columns:repeat(4,1fr)}.hero h1{font-size:48px}}
+@media(max-width:768px){
+    .mobile-menu-btn{display:block}
+    .nav-links{display:none;position:absolute;top:56px;left:0;right:0;background:rgba(10,10,10,0.98);border-bottom:1px solid var(--border-dim);flex-direction:column;padding:1rem;gap:0.25rem}
+    .nav-links.open{display:flex}
+    .nav-links a{padding:10px 12px}
+    .hero{padding:130px 0 60px}.hero h1{font-size:36px}
+    .panel-grid{grid-template-columns:1fr}
+    .stack-grid{grid-template-columns:repeat(3,1fr)}
+    .footer-grid{grid-template-columns:1fr 1fr}
+    .waitlist-form{flex-direction:column}
+    .compare-wrapper{overflow-x:auto}
+    .footer-bottom{flex-direction:column;gap:12px;text-align:center}
+}
+@media(max-width:480px){.stack-grid{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+<div class="nav-inner">
+<a href="/" class="logo"><img src="JebatLogo-transparent.png" alt="JEBAT" class="logo-img" loading="lazy" />JEBAT<span>v2.0</span></a>
+<button class="mobile-menu-btn" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+<ul class="nav-links" role="navigation">
+<li><a href="#ecosystem">Products</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#stack">Stack</a></li>
+<li><a href="#compare">Compare</a></li>
+<li><a href="https://docs.jebat.online">Docs</a></li>
+<li><a href="https://github.com/nusabyte-my/jebat-core">GitHub</a></li>
+</ul>
+<a href="/webui/" class="nav-cta" aria-label="Launch JEBAT Console">LAUNCH CONSOLE</a>
+</div>
+</nav>
+
+<section class="hero">
+<div class="container">
+<span class="mono emerald">Sovereign AI Infrastructure v2.0</span>
+<h1>Your Models. Your Data.<br><span class="emerald">Your AI Platform.</span></h1>
+<p>Open-source, self-hosted AI platform with governed inference, multi-phase reasoning, persistent memory, and auditable orchestration. Zero cloud dependency. Zero vendor lock-in.</p>
+<div class="hero-actions">
+<a href="/webui/" class="btn btn-emerald">Deploy Your Instance</a>
+<a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-outline">View Source Code</a>
+</div>
+<div class="console">
+<div class="console-header">
+<div class="console-dot active"></div>
+<div class="console-dot"></div>
+<div class="console-dot"></div>
+<span class="mono" style="font-size:10px;color:var(--text-dim);margin-left:8px">jebat_sovereign_boot.sh</span>
+</div>
+<div class="console-body" id="consoleOutput"></div>
+</div>
+</div>
+</section>
+
+<div class="status-strip">
+<div class="strip-content">
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ULTRA-THINK ENGINE</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ETERNAL MEMORY</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">AGENT ORCHESTRATION</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">MCP PROTOCOL</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SECURITY CONSOLE</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SOVEREIGN DEPLOY</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">TOOL-CALLING</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">RBAC HARDENING</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ULTRA-THINK ENGINE</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ETERNAL MEMORY</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">AGENT ORCHESTRATION</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">MCP PROTOCOL</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SECURITY CONSOLE</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SOVEREIGN DEPLOY</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">TOOL-CALLING</span></div>
+<div class="strip-item"><div class="pulse-dot"></div><span class="mono">RBAC HARDENING</span></div>
+</div>
+</div>
+
+<main>
+
+<section class="section" id="ecosystem">
+<div class="container">
+<div class="section-header">
+<span class="mono emerald">Product Ecosystem</span>
+<h2>Five Products. One Platform.</h2>
+<p>Modular AI suite covering reasoning, development, security, conversation, and orchestration — all sharing one memory backbone and deployable on your infrastructure.</p>
+</div>
+<div class="tab-nav" role="tablist" aria-label="JEBAT products">
+<button class="tab-btn active" data-tab="core" role="tab" aria-selected="true" aria-controls="tab-core">Core Platform <span class="tab-status live">Live</span></button>
+<button class="tab-btn" data-tab="security" role="tab" aria-selected="false" aria-controls="tab-security">AI Security <span class="tab-status soon">Soon</span></button>
+<button class="tab-btn" data-tab="dev" role="tab" aria-selected="false" aria-controls="tab-dev">Dev Tools <span class="tab-status live">Live</span></button>
+<button class="tab-btn" data-tab="companion" role="tab" aria-selected="false" aria-controls="tab-companion">Companion <span class="tab-status planned">Planned</span></button>
+<button class="tab-btn" data-tab="nexus" role="tab" aria-selected="false" aria-controls="tab-nexus">Nexus <span class="tab-status planned">Planned</span></button>
+</div>
+
+<div class="tab-panel" id="tab-core" role="tabpanel">
+<div class="panel-grid">
+<div class="panel panel-full">
+<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2zM14 8V3l5 5h-5zM8 13h8v2H8zm0 4h5v2H8z"/></svg></div>
+<h3>JEBAT Core — Self-Hosted AI Reasoning Engine</h3>
+<span class="codename mono">Codename: Hang Jebat</span>
+<p>Run advanced AI reasoning on your own hardware. Connect to 6 LLM providers or run fully offline with Ollama. Ultra-Think multi-phase reasoning delivers deep, strategic, and critical thinking modes without sending a single token to the cloud. Persistent memory maintains context across sessions, projects, and teams.</p>
+<div class="feature-list">
+<span class="feature-tag"><span class="check">&#x2713;</span>7 Reasoning Modes</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Cross-Session Memory</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Ollama + 5 Providers</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Native Tool-Calling</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>MCP Protocol Server</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Operator Console UI</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Streaming NDJSON</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>RBAC Permissions</span>
+</div>
+<div class="panel-actions">
+<a href="/webui/" class="btn btn-emerald btn-sm">Launch Console</a>
+<a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-outline btn-sm">Source Code</a>
+</div>
+<div class="deploy-snippet">$ docker compose up -d
+$ curl http://localhost:8787/health
+> {"status":"healthy","service":"jebat-webui"}</div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Platform Specs</span>
+<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value emerald">2.0.0 Stable</span></div>
+<div class="stat-row"><span class="stat-label">Deployment</span><span class="stat-value emerald">Self-Hosted</span></div>
+<div class="stat-row"><span class="stat-label">LLM Providers</span><span class="stat-value">6 (incl. local)</span></div>
+<div class="stat-row"><span class="stat-label">Reasoning Modes</span><span class="stat-value">7 cognitive</span></div>
+<div class="stat-row"><span class="stat-label">Sub-Agents</span><span class="stat-value">17 registered</span></div>
+<div class="stat-row"><span class="stat-label">Test Coverage</span><span class="stat-value">57 passing</span></div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Infrastructure</span>
+<div class="stat-row"><span class="stat-label">Runtime</span><span class="stat-value cyan">Python + FastAPI</span></div>
+<div class="stat-row"><span class="stat-label">Storage</span><span class="stat-value">SQLite + Redis</span></div>
+<div class="stat-row"><span class="stat-label">Container</span><span class="stat-value">Docker + Nginx</span></div>
+<div class="stat-row"><span class="stat-label">Protocol</span><span class="stat-value">MCP + REST</span></div>
+<div class="stat-row"><span class="stat-label">License</span><span class="stat-value emerald">MIT Open Source</span></div>
+</div>
+</div>
+</div>
+
+<div class="tab-panel" id="tab-security" role="tabpanel" hidden>
+<div class="panel-grid">
+<div class="panel panel-full">
+<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></div>
+<h3>JEBAT Security — AI-Powered Penetration Testing</h3>
+<span class="codename mono">Codename: Keris</span>
+<p>Automate vulnerability discovery with AI that thinks like a red teamer. Intelligent scanning, network analysis, and web application testing in a single self-hosted platform. Generate compliance-ready reports without exposing your attack surface to third-party SaaS. Runs air-gapped if needed.</p>
+<div class="feature-list">
+<span class="feature-tag"><span class="check">&#x2713;</span>AI Vulnerability Scanning</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Network Reconnaissance</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Web App Pentesting</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Compliance Reports</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Air-Gap Capable</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Ultra-Think Analysis</span>
+</div>
+<form class="waitlist-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Joined';this.querySelector('input').value=''">
+<input type="email" class="waitlist-input" placeholder="Enter email for early access" required aria-label="Email for early access" />
+<button type="submit" class="waitlist-btn">Join Waitlist</button>
+</form>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Release Status</span>
+<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value amber">1.0.0-dev</span></div>
+<div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value amber">Pre-Alpha</span></div>
+<div class="stat-row"><span class="stat-label">Target</span><span class="stat-value">Q2 2026</span></div>
+<div class="stat-row"><span class="stat-label">Codename</span><span class="stat-value">Keris</span></div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Scan Coverage</span>
+<div class="stat-row"><span class="stat-label">Targets</span><span class="stat-value cyan">Network + Web</span></div>
+<div class="stat-row"><span class="stat-label">Reporting</span><span class="stat-value">Auto-generated</span></div>
+<div class="stat-row"><span class="stat-label">Integration</span><span class="stat-value">Core Platform</span></div>
+</div>
+</div>
+</div>
+
+<div class="tab-panel" id="tab-dev" role="tabpanel" hidden>
+<div class="panel-grid">
+<div class="panel panel-full">
+<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg></div>
+<h3>JEBAT Dev — AI Code Generation &amp; Website Builder</h3>
+<span class="codename mono">Codename: Pandai</span>
+<p>Ship faster with AI that generates production code, builds websites from plain language, and catches bugs before production. Three builder modes — natural language, visual drag-and-drop, and immersive canvas — all on your infrastructure. Supports 50+ languages with live preview and one-click export.</p>
+<div class="feature-list">
+<span class="feature-tag"><span class="check">&#x2713;</span>AI Code Generation</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>NL Website Builder</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Visual Drag-and-Drop</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Bug Detection &amp; Fix</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Auto-Documentation</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>50+ Languages</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Live Preview</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>One-Click Export</span>
+</div>
+<div class="panel-actions">
+<a href="/webui/?mode=builder" class="btn btn-emerald btn-sm">Open Builder</a>
+<a href="/webui/?mode=chat" class="btn btn-outline btn-sm">Code Assistant</a>
+</div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Dev Specs</span>
+<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value emerald">1.0.0 Stable</span></div>
+<div class="stat-row"><span class="stat-label">Status</span><span class="stat-value emerald">Production</span></div>
+<div class="stat-row"><span class="stat-label">Builder Modes</span><span class="stat-value">3</span></div>
+<div class="stat-row"><span class="stat-label">Templates</span><span class="stat-value">6 starter kits</span></div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Capabilities</span>
+<div class="stat-row"><span class="stat-label">Models</span><span class="stat-value cyan">7 selectable</span></div>
+<div class="stat-row"><span class="stat-label">Input</span><span class="stat-value">NL + Visual</span></div>
+<div class="stat-row"><span class="stat-label">Analytics</span><span class="stat-value">Real-time usage</span></div>
+</div>
+</div>
+</div>
+
+<div class="tab-panel" id="tab-companion" role="tabpanel" hidden>
+<div class="panel-grid">
+<div class="panel panel-full">
+<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg></div>
+<h3>JEBAT Companion — Private Conversational AI Assistant</h3>
+<span class="codename mono">Codename: Sahabat</span>
+<p>A personal AI assistant that remembers you. Uses the eternal memory system to maintain context across conversations, projects, and channels. Deploy on Telegram, WhatsApp, Discord, or Slack — all routed through your self-hosted infrastructure. No conversation logs leave your servers.</p>
+<div class="feature-list">
+<span class="feature-tag"><span class="check">&#x2713;</span>Persistent Context Memory</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Multi-Channel Deploy</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Plugin Extensibility</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Ultra-Think Reasoning</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Zero Data Leakage</span>
+</div>
+<form class="waitlist-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Joined';this.querySelector('input').value=''">
+<input type="email" class="waitlist-input" placeholder="Get notified when Companion launches" required aria-label="Email for companion notification" />
+<button type="submit" class="waitlist-btn">Notify Me</button>
+</form>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Release Plan</span>
+<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value">0.1.0-plan</span></div>
+<div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value">Design</span></div>
+<div class="stat-row"><span class="stat-label">Target</span><span class="stat-value">Q2 2026</span></div>
+<div class="stat-row"><span class="stat-label">Codename</span><span class="stat-value">Sahabat</span></div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Channels</span>
+<div class="stat-row"><span class="stat-label">Telegram</span><span class="stat-value cyan">Adapter ready</span></div>
+<div class="stat-row"><span class="stat-label">WhatsApp</span><span class="stat-value cyan">Adapter ready</span></div>
+<div class="stat-row"><span class="stat-label">Discord</span><span class="stat-value cyan">Adapter ready</span></div>
+<div class="stat-row"><span class="stat-label">Slack</span><span class="stat-value cyan">Adapter ready</span></div>
+</div>
+</div>
+</div>
+
+<div class="tab-panel" id="tab-nexus" role="tabpanel" hidden>
+<div class="panel-grid">
+<div class="panel panel-full">
+<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z"/></svg></div>
+<h3>JEBAT Nexus — Multi-Agent Orchestration Gateway</h3>
+<span class="codename mono">Codename: Perisai</span>
+<p>Connect every JEBAT product into a single orchestrated AI system. Routes tasks across agents, manages cross-product memory, and exposes a unified bot framework deployable across channels. Plugin marketplace for community-built skills — all self-hosted, all under your control.</p>
+<div class="feature-list">
+<span class="feature-tag"><span class="check">&#x2713;</span>Cross-Agent Routing</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Unified Bot Framework</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Shared Memory Layer</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Plugin Marketplace</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Central Dashboard</span>
+<span class="feature-tag"><span class="check">&#x2713;</span>Multi-Channel Output</span>
+</div>
+<form class="waitlist-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Joined';this.querySelector('input').value=''">
+<input type="email" class="waitlist-input" placeholder="Get notified when Nexus launches" required aria-label="Email for nexus notification" />
+<button type="submit" class="waitlist-btn">Notify Me</button>
+</form>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Roadmap</span>
+<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value">0.1.0-plan</span></div>
+<div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value">Architecture</span></div>
+<div class="stat-row"><span class="stat-label">Target</span><span class="stat-value">Q3 2026</span></div>
+<div class="stat-row"><span class="stat-label">Codename</span><span class="stat-value">Perisai</span></div>
+</div>
+<div class="panel">
+<span class="mono emerald" style="display:block;margin-bottom:16px">// Milestones</span>
+<div class="stat-row"><span class="stat-label">Q3 2026</span><span class="stat-value cyan">Bot Framework</span></div>
+<div class="stat-row"><span class="stat-label">Q4 2026</span><span class="stat-value">Marketplace</span></div>
+<div class="stat-row"><span class="stat-label">Q4 2026</span><span class="stat-value emerald">All Products GA</span></div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+<section class="section" id="architecture" style="background:#0d0d0d">
+<div class="container">
+<div class="section-header">
+<span class="mono emerald">Platform Architecture</span>
+<h2>Governed Inference at Scale</h2>
+<p>Every component designed for auditability, data sovereignty, and operational control.</p>
+</div>
+<div class="panel-grid">
+<div class="panel">
+<div class="mono emerald" style="margin-bottom:20px">01 / Reasoning</div>
+<h3>Ultra-Think Engine</h3>
+<p>Seven cognitive modes — fast, deliberate, deep, strategic, creative, critical, direct. Real LLM calls with streaming output. Choose the depth your task demands.</p>
+</div>
+<div class="panel">
+<div class="mono emerald" style="margin-bottom:20px">02 / Persistence</div>
+<h3>Eternal Memory System</h3>
+<p>Context persists across sessions, projects, and products. Accumulates institutional knowledge instead of resetting. Layered storage with heat-scored retrieval.</p>
+</div>
+<div class="panel">
+<div class="mono emerald" style="margin-bottom:20px">03 / Providers</div>
+<h3>Provider-Agnostic LLM Layer</h3>
+<p>Ollama for fully offline operation, or plug in OpenRouter, Anthropic, OpenAI, Google Gemini. Automatic failover chain. Switch providers without changing workflow.</p>
+</div>
+<div class="panel">
+<div class="mono emerald" style="margin-bottom:20px">04 / Protocol</div>
+<h3>MCP Compliance</h3>
+<p>Model Context Protocol server for standardized tool integration. Skills adapter converts SKILL.md definitions into registered tools over stdio or HTTP.</p>
+</div>
+<div class="panel">
+<div class="mono emerald" style="margin-bottom:20px">05 / Agents</div>
+<h3>Domain Sub-Agents</h3>
+<p>17 purpose-built agents: Tukang (build), Hulubalang (security), Pawang (research), Syahbandar (ops), Bendahara (data), Penyemak (QA). Orchestrated by Core.</p>
+</div>
+<div class="panel">
+<div class="mono emerald" style="margin-bottom:20px">06 / Sovereignty</div>
+<h3>Zero Cloud Dependency</h3>
+<p>Default config runs on local hardware via Ollama. No API keys required. Graceful degradation. 57 tests pass with zero external services. Air-gap ready.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="sovereign-ai">
+<div class="container">
+<div class="section-header">
+<span class="mono emerald">Why It Matters</span>
+<h2>Sovereign AI Explained</h2>
+</div>
+<div class="sovereign-content">
+<h3>Why Organizations Are Moving to Sovereign AI</h3>
+<p>Cloud-based AI services require sending proprietary data, internal communications, and sensitive code to third-party servers. Every prompt becomes a data point in someone else's infrastructure. Pricing changes without notice. Models get deprecated. Access can be revoked. Sovereign AI eliminates these risks by running models on hardware you own, behind firewalls you control.</p>
+<p>JEBAT was built for this reality. The default installation uses Ollama to run open-weight models locally — no API keys, no billing accounts, no outbound connections. When you need more capability, plug in any of six commercial providers as an upgrade, not a requirement. The platform treats cloud AI as an optional accelerator, not a prerequisite.</p>
+<p>This architecture matters for regulated industries, government agencies, and any organization where data residency requirements make cloud AI non-viable. With JEBAT, compliance isn't a feature toggle — it's the default state. Your models stay on your network. Your memory stays in your database. Your reasoning pipeline never touches infrastructure you don't audit.</p>
+</div>
+</div>
+</section>
+
+<section class="section" id="stack" style="background:#0d0d0d">
+<div class="container">
+<div class="section-header center">
+<span class="mono emerald">Technology Stack</span>
+<h2>Integration Ecosystem</h2>
+</div>
+<div class="stack-grid">
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><span class="mono">FastAPI</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span class="mono">Uvicorn</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2zm0-10h2v8h-2z"/></svg><span class="mono">Python</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity="0.6"/><path d="M2 12l10 5 10-5" opacity="0.3"/></svg><span class="mono">Docker</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.3-6.7l-2.8 2.8m-7.8 7.8l-2.8 2.8M4.3 4.3l2.8 2.8m7.8 7.8l2.8 2.8" stroke="currentColor" stroke-width="1.5" fill="none"/></svg><span class="mono">Ollama</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm10 16H4V8h16v12z"/></svg><span class="mono">Redis</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg><span class="mono">PostgreSQL</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg><span class="mono">RBAC</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z"/></svg><span class="mono">MCP</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg><span class="mono">Cloudflare</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span class="mono">Nginx</span></div>
+<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg><span class="mono">Llama.cpp</span></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="compare">
+<div class="container">
+<div class="section-header">
+<span class="mono emerald">Platform Comparison</span>
+<h2>JEBAT vs Alternatives</h2>
+</div>
+<div class="compare-wrapper">
+<table class="compare-table">
+<thead><tr><th>Capability</th><th class="compare-highlight">JEBAT</th><th>ChatGPT / Claude</th><th>Ollama WebUI</th><th>LM Studio</th></tr></thead>
+<tbody>
+<tr><td>Self-Hosted</td><td class="compare-highlight">Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Multi-Provider</td><td class="compare-highlight">6 providers</td><td>1 (locked)</td><td>Ollama only</td><td>Local only</td></tr>
+<tr><td>Persistent Memory</td><td class="compare-highlight">Cross-session</td><td>Limited</td><td>No</td><td>No</td></tr>
+<tr><td>Multi-Phase Reasoning</td><td class="compare-highlight">7 modes</td><td>Basic</td><td>No</td><td>No</td></tr>
+<tr><td>AI Security Testing</td><td class="compare-highlight">Built-in</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>Code Generation</td><td class="compare-highlight">3 builders</td><td>Chat only</td><td>No</td><td>No</td></tr>
+<tr><td>Agent Orchestration</td><td class="compare-highlight">17 sub-agents</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>MCP Protocol</td><td class="compare-highlight">Native</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>Open Source</td><td class="compare-highlight">MIT</td><td>No</td><td>MIT</td><td>Proprietary</td></tr>
+<tr><td>Price</td><td class="compare-highlight">Free</td><td>$20+/mo</td><td>Free</td><td>Free</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+</main>
+
+<footer>
+<div class="container">
+<div class="footer-grid">
+<div class="footer-col">
+<a href="/" class="logo" style="margin-bottom:20px"><img src="JebatLogo-transparent.png" alt="JEBAT" class="logo-img" loading="lazy" />JEBAT</a>
+<p style="color:var(--text-muted);font-size:13px;max-width:260px;line-height:1.7">Open-source sovereign AI platform. Self-hosted LLM infrastructure with governed inference, persistent memory, and multi-agent orchestration.</p>
+</div>
+<div class="footer-col">
+<h4>Products</h4>
+<ul>
+<li><a href="#ecosystem">Core Platform</a></li>
+<li><a href="#ecosystem">AI Security</a></li>
+<li><a href="#ecosystem">Dev Tools</a></li>
+<li><a href="#ecosystem">Companion</a></li>
+<li><a href="#ecosystem">Nexus Gateway</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h4>Resources</h4>
+<ul>
+<li><a href="https://docs.jebat.online">Documentation</a></li>
+<li><a href="https://github.com/nusabyte-my/jebat-core">Source Code</a></li>
+<li><a href="/webui/">WebUI Console</a></li>
+<li><a href="https://api.jebat.online">API Reference</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h4>Organization</h4>
+<ul>
+<li><a href="mailto:support@jebat.online">Contact Support</a></li>
+<li><a href="https://github.com/nusabyte-my">NusaByte</a></li>
+<li><a href="#">Changelog</a></li>
+<li><a href="#">MIT License</a></li>
+</ul>
+</div>
+</div>
+<div class="footer-bottom">
+<span class="mono" style="color:var(--text-dim);font-size:10px">&copy; 2026 JEBAT. MIT License. Powered by <a href="https://nusabyte.my" style="color:var(--emerald);text-decoration:none">nusabyte.my</a></span>
+<div style="display:flex;gap:20px">
+<a href="https://github.com/nusabyte-my/jebat-core" class="mono emerald" style="text-decoration:none;font-size:10px">GitHub</a>
+<a href="https://docs.jebat.online" class="mono emerald" style="text-decoration:none;font-size:10px">Docs</a>
+</div>
+</div>
+</div>
+</footer>
+
+<noscript><style>.tab-panel[hidden]{display:block!important}.tab-nav{display:none}</style><div style="max-width:1280px;margin:0 auto;padding:2rem"><p style="color:var(--text-muted);font-size:13px">JavaScript disabled. All product sections shown below.</p></div></noscript>
+
+<script>
+const lines=[
+"<span class='emerald'>[SYSTEM]</span> Initializing JEBAT Sovereign Core...",
+"<span>[KERNEL]</span> Loading Ultra-Think reasoning engine...",
+"<span>[MEMORY]</span> Mapping layers M0-M4 <span class='emerald'>[OK]</span>",
+"<span>[PROVIDER]</span> Ollama connected <span class='emerald'>[LOCAL]</span>",
+"<span>[AGENT]</span> Registering 17 sub-agents...",
+"<span>[SECURITY]</span> RBAC policies loaded...",
+"<span>[MCP]</span> Protocol server ready...",
+"<span class='emerald'>[SYSTEM]</span> All subsystems operational.",
+"",
+"<span>$</span> jebat --status",
+"<span>></span> Runtime: <span class='emerald'>Sovereign</span>",
+"<span>></span> Data Boundary: <span class='emerald'>Local Only</span>",
+"<span>></span> Memory Heat: Optimal (84%)",
+"<span>></span> Active Agents: 17",
+"",
+"<span class='emerald'>Ready for instruction.</span>"
+];
+const el=document.getElementById('consoleOutput');
+lines.forEach((l,i)=>{const d=document.createElement('div');d.innerHTML=l;d.className='console-line';d.style.animationDelay=i*0.18+'s';el.appendChild(d)});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+btn.addEventListener('click',()=>{
+document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false')});
+document.querySelectorAll('.tab-panel').forEach(p=>{p.hidden=true});
+btn.classList.add('active');btn.setAttribute('aria-selected','true');
+document.getElementById('tab-'+btn.dataset.tab).hidden=false;
+})});
+
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+a.addEventListener('click',function(e){
+const t=document.querySelector(this.getAttribute('href'));
+if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}
+})});
+
+const mb=document.querySelector('.mobile-menu-btn'),nl=document.querySelector('.nav-links');
+if(mb&&nl){mb.addEventListener('click',function(){const o=nl.classList.toggle('open');mb.setAttribute('aria-expanded',o)})}
+</script>
+
+</body>
 </html>

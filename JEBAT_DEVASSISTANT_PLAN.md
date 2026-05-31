@@ -1,6 +1,6 @@
 # 🗡️ JEBAT DevAssistant - Local Development AI
 
-**Inspired by**: OpenClaw Architecture + Google Stitch MCP + JEBAT Intelligence
+**Inspired by**: Jebat Gateway Architecture + Google Stitch MCP + JEBAT Intelligence
 
 **Goal**: Create a local development assistant that works ONLY inside this Dev environment to help you build comprehensive applications.
 

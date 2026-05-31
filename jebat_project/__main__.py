@@ -15,6 +15,7 @@ Works with:
 - Any codebase
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -23,6 +24,8 @@ from pathlib import Path
 dev_path = Path(__file__).parent.parent
 if dev_path.exists():
     sys.path.insert(0, str(dev_path))
+
+from jebat_project.workspace_capture import WorkspaceCapture
 
 
 class JEBATProjectIntegration:
@@ -172,13 +175,26 @@ class JEBATProjectIntegration:
         return samples.get(self.project_type, "src/index.ts")
 
 
-def main():
-    """Main entry point."""
-    # Get current directory or provided path
-    if len(sys.argv) > 1:
-        project_root = Path(sys.argv[1]).resolve()
-    else:
-        project_root = Path.cwd()
+def _print_capture_result(result):
+    """Print workspace capture output."""
+    print()
+    print("VS Code workspace capture")
+    print("=" * 60)
+    for path in result.written:
+        print(f"  [written] {path}")
+    for path in result.skipped:
+        print(f"  [skipped] {path} already exists")
+    print()
+    print("Snapshot:")
+    print(f"  Project: {result.snapshot['project']['name']}")
+    print(f"  Type: {result.snapshot['project']['type']}")
+    print(f"  Stack: {', '.join(result.snapshot['project']['stack'])}")
+    print(f"  Skills: {', '.join(result.snapshot['assistant']['defaultSkills'])}")
+
+
+def run_init(project_root: Path, *, vscode: bool = False, overwrite: bool = False):
+    """Initialize JEBAT project integration."""
+    project_root = project_root.resolve()
 
     # Check if it's a valid project
     if not project_root.exists():
@@ -198,6 +214,73 @@ def main():
     print("  1. Navigate to project: cd <project_path>")
     print("  2. Run JEBAT: py -m jebat_dev.launch <command>")
     print("  3. Or use global: jebat <command>")
+
+    if vscode:
+        capture = WorkspaceCapture(project_root)
+        result = capture.write_vscode_capture(overwrite=overwrite)
+        _print_capture_result(result)
+
+
+def run_capture(project_root: Path, *, overwrite: bool = False, no_copilot: bool = False):
+    """Capture VS Code workspace context for a project."""
+    capture = WorkspaceCapture(project_root.resolve())
+    result = capture.write_vscode_capture(
+        overwrite=overwrite,
+        include_copilot=not no_copilot,
+    )
+    _print_capture_result(result)
+
+
+def main():
+    """Main entry point."""
+    # Backward compatibility: py -m jebat_project /path/to/project
+    if len(sys.argv) > 1 and sys.argv[1] not in {"init", "capture", "-h", "--help"}:
+        run_init(Path(sys.argv[1]))
+        return
+
+    parser = argparse.ArgumentParser(
+        prog="python -m jebat_project",
+        description="Initialize and capture JEBAT context for a development project.",
+    )
+    subparsers = parser.add_subparsers(dest="command")
+
+    init_parser = subparsers.add_parser("init", help="Create .jebatrc.json")
+    init_parser.add_argument("path", nargs="?", type=Path, default=Path.cwd())
+    init_parser.add_argument(
+        "--vscode",
+        action="store_true",
+        help="Also write VS Code workspace capture files.",
+    )
+    init_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing generated capture files.",
+    )
+
+    capture_parser = subparsers.add_parser(
+        "capture",
+        help="Write VS Code workspace capture files.",
+    )
+    capture_parser.add_argument("path", nargs="?", type=Path, default=Path.cwd())
+    capture_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing generated capture files.",
+    )
+    capture_parser.add_argument(
+        "--no-copilot",
+        action="store_true",
+        help="Do not write .github/copilot-instructions.md.",
+    )
+
+    args = parser.parse_args()
+
+    if args.command == "capture":
+        run_capture(args.path, overwrite=args.overwrite, no_copilot=args.no_copilot)
+    elif args.command == "init":
+        run_init(args.path, vscode=args.vscode, overwrite=args.overwrite)
+    else:
+        run_init(Path.cwd())
 
 
 if __name__ == "__main__":

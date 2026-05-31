@@ -84,16 +84,19 @@ database:
   pool_size: 5
 
 llm:
-  provider: openai
-  model: gpt-5.4
-  temperature: 0.2
+  provider: llamacpp
+  model: gemma4:e4b
+  temperature: 0.85
+  top_p: 0.95
+  top_k: 64
   max_tokens: 1200
   ollama_host: "http://127.0.0.1:11434"
+  llamacpp_host: "http://127.0.0.1:8080"
   fallback_providers:
+    - ollama
     - google
     - anthropic
     - openrouter
-    - ollama
     - local
   history_path: ".jebat/chat_history.jsonl"
 

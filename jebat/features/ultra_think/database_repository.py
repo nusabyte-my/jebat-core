@@ -10,7 +10,7 @@ Provides persistent storage for:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 
@@ -74,7 +74,7 @@ class UltraThinkRepository:
                 thinking_mode=thinking_mode,
                 status="running",
                 metadata=metadata or {},
-                started_at=datetime.utcnow(),
+                started_at=datetime.now(timezone.utc),
             )
 
             session.add(think_session)
@@ -117,7 +117,7 @@ class UltraThinkRepository:
 
             think_session.status = status
             think_session.completed_at = (
-                datetime.utcnow()
+                datetime.now(timezone.utc)
                 if status in ["completed", "failed", "timeout"]
                 else None
             )
@@ -185,7 +185,7 @@ class UltraThinkRepository:
                 supporting_evidence=supporting_evidence or [],
                 counter_arguments=counter_arguments or [],
                 metadata=metadata or {},
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
 
             session.add(thought)
@@ -273,7 +273,7 @@ class UltraThinkRepository:
             Dictionary with statistics
         """
         async with self.session_factory() as session:
-            cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
 
             # Total sessions
             total_result = await session.execute(

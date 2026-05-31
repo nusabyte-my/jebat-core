@@ -106,6 +106,58 @@
 
 ---
 
+## 🎯 Architecture Patterns
+
+### Pattern 5: Security Overlay as Orchestration Layer
+**Date**: 2026-04-23
+**Problem**: Multi-agent swarm execution lacked runtime risk governance and output control. Agents could produce unbounded outputs, leak secrets, or suggest unsafe actions without detection.
+
+**Solution**:
+- Classify task risk from description + parameters (low/medium/high/critical)
+- Auto-inject required roles (review for medium+, security/defense for high+)
+- Enforce critical task gate: block unless `approve_critical=True`
+- Apply token-based per-role output budgets (compact vs expander roles)
+- Scan agent outputs for credential patterns; redact with `[REDACTED]`
+- Detect unsafe deployment suggestions (publish to npm, open to internet)
+- Aggregate exposure findings into `security_layer` response object
+- Expose `security_layer` on plan, execute, and chat-routed responses
+
+**Key Design Decisions**:
+1. **Timing**: Security layer built during `plan_task` (base) and `execute_task` (runtime augmentation) — not a separate pass
+2. **Scope**: Single-agent and swarm paths both include runtime security summary (unified)
+3. **Durable policy split**: `durable_doctrine` and `security_policy_rules` stored on orchestrator, never injected into per-agent prompts
+4. **Post-sanitization**: Redaction applied after agent handler returns, before budget trim
+5. **Token budgets**: Use `estimate_tokens()` for accurate truncation; binary search for prefix length
+
+**Implementation Locations**:
+- `orchestrator.py:1043` — `_build_security_layer()` classifier
+- `orchestrator.py:500-509` — critical task gate in `_execute_task`
+- `orchestrator.py:1253-1312` — `_apply_output_budget()` + `_trim_to_token_budget()`
+- `orchestrator.py:1264-1348` — exposure detection (`_scan_for_exposures`, `_sanitize_payload`, `_flag_unsafe_output_paths`)
+- `orchestrator.py:1968-2031` — `_build_security_summary()` aggregates runtime fields
+- `jebat_api.py:830-844` — security_layer exposed on all response models
+
+**Testing**:
+- 27 tests in `test_swarm_orchestrator.py` cover classification, policy gate, budgets, exposures, contract
+- Plan vs execution schema separation validated
+- Critical block flow verified
+- Redaction and unsafe flagging verified via custom agent handlers
+
+**Benefit**: Runtime risk posture is observable, controllable, and part of the public contract. Security is orchestrated, not bolted-on.
+
+**Trade-offs**:
+- Redaction occurs post-generation (token cost already incurred) — acceptable for now
+- Token estimation uses heuristics when tiktoken unavailable — minor variance possible
+- Exposure patterns are regex-based, not LLM-judged — may miss obfuscated secrets
+
+**Future Work**:
+- Pre-call security gate to reject high-risk prompts before LLM invocation
+- LLM-based exposure detection for sophisticated leaks
+- Token budget enforcement at provider call layer (input-side)
+- Persist security_layer to database for audit trail
+
+---
+
 ## 🔧 Technical Patterns
 
 ### Pattern 1: Import Path Consistency

@@ -2,7 +2,7 @@
 
 **Sharp. Precise. Culturally Rooted.**
 
-KerisCore is a personal AI assistant that combines the multi-channel gateway architecture of OpenClaw with advanced cognitive memory systems. Like the legendary Malaysian keris dagger - sharp in execution, precise in memory, and deeply rooted in purpose.
+KerisCore is a personal AI assistant that combines the multi-channel gateway architecture of Jebat Gateway with advanced cognitive memory systems. Like the legendary Malaysian keris dagger - sharp in execution, precise in memory, and deeply rooted in purpose.
 
 ---
 
@@ -97,7 +97,7 @@ A **self-hosted, privacy-first AI assistant** that:
 ## 🎯 Key Differentiators
 
 ### 1. **Eternal Memory** 🧠
-Unlike OpenClaw's session-based approach, KerisCore implements:
+Unlike Jebat Gateway's session-based approach, KerisCore implements:
 - **5-layer memory architecture** (M0→M4) inspired by human cognition
 - **Heat-based importance scoring** - memories that matter stay, trivial ones fade
 - **Automatic consolidation** - episodic → semantic → conceptual
@@ -759,7 +759,7 @@ MIT License - See LICENSE file for details
 ## 🙏 Acknowledgments
 
 **KerisCore** is inspired by and builds upon:
-- **OpenClaw** - Gateway architecture and multi-channel design
+- **Jebat Gateway** - Gateway architecture and multi-channel design
 - **MemContext** - Multi-modal memory with spatiotemporal precision
 - **CORE** - Cognitive orchestration framework
 - **MemFuse** - Production-ready memory layer patterns

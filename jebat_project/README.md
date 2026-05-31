@@ -11,6 +11,12 @@ py -m jebat_project
 
 # Or specify path
 py -m jebat_project /path/to/project
+
+# Capture a project for VS Code development
+py -m jebat_project capture /path/to/project
+
+# Initialize and capture in one pass
+py -m jebat_project init /path/to/project --vscode
 ```
 
 ## What It Does
@@ -33,6 +39,11 @@ py -m jebat_project /path/to/project
    - Code review
    - Debugging assistance
 
+4. **Captures VS Code Project Context**
+   - `.vscode/jebat-workspace.json` structured project snapshot
+   - `PROJECT_START.md` human-readable startup notes
+   - `.github/copilot-instructions.md` capture-first Copilot instructions
+
 ## Usage
 
 After initialization:
@@ -49,6 +60,35 @@ py -m jebat_dev.launch review src/App.tsx
 
 # Debug
 py -m jebat_dev.launch debug "error message"
+```
+
+## VS Code Workspace Capture
+
+Use this when starting or taking over a project in VS Code:
+
+```bash
+cd your-project
+py -m jebat_project capture .
+```
+
+The capture command writes:
+
+| File | Purpose |
+|------|---------|
+| `.vscode/jebat-workspace.json` | Machine-readable project snapshot for JEBAT-aware tooling |
+| `PROJECT_START.md` | Project goal, stack, entrypoints, commands, risks, and operating rule |
+| `.github/copilot-instructions.md` | VS Code Copilot capture-first behavior instructions |
+
+Existing files are skipped by default. Use `--overwrite` when you intentionally want to refresh generated context:
+
+```bash
+py -m jebat_project capture . --overwrite
+```
+
+If a project already has its own Copilot instructions, preserve them and only write the workspace capture:
+
+```bash
+py -m jebat_project capture . --no-copilot
 ```
 
 ## Supported Project Types

@@ -8,6 +8,7 @@
     "business": 78,
     "data-ai": 156,
     "development": 312,
+    "design": 2,
     "security": 89,
     "testing": 68,
     "infrastructure": 98,
@@ -68,6 +69,22 @@
       ],
       "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
       "path": "skills/infrastructure/docker-expert/SKILL.md"
+    },
+    {
+      "name": "logo-generator",
+      "description": "Generate professional SVG logos and high-end showcase images for products and brands",
+      "category": "design",
+      "tags": ["design", "branding", "logo", "svg", "showcase"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/design/logo-generator/SKILL.md"
+    },
+    {
+      "name": "web-asset-generator",
+      "description": "Generate favicons, PWA app icons, and social media/Open Graph assets from logos, text, or emojis",
+      "category": "design",
+      "tags": ["design", "favicon", "app-icons", "social-images", "open-graph", "branding"],
+      "ide_support": ["vscode", "zed", "cursor", "claude", "gemini"],
+      "path": "skills/design/web-asset-generator/SKILL.md"
     },
     {
       "name": "cortex-reasoning",
@@ -172,6 +189,14 @@
         "nodejs-expert",
         "database-designer",
         "fullstack-lead"
+      ]
+    },
+    {
+      "name": "design-agent",
+      "description": "Design-agent bundle for UI/UX and design-system work with branding and web asset generation",
+      "skills": [
+        "logo-generator",
+        "web-asset-generator"
       ]
     }
   ],

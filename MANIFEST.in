@@ -1,0 +1,4 @@
+prune jebat_dev
+prune jebat_project
+global-exclude *.pyc
+global-exclude __pycache__

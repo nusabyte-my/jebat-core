@@ -1,14 +1,42 @@
 # JEBAT Task List
 
 **Project**: JEBAT - Personal AI Assistant with Eternal Memory
-**Last Updated**: 2026-02-18
+**Last Updated**: 2026-04-23
 **Status**: Active Development
 
 ---
 
 ## 🎯 Current Sprint
 
-### High Priority Tasks
+### High Priority — IN PROGRESS (2026-04-23)
+
+- [ ] **Monitoring Dashboard** ✅ (Architecture-Related)
+  - [ ] Brainstorm: real-time metrics, component integration, visualization options
+  - [ ] Wireframing: dashboard layout, data flow, storage mechanism
+  - [ ] Workflow: metrics collection -> storage -> API -> frontend
+  - [ ] Structural worktree: new monitoring subsystem, enhanced get_stats methods
+  - [ ] File/folder tree: jebat-core/jebat/monitoring/ directory
+  - [ ] Checklist: all tests passing, compile checks OK
+  - [ ] Security: metric sanitization, rate limiting, access control
+  - [ ] API contract: enhanced /api/v1/metrics endpoint with time-series support
+  - [ ] Documentation: ARCHITECTURE-MONITORING.md, ROADMAP.md updated
+  - [ ] Orchestration: verified end-to-end (collection, storage, API, visualization)
+  - **Deliverable**: Real-time monitoring dashboard with metrics collection, time-series storage, and React-based visualization
+
+### High Priority — COMPLETED (2026-04-23)
+
+- [x] **Security Overlay Architecture & Implementation** ✅ (Architecture-Related)
+  - [x] Brainstorm: risk classification, policy gate, output budgets, exposure controls
+  - [x] Wireframing: system flow diagrams (plan → classify → sanitize → budget → aggregate)
+  - [x] Workflow: integrated into plan_task, _execute_task, single & swarm paths
+  - [x] Structural worktree: orchestrator.py +260 lines, test files extended
+  - [x] File/folder tree: jebat-core/jebat/core/agents/orchestrator.py (security layer)
+  - [x] Checklist: all 27 tests passing, compile checks OK
+  - [x] Security: token budgets, credential redaction, unsafe output detection, critical task gate
+  - [x] API contract: plan vs execution schema separation, reducer/doctrine/security_layer validated
+  - [x] Documentation: ARCHITECTURE-SECURITY.md, NEXT-IMPROVEMENTS.md updated
+  - [x] Orchestration: verified end-to-end (single-agent, swarm, chat-routed)
+  - **Deliverable**: Complete runtime security overlay with exposure detection and token-based output budgets
 
 - [x] **Database Integration for Ultra-Loop** ✅
   - [x] Connect Ultra-Loop to PostgreSQL

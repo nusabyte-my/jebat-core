@@ -1,5 +1,4 @@
-"""
-JEBAT WebUI Launcher
+"""JEBAT WebUI Launcher
 
 Launch the immersive web interface for JEBAT.
 
@@ -18,9 +17,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
-from jebat.services.webui.webui_server import webui_router
+from jebat.services.webui.webui_server import webui_router, _mount_static
 
 # Set up logging
 logging.basicConfig(
@@ -48,13 +48,37 @@ app.add_middleware(
 # Include WebUI router
 app.include_router(webui_router)
 
-# Also mount at root for convenience
-app.include_router(webui_router, prefix="")
+# Mount static files for the Brutalist SPA
+_mount_static(app)
+
+
+LANDING_DIR = Path(__file__).resolve().parent.parent.parent.parent
+_static_mounted = False
+
+
+def _mount_landing_assets(app: FastAPI):
+    global _static_mounted
+    if _static_mounted:
+        return
+    for fname in ("JebatLogo-transparent.png", "robots.txt", "sitemap.xml"):
+        fpath = LANDING_DIR / fname
+        if fpath.exists():
+
+            @app.get(f"/{fname}", include_in_schema=False)
+            async def serve_asset(path=fpath):
+                return FileResponse(path, media_type="application/octet-stream")
+
+    _static_mounted = True
+
+
+_mount_landing_assets(app)
 
 
 @app.get("/", include_in_schema=False)
-async def root_redirect():
-    """Redirect the bare host to the WebUI entrypoint."""
+async def landing_page():
+    index = LANDING_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index, media_type="text/html")
     return RedirectResponse(url="/webui/", status_code=307)
 
 
@@ -88,12 +112,10 @@ def main():
     logger.info(f"  Starting server on http://{args.host}:{args.port}")
     logger.info("")
     logger.info("  Available routes:")
-    logger.info("    /           - Main landing page")
-    logger.info("    /chat       - AI chat interface")
-    logger.info("    /dashboard  - System dashboard")
-    logger.info("    /memory     - Memory explorer")
-    logger.info("    /api/*      - REST API endpoints")
-    logger.info("    /ws/{user}  - WebSocket endpoint")
+    logger.info("    /webui      - Brutalist SPA shell")
+    logger.info("    /chat       - AI chat interface (legacy)")
+    logger.info("    /webui/api/* - REST API endpoints")
+    logger.info("    /webui/ws/* - WebSocket endpoint")
     logger.info("=" * 70)
 
     uvicorn.run(

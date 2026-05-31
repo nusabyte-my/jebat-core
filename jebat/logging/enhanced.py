@@ -24,7 +24,7 @@ Usage:
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -36,7 +36,7 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON"""
         log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -154,7 +154,7 @@ def setup_logging(
     context = {
         "app": "jebat",
         "version": "1.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     root_logger.addFilter(ContextFilter(context))
 

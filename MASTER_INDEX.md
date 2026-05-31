@@ -1,8 +1,8 @@
 # 🗡️ JEBAT - Master Index
 
-**Last Updated**: 2026-02-18  
-**Status**: PRODUCTION READY  
-**Completion**: 90%  
+**Last Updated**: 2026-05-31  
+**Status**: CLI AGENT OPERATIONAL — ALL GAPS CLOSED  
+**Completion**: 100% (26/26 gaps implemented, 78 registered tools)  
 
 ---
 
@@ -14,19 +14,70 @@ This is your master index to all JEBAT documentation. Start here to find exactly
 
 ## 🚀 Quick Start (5 Minutes)
 
-**New to JEBAT? Start here:**
+**New to JEBAT CLI Agent? Start here:**
 
-1. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet
+1. **[CLI_AGENT_STATUS.md](CLI_AGENT_STATUS.md)** - Gap analysis & implementation status
+   - 26 gaps ALL implemented (100%)
+   - Architecture overview
+   - CLI command reference
+   - Feature comparison vs Hermes/Claude/Codex
+
+2. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet
    - Quick start commands
    - Key imports
    - All CLI commands
    - Common tasks
 
-2. **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - 2-minute overview
-   - What is JEBAT?
-   - Key metrics
-   - How to use
-   - Production status
+---
+
+## 🤖 CLI Agent Architecture (NEW)
+
+The JEBAT CLI is now a full agent system comparable to Hermes, Claude Code, and Codex.
+
+### Core Agent Loop
+
+- **`jebat/core/agent_loop.py`** (496 lines) — ReAct pattern: Think → Act → Observe → Think
+  - `AgentLoop.run(query, context)` → `AgentResult`
+  - Streaming via `on_token` callback
+  - Safety tiers: AUTO / CONFIRM / DANGEROUS
+  - Max iteration guard (default 10)
+  - Tool dispatch from LLM function-calling schema
+
+### Streaming REPL
+
+- **`jebat/features/repl/repl.py`** — Rich console REPL with AgentLoop integration
+  - Token-by-token streaming display
+  - Slash commands: /help, /tools, /model, /provider, /clear, /reset, /session, /save, /exit
+  - Session persistence via ChatHistoryStore
+  - Multi-model/provider switching mid-session
+
+### New Capabilities
+
+| Module | Path | Feature |
+|--------|------|---------|
+| Vision | `jebat/features/vision/vision.py` | Image analysis via PIL + LLM vision |
+| Search | `jebat/features/search/web_search.py` | Web search (SearXNG, DuckDuckGo, Brave) |
+| MCP | `jebat/features/mcp/mcp_client.py` | Model Context Protocol client (stdio + HTTP) |
+| Delegation | `jebat/core/delegation.py` | Parallel subagent delegation |
+| Image Gen | `jebat/features/image_gen/image_gen.py` | DALL-E + Stable Diffusion generation |
+| Cron | `jebat/features/cron/cron.py` | Already built (20K chars) |
+
+### CLI Commands
+
+```
+jebat                          # Start REPL (default)
+jebat agent <prompt>           # One-shot agent with tool-calling
+jebat tools list|inspect       # Tool registry
+jebat mcp connect|list         # MCP server management
+jebat search <query>           # Web search
+jebat chat <prompt>            # One-shot chat
+jebat chat-repl                # Full REPL session
+jebat think <question>         # Thinking session
+jebat memory store|search      # Memory operations
+jebat skills list|search|show  # TokGuru skills
+jebat loop start|stop|status   # Ultra-Loop
+jebat config|llm-*|doctor     # Configuration & health
+```
 
 ---
 
@@ -45,9 +96,10 @@ This is your master index to all JEBAT documentation. Start here to find exactly
 6. Review code examples in report
 
 **Day 3: Start Building**
-7. [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - API examples
-8. Run integration tests
-9. Build your first feature
+7. [QUICK_REFERENCE.md](QUICK_REFERENCE.md) — API examples
+8. [ARCHITECTURE-SECURITY.md](docs/ARCHITECTURE-SECURITY.md) — Security overlay design & implementation
+9. Run integration tests
+10. Build your first feature
 
 ---
 
@@ -363,16 +415,16 @@ This is your master index to all JEBAT documentation. Start here to find exactly
 
 ---
 
-**Master Index Last Updated**: 2026-02-18  
-**Total Documents**: 9  
-**Total Pages**: ~200  
-**Status**: COMPLETE ✅
+**Master Index Last Updated**: 2026-05-31  
+**Total Documents**: 10 (+ CLI_AGENT_STATUS.md)  
+**CLI Agent Gaps Closed**: 26/26 — ALL GAPS CLOSED ✅
+**Status**: CLI AGENT OPERATIONAL — 78 REGISTERED TOOLS
 
 🗡️ **JEBAT** - *Because warriors remember everything that matters.*
 
 ---
 
-**Start Here**: [EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)  
+**Start Here**: [CLI_AGENT_STATUS.md](CLI_AGENT_STATUS.md) — What's new in the CLI agent  
 **Quick Reference**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)  
 **Full Report**: [SYSTEM_REPORT_COMPLETE.md](SYSTEM_REPORT_COMPLETE.md)  
 **Roadmap**: [ROADMAP.md](ROADMAP.md)

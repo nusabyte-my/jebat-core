@@ -65,7 +65,7 @@ Before any new codebase or ambiguous task:
 - Backup config BEFORE editing, not after
 - Confirm before: destructive commands, force-push, SSH actions, external API writes
 - Never skip git hooks or safety checks unless explicitly told to
-- Never write `openclaw.json` directly; propose config changes in message form
+- Never write `jebat-gateway.json` directly; propose config changes in message form
 
 ### Ecosystem
 - **jebat-core** (Python multi-agent platform): github.com/nusabyte-my/jebat-core

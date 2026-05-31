@@ -11,7 +11,7 @@ Central intelligence for development tasks:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ class DevBrain:
                 "type": task_type,
                 "description": description,
                 "result": result.success,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
             }
         )
 

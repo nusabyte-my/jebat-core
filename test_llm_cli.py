@@ -2,6 +2,7 @@ from pathlib import Path
 
 from jebat.cli.jebat_cli import JEBATCLI
 from jebat.llm.auth import list_provider_auth_status
+from jebat.llm.conversation import prepare_chat_prompt
 from jebat.llm.history import ChatHistoryStore
 from jebat.llm.project_context import build_project_context
 from jebat.llm.config import load_llm_config
@@ -27,6 +28,7 @@ def test_local_echo_provider_returns_prompt() -> None:
 def test_supported_providers_include_openai_and_ollama() -> None:
     providers = {item["name"] for item in list_supported_providers()}
     assert "openai" in providers
+    assert "llamacpp" in providers
     assert "ollama" in providers
     assert "google" in providers
     assert "openrouter" in providers
@@ -62,9 +64,25 @@ def test_generate_with_failover_uses_local_when_primary_fails(monkeypatch) -> No
     assert "hello" in response
 
 
+def test_generate_with_failover_can_return_usage_metadata(monkeypatch) -> None:
+    import asyncio
+    from jebat.llm.config import JebatLLMConfig
+    from jebat.llm.providers import ProviderGeneration
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    config = JebatLLMConfig(provider="openai", fallback_providers=("local",))
+    response, provider = asyncio.run(
+        generate_with_failover(config, prompt="hello", system_prompt="system", return_metadata=True)
+    )
+
+    assert provider == "local"
+    assert isinstance(response, ProviderGeneration)
+    assert response.usage.total_tokens >= response.usage.prompt_tokens
+
+
 def test_provider_auth_status_lists_major_providers() -> None:
     providers = {item.provider for item in list_provider_auth_status()}
-    assert {"openai", "google", "anthropic", "openrouter", "ollama", "local"} <= providers
+    assert {"openai", "google", "anthropic", "openrouter", "llamacpp", "ollama", "local"} <= providers
 
 
 def test_skill_registry_loads_tokguru_repo_skills() -> None:
@@ -72,7 +90,7 @@ def test_skill_registry_loads_tokguru_repo_skills() -> None:
     skills = {skill.name for skill in registry.get_all_skills()}
     assert "python-patterns" in skills
     assert "cortex-reasoning" in skills
-    assert "hermes-agent" in skills
+    assert "jebat-agent" in skills
 
 
 def test_select_relevant_skills_matches_python_prompt() -> None:
@@ -101,12 +119,45 @@ def test_build_skill_prompt_can_pin_hermes_agent() -> None:
     prompt, selected = build_skill_prompt(
         "Be my daily coding copilot for this repo",
         registry=registry,
-        requested_skills=["hermes-agent"],
+        requested_skills=["jebat-agent"],
         auto_discover=False,
     )
     names = [skill.name for skill in selected]
-    assert names == ["hermes-agent"]
-    assert "Skill: hermes-agent" in prompt
+    assert names == ["jebat-agent"]
+    assert "Skill: jebat-agent" in prompt
+
+
+def test_build_skill_prompt_summarizes_secondary_skills() -> None:
+    registry = build_skill_registry(default_skills_path())
+    prompt, selected = build_skill_prompt(
+        "Help me design and implement a frontend flow with React and TypeScript patterns",
+        registry=registry,
+        requested_skills=["react-patterns", "typescript-expert"],
+        auto_discover=False,
+    )
+
+    assert len(selected) == 2
+    assert "Guidance:" in prompt
+    assert "Summary:" in prompt
+
+
+def test_prepare_chat_prompt_adds_rolling_summary() -> None:
+    prepared = prepare_chat_prompt(
+        "What is the safest rollout plan now?",
+        mode="deep",
+        conversation_messages=[
+            {"role": "user", "content": "We need to ship a database migration soon."},
+            {"role": "assistant", "content": "We should stage the rollout and add rollback checks."},
+            {"role": "user", "content": "There is also a queue worker dependency."},
+            {"role": "assistant", "content": "That means we need to coordinate application and worker deploys."},
+            {"role": "user", "content": "What is the safest rollout plan now?"},
+        ],
+    )
+
+    assert prepared.profile == "deep"
+    assert "[Conversation State]" in prepared.prompt
+    assert "[Recent Turns]" in prepared.prompt
+    assert "[Current User Request]" in prepared.prompt
 
 
 def test_doctor_reports_configured_provider(monkeypatch) -> None:

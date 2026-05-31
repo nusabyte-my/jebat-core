@@ -764,7 +764,7 @@ class SecurityAnalyzeSkill(BaseSkill):
             referer_domain = referer.split('/')[2].split('/')[0]
             origin_domain = origin.split('/')[2].split('/')[0]
             return referer_domain == origin_domain
-        except:
+        except (IndexError, AttributeError):
             return False
 
     async def _detect_rate_limiting(self, context: SecurityContext) -> List[str]:

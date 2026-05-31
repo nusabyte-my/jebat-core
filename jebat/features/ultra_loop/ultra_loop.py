@@ -15,7 +15,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -47,8 +47,8 @@ class LoopMetrics:
     total_execution_time: float = 0.0
     errors: List[str] = field(default_factory=list)
     last_error: Optional[str] = None
-    last_cycle_start: datetime = field(default_factory=datetime.utcnow)
-    last_cycle_end: datetime = field(default_factory=datetime.utcnow)
+    last_cycle_start: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_cycle_end: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -63,7 +63,7 @@ class LoopMetrics:
             "errors_count": len(self.errors),
             "last_error": self.last_error,
             "uptime_seconds": (
-                datetime.utcnow() - self.last_cycle_start
+                datetime.now(timezone.utc) - self.last_cycle_start
             ).total_seconds(),
         }
 
@@ -77,7 +77,7 @@ class LoopContext:
     inputs: Dict[str, Any] = field(default_factory=dict)
     outputs: Dict[str, Any] = field(default_factory=dict)
     state: Dict[str, Any] = field(default_factory=dict)
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
     error: Optional[str] = None
 
@@ -236,7 +236,7 @@ class UltraLoop:
 
         # Gather inputs from sources
         inputs = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "sources_checked": 0,
             "events_gathered": 0,
         }
@@ -441,7 +441,7 @@ class UltraLoop:
         context = LoopContext(cycle_id=cycle_id, phase=LoopPhase.PERCEPTION)
 
         cycle_start = time.time()
-        self.metrics.last_cycle_start = datetime.utcnow()
+        self.metrics.last_cycle_start = datetime.now(timezone.utc)
 
         # Create database record if persistence is enabled
         if self.db_repo:
@@ -498,7 +498,7 @@ class UltraLoop:
 
             # Update metrics
             self.metrics.successful_cycles += 1
-            context.end_time = datetime.utcnow()
+            context.end_time = datetime.now(timezone.utc)
 
             # Update database record
             if self.db_repo and self._current_db_cycle:

@@ -23,7 +23,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
@@ -35,7 +35,7 @@ class Event:
     """Analytics event"""
 
     event_type: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: Optional[str] = None
     tenant_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -49,7 +49,7 @@ class Insight:
     value: Any
     change: float  # Percentage change
     period: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -185,7 +185,7 @@ class AnalyticsEngine:
         insights = []
 
         # Calculate metrics based on period
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if period == "hour":
             start = now - timedelta(hours=1)
@@ -260,7 +260,7 @@ class AnalyticsEngine:
         Returns:
             Usage report dict
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if period == "day":
             start = now - timedelta(days=1)

@@ -1,0 +1,76 @@
+# JEBAT MCP Server — Docker Compose extension
+# Deploy alongside existing jebat-api + jebat-webui
+# Add to the existing docker-compose.prod.yml or run standalone
+
+services:
+  jebat-mcp:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: production
+    container_name: jebat-mcp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8100:8100"
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      JEBAT_MCP_ENABLED: true
+      JEBAT_MCP_HOST: 0.0.0.0
+      JEBAT_MCP_PORT: 8100
+      JEBAT_MCP_TRANSPORT: streamable-http
+    volumes:
+      - jebat_data:/app/data
+      - ../../config:/app/config:ro
+    networks:
+      - jebat-public
+      - jebat-shared
+    command: ["python", "-m", "jebat.cli.jebat_cli", "mcp", "serve", "--transport", "streamable-http", "--port", "8100", "--host", "0.0.0.0"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8100/mcp')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=sh4dow_sh4dow-net
+      - traefik.http.routers.jebat-mcp.rule=Host(`jebat.nusabyte.my`)
+      - traefik.http.routers.jebat-mcp.entrypoints=websecure
+      - traefik.http.routers.jebat-mcp.tls=true
+      - traefik.http.routers.jebat-mcp.tls.certresolver=letsencrypt
+      - traefik.http.routers.jebat-mcp.middlewares=security-headers@file,compress@file
+      - traefik.http.services.jebat-mcp.loadbalancer.server.port=8100
+
+  jebatcore-npm:
+    build:
+      context: ../../jebatcore
+      dockerfile: Dockerfile.npm
+    container_name: jebatcore-npm
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8101:8101"
+    environment:
+      JEBAT_MCP_URL: http://jebat-mcp:8100/mcp
+    networks:
+      - jebat-public
+    command: ["node", "src/cli.js", "mcp-client", "streamable-http"]
+
+networks:
+  jebat-public:
+    driver: bridge
+  jebat-shared:
+    external: true
+    name: sh4dow_sh4dow-net
+
+volumes:
+  jebat_data:
+    external: true
+    name: vps_jebat_data

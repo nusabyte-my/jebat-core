@@ -31,7 +31,7 @@ Available Products:
       Status: ○ Planned | Version: 0.1.0-planning
 
   [5] 🔗  JEBAT Nexus (Perisai)
-      OpenClaw-Style Bot Orchestrator for Multi-Channel
+      Jebat Gateway-Style Bot Orchestrator for Multi-Channel
       Status: ○ Planned | Version: 0.1.0-planning
 ```
 
@@ -102,7 +102,7 @@ Available Products:
 
 ---
 
-### 5. Bot (OpenClaw Style)
+### 5. Bot (Jebat Gateway Style)
 | Suggestion | Meaning | Status |
 |------------|---------|--------|
 | JEBAT Nexus | Central connection | ✅ **SELECTED** |

@@ -38,6 +38,7 @@ class ChatResponse:
     thinking_steps: int
     execution_time: float
     user_id: Optional[str]
+    swarm_lead: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -193,7 +194,7 @@ class JEBATClient:
         }
 
         async with session.post(
-            f"{self.base_url}/api/v1/chat/completions",
+            f"{self.base_url}/api/v1/chat",
             json=payload,
         ) as response:
             response.raise_for_status()
@@ -305,6 +306,72 @@ class JEBATClient:
         """
         session = await self._get_session()
         async with session.get(f"{self.base_url}/api/v1/agents") as response:
+            response.raise_for_status()
+            return await response.json()
+
+    async def execute_swarm(
+        self,
+        description: str,
+        *,
+        user_id: str = "default",
+        execution_mode: str = "consensus",
+        required_capabilities: Optional[List[str]] = None,
+        enable_search: bool = True,
+        search_queries: Optional[List[str]] = None,
+        max_agents: int = 3,
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute a task through the JEBAT swarm endpoint.
+        """
+        session = await self._get_session()
+        payload = {
+            "description": description,
+            "user_id": user_id,
+            "execution_mode": execution_mode,
+            "required_capabilities": required_capabilities or [],
+            "enable_search": enable_search,
+            "search_queries": search_queries or [],
+            "max_agents": max_agents,
+            "parameters": parameters or {},
+        }
+        async with session.post(
+            f"{self.base_url}/api/v1/swarm/execute",
+            json=payload,
+        ) as response:
+            response.raise_for_status()
+            return await response.json()
+
+    async def plan_swarm(
+        self,
+        description: str,
+        *,
+        user_id: str = "default",
+        execution_mode: str = "consensus",
+        required_capabilities: Optional[List[str]] = None,
+        enable_search: bool = True,
+        search_queries: Optional[List[str]] = None,
+        max_agents: int = 3,
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Preview a task through the JEBAT swarm planner without executing it.
+        """
+        session = await self._get_session()
+        payload = {
+            "description": description,
+            "user_id": user_id,
+            "execution_mode": execution_mode,
+            "required_capabilities": required_capabilities or [],
+            "enable_search": enable_search,
+            "search_queries": search_queries or [],
+            "max_agents": max_agents,
+            "parameters": parameters or {},
+        }
+        async with session.post(
+            f"{self.base_url}/api/v1/swarm/plan",
+            json=payload,
+        ) as response:
             response.raise_for_status()
             return await response.json()
 
