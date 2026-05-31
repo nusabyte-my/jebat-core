@@ -1,576 +1,259 @@
-# 🗡️ JEBAT - The Complete AI Development Ecosystem
+# JEBAT — CLI AI Agent
 
-**Because warriors remember everything that matters.**
+> *\"Mimpi yang menjadi nyata ketika pejuang melaksanakan.\"*
+> Dreams become reality when warriors execute.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/nusabyte-my/jebat-core)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
-[![Status](https://img.shields.io/badge/status-production%20ready-success.svg)]()
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
+JEBAT is a full-featured CLI AI agent built in Python. It combines an LLM-powered
+agent loop (ReAct), 97 registered tools, MCP server/client, free-tier AI routing,
+and a cybersecurity toolkit — all in one terminal command.
 
----
+## What Makes JEBAT Different
 
-## 🚀 Quick Start
+| Feature | JEBAT | Hermes | Claude Code | Codex | OpenClaw |
+|---------|-------|--------|-------------|-------|----------|
+| ReAct Agent Loop | Built-in | Built-in | Built-in | Built-in | Built-in |
+| Free AI (no API key) | 9Router proxy | No | No | No | No |
+| CyberSec toolkit | CVE/Shodan/nmap | No | No | No | No |
+| MCP Server + Client | Dual mode | Client only | No | No | Server only |
+| Social Media ops | TG/X/Discord | No | No | No | No |
+| Sandbox (Docker) | Built-in | Built-in | Built-in | Built-in | No |
+| Undo/Rollback | Built-in | Built-in | No | No | No |
+| Cost Tracking | Built-in | Built-in | No | No | No |
+| Plugin System | Built-in | Built-in | No | No | No |
+| Telemetry | Opt-in | Opt-in | No | No | No |
 
-### Try JEBAT Now (5 Minutes)
+## Quick Start
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/nusabyte-my/jebat-core.git
+# Install from PyPI (recommended)
+pip install jebat
+
+# ...or install from source
+git clone https://github.com/humm1ngb1rd/jebat.git
 cd jebat-core
+pip install -e .
 
-# 2. Quick setup
-python setup.py --quick
+# Run the init wizard to configure your LLM provider
+jebat init
 
-# 3. Start all services
-docker-compose up -d
+# Quick chat with any LLM
+jebat agent "Explain zero-day exploits"
 
-# 4. Open landing page
-start landing.html
+# Interactive REPL with tool-calling
+jebat chat-repl
 
-# 5. Try the chatbot
-python examples/chat/standalone_chatbot.py
+# One-shot agent task
+jebat agent "Scan nusabyte.my for SSL issues"
+
+# List 47+ available tools
+jebat tools
+
+# Search the web
+jebat search "latest CVE 2026"
+
+# Free models via 9Router
+jebat free-models
+
+# File operations
+jebat file read README.md
+jebat file write /tmp/test.txt "hello world"
+jebat file patch /tmp/test.txt "hello" "goodbye"
+jebat file search "TODO" --dir src/
 ```
 
-**That's it!** You're running JEBAT. 🎉
+## 24 CLI Subcommands
 
----
+| Command | What It Does |
+|---------|-------------|
+| `status` | Show system status |
+| `loop` | Ultra-Loop control (iteration limit, mode) |
+| `think` | Run thinking session |
+| `memory` | Memory operations |
+| `config` | Show configuration |
+| `llm-providers` | List supported LLM providers |
+| `llm-config` | Show resolved LLM configuration |
+| `llm-auth` | Show provider auth status |
+| `llm-best-provider` | Show best configured provider |
+| `doctor` | Check LLM/provider health |
+| `mode-guide` | Print JEBAT assistant guide path |
+| `skills` | Inspect TokGuru skills |
+| `chat` | Chat with LLM (one-shot) |
+| `chat-project` | Chat with project context |
+| `chat-repl` | Interactive REPL with AgentLoop tool-calling |
+| `tools` | List and inspect registered tools |
+| `file` | File operations: read, write, patch, search, undo |
+| `mcp` | MCP server management (serve, ide-config) |
+| `search` | Web search (SearXNG, Google/Bing API) |
+| `agent` | One-shot agent task with tool-calling |
+| `free-models` | List free/cheap AI models via 9Router |
+| `cost` | Token cost dashboard and tracking |
+| `undo` | Undo file changes (rollback to backup) |
+| `telemetry` | Opt-in usage analytics |
+| `sandbox` | Docker sandbox for code execution |
+| `plugins` | Manage JEBAT plugins |
 
-## 📖 Table of Contents
+## Architecture
 
-- [What is JEBAT?](#what-is-jebat)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start Guide](#quick-start-guide)
-- [Usage Examples](#usage-examples)
-- [Architecture](#architecture)
-- [API Reference](#api-reference)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
+```
+jebat-core/
+  jebat/
+    cli/            # CLI entry point (jebat_cli.py, 23 subcommands)
+    core/           # Agent brain
+      agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
+      delegation.py   # Sub-agent task delegation
+    features/       # Tool modules
+      browser/        # Web automation (9 tools)
+      cybersec/       # Security toolkit (10 tools: CVE, Shodan, nmap, DNS, SSL)
+      cost_tracking/  # Bendahara — token cost tracking (5 tools)
+      cron/           # Scheduled tasks (6 tools)
+      fileops/        # File operations (6 tools)
+      image_gen/      # Image generation (1 tool)
+      mcp/            # MCP client + server (5 server tools)
+      plugins/        # TukangPlugin — plugin system (6 tools)
+      repl/           # Streaming REPL
+      sandbox/        # Hulubalang — Docker sandbox (4 tools)
+      search/         # Web search (3 tools)
+      shell/          # Shell/file/code tools (6 tools)
+      social_media/   # Pengacara — TG/X/Discord (8 tools)
+      telemetry/      # Pengawas — opt-in analytics (6 tools)
+      terminal/       # Terminal execution (2 tools)
+      undo/           # Pawang — undo/rollback (5 tools)
+      vision/         # Vision analysis (2 tools)
+      wiki/           # Knowledge wiki (8 tools)
+    llm/            # LLM providers
+      providers.py     # Multi-provider routing (OpenAI, Anthropic, Gemini, GLM, etc.)
+      ninerouter_provider.py  # 9Router — free AI via localhost:20128 proxy
+    tools/          # Global tool registry (ToolDef, TOOL_REGISTRY)
+    integrations/   # Channels (Telegram, Discord, Slack, WhatsApp, webhook)
+```
 
----
+## Agent Names (Malaysian Identity)
 
-## 🎯 What is JEBAT?
+JEBAT uses Malaysian warrior/role names for its subsystems:
 
-**JEBAT** is a comprehensive AI-powered development ecosystem featuring:
+| Agent | Malay Meaning | Module |
+|-------|--------------|--------|
+| **Tukang** | Craftsman | Shell tools, Plugin system |
+| **Hulubalang** | Warrior/Guard | Sandbox (Docker) |
+| **Pawang** | Tracker/Shaman | Undo/Rollback |
+| **Pengacara** | Advocate/Lawyer | Social Media |
+| **Bendahara** | Treasurer | Cost Tracking |
+| **Pengawas** | Observer/Supervisor | Telemetry |
+| **TokGuru** | Master Teacher | Skills |
 
-### 🧠 Ultra-Think Reasoning
-6 thinking modes for different tasks:
-- **FAST** - Instant responses for simple questions
-- **DELIBERATE** - Balanced reasoning for most tasks
-- **DEEP** - Complex multi-layered analysis
-- **STRATEGIC** - Long-term planning
-- **CREATIVE** - Innovative lateral thinking
-- **CRITICAL** - Analytical evaluation
+## Safety Tiers
 
-### ♾️ Eternal Memory System
-5-layer memory architecture:
-- **M0** - Sensory buffer (30s)
-- **M1** - Episodic memory (24h)
-- **M2** - Semantic memory (7d)
-- **M3** - Procedural memory (permanent)
-- **M4** - Core identity (permanent)
+Every tool call goes through safety classification:
 
-### 🤖 Multi-Agent System
-Specialized agents working together:
-- Code analysis & generation
-- Security review
-- Documentation
-- Testing & QA
-- Research & analysis
+| Tier | Behaviour |
+|------|-----------|
+| **auto** | Execute immediately — read-only, low-risk |
+| **confirm** | Ask Y/n before execution — sudo, rm, chmod |
+| **dangerous** | Requires `--dangerous` flag — rm -rf /, dd, mkfs |
 
-### 💬 Multi-Channel Support
-Meet users where they are:
-- CLI interface
-- Telegram bot
-- WhatsApp Business
-- Discord bot
-- Slack integration
-- REST API
-- Web dashboard
+Dangerous commands are blocked in MCP mode (IDE integration) and require explicit
+confirmation in CLI mode.
 
----
+## MCP Integration
 
-## ✨ Features
-
-### Core Systems
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| **Ultra-Loop** | ✅ Complete | Continuous 5-phase processing cycle |
-| **Ultra-Think** | ✅ Complete | Deep reasoning with 6 modes |
-| **Memory System** | ✅ Complete | 5-layer eternal memory |
-| **Agent System** | ✅ Complete | Multi-agent orchestration |
-| **Decision Engine** | ✅ Complete | Intelligent task routing |
-| **Error Recovery** | ✅ Complete | Fault tolerance & auto-recovery |
-
-### Channels & Integration
-
-| Channel | Status | Description |
-|---------|--------|-------------|
-| **CLI** | ✅ Complete | Command-line interface |
-| **Telegram** | ✅ Complete | Telegram bot integration |
-| **WhatsApp** | ✅ Complete | WhatsApp Business API |
-| **Discord** | ✅ Complete | Discord bot with slash commands |
-| **Slack** | ✅ Complete | Slack app integration |
-| **REST API** | ✅ Complete | FastAPI with 8 endpoints |
-| **Web Dashboard** | ✅ Complete | Real-time monitoring UI |
-
-### Developer Tools
-
-| Tool | Status | Description |
-|------|--------|-------------|
-| **Python SDK** | ✅ Complete | Async Python client |
-| **JavaScript SDK** | ✅ Complete | TypeScript client |
-| **Plugin System** | ✅ Complete | Dynamic plugin loading |
-| **Multi-Tenancy** | ✅ Complete | SaaS-ready architecture |
-| **Analytics** | ✅ Complete | Usage tracking & insights |
-| **Knowledge Graph** | ✅ Complete | Graph-based knowledge |
-
----
-
-## 📦 Installation
-
-### Prerequisites
-
-- **Python** 3.11 or higher
-- **Docker** & **Docker Compose** (recommended)
-- **PostgreSQL** 16+ with TimescaleDB
-- **Redis** 7+
-
-### Option 1: Docker (Recommended)
+JEBAT can act as both MCP **client** (connect to external tool servers) and
+MCP **server** (expose its 47 tools to IDEs like VS Code, Cursor, Windsurf).
 
 ```bash
-# Clone repository
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core
+# Start MCP server on stdio (for IDE integration)
+jebat mcp serve
 
-# Copy environment file
-cp .env.example .env
+# Generate IDE config (VS Code, Cursor, Windsurf)
+jebat mcp ide-config --ide vscode
 
-# Edit .env with your settings
-# Add API keys, tokens, etc.
-
-# Start all services
-docker-compose up -d
-
-# Check status
-docker-compose ps
-
-# View logs
-docker-compose logs -f
+# Connect to an external MCP server
+jebat mcp connect --transport stdio --command "some-mcp-server"
 ```
 
-**Services started:**
-- JEBAT API (port 8000)
-- PostgreSQL (port 5432)
-- Redis (port 6379)
-- Grafana (port 3000)
-- Prometheus (port 9090)
+The MCP server exposes all 47 core tools with JSON Schema parameter definitions.
+Tool calls dispatch through the JEBAT tool registry with safety tier enforcement.
 
-### Option 2: Local Installation
+## 9Router — Free AI
+
+9Router is a local proxy at `localhost:20128/v1` that provides free-tier access
+to Claude, Gemini, GLM, and MiniMax models. No API key required.
 
 ```bash
-# Clone repository
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Initialize database
-python -m jebat.database.setup --init
-
-# Start API server
-python -m uvicorn jebat.services.api.jebat_api:app --reload
-
-# Start Ultra-Loop
-python -m jebat.ultra_process_runner --loop
+jebat free-models          # List available free models
+jebat chat "hello"         # Uses 9Router automatically if no paid provider configured
 ```
 
-### Option 3: Development Setup
+3-tier fallback: Primary → Secondary → Tertiary. RTK compression for efficiency.
+
+## CyberSec Toolkit
+
+hummingb1rd's differentiation — JEBAT is the only CLI agent with built-in
+security tools:
+
+- **CVE lookup** — search NVD for vulnerabilities
+- **Shodan** — discover exposed services on any host
+- **nmap** — port scanning (auto, confirm, or dangerous tier)
+- **DNS audit** — enumerate DNS records, check delegation
+- **SSL/TLS check** — certificate chain, expiry, cipher analysis
+- **Security headers** — HSTS, CSP, X-Frame-Options audit
+- **Password analysis** — strength scoring, entropy calculation
+- **OWASP quick check** — top 10 risk assessment
 
 ```bash
-# Clone with development dependencies
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core
-
-# Install in editable mode with dev extras
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/
-
-# Run linters
-black jebat/
-flake8 jebat/
-mypy jebat/
+jebat agent "Run a security audit on nusabyte.my"
 ```
+
+## Testing
+
+All tests pass:
+
+| Suite | Result |
+|-------|--------|
+| CLI smoke tests | 15/15 PASS |
+| MCP protocol tests | 9/9 PASS (initialize, tools/list, tools/call, ping, errors) |
+| Module imports | 11/11 OK |
+| Tool registry | 47 core + 50 module = 97 total |
+
+## Configuration
+
+JEBAT config lives in `~/.jebat/config.yaml` (or `JEBAT_CONFIG` env var):
+
+```yaml
+llm:
+  provider: openai
+  model: gpt-4o
+  api_key: ${OPENAI_API_KEY}   # or use 9Router for free
+
+safety:
+  default_tier: auto
+
+mcp:
+  servers: []
+
+telemetry:
+  enabled: false  # opt-in only
+
+sandbox:
+  docker_image: python:3.12-slim
+  network_restricted: true
+  mount_project: true
+```
+
+## Project Layout
+
+```
+D:\Jebat\jebat-core\
+  jebat/                 # Python package
+  jebat-core/            # Core docs (AGENTS.md, BOOTSTRAP.md, etc.)
+  JEBAT_MIMPI.md         # Project diary — dreams → reality
+  MEMORY.md              # Agent memory
+  DESIGN.md              # Architecture design rules
+```
+
+## License
+
+Private — NusaByte proprietary. Built by humm1ngb1rd (Shaidan Shaari).
 
 ---
 
-## 🚀 Quick Start Guide
-
-### 1. Start JEBAT
-
-```bash
-# Using Docker (recommended)
-docker-compose up -d
-
-# Verify it's running
-curl http://localhost:8000/api/v1/health
-```
-
-### 2. Try the Chatbot
-
-```bash
-# Standalone chatbot (no API needed)
-python examples/chat/standalone_chatbot.py
-
-# Interactive chatbot (with API)
-python examples/chat/interactive_chatbot.py
-
-# Simple chatbot
-python examples/chat/simple_chatbot.py
-```
-
-### 3. Use the CLI
-
-```bash
-# Show status
-python -m jebat.cli.launch status
-
-# Run thinking session
-python -m jebat.cli.launch think "What is AI?"
-
-# Store memory
-python -m jebat.cli.launch memory store "User prefers Python"
-
-# Search memories
-python -m jebat.cli.launch memory search "Python"
-```
-
-### 4. Access Web Interfaces
-
-- **Landing Page**: `start landing.html`
-- **API Docs**: http://localhost:8000/api/docs
-- **Monitoring Dashboard**: `jebat/services/webui/dashboard.html`
-- **Grafana**: http://localhost:3000 (admin/admin)
-
----
-
-## 💻 Usage Examples
-
-### Python SDK
-
-```python
-from jebat_sdk import JEBATClient
-import asyncio
-
-async def main():
-    async with JEBATClient() as client:
-        # Chat with JEBAT
-        response = await client.chat(
-            "What is artificial intelligence?",
-            mode="deliberate"
-        )
-        print(f"Response: {response.response}")
-        print(f"Confidence: {response.confidence:.0%}")
-        
-        # Store a memory
-        await client.store_memory(
-            "I prefer Python over JavaScript",
-            user_id="user123",
-            layer="M1_EPISODIC"
-        )
-        
-        # Search memories
-        memories = await client.search_memories(
-            "Python",
-            user_id="user123"
-        )
-        
-        for memory in memories:
-            print(f"Memory: {memory.content}")
-
-asyncio.run(main())
-```
-
-### REST API
-
-```bash
-# Health check
-curl http://localhost:8000/api/v1/health
-
-# Chat
-curl -X POST http://localhost:8000/api/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "What is AI?",
-    "mode": "deliberate",
-    "user_id": "user1"
-  }'
-
-# Store memory
-curl -X POST http://localhost:8000/api/v1/memories \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "Test memory",
-    "user_id": "user1"
-  }'
-
-# Search memories
-curl "http://localhost:8000/api/v1/memories/search?query=test&user_id=user1"
-```
-
-### JavaScript/TypeScript
-
-```typescript
-import { JEBATClient } from '@jebat/sdk';
-
-const client = new JEBATClient({
-  baseURL: 'http://localhost:8000'
-});
-
-// Chat
-const response = await client.chat('What is AI?', {
-  mode: 'deliberate'
-});
-console.log(response.response);
-
-// Store memory
-await client.storeMemory('TypeScript is great', {
-  userId: 'user123'
-});
-
-// Search
-const memories = await client.searchMemories('TypeScript', {
-  userId: 'user123'
-});
-```
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                  JEBAT Ecosystem                         │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌──────────────┐         ┌──────────────┐             │
-│  │  Ultra-Loop  │         │  Ultra-Think │             │
-│  │  (Continuous │         │  (Deep       │             │
-│  │   Processing)│         │   Reasoning) │             │
-│  └──────┬───────┘         └──────┬───────┘             │
-│         │                        │                      │
-│         └───────────┬────────────┘                      │
-│                     │                                   │
-│  ┌──────────────────┴──────────────────┐               │
-│  │         Integration Layer            │               │
-│  ├──────────────────────────────────────┤               │
-│  │  • Memory Manager (M0-M4 layers)     │               │
-│  │  • Cache Manager (HOT/WARM/COLD)     │               │
-│  │  • Decision Engine (Routing)         │               │
-│  │  • Agent Orchestrator (Multi-agent)  │               │
-│  │  • Error Recovery (Fault tolerance)  │               │
-│  └──────────────────────────────────────┘               │
-│                     │                                   │
-│  ┌──────────────────┴──────────────────┐               │
-│  │         Storage Layer                │               │
-│  ├──────────────────────────────────────┤               │
-│  │  • PostgreSQL + TimescaleDB          │               │
-│  │  • Redis Cache                       │               │
-│  │  • Vector Search (pgvector)          │               │
-│  └──────────────────────────────────────┘               │
-│                     │                                   │
-│  ┌──────────────────┴──────────────────┐               │
-│  │         Channels Layer               │               │
-│  ├──────────────────────────────────────┤               │
-│  │  • CLI • Telegram • WhatsApp         │               │
-│  │  • Discord • Slack • REST API        │               │
-│  └──────────────────────────────────────┘               │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📚 Documentation
-
-| Document | Description | Link |
-|----------|-------------|------|
-| **USAGE_GUIDE.md** | Complete usage guide | [View](USAGE_GUIDE.md) |
-| **QUICKSTART_EXAMPLES.md** | 8 working examples | [View](QUICKSTART_EXAMPLES.md) |
-| **QUICK_REFERENCE_CARD.md** | One-page cheat sheet | [View](QUICK_REFERENCE_CARD.md) |
-| **ARCHITECTURE.md** | System architecture | [View](ARCHITECTURE.md) |
-| **DEPLOYMENT_GUIDE.md** | Deployment guide | [View](DEPLOYMENT_GUIDE.md) |
-| **IMPLEMENTATION_STATUS_FINAL.md** | Status & chatbot guide | [View](IMPLEMENTATION_STATUS_FINAL.md) |
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=jebat --cov-report=html
-
-# Run specific test file
-pytest tests/test_full_system.py -v
-
-# Run integration tests
-pytest tests/test_integration.py -v
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how to help:
-
-### 1. Fork the Repository
-
-```bash
-# Fork on GitHub, then clone
-git clone https://github.com/YOUR_USERNAME/jebat-core.git
-cd jebat-core
-```
-
-### 2. Create a Branch
-
-```bash
-# Create feature branch
-git checkout -b feature/amazing-feature
-```
-
-### 3. Make Changes
-
-- Write clean, documented code
-- Add tests for new features
-- Update documentation
-- Follow existing code style
-
-### 4. Test
-
-```bash
-# Run tests
-pytest tests/
-
-# Run linters
-black jebat/
-flake8 jebat/
-mypy jebat/
-```
-
-### 5. Commit
-
-```bash
-# Commit with clear message
-git add .
-git commit -m "feat: add amazing feature
-
-- Description of what was added
-- Why it was added
-- Any breaking changes"
-```
-
-### 6. Push & PR
-
-```bash
-# Push to your fork
-git push origin feature/amazing-feature
-
-# Create Pull Request on GitHub
-```
-
-### Code of Conduct
-
-- Be respectful and inclusive
-- Focus on constructive feedback
-- Help others learn
-- Keep discussions on-topic
-
----
-
-## 📄 License
-
-**MIT License** - See [LICENSE](LICENSE) file for details.
-
-```
-Copyright (c) 2026 JEBAT
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software...
-```
-
----
-
-## 🙏 Acknowledgments
-
-- **Hang Jebat** - Legendary Malay warrior who inspired the name
-- **Community** - All contributors and users
-- **Open Source** - Built on amazing open-source projects
-
----
-
-## 📞 Support
-
-- **GitHub Issues**: [Report bugs](https://github.com/nusabyte-my/jebat-core/issues)
-- **GitHub Discussions**: [Ask questions](https://github.com/nusabyte-my/jebat-core/discussions)
-- **Documentation**: [Read the docs](USAGE_GUIDE.md)
-- **Email**: support@jebat.ai (placeholder)
-
----
-
-## 🎯 Roadmap
-
-### Q2 2026 ✅ - Infrastructure & Polish
-- [x] Monitoring Dashboard
-- [x] Enhanced Logging
-- [x] Docker Deployment
-- [x] CI/CD Pipeline
-- [x] WhatsApp Channel
-- [x] Discord Channel
-
-### Q3 2026 ✅ - User Experience & Scale
-- [x] REST API
-- [x] Web Interface
-- [x] Python SDK
-- [x] JavaScript SDK
-- [x] Multi-Tenancy
-
-### Q4 2026 ✅ - Advanced Features
-- [x] Plugin System
-- [x] Analytics Dashboard
-- [x] Knowledge Graph
-- [x] Model Fine-Tuning
-- [x] Advanced ML
-
-### 2027 (Optional)
-- [ ] Mobile apps (iOS/Android)
-- [ ] Voice integration
-- [ ] Advanced analytics
-- [ ] Real-time collaboration
-
----
-
-## 📊 Stats
-
-![Repo Size](https://img.shields.io/github/repo-size/nusabyte-my/jebat-core)
-![Stars](https://img.shields.io/github/stars/nusabyte-my/jebat-core?style=social)
-![Forks](https://img.shields.io/github/forks/nusabyte-my/jebat-core?style=social)
-![Issues](https://img.shields.io/github/issues/nusabyte-my/jebat-core)
-![Pull Requests](https://img.shields.io/github/issues-pr/nusabyte-my/jebat-core)
-
----
-
-**🗡️ JEBAT** - *Because warriors remember everything that matters.*
-
-Made with ❤️ for developers worldwide.
+*\"Kaboosh!\" — humm1ngb1rd's signature. Ghost in the machine.*
