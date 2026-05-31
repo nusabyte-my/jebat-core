@@ -998,6 +998,56 @@ async def main():
     wiki_parser.add_argument("content", nargs="?", help="Page content (for create)")
     wiki_parser.add_argument("--query", help="Search query (for search)")
 
+    # Delegation command
+    delegate_parser = subparsers.add_parser("delegate", help="Spawn subagents for delegated tasks")
+    delegate_subparsers = delegate_parser.add_subparsers(dest="delegate_action")
+
+    delegate_run = delegate_subparsers.add_parser("run", help="Run a delegated subagent task")
+    delegate_run.add_argument("goal", help="What the subagent should accomplish")
+    delegate_run.add_argument("--context", default="", help="Background context for the subagent")
+    delegate_run.add_argument("--tools", default="", help="Comma-separated toolset names (empty = all)")
+    delegate_run.add_argument("--model", default="", help="Model override for this subagent")
+    delegate_run.add_argument("--provider", default="", help="Provider override for this subagent")
+    delegate_run.add_argument("--timeout", type=int, default=120, help="Max seconds before kill")
+    delegate_run.add_argument("--max-iterations", type=int, default=10, help="Max agent loop iterations")
+
+    delegate_list = delegate_subparsers.add_parser("list", help="List active subagents")
+    delegate_cancel = delegate_subparsers.add_parser("cancel", help="Cancel a running subagent")
+    delegate_cancel.add_argument("task_id", help="Subagent task ID to cancel")
+
+    # Cron / Scheduled Jobs command
+    cron_parser = subparsers.add_parser("cron", help="Schedule recurring tasks")
+    cron_subparsers = cron_parser.add_subparsers(dest="cron_action")
+
+    cron_add = cron_subparsers.add_parser("add", help="Add a scheduled job")
+    cron_add.add_argument("prompt", help="Prompt to run on schedule")
+    cron_add.add_argument("--every", default="", help="Interval (e.g. '5m', '2h', '1d')")
+    cron_add.add_argument("--schedule", default="", help="Cron expression (e.g. '*/5 * * * *')")
+    cron_add.add_argument("--name", default="", help="Human-friendly job name")
+    cron_add.add_argument("--no-agent", action="store_true", help="Run as watchdog script (no LLM)")
+
+    cron_list = cron_subparsers.add_parser("list", help="List all scheduled jobs")
+    cron_run = cron_subparsers.add_parser("run", help="Execute a job immediately")
+    cron_run.add_argument("job_id", nargs="?", help="Job ID to run, or omit for all due jobs")
+    cron_pause = cron_subparsers.add_parser("pause", help="Pause a job")
+    cron_pause.add_argument("job_id", help="Job ID to pause")
+    cron_resume = cron_subparsers.add_parser("resume", help="Resume a paused job")
+    cron_resume.add_argument("job_id", help="Job ID to resume")
+    cron_remove = cron_subparsers.add_parser("remove", help="Delete a job")
+    cron_remove.add_argument("job_id", help="Job ID to remove")
+
+    # Safety command - audit log viewer
+    safety_parser = subparsers.add_parser("safety", help="Security: audit log, classify commands, sandbox toggle")
+    safety_subparsers = safety_parser.add_subparsers(dest="safety_action")
+
+    safety_subparsers.add_parser("audit", help="View audit log")
+    safety_subparsers.add_parser("clear-audit", help="Clear audit log")
+    safety_subparsers.add_parser("sandbox-on", help="Enable sandbox mode (dry run)")
+    safety_subparsers.add_parser("sandbox-off", help="Disable sandbox mode")
+
+    classify_cmd = safety_subparsers.add_parser("classify", help="Classify command safety tier")
+    classify_cmd.add_argument("command", help="Command to classify")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -1457,6 +1507,174 @@ async def main():
                 print(f"  Wiki stats: {stats['page_count']} pages, {stats['total_size_bytes']} bytes, {stats['backlink_count']} backlinks")
                 if stats["last_updated"]:
                     print(f"  Last updated: {stats['last_updated']['title']} ({stats['last_updated']['updated_at']:.0f})")
+
+        elif args.command == "delegate":
+            from jebat.core.delegation import DelegationManager, SubagentConfig
+
+            manager = DelegationManager()
+
+            if args.delegate_action == "run":
+                toolsets = [t.strip() for t in args.tools.split(",")] if args.tools else []
+
+                config = SubagentConfig(
+                    goal=args.goal,
+                    context=args.context or "",
+                    toolsets=toolsets,
+                    model=args.model or "",
+                    provider=args.provider or "",
+                    max_iterations=args.max_iterations,
+                    timeout=args.timeout,
+                )
+
+                print(f"  Spawning subagent for: {args.goal[:80]}")
+                print(f"  Toolsets: {toolsets or '(all)'}")
+                print(f"  Timeout: {args.timeout}s | Max iterations: {args.max_iterations}")
+
+                result = await manager.spawn_subagent(config)
+
+                print(f"\n{'='*60}")
+                print(f"  Status: {'SUCCESS' if result.success else 'FAILED'}")
+                print(f"  Tool calls: {len(result.tool_calls_made)}")
+                if result.error:
+                    print(f"  Error: {result.error}")
+                print(f"\n  Summary: {result.summary}")
+                print(f"{'='*60}")
+
+                if result.tokens_used:
+                    print(f"  Tokens: {result.tokens_used}")
+
+            elif args.delegate_action == "list":
+                active = manager._active_subagents
+                if not active:
+                    print("  No active subagents")
+                else:
+                    print(f"  Active subagents: {len(active)}")
+                    for tid, task in active.items():
+                        status = "running" if not task.done() else "completed"
+                        print(f"    {tid[:8]}... — {status}")
+
+            elif args.delegate_action == "cancel":
+                if args.task_id in manager._active_subagents:
+                    manager._active_subagents[args.task_id].cancel()
+                    print(f"  Cancelled {args.task_id[:12]}...")
+                else:
+                    print(f"  No subagent found with ID {args.task_id[:12]}...")
+            else:
+                delegate_parser.print_help()
+
+        elif args.command == "cron":
+            from jebat.features.cron import cron as cron_mod
+            import asyncio
+
+            if args.cron_action == "add":
+                name = args.name or args.prompt[:50]
+                schedule = args.every or args.schedule
+                if not schedule:
+                    print("  Error: --every or --schedule is required")
+                    return
+
+                result = await cron_mod.cron_create(
+                    name=name,
+                    schedule=schedule,
+                    prompt=args.prompt,
+                    no_agent=args.no_agent,
+                )
+                if result.get("ok"):
+                    print(f"  Job created: {result.get('id', '?')[:12]}...")
+                    print(f"  Schedule: {schedule}")
+                else:
+                    print(f"  Error: {result.get('error', 'unknown')}")
+
+            elif args.cron_action == "list":
+                jobs = cron_mod.get_due_jobs()
+                conn = cron_mod._get_conn()
+                all_jobs = conn.execute("SELECT * FROM cron_jobs ORDER BY created_at DESC").fetchall()
+                conn.close()
+                if not all_jobs:
+                    print("  No scheduled jobs")
+                else:
+                    for row in all_jobs:
+                        job = cron_mod._row_to_dict(row)
+                        state = "enabled" if job.get("enabled") else "paused"
+                        print(f"  [{state}] {job['id']} — {job.get('name', job['prompt'][:40])}")
+                        print(f"    Schedule: {job.get('schedule', '?')} | Runs: {job.get('run_count', 0)}")
+
+            elif args.cron_action == "run":
+                if args.job_id:
+                    job = cron_mod.get_job(args.job_id)
+                    if job:
+                        result = await cron_mod.cron_run_now(job_id=args.job_id)
+                        print(f"  Running {args.job_id[:12]}...")
+                        print(f"  Output: {result.get('output', '')[:500]}")
+                    else:
+                        print(f"  Job not found: {args.job_id[:12]}...")
+                else:
+                    due = cron_mod.get_due_jobs()
+                    if not due:
+                        print("  No jobs due")
+                    for job in due:
+                        result = await cron_mod.cron_run_now(job_id=job["id"])
+                        print(f"  {job['id'][:12]}... → {result.get('output', '')[:200]}")
+
+            elif args.cron_action == "pause":
+                result = await cron_mod.cron_pause(job_id=args.job_id)
+                print(f"  {result.get('message', result)}")
+
+            elif args.cron_action == "resume":
+                result = await cron_mod.cron_resume(job_id=args.job_id)
+                print(f"  {result.get('message', result)}")
+
+            elif args.cron_action == "remove":
+                result = await cron_mod.cron_remove(job_id=args.job_id)
+                print(f"  {result.get('message', result)}")
+
+            else:
+                cron_parser.print_help()
+
+        elif args.command == "safety":
+            from jebat.features.security import (
+                read_audit_log, clear_audit_log, enable_sandbox, disable_sandbox,
+                is_sandbox, AUDIT_LOG_PATH,
+            )
+            from jebat.tools import classify_command
+
+            if args.safety_action == "audit":
+                entries = read_audit_log(limit=50)
+                if not entries:
+                    print("  No audit log entries found")
+                else:
+                    print(f"  Recent audit entries ({len(entries)}):\n")
+                    for e in entries[-20:]:
+                        print(f"  [{e.get('safety','?')}] {e.get('ts','?')[:19]} | "
+                              f"{e.get('tool','?')} | {'OK' if e.get('approved') else 'BLOCKED'} | "
+                              f"{e.get('params',{}).get('command','')[:60]}")
+                    print(f"\n  Log path: {AUDIT_LOG_PATH}")
+                    print(f"  Total on disk: {len(entries)} entries")
+
+            elif args.safety_action == "clear-audit":
+                clear_audit_log()
+                print("  Audit log cleared")
+
+            elif args.safety_action == "sandbox-on":
+                enable_sandbox()
+                print("  Sandbox mode ON — commands will dry-run")
+
+            elif args.safety_action == "sandbox-off":
+                disable_sandbox()
+                print("  Sandbox mode OFF — commands execute normally")
+
+            elif args.safety_action == "classify":
+                tier = classify_command(args.command)
+                print(f"  Command: {args.command}")
+                print(f"  Safety tier: {tier.upper()}")
+                if tier == "dangerous":
+                    print("  ⚠ Needs --dangerous flag to execute")
+                elif tier == "confirm":
+                    print("  WARN: Will prompt for confirmation before executing")
+
+            else:
+                safety_parser.print_help()
+                print(f"  Sandbox mode: {'ON (dry-run)' if is_sandbox() else 'OFF'}")
 
         elif args.command == "free-models":
             from jebat.llm.ninerouter_provider import list_free_models, print_ninerouter_setup
