@@ -1,0 +1,23 @@
+# .dockerignore — keep the Docker image lean
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv
+.env
+.git
+.gitignore
+*.egg-info
+dist/
+build/
+**/test_*
+tests/
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.md
+!README.md
+Dockerfile
+docker-compose.yml
+.dockerignore
+node_modules/

@@ -1,19 +1,20 @@
-# JEBAT v5.0.0 — CLI AI Agent
+# JEBAT v6.0.0 — CLI AI Agent
 
-> *\"Mimpi yang menjadi nyata ketika pejuang melaksanakan.\"*
+> *\"Mimpi yang menjadi nyata apabila pejuang melaksanakan. Kaboosh!\"*
 > Dreams become reality when warriors execute.
 
-JEBAT is a full-featured CLI AI agent built in Python with 40 CLI subcommands. It combines an LLM-powered
+JEBAT is a full-featured CLI AI agent built in Python with 41 CLI subcommands. It combines an LLM-powered
 agent loop (ReAct), 97 registered tools, MCP server/client, free-tier AI routing,
-and a cybersecurity toolkit — all in one terminal command.
+and a cybersecurity + pentest toolkit — all in one terminal command. 107k LOC, 64 tests, zero VC.
 
 ## What Makes JEBAT Different
 
-| Feature | JEBAT | Hermes | Claude Code | Codex | OpenClaw |
-|---------|-------|--------|-------------|-------|----------|
-| CLI Subcommands | 40 | ~30 | ~15 | ~10 | ~10 |
+| Feature | JEBAT | Hermes | Claude Code | Codex | Cursor |
+|---------|-------|--------|-------------|-------|--------|
+| CLI Subcommands | 41 | ~30 | ~15 | ~10 | N/A (IDE) |
 | ReAct Agent Loop | Built-in | Built-in | Built-in | Built-in | Built-in |
 | Free AI (no API key) | 9Router proxy | No | No | No | No |
+| Pentest Toolkit | Full: nmap, CVE, Shodan, DNS, SSL, OWASP, Orchestrator | No | No | No | No |
 | CyberSec toolkit | CVE/Shodan/nmap | No | No | No | No |
 | MCP Server + Client | Dual mode | Client only | No | No | Server only |
 | Social Media ops | TG/X/Discord | No | No | No | No |
@@ -22,6 +23,7 @@ and a cybersecurity toolkit — all in one terminal command.
 | Cost Tracking | Built-in | Built-in | No | No | No |
 | Plugin System | Built-in | Built-in | No | No | No |
 | Telemetry | Opt-in | Opt-in | No | No | No |
+| Self-hosted | Yes | Yes | Yes | Yes | No |
 
 ## Quick Start
 
@@ -33,6 +35,13 @@ pip install jebat
 git clone https://github.com/humm1ngb1rd/jebat.git
 cd jebat-core
 pip install -e .
+
+# ...or run with Docker (no Python needed)
+docker build -t jebat:latest .
+docker run -it --rm \
+  -v ~/.jebat:/root/.jebat \
+  -e OPENAI_API_KEY=$OPENAI_API_KEY \
+  jebat:latest jebat chat-repl
 
 # Run the init wizard to configure your LLM provider
 jebat init
@@ -79,6 +88,12 @@ jebat cron list
 jebat safety audit
 jebat safety classify "rm -rf /tmp/logs"
 
+# Pentest — TukangBesi engine
+jebat pentest -t example.com -s quick           # fast scan
+jebat pentest --orchestrate -t example.com -v   # full orchestrated scan
+jebat pentest report example.com                # view saved reports
+jebat pentest --list-profiles                   # see scan profiles
+
 # Session history and cross-session search (FTS5)
 jebat session list
 jebat session search "delegation OR wiki"
@@ -88,7 +103,7 @@ source jebat-core/shell/jebat-completion.bash  # bash
 source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 
-## 40 CLI Subcommands
+## 41 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -130,6 +145,7 @@ source jebat-core/shell/jebat-completion.zsh   # zsh
 | `telemetry` | Opt-in usage analytics |
 | `sandbox` | Docker sandbox for code execution |
 | `plugins` | Manage JEBAT plugins |
+| `pentest` | Pentest scans: quick, full, web, api, orchestrate, report |
 
 ## Architecture
 
@@ -143,6 +159,7 @@ jebat-core/
     features/       # Tool modules
       browser/        # Web automation (9 tools)
       cybersec/       # Security toolkit (10 tools: CVE, Shodan, nmap, DNS, SSL)
+      pentest/        # TukangBesi — pentest engine + orchestrator (3 modules)
       cost_tracking/  # Bendahara — token cost tracking (5 tools)
       cron/           # Scheduled tasks (6 tools)
       security/       # 3-tier safety, audit log, sandbox mode
@@ -176,7 +193,7 @@ JEBAT uses Malaysian warrior/role names for its subsystems:
 
 | Agent | Malay Meaning | Module |
 |-------|--------------|--------|
-| **Tukang** | Craftsman | Shell tools, Plugin system |
+| **TukangBesi** | Blacksmith | Pentest engine, orchestrator |
 | **Hulubalang** | Warrior/Guard | Sandbox (Docker) |
 | **Pawang** | Tracker/Shaman | Undo/Rollback |
 | **Pengacara** | Advocate/Lawyer | Social Media |
@@ -228,10 +245,10 @@ jebat chat "hello"         # Uses 9Router automatically if no paid provider conf
 
 3-tier fallback: Primary → Secondary → Tertiary. RTK compression for efficiency.
 
-## CyberSec Toolkit
+## CyberSec & Pentest Toolkit
 
 hummingb1rd's differentiation — JEBAT is the only CLI agent with built-in
-security tools:
+security and pentest tools:
 
 - **CVE lookup** — search NVD for vulnerabilities
 - **Shodan** — discover exposed services on any host
@@ -240,10 +257,23 @@ security tools:
 - **SSL/TLS check** — certificate chain, expiry, cipher analysis
 - **Security headers** — HSTS, CSP, X-Frame-Options audit
 - **Password analysis** — strength scoring, entropy calculation
-- **OWASP quick check** — top 10 risk assessment
+- **OWASP Top-10** — risk assessment checklist
+- **TukangBesi orchestrated scan** — full pentest with multi-agent analysis
+- **MITRE ATT&CK mapping** — map findings to known TTPs
+- **Report generator** — Markdown + JSON output with severity scoring
 
 ```bash
+# One-shot security audit
 jebat agent "Run a security audit on nusabyte.my"
+
+# Quick pentest scan
+jebat pentest -t nusabyte.my -s quick
+
+# Full orchestrated pentest (3-agent swarm)
+jebat pentest --orchestrate -t nusabyte.my -v
+
+# List scan profiles
+jebat pentest --list-profiles
 ```
 
 ## Testing
@@ -253,9 +283,11 @@ All tests pass:
 | Suite | Result |
 |-------|--------|
 | CLI smoke tests | 15/15 PASS |
-| MCP protocol tests | 9/9 PASS (initialize, tools/list, tools/call, ping, errors) |
+| MCP protocol tests | 9/9 PASS |
+| Pentest tests | 28/28 PASS |
 | Module imports | 11/11 OK |
 | Tool registry | 47 core + 50 module = 97 total |
+| **Total** | **64/64 PASS** |
 
 ## Configuration
 

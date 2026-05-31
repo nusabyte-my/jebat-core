@@ -8,7 +8,7 @@ Version: 2.0.0-refactored
 Status: Production Ready
 """
 
-__version__ = "5.0.0"
+__version__ = "6.0.0"
 __author__ = "JEBAT Team"
 __license__ = "MIT"
 

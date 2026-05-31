@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI v5.0.0 — Command Line Interface — 41 subcommands
+JEBAT CLI v6.0.0 — Command Line Interface — 41 subcommands
 
 Subcommands (41): status, init, loop, think, memory, config,
 llm-providers, llm-config, llm-auth, llm-best-provider, auth, doctor,
@@ -820,7 +820,7 @@ class JEBATCLI:
 async def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="JEBAT v5.0.0 — 41-CLI AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nOps: file, exec, wiki, agent, search, tools, mcp\nPentest: pentest (quick/standard/full/vuln scan)\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
+        description="JEBAT v6.0.0 — 41-CLI AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nOps: file, exec, wiki, agent, search, tools, mcp\nPentest: pentest (quick/standard/full/vuln scan)\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -1181,6 +1181,9 @@ async def main():
     sandbox_parser.add_argument("--run", help="Python code to execute in sandbox")
     sandbox_parser.add_argument("--shell-cmd", dest="sandbox_command", help="Shell command to execute in sandbox")
     sandbox_parser.add_argument("--network", action="store_true", help="Allow network in sandbox")
+
+    # Demo/showcase command — fast 10-command overview
+    subparsers.add_parser("demo", help="Run a 10-command showcase of JEBAT features")
 
     # Plugins command
     plugins_parser = subparsers.add_parser("plugins", help="Manage JEBAT plugins")

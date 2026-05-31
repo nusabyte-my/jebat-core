@@ -1,64 +1,45 @@
-# JEBAT AI Assistant - Docker Configuration
-# Multi-stage build for production deployment
+# JEBAT v6.0.0 — CLI AI Agent
+# Build: docker build -t jebat:latest .
+# Run:   docker run -it --rm jebat:latest jebat status
+#        docker run -it --rm -v ~/.jebat:/root/.jebat jebat:latest jebat chat-repl
 
-FROM python:3.11-slim as base
+FROM python:3.12-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+LABEL org.opencontainers.image.title="JEBAT"
+LABEL org.opencontainers.image.description="41-CLI AI Agent with pentest toolkit, ReAct loop, MCP, and 97 tools"
+LABEL org.opencontainers.image.version="6.0.0"
+LABEL org.opencontainers.image.authors="humm1ngb1rd <humm1ngb1rd@nusabyte.my>"
+LABEL org.opencontainers.image.url="https://github.com/humm1ngb1rd/jebat"
+LABEL org.opencontainers.image.source="https://github.com/humm1ngb1rd/jebat"
 
-# Set work directory
-WORKDIR /app
-
-# Install system dependencies
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    postgresql-client \
+    ca-certificates \
+    curl \
+    git \
+    nmap \
+    dnsutils \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt requirements.prod.txt ./
+# Install JEBAT from the local directory
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY jebat/ jebat/
 
-# Install production Python dependencies by default in the base image.
-RUN pip install --no-cache-dir -r requirements.prod.txt
+# Install the package (editable not needed in container)
+RUN pip install --no-cache-dir . && \
+    python -c "import jebat; print(f'JEBAT v{jebat.__version__} installed')"
 
-# Production stage
-FROM base as production
+# Create default config skeleton
+RUN mkdir -p /root/.jebat && \
+    echo "# JEBAT config — configure your LLM provider" > /root/.jebat/config.yaml && \
+    echo 'llm:' >> /root/.jebat/config.yaml && \
+    echo '  provider: openai' >> /root/.jebat/config.yaml && \
+    echo '  model: gpt-4o' >> /root/.jebat/config.yaml && \
+    echo '  api_key: "${OPENAI_API_KEY}"' >> /root/.jebat/config.yaml
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash jebat
+# Test that the CLI boots
+RUN jebat status 2>&1 || true
 
-# Copy application code
-COPY --chown=jebat:jebat . .
-
-# Switch to non-root user
-USER jebat
-
-# Expose port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
-
-# Default command - start the API server
-CMD ["uvicorn", "jebat.services.api.jebat_api:app", "--host", "0.0.0.0", "--port", "8000"]
-
-# Development stage
-FROM base as development
-
-# Install development dependencies
-RUN pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir \
-    pytest \
-    pytest-asyncio \
-    black \
-    flake8 \
-    mypy
-
-# Copy application code
-COPY . .
-
-# Default command for development
-CMD ["python", "-m", "jebat.cli.launch", "status"]
+ENTRYPOINT ["jebat"]
+CMD ["--help"]

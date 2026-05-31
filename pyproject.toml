@@ -1,7 +1,7 @@
 [project]
 name = "jebat"
-version = "5.0.0"
-description = "JEBAT v5 — 40-CLI AI Agent. ReAct loop, 97 tools, MCP, FTS5 wiki, session search, social, TTS, auth keyring, delegation, cron, shell completion, 9Router free AI"
+version = "6.0.0"
+description = "JEBAT v6 — 41-CLI AI Agent. ReAct loop, 97 tools, MCP, pentest engine, FTS5 wiki, session search, social, TTS, auth keyring, delegation, cron, shell completion, 9Router free AI"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}

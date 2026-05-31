@@ -1,158 +1,24 @@
-# JEBAT AI Assistant - Docker Compose
-# Complete stack with database, cache, and monitoring
+# docker-compose.yml — quick JEBAT deployment
+#   docker compose up -d        # start in background
+#   docker compose run jebat    # interactive session
 
-version: "3.8"
+version: "3.9"
 
 services:
-  # JEBAT API Service
-  jebat-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    container_name: jebat-api
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
+  jebat:
+    build: .
+    image: jebat:latest
+    container_name: jebat
+    stdin_open: true    # docker run -i
+    tty: true           # docker run -t
+    volumes:
+      # Mount config so API keys persist between container restarts
+      - ~/.jebat:/root/.jebat
+      # Optional: mount your project directory
+      - ${PWD:-.}:/workspace
     environment:
-      - APP_ENV=production
-      - DATABASE_URL=postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD:-jebat_password}@postgres:5432/jebat_db
-      - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env
-    volumes:
-      - jebat_data:/app/data
-      - ./config:/app/config:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    networks:
-      - jebat-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  # JEBAT Ultra-Loop Worker
-  jebat-loop:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    container_name: jebat-loop
-    restart: unless-stopped
-    environment:
-      - APP_ENV=production
-      - DATABASE_URL=postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD:-jebat_password}@postgres:5432/jebat_db
-      - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env
-    volumes:
-      - jebat_data:/app/data
-      - ./config:/app/config:ro
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - jebat-network
-    command: ["python", "-m", "jebat.cli.launch", "loop", "start"]
-
-  # PostgreSQL Database with TimescaleDB
-  postgres:
-    image: timescale/timescaledb-ha:pg16
-    container_name: jebat-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: jebat_db
-      POSTGRES_USER: jebat
-      POSTGRES_PASSWORD: ${JEBAT_DB_PASSWORD:-jebat_password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "5432:5432"
-    networks:
-      - jebat-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jebat -d jebat_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: jebat-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - jebat-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Prometheus Monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: jebat-prometheus
-    restart: unless-stopped
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-      - "--web.console.templates=/usr/share/prometheus/consoles"
-    ports:
-      - "9090:9090"
-    networks:
-      - jebat-network
-    depends_on:
-      - jebat-api
-
-  # Grafana Dashboard
-  grafana:
-    image: grafana/grafana:latest
-    container_name: jebat-grafana
-    restart: unless-stopped
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${JEBAT_GRAFANA_PASSWORD:-admin}
-      GF_USERS_ALLOW_SIGN_UP: false
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    ports:
-      - "3000:3000"
-    networks:
-      - jebat-network
-    depends_on:
-      - prometheus
-
-networks:
-  jebat-network:
-    driver: bridge
-
-volumes:
-  jebat_data:
-  postgres_data:
-  redis_data:
-  prometheus_data:
-  grafana_data:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - SHODAN_API_KEY=${SHODAN_API_KEY:-}
+    entrypoint: ["jebat"]
+    command: ["--help"]
