@@ -87,7 +87,7 @@ source jebat-core/shell/jebat-completion.bash  # bash
 source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 
-## 30 CLI Subcommands
+## 31 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -114,6 +114,7 @@ source jebat-core/shell/jebat-completion.zsh   # zsh
 | `cron` | Schedule recurring tasks (add, list, run, pause, remove) |
 | `safety` | Security: audit log, sandbox, command classification |
 | `session` | Session history: list, search past conversations (FTS5) |
+| `todo` | Personal task tracking: add, list, update, remove, clear |
 | `mcp` | MCP server management (serve, ide-config) |
 | `search` | Web search (SearXNG, Google/Bing API) |
 | `agent` | One-shot agent task with tool-calling |
@@ -129,7 +130,7 @@ source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 30 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 31 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation

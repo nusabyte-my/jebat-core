@@ -1057,6 +1057,24 @@ async def main():
     session_search_cmd.add_argument("--role-filter", help="Filter by role: user,assistant (comma-separated)")
     session_search_cmd.add_argument("--limit", type=int, default=10, help="Max results (default: 10)")
 
+    # Todo commands — personal task tracker
+    todo_parser = subparsers.add_parser("todo", help="Personal todo list (add, list, remove, update, clear)")
+    todo_subparsers = todo_parser.add_subparsers(dest="todo_action")
+    # todo add
+    todo_add = todo_subparsers.add_parser("add", help="Add a new todo")
+    todo_add.add_argument("content", help="Todo content")
+    # todo list
+    todo_subparsers.add_parser("list", help="List all todos")
+    # todo remove
+    todo_remove = todo_subparsers.add_parser("remove", help="Remove a todo by ID")
+    todo_remove.add_argument("todo_id", help="Todo ID to remove")
+    # todo update
+    todo_update = todo_subparsers.add_parser("update", help="Update a todo's status")
+    todo_update.add_argument("todo_id", help="Todo ID to update")
+    todo_update.add_argument("status", help="New status: pending, in_progress, completed, cancelled")
+    # todo clear
+    todo_subparsers.add_parser("clear", help="Remove all todos")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -1720,6 +1738,53 @@ async def main():
 
             else:
                 session_parser.print_help()
+
+        elif args.command == "todo":
+            from jebat.features.todo import add_todo, list_todos, remove_todo, update_todo_status, clear_todos
+            import asyncio
+            import concurrent.futures
+
+            def _run_async(coro):
+                """Run a coroutine in a separate thread with its own event loop."""
+                def run_in_thread():
+                    return asyncio.run(coro)
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(run_in_thread)
+                    return future.result()
+
+            if args.todo_action == "add":
+                result = _run_async(add_todo(args.content))
+                if "error" in result:
+                    print(f"  Error: {result['error']}")
+                else:
+                    print(f"  Added todo [{result['id'][:8]}]: {result['content']}")
+            elif args.todo_action == "list":
+                todos = _run_async(list_todos())
+                if not todos:
+                    print("  No todos")
+                else:
+                    print(f"  Todos ({len(todos)}):")
+                    for t in todos:
+                        status_icon = {"pending": "○", "in_progress": "⧗", "completed": "✓", "cancelled": "✗"}.get(t["status"], "?")
+                        print(f"  [{status_icon}] {t['id'][:8]}: {t['content']}")
+            elif args.todo_action == "remove":
+                result = _run_async(remove_todo(args.todo_id))
+                if "error" in result:
+                    print(f"  Error: {result['error']}")
+                else:
+                    print(f"  Removed todo [{result['id'][:8]}]: {result['content']}")
+            elif args.todo_action == "update":
+                result = _run_async(update_todo_status(args.todo_id, args.status))
+                if "error" in result:
+                    print(f"  Error: {result['error']}")
+                else:
+                    print(f"  Updated todo [{result['id'][:8]}]: {result['content']} → {result['status']}")
+            elif args.todo_action == "clear":
+                result = _run_async(clear_todos())
+                print(f"  Cleared {result['removed']} todos")
+            else:
+                todo_parser.print_help()
 
         elif args.command == "free-models":
             from jebat.llm.ninerouter_provider import list_free_models, print_ninerouter_setup
