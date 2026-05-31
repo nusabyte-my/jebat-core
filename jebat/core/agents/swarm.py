@@ -44,6 +44,59 @@ ROLE_TOOLSETS: dict[str, list[str]] = {
 }
 
 
+# ── Swarm result cache ─────────────────────────────────────────────────────
+# Deduplicates identical goals so repeated queries don't re-dispatch.
+
+import hashlib
+import os
+
+SWARM_CACHE_DIR = os.path.expanduser("~/.jebat/swarm_cache")
+
+
+def _ensure_cache_dir() -> None:
+    os.makedirs(SWARM_CACHE_DIR, exist_ok=True)
+
+
+def _swarm_cache_key(goal: str, mode: str, profile: str, max_agents: int) -> str:
+    raw = f"{goal}::{mode}::{profile}::{max_agents}"
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def _swarm_cache_load(key: str) -> dict | None:
+    path = os.path.join(SWARM_CACHE_DIR, f"{key}.json")
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _swarm_cache_save(key: str, data: dict) -> None:
+    _ensure_cache_dir()
+    path = os.path.join(SWARM_CACHE_DIR, f"{key}.json")
+    try:
+        with open(path, "w") as f:
+            json.dump(data, f)
+    except OSError:
+        pass  # Cache is best-effort
+
+
+def _swarm_cache_invalidate() -> int:
+    """Clear all cached swarm results. Returns count of files removed."""
+    _ensure_cache_dir()
+    count = 0
+    for fname in os.listdir(SWARM_CACHE_DIR):
+        if fname.endswith(".json"):
+            try:
+                os.remove(os.path.join(SWARM_CACHE_DIR, fname))
+                count += 1
+            except OSError:
+                pass
+    return count
+
+
 def classify_goal(goal: str) -> list[str]:
     """Hang Nadim classifier — maps a goal string to relevant roles.
 
@@ -259,7 +312,7 @@ async def run_orchestration(
         provider_override: Optional provider override
 
     Returns:
-        Dict with orchestration results
+Dict with orchestration results
     """
     # Step 1: Classify or use provided roles
     if not roles:
@@ -269,6 +322,14 @@ async def run_orchestration(
 
     if not classified:
         classified = ["hang_tuah"]
+
+    # Check swarm cache before dispatching (skip cache when executing)
+    cache_key = _swarm_cache_key(goal, mode, profile, max_agents)
+    if not execute:
+        cached = _swarm_cache_load(cache_key)
+        if cached is not None:
+            cached["from_cache"] = True
+            return cached
 
     # Cost-aware model: if profile=deep and no override, pick premium
     if not model_override:
@@ -292,13 +353,12 @@ async def run_orchestration(
         if len(classified) == 1:
             result = await dispatch_single(classified[0], goal, profile,
                                             execute=execute, model_override=model_override,
-                                            provider_override=provider_override)
+provider_override=provider_override)
         else:
             swarm = await dispatch_swarm(classified, goal, profile, max_agents,
                                           execute=execute, model_override=model_override)
             result = [r for r in swarm if r.get("status") in ("ready", "completed")]
-
-    return {
+    out = {
         "goal": goal,
         "mode": mode,
         "roles_used": classified[:max_agents],
@@ -306,7 +366,14 @@ async def run_orchestration(
         "model": model_override,
         "executed": execute,
         "result": result,
+        "from_cache": False,
     }
+
+    # Cache the result for future deduplication
+    if not execute:
+        _swarm_cache_save(cache_key, out)
+
+    return out
 
 # ── LEGENDARY: Taming Sari reduction ────────────────────────────────────────
 # When deep+consensus mode runs with execute=True, the Taming Sari layer

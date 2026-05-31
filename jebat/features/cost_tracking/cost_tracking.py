@@ -389,6 +389,67 @@ def get_pricing() -> str:
 
 from jebat.tools import register_tool  # noqa: E402
 
+# ── Auto-profile Tuner ─────────────────────────────────────────────────────
+# Uses real cost data to recommend profile switching when budgets are exceeded.
+
+BUDGET_CAPS: dict[str, float] = {
+    "daily_warn": 0.50,   # Warn at $0.50/day
+    "daily_critical": 1.00,  # Force reduction at $1.00/day
+    "weekly_warn": 3.00,
+    "weekly_critical": 5.00,
+}
+
+
+def recommend_profile() -> dict:
+    """Analyse recent cost data and recommend a profile level + action.
+
+    Returns:
+        dict with keys: recommended_profile, reason, cost_today, cost_weekly, action
+    """
+    from jebat.features.cost_tracking.cost_tracking import get_daily_summary, get_weekly_summary
+
+    today = get_daily_summary()
+    week = get_weekly_summary()
+
+    cost_today = today.total_cost_usd
+    cost_weekly = week.total_cost_usd
+
+    recommendation = "cavement"
+    reasons: list[str] = []
+
+    if cost_today >= BUDGET_CAPS["daily_critical"] or cost_weekly >= BUDGET_CAPS["weekly_critical"]:
+        recommendation = "cavement"
+        reasons.append(f"cost critical - ${cost_today:.2f} today, ${cost_weekly:.2f}/week")
+    elif cost_today >= BUDGET_CAPS["daily_warn"] or cost_weekly >= BUDGET_CAPS["weekly_warn"]:
+        recommendation = "lean"
+        reasons.append(f"cost warning - ${cost_today:.2f} today, ${cost_weekly:.2f}/week")
+    else:
+        recommendation = "deep"
+        reasons.append("budget healthy")
+
+    return {
+        "recommended_profile": recommendation,
+        "reason": "; ".join(reasons),
+        "cost_today": round(cost_today, 4),
+        "cost_weekly": round(cost_weekly, 4),
+        "action": "switch" if recommendation != "deep" else "keep",
+    }
+
+
+def tune_prompt_profile(current_profile: str = "deep") -> str:
+    """Return the recommended profile based on real cost data.
+
+    Args:
+        current_profile: The profile currently active.
+
+    Returns:
+        Recommended profile name (cavement, lean, or deep).
+    """
+    rec = recommend_profile()
+    return rec["recommended_profile"]
+
+
+
 register_tool(
     name="cost_record",
     description="Record token usage with provider/model/tokens and calculate cost",
