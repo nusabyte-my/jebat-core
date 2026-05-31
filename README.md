@@ -67,9 +67,19 @@ jebat exec "echo Hello from JEBAT"
 jebat wiki create "my-page" "Knowledge is power"
 jebat wiki read my-page
 jebat wiki search --query "power"
+
+# Delegation and automation
+jebat delegate run "Resolve all TODOs in src/" --tools terminal,file
+jebat delegate list
+jebat cron add "echo daily heartbeat" --every 24h --name "daily-check"
+jebat cron list
+
+# Safety and audit
+jebat safety audit
+jebat safety classify "rm -rf /tmp/logs"
 ```
 
-## 26 CLI Subcommands
+## 29 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -92,6 +102,9 @@ jebat wiki search --query "power"
 | `file` | File operations: read, write, patch, search, undo |
 | `exec` | Run shell commands (foreground or background) |
 | `wiki` | Knowledge base: create, read, edit, search pages |
+| `delegate` | Spawn subagents for parallel task execution |
+| `cron` | Schedule recurring tasks (add, list, run, pause, remove) |
+| `safety` | Security: audit log, sandbox, command classification |
 | `mcp` | MCP server management (serve, ide-config) |
 | `search` | Web search (SearXNG, Google/Bing API) |
 | `agent` | One-shot agent task with tool-calling |
@@ -107,7 +120,7 @@ jebat wiki search --query "power"
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 26 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 29 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation
@@ -116,6 +129,7 @@ jebat-core/
       cybersec/       # Security toolkit (10 tools: CVE, Shodan, nmap, DNS, SSL)
       cost_tracking/  # Bendahara — token cost tracking (5 tools)
       cron/           # Scheduled tasks (6 tools)
+      security/       # 3-tier safety, audit log, sandbox mode
       fileops/        # File operations (6 tools)
       wiki/           # Knowledge base with FTS5 search
       terminal/       # Async terminal executor (foreground/background/PTY)
