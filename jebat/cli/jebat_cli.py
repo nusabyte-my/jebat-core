@@ -1075,6 +1075,33 @@ async def main():
     # todo clear
     todo_subparsers.add_parser("clear", help="Remove all todos")
 
+    # TTS commands — text-to-speech (Edge TTS free, OpenAI TTS with key)
+    tts_parser = subparsers.add_parser("tts", help="Text-to-speech generation (edge, openai, voices)")
+    tts_subparsers = tts_parser.add_subparsers(dest="tts_action")
+    # tts edge
+    tts_edge = tts_subparsers.add_parser("edge", help="Generate speech via Microsoft Edge TTS (free)")
+    tts_edge.add_argument("text", help="Text to convert to speech")
+    tts_edge.add_argument("--voice", default="en-US-JennyNeural",
+                          help="Voice name or shortcut (e.g., en-US-female, ms-MY-female)")
+    tts_edge.add_argument("--rate", default="+0%", help="Speed adjustment (+10%%, -5%%)")
+    tts_edge.add_argument("--pitch", default="+0Hz", help="Pitch adjustment (+2Hz)")
+    tts_edge.add_argument("--output-dir", help="Custom output directory")
+    # tts openai
+    tts_open = tts_subparsers.add_parser("openai", help="Generate speech via OpenAI TTS (API key)")
+    tts_open.add_argument("text", help="Text to convert to speech")
+    tts_open.add_argument("--voice", default="alloy",
+                          choices=["alloy", "echo", "fable", "onyx", "nova", "shimmer"])
+    tts_open.add_argument("--model", default="tts-1", choices=["tts-1", "tts-1-hd"])
+    tts_open.add_argument("--speed", type=float, default=1.0, help="Speed 0.25-4.0")
+    tts_open.add_argument("--format", default="mp3", choices=["mp3", "opus", "aac", "flac", "wav", "pcm"],
+                          dest="response_format")
+    tts_open.add_argument("--api-key", help="OpenAI API key (or set OPENAI_API_KEY env)")
+    tts_open.add_argument("--output-dir", help="Custom output directory")
+    # tts voices
+    tts_voices_cmd = tts_subparsers.add_parser("voices", help="List available Edge TTS voices")
+    tts_voices_cmd.add_argument("language", nargs="?", default=None,
+                                help="Language prefix filter (e.g., 'en', 'ms', 'zh', 'ja')")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -1905,6 +1932,65 @@ async def main():
                 print(f"  {result.get('status', 'unknown')}: {result}")
             else:
                 print("  Usage: jebat plugins [--list|--load|--load-all|--install-git|--install-pip|--uninstall]")
+
+        elif args.command == "tts":
+            from jebat.features.tts import edge_tts, openai_tts, list_tts_voices, EDGE_VOICES
+            import asyncio
+            import concurrent.futures
+
+            def _run_async(coro):
+                def _run():
+                    return asyncio.run(coro)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    return executor.submit(_run).result()
+
+            if args.tts_action == "edge":
+                # Resolve voice shortcuts
+                voice = EDGE_VOICES.get(args.voice, args.voice)
+                print(f"  Generating speech with Edge TTS...")
+                print(f"  Voice: {voice}")
+                try:
+                    result = _run_async(edge_tts(
+                        args.text, voice=voice,
+                        rate=args.rate, pitch=args.pitch,
+                        output_dir=args.output_dir,
+                    ))
+                    print(f"  Saved: {result.filepath}")
+                    print(f"  Format: {result.format} | Text length: {result.text_length} chars")
+                except Exception as e:
+                    print(f"  TTS failed: {e}")
+                    print(f"  Tip: Install edge-tts for offline use: pip install edge-tts")
+
+            elif args.tts_action == "openai":
+                print(f"  Generating speech with OpenAI TTS...")
+                print(f"  Model: {args.model} | Voice: {args.voice}")
+                try:
+                    result = _run_async(openai_tts(
+                        args.text,
+                        api_key=args.api_key,
+                        model=args.model,
+                        voice=args.voice,
+                        speed=args.speed,
+                        response_format=args.response_format,
+                        output_dir=args.output_dir,
+                    ))
+                    print(f"  Saved: {result.filepath}")
+                    print(f"  Format: {result.format} | Text length: {result.text_length} chars")
+                except Exception as e:
+                    print(f"  TTS failed: {e}")
+
+            elif args.tts_action == "voices":
+                voices = list_tts_voices(args.language)
+                if not voices:
+                    print(f"  No voices found for language '{args.language}'")
+                else:
+                    filter_text = f" for '{args.language}'" if args.language else ""
+                    print(f"  Available Edge TTS voices{filter_text} ({len(voices)}):")
+                    for shortcut, full_name in voices.items():
+                        print(f"    {shortcut:20s} → {full_name}")
+
+            else:
+                tts_parser.print_help()
 
         return 0
 

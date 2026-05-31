@@ -87,7 +87,7 @@ source jebat-core/shell/jebat-completion.bash  # bash
 source jebat-core/shell/jebat-completion.zsh   # zsh
 ```
 
-## 31 CLI Subcommands
+## 36 CLI Subcommands
 
 | Command | What It Does |
 |---------|-------------|
@@ -123,14 +123,17 @@ source jebat-core/shell/jebat-completion.zsh   # zsh
 | `undo` | Undo file changes (rollback to backup) |
 | `telemetry` | Opt-in usage analytics |
 | `sandbox` | Docker sandbox for code execution |
-| `plugins` | Manage JEBAT plugins |
+|| `plugins` | Manage JEBAT plugins |
+|| `tts` | Text-to-speech generation (edge, openai) |
+|| `git` | Git operations: status, diff, log, commit, branch |
+|| `init` | First-run setup: configure LLM provider and API key |
 
 ## Architecture
 
 ```
 jebat-core/
   jebat/
-    cli/            # CLI entry point (jebat_cli.py, 31 subcommands)
+    cli/            # CLI entry point (jebat_cli.py, 36 subcommands)
     core/           # Agent brain
       agent_loop.py   # ReAct loop (Think → Act → Observe → Think)
       delegation.py   # Sub-agent task delegation
