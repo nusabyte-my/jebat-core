@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
 from typing import Any, Mapping

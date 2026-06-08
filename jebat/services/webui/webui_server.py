@@ -10,18 +10,16 @@ import logging
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import (
     APIRouter,
     FastAPI,
     HTTPException,
-    Request,
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -709,7 +707,7 @@ async def agents_status():
 @webui_router.get("/webui/api/health")
 async def health_check():
     """Lightweight health check."""
-    from datetime import datetime, timezone as _dt
+    from datetime import timezone as _dt
     return {
         "ok": True,
         "uptime": "JEBAT online",

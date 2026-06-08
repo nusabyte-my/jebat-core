@@ -22,10 +22,6 @@ Usage:
     await channel.start()
 """
 
-import asyncio
-import hashlib
-import hmac
-import json
 import logging
 from typing import Any, Callable, Dict, List, Optional
 

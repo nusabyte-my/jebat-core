@@ -21,7 +21,6 @@ Usage:
     await channel.start()
 """
 
-import asyncio
 import hashlib
 import hmac
 import json

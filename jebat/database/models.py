@@ -14,11 +14,10 @@
 # - Sentinel Security (threat detection, policies)
 # - Skills System (agent capabilities)
 
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum as PyEnum
 from typing import Any, Dict, List, Optional
 
-import sqlalchemy
 
 # Remove unused import
 # import sqlalchemy
@@ -36,7 +35,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import ENUM, INET, UUID, array
+from sqlalchemy.dialects.postgresql import ENUM, INET, UUID
 from sqlalchemy.ext.asyncio import (
     AsyncAttrs,
     AsyncSession,
@@ -49,7 +48,6 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
-from sqlalchemy.sql import func as sql_func
 from sqlalchemy.types import ARRAY
 from sqlalchemy.types import ARRAY as SQLArray
 

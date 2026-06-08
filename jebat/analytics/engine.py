@@ -19,13 +19,11 @@ Usage:
     insights = await engine.get_insights(period="day")
 """
 
-import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Tuple
-from uuid import UUID
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

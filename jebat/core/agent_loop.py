@@ -25,13 +25,8 @@ from jebat.llm import (
     resolve_llm_config,
     build_chat_system_prompt,
     apply_chat_preset,
-    estimate_tokens,
 )
 from jebat.llm.chat_runtime import (
-    CHAT_PRESETS,
-    normalize_chat_preset,
-    list_chat_presets,
-    apply_runtime_overrides,
     ChatGenerationMetadata,
 )
 from jebat.tools import TOOL_REGISTRY, call_tool, classify_tool_call
@@ -68,7 +63,6 @@ def _build_project_context_section(project_path: str | None = None) -> str:
 
     Returns empty string if no context files are found.
     """
-    import os
 
     root = Path(project_path) if project_path else Path.cwd()
     root = root.resolve()

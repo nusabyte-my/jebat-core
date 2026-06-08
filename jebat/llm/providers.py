@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Protocol
 from urllib.parse import urljoin
 
 from .auth import get_provider_secret
 from .config import JebatLLMConfig
-from .ninerouter_provider import NineRouterProvider, build_ninerouter_provider, NINEROUTER_DEFAULT_HOST
+from .ninerouter_provider import build_ninerouter_provider
 from .token_usage import TokenUsage, usage_from_texts
 
 

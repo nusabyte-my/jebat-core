@@ -7,7 +7,6 @@ Tokens are printed as they arrive from the LLM, just like Claude Code and Hermes
 
 from __future__ import annotations
 
-import sys
 import asyncio
 from typing import Any, AsyncIterator
 

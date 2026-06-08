@@ -7,10 +7,9 @@ providing tool discovery, resource access, and session management.
 
 import asyncio
 import logging
-import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 logger = logging.getLogger(__name__)
 

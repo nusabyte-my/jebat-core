@@ -14,13 +14,13 @@ import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 import asyncpg
 import redis.asyncio as redis
-from asyncpg import Connection, Pool
+from asyncpg import Pool
 from redis.asyncio import Redis
 from redis.asyncio.connection import ConnectionPool as RedisPool
 
@@ -153,7 +153,7 @@ class DatabaseConnectionManager:
         """
         # Check circuit breaker
         if self._is_circuit_breaker_open():
-            logger.warning(f"Circuit breaker is open, skipping connection attempt")
+            logger.warning("Circuit breaker is open, skipping connection attempt")
             return False
 
         self.state = ConnectionState.CONNECTING
@@ -232,7 +232,7 @@ class DatabaseConnectionManager:
     async def _connect_redis(self) -> bool:
         """Establish Redis connection pool."""
         try:
-            self.redis_pool = aioredis.ConnectionPool.from_url(
+            self.redis_pool = redis.ConnectionPool.from_url(
                 f"redis://:{self.config.password}@{self.config.host}:{self.config.port}/{self.config.redis_db}",
                 max_connections=self.config.pool_size + self.config.max_overflow,
                 socket_timeout=self.config.command_timeout,
@@ -562,7 +562,7 @@ class DatabaseConnectionManager:
                 health = await self.health_check()
 
                 if not health["is_healthy"] and self.state == ConnectionState.CONNECTED:
-                    logger.warning(f"Health check failed, attempting reconnection")
+                    logger.warning("Health check failed, attempting reconnection")
                     await self.reconnect()
 
                 await asyncio.sleep(self.config.health_check_interval)

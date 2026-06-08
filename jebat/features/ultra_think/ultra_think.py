@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from .database_repository import UltraThinkRepository
@@ -497,7 +497,7 @@ class UltraThink:
 
         # Identify key components
         thought = ThoughtNode(
-            content=f"Key elements identified in problem",
+            content="Key elements identified in problem",
             phase=ThinkingPhase.ORIENTATION,
             confidence=0.7,
             metadata={"component": "analysis"},
@@ -506,7 +506,7 @@ class UltraThink:
 
         # Set thinking goals
         thought = ThoughtNode(
-            content=f"Thinking goal: Analyze and provide reasoned response",
+            content="Thinking goal: Analyze and provide reasoned response",
             phase=ThinkingPhase.ORIENTATION,
             confidence=0.9,
             metadata={"goal": "primary"},

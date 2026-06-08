@@ -15,15 +15,12 @@ This is the primary user-facing interface. Features:
 
 from __future__ import annotations
 
-import asyncio
-import json
 import os
 import signal
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from jebat.config import load_config
 from jebat.features.session import SessionManager

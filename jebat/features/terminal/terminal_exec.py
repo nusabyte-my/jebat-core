@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import shlex
-import signal
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -21,7 +19,6 @@ from typing import Any
 
 from jebat.features.security import (
     classify_command,
-    sanitize_params,
     write_audit,
     AuditEntry,
     prompt_confirm,

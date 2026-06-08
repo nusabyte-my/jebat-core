@@ -4,9 +4,9 @@ JEBAT Built-in Skills
 Skill registry and built-in skill implementations.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
-from .base_skill import BaseSkill, SkillResult
+from .base_skill import BaseSkill
 
 
 class SkillRegistry:

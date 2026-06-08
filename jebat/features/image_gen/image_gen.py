@@ -23,11 +23,9 @@ import json
 import logging
 import os
 import struct
-import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +170,7 @@ async def _generate_stability(
     import urllib.error
 
     # Stability AI uses multipart form data
-    url = f"https://api.stability.ai/v2beta/stable-image/generate/sd3"
+    url = "https://api.stability.ai/v2beta/stable-image/generate/sd3"
 
     # Map size to width/height
     size_map = {

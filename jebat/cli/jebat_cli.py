@@ -30,14 +30,11 @@ Usage examples:
 import argparse
 import asyncio
 import json
-import uuid
 import sys
 import urllib.error
 import urllib.request
 import warnings
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Suppress runpy RuntimeWarning when package is imported before __main__ execution
 warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*found in sys.modules.*")
@@ -45,7 +42,6 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*found in s
 from jebat.llm import (
     build_skill_prompt,
     build_skill_registry,
-    ChatHistoryStore,
     build_project_context,
     generate_with_failover,
     list_provider_auth_status,
@@ -54,7 +50,6 @@ from jebat.llm import (
     select_best_provider,
 )
 
-from jebat.tools.base import BaseTool, ToolRegistry
 
 # Rich for beautiful CLI output
 try:
@@ -781,7 +776,8 @@ class JEBATCLI:
 
     async def cmd_demo(self):
         """Run a 10-command JEBAT showcase — fast, no-LLM overview."""
-        import sys, subprocess
+        import sys
+        import subprocess
 
         self.print("\nJEBAT v6.0.0 — Demo Showcase", "bold cyan")
         self.print("zero-cost CLI agent with 43 subcommands, pentest engine, and more", "dim")
@@ -814,7 +810,7 @@ class JEBATCLI:
                         if line.strip():
                             self.print(f"     {line.strip()}", "dim")
             except subprocess.TimeoutExpired:
-                self.print(f"     timed out — skipping", "yellow")
+                self.print("     timed out — skipping", "yellow")
             except Exception as e:
                 self.print(f"     {e}", "red")
             self.print("")
@@ -1592,7 +1588,7 @@ async def main():
                 from jebat.features.mcp.mcp_server import MCPServer, TransportMode, run_server
                 if args.transport == "streamable-http":
                     from jebat.features.mcp.mcp_transport import StreamableHTTPTransport
-                    cli.print(f"  Starting JEBAT MCP server (Streamable HTTP, MCP 2025-03-26)...")
+                    cli.print("  Starting JEBAT MCP server (Streamable HTTP, MCP 2025-03-26)...")
                     server = MCPServer(transport=TransportMode.HTTP, http_port=args.port, host=args.host)
                     transport = StreamableHTTPTransport(server, host=args.host, port=args.port)
                     await transport.run()
@@ -2028,7 +2024,7 @@ async def main():
 
             if args.orchestrate:
                 # Orchestrated mode: scan + agent analysis + consensus
-                print(f"\n  ⚔️  JEBAT TukangBesi — Orchestrated Pentest")
+                print("\n  ⚔️  JEBAT TukangBesi — Orchestrated Pentest")
                 print(f"  Target: {args.target}")
                 print(f"  Scan: {args.scan} | Orchestration: ON (swarm agents)")
                 print()
@@ -2038,7 +2034,7 @@ async def main():
                     scan_type=args.scan,
                     verbose=args.verbose,
                 )
-                print(f"\n  ⚡ Orchestrated scan complete")
+                print("\n  ⚡ Orchestrated scan complete")
                 print(f"  Score: {result['score']}/100 ({result['severity']})")
                 print(f"  Vulnerabilities: {result['vulnerabilities']}")
                 print(f"  Agents engaged: {', '.join(result['agents'])}")
@@ -2160,7 +2156,8 @@ async def main():
 
         elif args.command == "social":
             from jebat.features.social_media.social_media import send_message, twitter_search, twitter_timeline
-            import asyncio, concurrent.futures
+            import asyncio
+            import concurrent.futures
 
             def _run_async(coro):
                 def run_in_thread():
@@ -2195,7 +2192,7 @@ async def main():
                 except Exception as exc:
                     print(f"  Error: {exc}")
             elif args.social_action == "twitter-timeline":
-                print(f"  Fetching home timeline...")
+                print("  Fetching home timeline...")
                 try:
                     tweets = _run_async(twitter_timeline(limit=args.limit))
                     if not tweets:
@@ -2260,7 +2257,7 @@ async def main():
                 else:
                     print(f"  Recommended: [{rec_profile}]  ({rec_action})")
                     print(f"  Reason: {rec.get('reason', 'N/A')}")
-                    print(f"  Run 'jebat profile tune --apply' to switch.")
+                    print("  Run 'jebat profile tune --apply' to switch.")
             elif action == "export":
                 path = export_profiles(getattr(args, "output", ""))
                 print(f"  Profiles exported to: {path}")
@@ -2328,7 +2325,7 @@ async def main():
                 print(f"  Telemetry ENABLED — categories: {', '.join(config.categories)}")
             elif args.disable:
                 config = disable_telemetry()
-                print(f"  Telemetry DISABLED")
+                print("  Telemetry DISABLED")
             elif args.report:
                 print(format_telemetry_report())
             else:
@@ -2360,7 +2357,7 @@ async def main():
                 print("  Usage: jebat sandbox [--check|--run 'code'|--command 'cmd'] [--network]")
 
         elif args.command == "orchestrate":
-            from jebat.core.agents.swarm import run_orchestration, ROLE_DESCRIPTIONS
+            from jebat.core.agents.swarm import run_orchestration
             result = await run_orchestration(
                 goal=args.goal,
                 mode=args.mode,
@@ -2429,10 +2426,10 @@ async def main():
             elif args.output == "full":
                 # Show synthesis if taming_sari was applied
                 if result.get("taming_sari"):
-                    print(f"\n  [bold yellow]Taming Sari Synthesis[/bold yellow]")
+                    print("\n  [bold yellow]Taming Sari Synthesis[/bold yellow]")
                     print(f"  {result.get('synthesis', '')}")
                     if result.get("contradictions"):
-                        print(f"\n  [red]Contradictions found:[/red]")
+                        print("\n  [red]Contradictions found:[/red]")
                         for c in result.get("contradictions", []):
                             print(f"  • {c}")
                 print(f"\n  {json.dumps(result, indent=2, default=str)[:2000]}")
@@ -2491,7 +2488,7 @@ async def main():
             if args.tts_action == "edge":
                 # Resolve voice shortcuts
                 voice = EDGE_VOICES.get(args.voice, args.voice)
-                print(f"  Generating speech with Edge TTS...")
+                print("  Generating speech with Edge TTS...")
                 print(f"  Voice: {voice}")
                 try:
                     result = _run_async(edge_tts(
@@ -2503,10 +2500,10 @@ async def main():
                     print(f"  Format: {result.format} | Text length: {result.text_length} chars")
                 except Exception as e:
                     print(f"  TTS failed: {e}")
-                    print(f"  Tip: Install edge-tts for offline use: pip install edge-tts")
+                    print("  Tip: Install edge-tts for offline use: pip install edge-tts")
 
             elif args.tts_action == "openai":
-                print(f"  Generating speech with OpenAI TTS...")
+                print("  Generating speech with OpenAI TTS...")
                 print(f"  Model: {args.model} | Voice: {args.voice}")
                 try:
                     result = _run_async(openai_tts(

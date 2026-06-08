@@ -25,10 +25,9 @@ import json
 import logging
 import sys
 import traceback
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional
 
 from jebat.tools import TOOL_REGISTRY, ToolDef, call_tool
 
@@ -377,7 +376,7 @@ class MCPServer:
         This is the mode used by IDEs that launch JEBAT as a
         subprocess (VS Code, Cursor, Windsurf, JetBrains).
         """
-        logger.info(f"Starting MCP server on stdio transport")
+        logger.info("Starting MCP server on stdio transport")
         sys.stderr.write(f"[JEBAT MCP Server] Starting on stdio, "
                          f"protocol v{MCP_PROTOCOL_VERSION}\n")
 
@@ -433,7 +432,6 @@ class MCPServer:
 
         This mode allows remote IDEs to connect over network.
         """
-        from httpx import ASGITransport, AsyncClient
         import uvicorn  # type: ignore
         from starlette.applications import Starlette  # type: ignore
         from starlette.routing import Route  # type: ignore

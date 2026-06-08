@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import os
 import re
-import json
 from typing import Any
 from html.parser import HTMLParser
 

@@ -16,10 +16,8 @@ from typing import Dict, List, Optional
 from .layers import (
     HeatScore,
     Memory,
-    MemoryImportance,
     MemoryLayer,
     MemoryMetadata,
-    MemoryModality,
 )
 
 logger = logging.getLogger(__name__)

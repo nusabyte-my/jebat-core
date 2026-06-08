@@ -26,23 +26,22 @@
 # - Malicious input patterns
 
 import asyncio
-import hashlib
 import ipaddress
-import json
 import logging
 import re
+import time
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
 from jebat.database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
-from jebat.database.models import SecurityEvent, SecurityPolicy, AuditLog, User
+from jebat.database.models import SecurityEvent, SecurityPolicy
 from jebat.core.decision.engine import DecisionEngine
 try:
     from jebat.error_recovery.system import ErrorRecoverySystem
@@ -312,7 +311,7 @@ class SecurityAnalyzeSkill(BaseSkill):
         # Train anomaly detector
         self._initialize_ml_models()
 
-        logger.info(f"Security analysis skill initialized with ML models")
+        logger.info("Security analysis skill initialized with ML models")
 
     def _initialize_ml_models(self) -> None:
         """Initialize ML models for anomaly detection."""
@@ -855,8 +854,8 @@ class SecurityAnalyzeSkill(BaseSkill):
                     indicators.append(f"Suspicious data volume: {data_volume:.2f}MB vs typical {typical_volume:.2f}MB")
 
             # Check for unusual data types being accessed
-            if 'request_paths' in input_data:
-                paths = input_data['request_paths']
+            if 'request_paths' in context.metadata:
+                paths = context.metadata['request_paths']
                 sensitive_paths = [
                     '/api/users/export',
                     '/api/database/dump',
@@ -992,6 +991,7 @@ class SecurityAnalyzeSkill(BaseSkill):
 
                 if len(response_times) > 10:
                     q1 = np.percentile(response_times, 25)
+                    q2 = np.percentile(response_times, 50)
                     q3 = np.percentile(response_times, 75)
                     iqr = q3 - q1
 
@@ -2039,258 +2039,3 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(example_usage())
-# - Integration with Error Recovery for security-related issues
-# - Hidden security layer for sophisticated threat detection
-# - Security metrics and monitoring
-# - Real-time threat scoring and risk assessment
-#
-# This is a production-grade security system designed to protect JEBAT from:
-# - SQL Injection attacks
-# - XSS (Cross-Site Scripting) attacks
-# - CSRF (Cross-Site Request Forgery) attacks
-# - Rate limiting abuse
-# - Unauthorized access attempts
-# - Data exfiltration attempts
-# - Behavioral anomalies
-# - Malicious input patterns
-
-import asyncio
-import hashlib
-import ipaddress
-import json
-import logging
-import re
-from collections import deque
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-
-import numpy as np
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-
-from jebat.database.repositories import SecurityEventRepository, SecurityPolicyRepository, AuditLogRepository, UserRepository
-from jebat.database.models import SecurityEvent, SecurityPolicy, AuditLog, User
-from jebat.core.decision.engine import DecisionEngine
-try:
-    from jebat.error_recovery.system import ErrorRecoverySystem
-except ImportError:
-    ErrorRecoverySystem = None
-from jebat.core.cache.smart_cache import CacheManager
-from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
-
-# Configure logging
-logger = logging.getLogger(__name__)
-
-
-# ==================== Enums ====================
-
-class SecurityEventType(str, Enum):
-    """Security event type enumeration"""
-
-    ANOMALY_DETECTED = "anomaly_detected"
-    THREAT_BLOCKED = "threat_blocked"
-    UNAUTHORIZED_ACCESS = "unauthorized_access"
-    RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
-    MALICIOUS_INPUT = "malicious_input"
-    SQL_INJECTION_ATTEMPT = "sql_injection_attempt"
-    XSS_ATTEMPT = "xss_attempt"
-    CSRF_ATTEMPT = "csrf_attempt"
-    DATA_EXFILTRATION_ATTEMPT = "data_exfiltration_attempt"
-    POLICY_VIOLATION = "policy_violation"
-    AUTHENTICATION_FAILURE = "authentication_failure"
-    SUSPICIOUS_BEHAVIOR = "suspicious_behavior"
-    SECURITY_ALERT = "security_alert"
-
-
-class SecuritySeverity(str, Enum):
-    """Security severity enumeration"""
-
-    INFO = "info"
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-    FATAL = "fatal"
-
-
-class ThreatType(str, Enum):
-    """Threat type enumeration"""
-
-    MALWARE = "malware"
-    PHISHING = "phishing"
-    SOCIAL_ENGINEERING = "social_engineering"
-    INSIDER_THREAT = "insider_threat"
-    DDOS = "ddos"
-    DATA_BREACH = "data_breach"
-    API_ABUSE = "api_abuse"
-    AUTHENTICATION_ATTACK = "authentication_attack"
-    UNKNOWN = "unknown"
-
-
-class PolicyType(str, Enum):
-    """Security policy type enumeration"""
-
-    RATE_LIMITING = "rate_limiting"
-    CONTENT_FILTERING = "content_filtering"
-    ACCESS_CONTROL = "access_control"
-    DATA_RETENTION = "data_retention"
-    INPUT_VALIDATION = "input_validation"
-    AUTHENTICATION = "authentication"
-    SESSION_MANAGEMENT = "session_management"
-
-
-class ResponseAction(str, Enum):
-    """Security response action enumeration"""
-
-    BLOCK = "block"
-    THROTTLE = "throttle"
-    CHALLENGE = "challenge"
-    LOG_ONLY = "log_only"
-    NOTIFY = "notify"
-    TERMINATE_SESSION = "terminate_session"
-    REVOKE_ACCESS = "revoke_access"
-    ALERT_ADMIN = "alert_admin"
-
-
-# ==================== Data Classes ====================
-
-@dataclass
-class SecurityContext:
-    """
-    Security context for security analysis.
-
-    Contains user information, request details, and environmental context.
-    """
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    request_path: Optional[str] = None
-    request_method: Optional[str] = None
-    request_headers: Dict[str, str] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    environment: str = "production"
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class ThreatAssessment:
-    """
-    Threat assessment result.
-
-    Contains threat detection results, risk scores, and recommended actions.
-    """
-    threat_detected: bool = False
-    threat_type: Optional[ThreatType] = None
-    severity: SecuritySeverity = SecuritySeverity.INFO
-    confidence_score: float = 0.0  # 0.0 to 1.0
-    risk_score: float = 0.0  # 0.0 to 100.0
-    recommended_action: Optional[ResponseAction] = None
-    details: Dict[str, Any] = field(default_factory=dict)
-    indicators: List[str] = field(default_factory=list)
-    model_version: str = "1.0.0"
-    assessed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-@dataclass
-class AnomalyScore:
-    """
-    Anomaly detection result.
-
-    Contains behavioral anomaly detection results with statistical analysis.
-    """
-    is_anomalous: bool = False
-    anomaly_type: Optional[str] = None
-    score: float = 0.0  # Higher means more anomalous
-    threshold: float = 0.0
-    features: Dict[str, float] = field(default_factory=dict)
-    baseline: Optional[float] = None
-    deviation: Optional[float] = None
-    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-@dataclass
-class SecurityMetrics:
-    """
-    Security system metrics.
-
-    Tracks overall security performance and threat statistics.
-    """
-    total_events: int = 0
-    events_by_type: Dict[str, int] = field(default_factory=dict)
-    events_by_severity: Dict[str, int] = field(default_factory=dict)
-    threats_blocked: int = 0
-    threats_detected: int = 0
-    anomalies_detected: int = 0
-    policies_enforced: int = 0
-    avg_response_time_ms: float = 0.0
-    false_positives: int = 0
-    false_negatives: int = 0
-    uptime_seconds: float = 0.0
-    last_threat_time: Optional[datetime] = None
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-# ==================== Security Skills ====================
-
-class SecurityAnalyzeSkill(BaseSkill):
-    """
-    Security analysis skill for detecting threats and anomalies.
-
-    Performs comprehensive security analysis using ML models and statistical methods.
-    """
-
-    name = "security_analyze"
-    skill_type = "analyze"
-    description = "Comprehensive security analysis with threat detection, anomaly detection, and risk assessment"
-    version = "1.0.0"
-    timeout_seconds = 60
-    max_retries = 2
-
-    parameters = [
-        SkillParameter(
-            name="input_data",
-            type=dict,
-            description="Input data to analyze (request, user context, etc.)",
-            required=True,
-        ),
-        SkillParameter(
-            name="analyze_type",
-            type=str,
-            description="Type of analysis to perform (threat, anomaly, both)",
-            default="both",
-        ),
-        SkillParameter(
-            name="strict_mode",
-            type=bool,
-            description="Enable strict security mode (block more threats)",
-            default=False,
-        ),
-    ]
-
-    capabilities = [
-        SkillCapability(
-            name="threat_detection",
-            description="Detect various types of cyber threats",
-            enabled=True,
-        ),
-        SkillCapability(
-            name="anomaly_detection",
-            description="Detect behavioral anomalies using ML",
-            enabled=True,
-        ),
-        SkillCapability(
-            name="input_validation",
-            description="Validate input for malicious patterns",
-            enabled=True,
-        ),
-            ]
-
-
-# End of Sentinel class
-
-
-# Alias for compatibility
-Sentinel = SentinelSecuritySystem

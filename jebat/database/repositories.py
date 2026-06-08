@@ -28,7 +28,6 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from .models import (
     Agent,
@@ -48,7 +47,6 @@ from .models import (
     ErrorSeverity,
     ErrorTracking,
     MCPOperation,
-    MemoryLayer,
     MemoryM0,
     MemoryM1,
     MemoryM2,

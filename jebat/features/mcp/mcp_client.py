@@ -17,7 +17,6 @@ import asyncio
 import json
 import logging
 import os
-import subprocess
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
@@ -26,7 +25,7 @@ from typing import Any, Callable, Coroutine, Dict, List, Optional
 import httpx
 
 from jebat.config import JebatConfig, load_config
-from jebat.tools import TOOL_REGISTRY, ToolDef, register_tool
+from jebat.tools import TOOL_REGISTRY, register_tool
 
 logger = logging.getLogger(__name__)
 

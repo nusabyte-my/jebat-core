@@ -21,15 +21,10 @@ Generated skills follow the JEBAT SKILL.md format:
 
 from __future__ import annotations
 
-import json
-import os
 import re
-import subprocess
-import textwrap
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import httpx
 
@@ -335,7 +330,7 @@ Generate a practical, actionable skill for this task."""
     # Try to use LLM for generation
     skill_content = ""
     try:
-        from jebat.llm.config import JebatLLMConfig, load_llm_config
+        from jebat.llm.config import load_llm_config
         from jebat.llm.providers import build_provider
         
         config = load_llm_config()

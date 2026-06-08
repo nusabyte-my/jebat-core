@@ -3,14 +3,13 @@
 Multi-tier caching system with intelligent eviction and heat-based optimization.
 """
 
-import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, OrderedDict, Set, Tuple
-from collections import defaultdict, deque
+from collections import deque
 
 logger = logging.getLogger(__name__)
 

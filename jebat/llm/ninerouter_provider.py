@@ -37,6 +37,7 @@ from typing import Any
 import httpx
 
 from .config import JebatLLMConfig
+from .providers import ProviderGeneration
 from .token_usage import TokenUsage, usage_from_texts
 
 

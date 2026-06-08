@@ -15,11 +15,9 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from jebat.database.models import (
     AsyncSessionLocal,
-    Base,
     UltraLoopCycle,
     UltraLoopPhase,
 )

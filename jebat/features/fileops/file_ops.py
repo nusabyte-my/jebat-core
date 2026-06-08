@@ -6,7 +6,6 @@ All operations go through safety checks and create backups before destructive wr
 from __future__ import annotations
 
 import difflib
-import os
 import shutil
 import subprocess
 from datetime import datetime

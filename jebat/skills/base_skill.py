@@ -12,15 +12,13 @@
 # - Performance tracking and metrics collection
 
 import asyncio
-import inspect
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-from ..database.models import Skill, SkillExecution, User
 from ..database.repositories import SkillExecutionRepository, SkillRepository
 
 # Configure logging
@@ -604,7 +602,7 @@ class SkillRegistry:
             skill_class: Skill class to register
         """
         if not issubclass(skill_class, BaseSkill):
-            raise ValueError(f"Skill class must inherit from BaseSkill")
+            raise ValueError("Skill class must inherit from BaseSkill")
 
         skill_name = skill_class.name
         self._skills[skill_name] = skill_class
@@ -831,7 +829,6 @@ class ExampleSkill(BaseSkill):
 
 async def example_usage():
     """Example usage of base skill system."""
-    from .built_in_skills import DataAnalyzeSkill, WebSearchSkill
 
     # Create skill instance
     skill = ExampleSkill()

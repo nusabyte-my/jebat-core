@@ -25,9 +25,8 @@ from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-import aiohttp
 import websockets
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocketDisconnect
 from websockets.server import WebSocketServerProtocol
 
 logger = logging.getLogger(__name__)
@@ -438,7 +437,7 @@ class WebSocketGateway:
 
             # Use decision engine for routing
             if self.decision_engine:
-                from decision_engine.engine import DecisionContext, DecisionType
+                from decision_engine.engine import DecisionContext
 
                 # Create decision context
                 context = DecisionContext(

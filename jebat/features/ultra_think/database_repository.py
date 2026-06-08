@@ -11,15 +11,13 @@ Provides persistent storage for:
 
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from jebat.database.models import (
     AsyncSessionLocal,
-    UltraLoopCycle,
     UltraLoopThinkSession,
     UltraLoopThought,
 )

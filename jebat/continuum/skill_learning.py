@@ -6,7 +6,7 @@ Skills that learn and improve through Continuum cycles.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -231,7 +231,7 @@ class ContinuumSkillLearning:
                 # Add examples
                 examples = improvement.get("examples", [])
                 if examples:
-                    self.skill.base_prompt += f"\n\n## Examples:\n" + "\n".join(
+                    self.skill.base_prompt += "\n\n## Examples:\n" + "\n".join(
                         f"- {ex}" for ex in examples
                     )
                 return True

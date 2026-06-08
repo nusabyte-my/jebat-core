@@ -10,7 +10,6 @@ Intelligent routing and decision-making:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -83,7 +82,7 @@ class DecisionEngine:
             decision_type=DecisionType.AGENT_SELECTION,
             selected_option=selected,
             confidence=0.8,
-            reasoning=f"Selected agent based on task requirements",
+            reasoning="Selected agent based on task requirements",
         )
 
         self.decision_history.append(result)

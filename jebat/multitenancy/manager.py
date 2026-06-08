@@ -20,7 +20,6 @@ Usage:
     usage = await manager.get_usage(tenant.id)
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
