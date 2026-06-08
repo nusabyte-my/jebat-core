@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 from .layers import (
     HeatScore,
     Memory,
+    MemoryImportance,
     MemoryLayer,
     MemoryMetadata,
 )
@@ -88,7 +89,11 @@ class MemoryManager:
         limit: int = 10,
     ) -> List[Memory]:
         """
-        Search memories.
+        Search memories, ranked by heat score (importance), not insertion order.
+
+        Matching memories have their heat updated on access (visit frequency
+        and recency rise), so frequently-retrieved memories surface higher over
+        time — the core premise of the heat-scoring architecture.
 
         Args:
             query: Search query
@@ -97,21 +102,38 @@ class MemoryManager:
             limit: Max results
 
         Returns:
-            List of matching memories
+            List of matching memories, highest-heat first
         """
-        results = []
+        query_lower = query.lower()
         layers = [layer] if layer else list(MemoryLayer)
 
-        for layer in layers:
-            for memory in self.memories[layer]:
+        matches: List[Memory] = []
+        for lyr in layers:
+            for memory in self.memories[lyr]:
                 if memory.metadata.user_id != user_id:
                     continue
-                if query.lower() in memory.content.lower():
-                    results.append(memory)
-                    if len(results) >= limit:
-                        return results
+                if query_lower in memory.content.lower():
+                    self._register_access(memory)
+                    matches.append(memory)
 
-        return results
+        # Rank by live heat score (descending), then recency as tie-breaker.
+        matches.sort(
+            key=lambda m: (m.heat.calculate(), m.created_at),
+            reverse=True,
+        )
+        return matches[:limit]
+
+    def _register_access(self, memory: Memory) -> None:
+        """Bump heat signals when a memory is retrieved.
+
+        Visit frequency climbs toward 1.0 with diminishing returns; recency
+        resets to fresh. This is what lets hot memories rank above cold ones.
+        """
+        heat = memory.heat
+        # Diminishing-returns increment so a single hot memory can't dominate.
+        heat.visit_frequency = min(1.0, heat.visit_frequency + (1.0 - heat.visit_frequency) * 0.2)
+        heat.recency = 1.0
+        memory.updated_at = datetime.now(timezone.utc)
 
     def get_stats(self) -> Dict:
         """Get memory statistics."""
@@ -160,10 +182,39 @@ class MemoryManager:
         logger.info("Memory consolidation started")
 
     async def consolidate(self):
-        """Run memory consolidation."""
+        """Run memory consolidation: decay idle memories and prune cold ones.
+
+        Consolidation is what keeps the store from growing unbounded and lets
+        the heat ranking stay meaningful over time:
+          1. Recency decays on every memory (older, untouched memories cool).
+          2. Memories whose heat falls below the prune threshold are dropped,
+             except CRITICAL/HIGH importance which are always retained.
+        """
         logger.info("Running memory consolidation...")
-        # Consolidation logic here
-        logger.info("Memory consolidation complete")
+
+        decay = float(self.config.get("recency_decay", 0.9))
+        prune_threshold = float(self.config.get("prune_threshold", 0.05))
+        protected = {MemoryImportance.CRITICAL, MemoryImportance.HIGH}
+
+        pruned = 0
+        for layer, memories in self.memories.items():
+            survivors: List[Memory] = []
+            for memory in memories:
+                # Cool down recency; frequently-accessed memories were just
+                # refreshed to 1.0 by _register_access so they decay slowly.
+                memory.heat.recency *= decay
+
+                if (
+                    memory.heat.calculate() < prune_threshold
+                    and memory.metadata.importance not in protected
+                ):
+                    pruned += 1
+                    continue
+                survivors.append(memory)
+            self.memories[layer] = survivors
+
+        logger.info(f"Memory consolidation complete (pruned {pruned} cold memories)")
+        return pruned
 
     def stop(self):
         """Stop consolidation task."""
