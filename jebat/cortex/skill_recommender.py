@@ -259,6 +259,15 @@ class CortexSkillRecommender:
                 )
             )
 
+        # De-duplicate by skill name, keeping the highest-confidence entry
+        # (a skill can arrive from both the general pass and language_skills).
+        best_by_name: Dict[str, SkillRecommendation] = {}
+        for rec in recommendations:
+            existing = best_by_name.get(rec.skill_name)
+            if existing is None or rec.confidence > existing.confidence:
+                best_by_name[rec.skill_name] = rec
+        recommendations = list(best_by_name.values())
+
         # Sort by confidence
         recommendations.sort(key=lambda x: x.confidence, reverse=True)
 
