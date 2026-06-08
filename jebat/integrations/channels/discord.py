@@ -19,9 +19,20 @@ Usage:
     )
     await channel.start()
 """
-
+import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
+
+try:
+    import discord
+    from discord import app_commands
+    from discord.ext import commands
+    HAS_DISCORD = True
+except ImportError:  # pragma: no cover - optional dependency
+    discord = None  # type: ignore
+    app_commands = None  # type: ignore
+    commands = None  # type: ignore
+    HAS_DISCORD = False
 
 logger = logging.getLogger(__name__)
 
