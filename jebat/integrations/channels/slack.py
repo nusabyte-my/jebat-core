@@ -285,9 +285,18 @@ class SlackChannel:
                                 },
                             ],
                         },
+                        {
+                            "type": "actions",
+                            "elements": [
+                                {
+                                    "type": "button",
+                                    "text": {"type": "plain_text", "text": "🗡️ Think Again (deeper)"},
+                                    "action_id": "think_again",
+                                    "value": text[:2000],
+                                },
+                            ],
+                        },
                     ]
-
-                    # Deliver via response_url (proper delayed-reply channel
                     # for slash commands); fall back to a channel post.
                     if response_url:
                         await self._send_to_response_url(response_url, blocks=blocks)
@@ -331,7 +340,7 @@ class SlackChannel:
         """Handle interactive block action"""
         actions = payload.get("actions", [])
         user = payload.get("user", {})
-        channel = payload.get("channel", {})
+        response_url = payload.get("response_url")
 
         for action in actions:
             action_id = action.get("action_id")
@@ -339,10 +348,58 @@ class SlackChannel:
 
             logger.info(f"Slack action: {action_id} by {user.get('id')}")
 
-            # Handle specific actions
+            # Re-run thinking one tier deeper than the original pass.
             if action_id == "think_again":
-                # Re-run thinking with different mode
-                pass
+                problem = (value or "").strip()
+                if not problem:
+                    return {"status": "ok"}
+                if not (self.ultra_loop and self.ultra_loop.ultra_think):
+                    await self._send_to_response_url(
+                        response_url, text="JEBAT is not initialized.",
+                        response_type="ephemeral",
+                    )
+                    return {"status": "ok"}
+
+                try:
+                    from jebat.features.ultra_think import ThinkingMode
+
+                    # Acknowledge immediately (the re-think can exceed 3s).
+                    await self._send_to_response_url(
+                        response_url, text="🗡️ Re-thinking deeper…",
+                        response_type="ephemeral",
+                    )
+
+                    result = await self.ultra_loop.ultra_think.think(
+                        problem=problem,
+                        mode=ThinkingMode.DEEP,
+                        user_id=user.get("id"),
+                        timeout=45,
+                    )
+                    blocks = [
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": f"*🗡️ JEBAT (deeper)*\n\n{result.conclusion[:2000]}",
+                            },
+                        },
+                        {
+                            "type": "context",
+                            "elements": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"Confidence: {result.confidence:.1%} | Steps: {len(result.reasoning_steps)} | Mode: deep",
+                                },
+                            ],
+                        },
+                    ]
+                    await self._send_to_response_url(response_url, blocks=blocks)
+                except Exception as e:
+                    logger.error(f"think_again failed: {e}")
+                    await self._send_to_response_url(
+                        response_url, text=f"Error re-thinking: {e}",
+                        response_type="ephemeral",
+                    )
 
         return {"status": "ok"}
 
