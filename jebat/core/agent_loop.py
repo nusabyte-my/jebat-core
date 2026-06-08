@@ -821,12 +821,23 @@ class AgentLoop:
 
         # Check if tool exists
         if tool_name not in TOOL_REGISTRY:
+            # Suggest the closest valid tool names so the LLM can self-correct
+            # on the next turn instead of burning iterations on a dead end.
+            import difflib
+            suggestions = difflib.get_close_matches(
+                tool_name, list(TOOL_REGISTRY.keys()), n=3, cutoff=0.5
+            )
+            hint = (
+                f" Did you mean: {', '.join(suggestions)}?"
+                if suggestions
+                else f" Available tools: {', '.join(sorted(TOOL_REGISTRY.keys())[:15])}."
+            )
             return ToolCallStep(
                 tool_name=tool_name,
                 params=params,
                 result=None,
                 duration_ms=int((time.time() - start) * 1000),
-                error=f"Tool '{tool_name}' not found in registry",
+                error=f"Tool '{tool_name}' not found in registry.{hint}",
             )
 
         # Safety approval
