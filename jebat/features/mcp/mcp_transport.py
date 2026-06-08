@@ -168,12 +168,17 @@ class SamplingHandler:
 
         # Use JEBAT's 9Router LLM proxy
         try:
+            from dataclasses import replace
             from jebat.llm import generate_with_failover, load_llm_config
             config = self._config or load_llm_config()
 
-            # Override model if IDE specifies one
-            if preferred_model:
-                config.model = preferred_model
+            # Honor IDE-supplied sampling params (config is frozen — rebuild it).
+            config = replace(
+                config,
+                model=preferred_model or config.model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
 
             response_text, used_provider = await generate_with_failover(
                 config=config,

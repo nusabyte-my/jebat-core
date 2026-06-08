@@ -287,7 +287,12 @@ class SlackChannel:
                         },
                     ]
 
-                    await self.send_message(channel, text="", blocks=blocks)
+                    # Deliver via response_url (proper delayed-reply channel
+                    # for slash commands); fall back to a channel post.
+                    if response_url:
+                        await self._send_to_response_url(response_url, blocks=blocks)
+                    else:
+                        await self.send_message(channel, text="", blocks=blocks)
 
                     return {"status": "ok"}
 
@@ -340,6 +345,32 @@ class SlackChannel:
                 pass
 
         return {"status": "ok"}
+
+    async def _send_to_response_url(
+        self,
+        response_url: str,
+        blocks: Optional[List[Dict]] = None,
+        text: str = "",
+        response_type: str = "in_channel",
+    ) -> None:
+        """POST a delayed reply to a Slack slash-command response_url.
+
+        Slash commands must be ACKed within 3s, but Ultra-Think can take up
+        to 30s. Slack provides response_url precisely for this delayed/
+        replacement delivery — use it instead of chat.postMessage so the
+        reply threads back to the invoking command.
+        """
+        if not response_url or not self._session:
+            return
+        payload: Dict[str, Any] = {"response_type": response_type, "text": text}
+        if blocks:
+            payload["blocks"] = blocks
+        try:
+            async with self._session.post(response_url, json=payload) as resp:
+                if resp.status != 200:
+                    logger.warning("Slack response_url returned HTTP %s", resp.status)
+        except Exception as e:  # pragma: no cover - network
+            logger.error(f"Failed to post to Slack response_url: {e}")
 
     def add_message_handler(self, handler: Callable):
         """Add message handler"""
