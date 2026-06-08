@@ -53,14 +53,33 @@ from jebat.llm import (
 
 # Rich for beautiful CLI output
 try:
+    from rich import box
     from rich.console import Console
     from rich.panel import Panel
+    from rich.rule import Rule
     from rich.table import Table
     from rich.text import Text
+    from rich.theme import Theme
+
+    # JEBAT terminal identity (DESIGN.md): black / emerald / cyan, premium
+    # technical minimalism. Named styles resolve everywhere via console theme.
+    JEBAT_THEME = Theme(
+        {
+            "ok": "bold #10b981",        # emerald — success / connected
+            "err": "bold #ef4444",       # red — failure
+            "warn": "bold #f59e0b",      # amber — degraded / attention
+            "accent": "bold #22d3ee",    # cyan — headings / primary
+            "brand": "bold #10b981",     # emerald — JEBAT wordmark
+            "muted": "#6b7280",          # grey — secondary detail
+            "key": "#22d3ee",            # cyan — labels / first column
+            "val": "#e5e7eb",            # near-white — values
+        }
+    )
 
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
+    JEBAT_THEME = None
     print("Note: Install 'rich' for better CLI output: pip install rich")
 
 
@@ -69,11 +88,28 @@ class JEBATCLI:
 
     def __init__(self):
         """Initialize CLI"""
-        self.console = Console() if RICH_AVAILABLE else None
+        self.console = Console(theme=JEBAT_THEME) if RICH_AVAILABLE else None
         self.ultra_loop = None
         self.ultra_think = None
         self.memory_manager = None
         self.initialized = False
+
+    # ── Status markers (consistent glyphs + emerald/red/amber semantics) ──
+    def _mark(self, state: str, label: str = "") -> str:
+        """Return a themed status marker. state: ok | err | warn | pending."""
+        glyph = {"ok": "●", "err": "●", "warn": "●", "pending": "○"}.get(state, "○")
+        style = {"ok": "ok", "err": "err", "warn": "warn", "pending": "muted"}.get(state, "muted")
+        if self.console:
+            return f"[{style}]{glyph}[/] {label}" if label else f"[{style}]{glyph}[/]"
+        ascii_glyph = {"ok": "[OK]", "err": "[ERR]", "warn": "[!]", "pending": "[..]"}.get(state, "[..]")
+        return f"{ascii_glyph} {label}".strip()
+
+    def rule(self, title: str = ""):
+        """Print a themed horizontal rule (brand-colored)."""
+        if self.console:
+            self.console.print(Rule(title, style="accent", characters="─"))
+        else:
+            print(f"\n── {title} " + "─" * max(0, 56 - len(title)))
 
     def print(self, message: str, style: str = ""):
         """Print message with optional style"""
@@ -90,7 +126,7 @@ class JEBATCLI:
         if self.initialized:
             return
 
-        self.print("\nJEBAT  JEBAT - Initializing systems...", "bold blue")
+        self.print("\n[brand]◆ JEBAT[/] [muted]initializing systems…[/]" if self.console else "\nJEBAT - Initializing systems...")
 
         try:
             # Import JEBAT components
@@ -100,14 +136,14 @@ class JEBATCLI:
 
             # Initialize Memory Manager
             self.memory_manager = MemoryManager()
-            self.print("  [OK] Memory Manager", "green")
+            self.print("  " + self._mark("ok", "Memory Manager"))
 
             # Initialize Ultra-Loop
             self.ultra_loop = await create_ultra_loop(
                 config={"cycle_interval": 1.0, "max_cycles": 0},
                 enable_db_persistence=False,
             )
-            self.print("  [OK] Ultra-Loop", "green")
+            self.print("  " + self._mark("ok", "Ultra-Loop"))
 
             # Initialize Ultra-Think
             self.ultra_think = await create_ultra_think(
@@ -116,34 +152,29 @@ class JEBATCLI:
                 enable_db_persistence=False,
                 enable_memory_integration=True,
             )
-            self.print("  [OK] Ultra-Think", "green")
+            self.print("  " + self._mark("ok", "Ultra-Think"))
 
             self.initialized = True
-            self.print("[OK] All systems initialized\n", "bold green")
+            self.print("[ok]✓ All systems initialized[/]\n" if self.console else "[OK] All systems initialized\n")
 
         except Exception as e:
-            self.print(f"[ERR] Initialization failed: {e}\n", "bold red")
+            self.print(f"[err]✗ Initialization failed:[/] {e}\n" if self.console else f"[ERR] Initialization failed: {e}\n")
             raise
 
     async def cmd_status(self):
         """Show system status"""
         await self.initialize()
 
-        self.print("\n" + "=" * 60, "bold blue")
-        self.print("JEBAT  JEBAT System Status", "bold blue")
-        self.print("=" * 60 + "\n", "bold blue")
+        if self.console:
+            self.console.print()
+            self.console.print("[brand]◆ JEBAT[/] [accent]System Status[/]", justify="left")
+        self.rule()
 
         # System components status
-        status_table = self._create_table("Component", "Status")
-        status_table.add_row(
-            "Memory Manager", "[OK] Connected" if self.memory_manager else "[ERR] Disconnected"
-        )
-        status_table.add_row(
-            "Ultra-Loop", "[OK] Ready" if self.ultra_loop else "[ERR] Not initialized"
-        )
-        status_table.add_row(
-            "Ultra-Think", "[OK] Ready" if self.ultra_think else "[ERR] Not initialized"
-        )
+        status_table = self._create_table("Component", "State")
+        status_table.add_row("Memory Manager", self._mark("ok", "Connected") if self.memory_manager else self._mark("err", "Disconnected"))
+        status_table.add_row("Ultra-Loop", self._mark("ok", "Ready") if self.ultra_loop else self._mark("err", "Not initialized"))
+        status_table.add_row("Ultra-Think", self._mark("ok", "Ready") if self.ultra_think else self._mark("err", "Not initialized"))
 
         self.print(status_table)
 
@@ -680,38 +711,40 @@ class JEBATCLI:
         best_provider = select_best_provider(config.provider, config.fallback_providers)
         auth_items = list_provider_auth_status()
 
-        self.print("\nJEBAT Doctor", "bold blue")
-        self.print(f"  Configured Provider: {config.provider}")
-        self.print(f"  Configured Model: {config.model}")
-        self.print(f"  Best Available Provider: {best_provider}")
+        if self.console:
+            self.console.print()
+            self.console.print("[brand]◆ JEBAT[/] [accent]Doctor[/] [muted]— LLM stack health[/]")
+        self.rule()
+        self.print(f"[key]Configured Provider[/]   [val]{config.provider}[/]" if self.console else f"  Configured Provider: {config.provider}")
+        self.print(f"[key]Configured Model[/]      [val]{config.model}[/]" if self.console else f"  Configured Model: {config.model}")
+        self.print(f"[key]Best Available[/]         [val]{best_provider}[/]" if self.console else f"  Best Available Provider: {best_provider}")
 
         configured = [item.provider for item in auth_items if item.configured]
         missing = [item.provider for item in auth_items if not item.configured]
-        self.print(f"  Configured Auth: {', '.join(configured) if configured else 'none'}")
+        self.print(self._mark("ok", f"Configured Auth: {', '.join(configured) if configured else 'none'}"))
         if missing:
-            self.print(f"  Missing Auth: {', '.join(missing)}", "yellow")
+            self.print(self._mark("warn", f"Missing Auth: {', '.join(missing)}"))
 
         ollama_item = next((item for item in auth_items if item.provider == "ollama"), None)
         if ollama_item and ollama_item.configured:
             ok, detail = self._check_ollama(config.ollama_host)
-            style = "green" if ok else "red"
-            self.print(f"  Ollama: {detail}", style)
+            self.print(self._mark("ok" if ok else "err", f"Ollama: {detail}"))
 
         llamacpp_item = next((item for item in auth_items if item.provider == "llamacpp"), None)
         if llamacpp_item and llamacpp_item.configured:
             ok, detail = self._check_llamacpp(config.llamacpp_host)
-            style = "green" if ok else "red"
-            self.print(f"  llama.cpp: {detail}", style)
+            self.print(self._mark("ok" if ok else "err", f"llama.cpp: {detail}"))
 
         if probe:
+            self.rule("probe")
             response, used_provider = await generate_with_failover(
                 config=config,
                 prompt="Reply with OK.",
                 system_prompt="You are a health check. Reply with OK only.",
             )
             snippet = " ".join(response.strip().split())[:120]
-            self.print(f"  Probe Provider: {used_provider}", "green")
-            self.print(f"  Probe Response: {snippet}", "green")
+            self.print(self._mark("ok", f"Probe Provider: {used_provider}"))
+            self.print(self._mark("ok", f"Probe Response: {snippet}"))
 
     def _check_ollama(self, host: str) -> tuple[bool, str]:
         """Check whether the local Ollama HTTP API responds."""
@@ -831,11 +864,19 @@ class JEBATCLI:
         )
 
     def _create_table(self, *columns):
-        """Create a table (Rich or fallback)"""
+        """Create a table (Rich or fallback) with JEBAT identity styling."""
         if self.console:
-            table = Table(show_header=True, header_style="bold")
-            for col in columns:
-                table.add_column(col)
+            table = Table(
+                show_header=True,
+                header_style="accent",
+                box=box.SIMPLE_HEAVY,
+                border_style="muted",
+                pad_edge=False,
+                expand=False,
+            )
+            for i, col in enumerate(columns):
+                # First column = labels (cyan), rest = values (near-white)
+                table.add_column(col, style="key" if i == 0 else "val", no_wrap=(i == 0))
             return table
         else:
             # Simple text table
