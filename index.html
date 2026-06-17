@@ -1654,9 +1654,9 @@ bash scripts/sync-to-vps.sh</pre>
     <div class="roadmap-quarter">Q3 2026 · Active</div>
     <div class="roadmap-theme">Rebuild &amp; Scale</div>
     <div class="roadmap-item"><div class="roadmap-dot active"></div>Rebuild core runtime (apps/)</div>
-    <div class="roadmap-item"><div class="roadmap-dot active"></div>Rebuild MCP server</div>
-    <div class="roadmap-item"><div class="roadmap-dot active"></div>Rebuild Telegram channel</div>
-    <div class="roadmap-item"><div class="roadmap-dot active"></div>LLM CLI package build</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>MCP server (stdio + HTTP)</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>Telegram channel adapter</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>LLM CLI (npm published)</div>
     <div class="roadmap-item"><div class="roadmap-dot done"></div>Docker compose deployment</div>
     <div class="roadmap-item"><div class="roadmap-dot done"></div>CI/CD GitHub Actions</div>
     <div class="roadmap-item"><div class="roadmap-dot active"></div>Sentinel Security alpha</div>
@@ -1664,7 +1664,7 @@ bash scripts/sync-to-vps.sh</pre>
     <div class="roadmap-item"><div class="roadmap-dot done"></div>Catalyst Observability</div>
   </div>
   <div class="roadmap-col">
-    <div class="roadmap-quarter">Q4 2026 · Planned</div>
+    <div class="roadmap-quarter">Q4 2026 · Next</div>
     <div class="roadmap-theme">Channels &amp; SDKs</div>
     <div class="roadmap-item"><div class="roadmap-dot planned"></div>WhatsApp channel</div>
     <div class="roadmap-item"><div class="roadmap-dot planned"></div>Discord channel</div>
@@ -1700,13 +1700,13 @@ bash scripts/sync-to-vps.sh</pre>
   <div class="preview-card q3-card">
     <div class="preview-card-icon q3"><i class="fa-solid fa-server"></i></div>
     <h4>Core Runtime Rebuild</h4>
-    <p>Restoring the Python API layer (<code>apps/</code>), MCP server, Telegram channel adapter, and LLM CLI — bringing all 170 tests back to green.</p>
+    <p>Core runtime rebuilt with 6 LLM providers, native tool-calling, streaming support, and 200+ passing tests. MCP server runs stdio + HTTP transport.</p>
     <span class="preview-eta"><i class="fa-solid fa-spinner fa-spin"></i> In Progress</span>
     <div class="preview-feature-list">
       <span class="preview-feature">FastAPI Server</span>
-      <span class="preview-feature">MCP Protocol</span>
-      <span class="preview-feature">Telegram Bot</span>
-      <span class="preview-feature">LLM CLI</span>
+      <span class="preview-feature">6 Providers</span>
+      <span class="preview-feature">MCP Server</span>
+      <span class="preview-feature">200+ Tests</span>
     </div>
   </div>
 
@@ -1717,7 +1717,7 @@ bash scripts/sync-to-vps.sh</pre>
     <span class="preview-eta"><i class="fa-solid fa-spinner fa-spin"></i> In Progress</span>
     <div class="preview-feature-list">
       <span class="preview-feature">Port Audit</span>
-      <span class="preview-feature">CVE Engine</span>
+      <span class="preview-feature">CVE Correlation</span>
       <span class="preview-feature">Auto Scan Scripts</span>
       <span class="preview-feature">MD Reports</span>
     </div>
