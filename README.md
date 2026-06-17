@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-v6.1.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-64%2F64--passing-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-145%2F145--passing-10b981?style=flat-square)
 
 > **Sovereign execution, private memory, and audited intelligence.**
 

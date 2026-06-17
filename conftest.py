@@ -13,11 +13,20 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+
+# Ensure the project root is first on sys.path so the root jebat/ package
+# is found before the stale duplicate inside jebat-core/jebat/.
+_project_root = str(Path(__file__).resolve().parent)
+if _project_root in sys.path:
+    sys.path.remove(_project_root)
+sys.path.insert(0, _project_root)
 
 try:
     from main import app
