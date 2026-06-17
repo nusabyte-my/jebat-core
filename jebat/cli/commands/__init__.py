@@ -28,6 +28,7 @@ from jebat.cli.commands.voice_cmd import voice_command
 from jebat.cli.commands.repl_cmd import repl_command
 from jebat.cli.commands.pentest_cmd import pentest_command
 from jebat.cli.commands.catalyst_cmd import catalyst_command
+from jebat.cli.commands.ghost_cmd import ghost_command
 
 # Command registry
 COMMANDS = {
@@ -41,6 +42,7 @@ COMMANDS = {
     "config": config_command,
     "conversation": conversation_command,
     "file": file_command,
+    "ghost": ghost_command,
     "gh": gh_command,
     "model": model_command,
     "pentest": pentest_command,
