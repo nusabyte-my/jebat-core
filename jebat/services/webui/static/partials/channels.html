@@ -1,0 +1,112 @@
+<!-- channels partial -->
+<div class="container section-sm">
+  <h2>Channels</h2>
+  <p class="small muted" style="margin-bottom: var(--space-lg);">Message bus connections. JEBAT can communicate through any connected channel.</p>
+</div>
+
+<div class="container" style="margin-bottom: var(--space-lg);">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Connect a Channel</div></div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Platform</label>
+        <select class="select" id="channel-platform">
+          <option value="telegram">Telegram</option>
+          <option value="discord">Discord</option>
+          <option value="slack">Slack</option>
+          <option value="signal">Signal</option>
+          <option value="matrix">Matrix</option>
+          <option value="yuanbao">Yuanbao</option>
+        </select>
+      </div>
+      <div class="form-group" id="channel-token-group">
+        <label class="form-label" id="channel-token-label">Bot Token</label>
+        <input class="input" id="channel-token" type="password" placeholder="Bot token or API key" />
+        <p class="small muted" style="margin-top: 4px;" id="channel-token-hint">Required for Telegram, Discord, Slack.</p>
+      </div>
+      <div class="form-group" id="channel-id-group" style="display:none;">
+        <label class="form-label">Additional Config</label>
+        <input class="input" id="channel-extra" placeholder="e.g. @username, room_id, or webhook URL" />
+      </div>
+      <button class="btn btn-black" id="channel-connect">Connect</button>
+      <span class="small muted" style="margin-left: var(--space-md);" id="channel-connect-status"></span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Active Channels</div></div>
+    <div class="card-body" id="channel-list">Loading…</div>
+  </div>
+</div>
+
+<script>
+  async function loadChannels() {
+    try {
+      const data = await API.get('/channels/connect');
+      const connections = data.connections || {};
+      const names = Object.keys(connections);
+      const list = document.getElementById('channel-list');
+
+      if (names.length === 0) {
+        list.innerHTML = '<div class="empty"><h3>No channels connected</h3><p>Use the form above to connect your first channel.</p></div>';
+        return;
+      }
+
+      list.innerHTML = '<div class="stack-sm">' + names.map(name => {
+        const cfg = connections[name];
+        const status = cfg.connected ? 'connected' : 'disconnected';
+        const id = cfg.bot_username || cfg.channel_id || name;
+        return `<div class="mini-card">
+          <strong>${name}</strong>
+          <span>${id}</span>
+        </div>`;
+      }).join('') + '</div>';
+    } catch (_) {
+      document.getElementById('channel-list').innerHTML = '<div class="empty"><p>Channel service not available.</p></div>';
+    }
+  }
+
+  document.getElementById('channel-connect').addEventListener('click', async () => {
+    const platform = document.getElementById('channel-platform').value;
+    const token = document.getElementById('channel-token').value;
+    const extra = document.getElementById('channel-extra').value;
+    const statusEl = document.getElementById('channel-connect-status');
+
+    if (!token) { statusEl.textContent = 'Enter a bot token or API key.'; return; }
+
+    const config = { bot_token: token };
+    if (extra) {
+      try { Object.assign(config, JSON.parse(extra)); } catch (_) { config.extra = extra; }
+    }
+
+    try {
+      await API.post('/channels/connect', { channel: platform, config });
+      statusEl.textContent = 'Connected.';
+      document.getElementById('channel-token').value = '';
+      loadChannels();
+      setTimeout(() => statusEl.textContent = '', 3000);
+    } catch (e) {
+      statusEl.textContent = 'Error: ' + e.message;
+    }
+  });
+
+  // Show/hide hints per platform
+  document.getElementById('channel-platform').addEventListener('change', () => {
+    const p = document.getElementById('channel-platform').value;
+    const hints = {
+      telegram: { token: 'Bot Token', hint: 'Get from @BotFather' },
+      discord: { token: 'Bot Token', hint: 'From Discord Developer Portal' },
+      slack: { token: 'Bot Token (xoxb-…)', hint: 'From Slack App settings' },
+      signal: { token: 'Phone Number', hint: '+60123456789' },
+      matrix: { token: 'Access Token', hint: 'From Element/Matrix client' },
+      yuanbao: { token: 'Account ID', hint: 'Yuanbao group code' },
+    };
+    const h = hints[p] || { token: 'Token', hint: '' };
+    document.getElementById('channel-token-label').textContent = h.token;
+    document.getElementById('channel-token-hint').textContent = h.hint;
+  });
+
+  loadChannels();
+</script>

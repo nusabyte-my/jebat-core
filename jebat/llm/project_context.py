@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from .tldr_context import build_tldr_summary
 
 @dataclass
 class ProjectContext:

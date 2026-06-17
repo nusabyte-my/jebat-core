@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.integration]
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from jebat.features.ultra_loop import UltraLoop, create_ultra_loop
 from jebat.features.ultra_loop.database_repository import UltraLoopRepository
@@ -239,7 +239,7 @@ async def main():
     print("\n" + "=" * 60)
     print("JEBAT Ultra-Loop & Ultra-Think Database Integration Tests")
     print("=" * 60)
-    print(f"Started at: {datetime.utcnow().isoformat()}")
+    print(f"Started at: {datetime.now(datetime.timezone.utc).isoformat()}")
 
     results = {
         "repositories": await test_repositories_directly(),
@@ -259,7 +259,7 @@ async def main():
     print(
         f"\nOverall: {'✅ ALL TESTS PASSED' if all_passed else '❌ SOME TESTS FAILED'}"
     )
-    print(f"Completed at: {datetime.utcnow().isoformat()}")
+    print(f"Completed at: {datetime.now(datetime.timezone.utc).isoformat()}")
 
     return all_passed
 

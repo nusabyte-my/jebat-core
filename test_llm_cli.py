@@ -3,6 +3,7 @@ from pathlib import Path
 
 from jebat.cli.jebat_cli import JEBATCLI
 from jebat.llm.auth import list_provider_auth_status
+from jebat.llm.conversation import prepare_chat_prompt
 from jebat.llm.history import ChatHistoryStore
 from jebat.llm.project_context import build_project_context
 from jebat.llm.config import load_llm_config
@@ -32,6 +33,7 @@ def test_local_echo_provider_returns_prompt() -> None:
 def test_supported_providers_include_openai_and_ollama() -> None:
     providers = {item["name"] for item in list_supported_providers()}
     assert "openai" in providers
+    assert "llamacpp" in providers
     assert "ollama" in providers
     assert "openai" in providers  # google not in base providers list
     assert "openrouter" in providers
@@ -113,6 +115,19 @@ def test_build_skill_prompt_can_pin_hermes_agent() -> None:
     registry = build_skill_registry(default_skills_path())
     prompt, selected = build_skill_prompt(
         "Be my daily coding copilot for this repo",
+        registry=registry,
+        requested_skills=["jebat-agent"],
+        auto_discover=False,
+    )
+    names = [skill.name for skill in selected]
+    assert names == ["jebat-agent"]
+    assert "Skill: jebat-agent" in prompt
+
+
+def test_build_skill_prompt_summarizes_secondary_skills() -> None:
+    registry = build_skill_registry(default_skills_path())
+    prompt, selected = build_skill_prompt(
+        "Help me design and implement a frontend flow with React and TypeScript patterns",
         registry=registry,
         requested_skills=["jebat-agent"],
         auto_discover=False,

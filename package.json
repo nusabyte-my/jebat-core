@@ -1,5 +1,5 @@
 {
-  "name": "jebatcore",
+  "name": "create-jebatcore",
   "version": "0.1.0",
   "description": "JEBATCore workstation installer for IDE context files and local MCP setup.",
   "type": "module",

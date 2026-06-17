@@ -1,13 +1,12 @@
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "jebat-core"
-version = "2.0.0"
-description = "JEBAT AI assistant platform"
+name = "jebat"
+version = "6.1.0"
+description = "JEBAT v6.1 — Sovereign AI Platform & Agent Workstation. ReAct loop, 89 tools, MCP, pentest engine, FTS5 wiki, 5-layer memory, multi-agent swarms, Docker sandbox, voice I/O, GitOps"
 readme = "README.md"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "humm1ngb1rd (Shaidan Shaari)", email = "humm1ngb1rd@nusabyte.my"}]
+
 dependencies = [
   "fastapi>=0.109.0",
   "uvicorn[standard]>=0.27.0",
@@ -23,6 +22,10 @@ dependencies = [
 [project.scripts]
 jebat = "apps.api.cli.jebat_cli:run"
 jebat-server = "apps.api.main:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["apps*"]

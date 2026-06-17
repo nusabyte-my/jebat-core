@@ -25,7 +25,9 @@ MANIFEST
 venv/
 ENV/
 env/
-.venv
+.venv/
+virtualenv/
+.envrc
 
 # IDE
 .vscode/
@@ -34,6 +36,12 @@ env/
 *.swo
 *~
 .DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
 
 # Testing
 .pytest_cache/
@@ -41,37 +49,95 @@ env/
 htmlcov/
 *.manifest
 *.spec
+.tox/
+.nox/
+.hypothesis/
 
 # Logs
 *.log
 logs/
+log/
+*.log.*
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+*.db-*
+*.sqlite-*
+*.sqlite3-*
+*.db.journal
+*.sqlite.journal
+*.sqlite3.journal
 
-# Environment variables
+# Environment variables & secrets
 .env
 .env.local
 .env.vps
 
-# JEBAT specific
-jebat_old_backup/
-projects/
-*.pem
+# Secrets & Keys
 *.key
+*.pem
+*.crt
+*.cer
+*.der
+*.p7b
+*.p7c
+*.p8
+*.pkcs12
+*.p12
+*.pfx
+*.pem.enc
+*.key.enc
 secrets/
+secrets.yaml
+secrets.yml
+*.secret
+*.secrets
+vault/
+vault.yaml
+vault.yml
+*.gpg
+*.asc
+*.sig
 
-# Node (if using)
-node_modules/
-npm-debug.log
-yarn-error.log
+# SSH & SSL
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+ssh/
+.ssh/
+authorized_keys
+known_hosts
+config
+*.pub
+*.pem
+*.crt
+*.csr
+*.cnf
 
-# Testing
-test_results/
-.tmp/
-.temp/
+# Docker
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.local.yml
+.docker/
+.dockerignore
+Dockerfile.local
+Dockerfile.*.local
+docker-secrets/
+*.dockerfile.local
+
+# Terraform / Infrastructure
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+*.auto.tfvars
+*.auto.tfvars.json
 
 # Backup files
 *.bak
