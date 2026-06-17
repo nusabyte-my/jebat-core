@@ -8,7 +8,9 @@ set -e
 VPS_HOST="root@72.62.255.206"
 VPS_KEY="$HOME/.ssh/id_ed25519_vps"
 VPS_CODE_DIR="/var/www/jebat-core"
-VPS_WEB_DIR="/var/www/jebat.online"
+VPS_WEB_DIR="/var/www/jebat.online/out"
+PUBLIC_VPS_HOST="root@72.62.254.65"
+PUBLIC_WEB_DIR="/var/www/jebat.online"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 AUTH_HELPER="$LOCAL_DIR/scripts/vps_auth_helper.py"
 
@@ -20,6 +22,7 @@ echo ""
 echo "Source: $LOCAL_DIR"
 echo "VPS Code: $VPS_HOST:$VPS_CODE_DIR"
 echo "VPS Web:  $VPS_HOST:$VPS_WEB_DIR"
+echo "Public Web: $PUBLIC_VPS_HOST:$PUBLIC_WEB_DIR"
 echo "Using Key: $VPS_KEY"
 echo "Automating with: $AUTH_HELPER"
 echo ""
@@ -64,19 +67,24 @@ run_auth "ssh $SSH_OPTS $VPS_HOST \"cd $VPS_CODE_DIR/apps/web && npm install && 
 # Step 4: Deploy frontend build to web directory
 echo "🚀 Deploying frontend to web directory..."
 run_auth "ssh $SSH_OPTS $VPS_HOST \"rm -rf $VPS_WEB_DIR/_next $VPS_WEB_DIR/dashboard $VPS_WEB_DIR/demo $VPS_WEB_DIR/docs $VPS_WEB_DIR/onboarding $VPS_WEB_DIR/setup $VPS_WEB_DIR/integration $VPS_WEB_DIR/gelanggang $VPS_WEB_DIR/guides $VPS_WEB_DIR/index.html $VPS_WEB_DIR/*.svg $VPS_WEB_DIR/*.ico $VPS_WEB_DIR/*.txt $VPS_WEB_DIR/__next* $VPS_WEB_DIR/404 $VPS_WEB_DIR/404.html $VPS_WEB_DIR/_not-found 2>/dev/null\""
-run_auth "ssh $SSH_OPTS $VPS_HOST \"cp -r $VPS_CODE_DIR/apps/web/out/* $VPS_WEB_DIR/ && chown -R www-data:www-data $VPS_WEB_DIR/\""
+run_auth "ssh $SSH_OPTS $VPS_HOST \"cp -r $VPS_CODE_DIR/apps/web/out/* $VPS_WEB_DIR/ && cp $VPS_CODE_DIR/landing.html $VPS_WEB_DIR/index.html && chown -R www-data:www-data $VPS_WEB_DIR/\""
+
+# The public Cloudflare-facing node serves the landing root from .65.
+echo "🌐 Publishing landing page to public web root..."
+run_auth "scp -o StrictHostKeyChecking=no \"$LOCAL_DIR/landing.html\" $PUBLIC_VPS_HOST:$PUBLIC_WEB_DIR/index.html"
+run_auth "ssh -o StrictHostKeyChecking=no $PUBLIC_VPS_HOST \"chown www-data:www-data $PUBLIC_WEB_DIR/index.html\""
 
 # Step 5: Install dependencies and Restart backend API
 echo "🔄 Restarting backend API..."
-run_auth "ssh $SSH_OPTS $VPS_HOST \"pip install -r $VPS_CODE_DIR/apps/api/requirements.txt --break-system-packages && pip install pexpect aiohttp httpx pyyaml --break-system-packages && pkill -f jebat_api 2>/dev/null || true; cd $VPS_CODE_DIR && nohup python3 -m apps.api.services.api.jebat_api > /var/log/jebat-api.log 2>&1 &\""
+run_auth "ssh $SSH_OPTS $VPS_HOST \"docker restart jebat-api jebat-webui\""
 
 # Step 6: Verify deployment
 echo ""
 echo "🔍 Verifying deployment..."
 sleep 5
 HEALTH=$(run_auth "ssh $SSH_OPTS $VPS_HOST \"curl -s http://localhost:8000/api/v1/health\"" 2>/dev/null || echo "API offline")
-LANDING=$(run_auth "ssh $SSH_OPTS $VPS_HOST \"curl -s -o /dev/null -w '%{http_code}' https://jebat.online/\"" 2>/dev/null || echo "000")
-GELANGGANG=$(run_auth "ssh $SSH_OPTS $VPS_HOST \"curl -s -o /dev/null -w '%{http_code}' https://jebat.online/gelanggang/\"" 2>/dev/null || echo "000")
+LANDING=$(run_auth "ssh $SSH_OPTS $VPS_HOST \"curl -s -o /dev/null -w '%{http_code}' https://127.0.0.1/ -H 'Host: jebat.online' -k\"" 2>/dev/null || echo "000")
+GELANGGANG=$(run_auth "ssh $SSH_OPTS $VPS_HOST \"curl -s -o /dev/null -w '%{http_code}' https://127.0.0.1/gelanggang/ -H 'Host: jebat.online' -k\"" 2>/dev/null || echo "000")
 
 echo ""
 echo "📊 Deployment Results:"
@@ -85,10 +93,10 @@ echo "   Landing: HTTP $LANDING"
 echo "   Gelanggang: HTTP $GELANGGANG"
 echo ""
 
-if [ "$LANDING" = "200" ]; then
+if [ "$LANDING" = "200" ] || [ "$LANDING" = "301" ] || [ "$LANDING" = "308" ]; then
   echo "✅ Deployment successful on .206!"
   echo "   🌐 https://jebat.online"
 else
   echo "⚠️  Some services may need attention on .206"
-  echo "   Check: tail -f /var/log/jebat-api.log"
+  echo "   Check: docker logs jebat-api"
 fi

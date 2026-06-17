@@ -1,0 +1,136 @@
+# ==================== JEBAT v6.1 — Production Override ====================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Adds resource limits, logging, and hardening for production deployments.
+
+services:
+
+  # ─── JEBAT API (production) ───
+  jebat-api:
+    image: jebat-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    environment:
+      - JEBAT_DEBUG=false
+      - JEBAT_LOG_LEVEL=WARNING
+    command: >
+      python -m uvicorn main:app
+      --host 0.0.0.0
+      --port 8080
+      --workers 4
+      --access-log
+      --proxy-headers
+      --forwarded-allow-ips=*
+
+  # ─── PostgreSQL (production) ───
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+    command: >
+      postgres
+      -c shared_preload_libraries=timescaledb,pg_stat_statements,pgvector
+      -c max_connections=200
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c work_mem=16MB
+      -c maintenance_work_mem=512MB
+      -c wal_buffers=64MB
+      -c checkpoint_completion_target=0.9
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c log_min_duration_statement=1000
+      -c log_statement=ddl
+
+  # ─── Redis (production) ───
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-redis_secure_password_change_me}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --auto-aof-rewrite-percentage 100
+      --auto-aof-rewrite-min-size 64mb
+      --slowlog-log-slower-than 10000
+      --slowlog-max-len 256
+      --io-threads 4
+      --io-threads-do-reads yes
+
+  # ─── Prometheus (production) ───
+  prometheus:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ─── Grafana (production) ───
+  grafana:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-jebat_admin_change_me}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN:-jebat.local}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel

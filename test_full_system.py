@@ -12,6 +12,10 @@ Comprehensive end-to-end test of the JEBAT enhanced system including:
 Usage:
     python test_full_system.py
 """
+import pytest
+
+pytestmark = [pytest.mark.integration]
+
 
 import asyncio
 import logging

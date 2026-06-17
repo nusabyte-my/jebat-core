@@ -54,6 +54,7 @@ logs/
 # Environment variables
 .env
 .env.local
+.env.vps
 
 # JEBAT specific
 jebat_old_backup/

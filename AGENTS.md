@@ -14,7 +14,9 @@ At the start of a session in this workspace, load these files in order:
 2. `jebat-core/AGENTS.md`
 3. `jebat-core/JEBAT_ASSISTANT_GUIDE.md`
 4. `jebat-core/MASTER_INDEX.md`
-5. `CODEX_PROFILE.md` when the active assistant is Codex
+5. `MEMORY.md`
+6. `DESIGN.md`
+7. `CODEX_PROFILE.md` when the active assistant is Codex
 
 If the task is specifically about identity, behavior, or operating posture, also consult:
 
@@ -26,7 +28,8 @@ If the task is specifically about identity, behavior, or operating posture, also
 - Treat JEBAT and JEBATCore as the same active system for this repo.
 - Default to repo-aware implementation, not generic advice.
 - Keep the active context narrow and centered on the relevant `jebat-core/` subsystem.
-- Prefer documented JEBAT entrypoints, skills, and vault/checklists before inventing new workflows.
+- Prefer documented JEBAT entrypoints, skills, design rules, and vault/checklists before inventing new workflows.
+- Load the nearest local `AGENTS.md`, `MEMORY.md`, and `DESIGN.md` in the subtree you are changing.
 
 ## Source Of Truth
 
@@ -36,6 +39,8 @@ For architecture, startup, and operating behavior:
 - `jebat-core/AGENTS.md`
 - `jebat-core/JEBAT_ASSISTANT_GUIDE.md`
 - `jebat-core/MASTER_INDEX.md`
+- `MEMORY.md`
+- `DESIGN.md`
 - `CODEX_PROFILE.md` for Codex-specific session behavior
 
 For implementation work, use the nearest local docs in the affected subtree after the files above.

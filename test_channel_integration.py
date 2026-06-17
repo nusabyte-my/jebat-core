@@ -3,6 +3,10 @@ Test Channel Integration
 
 Tests ChannelManager and Telegram channel integration.
 """
+import pytest
+
+pytestmark = [pytest.mark.integration]
+
 
 import asyncio
 import sys

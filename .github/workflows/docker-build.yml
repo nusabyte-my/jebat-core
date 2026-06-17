@@ -1,0 +1,222 @@
+# JEBAT Docker Build Validation
+# Prevents Dockerfile drift by validating the build succeeds on every push.
+#
+# Triggered on:
+#   - Push to main or develop
+#   - Pull requests targeting main
+#   - Manual dispatch
+
+name: Docker Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Build the main application image ───
+  build-api:
+    name: Build API image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: jebat-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Validate health endpoint wiring
+        run: |
+          # Verify main.py has /health endpoint (required by Dockerfile HEALTHCHECK)
+          grep -q '@app.get("/health")' main.py || {
+            echo "::error::main.py is missing the /health endpoint required by Dockerfile HEALTHCHECK"
+            exit 1
+          }
+          echo "✅ Health endpoint present in main.py"
+
+      - name: Verify COPY targets exist
+        run: |
+          # Ensure every COPY source in the Dockerfile exists (prevents broken builds)
+          MISSING=0
+          for src in __init__.py pyproject.toml config/config_manager.py database/schema/ database/init/ scripts/*.py index.html requirements.prod.txt main.py; do
+            # Use shell glob to check files
+            if [ ! -e "$src" ]; then
+              echo "::error::Dockerfile COPY target missing: $src"
+              MISSING=1
+            fi
+          done
+          if [ "$MISSING" -eq 1 ]; then
+            echo "::error::One or more COPY targets are missing. The build would fail."
+            exit 1
+          fi
+          echo "✅ All COPY targets exist"
+
+  # ─── Build the database image ───
+  build-database:
+    name: Build Database image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Database image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./database
+          file: ./database/Dockerfile
+          push: false
+          tags: jebat-database:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify schema files exist
+        run: |
+          if [ ! -d "database/schema" ] || [ ! -d "database/init" ]; then
+            echo "::error::database/schema/ or database/init/ directories are missing"
+            exit 1
+          fi
+          echo "✅ Schema and init directories present"
+
+  # ─── Validate docker-compose config ───
+  validate-compose:
+    name: Validate Compose config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install docker compose
+        uses: docker/setup-compose-action@v1
+
+      - name: Validate base compose
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          echo "✅ docker-compose.yml is valid"
+
+      - name: Validate production override
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+          echo "✅ docker-compose.prod.yml is valid"
+
+  # ─── Check for .dockerignore / Dockerfile conflicts ───
+  check-sync:
+    name: Check .dockerignore sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify .dockerignore doesn't block COPY targets
+        run: |
+          # Extract COPY source paths from Dockerfile
+          COPY_TARGETS=$(grep '^COPY ' Dockerfile | sed 's/^COPY //;s/ .*//' | sort -u)
+          CONFLICTS=0
+          for target in $COPY_TARGETS; do
+            # Check if the target matches a .dockerignore pattern
+            if [ -f ".dockerignore" ]; then
+              # Simple check: skip glob patterns, check exact directory matches
+              dir=$(echo "$target" | sed 's|/.*||')
+              if grep -qx "$dir" .dockerignore 2>/dev/null; then
+                echo "::error::CONFLICT: Dockerfile copies '$target' but .dockerignore excludes '$dir'"
+                CONFLICTS=1
+              fi
+            fi
+          done
+          if [ "$CONFLICTS" -eq 1 ]; then
+            echo "::error::Dockerfile and .dockerignore are out of sync. The build would fail."
+            exit 1
+          fi
+          echo "✅ No .dockerignore / Dockerfile conflicts"
+
+  # ─── Lint Dockerfile best practices ───
+  lint:
+    name: Lint Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Dockerfile best practices
+        run: |
+          ISSUES=0
+
+          # Check: no apt-get upgrade (unpredictable)
+          if grep -q 'apt-get upgrade' Dockerfile; then
+            echo "::warning::Dockerfile uses 'apt-get upgrade' — this is non-reproducible"
+            ISSUES=$((ISSUES + 1))
+          fi
+
+          # Check: no ADD used (COPY preferred)
+          if grep -q '^ADD ' Dockerfile; then
+            echo "::warning::Dockerfile uses 'ADD' instead of 'COPY' — prefer COPY unless you need tar extraction"
+            ISSUES=$((ISSUES + 1))
+          fi
+
+          # Check: RUN apt-get has cleanup
+          if grep -q 'apt-get install' Dockerfile && ! grep -q 'rm -rf /var/lib/apt/lists' Dockerfile; then
+            echo "::warning::Dockerfile installs packages but doesn't clean apt cache"
+            ISSUES=$((ISSUES + 1))
+          fi
+
+          # Check: EXPOSE matches compose ports
+          EXPOSE_PORTS=$(grep '^EXPOSE' Dockerfile | awk '{print $2}' | tr ' ' '\n' | sort -u)
+          for port in $EXPOSE_PORTS; do
+            if ! grep -q ":${port}" docker-compose.yml; then
+              echo "::warning::Dockerfile exposes port $port but docker-compose.yml doesn't map it"
+            fi
+          done
+
+          # Check: non-root user
+          if ! grep -q 'USER' Dockerfile; then
+            echo "::error::Dockerfile doesn't switch to a non-root user"
+            ISSUES=$((ISSUES + 1))
+          fi
+
+          # Check: HEALTHCHECK exists
+          if ! grep -q 'HEALTHCHECK' Dockerfile; then
+            echo "::warning::Dockerfile is missing a HEALTHCHECK instruction"
+          fi
+
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "::warning::$ISSUES issues found — review Dockerfile best practices"
+          fi
+          echo "✅ Dockerfile lint complete ($ISSUES issues)"
+
+  # ─── Summary ───
+  summary:
+    name: Build validation summary
+    runs-on: ubuntu-latest
+    needs: [build-api, build-database, validate-compose, check-sync, lint]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          echo "=== Docker Build Validation Summary ==="
+          echo "Build API:      ${{ needs.build-api.result }}"
+          echo "Build Database: ${{ needs.build-database.result }}"
+          echo "Compose Config: ${{ needs.validate-compose.result }}"
+          echo "Sync Check:     ${{ needs.check-sync.result }}"
+          echo "Lint:           ${{ needs.lint.result }}"
+
+          if [ "${{ needs.build-api.result }}" != "success" ] || \
+             [ "${{ needs.build-database.result }}" != "success" ] || \
+             [ "${{ needs.validate-compose.result }}" != "success" ]; then
+            echo "::error::One or more critical Docker checks failed"
+            exit 1
+          fi
+
+          echo "✅ All critical checks passed"

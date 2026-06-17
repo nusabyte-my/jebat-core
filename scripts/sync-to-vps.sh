@@ -4,7 +4,7 @@
 
 set -e
 
-VPS_HOST="root@72.62.254.65"
+VPS_HOST="root@72.62.255.206"
 VPS_CODE_DIR="/var/www/jebat-core"
 LOCAL_DIR="$(cd "$(dirname "$0")" && pwd)"
 

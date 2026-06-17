@@ -1,289 +1,152 @@
-# 🗡️ JEBATCore — AI Agent Operating System
+# JEBAT v6.1.0 — Sovereign AI Platform & Agent Workstation
 
-**Because warriors remember everything that matters.**
+![Version](https://img.shields.io/badge/version-v6.1.0--stable-10b981?style=flat-square)
+![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-64%2F64--passing-10b981?style=flat-square)
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/nusabyte-my/jebat-core)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-green.svg)](https://nodejs.org)
-[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org)
+> **Sovereign execution, private memory, and audited intelligence.**
 
----
-
-JEBATCore is an **AI agent operating system** that installs context, rules, design systems, and skills into your IDE and project — plus provides a local MCP server for structured asset delivery. It works with any LLM provider (Claude, GPT, Gemini, Ollama) and is optimized for token efficiency on both input and output.
+JEBAT is an enterprise-grade self-hosted AI platform and agent workstation. It provides governed local LLM inference, secure cognitive routing, multi-agent swarm orchestration, and an embedded threat reconnaissance toolkit. Run fully air-gapped on your private network with zero data leakage.
 
 ---
 
-## 🚀 Quick Start
+## Technical Comparison
 
-### Install via CLI
+| Capability | JEBAT v6.1 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| :--- | :---: | :---: | :---: | :---: |
+| **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
+| **LLM Provider Routing** | **6 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
+| **Cognitive Profiles** | **7 Thinking Modes (Ultra-Think)** | Standard Chat | Standard Chat | Standard Chat |
+| **Security Auditing** | **Autonomous Pentest Suite** | Blocked | None | None |
+| **Access Control (RBAC)** | **3-Tier Command Classification** | Muted Policy | Basic Auth | None |
+| **Eternal Memory** | **5-Layer Heat-Scored Recall** | Session Limits | No | No |
+| **Standard Integration** | **Native MCP Client + Server** | None | Basic API | Local API |
+
+---
+
+## 🔌 Workstation & MCP Server Integration
+
+JEBAT v6.1 features native integration with major developer workspaces (Cursor, VS Code, Zed, Windsurf, JetBrains) as a standard **Model Context Protocol (MCP)** server.
+
+For step-by-step injection configurations and details on executing the **13 core capabilities** (ReAct loop, Ultra-Think reasoning, swarms, sandbox, voice I/O, Playwright, pentesting), please consult:
+👉 **[WORKSTATION_MCP_GUIDE.md](file:///d:/Jebat/WORKSTATION_MCP_GUIDE.md)**
+
+---
+
+## 6-Step Operational Onboarding Guide
+
+### Step 1: Secure Installation
+Install the platform directly onto your secure environment using python package managers, container arrays, or clean source repositories.
 
 ```bash
-# Install with defaults (auto-detects IDEs)
-npx jebatcore install --yes
+# Option A: Standard local install via pip
+pip install jebat
 
-# Interactive wizard
-npx jebatcore install
-
-# Dry run to preview changes
-npx jebatcore install --dry-run --yes
+# Option B: Isolated container build
+git clone https://github.com/nusabyte-my/jebat-core.git
+cd jebat-core
+docker compose build
+docker compose up -d
 ```
 
-### What Gets Installed
-
-| Target | What |
-|--------|------|
-| **IDE context files** | System prompts, rules, and agent configs for VS Code, Cursor, Zed, JetBrains, Neovim, and more |
-| **Project context** | `.cursorrules`, `CLAUDE.md`, `AGENTS.md` — AI agents read these automatically |
-| **MCP server** | Local Model Context Protocol server with tools for serving JEBAT assets |
-| **Skills** | 23+ specialized skills (dev, security, design, marketing, strategy) |
-| **Design systems** | Vercel, Cursor, Supabase — drop into any project for AI-consistent UI |
-
----
-
-## 📦 Ecosystem
-
-### Token Optimization
-
-| Layer | What | Savings |
-|-------|------|---------|
-| **Input compression** | Context shrinking, prompt optimization | 25-50% |
-| **Output fluff stripping** | Removes greetings, filler, sycophancy | 30-60% |
-| **MCP caching** | Response caching for repeated calls | Variable |
-| **Budget management** | Per-operation token limits with tracking | Controlled |
+### Step 2: Credential Hardening
+Initialize the encrypted keyring credential manager. JEBAT securely encrypts all local secrets to prevent key leakage.
 
 ```bash
-npx jebatcore token-analyze --file AGENTS.md --model claude
-npx jebatcore token-compress --file context.txt --level aggressive --target-tokens 3000
-npx jebatcore output-fluff --file llm-response.txt
-npx jebatcore token-budget --budget implementation
+# Securely store API keys or connection hosts
+jebat auth set openai your-openai-key
+jebat auth set anthropic your-anthropic-key
+jebat auth set ollama http://localhost:11434
 ```
 
-### Design Systems
+### Step 3: Configure the Cognitive Router
+Configure the default system runtime variables inside `~/.jebat/config.yaml`. Point JEBAT to local weights or cloud endpoints.
 
-Three production-ready systems from [awesome-design-md](https://github.com/VoltAgent/awesome-design-md):
+```yaml
+llm:
+  provider: ollama
+  model: qwen2.5-coder:7b
+  fallback_providers:
+    - openai
+    - anthropic
+safety:
+  default_tier: confirm
+  sandbox_restricted: true
+```
 
-| System | Style | Key Traits |
-|--------|-------|------------|
-| **Vercel** (Geist) | Minimalist developer infra | Shadow-as-border, Geist font, white canvas |
-| **Cursor** | Warm craft minimalism | Cream `#f2f1ed`, jjannon serif, oklab borders |
-| **Supabase** | Dark-mode-native | `#171717` void, emerald green, Circular font |
+### Step 4: Run Autonomous Agent Loops
+Launch the ReAct (Reasoning and Acting) execution engine. You can execute tasks in single queries or jump into an interactive command shell.
 
 ```bash
-npx jebatcore design-system --list
-npx jebatcore design-system --name vercel
+# Run one-shot queries with tool routing
+jebat agent "Verify the repository build config in package.json"
+
+# Launch the interactive streaming REPL shell
+jebat chat-repl
 ```
 
-### Icon Catalog
-
-100+ tech logos from [developer-icons](https://github.com/xandemon/developer-icons) for UI/UX enhancement:
+### Step 5: Orchestrate Agent Swarms
+Deconstruct high-level goals into parallel subtasks and delegate them to role-based subagents (Tukang, Hulubalang, Pawang).
 
 ```bash
-npx jebatcore icon-search --query react
-npx jebatcore icon-search --list-all
+# Dispatch a secure multi-agent task array
+jebat delegate run "Audit all API endpoints in src/services" --tools terminal,file
 ```
 
-### Skill Manager
-
-Anthropic-compatible [SKILL.md](https://agentskills.io) format with SHA-256 integrity:
+### Step 6: Deploy Multi-Channel Adapters
+Expose the agent gateway securely to team messaging systems, letting your operations team query logs and dispatch commands.
 
 ```bash
-npx jebatcore skill-list                # List all 23 skills
-npx jebatcore skill --skill panglima    # View full skill content
-npx jebatcore skill-search --query react
-npx jebatcore skill-create --skill my-api --description "REST API patterns"
-npx jebatcore skill-verify              # Integrity check
-```
-
-**23 Skills across 12 categories:**
-
-| Category | Skills |
-|----------|--------|
-| jebat-native | panglima, memory-core, hermes-agent |
-| development | fullstack, web-developer, app-development |
-| orchestration | agent-dispatch |
-| security | security-pentest |
-| database | database |
-| automation | automation |
-| design | ui-ux |
-| growth | marketing, seo |
-| strategy | brand-strategy, product-strategy |
-| commercial | proposal-writing, sales-enablement |
-| content | content-creation, copywriting |
-| quality | qa-validation |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                    JEBATCore                         │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  ┌──────────────┐    ┌──────────────┐               │
-│  │  CLI Engine  │    │  MCP Server  │               │
-│  │  (Node.js)   │    │  (stdio)     │               │
-│  └──────┬───────┘    └──────┬───────┘               │
-│         │                   │                        │
-│  ┌──────┴───────────────────┴───────┐               │
-│  │         Core Libraries            │               │
-│  ├───────────────────────────────────┤               │
-│  │  • install.js   (file deploy)     │               │
-│  │  • detect.js    (IDE scanning)    │               │
-│  │  • cli.js       (arg routing)      │               │
-│  │  • mcp-server.js  (asset server)   │               │
-│  │  • token-utils.js  (counting)      │               │
-│  │  • context-compression.js          │               │
-│  │  • skill-manager.js  (lifecycle)   │               │
-│  └───────────────────────────────────┘               │
-│                     │                                │
-│  ┌──────────────────┴──────────────────┐            │
-│  │         Assets & Config             │            │
-│  ├─────────────────────────────────────┤            │
-│  │  • vault/ (playbooks, templates)     │            │
-│  │  • skills/ (23 SKILL.md files)       │            │
-│  │  • adapters/ (IDE-specific configs)  │            │
-│  │  • docs/ (token optimization guide)  │            │
-│  └─────────────────────────────────────┘            │
-│                                                      │
-└─────────────────────────────────────────────────────┘
+# Initialize channel listeners (configured in config.yaml)
+jebat social start --channels telegram,slack
 ```
 
 ---
 
-## 📋 CLI Commands
+## Subcommand Directory
 
-### Core
+JEBAT exposes 46 subcommands divided into logical management zones:
 
-| Command | Description |
-|---------|-------------|
-| `jebatcore install` | Install context files and MCP setup |
-| `jebatcore detect` | Scan for installed IDEs |
-| `jebatcore prompt` | Print universal system prompt |
-| `jebatcore doctor` | Diagnose workspace setup |
-
-### Token Optimization
-
-| Command | Description |
-|---------|-------------|
-| `token-analyze` | Count tokens for any text/file |
-| `token-compress` | Compress context with configurable levels |
-| `token-compress-prompt` | Optimize system prompts |
-| `token-budget` | View per-operation token budgets |
-| `output-fluff` | Analyze and strip LLM output filler |
-
-### Design & Icons
-
-| Command | Description |
-|---------|-------------|
-| `design-system --list` | List available design systems |
-| `design-system --name <system>` | View full design spec |
-| `icon-search --query <term>` | Search tech logos |
-| `icon-search --list-all` | Full icon catalog |
-
-### Skills
-
-| Command | Description |
-|---------|-------------|
-| `skill-list` | List all installed skills |
-| `skill --skill <name>` | View skill content + integrity |
-| `skill-search --query <term>` | Search skills by tag |
-| `skill-create --skill <name>` | Author new skill |
-| `skill-install --source <path>` | Install from path |
-| `skill-remove --skill <name>` | Remove skill |
-| `skill-verify` | SHA-256 integrity check |
+| Domain | Commands | Description |
+| :--- | :--- | :--- |
+| **System** | `status`, `init`, `config`, `doctor`, `optimize` | Manage system health, tune configs, run optimizations |
+| **Inference** | `llm-providers`, `llm-config`, `llm-auth`, `free-models`, `cost` | Review provider credentials, fallback paths, live usage budgets |
+| **Interaction** | `chat`, `chat-project`, `chat-repl`, `think`, `loop` | Standard chat, project context loading, interactive REPL |
+| **Orchestration** | `delegate`, `cron`, `skills`, `tools`, `mcp` | Swarm delegation, task scheduler, skill registries, MCP servers |
+| **Operations** | `file`, `exec`, `git`, `wiki`, `session`, `todo` | File modifiers, PTY terminal execution, wiki pages, database indices |
+| **Security** | `pentest`, `sandbox`, `safety`, `undo` | Auditing tools, Docker container isolation, rollback backups |
 
 ---
 
-## 🔧 Supported IDEs
-
-| IDE | Extension | MCP | Both |
-|-----|-----------|-----|------|
-| VS Code | ✅ | ✅ | ✅ |
-| Cursor | ✅ | ✅ | ✅ |
-| Windsurf | ✅ | ✅ | ✅ |
-| Zed | ✅ | ✅ | ✅ |
-| VSCodium | ✅ | ✅ | ✅ |
-| JetBrains | ✅ | — | ✅ |
-| Neovim | ✅ | — | ✅ |
-| Sublime Text | ✅ | — | ✅ |
-| Trae | ✅ | — | ✅ |
-| Antigravity | ✅ | — | ✅ |
-
----
-
-## 📁 Project Structure
+## System Architecture
 
 ```
 jebat-core/
-├── bin/                    # CLI entry point
-├── lib/                    # Core libraries
-│   ├── cli.js              # CLI router
-│   ├── install.js          # File deployment
-│   ├── detect.js           # IDE detection
-│   ├── mcp-server.js       # MCP stdio server
-│   ├── token-utils.js      # Token counting & budgets
-│   ├── context-compression.js  # Input-side compression
-│   ├── skill-manager.js    # Skill lifecycle
-│   └── token-config.json   # Token defaults
-├── adapters/               # IDE-specific configs
-│   ├── profiles/           # Specialized agent profiles
-│   ├── cursor/             # .cursorrules
-│   ├── vscode/             # copilot-instructions.md
-│   ├── zed/                # system-prompt.md
-│   └── generic/            # JEBAT.md (universal)
-├── skills/                 # 23 Anthropic-compatible skills
-│   ├── _core/              # Shared CODEX_CORE.md
-│   ├── panglima/           # Orchestration
-│   ├── fullstack/          # Development
-│   └── ...
-├── vault/                  # Playbooks, templates, checklists
-│   ├── design-systems/     # Vercel, Cursor, Supabase
-│   ├── references/         # Icon catalog
-│   ├── playbooks/          # Workflow guides
-│   ├── templates/          # Brief templates
-│   └── checklists/         # Verification checklists
-└── docs/
-    └── TOKEN-OPTIMIZATION.md  # Complete guide
+  ├── jebat/                  # Active runtime modules
+  │   ├── cli/                # Entrypoints (jebat_cli.py v6.1.0)
+  │   ├── core/               # Cognitive loops (agent_loop.py, delegation.py)
+  │   ├── features/           # Specialized capability suites
+  │   │   ├── pentest/        # TukangBesi — reconnaissance orchestration
+  │   │   ├── sandbox/        # Hulubalang — Docker container sandbox
+  │   │   └── undo/           # Pawang — backup rollbacks
+  │   └── llm/                # Multi-provider HSL cognitive routing
+  ├── db/                     # SQLite RAG wiki & memory files
+  └── docs/                   # Platform architecture references
 ```
 
 ---
 
-## 🤝 Contributing
+## Safety Classification Tiers
 
-```bash
-# Clone
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core
+To safeguard target servers, JEBAT categorizes all tool execution into permission tiers:
 
-# Test CLI
-node bin/jebatcore.js help
-
-# Dry run install
-npm run cli:dry-run
-
-# Validate structure
-powershell -NoProfile -ExecutionPolicy Bypass -File .\validate-workspace.ps1
-```
+- **AUTO**: Read-only, safe commands executed without intervention (e.g. `cat`, `grep`).
+- **CONFIRM**: Write and modification commands prompting user validation (e.g. `write`, `patch`, `git commit`).
+- **DANGEROUS**: Destructive or privilege-escalating commands requiring explicit terminal validation tags (e.g. `rm -rf`, `sudo`).
 
 ---
 
-## 📄 License
-
-**MIT License** — see [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Credits
-
-- **Hang Jebat** — Legendary Malay warrior who inspired the name
-- [awesome-design-md](https://github.com/VoltAgent/awesome-design-md) — Design system collection
-- [developer-icons](https://github.com/xandemon/developer-icons) — Tech logo icon set
-- [Agent Skills](https://agentskills.io) — SKILL.md standard (Anthropic)
-- [skilld](https://github.com/harlan-zw/skilld) — NPM skill packaging inspiration
-
----
-
-**🗡️ JEBATCore** — *Because warriors remember everything that matters.*
-
-Made by [NusaByte](https://github.com/nusabyte-my).
+## License & Organization
+Developed and maintained under strict data residency governance by NusaByte.
+Licensed under the MIT Open Source License. Built by Shaidan Shaari (humm1ngb1rd).

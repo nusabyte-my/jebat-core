@@ -7,6 +7,10 @@ Tests for:
 - Memory integration
 - Statistics and history retrieval
 """
+import pytest
+
+pytestmark = [pytest.mark.integration]
+
 
 import asyncio
 import logging

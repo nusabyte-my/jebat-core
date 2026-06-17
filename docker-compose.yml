@@ -1,0 +1,206 @@
+# ==================== JEBAT v6.1 — Docker Compose Stack ====================
+# One-command production deployment:
+#   docker compose up -d
+#
+# Services:
+#   jebat-api        — FastAPI application server (port 8080)
+#   postgres         — TimescaleDB + pgvector (port 5432)
+#   redis            — Cache + session store (port 6379)
+#   prometheus       — Metrics collection (port 9090)
+#   grafana          — Dashboards (port 3000)
+#   postgres-exporter — PG metrics for Prometheus
+#   redis-exporter    — Redis metrics for Prometheus
+
+services:
+
+  # ─── JEBAT API Server ───
+  jebat-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jebat-api
+    restart: unless-stopped
+    ports:
+      - "${JEBAT_API_PORT:-8080}:8080"
+      - "${JEBAT_WEBUI_PORT:-8787}:8787"
+      - "${JEBAT_MCP_PORT:-18789}:18789"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-jebat}:${POSTGRES_PASSWORD:-jebat_secure_password_change_me}@postgres:5432/${POSTGRES_DB:-jebat_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_password_change_me}@redis:6379/0
+      - JEBAT_API_HOST=0.0.0.0
+      - JEBAT_API_PORT=8080
+      - JEBAT_WEBUI_HOST=0.0.0.0
+      - JEBAT_WEBUI_PORT=8787
+      - JEBAT_MCP_PORT=18789
+    volumes:
+      - jebat-data:/app/data
+      - jebat-logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - jebat-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # ─── PostgreSQL + TimescaleDB + pgvector ───
+  postgres:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: jebat-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-jebat_db}
+      - POSTGRES_USER=${POSTGRES_USER:-jebat}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-jebat_secure_password_change_me}
+    volumes:
+      - jebat-pgdata:/home/postgres/pgdata/data
+      # Mount schema files for initialization
+      - ./database/schema:/schemas:ro
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - jebat-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jebat} -d ${POSTGRES_DB:-jebat_db}"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ─── Redis ───
+  redis:
+    image: redis:7-alpine
+    container_name: jebat-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-redis_secure_password_change_me}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - jebat-redis-data:/data
+    networks:
+      - jebat-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secure_password_change_me}", "ping"]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 5
+
+  # ─── Prometheus ───
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: jebat-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./database/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - jebat-prometheus-data:/prometheus
+    networks:
+      - jebat-internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # ─── Grafana ───
+  grafana:
+    image: grafana/grafana:latest
+    container_name: jebat-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-jebat_admin_change_me}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-jebat_secure_password_change_me}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password_change_me}
+    volumes:
+      - ./database/config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./database/config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - jebat-grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    networks:
+      - jebat-internal
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # ─── PostgreSQL Exporter ───
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: jebat-pg-exporter
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER:-jebat}:${POSTGRES_PASSWORD:-jebat_secure_password_change_me}@postgres:5432/${POSTGRES_DB:-jebat_db}?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - jebat-internal
+
+  # ─── Redis Exporter ───
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: jebat-redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password_change_me}
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jebat-internal
+
+# ─── Named Volumes ───
+volumes:
+  jebat-data:
+    driver: local
+  jebat-logs:
+    driver: local
+  jebat-pgdata:
+    driver: local
+  jebat-redis-data:
+    driver: local
+  jebat-prometheus-data:
+    driver: local
+  jebat-grafana-data:
+    driver: local
+
+# ─── Internal Network ───
+networks:
+  jebat-internal:
+    driver: bridge

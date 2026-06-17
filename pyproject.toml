@@ -26,3 +26,32 @@ jebat-server = "apps.api.main:main"
 
 [tool.setuptools.packages.find]
 include = ["apps*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+  "-v",
+  "--tb=short",
+  "--strict-markers",
+]
+markers = [
+  "unit: Unit tests (no external dependencies)",
+  "integration: Integration tests (may use mocked services)",
+  "api: API endpoint tests (httpx AsyncClient against FastAPI)",
+  "client: Direct client class unit tests (no HTTP layer)",
+  "auth: Authentication and key management tests",
+  "ghost: Ghost Database feature tests",
+  "catalyst: Catalyst Observability feature tests",
+  "chat: Chat sync and streaming tests",
+  "logging: Request logging and middleware tests",
+  "slow: Tests that take more than a few seconds",
+]
+testpaths = ["."]
+pythonpath = ["jebat-core"]
+filterwarnings = [
+  "ignore::DeprecationWarning",
+  "ignore::RuntimeWarning:jebat.api.logging",
+]

@@ -2,6 +2,10 @@
 """
 Test script to verify orchestrator improvements
 """
+import pytest
+
+pytestmark = [pytest.mark.integration]
+
 
 import asyncio
 import sys

@@ -3,6 +3,10 @@ Test MemoryManager Integration with Ultra-Think
 
 Demonstrates memory-augmented thinking.
 """
+import pytest
+
+pytestmark = [pytest.mark.integration]
+
 
 import asyncio
 import sys

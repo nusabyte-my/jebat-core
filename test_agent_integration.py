@@ -3,6 +3,10 @@ Test Agent Integration with Ultra-Loop
 
 Demonstrates agent execution during Ultra-Loop action phase.
 """
+import pytest
+
+pytestmark = [pytest.mark.integration]
+
 
 import asyncio
 import sys

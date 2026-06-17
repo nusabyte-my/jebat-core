@@ -25,9 +25,9 @@ pyyaml>=6.0.1
 python-dotenv>=1.0.0
 rich>=13.7.0
 
-# === Database (optional — install if JEBAT_DATABASE_ENABLED=true) ===
-# pip install sqlalchemy[asyncio] asyncpg  # PostgreSQL
-# pip install sqlalchemy[asyncio] aiosqlite  # SQLite (dev only)
+# === Database (PostgreSQL + Redis) ===
+asyncpg>=0.29.0
+redis>=5.0.0
 sqlalchemy[asyncio]>=2.0.0
 
 # === Security / Sentinel (optional — needs numpy + sklearn) ===

@@ -1,0 +1,104 @@
+# JEBAT Docker Ignore
+# Keep the image lean — exclude dev, test, docs, and local state
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.venv
+.venv-tldr
+*.egg-info
+
+# Node
+node_modules
+package-lock.json
+.next
+
+# Local state & secrets
+.env
+.env.*
+!.env.example
+.jebat
+.jebatrc.json
+.openclaude-profile.json
+.omx
+.openclaw
+.learnings
+.qwen
+.kilo
+.sisyphus
+.claude
+.codex
+
+# Test files
+test_*.py
+
+# Documentation (not needed at runtime)
+*.md
+!README.md
+docs/
+plans/
+vault/
+examples/
+MODelfile.*
+robots.txt
+sitemap.xml
+landing.html
+
+# Local dev tools
+scripts/*.ps1
+deploy.py
+setup.py
+jebat_selector.py
+jebat_v3_design_swarm.py
+start_loop_and_swarm.py
+fix_*.py
+git_push.*
+validate-workspace.ps1
+
+# Backup & snapshot dirs
+backups/
+skill-snapshots/
+reviewed-skills-backups/
+records/
+tasks/
+brain/
+
+# Infrastructure config (mounted as volumes in compose, not baked into image)
+database/config/
+
+# IDE configs (not needed at runtime)
+ide-configs/
+
+# Models & large binaries
+models/
+llama.cpp/
+
+# Other app dirs that are not part of the core image
+apps/
+automation/
+chat/
+core/
+extensions/
+integrations/
+jebat-core/
+jebat-tokguru/
+jebat_project/
+mobile/
+monitoring/
+packages/
+security/
+utils/
+memory/
+memory_system/
+infrastructure/
+agentix/
+
+# Windows artifacts
+*.bat

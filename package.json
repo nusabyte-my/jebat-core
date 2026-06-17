@@ -4,7 +4,7 @@
   "description": "JEBATCore workstation installer for IDE context files and local MCP setup.",
   "type": "module",
   "bin": {
-    "jebatcore": "./bin/jebatcore.js"
+    "jebatcore": "./packages/cli/bin/jebatcore.js"
   },
   "files": [
     "bin",
@@ -40,19 +40,19 @@
     "build:cli": "bash scripts/build-cli-bundle.sh || scripts\\build-cli-bundle.bat",
     "build:cli:win": "scripts\\build-cli-bundle.bat",
     "build:cli:unix": "bash scripts/build-cli-bundle.sh",
-    "cli:detect": "node ./bin/jebatcore.js detect",
-    "cli:doctor": "node ./bin/jebatcore.js doctor",
-    "cli:help": "node ./bin/jebatcore.js help",
-    "cli:dry-run": "node ./bin/jebatcore.js install --ide vscode --mode both --scope workstation --home ./.tmp-jebat-home --yes --dry-run",
-    "cli:token-analyze": "node ./bin/jebatcore.js token-analyze",
-    "cli:token-compress": "node ./bin/jebatcore.js token-compress",
-    "cli:token-compress-prompt": "node ./bin/jebatcore.js token-compress-prompt",
-    "cli:token-budget": "node ./bin/jebatcore.js token-budget",
-    "cli:output-fluff": "node ./bin/jebatcore.js output-fluff",
-    "cli:design-system": "node ./bin/jebatcore.js design-system",
-    "cli:icon-search": "node ./bin/jebatcore.js icon-search",
-    "cli:skill-list": "node ./bin/jebatcore.js skill-list",
-    "cli:skill-verify": "node ./bin/jebatcore.js skill-verify",
-    "cli:skill-search": "node ./bin/jebatcore.js skill-search"
+    "cli:detect": "node ./packages/cli/bin/jebatcore.js detect",
+    "cli:doctor": "node ./packages/cli/bin/jebatcore.js doctor",
+    "cli:help": "node ./packages/cli/bin/jebatcore.js help",
+    "cli:dry-run": "node ./packages/cli/bin/jebatcore.js install --ide vscode --mode both --scope workstation --home ./.tmp-jebat-home --yes --dry-run",
+    "cli:token-analyze": "node ./packages/cli/bin/jebatcore.js token-analyze",
+    "cli:token-compress": "node ./packages/cli/bin/jebatcore.js token-compress",
+    "cli:token-compress-prompt": "node ./packages/cli/bin/jebatcore.js token-compress-prompt",
+    "cli:token-budget": "node ./packages/cli/bin/jebatcore.js token-budget",
+    "cli:output-fluff": "node ./packages/cli/bin/jebatcore.js output-fluff",
+    "cli:design-system": "node ./packages/cli/bin/jebatcore.js design-system",
+    "cli:icon-search": "node ./packages/cli/bin/jebatcore.js icon-search",
+    "cli:skill-list": "node ./packages/cli/bin/jebatcore.js skill-list",
+    "cli:skill-verify": "node ./packages/cli/bin/jebatcore.js skill-verify",
+    "cli:skill-search": "node ./packages/cli/bin/jebatcore.js skill-search"
   }
 }

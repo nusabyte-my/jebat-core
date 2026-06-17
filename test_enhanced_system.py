@@ -1,3 +1,4 @@
+import pytest
 """
 Enhanced JEBAT System - Simple Initialization Test
 
@@ -37,6 +38,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.unit
 class TestResult:
     """Track test results"""
 

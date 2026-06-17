@@ -1,3 +1,0 @@
-"""
-Serangan Console TUI.
-"""

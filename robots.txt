@@ -1,0 +1,52 @@
+# JEBAT — Sovereign AI Platform
+# https://jebat.online
+
+Sitemap: https://jebat.online/sitemap.xml
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /webui/
+Disallow: /tmp/
+
+# AI Search Crawlers — explicitly allowed for Answer Engine Optimization
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+# Block aggressive crawlers
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Crawl-delay for polite bots
+User-agent: Bingbot
+Crawl-delay: 1
