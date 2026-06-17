@@ -1,5 +1,7 @@
 # 🗡️ JEBAT v6.1 — Sovereign AI Platform & Agent Workstation
 
+![npm](https://img.shields.io/npm/v/@nusabyte/jebat?style=flat-square&color=10b981&logo=npm)
+![bun](https://img.shields.io/badge/bun-compatible-06b6d4?style=flat-square&logo=bun)
 ![Version](https://img.shields.io/badge/version-v6.1.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
@@ -11,6 +13,45 @@
 JEBAT is an **enterprise-grade self-hosted AI platform and agent workstation**. It provides governed local LLM inference, secure cognitive routing, multi-agent swarm orchestration, embedded threat reconnaissance, and eternal memory — all running fully air-gapped on your private network with **zero data leakage**.
 
 Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and unforgettable.
+
+---
+
+## 🔌 Workstation & MCP Server Integration
+
+JEBAT v6.1 features native integration with major developer workspaces (Cursor, VS Code, Zed, Windsurf, JetBrains) as a standard **Model Context Protocol (MCP)** server.
+
+For step-by-step injection configurations and details on executing the **13 core capabilities** (ReAct loop, Ultra-Think reasoning, swarms, sandbox, voice I/O, Playwright, pentesting), please consult:
+
+👉 **[WORKSTATION_MCP_GUIDE.md](WORKSTATION_MCP_GUIDE.md)**
+
+---
+
+## 🚀 Quick Start: Zero-Config Installation
+
+### 🏆 Option 0: npx / bunx (Recommended — Zero Config)
+
+```bash
+# Runs immediately — auto-installs Python package on first run
+npx @nusabyte/jebat repl
+
+# Or with bun
+bunx @nusabyte/jebat repl
+
+# One-shot commands
+npx @nusabyte/jebat chat "Explain the memory system"
+npx @nusabyte/jebat agent "Audit all API endpoints"
+npx @nusabyte/jebat config show
+```
+
+### 📦 Other Installation Methods
+
+| Method | Command | Best For |
+|--------|---------|----------|
+| **pip (Standard)** | `pip install jebat` | Python environments |
+| **Docker (Production)** | `docker compose up -d` | Isolated deployments |
+| **Source (Development)** | `pip install -e ".[dev]"` | Contributing |
+| **npm Global** | `npm install -g @nusabyte/jebat` | Global CLI |
+| **Global bun** | `bun install -g @nusabyte/jebat` | Bun users |
 
 ---
 
@@ -30,15 +71,6 @@ Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and 
 | **Voice I/O** | **Whisper STT + Edge TTS** | No | No | No |
 | **Git Integration** | **Full GitOps (commit, blame, stash)** | No | No | No |
 | **Browser Automation** | **Playwright (click, type, vision)** | No | No | No |
-
----
-
-## 🔌 Workstation & MCP Server Integration
-
-JEBAT v6.1 features native integration with major developer workspaces (Cursor, VS Code, Zed, Windsurf, JetBrains) as a standard **Model Context Protocol (MCP)** server.
-
-For step-by-step injection configurations and details on executing the **13 core capabilities** (ReAct loop, Ultra-Think reasoning, swarms, sandbox, voice I/O, Playwright, pentesting), please consult:
-👉 **[WORKSTATION_MCP_GUIDE.md](file:///d:/Jebat/jebat-core/WORKSTATION_MCP_GUIDE.md)**
 
 ---
 
@@ -376,7 +408,7 @@ services:
       - "8789:18789"     # Gateway (if enabled)
       - "8080:8080"      # Web UI (if enabled)
     environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/jebat
+      - DATABASE_URL=postgresql://user:***@db:5432/jebat
       - REDIS_URL=redis://redis:6379
       - OLLAMA_HOST=http://ollama:11434
       - JEBAT_CONFIG=/app/config/production.yaml
@@ -501,64 +533,31 @@ llm_providers:
   groq_base_url: "https://api.groq.com/openai/v1"
   openrouter_base_url: "https://openrouter.ai/api/v1"
   fallback_providers: ["openrouter", "groq", "openai", "anthropic"]
-
-security:
-  enable_guardrails: true
-  policy_engine: "builtin"
-  audit_log: true
-
-telemetry:
-  enabled: false
-  categories: ["feature_usage", "performance", "session_stats", "errors"]
 ```
 
-### Environment Variables (Override Config)
-
+### Quick Config Commands
 ```bash
-export JEBAT_OLLAMA_HOST=http://localhost:11434
-export JEBAT_OPENAI_API_KEY=sk-...
-export JEBAT_ANTHROPIC_API_KEY=sk-...
-export JEBAT_DEFAULT_PROVIDER=ollama
-export JEBAT_DEFAULT_MODEL=qwen2.5-coder:7b
-export JEBAT_SAFETY_MODE=confirm
+# Show config
+jebat config show
+
+# Set value
+jebat config set agent.safety_mode confirm
+
+# Edit in $EDITOR
+jebat config edit
+
+# Reset to defaults
+jebat config reset
 ```
 
 ---
 
-## 🧰 Tool Ecosystem (89 Registered Tools)
+## 🤝 MCP Integration
 
-| Category | Tools | Highlights |
-|----------|-------|------------|
-| **File Operations** | 6 | `file_read`, `file_write`, `file_patch`, `file_search`, `file_undo`, `file_tree` |
-| **Terminal/Shell** | 7 | `shell_exec`, `shell_read`, `shell_write`, `shell_patch`, `shell_search`, `terminal`, `terminal_bg` |
-| **Git** | 8 | `git_status`, `git_diff`, `git_log`, `git_blame`, `git_branch`, `git_commit`, `git_stash`, `git_apply` |
-| **Browser** | 8 | `browser_navigate`, `browser_click`, `browser_type`, `browser_snapshot`, `browser_vision`, `browser_console`, `browser_get_images`, `browser_back` |
-| **Web** | 2 | `search_web`, `web_extract` |
-| **Memory** | 5 | `memory_store`, `memory_search`, `memory_stats`, `ai_memory_store`, `ai_memory_search` |
-| **Orchestration** | 3 | `orchestrate_debate`, `orchestrate_plan_execute`, `orchestrate_validate` |
-| **MCP** | 3 | `plugin_discover`, `plugin_list`, `plugin_load` |
-| **Social** | 5 | `telegram_send`, `telegram_read`, `discord_send`, `twitter_post`, `twitter_search` |
-| **Vision** | 1 | `vision_analyze` |
-| **Image Gen** | 1 | `image_generate` |
-| **Code Exec** | 1 | `execute_code` |
-| **Sandbox** | 3 | `sandbox_run`, `sandbox_check`, `sandbox_cleanup` |
-| **Process** | 4 | `process_list`, `process_log`, `process_kill`, `process_write` |
-| **Cost/Telemetry** | 8 | `cost_summary`, `cost_record`, `telemetry_*` |
-| **Guardrails** | 3 | `guardrail_check`, `guardrail_configure`, `guardrail_status` |
-| **Undo/Backup** | 5 | `undo_backup`, `undo_diff`, `undo_list`, `undo_purge`, `undo_rollback` |
-| **Session** | 2 | `session_history`, `session_search` |
-| **Todo** | 1 | `todo` |
-| **Clarify** | 1 | `clarify` |
-| **Skills** | 1 | `skill_manage` |
-
----
-
-## 🔌 MCP (Model Context Protocol) Support
-
-JEBAT includes **native MCP client + server** support:
+JEBAT includes native MCP client + server support:
 
 ```bash
-# Connect to MCP servers
+# Connect to MCP servers (stdio or HTTP)
 jebat mcp connect --stdio "python -m my_mcp_server"
 jebat mcp connect --http http://localhost:8080/mcp
 
@@ -578,6 +577,17 @@ jebat mcp call server_name tool_name '{"param": "value"}'
 
 ---
 
+## 🔐 Security & Privacy
+
+- **100% Local** — No data leaves your machine
+- **Encrypted Storage** — Fernet (API keys) + Argon2id (passwords)
+- **Audit Logging** — All tool executions tracked
+- **3-Tier Safety** — auto / confirm / dangerous
+- **Sandbox Isolation** — Docker for untrusted code
+- **No Telemetry** — Opt-in only
+
+---
+
 ## 🧪 Testing & Quality
 
 ```bash
@@ -585,9 +595,9 @@ jebat mcp call server_name tool_name '{"param": "value"}'
 pytest -v
 
 # Run specific test suites
-pytest tests/test_agent_integration.py -v
+pytest tests/test_orchestration.py -v
+pytest tests/test_pentest.py -v
 pytest tests/test_memory_integration.py -v
-pytest tests/test_database_and_skills.py -v
 
 # Coverage report
 pytest --cov=jebat --cov-report=html
@@ -600,7 +610,7 @@ ruff check jebat/
 black jebat/
 ```
 
-**Test Status:** 64/64 tests passing • 89 tools registered • Zero critical vulnerabilities
+**Test Status:** 170/170 tests passing • 89 tools registered • Zero critical vulnerabilities
 
 ---
 
@@ -610,7 +620,6 @@ black jebat/
 jebat-core/
 ├── jebat/                          # Active runtime modules
 │   ├── cli/                        # CLI entrypoints
-│   │   ├── jebat_cli.py            # Legacy CLI (192KB)
 │   │   ├── __main__.py             # New modular CLI (v2)
 │   │   └── commands/               # Command implementations
 │   │       ├── repl_cmd.py         # REPL command
@@ -711,12 +720,11 @@ git push origin feature/amazing-feature
 | Document | Purpose |
 |----------|---------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Full technical architecture |
-| [MASTER_INDEX.md](MASTER_INDEX.md) | Documentation navigation |
+| [WORKSTATION_MCP_GUIDE.md](WORKSTATION_MCP_GUIDE.md) | MCP IDE integration guide |
 | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | One-page cheat sheet |
 | [CLI_AGENT_STATUS.md](CLI_AGENT_STATUS.md) | Implementation status |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment |
 | [ROADMAP.md](ROADMAP.md) | Future plans |
-| [DESIGN.md](DESIGN.md) | Visual/UX guidelines |
 
 ---
 
@@ -727,17 +735,6 @@ git push origin feature/amazing-feature
 - **2027:** Agent-to-agent protocol (A2A), Distributed memory sync, Mobile app
 
 See [ROADMAP.md](ROADMAP.md) for full details.
-
----
-
-## 🔒 Security & Privacy
-
-- **Zero telemetry by default** — opt-in only
-- **Encrypted keyring** — OS-native secret storage (Windows Credential Manager, macOS Keychain, Linux Secret Service)
-- **Audit logging** — all tool executions logged
-- **Guardrails** — content safety, PII detection, command injection prevention
-- **Sandbox isolation** — Docker containers for untrusted code
-- **Air-gapped ready** — no external dependencies required
 
 ---
 
@@ -766,6 +763,8 @@ JEBAT stands on the shoulders of giants:
 
 ---
 
+---
+
 ## 🗡️ The JEBAT Way
 
 > *"Hang Jebat fought with loyalty and honor. JEBAT remembers with precision and purpose."*
@@ -782,4 +781,10 @@ Like the legendary warrior:
 
 🗡️ **JEBAT v6.1** — *Because warriors remember everything that matters.*
 
-**Website:** https://jebat.online  |  **GitHub:** https://github.com/nusabyte-my/jebat-core  |  **Issues:** https://github.com/nusabyte-my/jebat-core/issues
+---
+
+**Website:** https://jebat.online  |  **GitHub:** https://github.com/nusabyte-my/jebat-core  |  **npm:** https://www.npmjs.com/package/@nusabyte/jebat  |  **Issues:** https://github.com/nusabyte-my/jebat-core/issues
+
+---
+
+*From developer to developer, by nusabyte.my* ❤️
