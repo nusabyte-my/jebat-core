@@ -33,6 +33,15 @@ Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and 
 
 ---
 
+## 🔌 Workstation & MCP Server Integration
+
+JEBAT v6.1 features native integration with major developer workspaces (Cursor, VS Code, Zed, Windsurf, JetBrains) as a standard **Model Context Protocol (MCP)** server.
+
+For step-by-step injection configurations and details on executing the **13 core capabilities** (ReAct loop, Ultra-Think reasoning, swarms, sandbox, voice I/O, Playwright, pentesting), please consult:
+👉 **[WORKSTATION_MCP_GUIDE.md](file:///d:/Jebat/jebat-core/WORKSTATION_MCP_GUIDE.md)**
+
+---
+
 ## 🚀 6-Step Operational Onboarding
 
 ### Step 1: Secure Installation

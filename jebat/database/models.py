@@ -61,16 +61,18 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 # Database URL should be configured from environment
-DATABASE_URL = (
-    "postgresql+asyncpg://jebat:jebat_secure_password@localhost:5432/jebat_db"
+import os
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://jebat:${JEBAT_DB_PASSWORD}@localhost:5432/jebat_db"
 )
 
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=20,
+    max_overflow=10,
     pool_pre_ping=True,
     pool_recycle=3600,
 )
@@ -167,6 +169,14 @@ class ConnectionState(str, PyEnum):
 # ==================== Memory System Models ====================
 
 
+# Import encryption utilities
+from jebat.features.security import (
+    get_password_hasher,
+    verify_password,
+    hash_password,
+)
+
+
 class User(Base):
     """User account model"""
 
@@ -195,6 +205,15 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    # Password methods
+    def set_password(self, password: str) -> None:
+        """Set password with secure Argon2id hashing."""
+        self.password_hash = hash_password(password)
+
+    def check_password(self, password: str) -> bool:
+        """Verify password against hash."""
+        return verify_password(password, self.password_hash)
 
     # Relationships
     tasks: Mapped[List["Task"]] = relationship(

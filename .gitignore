@@ -25,7 +25,9 @@ MANIFEST
 venv/
 ENV/
 env/
-.venv
+.venv/
+virtualenv/
+.envrc
 
 # IDE
 .vscode/
@@ -34,6 +36,12 @@ env/
 *.swo
 *~
 .DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
 
 # Testing
 .pytest_cache/
@@ -41,38 +49,346 @@ env/
 htmlcov/
 *.manifest
 *.spec
+.tox/
+.nox/
+.hypothesis/
 
 # Logs
 *.log
 logs/
+log/
+*.log.*
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+*.db-*
+*.sqlite-*
+*.sqlite3-*
+*.db.journal
+*.sqlite.journal
+*.sqlite3.journal
 
-# Environment variables
+# Environment variables & secrets
 .env
-.env.local
+.env.*
+*.env
+*.env.local
+*.env.production
+*.env.staging
+*.env.development
+*.env.test
+.env.*.local
+!*.env.example
+!*.env.vps.example
+!.env.template
 
-# JEBAT specific
-jebat_old_backup/
-projects/
-*.pem
+# Secrets & Keys
 *.key
+*.pem
+*.crt
+*.cer
+*.der
+*.p7b
+*.p7c
+*.p8
+*.pkcs12
+*.p12
+*.pfx
+*.pem.enc
+*.key.enc
 secrets/
+secrets.yaml
+secrets.yml
+*.secret
+*.secrets
+vault/
+vault.yaml
+vault.yml
+*.gpg
+*.asc
+*.sig
 
-# Node (if using)
-node_modules/
-npm-debug.log
-yarn-error.log
+# SSH & SSL
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+ssh/
+.ssh/
+authorized_keys
+known_hosts
+config
+*.pub
+*.pem
+*.crt
+*.csr
+*.cnf
 
-# Testing
-test_results/
-.tmp/
-.temp/
+# Docker
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.local.yml
+.docker/
+.dockerignore
+Dockerfile.local
+Dockerfile.*.local
+docker-secrets/
+*.dockerfile.local
+
+# Terraform / Infrastructure
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+*.auto.tfvars
+*.auto.tfvars.json
 
 # Backup files
 *.bak
 *.backup
 *.old
+*.orig
+*.tmp
+*.temp
+*.swp
+*~
+*.BAK
+*.BACKUP
+*.OLD
+*.TMP
+.backup/
+.backups/
+backup/
+backups/
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# JEBAT specific
+.jebat/
+.jebat/
+jebat_old_backup/
+projects/
+.jebatrc.json
+.jebatrc.json.local
+.jebat/*.db
+.jebat/*.sqlite
+.jebat/*.sqlite3
+.jebat/backups/
+.jebat/logs/
+.jebat/sessions.db
+.jebat/wiki.db
+.jebat/memory.db
+.jebat/tool_cache/
+.jebat/plugin_cache/
+.jebat/mcp/
+
+# Node (if using)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm/
+.yarn/
+.pnp/
+.pnp.js
+*.tsbuildinfo
+.next/
+.out/
+dist/
+build/
+coverage/
+.vercel
+.netlify
+
+# CI/CD
+.github/workflows/*.local.yml
+.gitlab-ci.local.yml
+.circleci/local.yml
+.azure-pipelines.local.yml
+
+# Package managers
+*.lock
+!package-lock.json
+!pnpm-lock.yaml
+!yarn.lock
+!Cargo.lock
+!go.sum
+!composer.lock
+!poetry.lock
+!pip.lock
+!requirements.lock
+
+# Temporary & cache
+.tmp/
+.temp/
+.cache/
+*.cache
+*.tmp
+*.temp
+tmp/
+temp/
+*.swp
+*.swo
+
+# Profiling
+*.prof
+*.pstats
+.profiler/
+
+# Documentation builds
+docs/_build/
+site/
+dist/docs/
+
+# Local development
+*.local
+*.local.*
+local/
+.local/
+
+# Sensitive configs
+config.local.yaml
+config.local.yml
+config.local.json
+settings.local.yaml
+settings.local.yml
+settings.local.json
+*.local.yaml
+*.local.yml
+*.local.json
+
+# IDE/Editor specific
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+*.ipr
+*.iws
+*.idea/
+
+# Language specific
+# Go
+vendor/
+*.exe
+*.test
+*.out
+
+# Java
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# Rust
+target/
+Cargo.lock
+
+# Ruby
+*.gem
+.bundle/
+vendor/bundle/
+Gemfile.local
+.rbenv/
+.rvm/
+
+# PHP
+vendor/
+composer.phar
+*.phar
+
+# Swift
+.build/
+Packages/
+Package.resolved
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM/
+
+# Kotlin
+*.class
+build/
+.gradle/
+.kotlin/
+
+# Terraform
+.tfstate
+.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+.terraform/
+
+# Ansible
+*.retry
+.vault_pass
+vault_pass.txt
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+*.kubeconfig.local
+
+# Monitoring & Telemetry
+*.prom
+*.prometheus
+*.grafana
+*.jaeger
+*.zipkin
+*.otel
+*.otlp
+
+# Security scanning
+*.sarif
+*.osv
+*.grype
+*.trivy
+*.syft
+*.bom
+*.sbom
+
+# Misc
+*.pid
+*.lock
+*.socket
+*.sock
+*.fifo
+*.pipe
+core
+core.*
+vgcore.*
+*.dmp
+*.crash
+*.minidump

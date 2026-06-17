@@ -1,4 +1,6 @@
-"""JEBAT Security Framework — three-tier safety, audit logging, sandbox mode.
+"""
+JEBAT Security Framework — three-tier safety, audit logging, sandbox mode,
+and encryption for data-at-rest.
 
 Tiers:
   - auto:      No prompt, execute immediately   (ls, echo, file read)
@@ -17,6 +19,21 @@ from pathlib import Path
 from typing import Any
 
 from jebat.tools import classify_command, classify_tool_call
+
+# ── Encryption ──────────────────────────────────────────────────────────────
+
+from jebat.features.security.encryption import (
+    EncryptionManager,
+    PasswordHasher,
+    FieldEncryption,
+    get_encryption_manager,
+    get_password_hasher,
+    encrypt_field,
+    decrypt_field,
+    hash_password,
+    verify_password,
+    log_encryption_operation,
+)
 
 # ── Audit Log ─────────────────────────────────────────────────────────────
 
@@ -151,3 +168,31 @@ def sanitize_params(params: dict[str, Any]) -> dict[str, Any]:
         else:
             sanitized[k] = v
     return sanitized
+
+
+__all__ = [
+    # Encryption
+    "EncryptionManager",
+    "PasswordHasher",
+    "FieldEncryption",
+    "get_encryption_manager",
+    "get_password_hasher",
+    "encrypt_field",
+    "decrypt_field",
+    "hash_password",
+    "verify_password",
+    "log_encryption_operation",
+    # Audit
+    "AuditEntry",
+    "write_audit",
+    "read_audit_log",
+    "clear_audit_log",
+    # Approval
+    "prompt_confirm",
+    # Sandbox
+    "enable_sandbox",
+    "disable_sandbox",
+    "is_sandbox",
+    # Utils
+    "sanitize_params",
+]
