@@ -323,14 +323,43 @@ def add_subcommand_parsers(parser: argparse.ArgumentParser):
     file_tree.add_argument("--gitignore", action="store_true", default=True, help="Respect .gitignore (default)")
     file_tree.add_argument("--no-gitignore", action="store_false", dest="gitignore", help="Don't respect .gitignore")
 
+    # Pentest command with subcommands
+    pentest_parser = subparsers.add_parser("pentest", help="Pentesting automation — scan targets, generate vulnerability reports")
+    pentest_parser.add_argument("-t", "--target", help="Target domain, IP, or URL")
+    pentest_parser.add_argument("-s", "--scan", default="quick", choices=["quick", "standard", "full", "vuln"], help="Scan profile (default: quick)")
+    pentest_parser.add_argument("-v", "--verbose", action="store_true", help="Show scan progress")
+    pentest_parser.add_argument("-o", "--output", default="report", choices=["report", "json", "both"], help="Output format (default: report)")
+    pentest_parser.add_argument("--list-profiles", action="store_true", help="List available scan profiles")
+    pentest_parser.add_argument("--shodan-key", help="Shodan API key for enhanced recon")
+    pentest_parser.add_argument("--orchestrate", action="store_true", help="Enable agent-based orchestrated analysis")
+
+    # Catalyst command with subcommands
+    catalyst_parser = subparsers.add_parser("catalyst", help="Inference.net Catalyst — tracing, gateway, signals, evals, training")
+    catalyst_sub = catalyst_parser.add_subparsers(dest="catalyst_command")
+    catalyst_sub.add_parser("status", help="Check Catalyst integration status")
+    catalyst_init = catalyst_sub.add_parser("init", help="Initialize Catalyst with API key")
+    catalyst_init.add_argument("--api-key", help="Inference.net API key")
+    catalyst_init.add_argument("--project-id", help="Inference.net project ID")
+    catalyst_init.add_argument("--gateway", action="store_true", help="Enable Gateway routing")
+    catalyst_init.add_argument("--sample-rate", type=float, default=1.0, help="Trace sample rate (0.0-1.0)")
+    catalyst_sub.add_parser("instrument", help="Auto-instrument JEBAT agent loop")
+    catalyst_trace = catalyst_sub.add_parser("trace", help="Create a trace span")
+    catalyst_trace.add_argument("name", help="Trace span name")
+    catalyst_trace.add_argument("--attrs", help="JSON attributes")
+    catalyst_eval = catalyst_sub.add_parser("eval", help="Run evaluation")
+    catalyst_eval.add_argument("--dataset", help="Dataset ID")
+    catalyst_eval.add_argument("--models", nargs="+", help="Model IDs to evaluate")
+    catalyst_train = catalyst_sub.add_parser("train", help="Train custom model")
+    catalyst_train.add_argument("--name", required=True, help="Training job name")
+    catalyst_train.add_argument("--dataset", required=True, help="Dataset ID")
+    catalyst_train.add_argument("--base-model", required=True, help="Base model")
+    catalyst_halo = catalyst_sub.add_parser("halo", help="Run HALO analysis on traces")
+    catalyst_halo.add_argument("traces", nargs="+", help="Trace IDs to analyze")
+    catalyst_halo.add_argument("--type", default="full", choices=["full", "prompt", "tool", "reasoning"])
+
     # Other commands
     subparsers.add_parser("cron", help="Scheduled task management")
     subparsers.add_parser("delegate", help="Multi-agent task delegation")
-    subparsers.add_parser("doctor", help="System health checks")
-    subparsers.add_parser("init", help="Initialize JEBAT in current directory")
-    subparsers.add_parser("loop", help="Ultra-Loop autonomous agent")
-    subparsers.add_parser("mcp", help="MCP server management")
-    subparsers.add_parser("pentest", help="Pentesting automation")
 
     # Plugin command with subcommands
     plugin_parser = subparsers.add_parser("plugin", help="Plugin management")

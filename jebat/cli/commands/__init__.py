@@ -26,6 +26,8 @@ from jebat.cli.commands.config_cmd import config_command
 from jebat.cli.commands.file_cmd import file_command
 from jebat.cli.commands.voice_cmd import voice_command
 from jebat.cli.commands.repl_cmd import repl_command
+from jebat.cli.commands.pentest_cmd import pentest_command
+from jebat.cli.commands.catalyst_cmd import catalyst_command
 
 # Command registry
 COMMANDS = {
@@ -33,6 +35,7 @@ COMMANDS = {
     "agent-def": agent_def_command,
     "benchmark": benchmark_command,
     "byok": byok_command,
+    "catalyst": catalyst_command,
     "chat": chat_command,
     "code-index": code_index_command,
     "config": config_command,
@@ -40,6 +43,7 @@ COMMANDS = {
     "file": file_command,
     "gh": gh_command,
     "model": model_command,
+    "pentest": pentest_command,
     "plugin": plugin_command,
     "repl": repl_command,
     "telemetry": telemetry_command,
