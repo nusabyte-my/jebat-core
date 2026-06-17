@@ -198,6 +198,26 @@ class LlamaCppProvider(OpenAIProvider):
         return AsyncOpenAI(base_url=f"{self._base_url}/v1", api_key="none")
 
 
+class OpenRouterProvider(OpenAIProvider):
+    """OpenRouter multi-provider gateway (OpenAI-compatible API)."""
+    name = "openrouter"
+    _default_model: str = "openai/gpt-4o"
+    _error_label: str = "OpenRouter"
+
+    def _make_client(self, **kwargs: Any):  # type: ignore[no-untyped-def]
+        from openai import AsyncOpenAI
+        api_key = os.getenv("OPENROUTER_API_KEY", "")
+        if not api_key:
+            raise RuntimeError(
+                "OPENROUTER_API_KEY env var is not set. "
+                "Set it to your OpenRouter API key to use this provider."
+            )
+        return AsyncOpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Provider registry
 # ---------------------------------------------------------------------------
@@ -207,6 +227,7 @@ _PROVIDER_MAP: Dict[str, type] = {
     "anthropic": AnthropicProvider,
     "ollama": OllamaProvider,
     "llamacpp": LlamaCppProvider,
+    "openrouter": OpenRouterProvider,
     "local": LocalEchoProvider,
 }
 
