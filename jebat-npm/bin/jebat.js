@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+// JEBAT npm wrapper - installs Python package and runs CLI
+// Usage: npx jebat [args...] or bunx jebat [args...]
+
+import { spawnSync, spawn } from 'child_process';
+import { existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PACKAGE_NAME = 'jebat';
+const PYTHON_CMD = process.platform === 'win32' ? 'python.exe' : 'python3';
+
+function log(msg) {
+  console.error(`[jebat] ${msg}`);
+}
+
+function error(msg) {
+  console.error(`[jebat] ERROR: ${msg}`);
+  process.exit(1);
+}
+
+function checkPython() {
+  try {
+    const result = spawnSync(PYTHON_CMD, ['--version'], { stdio: 'pipe' });
+    if (result.status !== 0) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function checkPip() {
+  try {
+    const result = spawnSync(PYTHON_CMD, ['-m', 'pip', '--version'], { stdio: 'pipe' });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+function installJebat() {
+  log('Installing JEBAT via pip...');
+  const result = spawnSync(PYTHON_CMD, ['-m', 'pip', 'install', '--upgrade', 'jebat'], {
+    stdio: 'inherit',
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+  });
+  if (result.status !== 0) {
+    error('Failed to install JEBAT. Please ensure Python 3.11+ and pip are installed.');
+  }
+  log('JEBAT installed successfully!');
+}
+
+function runJebat(args) {
+  const pythonArgs = ['-m', 'jebat.cli', ...args];
+  
+  // Use spawn for interactive mode (REPL)
+  const isInteractive = args.includes('repl') || args.length === 0;
+  
+  if (isInteractive && process.stdin.isTTY) {
+    // Interactive mode - use spawn with stdio inherit
+    const child = spawn(PYTHON_CMD, pythonArgs, {
+      stdio: 'inherit',
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1' }
+    });
+    
+    child.on('error', (err) => {
+      error(`Failed to start JEBAT: ${err.message}`);
+    });
+    
+    child.on('exit', (code) => {
+      process.exit(code || 0);
+    });
+    
+    // Handle signals
+    process.on('SIGINT', () => child.kill('SIGINT'));
+    process.on('SIGTERM', () => child.kill('SIGTERM'));
+  } else {
+    // Non-interactive mode - use spawnSync
+    const result = spawnSync(PYTHON_CMD, pythonArgs, {
+      stdio: 'inherit',
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    });
+    process.exit(result.status || 0);
+  }
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  
+  // Handle special flags
+  if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
+    console.log(`JEBAT v6.1.0 — Sovereign AI Platform & Agent Workstation
+    
+Usage: npx jebat [command] [options]
+
+Commands:
+  repl              Start interactive REPL (default)
+  chat <prompt>     One-shot chat with tool calling
+  agent <prompt>    Run one-shot agent task
+  config show|set   Configuration management
+  file read|write|patch|search|undo|tree  File operations
+  tools list|inspect  List/inspect registered tools
+  memory store|search|stats  Memory operations
+  status            System status
+  --version         Show version
+  --help            Show this help
+
+Examples:
+  npx jebat repl
+  npx jebat chat "Hello JEBAT"
+  npx jebat agent "Analyze this codebase"
+  npx jebat config show
+
+Installation:
+  This wrapper installs the Python package automatically on first run.
+  Requires: Python 3.11+ and pip
+`);
+    return;
+  }
+  
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log('JEBAT 6.1.0 (npm wrapper)');
+    return;
+  }
+  
+  // Check Python
+  if (!checkPython()) {
+    error('Python 3.11+ not found. Please install Python from https://python.org');
+  }
+  
+  // Check pip
+  if (!checkPip()) {
+    error('pip not found. Please install pip (usually comes with Python).');
+  }
+  
+  // Check if jebat is installed
+  const checkResult = spawnSync(PYTHON_CMD, ['-c', 'import jebat; print(jebat.__version__)'], { 
+    stdio: 'pipe',
+    encoding: 'utf-8'
+  });
+  
+  if (checkResult.status !== 0 || !checkResult.stdout.includes('6.1')) {
+    log('JEBAT not found or outdated. Installing...');
+    installJebat();
+  } else {
+    log(`JEBAT ${checkResult.stdout.trim()} already installed`);
+  }
+  
+  // Run JEBAT
+  runJebat(args);
+}
+
+main().catch(err => {
+  error(`Unexpected error: ${err.message}`);
+});

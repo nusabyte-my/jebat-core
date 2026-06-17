@@ -1,0 +1,57 @@
+{
+  "name": "@nusabyte/jebat",
+  "version": "6.1.0",
+  "description": "JEBAT v6.1 — Sovereign AI Platform & Agent Workstation. Self-hosted, privacy-first AI agent with eternal memory, multi-agent swarms, and security auditing. Runs via npx/bunx with auto Python installation.",
+  "type": "module",
+  "bin": {
+    "jebat": "./bin/jebat.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "jebat",
+    "ai",
+    "agent",
+    "cli",
+    "llm",
+    "memory",
+    "mcp",
+    "sovereign",
+    "privacy",
+    "self-hosted",
+    "orchestration",
+    "pentest",
+    "repl"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "scripts": {
+    "test": "node ./bin/jebat.js --version",
+    "prepublishOnly": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusabyte-my/jebat-core.git",
+    "directory": "jebat-npm"
+  },
+  "bugs": {
+    "url": "https://github.com/nusabyte-my/jebat-core/issues"
+  },
+  "homepage": "https://jebat.online",
+  "author": "NusaByte (humm1ngb1rd)",
+  "funding": "https://github.com/sponsors/nusabyte-my",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
