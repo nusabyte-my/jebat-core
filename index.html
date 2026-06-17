@@ -1863,13 +1863,19 @@ curl -H <span style="color:var(--emerald)">&quot;Authorization: Bearer $TOKEN&qu
   <div class="preview-card q4-card">
     <div class="preview-card-icon q4"><i class="fa-brands fa-whatsapp"></i></div>
     <h4>WhatsApp Channel</h4>
-    <p>WhatsApp Business API integration — send/receive messages, handle media, group chats, and secure command dispatch to your agent swarm.</p>
+    <p>WhatsApp Business API with webhook-driven agent dispatch, media transcription, template message workflows, group chat routing, and end-to-end encrypted command relay to the JEBAT swarm.</p>
     <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;October 2026</span>
     <div class="preview-feature-list">
-      <span class="preview-feature">Business API</span>
-      <span class="preview-feature">Media Handling</span>
-      <span class="preview-feature">Group Chat</span>
+      <span class="preview-feature">Webhook Dispatch</span>
+      <span class="preview-feature">Template Workflows</span>
+      <span class="preview-feature">Media Transcription</span>
       <span class="preview-feature">E2E Encrypted</span>
+    </div>
+    <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;font-family:var(--font-mono);font-size:11px;color:#9ca3af;line-height:1.7;">
+      <span style="color:var(--text-dim)"># WhatsApp inbound webhook handler</span><br>
+      <span style="color:var(--purple)">from</span> jebat.integrations.channels <span style="color:var(--purple)">import</span> WhatsAppChannel<br>
+      channel = WhatsAppChannel(webhook_secret=<span style="color:var(--emerald)"></span>)<br>
+      <span style="color:var(--purple)">await</span> channel.dispatch(message, agent=<span style="color:var(--emerald)">"swarm"</span>)
     </div>
   </div>
 
@@ -1889,13 +1895,13 @@ curl -H <span style="color:var(--emerald)">&quot;Authorization: Bearer $TOKEN&qu
   <div class="preview-card q4-card">
     <div class="preview-card-icon q4"><i class="fa-solid fa-comments"></i></div>
     <h4>Companion Beta (Sahabat)</h4>
-    <p>First public beta of the daily-use conversational AI assistant — distilled for natural ops: meeting summaries, email drafts, task management, and persistent preference memory across all connected channels.</p>
+    <p>First public beta of the conversational AI assistant — meeting summaries, email drafts, task management, SOC2 audit trail support planned, and persistent preference memory across all connected channels.</p>
     <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;December 2026</span>
     <div class="preview-feature-list">
       <span class="preview-feature">Meeting Summaries</span>
       <span class="preview-feature">Email Drafting</span>
-      <span class="preview-feature">Task Reminders</span>
-      <span class="preview-feature">Persistent Prefs</span>
+      <span class="preview-feature">Task Management</span>
+      <span class="preview-feature">SOC2 Audit Trail</span>
     </div>
     <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;">
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:8px;">SUPPORTED CHANNELS (BETA)</div>
