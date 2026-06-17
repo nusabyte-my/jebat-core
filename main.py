@@ -25,7 +25,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from jebat.api.auth import APIKeyMiddleware
 from jebat.api.logging import RequestLoggingMiddleware, clear_all_logs, export_logs, get_request_stats, get_recent_logs
@@ -103,7 +103,7 @@ app = FastAPI(
     version=os.getenv("JEBAT_VERSION", "6.1.0"),
     description="Sovereign AI Platform — Private LLM Inference, Agent Orchestration & Eternal Memory",
     lifespan=lifespan,
-    docs_url="/docs",
+    docs_url="/swagger",
     redoc_url="/redoc",
     openapi_tags=[
         {"name": "root", "description": "API root and liveness checks."},
@@ -171,6 +171,30 @@ app.include_router(ghost_router)
 app.include_router(catalyst_router)
 
 
+# ─── Documentation Portal ───
+
+def _load_docs_html() -> str:
+    """Load the documentation portal HTML from disk (cached after first read)."""
+    import functools
+
+    @functools.lru_cache(maxsize=1)
+    def _read() -> str:
+        from pathlib import Path
+
+        html_path = Path(__file__).parent / "docs.html"
+        if html_path.exists():
+            return html_path.read_text(encoding="utf-8")
+        return "<h1>docs.html not found</h1>"
+
+    return _read()
+
+
+@app.get("/docs", response_class=HTMLResponse, include_in_schema=False)
+async def docs_portal():
+    """Documentation portal — guides, deployment, and API reference."""
+    return HTMLResponse(content=_load_docs_html())
+
+
 # ─── Root & Health ───
 
 @app.get("/", tags=["root"])
@@ -181,6 +205,7 @@ async def root():
         "version": os.getenv("JEBAT_VERSION", "6.1.0"),
         "status": "running",
         "docs": "/docs",
+        "swagger": "/swagger",
         "endpoints": {
             "status": "/api/status",
             "chat": "/api/chat",

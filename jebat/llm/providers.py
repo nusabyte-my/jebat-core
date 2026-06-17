@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
@@ -39,36 +40,43 @@ class LocalEchoProvider(BaseProvider):
 
 
 class OpenAIProvider(BaseProvider):
+    """OpenAI-compatible provider. Subclass and override _make_client for
+    alternative endpoints (e.g. llama.cpp, OpenRouter).
+    """
     name = "openai"
+    _default_model: str = "gpt-4o"
+    _error_label: str = "OpenAI"
+
+    def _make_client(self, **kwargs: Any):  # type: ignore[no-untyped-def]
+        from openai import AsyncOpenAI
+        return AsyncOpenAI()
 
     async def generate(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> str:
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI()
+            client = self._make_client(**kwargs)
             messages = []
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": prompt})
             resp = await client.chat.completions.create(
-                model=kwargs.get("model", "gpt-4o"),
+                model=kwargs.get("model", self._default_model),
                 messages=messages,
                 temperature=kwargs.get("temperature", 0.2),
                 max_tokens=kwargs.get("max_tokens", 4096),
             )
             return resp.choices[0].message.content or ""
         except Exception as exc:
-            raise RuntimeError(f"OpenAI provider error: {exc}") from exc
+            raise RuntimeError(f"{self._error_label} provider error: {exc}") from exc
 
     async def generate_stream(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> AsyncIterator[str]:
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI()
+            client = self._make_client(**kwargs)
             messages = []
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": prompt})
             stream = await client.chat.completions.create(
-                model=kwargs.get("model", "gpt-4o"),
+                model=kwargs.get("model", self._default_model),
                 messages=messages,
                 temperature=kwargs.get("temperature", 0.2),
                 max_tokens=kwargs.get("max_tokens", 4096),
@@ -79,7 +87,7 @@ class OpenAIProvider(BaseProvider):
                 if delta and delta.content:
                     yield delta.content
         except Exception as exc:
-            raise RuntimeError(f"OpenAI streaming error: {exc}") from exc
+            raise RuntimeError(f"{self._error_label} streaming error: {exc}") from exc
 
 
 class AnthropicProvider(BaseProvider):
@@ -176,6 +184,20 @@ class OllamaProvider(BaseProvider):
                             continue
 
 
+class LlamaCppProvider(OpenAIProvider):
+    """llama.cpp server via its OpenAI-compatible HTTP API."""
+    name = "llamacpp"
+    _default_model: str = "local-model"
+    _error_label: str = "llama.cpp"
+
+    def __init__(self, base_url: Optional[str] = None) -> None:
+        self._base_url = base_url or os.getenv("LLAMA_CPP_HOST", "http://127.0.0.1:8080")
+
+    def _make_client(self, **kwargs: Any):  # type: ignore[no-untyped-def]
+        from openai import AsyncOpenAI
+        return AsyncOpenAI(base_url=f"{self._base_url}/v1", api_key="none")
+
+
 # ---------------------------------------------------------------------------
 # Provider registry
 # ---------------------------------------------------------------------------
@@ -184,6 +206,7 @@ _PROVIDER_MAP: Dict[str, type] = {
     "openai": OpenAIProvider,
     "anthropic": AnthropicProvider,
     "ollama": OllamaProvider,
+    "llamacpp": LlamaCppProvider,
     "local": LocalEchoProvider,
 }
 
@@ -200,6 +223,7 @@ def list_supported_providers() -> List[Dict[str, str]]:
         {"name": "openai", "description": "OpenAI API"},
         {"name": "anthropic", "description": "Anthropic Claude"},
         {"name": "ollama", "description": "Ollama local"},
+        {"name": "llamacpp", "description": "llama.cpp server (OpenAI-compatible)"},
         {"name": "openrouter", "description": "OpenRouter (multi-provider gateway)"},
         {"name": "local", "description": "Local echo provider"},
     ]

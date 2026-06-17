@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JEBAT Documentation — Guides, Deployment &amp; API Reference</title>
+<meta name="description" content="Comprehensive JEBAT documentation: installation guides, deployment instructions, API reference, architecture overview, and operational playbooks for the sovereign AI platform." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+:root {
+  --void: #030303;
+  --graphite: #09090b;
+  --surface: #111113;
+  --surface-mid: #141418;
+  --emerald: #10b981;
+  --emerald-dim: rgba(16,185,129,0.08);
+  --emerald-glow: rgba(16,185,129,0.25);
+  --emerald-bright: #34d399;
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6,182,212,0.08);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.08);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.08);
+  --purple: #a855f7;
+  --border-dim: #1a1a1e;
+  --border-mid: #27272a;
+  --border-bright: #3f3f46;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-dim: #52525b;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; border-radius: 0 !important; }
+html { scroll-behavior: smooth; }
+body { background: var(--void); color: var(--text); font-family: var(--font-sans); line-height: 1.6; }
+a { color: inherit; }
+
+.mono { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; }
+.container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+/* ─── NAV ─── */
+nav { position: fixed; top: 0; width: 100%; background: rgba(3,3,3,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-dim); z-index: 1000; height: 56px; display: flex; align-items: center; }
+.nav-inner { max-width: 1100px; width: 100%; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 1rem; letter-spacing: -0.02em; }
+.logo-tag { font-family: var(--font-mono); font-size: 9px; padding: 2px 7px; border: 1px solid var(--border-mid); color: var(--cyan); background: var(--graphite); letter-spacing: 0.5px; }
+.nav-links { display: flex; gap: 1.25rem; list-style: none; align-items: center; }
+.nav-links a { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s; }
+.nav-links a:hover { color: var(--text); }
+.nav-links a.active { color: var(--emerald); }
+.mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-mid); color: var(--text); font-size: 1.1rem; padding: 4px 10px; cursor: pointer; }
+
+/* ─── HERO ─── */
+.docs-hero { padding: 100px 0 60px; border-bottom: 1px solid var(--border-dim); }
+.docs-hero h1 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -0.04em; margin-bottom: 14px; }
+.docs-hero p { color: var(--text-muted); font-size: 15px; max-width: 600px; line-height: 1.7; }
+.docs-hero .badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--emerald); background: var(--emerald-dim); border: 1px solid rgba(16,185,129,0.2); padding: 4px 12px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ─── SEARCH ─── */
+.search-bar { margin-top: 28px; max-width: 500px; position: relative; }
+.search-bar input { width: 100%; padding: 12px 16px 12px 40px; background: var(--graphite); border: 1px solid var(--border-mid); color: var(--text); font-family: var(--font-sans); font-size: 14px; outline: none; transition: border-color 0.2s; }
+.search-bar input:focus { border-color: var(--emerald); }
+.search-bar input::placeholder { color: var(--text-dim); }
+.search-bar i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 14px; }
+
+/* ─── SIDEBAR + CONTENT ─── */
+.docs-layout { display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0 80px; min-height: 60vh; }
+.sidebar { position: sticky; top: 72px; align-self: start; }
+.sidebar-group { margin-bottom: 28px; }
+.sidebar-title { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 10px; padding-left: 12px; }
+.sidebar-link { display: block; padding: 7px 12px; color: var(--text-muted); text-decoration: none; font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; }
+.sidebar-link:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+.sidebar-link.active { color: var(--emerald); border-left-color: var(--emerald); background: var(--emerald-dim); }
+
+.content { max-width: 780px; }
+.content h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin: 48px 0 16px; padding-top: 16px; border-top: 1px solid var(--border-dim); }
+.content h2:first-child { border-top: none; margin-top: 0; }
+.content h3 { font-size: 18px; font-weight: 700; margin: 32px 0 10px; letter-spacing: -0.02em; }
+.content p { color: var(--text-muted); font-size: 14px; line-height: 1.75; margin-bottom: 16px; }
+.content ul, .content ol { color: var(--text-muted); font-size: 14px; margin: 0 0 16px 20px; }
+.content li { margin-bottom: 6px; line-height: 1.7; }
+.content code { font-family: var(--font-mono); font-size: 12px; background: var(--graphite); border: 1px solid var(--border-dim); padding: 2px 6px; color: var(--emerald); }
+.content pre { background: var(--graphite); border: 1px solid var(--border-dim); padding: 16px 20px; font-family: var(--font-mono); font-size: 12px; color: var(--emerald); overflow-x: auto; white-space: pre; line-height: 1.8; margin: 16px 0 24px; position: relative; }
+.content pre .comment { color: var(--text-dim); }
+.content pre .cmd { color: var(--text); }
+.content pre .highlight { color: var(--cyan); }
+
+/* ─── INFO BOXES ─── */
+.info-box { padding: 16px 20px; margin: 16px 0 24px; border-left: 3px solid; font-size: 13px; line-height: 1.7; }
+.info-box.note { border-color: var(--cyan); background: var(--cyan-dim); color: var(--text-muted); }
+.info-box.warning { border-color: var(--amber); background: var(--amber-dim); color: var(--text-muted); }
+.info-box.tip { border-color: var(--emerald); background: var(--emerald-dim); color: var(--text-muted); }
+.info-box strong { color: var(--text); }
+
+/* ─── CARD GRID ─── */
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin: 24px 0; }
+.card { background: var(--void); padding: 24px; transition: background 0.2s; text-decoration: none; }
+.card:hover { background: rgba(16,185,129,0.02); }
+.card-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--graphite); border: 1px solid var(--border-mid); margin-bottom: 14px; }
+.card-icon i { font-size: 14px; color: var(--emerald); }
+.card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+.card p { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+.card .arrow { font-size: 11px; color: var(--text-dim); margin-top: 10px; display: inline-block; transition: color 0.15s; }
+.card:hover .arrow { color: var(--emerald); }
+
+/* ─── TABLE ─── */
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13px; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-dim); }
+th { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; background: var(--graphite); }
+td { color: var(--text-muted); }
+tr:hover td { background: rgba(16,185,129,0.02); }
+
+/* ─── FOOTER ─── */
+footer { padding: 40px 0; border-top: 1px solid var(--border-dim); text-align: center; }
+footer p { font-size: 12px; color: var(--text-dim); }
+footer a { color: var(--emerald); text-decoration: none; }
+
+@media(max-width: 768px) {
+  .docs-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; display: flex; gap: 4px; overflow-x: auto; padding-bottom: 16px; }
+  .sidebar-group { margin-bottom: 0; }
+  .sidebar-title { display: none; }
+  .card-grid { grid-template-columns: 1fr; }
+  .mobile-menu-btn { display: block; }
+  .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: rgba(3,3,3,0.98); border-bottom: 1px solid var(--border-dim); flex-direction: column; padding: 1.5rem; gap: 1rem; }
+  .nav-links.open { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+<div class="nav-inner">
+  <a href="/" class="logo">🗡️ JEBAT <span class="logo-tag">v6.1</span></a>
+  <button class="mobile-menu-btn" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="/">Home</a></li>
+    <li><a href="/docs" class="active">Docs</a></li>
+    <li><a href="/swagger" target="_blank">Swagger</a></li>
+    <li><a href="/webui/" target="_blank">Console</a></li>
+    <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank">GitHub ↗</a></li>
+  </ul>
+</div>
+</nav>
+
+<!-- HERO -->
+<section class="docs-hero">
+<div class="container">
+  <div class="badge"><i class="fa-solid fa-book"></i> Documentation Portal</div>
+  <h1>JEBAT Documentation</h1>
+  <p>Installation guides, deployment instructions, API reference, architecture overview, and operational playbooks for the sovereign AI platform.</p>
+  <div class="search-bar">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" id="docSearch" placeholder="Search documentation..." oninput="filterDocs()" />
+  </div>
+</div>
+</section>
+
+<!-- MAIN LAYOUT -->
+<div class="container">
+<div class="docs-layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-title">Getting Started</div>
+    <a href="#quickstart" class="sidebar-link active">Quick Start</a>
+    <a href="#installation" class="sidebar-link">Installation</a>
+    <a href="#configuration" class="sidebar-link">Configuration</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-title">Deployment</div>
+    <a href="#deploy-local" class="sidebar-link">Local Development</a>
+    <a href="#deploy-docker" class="sidebar-link">Docker</a>
+    <a href="#deploy-vps" class="sidebar-link">VPS Production</a>
+    <a href="#deploy-airgap" class="sidebar-link">Air-Gapped</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-title">Guides</div>
+    <a href="#guide-llm" class="sidebar-link">LLM Providers</a>
+    <a href="#guide-memory" class="sidebar-link">Memory System</a>
+    <a href="#guide-agents" class="sidebar-link">Agent Orchestration</a>
+    <a href="#guide-mcp" class="sidebar-link">MCP Integration</a>
+    <a href="#guide-security" class="sidebar-link">Security &amp; RBAC</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-title">Reference</div>
+    <a href="#api-reference" class="sidebar-link">API Reference</a>
+    <a href="#architecture" class="sidebar-link">Architecture</a>
+    <a href="#cli-commands" class="sidebar-link">CLI Commands</a>
+    <a href="#troubleshooting" class="sidebar-link">Troubleshooting</a>
+  </div>
+</aside>
+
+<!-- CONTENT -->
+<main class="content" id="docContent">
+
+<!-- ═══════════════ QUICK START ═══════════════ -->
+<section id="quickstart">
+<h2>Quick Start</h2>
+<p>Get JEBAT running in under 5 minutes. Choose your preferred installation method:</p>
+
+<div class="card-grid">
+  <a href="#installation" class="card">
+    <div class="card-icon"><i class="fa-brands fa-npm"></i></div>
+    <h4>Zero-Config Install</h4>
+    <p>npx wrapper auto-installs the Python core on first run. No prerequisites needed.</p>
+    <span class="arrow">Read guide →</span>
+  </a>
+  <a href="#deploy-docker" class="card">
+    <div class="card-icon"><i class="fa-brands fa-docker"></i></div>
+    <h4>Docker Deployment</h4>
+    <p>One-command production stack with PostgreSQL, Redis, Prometheus, and Grafana.</p>
+    <span class="arrow">Read guide →</span>
+  </a>
+  <a href="#deploy-vps" class="card">
+    <div class="card-icon"><i class="fa-solid fa-server"></i></div>
+    <h4>VPS Production</h4>
+    <p>Deploy to your private VPS with PM2 process management and SSL termination.</p>
+    <span class="arrow">Read guide →</span>
+  </a>
+  <a href="#deploy-airgap" class="card">
+    <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <h4>Air-Gapped Deploy</h4>
+    <p>Full offline deployment with Ollama or llama.cpp. Zero external dependencies.</p>
+    <span class="arrow">Read guide →</span>
+  </a>
+</div>
+
+<h3>Zero-Config (Recommended)</h3>
+<pre><span class="comment"># Install and launch in one command</span>
+<span class="cmd">npx @nusabyte/jebat repl</span>
+
+<span class="comment"># Or with bun</span>
+<span class="cmd">bunx @nusabyte/jebat repl</span>
+
+<span class="comment"># Or Python direct</span>
+<span class="cmd">pip install jebat</span>
+<span class="cmd">jebat repl</span></pre>
+
+<div class="info-box tip">
+  <strong>💡 Tip:</strong> The <code>npx</code> wrapper handles Python environment setup automatically. It detects your OS, installs dependencies, and launches the REPL — no manual configuration required.
+</div>
+</section>
+
+<!-- ═══════════════ INSTALLATION ═══════════════ -->
+<section id="installation">
+<h2>Installation</h2>
+
+<h3>Prerequisites</h3>
+<table>
+  <thead><tr><th>Requirement</th><th>Minimum</th><th>Recommended</th></tr></thead>
+  <tbody>
+    <tr><td>Python</td><td>3.10+</td><td>3.12</td></tr>
+    <tr><td>Node.js (for npx)</td><td>18+</td><td>20+</td></tr>
+    <tr><td>RAM</td><td>2 GB</td><td>8 GB</td></tr>
+    <tr><td>Disk</td><td>500 MB</td><td>2 GB</td></tr>
+    <tr><td>OS</td><td colspan="2">Linux, macOS, Windows (WSL2)</td></tr>
+  </tbody>
+</table>
+
+<h3>Python Install</h3>
+<pre><span class="comment"># Install from PyPI</span>
+<span class="cmd">pip install jebat</span>
+
+<span class="comment"># Or install from source</span>
+<span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git</span>
+<span class="cmd">cd jebat-core</span>
+<span class="cmd">pip install -e .</span>
+
+<span class="comment"># Verify installation</span>
+<span class="cmd">jebat --version</span></pre>
+
+<h3>Node.js Wrapper</h3>
+<pre><span class="comment"># Global install</span>
+<span class="cmd">npm install -g @nusabyte/jebat</span>
+
+<span class="comment"># Use directly</span>
+<span class="cmd">npx @nusabyte/jebat repl</span></pre>
+
+<h3>System Dependencies (Optional)</h3>
+<table>
+  <thead><tr><th>Tool</th><th>Purpose</th><th>Install</th></tr></thead>
+  <tbody>
+    <tr><td>Ollama</td><td>Local LLM inference</td><td><code>curl -fsSL https://ollama.com/install.sh | sh</code></td></tr>
+    <tr><td>Docker</td><td>Container deployment</td><td><code>apt install docker.io docker-compose</code></td></tr>
+    <tr><td>PostgreSQL</td><td>Persistent memory storage</td><td><code>apt install postgresql</code></td></tr>
+    <tr><td>Redis</td><td>Cache &amp; session store</td><td><code>apt install redis-server</code></td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════ CONFIGURATION ═══════════════ -->
+<section id="configuration">
+<h2>Configuration</h2>
+<p>JEBAT uses a YAML configuration file at <code>~/.jebat/jebat.yaml</code> (or <code>.jebatrc.json</code> in the project root).</p>
+
+<h3>Environment Variables</h3>
+<pre><span class="comment"># Core settings</span>
+<span class="highlight">JEBAT_VERSION</span>=6.1.0
+<span class="highlight">JEBAT_DEBUG</span>=false
+<span class="highlight">JEBAT_LOG_LEVEL</span>=INFO
+
+<span class="comment"># LLM provider routing</span>
+<span class="highlight">JEBAT_LLM_PROVIDER</span>=ollama
+<span class="highlight">JEBAT_LLM_MODEL</span>=qwen2.5-coder:7b
+<span class="highlight">JEBAT_LLM_TEMPERATURE</span>=0.2
+<span class="highlight">JEBAT_LLM_MAX_TOKENS</span>=4096
+<span class="highlight">JEBAT_LLM_FALLBACKS</span>=openai,anthropic,local
+
+<span class="comment"># Database (optional)</span>
+<span class="highlight">DATABASE_URL</span>=postgresql://jebat:password@localhost:5432/jebat_db
+<span class="highlight">REDIS_URL</span>=redis://localhost:6379/0
+
+<span class="comment"># API keys (leave blank to disable)</span>
+<span class="highlight">OPENAI_API_KEY</span>=
+<span class="highlight">ANTHROPIC_API_KEY</span>=
+<span class="highlight">OLLAMA_HOST</span>=http://localhost:11434</pre>
+
+<h3>Provider Configuration</h3>
+<p>JEBAT routes through 7 LLM providers with automatic failover:</p>
+<table>
+  <thead><tr><th>Provider</th><th>Env Var</th><th>Offline?</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>OpenAI</td><td><code>OPENAI_API_KEY</code></td><td>No</td><td>GPT-4o, GPT-5.4</td></tr>
+    <tr><td>Anthropic</td><td><code>ANTHROPIC_API_KEY</code></td><td>No</td><td>Claude Sonnet 4</td></tr>
+    <tr><td>Google</td><td><code>GOOGLE_API_KEY</code></td><td>No</td><td>Gemini Pro</td></tr>
+    <tr><td>OpenRouter</td><td><code>OPENROUTER_API_KEY</code></td><td>No</td><td>Multi-provider gateway</td></tr>
+    <tr><td>Ollama</td><td><code>OLLAMA_HOST</code></td><td>Yes</td><td>Local inference</td></tr>
+    <tr><td>llama.cpp</td><td><code>LLAMA_CPP_HOST</code></td><td>Yes</td><td>Custom GGUF weights</td></tr>
+    <tr><td>Local Echo</td><td>—</td><td>Yes</td><td>Dev/test fallback</td></tr>
+  </tbody>
+</table>
+
+<div class="info-box note">
+  <strong>ℹ️ Note:</strong> Provider failover is automatic. If the primary provider is unavailable, JEBAT tries each fallback in order. Set <code>JEBAT_LLM_FALLBACKS</code> to control the chain.
+</div>
+</section>
+
+<!-- ═══════════════ DEPLOY LOCAL ═══════════════ -->
+<section id="deploy-local">
+<h2>Local Development</h2>
+<p>Run JEBAT locally for development and testing.</p>
+
+<pre><span class="comment"># Clone the repository</span>
+<span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git</span>
+<span class="cmd">cd jebat-core</span>
+
+<span class="comment"># Install dependencies</span>
+<span class="cmd">pip install -r requirements.txt</span>
+
+<span class="comment"># Copy environment template</span>
+<span class="cmd">cp .env.example .env</span>
+
+<span class="comment"># Start the API server</span>
+<span class="cmd">uvicorn main:app --host 0.0.0.0 --port 8080 --reload</span>
+
+<span class="comment"># In another terminal, launch the REPL</span>
+<span class="cmd">jebat repl</span></pre>
+
+<p>The API server starts at <code>http://localhost:8080</code>. Available endpoints:</p>
+<ul>
+  <li><code>/</code> — API root and liveness check</li>
+  <li><code>/health</code> — Health probe</li>
+  <li><code>/docs</code> — Swagger UI (interactive API explorer)</li>
+  <li><code>/webui/</code> — Web console</li>
+</ul>
+</section>
+
+<!-- ═══════════════ DEPLOY DOCKER ═══════════════ -->
+<section id="deploy-docker">
+<h2>Docker Deployment</h2>
+<p>One-command production stack with all services.</p>
+
+<h3>Quick Start</h3>
+<pre><span class="comment"># Clone and configure</span>
+<span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git</span>
+<span class="cmd">cd jebat-core</span>
+<span class="cmd">cp .env.example .env</span>
+
+<span class="comment"># Edit .env with your passwords and API keys</span>
+
+<span class="comment"># Launch the full stack</span>
+<span class="cmd">docker compose up -d</span>
+
+<span class="comment"># Check status</span>
+<span class="cmd">docker compose ps</span></pre>
+
+<h3>Services Included</h3>
+<table>
+  <thead><tr><th>Service</th><th>Port</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>jebat-api</td><td>8080</td><td>FastAPI application server</td></tr>
+    <tr><td>postgres</td><td>5432</td><td>TimescaleDB + pgvector</td></tr>
+    <tr><td>redis</td><td>6379</td><td>Cache &amp; session store</td></tr>
+    <tr><td>prometheus</td><td>9090</td><td>Metrics collection</td></tr>
+    <tr><td>grafana</td><td>3000</td><td>Dashboards &amp; monitoring</td></tr>
+  </tbody>
+</table>
+
+<h3>Production Override</h3>
+<pre><span class="comment"># Apply production resource limits and logging</span>
+<span class="cmd">docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d</span></pre>
+
+<div class="info-box warning">
+  <strong>⚠️ Warning:</strong> Change the default passwords in <code>.env</code> before deploying to production. The default PostgreSQL, Redis, and Grafana credentials are insecure.
+</div>
+</section>
+
+<!-- ═══════════════ DEPLOY VPS ═══════════════ -->
+<section id="deploy-vps">
+<h2>VPS Production Deployment</h2>
+<p>Deploy to a private VPS with PM2 process management.</p>
+
+<h3>Server Setup</h3>
+<pre><span class="comment"># SSH into your VPS</span>
+<span class="cmd">ssh root@your-vps-ip</span>
+
+<span class="comment"># Install Node.js and Python</span>
+<span class="cmd">curl -fsSL https://deb.nodesource.com/setup_20.x | bash -</span>
+<span class="cmd">apt install -y python3.12 python3-pip nodejs</span>
+
+<span class="comment"># Install PM2</span>
+<span class="cmd">npm install -g pm2</span>
+
+<span class="comment"># Clone the project</span>
+<span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git /var/www/jebat-core</span>
+<span class="cmd">cd /var/www/jebat-core</span>
+
+<span class="comment"># Install dependencies</span>
+<span class="cmd">pip install -r requirements.txt</span>
+
+<span class="comment"># Configure environment</span>
+<span class="cmd">cp .env.example .env</span>
+<span class="cmd">nano .env  # Edit with production values</span></pre>
+
+<h3>Start with PM2</h3>
+<pre><span class="comment"># Start the API server</span>
+<span class="cmd">pm2 start "python -m uvicorn main:app --host 0.0.0.0 --port 8080 --workers 4" --name jebat-api</span>
+
+<span class="comment"># Save process list</span>
+<span class="cmd">pm2 save</span>
+
+<span class="comment"># Auto-start on boot</span>
+<span class="cmd">pm2 startup</span>
+
+<span class="comment"># Monitor logs</span>
+<span class="cmd">pm2 logs jebat-api</span></pre>
+
+<h3>CI/CD Deployment</h3>
+<p>The GitHub Actions CI/CD pipeline automatically deploys to your VPS on push to <code>main</code>:</p>
+<ul>
+  <li><strong>Staging:</strong> Deploys to <code>72.62.255.206</code> via SSH</li>
+  <li><strong>Production:</strong> Deploys to <code>72.62.254.65</code> via SSH</li>
+</ul>
+
+<div class="info-box note">
+  <strong>ℹ️ CI/CD Setup:</strong> Add your SSH private key as the <code>VPS_SSH_PRIVATE_KEY</code> secret in your GitHub repository settings.
+</div>
+</section>
+
+<!-- ═══════════════ DEPLOY AIRGAP ═══════════════ -->
+<section id="deploy-airgap">
+<h2>Air-Gapped Deployment</h2>
+<p>Run JEBAT entirely offline with no external dependencies.</p>
+
+<h3>Using Ollama</h3>
+<pre><span class="comment"># 1. Install Ollama on the air-gapped server</span>
+<span class="comment"># (transfer the installer via USB or internal network)</span>
+<span class="cmd">ollama serve &amp;</span>
+
+<span class="comment"># 2. Pull models (on a connected machine first, then transfer)</span>
+<span class="cmd">ollama pull qwen2.5-coder:7b</span>
+
+<span class="comment"># 3. Configure JEBAT to use local Ollama</span>
+<span class="highlight">JEBAT_LLM_PROVIDER</span>=ollama
+<span class="highlight">JEBAT_LLM_MODEL</span>=qwen2.5-coder:7b
+<span class="highlight">OLLAMA_HOST</span>=http://localhost:11434
+
+<span class="comment"># 4. Launch JEBAT</span>
+<span class="cmd">jebat repl</span></pre>
+
+<h3>Using llama.cpp with GGUF Weights</h3>
+<pre><span class="comment"># 1. Install llama.cpp (transfer binary to air-gapped server)</span>
+<span class="cmd">llama-server --model model.gguf --port 8081</span>
+
+<span class="comment"># 2. Configure JEBAT</span>
+<span class="highlight">JEBAT_LLM_PROVIDER</span>=local
+<span class="highlight">LLAMA_CPP_HOST</span>=http://localhost:8081</pre>
+
+<div class="info-box tip">
+  <strong>💡 Tip:</strong> For production air-gapped deployments, use the <code>.206 → .65</code> remote model host topology where a dedicated model server (<code>72.62.255.206</code>) hosts llama.cpp and the API server (<code>72.62.254.65</code>) routes to it over the internal network.
+</div>
+</section>
+
+<!-- ═══════════════ GUIDE: LLM ═══════════════ -->
+<section id="guide-llm">
+<h2>LLM Provider Guide</h2>
+<p>JEBAT routes inference requests through a chain of providers with automatic failover, cost tracking, and health monitoring.</p>
+
+<h3>How Failover Works</h3>
+<ol>
+  <li>JEBAT sends the request to the primary provider (e.g., <code>ollama</code>)</li>
+  <li>If the provider fails (timeout, rate limit, auth error), JEBAT tries the next in the fallback chain</li>
+  <li>The chain continues until a provider succeeds or all are exhausted</li>
+  <li>The successful provider name is returned in the response metadata</li>
+</ol>
+
+<h3>Ultra-Think Reasoning Modes</h3>
+<p>JEBAT includes 7 selectable reasoning profiles that control how deeply the model thinks:</p>
+<table>
+  <thead><tr><th>Mode</th><th>Description</th><th>Use Case</th></tr></thead>
+  <tbody>
+    <tr><td><code>fast</code></td><td>Minimal reasoning, quick response</td><td>Simple questions, status checks</td></tr>
+    <tr><td><code>deliberate</code></td><td>Balanced reasoning depth</td><td>General coding, explanations</td></tr>
+    <tr><td><code>deep</code></td><td>Extended chain-of-thought</td><td>Complex architecture decisions</td></tr>
+    <tr><td><code>strategic</code></td><td>Multi-step planning</td><td>Feature design, system planning</td></tr>
+    <tr><td><code>creative</code></td><td>Divergent thinking</td><td>Brainstorming, naming, design</td></tr>
+    <tr><td><code>critical</code></td><td>Adversarial analysis</td><td>Security review, code audit</td></tr>
+    <tr><td><code>custom</code></td><td>User-defined prompt template</td><td>Domain-specific reasoning</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════ GUIDE: MEMORY ═══════════════ -->
+<section id="guide-memory">
+<h2>Memory System</h2>
+<p>JEBAT implements a 5-layer eternal memory system with heat-scored retrieval for persistent cross-session context.</p>
+
+<h3>Memory Layers</h3>
+<table>
+  <thead><tr><th>Layer</th><th>Purpose</th><th>Storage</th><th>Retention</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sensory (M0)</strong></td><td>Live working context</td><td>In-memory</td><td>Current session</td></tr>
+    <tr><td><strong>Episodic (M1)</strong></td><td>Session logs &amp; events</td><td>PostgreSQL</td><td>30 days</td></tr>
+    <tr><td><strong>Semantic (M2)</strong></td><td>Concepts &amp; facts</td><td>PostgreSQL</td><td>Permanent</td></tr>
+    <tr><td><strong>Conceptual (M3)</strong></td><td>Abstracted patterns</td><td>PostgreSQL</td><td>Permanent</td></tr>
+    <tr><td><strong>Procedural (M4)</strong></td><td>Action patterns &amp; skills</td><td>PostgreSQL</td><td>Permanent</td></tr>
+  </tbody>
+</table>
+
+<h3>Heat Scoring</h3>
+<p>Memories are scored by recency, access frequency, and relevance. Frequently accessed memories stay "hot" and are retrieved first. Unused memories cool down over time but are never deleted.</p>
+
+<h3>CLI Usage</h3>
+<pre><span class="comment"># Store a memory</span>
+<span class="cmd">jebat memory store "API uses Bearer token auth"</span>
+
+<span class="comment"># Search memories</span>
+<span class="cmd">jebat memory search "authentication"</span>
+
+<span class="comment"># View memory stats</span>
+<span class="cmd">jebat memory stats</span></pre>
+</section>
+
+<!-- ═══════════════ GUIDE: AGENTS ═══════════════ -->
+<section id="guide-agents">
+<h2>Agent Orchestration</h2>
+<p>JEBAT orchestrates 17 specialized agent roles through a ReAct (Reasoning and Acting) loop.</p>
+
+<h3>Agent Roles</h3>
+<table>
+  <thead><tr><th>Role</th><th>Malay Name</th><th>Specialization</th></tr></thead>
+  <tbody>
+    <tr><td>Builder</td><td>Tukang</td><td>Code generation, file creation, implementation</td></tr>
+    <tr><td>Executor</td><td>Hulubalang</td><td>Command execution, deployment, operations</td></tr>
+    <tr><td>Debugger</td><td>Pawang</td><td>Error diagnosis, fix suggestion, testing</td></tr>
+    <tr><td>Reviewer</td><td>Pengacara</td><td>Code review, quality analysis, compliance</td></tr>
+    <tr><td>Planner</td><td>Bendahara</td><td>Architecture, planning, resource allocation</td></tr>
+    <tr><td>Researcher</td><td>Penyelidik</td><td>Web search, documentation, knowledge gathering</td></tr>
+    <tr><td>Security</td><td>Keselamatan</td><td>Vulnerability scanning, hardening, pentesting</td></tr>
+  </tbody>
+</table>
+
+<h3>ReAct Loop</h3>
+<ol>
+  <li><strong>Reason:</strong> The agent analyzes the task and decides the next action</li>
+  <li><strong>Act:</strong> The agent selects and executes a tool (file write, terminal command, etc.)</li>
+  <li><strong>Observe:</strong> The agent reads the tool output</li>
+  <li><strong>Iterate:</strong> Steps 1-3 repeat until the task is complete or max iterations reached</li>
+</ol>
+
+<pre><span class="comment"># Delegate a task to the swarm</span>
+<span class="cmd">jebat agent "Audit the authentication module for vulnerabilities"</span>
+
+<span class="comment"># Run in planning mode</span>
+<span class="cmd">jebat agent --mode strategic "Design a microservice architecture"</span></pre>
+</section>
+
+<!-- ═══════════════ GUIDE: MCP ═══════════════ -->
+<section id="guide-mcp">
+<h2>MCP Integration</h2>
+<p>JEBAT runs a native Model Context Protocol server exposing 13 core capabilities to any MCP-compatible IDE.</p>
+
+<h3>Supported IDEs</h3>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 24px;">
+  <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Cursor</span>
+  <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">VS Code</span>
+  <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Zed</span>
+  <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Windsurf</span>
+  <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">JetBrains</span>
+</div>
+
+<h3>Quick Connect</h3>
+<pre><span class="comment"># Start MCP server (stdio transport for Cursor/VS Code)</span>
+<span class="cmd">jebat mcp serve --transport stdio</span>
+
+<span class="comment"># Generate IDE config files</span>
+<span class="cmd">jebat mcp ide-config</span>
+
+<span class="comment"># HTTP transport for Windsurf/JetBrains</span>
+<span class="cmd">jebat mcp serve --transport http --port 9000</span>
+
+<span class="comment"># List available tools</span>
+<span class="cmd">jebat mcp tools list</span></pre>
+
+<h3>13 Core MCP Tools</h3>
+<table>
+  <thead><tr><th>#</th><th>Tool</th><th>Capability</th></tr></thead>
+  <tbody>
+    <tr><td>01</td><td><code>jebat_react_run</code></td><td>ReAct agent loop</td></tr>
+    <tr><td>02</td><td><code>jebat_think</code></td><td>Ultra-Think reasoning</td></tr>
+    <tr><td>03</td><td><code>jebat_delegate</code></td><td>Multi-agent swarm</td></tr>
+    <tr><td>04</td><td><code>jebat_sandbox_exec</code></td><td>Docker sandbox</td></tr>
+    <tr><td>05</td><td><code>jebat_memory_recall</code></td><td>5-layer memory</td></tr>
+    <tr><td>06</td><td><code>jebat_voice_listen</code></td><td>Voice I/O</td></tr>
+    <tr><td>07</td><td><code>jebat_browser_navigate</code></td><td>Playwright browser</td></tr>
+    <tr><td>08</td><td><code>jebat_pentest_scan</code></td><td>Pentest suite</td></tr>
+    <tr><td>09</td><td><code>jebat_file_write</code></td><td>File &amp; git tools</td></tr>
+    <tr><td>10</td><td><code>jebat_wiki_search</code></td><td>RAG knowledge wiki</td></tr>
+    <tr><td>11</td><td><code>jebat_cron_add</code></td><td>Cron scheduler</td></tr>
+    <tr><td>12</td><td><code>jebat_channel_send</code></td><td>Channel adapter</td></tr>
+    <tr><td>13</td><td><code>jebat_safety_classify</code></td><td>Safety classifier</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════ GUIDE: SECURITY ═══════════════ -->
+<section id="guide-security">
+<h2>Security &amp; RBAC</h2>
+<p>JEBAT classifies all tool execution into 3 permission tiers with full audit logging.</p>
+
+<h3>Execution Tiers</h3>
+<table>
+  <thead><tr><th>Tier</th><th>Description</th><th>Examples</th><th>Approval</th></tr></thead>
+  <tbody>
+    <tr><td style="color:var(--emerald);font-weight:600;">AUTO</td><td>Read-only, safe operations</td><td><code>cat</code>, <code>grep</code>, <code>git log</code></td><td>None required</td></tr>
+    <tr><td style="color:var(--amber);font-weight:600;">CONFIRM</td><td>Write/modify operations</td><td><code>write</code>, <code>git commit</code>, <code>npm install</code></td><td>User confirmation</td></tr>
+    <tr><td style="color:var(--red);font-weight:600;">DANGEROUS</td><td>Destructive operations</td><td><code>rm -rf</code>, <code>sudo</code>, <code>DROP TABLE</code></td><td>Explicit approval + audit</td></tr>
+  </tbody>
+</table>
+
+<h3>API Key Authentication</h3>
+<pre><span class="comment"># Set API key in environment</span>
+<span class="highlight">JEBAT_API_KEY</span>=your-secret-key
+
+<span class="comment"># Rotate API key (with grace period)</span>
+<span class="cmd">curl -X POST http://localhost:8080/api/auth/rotate-key \
+  -H "Authorization: Bearer $JEBAT_API_KEY"</span>
+
+<span class="comment"># Emergency revoke</span>
+<span class="cmd">curl -X POST http://localhost:8080/api/auth/revoke-key \
+  -H "Authorization: Bearer $JEBAT_API_KEY"</span></pre>
+</section>
+
+<!-- ═══════════════ API REFERENCE ═══════════════ -->
+<section id="api-reference">
+<h2>API Reference</h2>
+<p>JEBAT exposes a RESTful API with interactive documentation.</p>
+
+<h3>Interactive Docs</h3>
+<div class="card-grid">
+  <a href="/swagger" class="card" target="_blank">
+    <div class="card-icon"><i class="fa-solid fa-code"></i></div>
+    <h4>Swagger UI</h4>
+    <p>Interactive API explorer. Test endpoints directly from the browser.</p>
+    <span class="arrow">Open Swagger →</span>
+  </a>
+  <a href="/redoc" class="card" target="_blank">
+    <div class="card-icon"><i class="fa-solid fa-book"></i></div>
+    <h4>ReDoc</h4>
+    <p>Readable API documentation with request/response schemas.</p>
+    <span class="arrow">Open ReDoc →</span>
+  </a>
+</div>
+
+<h3>Endpoint Overview</h3>
+<table>
+  <thead><tr><th>Endpoint</th><th>Method</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>/</code></td><td>GET</td><td>API root &amp; liveness check</td></tr>
+    <tr><td><code>/health</code></td><td>GET</td><td>Health probe (always 200 if alive)</td></tr>
+    <tr><td><code>/ready</code></td><td>GET</td><td>Readiness probe (checks DB + Redis)</td></tr>
+    <tr><td><code>/api/chat</code></td><td>POST</td><td>Chat with provider failover</td></tr>
+    <tr><td><code>/api/chat/stream</code></td><td>POST</td><td>SSE streaming chat</td></tr>
+    <tr><td><code>/api/agents</code></td><td>POST</td><td>Execute agent tasks</td></tr>
+    <tr><td><code>/api/memory/*</code></td><td>GET/POST</td><td>5-layer memory CRUD</td></tr>
+    <tr><td><code>/api/skills/*</code></td><td>GET/POST</td><td>Skill registry &amp; execution</td></tr>
+    <tr><td><code>/api/ghost/*</code></td><td>GET/POST</td><td>Ghost database operations</td></tr>
+    <tr><td><code>/api/catalyst/*</code></td><td>GET/POST</td><td>Catalyst observability</td></tr>
+    <tr><td><code>/api/pentest/*</code></td><td>POST</td><td>Security scanning</td></tr>
+    <tr><td><code>/api/auth/*</code></td><td>POST</td><td>API key management</td></tr>
+    <tr><td><code>/metrics</code></td><td>GET</td><td>Prometheus metrics</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ═══════════════ ARCHITECTURE ═══════════════ -->
+<section id="architecture">
+<h2>Architecture</h2>
+<p>JEBAT is built on a layered architecture designed for sovereign, air-gap-compatible deployment.</p>
+
+<h3>System Layers</h3>
+<table>
+  <thead><tr><th>Layer</th><th>Components</th><th>Tech</th></tr></thead>
+  <tbody>
+    <tr><td><strong>API Gateway</strong></td><td>FastAPI, CORS, API key auth, request logging</td><td>Python, Uvicorn</td></tr>
+    <tr><td><strong>Cognitive Router</strong></td><td>7-mode Ultra-Think, provider failover chain</td><td>Python async</td></tr>
+    <tr><td><strong>Agent Engine</strong></td><td>ReAct loop, swarm orchestrator, 17 roles</td><td>Python asyncio</td></tr>
+    <tr><td><strong>Memory System</strong></td><td>5-layer heat-scored recall, M0-M4</td><td>PostgreSQL, pgvector</td></tr>
+    <tr><td><strong>MCP Protocol</strong></td><td>13 tools, stdio/HTTP transport</td><td>MCP SDK</td></tr>
+    <tr><td><strong>Observability</strong></td><td>Catalyst tracing, HALO analysis, Prometheus</td><td>Python, Grafana</td></tr>
+    <tr><td><strong>Security</strong></td><td>3-tier RBAC, Fernet encryption, Argon2id</td><td>cryptography</td></tr>
+    <tr><td><strong>Persistence</strong></td><td>PostgreSQL (TimescaleDB + pgvector), Redis</td><td>Docker Compose</td></tr>
+  </tbody>
+</table>
+
+<h3>Data Flow</h3>
+<pre>
+User Request → API Gateway (auth, logging)
+    → Cognitive Router (select provider + reasoning mode)
+    → LLM Provider (OpenAI / Anthropic / Ollama / llama.cpp)
+    → Agent Engine (ReAct loop, tool calls)
+    → Memory System (recall + store)
+    → Response (SSE stream or JSON)
+</pre>
+</section>
+
+<!-- ═══════════════ CLI COMMANDS ═══════════════ -->
+<section id="cli-commands">
+<h2>CLI Commands</h2>
+<p>JEBAT exposes 46 subcommands across 6 operational domains.</p>
+
+<h3>System Commands</h3>
+<pre><span class="cmd">jebat status</span>          <span class="comment"># Show system status</span>
+<span class="cmd">jebat config show</span>     <span class="comment"># Display configuration</span>
+<span class="cmd">jebat config set</span>      <span class="comment"># Set a config value</span>
+<span class="cmd">jebat doctor</span>          <span class="comment"># Health check all components</span></pre>
+
+<h3>Inference Commands</h3>
+<pre><span class="cmd">jebat repl</span>            <span class="comment"># Interactive REPL</span>
+<span class="cmd">jebat chat "prompt"</span>   <span class="comment"># One-shot chat</span>
+<span class="cmd">jebat think --mode deep "prompt"</span>  <span class="comment"># Ultra-Think</span>
+<span class="cmd">jebat providers</span>       <span class="comment"># List LLM providers</span></pre>
+
+<h3>Agent Commands</h3>
+<pre><span class="cmd">jebat agent "task"</span>    <span class="comment"># Run agent task</span>
+<span class="cmd">jebat delegate "task"</span> <span class="comment"># Swarm delegation</span>
+<span class="cmd">jebat skills list</span>     <span class="comment"># List available skills</span></pre>
+
+<h3>Security Commands</h3>
+<pre><span class="cmd">jebat pentest scan --target example.com</span>
+<span class="cmd">jebat ghost create workspace-1</span>
+<span class="cmd">jebat ghost fork production-db sandbox</span>
+<span class="cmd">jebat catalyst trace start --name my-trace</span></pre>
+
+<p>For the full CLI reference, run <code>jebat --help</code> or visit the <a href="/swagger" style="color:var(--emerald);">Swagger UI</a>.</p>
+</section>
+
+<!-- ═══════════════ TROUBLESHOOTING ═══════════════ -->
+<section id="troubleshooting">
+<h2>Troubleshooting</h2>
+
+<h3>Common Issues</h3>
+
+<h3 style="color:var(--amber);">Connection refused on port 8080</h3>
+<p>Another process is using the port. Kill it or change the port:</p>
+<pre><span class="cmd">lsof -i :8080</span>  <span class="comment"># Find the process</span>
+<span class="cmd">kill -9 PID</span>     <span class="comment"># Kill it</span>
+
+<span class="comment"># Or start on a different port</span>
+<span class="cmd">uvicorn main:app --port 8081</span></pre>
+
+<h3 style="color:var(--amber);">Ollama connection timeout</h3>
+<p>Ensure Ollama is running and accessible:</p>
+<pre><span class="cmd">ollama serve &amp;</span>
+<span class="cmd">curl http://localhost:11434/api/tags</span>  <span class="comment"># List models</span></pre>
+
+<h3 style="color:var(--amber);">Database connection failed</h3>
+<p>JEBAT runs in degraded mode without a database. To enable it:</p>
+<pre><span class="comment"># Set these in .env</span>
+<span class="highlight">JEBAT_DATABASE_ENABLED</span>=true
+<span class="highlight">DATABASE_URL</span>=postgresql://jebat:password@localhost:5432/jebat_db</pre>
+
+<h3 style="color:var(--amber);">Import errors after restructuring</h3>
+<p>If you see <code>ModuleNotFoundError</code>, ensure the project root is on your Python path:</p>
+<pre><span class="comment"># From the project root</span>
+<span class="cmd">export PYTHONPATH="$PWD:$PYTHONPATH"</span>
+<span class="cmd">python -c "import jebat; print('OK')"</span></pre>
+
+<h3>Getting Help</h3>
+<ul>
+  <li><a href="https://github.com/nusabyte-my/jebat-core/issues" style="color:var(--emerald);">GitHub Issues</a> — Report bugs and request features</li>
+  <li><a href="/docs" style="color:var(--emerald);">Swagger UI</a> — Interactive API testing</li>
+  <li><a href="/redoc" style="color:var(--emerald);">ReDoc</a> — Full API schema documentation</li>
+</ul>
+</section>
+
+</main>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+<div class="container">
+  <p>JEBAT v6.1.0 — Sovereign AI Platform · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="/">Home</a> · <a href="/swagger">API</a></p>
+</div>
+</footer>
+
+<script>
+// Sidebar active state on scroll
+const sections = document.querySelectorAll('section[id]');
+const sidebarLinks = document.querySelectorAll('.sidebar-link');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  sidebarLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+  });
+});
+
+// Search filter
+function filterDocs() {
+  const query = document.getElementById('docSearch').value.toLowerCase();
+  document.querySelectorAll('.content section').forEach(section => {
+    if (!query) { section.style.display = ''; return; }
+    const text = section.textContent.toLowerCase();
+    section.style.display = text.includes(query) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
