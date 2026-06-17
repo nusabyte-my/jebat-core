@@ -4,11 +4,11 @@ JEBAT - Unified AI Assistant Platform
 JEBAT (named after the legendary Malay warrior Hang Jebat) is a personal AI
 assistant with eternal memory, ultra-reasoning, and continuous learning.
 
-Version: 2.0.0-refactored
+Version: 6.1.0
 Status: Production Ready
 """
 
-__version__ = "6.0.0"
+__version__ = "6.1.0"
 __author__ = "JEBAT Team"
 __license__ = "MIT"
 

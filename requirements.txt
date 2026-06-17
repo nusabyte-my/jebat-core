@@ -1,5 +1,5 @@
 # JEBAT Core Requirements
-# Version: 3.0.0
+# Version: 6.1.0
 # Stripped — only deps actually used by CLI + agent loop
 
 # ── Core Framework ──
@@ -24,6 +24,17 @@ asyncpg>=0.29.0
 rich>=13.7.0
 prompt-toolkit>=3.0.43
 
+# ── Voice I/O ──
+faster-whisper>=1.0.0
+edge-tts>=6.1.0
+
+# ── Monitoring & Health ──
+psutil>=5.9.0
+prometheus-client>=0.19.0
+
+# ── Migrations ──
+alembic>=1.12.0
+
 # ── Utilities ──
 structlog>=24.1.0
 
@@ -32,7 +43,9 @@ pytest>=7.4.4
 pytest-asyncio>=0.23.3
 
 # ── Optional heavy deps (install separately if needed) ──
-# pip install jebat[ml]    → numpy, pandas, scikit-learn, xgboost, lightgbm
-# pip install jebat[nlp]   → sentence-transformers, spacy, nltk
+# pip install jebat[ml]     → numpy, pandas, scikit-learn, xgboost, lightgbm
+# pip install jebat[nlp]    → sentence-transformers, spacy, nltk
 # pip install jebat[server] → fastapi, uvicorn, websockets, prometheus-client, opentelemetry-api, opentelemetry-sdk
 # pip install jebat[db]     → pymongo, redis, alembic
+# pip install jebat[voice]  → faster-whisper, edge-tts
+# pip install jebat[monitor] → opentelemetry-api, opentelemetry-sdk, opentelemetry-exporter-otlp

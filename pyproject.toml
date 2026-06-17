@@ -1,7 +1,7 @@
 [project]
 name = "jebat"
-version = "6.0.0"
-description = "JEBAT v6 — 41-CLI AI Agent. ReAct loop, 97 tools, MCP, pentest engine, FTS5 wiki, session search, social, TTS, auth keyring, delegation, cron, shell completion, 9Router free AI"
+version = "6.1.0"
+description = "JEBAT v6.1 — Sovereign AI Platform & Agent Workstation. ReAct loop, 89 tools, MCP, pentest engine, FTS5 wiki, 5-layer memory, multi-agent swarms, Docker sandbox, voice I/O, GitOps"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -43,6 +43,8 @@ server = [
     "prometheus-client>=0.19.0",
     "opentelemetry-api>=1.21.0",
     "opentelemetry-sdk>=1.21.0",
+    "python-json-logger>=2.0.0",
+    "streamlit>=1.32.0",
 ]
 db = [
     "pymongo>=4.6.0",
@@ -57,8 +59,12 @@ dev = [
     "mypy>=1.8.0",
     "isort>=5.13.0",
 ]
+monitoring = [
+    "python-json-logger>=2.0.0",
+    "streamlit>=1.32.0",
+]
 all = [
-    "jebat[ml,nlp,server,db,dev]",
+    "jebat[ml,nlp,server,db,dev,monitoring]",
 ]
 
 [project.scripts]
@@ -71,3 +77,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["jebat", "jebat.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
