@@ -136,9 +136,9 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/jebat:buildcache
           cache-to: type=inline
 
-  # ─── Deploy to Staging ──────────────────────────────────────────
+  # ─── Deploy to Staging (72.62.255.206) ──────────────────────────
   deploy-staging:
-    name: Deploy to Staging
+    name: Deploy to Staging (.206)
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -148,15 +148,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to staging
-        run: |
-          echo "Deploying to staging environment..."
-          # Pull latest image and restart via docker compose
-          # ssh deploy@staging.jebat.online "cd /opt/jebat && docker compose pull && docker compose up -d"
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
 
-  # ─── Deploy to Production ───────────────────────────────────────
+      - name: Add VPS to known_hosts
+        run: ssh-keyscan 72.62.255.206 >> ~/.ssh/known_hosts
+
+      - name: Pull latest code on staging VPS
+        run: |
+          echo "Deploying commit ${{ github.sha }} to staging (72.62.255.206)"
+          ssh root@72.62.255.206 "cd /var/www/jebat-core && \
+        run: |
+          ssh root@72.62.255.206 "cd /var/www/jebat-core && \
+            git fetch origin main && \
+            git reset --hard origin/main && \
+            echo '✅ Code updated on staging'"
+
+      - name: Install dependencies on staging
+        run: |
+          ssh root@72.62.255.206 "cd /var/www/jebat-core && \
+            if [ -f requirements.prod.txt ]; then pip install -r requirements.prod.txt --quiet; else pip install -r requirements.txt --quiet; fi && \
+            echo '✅ Dependencies updated on staging'"
+
+      - name: Restart PM2 processes on staging
+        run: |
+          ssh root@72.62.255.206 "cd /var/www/jebat-core && \
+            pm2 restart jebat-api 2>/dev/null || \
+            pm2 start \"python -m uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2\" --name jebat-api && \
+            pm2 save && \
+            echo '✅ PM2 processes restarted on staging'"
+
+      - name: Verify staging health
+        run: |
+          HEALTHY=false
+          for i in 1 2 3 4 5; do
+            if ssh root@72.62.255.206 "curl -sf http://localhost:8080/health"; then
+              HEALTHY=true
+              break
+            fi
+            echo "Attempt $i/5 failed, retrying in 5s..."
+            sleep 5
+          done
+          if [ "$HEALTHY" != "true" ]; then
+            echo '⚠️ Staging health check failed after 5 attempts'
+            exit 1
+          fi
+          echo '✅ Staging health check passed'
+
+  # ─── Deploy to Production (72.62.254.65) ────────────────────────
   deploy-production:
-    name: Deploy to Production
+    name: Deploy to Production (.65)
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -166,10 +209,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to production
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+
+      - name: Add VPS to known_hosts
+        run: ssh-keyscan 72.62.254.65 >> ~/.ssh/known_hosts
+
+      - name: Pull latest code on production VPS
         run: |
-          echo "Deploying to production environment..."
-          # ssh deploy@72.62.254.65 "cd /opt/jebat && docker compose -f docker-compose.yml -f docker-compose.prod.yml pull && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+          echo "Deploying commit ${{ github.sha }} to production (72.62.254.65)"
+          ssh root@72.62.254.65 "cd /var/www/jebat-core && \
+        run: |
+          ssh root@72.62.254.65 "cd /var/www/jebat-core && \
+            git fetch origin main && \
+            git reset --hard origin/main && \
+            echo '✅ Code updated on production'"
+
+      - name: Install dependencies on production
+        run: |
+          ssh root@72.62.254.65 "cd /var/www/jebat-core && \
+            if [ -f requirements.prod.txt ]; then pip install -r requirements.prod.txt --quiet; else pip install -r requirements.txt --quiet; fi && \
+            echo '✅ Dependencies updated on production'"
+
+      - name: Restart PM2 processes on production
+        run: |
+          ssh root@72.62.254.65 "cd /var/www/jebat-core && \
+            pm2 restart jebat-api 2>/dev/null || \
+            pm2 start \"python -m uvicorn main:app --host 0.0.0.0 --port 8080 --workers 4\" --name jebat-api && \
+            pm2 save && \
+            echo '✅ PM2 processes restarted on production'"
+
+      - name: Verify production health
+        run: |
+          HEALTHY=false
+          for i in 1 2 3 4 5; do
+            if ssh root@72.62.254.65 "curl -sf http://localhost:8080/health"; then
+              HEALTHY=true
+              break
+            fi
+            echo "Attempt $i/5 failed, retrying in 5s..."
+            sleep 5
+          done
+          if [ "$HEALTHY" != "true" ]; then
+            echo '⚠️ Production health check failed after 5 attempts'
+            exit 1
+          fi
+          echo '✅ Production health check passed'
 
   # ─── Security Scan ──────────────────────────────────────────────
   security:
