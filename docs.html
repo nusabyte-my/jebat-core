@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JEBAT Documentation — Guides, Deployment &amp; API Reference</title>
+<title>JEBAT v6.1 Documentation — Guides, Deployment &amp; API Reference</title>
 <meta name="description" content="Comprehensive JEBAT documentation: installation guides, deployment instructions, API reference, architecture overview, and operational playbooks for the sovereign AI platform." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -153,7 +153,7 @@ footer a { color: var(--emerald); text-decoration: none; }
 <div class="container">
   <div class="badge"><i class="fa-solid fa-book"></i> Documentation Portal</div>
   <h1>JEBAT Documentation</h1>
-  <p>Installation guides, deployment instructions, API reference, architecture overview, and operational playbooks for the sovereign AI platform.</p>
+  <p>Comprehensive JEBAT documentation: installation guides, deployment playbooks (local, Docker, VPS, air-gapped), LLM provider configuration, memory system, agent orchestration, MCP integration, security Installation guides, deployment instructions, API reference, architecture overview, and operational playbooks for the sovereign AI platform. RBAC, API reference, architecture, CLI commands, and troubleshooting for the sovereign AI platform.</p>
   <div class="search-bar">
     <i class="fa-solid fa-magnifying-glass"></i>
     <input type="text" id="docSearch" placeholder="Search documentation..." oninput="filterDocs()" />
@@ -367,7 +367,7 @@ footer a { color: var(--emerald); text-decoration: none; }
 <ul>
   <li><code>/</code> — API root and liveness check</li>
   <li><code>/health</code> — Health probe</li>
-  <li><code>/docs</code> — Swagger UI (interactive API explorer)</li>
+  <li><code>/swagger</code> — Swagger UI (interactive API explorer)</li>
   <li><code>/webui/</code> — Web console</li>
 </ul>
 </section>
@@ -671,7 +671,7 @@ footer a { color: var(--emerald); text-decoration: none; }
 <!-- ═══════════════ API REFERENCE ═══════════════ -->
 <section id="api-reference">
 <h2>API Reference</h2>
-<p>JEBAT exposes a RESTful API with interactive documentation.</p>
+<p>JEBAT exposes a RESTful API with interactive documentation. All endpoints are protected by API key authentication with SHA-256 hashed keys, support SSE streaming, and include CORS headers for cross-origin deployments.</p>
 
 <h3>Interactive Docs</h3>
 <div class="card-grid">
@@ -806,7 +806,7 @@ User Request → API Gateway (auth, logging)
 <h3>Getting Help</h3>
 <ul>
   <li><a href="https://github.com/nusabyte-my/jebat-core/issues" style="color:var(--emerald);">GitHub Issues</a> — Report bugs and request features</li>
-  <li><a href="/docs" style="color:var(--emerald);">Swagger UI</a> — Interactive API testing</li>
+  <li><a href="/swagger" style="color:var(--emerald);">Swagger UI</a> — Interactive API testing</li>
   <li><a href="/redoc" style="color:var(--emerald);">ReDoc</a> — Full API schema documentation</li>
 </ul>
 </section>
