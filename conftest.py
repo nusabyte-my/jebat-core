@@ -22,7 +22,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 # Ensure the project root is first on sys.path so the root jebat/ package
-# is found before the stale duplicate inside jebat-core/jebat/.
+# is found before any stale duplicates.
 _project_root = str(Path(__file__).resolve().parent)
 if _project_root in sys.path:
     sys.path.remove(_project_root)
