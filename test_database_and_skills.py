@@ -49,21 +49,15 @@ class TestDatabaseConnection:
         )
 
         config = DatabaseManager(
-            db_type=DatabaseType.POSTGRESQL,
-            host="localhost",
-            port=5432,
-            database="jebat_db",
-            username="jebat",
-            password="test_password",
-            pool_size=5,
-            max_overflow=5,
+            dsn="postgresql://jebat:test_password@localhost:5432/jebat_db",
+            min_size=2,
+            max_size=5,
+            timeout=10.0,
         )
 
         assert config is not None  # DatabaseManager created successfully
-        assert config.host == "localhost"
-        assert config.port == 5432
-        assert config.pool_size == 5
-        assert config.max_overflow == 5
+        assert config._min_size == 2
+        assert config._max_size == 5
 
         logger.info("✅ Test database connection config - PASSED")
 
@@ -894,13 +888,7 @@ class TestErrorRecovery:
 
         # Create config
         config = DatabaseManager(
-            db_type=DatabaseType.POSTGRESQL,
-            host="localhost",
-            port=5432,
-            database="jebat_db",
-            username="jebat",
-            password="test",
-            circuit_breaker_threshold=3,
+            dsn="postgresql://jebat:test@localhost:5432/jebat_db",
         )
 
         # Create circuit breaker state
@@ -908,11 +896,11 @@ class TestErrorRecovery:
         assert state.failure_count == 0
         assert state.state == ConnectionState.CONNECTED
 
-        # Simulate failures
-        state.failure_count = 5
-        state.state = ConnectionState.ERROR
+        # Simulate failures — use record_failure with a threshold of 3
+        for _ in range(5):
+            state.record_failure(threshold=3)
 
-        assert state.failure_count >= config.circuit_breaker_threshold
+        assert state.failure_count == 5
         assert state.state == ConnectionState.ERROR
 
         logger.info("✅ Test circuit breaker - PASSED")

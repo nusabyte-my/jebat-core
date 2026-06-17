@@ -200,6 +200,7 @@ def list_supported_providers() -> List[Dict[str, str]]:
         {"name": "openai", "description": "OpenAI API"},
         {"name": "anthropic", "description": "Anthropic Claude"},
         {"name": "ollama", "description": "Ollama local"},
+        {"name": "openrouter", "description": "OpenRouter (multi-provider gateway)"},
         {"name": "local", "description": "Local echo provider"},
     ]
 
