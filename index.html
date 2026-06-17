@@ -1882,13 +1882,19 @@ curl -H <span style="color:var(--emerald)">&quot;Authorization: Bearer $TOKEN&qu
   <div class="preview-card q4-card">
     <div class="preview-card-icon q4"><i class="fa-brands fa-discord"></i></div>
     <h4>Discord Channel</h4>
-    <p>Discord bot integration with slash commands, thread-based agent delegation, role-gated access control, and rich embed responses for team operations.</p>
+    <p>Discord bot with slash-command router, thread-based agent delegation, role-gated access control, webhook relay to JEBAT swarm, and rich embed responses for real-time team operations.</p>
     <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;November 2026</span>
     <div class="preview-feature-list">
-      <span class="preview-feature">Slash Commands</span>
+      <span class="preview-feature">Slash-Command Router</span>
       <span class="preview-feature">Thread Delegation</span>
-      <span class="preview-feature">Role Gating</span>
-      <span class="preview-feature">Rich Embeds</span>
+      <span class="preview-feature">Role-Gated ACL</span>
+      <span class="preview-feature">Webhook Relay</span>
+    </div>
+    <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;font-family:var(--font-mono);font-size:11px;color:#9ca3af;line-height:1.7;">
+      <span style="color:var(--text-dim)"># Discord slash-command → JEBAT agent</span><br>
+      <span style="color:var(--purple)">from</span> jebat.integrations.channels <span style="color:var(--purple)">import</span> DiscordChannel<br>
+      bot = DiscordChannel(token=<span style="color:var(--emerald)"></span>)<br>
+      bot.route(<span style="color:var(--emerald)">"/audit"</span>, agent=<span style="color:var(--emerald)">"sentinel"</span>)
     </div>
   </div>
 
