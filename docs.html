@@ -525,9 +525,8 @@ footer a { color: var(--emerald); text-decoration: none; }
     <tr><td><code>custom</code></td><td>User-defined prompt template</td><td>Domain-specific reasoning</td></tr>
   </tbody>
 </table>
-</section>
 
-<!-- ═══════════════ GUIDE: OPENROUTER ═══════════════ -->
+<h3>OpenRouter — Multi-Provider Gateway</h3>
 <h3>OpenRouter — Multi-Provider Gateway</h3>
 <p>OpenRouter provides a unified API gateway to 200+ models from OpenAI, Anthropic, Google, Meta, Mistral, and other providers through a single <code>OPENROUTER_API_KEY</code>. JEBAT treats OpenRouter as a first-class provider with automatic failover.</p>
 <h4>Configuration</h4>
@@ -550,7 +549,6 @@ export JEBAT_LLM_MODEL=openai/gpt-4o</code></pre>
   <li><strong>No GPU required:</strong> All inference runs on OpenRouter's infrastructure</li>
 </ul>
 
-<!-- ═══════════════ GUIDE: LLAMACPP ═══════════════ -->
 <h3>llama.cpp — Local GGUF Inference</h3>
 <p>llama.cpp enables fully air-gapped local inference using quantized GGUF model weights. JEBAT communicates with a llama.cpp server via its OpenAI-compatible API, making it a drop-in replacement for cloud providers in offline deployments.</p>
 <h4>Configuration</h4>
@@ -578,6 +576,7 @@ API Server (72.62.254.65:8000)
   <li><strong>OpenAI-compatible API:</strong> Drop-in replacement for cloud providers with identical request format</li>
   <li><strong>Custom weights:</strong> Load any GGUF model including fine-tuned and community models</li>
 </ul>
+</section>
 
 <!-- ═══════════════ GUIDE: MEMORY ═══════════════ -->
 <section id="guide-memory">
