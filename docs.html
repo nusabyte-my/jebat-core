@@ -527,6 +527,58 @@ footer a { color: var(--emerald); text-decoration: none; }
 </table>
 </section>
 
+<!-- ═══════════════ GUIDE: OPENROUTER ═══════════════ -->
+<h3>OpenRouter — Multi-Provider Gateway</h3>
+<p>OpenRouter provides a unified API gateway to 200+ models from OpenAI, Anthropic, Google, Meta, Mistral, and other providers through a single <code>OPENROUTER_API_KEY</code>. JEBAT treats OpenRouter as a first-class provider with automatic failover.</p>
+<h4>Configuration</h4>
+<pre><code class="language-yaml"># ~/.jebat/config.yaml
+llm:
+  provider: openrouter
+  model: openai/gpt-4o
+  fallbacks:
+    - ollama
+    - local</code></pre>
+<h4>Environment Variable</h4>
+<pre><code class="language-bash">export OPENROUTER_API_KEY="sk-or-v1-..."
+export JEBAT_LLM_PROVIDER=openrouter
+export JEBAT_LLM_MODEL=openai/gpt-4o</code></pre>
+<h4>Key Features</h4>
+<ul>
+  <li><strong>Model catalog:</strong> Access 200+ models from multiple providers through a single endpoint</li>
+  <li><strong>Cost routing:</strong> Automatically select the cheapest model that meets quality thresholds</li>
+  <li><strong>Failover target:</strong> Ideal as a cloud fallback when local Ollama or llama.cpp is unavailable</li>
+  <li><strong>No GPU required:</strong> All inference runs on OpenRouter's infrastructure</li>
+</ul>
+
+<!-- ═══════════════ GUIDE: LLAMACPP ═══════════════ -->
+<h3>llama.cpp — Local GGUF Inference</h3>
+<p>llama.cpp enables fully air-gapped local inference using quantized GGUF model weights. JEBAT communicates with a llama.cpp server via its OpenAI-compatible API, making it a drop-in replacement for cloud providers in offline deployments.</p>
+<h4>Configuration</h4>
+<pre><code class="language-yaml"># ~/.jebat/config.yaml
+llm:
+  provider: local
+  model: qwen2.5-coder-7b
+  fallbacks:
+    - ollama</code></pre>
+<h4>Environment Variable</h4>
+<pre><code class="language-bash">export LLAMA_CPP_HOST="http://127.0.0.1:8080"
+export JEBAT_LLM_PROVIDER=local
+export JEBAT_LLM_MODEL=qwen2.5-coder-7b</code></pre>
+<h4>Production Deployment</h4>
+<p>For production air-gapped environments, deploy llama.cpp on a dedicated model server and route JEBAT API traffic to it:</p>
+<pre><code class="language-text">Model Server (72.62.255.206:8080)
+  └── llama-server --host 0.0.0.0 --port 8080 --model qwen2.5-coder-7b.Q8_0.gguf
+
+API Server (72.62.254.65:8000)
+  └── LLAMA_CPP_HOST=http://72.62.255.206:8080</code></pre>
+<h4>Key Features</h4>
+<ul>
+  <li><strong>Zero cloud dependency:</strong> Complete air-gapped operation with no external API calls</li>
+  <li><strong>GGUF quantization:</strong> Run 7B–35B parameter models on CPU with optional GPU offload</li>
+  <li><strong>OpenAI-compatible API:</strong> Drop-in replacement for cloud providers with identical request format</li>
+  <li><strong>Custom weights:</strong> Load any GGUF model including fine-tuned and community models</li>
+</ul>
+
 <!-- ═══════════════ GUIDE: MEMORY ═══════════════ -->
 <section id="guide-memory">
 <h2>Memory System</h2>
