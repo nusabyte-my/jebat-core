@@ -1,5 +1,5 @@
 """
-JEBAT — interactive REPL (OpenClaude-style).
+JEBAT — interactive REPL with OpenClaude & OpenManus styles.
 """
 
 from __future__ import annotations
@@ -23,10 +23,11 @@ PRESETS = {
 
 
 class REPL:
-    def __init__(self, agent: AgentLoop):
+    def __init__(self, agent: AgentLoop, style: str = "openclaude"):
         self.agent = agent
         self.provider = agent.default_provider
         self.model = agent.model
+        self.style = style
         self.mode = "auto"
         self.sys_prompt = ""
         self.tools_enabled = True
@@ -37,9 +38,13 @@ class REPL:
     def start(self):
         """Start the interactive REPL."""
         print()
-        print("  JEBAT  ⚔️  unified coding agent")
+        if self.style == "openmanus":
+            print("  JEBAT  ⚔️  unified coding agent (OpenManus mode)")
+        else:
+            print("  JEBAT  ⚔️  unified coding agent")
         print(f"  provider: {self.provider}  model: {self.model}")
-        print(f"  preset: {self.preset}  yolo: {self.yolo}  auto-commit: {self.auto_commit}")
+        print(f"  style: {self.style}  preset: {self.preset}")
+        print(f"  yolo: {self.yolo}  auto-commit: {self.auto_commit}")
         print()
         print("  /help, /plan, /provider, /model, /preset, /yolo, /commit, /clear, /exit")
         print()
@@ -109,7 +114,8 @@ class REPL:
             return True
 
         if cmd.name == "plan":
-            out = self.agent.run_plan_then_answer(args or raw.replace("/plan", "", 1), provider=self.provider, model=self.model)
+            out = self.agent.run_plan_then_answer(args or raw.replace("/plan", "", 1),
+                                                  provider=self.provider, model=self.model)
             streaming_print(out.response.text, self.provider, self.model)
             return True
 
@@ -131,6 +137,16 @@ class REPL:
 
         if cmd.name == "commit":
             self._do_auto_commit(args)
+            return True
+
+        if cmd.name == "style":
+            new_style = (args or "").strip().lower()
+            if new_style in {"openclaude", "openmanus"}:
+                self.style = new_style
+                self.agent.style = new_style
+                print(f"  style: {self.style}")
+            else:
+                print("  Styles: openclaude, openmanus")
             return True
 
         print(render_help())

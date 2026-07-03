@@ -108,7 +108,7 @@ def handle_read_file(args: Dict[str, Any]) -> str:
 
 
 def handle_write_file(args: Dict[str, Any]) -> str:
-    path = args.get("path", "")
+    path = args.get("path") or args.get("filename") or ""
     content = args.get("content", "")
     try:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI — unified coding-agent CLI (OpenClaude-style).
+JEBAT CLI — unified coding-agent CLI with OpenClaude & OpenManus styles.
 
 Examples:
   jebat code "Fix the bug in auth.py"
-  jebat code --auto-commit "Refactor the login flow"
+  jebat code --style openmanus --auto-commit "Refactor the login flow"
   jebat code --yolo "Delete the test files"
   jebat code --provider openai --model gpt-4o-mini "Explain this"
   jebat chat "What is the capital of France?"
@@ -12,6 +12,7 @@ Examples:
   jebat provider add openai --id work --api-key sk-...
   jebat provider use work
   jebat repl
+  jebat repl --style openmanus
 """
 
 from __future__ import annotations
@@ -46,10 +47,13 @@ def _default_model(kind: str) -> str:
     }.get(kind, "")
 
 
-def _print_banner(provider: str, model: str):
-    """Print OpenClaude-style banner."""
+def _print_banner(provider: str, model: str, style: str = "openclaude"):
+    """Print style-aware banner."""
     print()
-    print("  JEBAT  ⚔️  unified coding agent")
+    if style == "openmanus":
+        print("  JEBAT  ⚔️  unified coding agent (OpenManus mode)")
+    else:
+        print("  JEBAT  ⚔️  unified coding agent")
     print(f"  provider: {provider}  model: {model}")
     print()
 
@@ -85,7 +89,8 @@ def _run_with_auto_commit(agent: AgentLoop, prompt: str, provider: str, model: s
 def cmd_code(args, registry: ProviderRegistry):
     provider = args.provider or "ollama"
     model = args.model or "qwen2.5-coder:7b"
-    _print_banner(provider, model)
+    style = getattr(args, "style", "openclaude")
+    _print_banner(provider, model, style)
 
     # Load project context if path provided
     project_context = ""
@@ -110,6 +115,7 @@ def cmd_code(args, registry: ProviderRegistry):
         model=model,
         yolo=getattr(args, "yolo", False),
         auto_commit=getattr(args, "auto_commit", False),
+        style=style,
     )
 
     if args.prompt:
@@ -120,7 +126,7 @@ def cmd_code(args, registry: ProviderRegistry):
             project_path=project_path,
         )
     else:
-        agent.interactive(provider=provider, model=model)
+        agent.interactive(provider=provider, model=model, style=style)
 
 
 def cmd_chat(args, registry: ProviderRegistry):
@@ -180,34 +186,40 @@ def cmd_provider(args, registry: ProviderRegistry):
 
 
 def cmd_agent_run(args, registry: ProviderRegistry):
-    _print_banner(args.provider or "ollama", args.model or "qwen2.5-coder:7b")
+    style = getattr(args, "style", "openclaude")
+    _print_banner(args.provider or "ollama", args.model or "qwen2.5-coder:7b", style)
     agent = AgentLoop(
         registry,
         default_provider=args.provider or "ollama",
         model=args.model or "qwen2.5-coder:7b",
         yolo=getattr(args, "yolo", False),
+        style=style,
     )
     out = agent.step(args.prompt or "Start.", provider=args.provider, model=args.model)
     print(out.response.text)
 
 
-def cmd_repl(registry: ProviderRegistry):
+def cmd_repl(registry: ProviderRegistry, style: str = "openclaude"):
     from jebat_cli_new.repl import REPL
-    agent = AgentLoop(registry, default_provider="ollama", model="qwen2.5-coder:7b")
-    REPL(agent).start()
+    agent = AgentLoop(registry, default_provider="ollama", model="qwen2.5-coder:7b", style=style)
+    REPL(agent, style=style).start()
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="jebat",
-        description="JEBAT unified coding-agent CLI",
+        description="JEBAT unified coding-agent CLI (OpenClaude & OpenManus styles)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
+Styles:
+  openclaude  — Minimal, fast, direct (default)
+  openmanus   — Multi-step planning, detailed execution
+
 Examples:
   jebat code "Fix the bug in auth.py"
-  jebat code --auto-commit --yolo "Refactor the login flow"
+  jebat code --style openmanus --auto-commit "Refactor the login flow"
   jebat provider add openai --id work --api-key sk-...
-  jebat repl
+  jebat repl --style openmanus
         """,
     )
     sub = parser.add_subparsers(dest="command")
@@ -216,6 +228,7 @@ Examples:
     code.add_argument("prompt", nargs="?")
     code.add_argument("--provider", default="ollama")
     code.add_argument("--model", default="qwen2.5-coder:7b")
+    code.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
     code.add_argument("--project-path", dest="project_path")
     code.add_argument("--yolo", action="store_true", help="Bypass safety confirmations")
     code.add_argument("--safety", default="auto", choices=["auto", "confirm", "off"])
@@ -228,6 +241,7 @@ Examples:
     chat.add_argument("prompt", nargs="?")
     chat.add_argument("--provider", default="ollama")
     chat.add_argument("--model", default="qwen2.5-coder:7b")
+    chat.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
     chat.add_argument("--preset", dest="preset",
                      choices=["fast", "deliberate", "deep", "strategic", "creative", "critical"])
 
@@ -250,9 +264,11 @@ Examples:
     run.add_argument("prompt", nargs="?")
     run.add_argument("--provider", default="ollama")
     run.add_argument("--model", default="qwen2.5-coder:7b")
+    run.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
     run.add_argument("--yolo", action="store_true")
 
-    sub.add_parser("repl", help="Interactive REPL")
+    repl_p = sub.add_parser("repl", help="Interactive REPL")
+    repl_p.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
 
     return parser.parse_args(argv)
 
@@ -273,7 +289,8 @@ def main(argv: Optional[Sequence[str]] = None):
         else:
             raise SystemExit("  Usage: jebat agent run [prompt]")
     elif args.command == "repl":
-        cmd_repl(registry)
+        style = getattr(args, "style", "openclaude")
+        cmd_repl(registry, style=style)
     else:
         raise SystemExit("  Usage: jebat code|chat|provider|agent|repl")
 
