@@ -1,0 +1,106 @@
+version: 6.1.0
+data_dir: ~/.jebat
+config_file: ~/.jebat/jebat.yaml
+agent:
+  default_model: ''
+  default_provider: ''
+  safety_mode: auto
+  max_iterations: 10
+  context_window: 8192
+  min_context_messages: 2
+  stream_tokens: true
+  enable_memory: true
+  enable_search: false
+  enable_orchestration: false
+  orchestration_strategy: auto
+  project_path: ''
+  auto_load_project_context: true
+  planner_model: ''
+  executor_model: ''
+orchestration:
+  enabled_patterns:
+  - dual
+  - cross_validation
+  - debate
+  default_strategy: auto
+  fallback_chain: []
+byok:
+  providers:
+  - openai
+  - anthropic
+  - google
+  - groq
+  - openrouter
+  encryption: fernet
+  auto_detect: true
+web_chat:
+  host: 127.0.0.1
+  port: 8080
+  ws_enabled: true
+  ws_path: /ws
+  cors_origins:
+  - '*'
+  static_files: true
+telemetry:
+  enabled: false
+  categories:
+  - feature_usage
+  - performance
+  - session_stats
+  - errors
+  sample_rate: 1.0
+  export_interval_seconds: 300
+  retention_days: 30
+  otel_endpoint: ''
+  otel_headers: {}
+code_index:
+  languages:
+  - python
+  - javascript
+  - typescript
+  - go
+  - rust
+  exclude_patterns:
+  - '**/node_modules/**'
+  - '**/__pycache__/**'
+  - '**/.git/**'
+  - '**/venv/**'
+  - '**/.venv/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/*.pyc'
+  - '**/*.min.js'
+  - '**/*.map'
+  max_files: 5000
+  use_tree_sitter: true
+  output_path: ~/.jebat/code_graph.json
+plugins:
+  auto_discover: true
+  directories:
+  - ~/.jebat/plugins
+  allow_pip_plugins: true
+  plugin_prefix: jebat-plugin-
+llm_providers:
+  ollama_host: http://localhost:11434
+  ollama_timeout: 120
+  openai_base_url: https://api.openai.com/v1
+  anthropic_base_url: https://api.anthropic.com
+  google_base_url: https://generativelanguage.googleapis.com
+  groq_base_url: https://api.groq.com/openai/v1
+  openrouter_base_url: https://openrouter.ai/api/v1
+  openrouter_referer: https://jebat.ai
+  openrouter_title: JEBAT
+logging:
+  level: INFO
+  format: json
+  structured: true
+  correlation_ids: true
+  output_file: ''
+  max_size_mb: 100
+  backup_count: 5
+security:
+  enable_guardrails: true
+  policy_engine: builtin
+  policy_path: ~/.jebat/policies
+  audit_log: true
+  audit_path: ~/.jebat/audit

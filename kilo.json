@@ -1,0 +1,62 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "default_agent": "panglima",
+  "instructions": [
+    "AGENTS.md",
+    "JEBAT.md",
+    "MEMORY.md",
+    "DESIGN.md",
+    "CODEX_PROFILE.md",
+    ".kilo/jebatcore/*.md",
+    "jebat-core/BOOTSTRAP.md",
+    "jebat-core/AGENTS.md",
+    "jebat-core/JEBAT_ASSISTANT_GUIDE.md",
+    "jebat-core/MASTER_INDEX.md"
+  ],
+  "skills": {
+    "paths": [
+      "./.kilo/skills",
+      "./jebat-core/skills",
+      "~/.jebatcore/bundle/skills"
+    ]
+  },
+  "mcp": {
+    "jebat": {
+      "type": "local",
+      "command": [
+        "jebat",
+        "mcp",
+        "serve",
+        "--transport",
+        "stdio"
+      ],
+      "enabled": true,
+      "timeout": 60000
+    },
+    "web-search": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "open-websearch@latest"
+      ],
+      "environment": {
+        "MODE": "stdio",
+        "DEFAULT_SEARCH_ENGINE": "duckduckgo",
+        "ALLOWED_SEARCH_ENGINES": "duckduckgo,bing,brave,exa,startpage"
+      },
+      "enabled": true,
+      "timeout": 30000
+    }
+  },
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "skill": "allow",
+    "web-search_*": "ask",
+    "todowrite": "allow",
+    "bash": "ask",
+    "edit": "ask"
+  }
+}

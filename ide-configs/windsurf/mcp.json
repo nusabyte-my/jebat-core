@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "jebat": {
+      "command": "jebat",
+      "args": [
+        "mcp",
+        "serve",
+        "--transport",
+        "stdio"
+      ],
+      "env": {}
+    }
+  }
+}

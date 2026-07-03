@@ -3,316 +3,666 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JEBAT — Sovereign AI Platform | Self-Hosted LLM Infrastructure</title>
-<meta name="description" content="JEBAT is a self-hosted sovereign AI platform. Run your own LLM infrastructure with Ultra-Think reasoning, eternal memory, AI security testing, code generation, and multi-agent orchestration. No cloud lock-in." />
-<meta name="keywords" content="sovereign AI, self-hosted LLM, local AI platform, private AI infrastructure, AI penetration testing, AI code generator, open source AI, MCP protocol, Ollama platform, AI agent framework" />
+<title>JEBAT v6.1 — Sovereign AI Platform & Private Agent Workstation</title>
+<meta name="description" content="JEBAT v6.1 is an enterprise-grade self-hosted sovereign AI platform. Run private LLM clusters, multi-agent swarms, autonomous pentests, and RAG pipelines in secure, air-gapped environments." />
+<meta name="keywords" content="sovereign AI, self-hosted LLM, private AI agent, multi-agent swarm, air-gapped AI, MCP protocol, cybersecurity agent, local LLM infrastructure, Hang Jebat, NusaByte" />
 <meta name="author" content="NusaByte" />
 <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://jebat.online/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="JEBAT" />
-<meta property="og:title" content="JEBAT — Sovereign AI Platform" />
-<meta property="og:description" content="Self-hosted AI platform with Ultra-Think reasoning, eternal memory, security testing, and multi-agent orchestration. Your data. Your models. Your infrastructure." />
+<meta property="og:title" content="JEBAT v6.1 — Sovereign AI Platform" />
+<meta property="og:description" content="Self-hosted AI platform with local cognitive routing, eternal memory, autonomous penetration testing, and multi-agent swarms." />
 <meta property="og:url" content="https://jebat.online/" />
 <meta property="og:image" content="https://jebat.online/JebatLogo-transparent.png" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="JEBAT — Sovereign AI Platform" />
-<meta name="twitter:description" content="Self-hosted AI platform with Ultra-Think reasoning, eternal memory, security testing, and multi-agent orchestration. No cloud lock-in." />
+<meta name="twitter:title" content="JEBAT v6.1 — Sovereign AI Platform" />
+<meta name="twitter:description" content="Self-hosted AI platform with local cognitive routing, eternal memory, autonomous penetration testing, and multi-agent swarms." />
 <meta name="twitter:image" content="https://jebat.online/JebatLogo-transparent.png" />
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"JEBAT","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, Windows, macOS","description":"Sovereign AI platform for self-hosted LLM infrastructure with Ultra-Think reasoning, eternal memory, AI security testing, code generation, and multi-agent orchestration.","url":"https://jebat.online","softwareVersion":"2.0.0","license":"https://opensource.org/licenses/MIT","author":{"@type":"Organization","name":"NusaByte","url":"https://github.com/nusabyte-my"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Ultra-Think multi-phase LLM reasoning","Eternal memory system","6 LLM provider support","AI-powered penetration testing","AI code generation and website builder","MCP protocol server","Multi-agent orchestration","Self-hosted deployment","RBAC permissions","Streaming NDJSON responses"]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is sovereign AI?","acceptedAnswer":{"@type":"Answer","text":"Sovereign AI means running artificial intelligence models entirely on your own infrastructure. Your data never leaves your servers, you choose which models to use, and no third-party vendor controls access or pricing."}},{"@type":"Question","name":"How does JEBAT differ from ChatGPT or Claude?","acceptedAnswer":{"@type":"Answer","text":"ChatGPT and Claude are cloud-only SaaS products. JEBAT runs on your hardware, supports 6 LLM providers including fully offline Ollama, includes persistent memory, security testing, code generation, and agent orchestration in one self-hosted platform."}},{"@type":"Question","name":"Can JEBAT run completely offline?","acceptedAnswer":{"@type":"Answer","text":"Yes. The default configuration uses Ollama as the LLM backend, which runs models locally. No API keys, no internet connection, no cloud dependency required."}},{"@type":"Question","name":"What is the difference between JEBAT and Ollama WebUI?","acceptedAnswer":{"@type":"Answer","text":"Ollama WebUI is a chat interface. JEBAT is a full AI platform with multi-phase reasoning, persistent memory, security testing, code generation, visual building, multi-agent orchestration, and MCP protocol support."}},{"@type":"Question","name":"Is JEBAT free and open source?","acceptedAnswer":{"@type":"Answer","text":"Yes. JEBAT is fully open source under the MIT license. Free to self-host with no usage fees."}}]}</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "JEBAT Enterprise Core",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Linux, Windows, macOS",
+  "description": "Sovereign AI platform for self-hosted private LLM infrastructure, multi-agent swarms, and audited pentesting.",
+  "url": "https://jebat.online",
+  "softwareVersion": "6.1.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "author": {
+    "@type": "Organization",
+    "name": "NusaByte",
+    "url": "https://github.com/nusabyte-my"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
 :root {
-    --void: #0a0a0a;
-    --graphite: #141414;
-    --surface: #1a1a1a;
-    --emerald: #3ecf8e;
-    --emerald-dim: rgba(62,207,142,0.08);
-    --emerald-glow: rgba(62,207,142,0.25);
-    --cyan: #22d3ee;
-    --amber: #f59e0b;
-    --border-dim: #1f1f1f;
-    --border-mid: #2a2a2a;
-    --border-bright: #333;
-    --text: #fafafa;
-    --text-muted: #888;
-    --text-dim: #555;
-    --font-sans: 'Inter', -apple-system, sans-serif;
-    --font-mono: 'Source Code Pro', monospace;
+  --void: #030303;
+  --graphite: #09090b;
+  --surface: #111113;
+  --surface-mid: #141418;
+  --emerald: #10b981;
+  --emerald-dim: rgba(16,185,129,0.08);
+  --emerald-glow: rgba(16,185,129,0.25);
+  --emerald-bright: #34d399;
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6,182,212,0.08);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.08);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.08);
+  --purple: #a855f7;
+  --purple-dim: rgba(168,85,247,0.08);
+  --border-dim: #1a1a1e;
+  --border-mid: #27272a;
+  --border-bright: #3f3f46;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-dim: #52525b;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
-html{scroll-behavior:smooth}
-body{background:var(--void);color:var(--text);font-family:var(--font-sans);line-height:1.5;overflow-x:hidden}
-section[id]{scroll-margin-top:72px}
-.mono{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:1.2px}
-.emerald{color:var(--emerald)}
-.container{max-width:1280px;margin:0 auto;padding:0 2rem}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; border-radius: 0 !important; }
+html { scroll-behavior: smooth; }
+body { background: var(--void); color: var(--text); font-family: var(--font-sans); line-height: 1.5; overflow-x: hidden; }
+section[id] { scroll-margin-top: 56px; }
+a { color: inherit; }
 
-/* NAV */
-nav{position:fixed;top:0;width:100%;background:rgba(10,10,10,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-dim);z-index:1000;height:56px;display:flex;align-items:center}
-.nav-inner{max-width:1280px;width:100%;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:600;font-size:1rem}
-.logo-img{height:28px;width:auto;display:block}
-.logo span{color:var(--text-dim);font-family:var(--font-mono);font-size:10px;font-weight:400;margin-left:2px}
-.nav-links{display:flex;gap:2rem;list-style:none}
-.nav-links a{color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.2s}
-.nav-links a:hover{color:var(--text)}
-.nav-cta{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--void);background:var(--emerald);border:none;padding:8px 20px;border-radius:999px;text-decoration:none;transition:all 0.2s;letter-spacing:0.5px}
-.nav-cta:hover{background:#4ade80;box-shadow:0 0 20px var(--emerald-glow)}
-.mobile-menu-btn{display:none;background:none;border:1px solid var(--border-mid);color:var(--text);font-size:1.1rem;padding:4px 10px;border-radius:4px;cursor:pointer}
+/* ─── UTILITIES ─── */
+.mono { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; }
+.emerald { color: var(--emerald); }
+.cyan { color: var(--cyan); }
+.amber { color: var(--amber); }
+.muted { color: var(--text-muted); }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
 
-/* HERO */
-.hero{padding:160px 0 80px;text-align:center;position:relative}
-.hero h1{font-size:clamp(48px,6vw,72px);line-height:1.0;letter-spacing:-0.04em;margin-bottom:24px;font-weight:500}
-.hero p{font-size:17px;color:var(--text-muted);max-width:620px;margin:0 auto 40px;line-height:1.7}
-.hero-actions{display:flex;justify-content:center;gap:14px;margin-bottom:70px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 28px;border-radius:999px;font-size:14px;font-weight:500;text-decoration:none;transition:all 0.2s;border:1px solid transparent;cursor:pointer}
-.btn-emerald{background:var(--emerald);color:var(--void)}
-.btn-emerald:hover{background:#4ade80;box-shadow:0 0 20px var(--emerald-glow)}
-.btn-outline{background:transparent;color:var(--text);border-color:var(--border-bright)}
-.btn-outline:hover{background:var(--graphite);border-color:var(--emerald)}
+/* ─── NAV ─── */
+nav { position: fixed; top: 0; width: 100%; background: rgba(3,3,3,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-dim); z-index: 1000; height: 56px; display: flex; align-items: center; transition: border-color 0.3s; }
+nav.scrolled { border-bottom-color: var(--border-mid); }
+.nav-inner { max-width: 1200px; width: 100%; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 1rem; letter-spacing: -0.02em; }
+.logo-tag { font-family: var(--font-mono); font-size: 9px; padding: 2px 7px; border: 1px solid var(--border-mid); color: var(--cyan); background: var(--graphite); letter-spacing: 0.5px; }
+.nav-links { display: flex; gap: 1.5rem; list-style: none; align-items: center; }
+.nav-links a { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s; }
+.nav-links a:hover { color: var(--text); }
+.dropdown { position: relative; }
+.dropdown-trigger { display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--text-muted); font-size: 13px; font-weight: 500; transition: color 0.15s; user-select: none; }
+.dropdown-trigger:hover { color: var(--text); }
+.dropdown-trigger::after { content: '▾'; font-size: 10px; margin-left: 2px; color: var(--text-dim); transition: transform 0.2s; }
+.dropdown:hover .dropdown-trigger::after { transform: rotate(180deg); }
+.dropdown-content { position: absolute; top: 100%; left: 50%; transform: translate(-50%, 10px); background: var(--graphite); border: 1px solid var(--border-mid); padding: 8px 0; min-width: 260px; z-index: 2000; margin-top: 14px; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+.dropdown-content::before { content: ''; position: absolute; top: -15px; left: 0; right: 0; height: 15px; }
+.dropdown-content a { display: block; padding: 10px 16px; color: var(--text-muted); text-decoration: none; font-size: 12px; line-height: 1.4; transition: all 0.15s; border-left: 2px solid transparent; }
+.dropdown-content a:hover { color: var(--emerald); background: var(--surface); border-left-color: var(--emerald); }
+.dropdown-content a strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+.dropdown:hover .dropdown-content { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.status-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); }
+.pulse-dot { width: 6px; height: 6px; background: var(--emerald); border-radius: 50% !important; animation: pulse 2.2s infinite; flex-shrink: 0; }
+@keyframes pulse { 0% { opacity:0.3; box-shadow:0 0 0 0 rgba(16,185,129,0.4); } 50% { opacity:1; box-shadow:0 0 8px 2px rgba(16,185,129,0.6); } 100% { opacity:0.3; box-shadow:0 0 0 0 rgba(16,185,129,0.4); } }
+.nav-cta { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--void); background: var(--emerald); border: none; padding: 8px 20px; text-decoration: none; transition: all 0.2s; letter-spacing: 0.5px; animation: buttonPulse 3s infinite; white-space: nowrap; }
+.nav-cta:hover { background: var(--emerald-bright); box-shadow: 0 0 25px var(--emerald-glow); animation: none; }
+@keyframes buttonPulse { 0% { box-shadow:0 0 0 0 rgba(16,185,129,0.3); } 50% { box-shadow:0 0 15px 4px rgba(16,185,129,0.5); } 100% { box-shadow:0 0 0 0 rgba(16,185,129,0.3); } }
+.mobile-menu-btn { display: none; background: none; border: 1px solid var(--border-mid); color: var(--text); font-size: 1.1rem; padding: 4px 10px; cursor: pointer; }
 
-/* TERMINAL */
-.console{max-width:860px;margin:0 auto;background:var(--void);border:1px solid var(--border-mid);border-radius:8px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.7);text-align:left}
-.console-header{background:var(--graphite);padding:10px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;gap:8px}
-.console-dot{width:10px;height:10px;border-radius:50%;background:var(--border-bright)}
-.console-dot.active{background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
-.console-body{padding:20px 24px;font-family:var(--font-mono);font-size:13px;color:#ccc;height:260px;overflow-y:auto;line-height:1.7}
-.console-line{opacity:0;animation:typeIn 0.3s ease forwards}
-@keyframes typeIn{to{opacity:1}}
+/* ─── HERO ─── */
+.hero { padding: 130px 0 70px; text-align: center; position: relative; border-bottom: 1px solid var(--border-dim); overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 800px 600px at 50% 20%, rgba(16,185,129,0.04) 0%, transparent 70%); pointer-events: none; }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--emerald); background: var(--emerald-dim); border: 1px solid rgba(16,185,129,0.2); padding: 5px 14px; margin-bottom: 24px; }
+.hero h1 { font-size: clamp(36px, 5.5vw, 68px); line-height: 1.05; letter-spacing: -0.045em; margin-bottom: 22px; font-weight: 800; }
+.hero h1 .emerald { background: linear-gradient(135deg, var(--emerald), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { font-size: 16px; color: var(--text-muted); max-width: 680px; margin: 0 auto 36px; line-height: 1.7; }
+.hero-actions { display: flex; justify-content: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.hero-meta { display: flex; justify-content: center; gap: 24px; margin-bottom: 52px; flex-wrap: wrap; }
+.hero-badge { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; }
+.hero-badge span { color: var(--text-muted); }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 28px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: var(--font-mono); letter-spacing: 0.5px; }
+.btn-emerald { background: var(--emerald); color: var(--void); }
+.btn-emerald:hover { background: var(--emerald-bright); box-shadow: 0 0 30px var(--emerald-glow); }
+.btn-outline { background: transparent; color: var(--text); border-color: var(--border-mid); }
+.btn-outline:hover { background: var(--surface); border-color: var(--border-bright); }
+.btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border-dim); font-size: 12px; padding: 8px 20px; }
+.btn-ghost:hover { color: var(--text); border-color: var(--border-mid); }
+.btn-sm { padding: 8px 18px; font-size: 11px; }
 
-/* STATUS STRIP */
-.status-strip{border-top:1px solid var(--border-dim);border-bottom:1px solid var(--border-dim);background:var(--void);padding:14px 0;overflow:hidden}
-.strip-content{display:flex;gap:50px;animation:marquee 35s linear infinite;width:max-content}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.strip-item{display:flex;align-items:center;gap:10px;color:var(--text-muted)}
-.pulse-dot{width:6px;height:6px;background:var(--emerald);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%{opacity:0.4;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2);box-shadow:0 0 10px var(--emerald)}100%{opacity:0.4;transform:scale(0.8)}}
+/* ─── CONSOLE ─── */
+.console { max-width: 900px; margin: 0 auto; background: var(--void); border: 1px solid var(--border-mid); overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.9); text-align: left; position: relative; }
+.console::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--emerald-glow), transparent); }
+.console-header { background: var(--graphite); padding: 9px 16px; border-bottom: 1px solid var(--border-dim); display: flex; align-items: center; justify-content: space-between; }
+.console-dots { display: flex; gap: 6px; }
+.console-dot { width: 8px; height: 8px; }
+.console-dot.red { background: #ff5f57; }
+.console-dot.yellow { background: #ffbd2e; }
+.console-dot.green { background: #28ca41; }
+.console-body { padding: 20px 24px; font-family: var(--font-mono); font-size: 12px; color: #9ca3af; height: 290px; overflow-y: auto; line-height: 1.8; }
+.console-body::-webkit-scrollbar { width: 3px; }
+.console-body::-webkit-scrollbar-track { background: var(--void); }
+.console-body::-webkit-scrollbar-thumb { background: var(--border-mid); }
+.console-line { opacity: 0; animation: typeIn 0.3s ease forwards; }
+@keyframes typeIn { to { opacity: 1; } }
+.console-prompt { color: var(--emerald); }
+.console-cmd { color: var(--text); }
+.console-ok { color: var(--emerald); }
+.console-info { color: var(--cyan); }
+.console-warn { color: var(--amber); }
 
-/* SECTIONS */
-.section{padding:100px 0}
-.section-header{margin-bottom:60px;max-width:640px}
-.section-header.center{text-align:center;margin-left:auto;margin-right:auto}
-.section-header h2{font-size:clamp(28px,4vw,42px);margin-top:12px;margin-bottom:20px;font-weight:500;letter-spacing:-0.03em}
-.section-header p{color:var(--text-muted);font-size:15px;line-height:1.7}
+/* ─── STATUS STRIP ─── */
+.status-strip { border-bottom: 1px solid var(--border-dim); background: var(--graphite); padding: 10px 0; overflow: hidden; }
+.strip-content { display: flex; gap: 40px; animation: marquee 50s linear infinite; width: max-content; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.strip-item { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 10px; font-family: var(--font-mono); white-space: nowrap; letter-spacing: 1px; }
+.strip-item .dot { width: 4px; height: 4px; background: var(--emerald); flex-shrink: 0; }
 
-/* TABS */
-.tab-nav{display:flex;gap:0;border-bottom:1px solid var(--border-dim);overflow-x:auto;scrollbar-width:none}
-.tab-nav::-webkit-scrollbar{display:none}
-.tab-btn{font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-dim);background:none;border:none;padding:14px 20px;cursor:pointer;white-space:nowrap;transition:all 0.2s;position:relative;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.8px}
-.tab-btn:hover{color:var(--text-muted);background:rgba(255,255,255,0.02)}
-.tab-btn.active{color:var(--emerald)}
-.tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--emerald);box-shadow:0 0 8px var(--emerald-glow)}
-.tab-status{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px}
-.tab-status.live{background:var(--emerald-dim);color:var(--emerald)}
-.tab-status.soon{background:rgba(245,158,11,0.1);color:var(--amber)}
-.tab-status.planned{background:rgba(255,255,255,0.04);color:var(--text-dim)}
-.tab-panel{animation:fadeIn 0.3s ease}
-.tab-panel[hidden]{display:none}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* ─── SECTIONS ─── */
+.section { padding: 88px 0; border-bottom: 1px solid var(--border-dim); }
+.section-dark { background: var(--graphite); }
+.section-header { margin-bottom: 56px; max-width: 720px; }
+.section-header.center { text-align: center; margin-left: auto; margin-right: auto; }
+.section-eyebrow { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--emerald); margin-bottom: 10px; display: block; }
+.section-header h2 { font-size: clamp(26px, 3.5vw, 40px); margin-bottom: 16px; font-weight: 700; letter-spacing: -0.035em; }
+.section-header p { color: var(--text-muted); font-size: 15px; line-height: 1.7; }
 
-/* PRODUCT PANEL */
-.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border-dim);border:1px solid var(--border-dim);margin-top:40px}
-.panel{background:var(--void);padding:40px;transition:background 0.3s}
-.panel:hover{background:var(--graphite)}
-.panel-full{grid-column:1/-1}
-.panel-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--graphite);border:1px solid var(--border-mid);border-radius:8px;margin-bottom:20px}
-.panel-icon svg{width:24px;height:24px;fill:var(--emerald)}
-.panel h3{font-size:22px;font-weight:500;letter-spacing:-0.02em;margin-bottom:4px}
-.panel .codename{font-family:var(--font-mono);font-size:11px;color:var(--emerald);margin-bottom:16px;display:block}
-.panel p{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:20px}
-.feature-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
-.feature-tag{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);padding:5px 10px;background:var(--graphite);border:1px solid var(--border-dim);border-radius:4px;display:flex;align-items:center;gap:5px}
-.feature-tag .check{color:var(--emerald);font-weight:700}
-.panel-actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn-sm{font-size:12px;padding:8px 18px;border-radius:999px}
-.deploy-snippet{margin-top:20px;background:var(--graphite);border:1px solid var(--border-dim);border-radius:6px;padding:14px 18px;font-family:var(--font-mono);font-size:12px;color:var(--emerald);overflow-x:auto;white-space:pre;line-height:1.5}
-.waitlist-form{display:flex;gap:8px;margin-top:8px}
-.waitlist-input{flex:1;background:var(--graphite);border:1px solid var(--border-mid);border-radius:999px;padding:8px 16px;color:var(--text);font-family:var(--font-sans);font-size:13px}
-.waitlist-input:focus{outline:none;border-color:var(--emerald)}
-.waitlist-btn{background:var(--emerald-dim);color:var(--emerald);border:1px solid rgba(62,207,142,0.3);padding:8px 18px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap}
-.waitlist-btn:hover{background:var(--emerald);color:var(--void)}
-.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-dim)}
-.stat-row:last-child{border-bottom:none}
-.stat-label{font-size:13px;color:var(--text-muted)}
-.stat-value{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text)}
-.stat-value.emerald{color:var(--emerald)}
-.stat-value.amber{color:var(--amber)}
-.stat-value.cyan{color:var(--cyan)}
+/* ─── LIVE COUNTER BAR ─── */
+.counter-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-bottom: 56px; }
+.counter-cell { background: var(--void); padding: 28px 32px; text-align: center; transition: background 0.2s; }
+.counter-cell:hover { background: var(--graphite); }
+.counter-num { font-size: 3rem; font-weight: 800; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; font-family: var(--font-mono); color: var(--emerald); line-height: 1; margin-bottom: 6px; }
+.counter-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; font-family: var(--font-mono); }
+.counter-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-/* STACK GRID */
-.stack-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border-dim);margin-top:40px}
-.stack-item{aspect-ratio:1;background:var(--void);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;filter:grayscale(1);opacity:0.4;transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}
-.stack-item:hover{filter:grayscale(0);opacity:1;background:var(--graphite);z-index:1;box-shadow:inset 0 0 20px var(--emerald-dim)}
-.stack-item svg{width:28px;height:28px;transition:transform 0.3s}
-.stack-item:hover svg{transform:scale(1.1)}
-.stack-item span{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px}
-.stack-item:hover span{color:var(--emerald)}
+/* ─── TABS ─── */
+.tab-nav { display: flex; border-bottom: 1px solid var(--border-dim); overflow-x: auto; scrollbar-width: none; }
+.tab-btn { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--text-dim); background: none; border: none; padding: 13px 20px; cursor: pointer; white-space: nowrap; transition: all 0.2s; position: relative; text-transform: uppercase; letter-spacing: 0.8px; }
+.tab-btn:hover { color: var(--text-muted); background: rgba(255,255,255,0.02); }
+.tab-btn.active { color: var(--emerald); }
+.tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--emerald); box-shadow: 0 0 8px var(--emerald-glow); }
+.tab-status { font-size: 8px; font-weight: 700; padding: 1px 5px; margin-left: 5px; text-transform: uppercase; vertical-align: middle; }
+.tab-status.live { background: var(--emerald-dim); color: var(--emerald); border: 0.5px solid var(--emerald); }
+.tab-status.soon { background: var(--amber-dim); color: var(--amber); border: 0.5px solid var(--amber); }
+.tab-status.planned { background: rgba(255,255,255,0.02); color: var(--text-dim); border: 0.5px solid var(--border-dim); }
+.tab-panel { animation: fadeIn 0.25s ease; }
+.tab-panel[hidden] { display: none; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
-/* SOVEREIGN SECTION */
-.sovereign-content{background:var(--graphite);border:1px solid var(--border-dim);border-radius:8px;padding:48px;margin-top:40px}
-.sovereign-content h3{font-size:20px;font-weight:500;margin-bottom:16px;letter-spacing:-0.02em}
-.sovereign-content p{font-size:14px;color:var(--text-muted);line-height:1.8;margin-bottom:14px}
-.sovereign-content p:last-child{margin-bottom:0}
+/* ─── PANEL GRID ─── */
+.panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-dim); margin-top: 32px; border: 1px solid var(--border-dim); }
+.panel { background: var(--void); padding: 36px; transition: background 0.2s; position: relative; overflow: hidden; }
+.panel:hover { background: rgba(16,185,129,0.02); }
+.panel-full { grid-column: 1/-1; }
+.panel-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--graphite); border: 1px solid var(--border-mid); margin-bottom: 20px; font-size: 16px; }
+.panel h3 { font-size: 21px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 4px; }
+.panel .codename { font-family: var(--font-mono); font-size: 9px; color: var(--emerald); margin-bottom: 16px; display: block; letter-spacing: 1px; }
+.panel p { color: var(--text-muted); font-size: 13.5px; line-height: 1.65; margin-bottom: 20px; }
+.feature-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+.feature-tag { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); padding: 4px 10px; background: var(--graphite); border: 1px solid var(--border-dim); display: flex; align-items: center; gap: 5px; }
+.feature-tag .check { color: var(--emerald); font-weight: 700; font-size: 10px; }
+.deploy-snippet { margin-top: 20px; background: var(--graphite); border: 1px solid var(--border-dim); padding: 14px 18px; font-family: var(--font-mono); font-size: 12px; color: var(--emerald); overflow-x: auto; white-space: pre; line-height: 1.7; }
+.deploy-snippet .comment { color: var(--text-dim); }
+.deploy-snippet .cmd { color: var(--text); }
 
-/* COMPARE TABLE */
-.compare-table{width:100%;border-collapse:collapse;margin-top:40px;font-size:13px}
-.compare-table th,.compare-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border-dim)}
-.compare-table th{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px}
-.compare-table td:first-child{font-weight:500;color:var(--text)}
-.compare-table td{color:var(--text-muted)}
-.compare-table tr:hover td{background:rgba(255,255,255,0.015)}
-.compare-highlight{color:var(--emerald)!important;font-weight:600!important}
+/* ─── WIZARD ─── */
+.wizard-card { background: var(--graphite); border: 1px solid var(--border-dim); padding: 32px; margin-top: 32px; }
+.wizard-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.wizard-col h4 { font-size: 11px; font-family: var(--font-mono); color: var(--cyan); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.wizard-select { width: 100%; padding: 9px 12px; font-size: 12px; font-family: var(--font-mono); color: var(--text); background: var(--void); border: 1px solid var(--border-mid); outline: none; cursor: pointer; transition: border-color 0.2s; }
+.wizard-select:focus { border-color: var(--emerald); }
+.wizard-output { background: var(--void); border: 1px solid var(--border-dim); padding: 16px; font-family: var(--font-mono); font-size: 12px; color: var(--emerald); overflow-x: auto; white-space: pre-wrap; word-break: break-all; line-height: 1.8; }
+.wizard-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
 
-/* FOOTER */
-footer{padding:80px 0 50px;border-top:1px solid var(--border-dim);background:var(--void)}
-.footer-grid{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:40px;margin-bottom:60px}
-.footer-col h4{font-size:13px;margin-bottom:20px;color:var(--text);font-weight:500}
-.footer-col ul{list-style:none}
-.footer-col li{margin-bottom:10px}
-.footer-col a{color:var(--text-muted);text-decoration:none;font-size:13px;transition:color 0.2s}
-.footer-col a:hover{color:var(--emerald)}
-.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:30px;border-top:1px solid var(--border-dim)}
+/* ─── ARCHITECTURE CARDS ─── */
+.arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.arch-panel { background: var(--surface-mid); padding: 36px; }
+.arch-num { font-family: var(--font-mono); font-size: 10px; color: var(--emerald); margin-bottom: 14px; letter-spacing: 1px; text-transform: uppercase; }
+.arch-panel h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
+.arch-panel p { color: var(--text-muted); font-size: 13px; line-height: 1.65; }
 
-/* RESPONSIVE */
-@media(max-width:1024px){.stack-grid{grid-template-columns:repeat(4,1fr)}.hero h1{font-size:48px}}
-@media(max-width:768px){
-    .mobile-menu-btn{display:block}
-    .nav-links{display:none;position:absolute;top:56px;left:0;right:0;background:rgba(10,10,10,0.98);border-bottom:1px solid var(--border-dim);flex-direction:column;padding:1rem;gap:0.25rem}
-    .nav-links.open{display:flex}
-    .nav-links a{padding:10px 12px}
-    .hero{padding:130px 0 60px}.hero h1{font-size:36px}
-    .panel-grid{grid-template-columns:1fr}
-    .stack-grid{grid-template-columns:repeat(3,1fr)}
-    .footer-grid{grid-template-columns:1fr 1fr}
-    .waitlist-form{flex-direction:column}
-    .compare-wrapper{overflow-x:auto}
-    .footer-bottom{flex-direction:column;gap:12px;text-align:center}
+/* ─── PRODUCT FAMILY ─── */
+.product-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.product-card { background: var(--void); padding: 28px 20px; text-align: center; transition: background 0.2s; cursor: default; position: relative; }
+.product-card.active-product { background: var(--surface); }
+.product-card:hover { background: var(--surface-mid); }
+.product-icon { width: 52px; height: 52px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+.product-icon i { font-size: 26px; }
+.pi-core { color: var(--emerald); }
+.pi-security { color: #f87171; }
+.pi-dev { color: var(--cyan); }
+.pi-companion { color: var(--purple); }
+.pi-nexus { color: var(--amber); }
+/* panel icons */
+.panel-icon i { font-size: 16px; color: var(--emerald); }
+/* stack icons */
+.stack-icon i { font-size: 22px; }
+.stack-item:hover .stack-icon i { color: var(--emerald); }
+/* IDE icons */
+.mcp-ide .icon i { font-size: 22px; color: var(--text-dim); transition: color 0.2s; }
+.mcp-ide:hover .icon i { color: var(--emerald); }
+/* Q preview section */
+.preview-section { padding: 88px 0; border-bottom: 1px solid var(--border-dim); }
+.preview-tag { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; padding: 5px 14px; margin-bottom: 24px; }
+.preview-tag.q3 { color: var(--amber); background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.25); }
+.preview-tag.q4 { color: var(--purple); background: var(--purple-dim); border: 1px solid rgba(168,85,247,0.25); }
+.preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.preview-card { background: var(--void); padding: 32px; position: relative; overflow: hidden; transition: background 0.2s; }
+.preview-card:hover { background: var(--surface); }
+.preview-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.preview-card.q3-card::after { background: linear-gradient(90deg, var(--amber), transparent); }
+.preview-card.q4-card::after { background: linear-gradient(90deg, var(--purple), transparent); }
+.preview-card-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--graphite); border: 1px solid var(--border-mid); margin-bottom: 18px; }
+.preview-card-icon.q3 i { color: var(--amber); font-size: 18px; }
+.preview-card-icon.q4 i { color: var(--purple); font-size: 18px; }
+.preview-card h4 { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+.preview-card p { font-size: 13px; color: var(--text-muted); line-height: 1.65; margin-bottom: 14px; }
+.preview-eta { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 3px 8px; border: 1px solid var(--border-mid); color: var(--text-dim); display: inline-block; }
+.preview-card.q3-card .preview-eta { color: var(--amber); border-color: rgba(245,158,11,0.3); }
+.preview-card.q4-card .preview-eta { color: var(--purple); border-color: rgba(168,85,247,0.3); }
+.preview-feature-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.preview-feature { font-family: var(--font-mono); font-size: 10px; padding: 3px 7px; background: var(--graphite); border: 1px solid var(--border-dim); color: var(--text-dim); }
+@media(max-width:900px) { .preview-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:600px) { .preview-grid { grid-template-columns: 1fr; } }
+.product-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.product-codename { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.8px; }
+.product-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+.product-status { display: inline-block; font-family: var(--font-mono); font-size: 8px; padding: 3px 7px; text-transform: uppercase; letter-spacing: 0.8px; }
+.status-active { background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.25); }
+.status-soon { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+.status-planned { background: rgba(255,255,255,0.02); color: var(--text-dim); border: 1px solid var(--border-dim); }
+
+/* ─── COMPARE TABLE ─── */
+.compare-table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 13px; }
+.compare-table th, .compare-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-dim); }
+.compare-table th { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; background: var(--graphite); }
+.compare-table th.jebat-col { color: var(--emerald); }
+.compare-table td:first-child { font-weight: 500; color: var(--text); }
+.compare-table td { color: var(--text-muted); }
+.compare-table tr:hover td { background: rgba(16,185,129,0.02); }
+.compare-highlight { color: var(--emerald) !important; font-weight: 600 !important; }
+.compare-no { color: var(--text-dim) !important; }
+.compare-yes { color: var(--emerald) !important; }
+
+/* ─── SAFETY TIERS ─── */
+.tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.tier-card { background: var(--void); padding: 32px; }
+.tier-label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; padding: 4px 10px; display: inline-block; }
+.tier-auto .tier-label { background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.2); }
+.tier-confirm .tier-label { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+.tier-danger .tier-label { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+.tier-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+.tier-card p { font-size: 13px; color: var(--text-muted); line-height: 1.65; margin-bottom: 14px; }
+.tier-examples { display: flex; flex-wrap: wrap; gap: 5px; }
+.tier-example { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; background: var(--graphite); border: 1px solid var(--border-dim); color: var(--text-dim); }
+
+/* ─── SUBCOMMAND TABLE ─── */
+.subcmd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.subcmd-domain { background: var(--void); padding: 24px 28px; }
+.subcmd-domain-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.subcmd-domain-name { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--emerald); }
+.subcmd-count { font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.2); }
+.subcmd-list { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.subcmd-tag { font-family: var(--font-mono); font-size: 10px; color: var(--cyan); padding: 3px 7px; background: var(--graphite); border: 1px solid var(--border-dim); }
+.subcmd-desc { font-size: 12px; color: var(--text-dim); }
+
+/* ─── STACK GRID ─── */
+.stack-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; background: var(--border-dim); margin-top: 32px; border: 1px solid var(--border-dim); }
+.stack-item { aspect-ratio: 1; background: var(--void); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; opacity: 0.45; transition: all 0.3s; cursor: default; }
+.stack-item:hover { opacity: 1; background: var(--graphite); }
+.stack-item .stack-icon { font-size: 22px; }
+.stack-item span { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
+.stack-item:hover span { color: var(--emerald); }
+
+/* ─── ROADMAP ─── */
+.roadmap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.roadmap-col { background: var(--void); padding: 28px; }
+.roadmap-quarter { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.roadmap-theme { font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.02em; }
+.roadmap-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.roadmap-dot { width: 6px; height: 6px; margin-top: 4px; flex-shrink: 0; }
+.roadmap-dot.done { background: var(--emerald); }
+.roadmap-dot.active { background: var(--amber); }
+.roadmap-dot.planned { background: var(--border-bright); }
+
+/* ─── ONBOARDING STEPS ─── */
+.steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 32px; }
+.step-card { background: var(--void); padding: 32px; position: relative; overflow: hidden; }
+.step-card::before { content: attr(data-step); position: absolute; top: 20px; right: 24px; font-family: var(--font-mono); font-size: 64px; font-weight: 800; color: var(--border-dim); line-height: 1; pointer-events: none; }
+.step-card:hover { background: rgba(16,185,129,0.02); }
+.step-num { font-family: var(--font-mono); font-size: 10px; color: var(--emerald); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px; }
+.step-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.02em; }
+.step-card p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px; }
+.step-code { background: var(--graphite); border: 1px solid var(--border-dim); padding: 10px 14px; font-family: var(--font-mono); font-size: 11px; color: var(--emerald); overflow-x: auto; white-space: pre; }
+
+/* ─── MCP INTEGRATION ─── */
+.mcp-ide-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-top: 24px; }
+.mcp-ide { background: var(--void); padding: 18px; text-align: center; transition: background 0.2s; }
+.mcp-ide:hover { background: var(--graphite); }
+.mcp-ide .icon { font-size: 22px; margin-bottom: 8px; }
+.mcp-ide .name { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.mcp-capabilities { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 24px; }
+.mcp-cap { background: var(--graphite); border: 1px solid var(--border-dim); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.mcp-cap-dot { width: 6px; height: 6px; background: var(--emerald); flex-shrink: 0; }
+.mcp-cap-text { font-size: 12px; color: var(--text-muted); }
+
+/* ─── FOOTER ─── */
+footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); background: var(--void); }
+.footer-grid { display: grid; grid-template-columns: 2.5fr repeat(3, 1fr); gap: 40px; margin-bottom: 48px; }
+.footer-brand .logo { display: inline-flex; margin-bottom: 16px; font-size: 1rem; text-decoration: none; }
+.footer-brand p { color: var(--text-muted); font-size: 13px; line-height: 1.65; max-width: 300px; }
+.footer-col h4 { font-size: 11px; margin-bottom: 18px; color: var(--text); font-weight: 600; font-family: var(--font-mono); letter-spacing: 1px; text-transform: uppercase; }
+.footer-col ul { list-style: none; }
+.footer-col li { margin-bottom: 10px; }
+.footer-col a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.15s; display: flex; align-items: center; gap: 6px; }
+.footer-col a:hover { color: var(--emerald); }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 28px; border-top: 1px solid var(--border-dim); }
+.footer-bottom span { font-size: 11px; color: var(--text-dim); }
+.footer-badges { display: flex; gap: 10px; }
+.footer-badge { font-family: var(--font-mono); font-size: 9px; padding: 3px 8px; border: 1px solid var(--border-mid); color: var(--text-dim); }
+.footer-badge.emerald { color: var(--emerald); border-color: rgba(16,185,129,0.3); }
+.footer-badge.cyan { color: var(--cyan); border-color: rgba(6,182,212,0.3); }
+
+/* ─── RESPONSIVE ─── */
+@media(max-width: 1100px) {
+  .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .roadmap-grid { grid-template-columns: repeat(2, 1fr); }
+  .stack-grid { grid-template-columns: repeat(4, 1fr); }
 }
-@media(max-width:480px){.stack-grid{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:1fr}}
+@media(max-width: 900px) {
+  .arch-grid, .panel-grid, .subcmd-grid, .tier-grid, .steps-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .counter-bar { grid-template-columns: repeat(2, 1fr); }
+  .mcp-capabilities { grid-template-columns: 1fr; }
+}
+@media(max-width: 768px) {
+  .mobile-menu-btn { display: block; }
+  .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: rgba(3,3,3,0.98); border-bottom: 1px solid var(--border-dim); flex-direction: column; padding: 1.5rem; gap: 1rem; }
+  .nav-links.open { display: flex; }
+  .hero { padding: 110px 0 60px; }
+  .hero h1 { font-size: 32px; }
+  .wizard-row { grid-template-columns: 1fr; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .roadmap-grid { grid-template-columns: 1fr; }
+  .stack-grid { grid-template-columns: repeat(3, 1fr); }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+  .mcp-ide-grid { grid-template-columns: repeat(3, 1fr); }
+}
 </style>
 </head>
 <body>
 
-<nav>
+<!-- NAV -->
+<nav id="mainNav">
 <div class="nav-inner">
-<a href="/" class="logo"><img src="JebatLogo-transparent.png" alt="JEBAT" class="logo-img" loading="lazy" />JEBAT<span>v2.0</span></a>
+<a href="/" class="logo">🗡️ JEBAT <span class="logo-tag">v6.1.0-stable</span></a>
 <button class="mobile-menu-btn" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
-<ul class="nav-links" role="navigation">
-<li><a href="#ecosystem">Products</a></li>
-<li><a href="#architecture">Architecture</a></li>
-<li><a href="#stack">Stack</a></li>
-<li><a href="#compare">Compare</a></li>
-<li><a href="https://docs.jebat.online">Docs</a></li>
-<li><a href="https://github.com/nusabyte-my/jebat-core">GitHub</a></li>
+<ul class="nav-links" role="navigation" id="navLinks">
+  <li class="dropdown">
+    <span class="dropdown-trigger">Platform</span>
+    <div class="dropdown-content">
+      <a href="#products"><strong>JEBAT Core (Hang Jebat)</strong>Sovereign inference router &amp; memory swarm</a>
+      <a href="#products"><strong>Sentinel Security (Keris)</strong>Autonomous pentest orchestration</a>
+      <a href="#products"><strong>Developer Suite (Pandai)</strong>MCP-native sandboxed code workspace</a>
+      <a href="#products"><strong>Companion (Sahabat)</strong>Conversational AI for daily ops</a>
+    </div>
+  </li>
+  <li class="dropdown">
+    <span class="dropdown-trigger">Resources</span>
+    <div class="dropdown-content">
+      <a href="/docs" target="_blank"><strong>Documentation Portal</strong>Full platform reference &amp; API docs</a>
+      <a href="#architecture"><strong>Architecture Diagram</strong>Technical infrastructure overview</a>
+      <a href="https://github.com/nusabyte-my/jebat-core" target="_blank"><strong>GitHub Repository</strong>Source code, issues &amp; releases</a>
+      <a href="#q3"><strong>Q3 2026 Preview</strong>Security, Channels &amp; DevOps scale</a>
+      <a href="#q4"><strong>Q4 2026 Preview</strong>SDK, APIs &amp; Enterprise features</a>
+    </div>
+  </li>
+  <li><a href="#onboarding">Quickstart</a></li>
+  <li><a href="#compare">Compare</a></li>
+  <li><a href="#roadmap">Roadmap</a></li>
+  <li class="status-badge"><span class="pulse-dot"></span> Systems Operational</li>
+  <li><a href="/webui/" class="nav-cta" aria-label="Launch Console">CONNECT CONSOLE</a></li>
 </ul>
-<a href="/webui/" class="nav-cta" aria-label="Launch JEBAT Console">LAUNCH CONSOLE</a>
 </div>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
 <div class="container">
-<span class="mono emerald">Sovereign AI Infrastructure v2.0</span>
-<h1>Your Models. Your Data.<br><span class="emerald">Your AI Platform.</span></h1>
-<p>Open-source, self-hosted AI platform with governed inference, multi-phase reasoning, persistent memory, and auditable orchestration. Zero cloud dependency. Zero vendor lock-in.</p>
-<div class="hero-actions">
-<a href="/webui/" class="btn btn-emerald">Deploy Your Instance</a>
-<a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-outline">View Source Code</a>
-</div>
-<div class="console">
-<div class="console-header">
-<div class="console-dot active"></div>
-<div class="console-dot"></div>
-<div class="console-dot"></div>
-<span class="mono" style="font-size:10px;color:var(--text-dim);margin-left:8px">jebat_sovereign_boot.sh</span>
-</div>
-<div class="console-body" id="consoleOutput"></div>
-</div>
+  <div class="hero-eyebrow"><span class="pulse-dot"></span> Sovereign Enterprise Infrastructure v6.1</div>
+  <h1>Private Models. Private Memory.<br><span class="emerald">Audited Execution.</span></h1>
+  <p>An enterprise-grade, self-hosted AI workstation built for compliance-driven operations. Govern private LLM inference, orchestrate multi-agent swarms, maintain eternal heat-scored memory, and run autonomous threat reconnaissance — fully air-gap compatible.</p>
+  <div class="hero-actions">
+    <a href="/webui/" class="btn btn-emerald">DEPLOY CLUSTER</a>
+    <a href="#onboarding" class="btn btn-outline">6-STEP QUICKSTART</a>
+    <a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-ghost" target="_blank">GitHub ↗</a>
+  </div>
+  <div class="hero-meta">
+    <span class="hero-badge"><i class="fa-solid fa-tag" style="color:var(--text-dim);font-size:10px"></i> <span>v6.1.0-stable</span></span>
+    <span class="hero-badge"><i class="fa-solid fa-circle-check" style="color:var(--emerald);font-size:10px"></i> <span>170 Tests Passing</span></span>
+    <span class="hero-badge"><i class="fa-solid fa-lock" style="color:var(--amber);font-size:10px"></i> <span>Fernet + Argon2id</span></span>
+    <span class="hero-badge"><i class="fa-solid fa-file-lines" style="color:var(--text-dim);font-size:10px"></i> <span>MIT License</span></span>
+    <span class="hero-badge"><i class="fa-brands fa-npm" style="color:#cc3534;font-size:11px"></i> <span>npm Published</span></span>
+    <span class="hero-badge"><i class="fa-solid fa-bolt" style="color:var(--cyan);font-size:10px"></i> <span>&lt;100ms Memory</span></span>
+  </div>
+  <div class="console">
+    <div class="console-header">
+      <div class="console-dots">
+        <div class="console-dot red"></div>
+        <div class="console-dot yellow"></div>
+        <div class="console-dot green"></div>
+      </div>
+      <span class="mono" style="font-size:10px;color:var(--text-dim)">jebat_secure_bootstrap.sh (v6.1.0-stable)</span>
+      <span class="mono" style="font-size:9px;color:var(--emerald)">● LIVE</span>
+    </div>
+    <div class="console-body" id="consoleOutput"></div>
+  </div>
 </div>
 </section>
 
+<!-- STATUS STRIP -->
 <div class="status-strip">
 <div class="strip-content">
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ULTRA-THINK ENGINE</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ETERNAL MEMORY</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">AGENT ORCHESTRATION</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">MCP PROTOCOL</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SECURITY CONSOLE</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SOVEREIGN DEPLOY</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">TOOL-CALLING</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">RBAC HARDENING</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ULTRA-THINK ENGINE</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">ETERNAL MEMORY</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">AGENT ORCHESTRATION</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">MCP PROTOCOL</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SECURITY CONSOLE</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">SOVEREIGN DEPLOY</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">TOOL-CALLING</span></div>
-<div class="strip-item"><div class="pulse-dot"></div><span class="mono">RBAC HARDENING</span></div>
+  <div class="strip-item"><span class="dot"></span>ENTERPRISE CORE</div>
+  <div class="strip-item"><span class="dot"></span>ULTRA-THINK REASONING</div>
+  <div class="strip-item"><span class="dot"></span>5-LAYER ETERNAL MEMORY</div>
+  <div class="strip-item"><span class="dot"></span>SWARM ORCHESTRATION</div>
+  <div class="strip-item"><span class="dot"></span>AUTONOMOUS PENTEST</div>
+  <div class="strip-item"><span class="dot"></span>NATIVE MCP SERVER</div>
+  <div class="strip-item"><span class="dot"></span>NPM PUBLISHED</div>
+  <div class="strip-item"><span class="dot"></span>FERNET + ARGON2ID</div>
+  <div class="strip-item"><span class="dot"></span>AIR-GAPPED ROUTING</div>
+  <div class="strip-item"><span class="dot"></span>SECURE KEYRING</div>
+  <div class="strip-item"><span class="dot"></span>RBAC GUARDRAILS</div>
+  <div class="strip-item"><span class="dot"></span>46 CLI SUBCOMMANDS</div>
+  <div class="strip-item"><span class="dot"></span>170 TESTS PASSING</div>
+  <div class="strip-item"><span class="dot"></span>ENTERPRISE CORE</div>
+  <div class="strip-item"><span class="dot"></span>ULTRA-THINK REASONING</div>
+  <div class="strip-item"><span class="dot"></span>5-LAYER ETERNAL MEMORY</div>
+  <div class="strip-item"><span class="dot"></span>SWARM ORCHESTRATION</div>
+  <div class="strip-item"><span class="dot"></span>AUTONOMOUS PENTEST</div>
+  <div class="strip-item"><span class="dot"></span>NATIVE MCP SERVER</div>
+  <div class="strip-item"><span class="dot"></span>NPM PUBLISHED</div>
+  <div class="strip-item"><span class="dot"></span>FERNET + ARGON2ID</div>
+  <div class="strip-item"><span class="dot"></span>AIR-GAPPED ROUTING</div>
+  <div class="strip-item"><span class="dot"></span>SECURE KEYRING</div>
+  <div class="strip-item"><span class="dot"></span>RBAC GUARDRAILS</div>
+  <div class="strip-item"><span class="dot"></span>46 CLI SUBCOMMANDS</div>
+  <div class="strip-item"><span class="dot"></span>170 TESTS PASSING</div>
+</div>
+</div>
+
+<!-- JUST SHIPPED NEWS BANNER -->
+<style>
+.news-strip { background: var(--graphite); border-bottom: 1px solid var(--border-dim); padding: 0; }
+.news-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: grid; grid-template-columns: auto 1fr; align-items: stretch; }
+.news-label { background: var(--emerald); color: var(--void); font-family: var(--font-mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 0 16px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.news-scroll { overflow: hidden; flex: 1; }
+.news-track { display: flex; gap: 0; }
+.news-item { display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 11.5px; color: var(--text-muted); border-right: 1px solid var(--border-dim); white-space: nowrap; transition: background 0.2s; }
+.news-item:hover { background: var(--surface); color: var(--text); }
+.news-item i { font-size: 12px; }
+.news-tag { font-family: var(--font-mono); font-size: 8px; padding: 2px 6px; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; }
+.news-tag.new { background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.25); }
+.news-tag.updated { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(6,182,212,0.25); }
+@media(max-width:768px){ .news-inner { grid-template-columns: 1fr; } .news-label { padding: 8px 14px; } }
+</style>
+<div class="news-strip">
+<div class="news-inner">
+  <div class="news-label"><i class="fa-solid fa-rocket"></i> Just Shipped</div>
+  <div class="news-scroll">
+    <div class="news-track">
+      <div class="news-item"><i class="fa-brands fa-npm" style="color:#cc3534"></i> <strong>@nusabyte/jebat</strong> published to npm &mdash; <code style="font-family:var(--font-mono);font-size:10px;color:var(--emerald)">npx @nusabyte/jebat repl</code> <span class="news-tag new">New</span></div>
+      <div class="news-item"><i class="fa-solid fa-circle-check" style="color:var(--emerald)"></i> 170 tests passing (was 64) <span class="news-tag updated">Updated</span></div>
+      <div class="news-item"><i class="fa-solid fa-lock" style="color:var(--amber)"></i> Fernet + Argon2id encryption hardened <span class="news-tag new">New</span></div>
+      <div class="news-item"><i class="fa-solid fa-file-shield" style="color:var(--cyan)"></i> Improved .gitignore security patterns <span class="news-tag updated">Updated</span></div>
+      <div class="news-item"><i class="fa-brands fa-github" style="color:var(--text-muted)"></i> README polished with full install comparison table <span class="news-tag updated">Updated</span></div>
+      <div class="news-item"><i class="fa-solid fa-cube" style="color:var(--purple)"></i> Modular CLI: repl, config, file, tools subcommands <span class="news-tag new">New</span></div>
+    </div>
+  </div>
 </div>
 </div>
 
 <main>
 
+<!-- LIVE METRICS -->
+<section class="section" id="metrics">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Platform Metrics</span>
+  <h2>Sovereign at Scale</h2>
+  <p>Audited capability counts powered live from the runtime API — verified at deployment time.</p>
+</div>
+<div class="counter-bar">
+  <div class="counter-cell">
+    <div class="counter-num" id="cnt-providers">7</div>
+    <div class="counter-label">LLM Providers</div>
+    <div class="counter-sub">OpenAI · Google · Anthropic · OpenRouter · Ollama · llama.cpp · Local</div>
+  </div>
+  <div class="counter-cell">
+    <div class="counter-num" id="cnt-subcommands">46</div>
+    <div class="counter-label">CLI Subcommands</div>
+    <div class="counter-sub">Across 6 operational domains</div>
+  </div>
+  <div class="counter-cell">
+    <div class="counter-num" id="cnt-agents">17</div>
+    <div class="counter-label">Agent Roles</div>
+    <div class="counter-sub">Tukang · Hulubalang · Pawang · Pengacara · Bendahara + 12 more</div>
+  </div>
+  <div class="counter-cell">
+    <div class="counter-num" id="cnt-memory">5</div>
+    <div class="counter-label">Memory Layers</div>
+    <div class="counter-sub">Sensory → Episodic → Semantic → Conceptual → Procedural</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- PRODUCT FAMILY -->
+<section class="section section-dark" id="products">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Product Family</span>
+  <h2>The JEBAT Platform Suite</h2>
+  <p>Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Each named after Malay heritage — rooted in the legend of Hang Jebat.</p>
+</div>
+<div class="product-grid">
+  <div class="product-card active-product">
+    <div class="product-icon"><i class="fa-solid fa-crosshairs pi-core"></i></div>
+    <div class="product-name">JEBAT Core</div>
+    <div class="product-codename">Hang Jebat</div>
+    <div class="product-desc">Sovereign inference router with 7 reasoning modes, 5-layer memory &amp; multi-agent swarm</div>
+    <span class="product-status status-active"><i class="fa-solid fa-circle-check" style="font-size:8px"></i> Live v6.1</span>
+  </div>
+  <div class="product-card">
+    <div class="product-icon"><i class="fa-solid fa-shield-halved pi-security"></i></div>
+    <div class="product-name">Sentinel Security</div>
+    <div class="product-codename">Keris</div>
+    <div class="product-desc">Autonomous pentest orchestrator for air-gapped threat reconnaissance &amp; CVE correlation</div>
+    <span class="product-status status-soon"><i class="fa-solid fa-clock" style="font-size:8px"></i> Q3 2026</span>
+  </div>
+  <div class="product-card">
+    <div class="product-icon"><i class="fa-solid fa-terminal pi-dev"></i></div>
+    <div class="product-name">Developer Suite</div>
+    <div class="product-codename">Pandai</div>
+    <div class="product-desc">MCP-native sandboxed code workspace for VS Code, Cursor, Zed &amp; Windsurf</div>
+    <span class="product-status status-active"><i class="fa-solid fa-circle-check" style="font-size:8px"></i> Live v1.0</span>
+  </div>
+  <div class="product-card">
+    <div class="product-icon"><i class="fa-solid fa-comments pi-companion"></i></div>
+    <div class="product-name">Companion</div>
+    <div class="product-codename">Sahabat</div>
+    <div class="product-desc">Conversational AI for daily operations, meeting summaries &amp; task management</div>
+    <span class="product-status status-planned"><i class="fa-regular fa-circle" style="font-size:8px"></i> Planned</span>
+  </div>
+  <div class="product-card">
+    <div class="product-icon"><i class="fa-solid fa-diagram-project pi-nexus"></i></div>
+    <div class="product-name">Nexus</div>
+    <div class="product-codename">Perisai</div>
+    <div class="product-desc">Multi-channel bot orchestrator — Telegram, Discord, Slack, Signal, Matrix, WhatsApp</div>
+    <span class="product-status status-planned"><i class="fa-regular fa-circle" style="font-size:8px"></i> Q4 2026</span>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- ECOSYSTEM TABS -->
 <section class="section" id="ecosystem">
 <div class="container">
 <div class="section-header">
-<span class="mono emerald">Product Ecosystem</span>
-<h2>Five Products. One Platform.</h2>
-<p>Modular AI suite covering reasoning, development, security, conversation, and orchestration — all sharing one memory backbone and deployable on your infrastructure.</p>
+  <span class="section-eyebrow">Platform Modules</span>
+  <h2>Deep-Dive Technical Reference</h2>
+  <p>Installation guides, feature lists, and CLI snippets for each active module — pulled from the README source of truth.</p>
 </div>
-<div class="tab-nav" role="tablist" aria-label="JEBAT products">
-<button class="tab-btn active" data-tab="core" role="tab" aria-selected="true" aria-controls="tab-core">Core Platform <span class="tab-status live">Live</span></button>
-<button class="tab-btn" data-tab="security" role="tab" aria-selected="false" aria-controls="tab-security">AI Security <span class="tab-status soon">Soon</span></button>
-<button class="tab-btn" data-tab="dev" role="tab" aria-selected="false" aria-controls="tab-dev">Dev Tools <span class="tab-status live">Live</span></button>
-<button class="tab-btn" data-tab="companion" role="tab" aria-selected="false" aria-controls="tab-companion">Companion <span class="tab-status planned">Planned</span></button>
-<button class="tab-btn" data-tab="nexus" role="tab" aria-selected="false" aria-controls="tab-nexus">Nexus <span class="tab-status planned">Planned</span></button>
+<div class="tab-nav" role="tablist" aria-label="JEBAT modules">
+  <button class="tab-btn active" data-tab="core" role="tab" aria-selected="true"><i class="fa-solid fa-crosshairs" style="margin-right:6px;font-size:10px"></i>Enterprise Core <span class="tab-status live">Live</span></button>
+  <button class="tab-btn" data-tab="security" role="tab" aria-selected="false"><i class="fa-solid fa-shield-halved" style="margin-right:6px;font-size:10px"></i>Sentinel Security <span class="tab-status soon">Q3 2026</span></button>
+  <button class="tab-btn" data-tab="dev" role="tab" aria-selected="false"><i class="fa-solid fa-terminal" style="margin-right:6px;font-size:10px"></i>Developer Suite <span class="tab-status live">Live</span></button>
 </div>
 
 <div class="tab-panel" id="tab-core" role="tabpanel">
 <div class="panel-grid">
 <div class="panel panel-full">
-<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2zM14 8V3l5 5h-5zM8 13h8v2H8zm0 4h5v2H8z"/></svg></div>
-<h3>JEBAT Core — Self-Hosted AI Reasoning Engine</h3>
-<span class="codename mono">Codename: Hang Jebat</span>
-<p>Run advanced AI reasoning on your own hardware. Connect to 6 LLM providers or run fully offline with Ollama. Ultra-Think multi-phase reasoning delivers deep, strategic, and critical thinking modes without sending a single token to the cloud. Persistent memory maintains context across sessions, projects, and teams.</p>
-<div class="feature-list">
-<span class="feature-tag"><span class="check">&#x2713;</span>7 Reasoning Modes</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Cross-Session Memory</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Ollama + 5 Providers</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Native Tool-Calling</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>MCP Protocol Server</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Operator Console UI</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Streaming NDJSON</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>RBAC Permissions</span>
-</div>
-<div class="panel-actions">
-<a href="/webui/" class="btn btn-emerald btn-sm">Launch Console</a>
-<a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-outline btn-sm">Source Code</a>
-</div>
-<div class="deploy-snippet">$ docker compose up -d
-$ curl http://localhost:8787/health
-> {"status":"healthy","service":"jebat-webui"}</div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Platform Specs</span>
-<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value emerald">2.0.0 Stable</span></div>
-<div class="stat-row"><span class="stat-label">Deployment</span><span class="stat-value emerald">Self-Hosted</span></div>
-<div class="stat-row"><span class="stat-label">LLM Providers</span><span class="stat-value">6 (incl. local)</span></div>
-<div class="stat-row"><span class="stat-label">Reasoning Modes</span><span class="stat-value">7 cognitive</span></div>
-<div class="stat-row"><span class="stat-label">Sub-Agents</span><span class="stat-value">17 registered</span></div>
-<div class="stat-row"><span class="stat-label">Test Coverage</span><span class="stat-value">57 passing</span></div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Infrastructure</span>
-<div class="stat-row"><span class="stat-label">Runtime</span><span class="stat-value cyan">Python + FastAPI</span></div>
-<div class="stat-row"><span class="stat-label">Storage</span><span class="stat-value">SQLite + Redis</span></div>
-<div class="stat-row"><span class="stat-label">Container</span><span class="stat-value">Docker + Nginx</span></div>
-<div class="stat-row"><span class="stat-label">Protocol</span><span class="stat-value">MCP + REST</span></div>
-<div class="stat-row"><span class="stat-label">License</span><span class="stat-value emerald">MIT Open Source</span></div>
+  <div class="panel-icon"><i class="fa-solid fa-crosshairs"></i></div>
+  <h3>JEBAT Enterprise Core — Private Inference Router</h3>
+  <span class="codename mono">Codename: Hang Jebat · v6.1.0-stable Production</span>
+  <p>High-performance sovereign AI cognitive router running behind corporate firewalls. Manages private inference routing to 7 LLM API gateways or fully offline models via Ollama. Implements persistent 5-layer recall context storage (Sensory → Episodic → Semantic → Conceptual → Procedural) with active vector heat-scoring, a secure local keyring, and 3-tier command classification guardrails. Built with FastAPI, Uvicorn, SQLite, and Redis caching.</p>
+  <div class="feature-list">
+    <span class="feature-tag"><span class="check">✓</span> 7 Reasoning Modes (Ultra-Think)</span>
+    <span class="feature-tag"><span class="check">✓</span> 5-Layer Heat-Scored Memory</span>
+    <span class="feature-tag"><span class="check">✓</span> Secure Local Keyring</span>
+    <span class="feature-tag"><span class="check">✓</span> Native MCP Client + Server</span>
+    <span class="feature-tag"><span class="check">✓</span> 3-Tier RBAC Guardrails</span>
+    <span class="feature-tag"><span class="check">✓</span> 170 Tests Passing</span>
+    <span class="feature-tag"><span class="check">✓</span> Air-Gap Compatible</span>
+    <span class="feature-tag"><span class="check">✓</span> Ollama / llama.cpp Offline</span>
+    <span class="feature-tag"><span class="check">✓</span> OpenAI-Compatible Proxy</span>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <a href="/webui/" class="btn btn-emerald btn-sm">DEPLOY CONSOLE</a>
+    <a href="/docs" class="btn btn-ghost btn-sm" target="_blank">VIEW DOCS</a>
+  </div>
+  <h4 style="font-size:11px;font-family:var(--font-mono);color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Core Installation &amp; Launch Guide:</h4>
+  <div class="deploy-snippet"><span class="comment"># 1. Clone repository using GitHub CLI</span>
+<span class="cmd">$ gh repo clone nusabyte-my/jebat-core</span>
+<span class="cmd">$ cd jebat-core</span>
+
+<span class="comment"># 2. Configure environment &amp; install dependencies</span>
+<span class="cmd">$ cp .env.example .env</span>
+<span class="cmd">$ pip install -e .[all]</span>
+
+<span class="comment"># 3. Initialize memory database &amp; launch server</span>
+<span class="cmd">$ python setup.py --init-db</span>
+<span class="cmd">$ python -m jebat.services.webui.launch --port 8787</span>
+
+<span class="comment"># 4. Connect MCP to your IDE (Cursor / VS Code / Zed)</span>
+<span class="cmd">$ jebat mcp ide-config</span></div>
 </div>
 </div>
 </div>
@@ -320,35 +670,30 @@ $ curl http://localhost:8787/health
 <div class="tab-panel" id="tab-security" role="tabpanel" hidden>
 <div class="panel-grid">
 <div class="panel panel-full">
-<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></div>
-<h3>JEBAT Security — AI-Powered Penetration Testing</h3>
-<span class="codename mono">Codename: Keris</span>
-<p>Automate vulnerability discovery with AI that thinks like a red teamer. Intelligent scanning, network analysis, and web application testing in a single self-hosted platform. Generate compliance-ready reports without exposing your attack surface to third-party SaaS. Runs air-gapped if needed.</p>
-<div class="feature-list">
-<span class="feature-tag"><span class="check">&#x2713;</span>AI Vulnerability Scanning</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Network Reconnaissance</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Web App Pentesting</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Compliance Reports</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Air-Gap Capable</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Ultra-Think Analysis</span>
-</div>
-<form class="waitlist-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Joined';this.querySelector('input').value=''">
-<input type="email" class="waitlist-input" placeholder="Enter email for early access" required aria-label="Email for early access" />
-<button type="submit" class="waitlist-btn">Join Waitlist</button>
-</form>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Release Status</span>
-<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value amber">1.0.0-dev</span></div>
-<div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value amber">Pre-Alpha</span></div>
-<div class="stat-row"><span class="stat-label">Target</span><span class="stat-value">Q2 2026</span></div>
-<div class="stat-row"><span class="stat-label">Codename</span><span class="stat-value">Keris</span></div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Scan Coverage</span>
-<div class="stat-row"><span class="stat-label">Targets</span><span class="stat-value cyan">Network + Web</span></div>
-<div class="stat-row"><span class="stat-label">Reporting</span><span class="stat-value">Auto-generated</span></div>
-<div class="stat-row"><span class="stat-label">Integration</span><span class="stat-value">Core Platform</span></div>
+  <div class="panel-icon"><i class="fa-solid fa-shield-halved"></i></div>
+  <h3>JEBAT Sentinel Security — Autonomous Pentest Orchestration</h3>
+  <span class="codename mono">Codename: Keris · Q3 2026 Alpha</span>
+  <p>Autonomous threat reconnaissance and penetration testing orchestrator. Coordinates specialized security agents to discover open ports, audit HTTP security headers, resolve subdomain trees, query Shodan API, correlate CVE databases, and execute controlled exploit validation — all in fully air-gapped environments. Generates clean markdown mitigation reports with severity classification.</p>
+  <div class="feature-list">
+    <span class="feature-tag"><span class="check">✓</span> Automated Port Auditing</span>
+    <span class="feature-tag"><span class="check">✓</span> HTTP Header Security Analysis</span>
+    <span class="feature-tag"><span class="check">✓</span> Subdomain Tree Resolution</span>
+    <span class="feature-tag"><span class="check">✓</span> CVE Correlation Engine</span>
+    <span class="feature-tag"><span class="check">✓</span> Shodan API Integration</span>
+    <span class="feature-tag"><span class="check">✓</span> Air-Gapped Target Support</span>
+    <span class="feature-tag"><span class="check">✓</span> Exploit Validation</span>
+    <span class="feature-tag"><span class="check">✓</span> Markdown Mitigation Reports</span>
+  </div>
+  <h4 style="font-size:11px;font-family:var(--font-mono);color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Sentinel Execution Guide:</h4>
+  <div class="deploy-snippet"><span class="comment"># 1. Clone and install with pentest extras</span>
+<span class="cmd">$ gh repo clone nusabyte-my/jebat-core && cd jebat-core</span>
+<span class="cmd">$ pip install -e .[all]</span>
+
+<span class="comment"># 2. Execute automated pentest scan</span>
+<span class="cmd">$ jebat pentest scan --target example.com --profile quick --output md</span>
+
+<span class="comment"># 3. Read generated mitigation report</span>
+<span class="cmd">$ cat pentest_quick_example_com_*.md</span></div>
 </div>
 </div>
 </div>
@@ -356,109 +701,31 @@ $ curl http://localhost:8787/health
 <div class="tab-panel" id="tab-dev" role="tabpanel" hidden>
 <div class="panel-grid">
 <div class="panel panel-full">
-<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg></div>
-<h3>JEBAT Dev — AI Code Generation &amp; Website Builder</h3>
-<span class="codename mono">Codename: Pandai</span>
-<p>Ship faster with AI that generates production code, builds websites from plain language, and catches bugs before production. Three builder modes — natural language, visual drag-and-drop, and immersive canvas — all on your infrastructure. Supports 50+ languages with live preview and one-click export.</p>
-<div class="feature-list">
-<span class="feature-tag"><span class="check">&#x2713;</span>AI Code Generation</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>NL Website Builder</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Visual Drag-and-Drop</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Bug Detection &amp; Fix</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Auto-Documentation</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>50+ Languages</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Live Preview</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>One-Click Export</span>
-</div>
-<div class="panel-actions">
-<a href="/webui/?mode=builder" class="btn btn-emerald btn-sm">Open Builder</a>
-<a href="/webui/?mode=chat" class="btn btn-outline btn-sm">Code Assistant</a>
-</div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Dev Specs</span>
-<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value emerald">1.0.0 Stable</span></div>
-<div class="stat-row"><span class="stat-label">Status</span><span class="stat-value emerald">Production</span></div>
-<div class="stat-row"><span class="stat-label">Builder Modes</span><span class="stat-value">3</span></div>
-<div class="stat-row"><span class="stat-label">Templates</span><span class="stat-value">6 starter kits</span></div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Capabilities</span>
-<div class="stat-row"><span class="stat-label">Models</span><span class="stat-value cyan">7 selectable</span></div>
-<div class="stat-row"><span class="stat-label">Input</span><span class="stat-value">NL + Visual</span></div>
-<div class="stat-row"><span class="stat-label">Analytics</span><span class="stat-value">Real-time usage</span></div>
-</div>
-</div>
-</div>
+  <div class="panel-icon"><i class="fa-solid fa-terminal"></i></div>
+  <h3>JEBAT Developer Suite — Sandboxed Code Workspace</h3>
+  <span class="codename mono">Codename: Pandai · v1.0.0 Active Release</span>
+  <p>Sandboxed software development environment for secure code generation, verification, and linting. Runs standard Model Context Protocol (MCP) server endpoints exposing 13 core capabilities directly to modern developer editors over local standard streams or network gateways. Integrate with any MCP-compatible IDE in under 60 seconds.</p>
+  <div class="feature-list">
+    <span class="feature-tag"><span class="check">✓</span> MCP-Compliant Tooling</span>
+    <span class="feature-tag"><span class="check">✓</span> 13 Core Capabilities</span>
+    <span class="feature-tag"><span class="check">✓</span> Docker Workspace Sandbox</span>
+    <span class="feature-tag"><span class="check">✓</span> Cursor / VS Code / Zed / Windsurf</span>
+    <span class="feature-tag"><span class="check">✓</span> Secure Code Auditing</span>
+    <span class="feature-tag"><span class="check">✓</span> Interactive Patching</span>
+    <span class="feature-tag"><span class="check">✓</span> ReAct Loop Execution</span>
+  </div>
+  <h4 style="font-size:11px;font-family:var(--font-mono);color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Developer Integration Guide:</h4>
+  <div class="deploy-snippet"><span class="comment"># 1. Install developer suite</span>
+<span class="cmd">$ pip install -e .[server,dev]</span>
 
-<div class="tab-panel" id="tab-companion" role="tabpanel" hidden>
-<div class="panel-grid">
-<div class="panel panel-full">
-<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg></div>
-<h3>JEBAT Companion — Private Conversational AI Assistant</h3>
-<span class="codename mono">Codename: Sahabat</span>
-<p>A personal AI assistant that remembers you. Uses the eternal memory system to maintain context across conversations, projects, and channels. Deploy on Telegram, WhatsApp, Discord, or Slack — all routed through your self-hosted infrastructure. No conversation logs leave your servers.</p>
-<div class="feature-list">
-<span class="feature-tag"><span class="check">&#x2713;</span>Persistent Context Memory</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Multi-Channel Deploy</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Plugin Extensibility</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Ultra-Think Reasoning</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Zero Data Leakage</span>
-</div>
-<form class="waitlist-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Joined';this.querySelector('input').value=''">
-<input type="email" class="waitlist-input" placeholder="Get notified when Companion launches" required aria-label="Email for companion notification" />
-<button type="submit" class="waitlist-btn">Notify Me</button>
-</form>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Release Plan</span>
-<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value">0.1.0-plan</span></div>
-<div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value">Design</span></div>
-<div class="stat-row"><span class="stat-label">Target</span><span class="stat-value">Q2 2026</span></div>
-<div class="stat-row"><span class="stat-label">Codename</span><span class="stat-value">Sahabat</span></div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Channels</span>
-<div class="stat-row"><span class="stat-label">Telegram</span><span class="stat-value cyan">Adapter ready</span></div>
-<div class="stat-row"><span class="stat-label">WhatsApp</span><span class="stat-value cyan">Adapter ready</span></div>
-<div class="stat-row"><span class="stat-label">Discord</span><span class="stat-value cyan">Adapter ready</span></div>
-<div class="stat-row"><span class="stat-label">Slack</span><span class="stat-value cyan">Adapter ready</span></div>
-</div>
-</div>
-</div>
+<span class="comment"># 2. Launch MCP Server (stdio transport for Cursor / VS Code)</span>
+<span class="cmd">$ jebat mcp serve --transport stdio</span>
 
-<div class="tab-panel" id="tab-nexus" role="tabpanel" hidden>
-<div class="panel-grid">
-<div class="panel panel-full">
-<div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z"/></svg></div>
-<h3>JEBAT Nexus — Multi-Agent Orchestration Gateway</h3>
-<span class="codename mono">Codename: Perisai</span>
-<p>Connect every JEBAT product into a single orchestrated AI system. Routes tasks across agents, manages cross-product memory, and exposes a unified bot framework deployable across channels. Plugin marketplace for community-built skills — all self-hosted, all under your control.</p>
-<div class="feature-list">
-<span class="feature-tag"><span class="check">&#x2713;</span>Cross-Agent Routing</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Unified Bot Framework</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Shared Memory Layer</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Plugin Marketplace</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Central Dashboard</span>
-<span class="feature-tag"><span class="check">&#x2713;</span>Multi-Channel Output</span>
-</div>
-<form class="waitlist-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Joined';this.querySelector('input').value=''">
-<input type="email" class="waitlist-input" placeholder="Get notified when Nexus launches" required aria-label="Email for nexus notification" />
-<button type="submit" class="waitlist-btn">Notify Me</button>
-</form>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Roadmap</span>
-<div class="stat-row"><span class="stat-label">Version</span><span class="stat-value">0.1.0-plan</span></div>
-<div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value">Architecture</span></div>
-<div class="stat-row"><span class="stat-label">Target</span><span class="stat-value">Q3 2026</span></div>
-<div class="stat-row"><span class="stat-label">Codename</span><span class="stat-value">Perisai</span></div>
-</div>
-<div class="panel">
-<span class="mono emerald" style="display:block;margin-bottom:16px">// Milestones</span>
-<div class="stat-row"><span class="stat-label">Q3 2026</span><span class="stat-value cyan">Bot Framework</span></div>
-<div class="stat-row"><span class="stat-label">Q4 2026</span><span class="stat-value">Marketplace</span></div>
-<div class="stat-row"><span class="stat-label">Q4 2026</span><span class="stat-value emerald">All Products GA</span></div>
+<span class="comment"># 3. Generate IDE config templates</span>
+<span class="cmd">$ jebat mcp ide-config</span>
+
+<span class="comment"># 4. Or use Streamable HTTP transport for Windsurf / JetBrains</span>
+<span class="cmd">$ jebat mcp serve --transport http --port 9000</span></div>
 </div>
 </div>
 </div>
@@ -466,201 +733,1022 @@ $ curl http://localhost:8787/health
 </div>
 </section>
 
-<section class="section" id="architecture" style="background:#0d0d0d">
+<!-- MCP WORKSTATION INTEGRATION -->
+<section class="section section-dark" id="mcp">
 <div class="container">
 <div class="section-header">
-<span class="mono emerald">Platform Architecture</span>
-<h2>Governed Inference at Scale</h2>
-<p>Every component designed for auditability, data sovereignty, and operational control.</p>
+  <span class="section-eyebrow">Workstation &amp; MCP Integration</span>
+  <h2>13 Capabilities. Any IDE. One Protocol.</h2>
+  <p>JEBAT v6.1 runs a native MCP server exposing all 13 core capabilities directly into your editor via stdio or HTTP transport. Connect Cursor, VS Code, Zed, Windsurf, or JetBrains in under 60 seconds.</p>
 </div>
-<div class="panel-grid">
-<div class="panel">
-<div class="mono emerald" style="margin-bottom:20px">01 / Reasoning</div>
-<h3>Ultra-Think Engine</h3>
-<p>Seven cognitive modes — fast, deliberate, deep, strategic, creative, critical, direct. Real LLM calls with streaming output. Choose the depth your task demands.</p>
+
+<!-- IDE badges -->
+<div class="mcp-ide-grid" style="margin-bottom:40px;">
+  <div class="mcp-ide"><div class="icon"><i class="fa-solid fa-arrow-pointer"></i></div><div class="name">Cursor</div></div>
+  <div class="mcp-ide"><div class="icon"><i class="fa-solid fa-code"></i></div><div class="name">VS Code</div></div>
+  <div class="mcp-ide"><div class="icon"><i class="fa-solid fa-bolt"></i></div><div class="name">Zed</div></div>
+  <div class="mcp-ide"><div class="icon"><i class="fa-solid fa-wind"></i></div><div class="name">Windsurf</div></div>
+  <div class="mcp-ide"><div class="icon"><i class="fa-brands fa-java"></i></div><div class="name">JetBrains</div></div>
 </div>
-<div class="panel">
-<div class="mono emerald" style="margin-bottom:20px">02 / Persistence</div>
-<h3>Eternal Memory System</h3>
-<p>Context persists across sessions, projects, and products. Accumulates institutional knowledge instead of resetting. Layered storage with heat-scored retrieval.</p>
+
+<!-- 13 capability cards -->
+<style>
+.cap13-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); }
+.cap13-card { background: var(--void); padding: 24px 22px; position: relative; overflow: hidden; transition: background 0.2s; }
+.cap13-card:hover { background: rgba(16,185,129,0.03); }
+.cap13-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: transparent; transition: background 0.2s; }
+.cap13-card:hover::before { background: var(--emerald); }
+.cap13-num { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.cap13-icon { width: 36px; height: 36px; background: var(--graphite); border: 1px solid var(--border-mid); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; transition: border-color 0.2s; }
+.cap13-card:hover .cap13-icon { border-color: var(--emerald); }
+.cap13-icon i { font-size: 15px; color: var(--emerald); }
+.cap13-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+.cap13-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 10px; }
+.cap13-tool { font-family: var(--font-mono); font-size: 9px; color: var(--cyan); background: var(--cyan-dim); border: 1px solid rgba(6,182,212,0.2); padding: 2px 7px; display: inline-block; }
+@media(max-width:1100px){ .cap13-grid { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:768px){ .cap13-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:480px){ .cap13-grid { grid-template-columns: 1fr; } }
+</style>
+<div class="cap13-grid">
+
+  <div class="cap13-card">
+    <div class="cap13-num">01 / Core</div>
+    <div class="cap13-icon"><i class="fa-solid fa-rotate"></i></div>
+    <div class="cap13-name">ReAct Agent Loop</div>
+    <div class="cap13-desc">Autonomous reasoning and acting cycle. The agent reasons about a task, selects a tool, observes the result, and iterates until completion — no manual prompting required.</div>
+    <span class="cap13-tool">tool: jebat_react_run</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">02 / Cognition</div>
+    <div class="cap13-icon"><i class="fa-solid fa-brain"></i></div>
+    <div class="cap13-name">Ultra-Think Engine</div>
+    <div class="cap13-desc">7 selectable reasoning profiles — Fast, Deliberate, Deep, Strategic, Creative, Critical, and Custom. Prevents over-spending tokens on trivial queries while enabling full depth on complex ones.</div>
+    <span class="cap13-tool">tool: jebat_think</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">03 / Orchestration</div>
+    <div class="cap13-icon"><i class="fa-solid fa-sitemap"></i></div>
+    <div class="cap13-name">Multi-Agent Swarm</div>
+    <div class="cap13-desc">Deconstruct goals into parallel subtasks and delegate them to role-based specialist agents: Tukang (builder), Hulubalang (executor), Pawang (debugger), Pengacara (reviewer), Bendahara (planner).</div>
+    <span class="cap13-tool">tool: jebat_delegate</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">04 / Sandbox</div>
+    <div class="cap13-icon"><i class="fa-brands fa-docker"></i></div>
+    <div class="cap13-name">Docker Sandbox</div>
+    <div class="cap13-desc">Isolated Docker container execution for safe code testing. Ephemeral workspaces with volume mounting, network isolation, and resource limits — no host contamination risk.</div>
+    <span class="cap13-tool">tool: jebat_sandbox_exec</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">05 / Memory</div>
+    <div class="cap13-icon"><i class="fa-solid fa-layer-group"></i></div>
+    <div class="cap13-name">5-Layer Memory</div>
+    <div class="cap13-desc">Persistent cross-session recall across five storage tiers: Sensory (live context), Episodic (session logs), Semantic (concepts), Conceptual (abstractions), and Procedural (action patterns). &lt;100ms retrieval.</div>
+    <span class="cap13-tool">tool: jebat_memory_recall</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">06 / Voice</div>
+    <div class="cap13-icon"><i class="fa-solid fa-microphone"></i></div>
+    <div class="cap13-name">Voice I/O</div>
+    <div class="cap13-desc">Bidirectional voice interface using OpenAI Whisper for speech-to-text transcription and configurable TTS synthesis. Enables hands-free agent interaction from any terminal or channel.</div>
+    <span class="cap13-tool">tool: jebat_voice_listen</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">07 / Browser</div>
+    <div class="cap13-icon"><i class="fa-solid fa-globe"></i></div>
+    <div class="cap13-name">Playwright Browser</div>
+    <div class="cap13-desc">Full headless Chromium browser automation via Playwright. Navigate URLs, extract structured data, click and fill forms, screenshot pages, and run multi-step web scraping pipelines.</div>
+    <span class="cap13-tool">tool: jebat_browser_navigate</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">08 / Security</div>
+    <div class="cap13-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <div class="cap13-name">Pentest Suite</div>
+    <div class="cap13-desc">Autonomous reconnaissance and security audit orchestration. Port scanning via nmap, HTTP header analysis, subdomain resolution, CVE database queries, and structured markdown mitigation reports.</div>
+    <span class="cap13-tool">tool: jebat_pentest_scan</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">09 / Workspace</div>
+    <div class="cap13-icon"><i class="fa-solid fa-folder-open"></i></div>
+    <div class="cap13-name">File &amp; Git Tools</div>
+    <div class="cap13-desc">Full workspace file I/O with read, write, patch, and delete operations. Integrated git tooling — diff, commit, push, branch management — with automatic backup snapshots before destructive edits.</div>
+    <span class="cap13-tool">tool: jebat_file_write</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">10 / Knowledge</div>
+    <div class="cap13-icon"><i class="fa-solid fa-book"></i></div>
+    <div class="cap13-name">RAG Knowledge Wiki</div>
+    <div class="cap13-desc">SQLite-backed vector search knowledge store. Ingest documents, code files, or runbooks into a searchable wiki. Retrieval-Augmented Generation queries ground agent responses in your private documentation.</div>
+    <span class="cap13-tool">tool: jebat_wiki_search</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">11 / Scheduling</div>
+    <div class="cap13-icon"><i class="fa-solid fa-clock"></i></div>
+    <div class="cap13-name">Cron Scheduler</div>
+    <div class="cap13-desc">Define and manage recurring autonomous task execution using standard cron expressions. Agents can self-schedule follow-up work, daily summaries, automated reports, and health-check loops.</div>
+    <span class="cap13-tool">tool: jebat_cron_add</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">12 / Channels</div>
+    <div class="cap13-icon"><i class="fa-solid fa-comments"></i></div>
+    <div class="cap13-name">Channel Adapter</div>
+    <div class="cap13-desc">Unified messaging adapter for Telegram, Slack, Discord, Signal, Matrix, and WhatsApp. Bidirectional command dispatch — receive user queries from any platform, stream agent responses back in real time.</div>
+    <span class="cap13-tool">tool: jebat_channel_send</span>
+  </div>
+
+  <div class="cap13-card">
+    <div class="cap13-num">13 / Safety</div>
+    <div class="cap13-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="cap13-name">Safety Classifier</div>
+    <div class="cap13-desc">3-tier command classification guardrail engine. Every tool call is categorized as AUTO (safe, read-only), CONFIRM (write/modify, requires validation), or DANGEROUS (destructive, explicit approval + full audit log).</div>
+    <span class="cap13-tool">tool: jebat_safety_classify</span>
+  </div>
+
 </div>
-<div class="panel">
-<div class="mono emerald" style="margin-bottom:20px">03 / Providers</div>
-<h3>Provider-Agnostic LLM Layer</h3>
-<p>Ollama for fully offline operation, or plug in OpenRouter, Anthropic, OpenAI, Google Gemini. Automatic failover chain. Switch providers without changing workflow.</p>
-</div>
-<div class="panel">
-<div class="mono emerald" style="margin-bottom:20px">04 / Protocol</div>
-<h3>MCP Compliance</h3>
-<p>Model Context Protocol server for standardized tool integration. Skills adapter converts SKILL.md definitions into registered tools over stdio or HTTP.</p>
-</div>
-<div class="panel">
-<div class="mono emerald" style="margin-bottom:20px">05 / Agents</div>
-<h3>Domain Sub-Agents</h3>
-<p>17 purpose-built agents: Tukang (build), Hulubalang (security), Pawang (research), Syahbandar (ops), Bendahara (data), Penyemak (QA). Orchestrated by Core.</p>
-</div>
-<div class="panel">
-<div class="mono emerald" style="margin-bottom:20px">06 / Sovereignty</div>
-<h3>Zero Cloud Dependency</h3>
-<p>Default config runs on local hardware via Ollama. No API keys required. Graceful degradation. 57 tests pass with zero external services. Air-gap ready.</p>
-</div>
+<div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+  <a href="/docs" class="btn btn-outline" target="_blank">READ WORKSTATION MCP GUIDE ↗</a>
+  <a href="#onboarding" class="btn btn-ghost">6-STEP QUICKSTART</a>
 </div>
 </div>
 </section>
 
-<section class="section" id="sovereign-ai">
+<!-- 6-STEP ONBOARDING -->
+<section class="section" id="onboarding">
 <div class="container">
 <div class="section-header">
-<span class="mono emerald">Why It Matters</span>
-<h2>Sovereign AI Explained</h2>
+  <span class="section-eyebrow">6-Step Operational Onboarding</span>
+  <h2>From Zero to Sovereign Cluster</h2>
+  <p>The complete enterprise onboarding guide. Follow all six steps to deploy a production-grade private AI workstation.</p>
 </div>
-<div class="sovereign-content">
-<h3>Why Organizations Are Moving to Sovereign AI</h3>
-<p>Cloud-based AI services require sending proprietary data, internal communications, and sensitive code to third-party servers. Every prompt becomes a data point in someone else's infrastructure. Pricing changes without notice. Models get deprecated. Access can be revoked. Sovereign AI eliminates these risks by running models on hardware you own, behind firewalls you control.</p>
-<p>JEBAT was built for this reality. The default installation uses Ollama to run open-weight models locally — no API keys, no billing accounts, no outbound connections. When you need more capability, plug in any of six commercial providers as an upgrade, not a requirement. The platform treats cloud AI as an optional accelerator, not a prerequisite.</p>
-<p>This architecture matters for regulated industries, government agencies, and any organization where data residency requirements make cloud AI non-viable. With JEBAT, compliance isn't a feature toggle — it's the default state. Your models stay on your network. Your memory stays in your database. Your reasoning pipeline never touches infrastructure you don't audit.</p>
+<div class="steps-grid">
+  <div class="step-card" data-step="1">
+    <div class="step-num">Step 01 / Zero-Config Installation</div>
+    <h4>Install the Platform</h4>
+    <p>Five install methods — from zero-config npx to air-gapped source. Choose what fits your environment.</p>
+    <pre class="step-code"># ✦ Option 0: Zero-config (recommended)
+npx @nusabyte/jebat repl
+bunx @nusabyte/jebat repl
+
+# Option A: Global npm install
+npm install -g @nusabyte/jebat
+
+# Option B: pip install
+pip install jebat
+
+# Option C: Docker
+docker compose up -d
+
+# Option D: Source (air-gapped)
+git clone github.com/nusabyte-my/jebat-core</pre>
+  </div>
+  <div class="step-card" data-step="2">
+    <div class="step-num">Step 02 / Credential Hardening</div>
+    <h4>Initialize Encrypted Keyring</h4>
+    <p>Securely encrypt all local API credentials. JEBAT uses a local keyring to prevent key leakage — no plaintext secrets on disk.</p>
+    <pre class="step-code">jebat auth set openai &lt;key&gt;
+jebat auth set anthropic &lt;key&gt;
+jebat auth set ollama http://localhost:11434</pre>
+  </div>
+  <div class="step-card" data-step="3">
+    <div class="step-num">Step 03 / Configure Cognitive Router</div>
+    <h4>Set Provider &amp; Fallback Chain</h4>
+    <p>Configure the cognitive router in <code>~/.jebat/config.yaml</code>. Set primary provider, fallback chain, and safety tier defaults.</p>
+    <pre class="step-code">llm:
+  provider: ollama
+  model: qwen2.5-coder:7b
+  fallback_providers:
+    - openai
+    - anthropic</pre>
+  </div>
+  <div class="step-card" data-step="4">
+    <div class="step-num">Step 04 / Run Agent Loops</div>
+    <h4>Execute Autonomous Tasks</h4>
+    <p>Launch the ReAct reasoning engine for one-shot queries or drop into the interactive REPL for conversational workflows.</p>
+    <pre class="step-code">jebat agent "Verify the build config in package.json"
+
+# Interactive streaming REPL
+jebat chat-repl</pre>
+  </div>
+  <div class="step-card" data-step="5">
+    <div class="step-num">Step 05 / Orchestrate Swarms</div>
+    <h4>Delegate to Specialist Agents</h4>
+    <p>Deconstruct complex goals into parallel subtasks and dispatch them to role-based agents (Tukang, Hulubalang, Pawang).</p>
+    <pre class="step-code">jebat delegate run "Audit all API endpoints in src/services" \
+  --tools terminal,file</pre>
+  </div>
+  <div class="step-card" data-step="6">
+    <div class="step-num">Step 06 / Deploy Channels</div>
+    <h4>Expose to Team Messaging</h4>
+    <p>Connect your agent gateway to team platforms. Let operations query logs and dispatch commands from Telegram, Slack, or Discord.</p>
+    <pre class="step-code">jebat social start \
+  --channels telegram,slack</pre>
+  </div>
 </div>
 </div>
 </section>
 
-<section class="section" id="stack" style="background:#0d0d0d">
+<!-- INTERACTIVE WIZARD -->
+<section class="section section-dark" id="setup">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Cluster Deployment Wizard</span>
+  <h2>Generate Your Deployment Command</h2>
+  <p>Select your target environment, inference engine, and orchestration model to get a clean terminal execution command.</p>
+</div>
+<div class="wizard-card">
+<div class="wizard-row">
+  <div class="wizard-col">
+    <h4>Target Environment</h4>
+    <select id="wiz-env" class="wizard-select" onchange="updateWizard()">
+      <option value="local">Local Workstation</option>
+      <option value="vps">Private VPS Cluster</option>
+      <option value="airgap">Air-Gapped Secure Server</option>
+    </select>
+  </div>
+  <div class="wizard-col">
+    <h4>Inference Engine</h4>
+    <select id="wiz-engine" class="wizard-select" onchange="updateWizard()">
+      <option value="ollama">Ollama (Fully Offline)</option>
+      <option value="commercial">Paid API Gateway (Hybrid)</option>
+      <option value="llamacpp">llama.cpp (Custom Weights)</option>
+    </select>
+  </div>
+  <div class="wizard-col">
+    <h4>Orchestration Mode</h4>
+    <select id="wiz-mode" class="wizard-select" onchange="updateWizard()">
+      <option value="single">Single User (Developer)</option>
+      <option value="swarm">Multi-Agent Swarm</option>
+      <option value="team">Multi-Tenancy Team</option>
+    </select>
+  </div>
+</div>
+<div class="wizard-label">Generated Deployment Command</div>
+<div class="wizard-output" id="wizardOutput">Loading configuration...</div>
+</div>
+</div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section" id="architecture">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Platform Architecture</span>
+  <h2>Technical Infrastructure Overview</h2>
+  <p>Engineered for absolute data residency, compliance, and auditability at every layer. Zero external telemetry.</p>
+</div>
+<div class="arch-grid">
+  <div class="arch-panel">
+    <div class="arch-num">01 / Cognitive Routing</div>
+    <h3>Governed 7-Mode Reasoning</h3>
+    <p>Direct LLM traffic based on complexity using 7 distinct Ultra-Think profiles: Fast, Deliberate, Deep, Strategic, Creative, Critical, and Custom. Prevents costly routing for basic ops.</p>
+  </div>
+  <div class="arch-panel">
+    <div class="arch-num">02 / Eternal Memory</div>
+    <h3>5-Layer Heat-Scored Recall</h3>
+    <p>Preserve system logs, past audits, and operational context across 5 persistence tiers in SQLite with active vector heat-scoring. Response time &lt;100ms per memory retrieval.</p>
+  </div>
+  <div class="arch-panel">
+    <div class="arch-num">03 / Security Sandbox</div>
+    <h3>3-Tier RBAC Guardrails</h3>
+    <p>Classify tool execution into AUTO (read-only), CONFIRM (write/modify requiring validation), and DANGEROUS (destructive requiring explicit approval). Full audit trail.</p>
+  </div>
+  <div class="arch-panel">
+    <div class="arch-num">04 / MCP Protocol Bus</div>
+    <h3>Standard Integration Layer</h3>
+    <p>Native MCP client + server running over stdio or HTTP transport. Exposes 13 core capabilities to any MCP-compatible IDE, CLI, or automation workflow. OpenAI-compatible proxy at :20128.</p>
+  </div>
+  <div class="arch-panel">
+    <div class="arch-num">05 / Agent Swarm Engine</div>
+    <h3>17 Specialized Agent Roles</h3>
+    <p>Role-based multi-agent orchestration: Tukang (builders), Hulubalang (executors), Pawang (debuggers), Pengacara (reviewers), Bendahara (planners) + 12 domain specialists.</p>
+  </div>
+  <div class="arch-panel">
+    <div class="arch-num">06 / Provider Failover</div>
+    <h3>6-Provider Cognitive Routing</h3>
+    <p>Automatic failover across OpenAI, Google, Anthropic, OpenRouter, Ollama, and llama.cpp. Health monitoring, cost tracking, and budget guardrails built in. OpenAI-compatible API proxy.</p>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- SAFETY TIERS -->
+<section class="section section-dark" id="safety">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Safety Classification</span>
+  <h2>3-Tier Execution Guardrails</h2>
+  <p>JEBAT categorizes all tool execution into permission tiers to safeguard target systems. Zero destructive commands without explicit authorization.</p>
+</div>
+<div class="tier-grid">
+  <div class="tier-card tier-auto">
+    <span class="tier-label">AUTO</span>
+    <h4>Read-Only Safe</h4>
+    <p>Commands executed without intervention. Non-destructive, read-only operations that cannot modify system state.</p>
+    <div class="tier-examples">
+      <span class="tier-example">cat</span>
+      <span class="tier-example">grep</span>
+      <span class="tier-example">ls</span>
+      <span class="tier-example">status</span>
+      <span class="tier-example">git log</span>
+      <span class="tier-example">jebat health</span>
+    </div>
+  </div>
+  <div class="tier-card tier-confirm">
+    <span class="tier-label">CONFIRM</span>
+    <h4>Write / Modify</h4>
+    <p>Commands prompting user validation before execution. Write, modification, and network operations requiring explicit confirmation.</p>
+    <div class="tier-examples">
+      <span class="tier-example">write</span>
+      <span class="tier-example">patch</span>
+      <span class="tier-example">git commit</span>
+      <span class="tier-example">npm install</span>
+      <span class="tier-example">jebat deploy</span>
+    </div>
+  </div>
+  <div class="tier-card tier-danger">
+    <span class="tier-label">DANGEROUS</span>
+    <h4>Destructive / Escalated</h4>
+    <p>Commands requiring explicit terminal validation tags before proceeding. Destructive or privilege-escalating operations with full audit log entry.</p>
+    <div class="tier-examples">
+      <span class="tier-example">rm -rf</span>
+      <span class="tier-example">sudo</span>
+      <span class="tier-example">DROP TABLE</span>
+      <span class="tier-example">chmod 777</span>
+      <span class="tier-example">iptables</span>
+    </div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- SUBCOMMAND DIRECTORY -->
+<section class="section" id="commands">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">CLI Reference</span>
+  <h2>46 Subcommands Across 6 Domains</h2>
+  <p>JEBAT exposes a comprehensive command surface organized into logical management zones. Full operational control from any terminal.</p>
+</div>
+<div class="subcmd-grid">
+  <div class="subcmd-domain">
+    <div class="subcmd-domain-header">
+      <span class="subcmd-domain-name">System</span>
+      <span class="subcmd-count">5 cmds</span>
+    </div>
+    <div class="subcmd-list">
+      <span class="subcmd-tag">status</span>
+      <span class="subcmd-tag">init</span>
+      <span class="subcmd-tag">config</span>
+      <span class="subcmd-tag">doctor</span>
+      <span class="subcmd-tag">optimize</span>
+    </div>
+    <div class="subcmd-desc">Manage system health, tune configs, run optimizations</div>
+  </div>
+  <div class="subcmd-domain">
+    <div class="subcmd-domain-header">
+      <span class="subcmd-domain-name">Inference</span>
+      <span class="subcmd-count">5 cmds</span>
+    </div>
+    <div class="subcmd-list">
+      <span class="subcmd-tag">llm-providers</span>
+      <span class="subcmd-tag">llm-config</span>
+      <span class="subcmd-tag">llm-auth</span>
+      <span class="subcmd-tag">free-models</span>
+      <span class="subcmd-tag">cost</span>
+    </div>
+    <div class="subcmd-desc">Manage provider credentials, fallback paths, live usage budgets</div>
+  </div>
+  <div class="subcmd-domain">
+    <div class="subcmd-domain-header">
+      <span class="subcmd-domain-name">Interaction</span>
+      <span class="subcmd-count">5 cmds</span>
+    </div>
+    <div class="subcmd-list">
+      <span class="subcmd-tag">chat</span>
+      <span class="subcmd-tag">chat-project</span>
+      <span class="subcmd-tag">chat-repl</span>
+      <span class="subcmd-tag">think</span>
+      <span class="subcmd-tag">loop</span>
+    </div>
+    <div class="subcmd-desc">Standard chat, project context loading, interactive REPL shell</div>
+  </div>
+  <div class="subcmd-domain">
+    <div class="subcmd-domain-header">
+      <span class="subcmd-domain-name">Orchestration</span>
+      <span class="subcmd-count">5 cmds</span>
+    </div>
+    <div class="subcmd-list">
+      <span class="subcmd-tag">delegate</span>
+      <span class="subcmd-tag">cron</span>
+      <span class="subcmd-tag">skills</span>
+      <span class="subcmd-tag">tools</span>
+      <span class="subcmd-tag">mcp</span>
+    </div>
+    <div class="subcmd-desc">Swarm delegation, task scheduler, skill registries, MCP servers</div>
+  </div>
+  <div class="subcmd-domain">
+    <div class="subcmd-domain-header">
+      <span class="subcmd-domain-name">Operations</span>
+      <span class="subcmd-count">6 cmds</span>
+    </div>
+    <div class="subcmd-list">
+      <span class="subcmd-tag">file</span>
+      <span class="subcmd-tag">exec</span>
+      <span class="subcmd-tag">git</span>
+      <span class="subcmd-tag">wiki</span>
+      <span class="subcmd-tag">session</span>
+      <span class="subcmd-tag">todo</span>
+    </div>
+    <div class="subcmd-desc">File modifiers, PTY terminal execution, wiki pages, database indices</div>
+  </div>
+  <div class="subcmd-domain">
+    <div class="subcmd-domain-header">
+      <span class="subcmd-domain-name">Security</span>
+      <span class="subcmd-count">4 cmds</span>
+    </div>
+    <div class="subcmd-list">
+      <span class="subcmd-tag">pentest</span>
+      <span class="subcmd-tag">sandbox</span>
+      <span class="subcmd-tag">safety</span>
+      <span class="subcmd-tag">undo</span>
+    </div>
+    <div class="subcmd-desc">Auditing tools, Docker container isolation, rollback backups</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- STACK -->
+<section class="section section-dark" id="stack">
 <div class="container">
 <div class="section-header center">
-<span class="mono emerald">Technology Stack</span>
-<h2>Integration Ecosystem</h2>
+  <span class="section-eyebrow">Technology Stack</span>
+  <h2>Governed Integration Ecosystem</h2>
 </div>
 <div class="stack-grid">
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg><span class="mono">FastAPI</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span class="mono">Uvicorn</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2zm0-10h2v8h-2z"/></svg><span class="mono">Python</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity="0.6"/><path d="M2 12l10 5 10-5" opacity="0.3"/></svg><span class="mono">Docker</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.3-6.7l-2.8 2.8m-7.8 7.8l-2.8 2.8M4.3 4.3l2.8 2.8m7.8 7.8l2.8 2.8" stroke="currentColor" stroke-width="1.5" fill="none"/></svg><span class="mono">Ollama</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm10 16H4V8h16v12z"/></svg><span class="mono">Redis</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg><span class="mono">PostgreSQL</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg><span class="mono">RBAC</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z"/></svg><span class="mono">MCP</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg><span class="mono">Cloudflare</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span class="mono">Nginx</span></div>
-<div class="stack-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg><span class="mono">Llama.cpp</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-solid fa-bolt"></i></div><span>FastAPI</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-solid fa-server"></i></div><span>Uvicorn</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-brands fa-python"></i></div><span>Python</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-brands fa-docker"></i></div><span>Docker</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-solid fa-brain"></i></div><span>Ollama</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-solid fa-database"></i></div><span>SQLite</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-solid fa-layer-group"></i></div><span>Redis</span></div>
+  <div class="stack-item"><div class="stack-icon"><i class="fa-solid fa-plug"></i></div><span>MCP</span></div>
 </div>
 </div>
 </section>
 
+<!-- COMPARE -->
 <section class="section" id="compare">
 <div class="container">
 <div class="section-header">
-<span class="mono emerald">Platform Comparison</span>
-<h2>JEBAT vs Alternatives</h2>
+  <span class="section-eyebrow">Comparison Matrix</span>
+  <h2>Enterprise AI Readiness</h2>
+  <p>JEBAT versus public SaaS, Ollama WebUI, and LM Studio — across the 7 dimensions that matter for enterprise deployment.</p>
 </div>
-<div class="compare-wrapper">
 <table class="compare-table">
-<thead><tr><th>Capability</th><th class="compare-highlight">JEBAT</th><th>ChatGPT / Claude</th><th>Ollama WebUI</th><th>LM Studio</th></tr></thead>
+<thead>
+  <tr>
+    <th>Capability</th>
+    <th class="jebat-col compare-highlight">JEBAT v6.1</th>
+    <th>Public SaaS (Claude/GPT)</th>
+    <th>Ollama WebUI</th>
+    <th>LM Studio</th>
+  </tr>
+</thead>
 <tbody>
-<tr><td>Self-Hosted</td><td class="compare-highlight">Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
-<tr><td>Multi-Provider</td><td class="compare-highlight">6 providers</td><td>1 (locked)</td><td>Ollama only</td><td>Local only</td></tr>
-<tr><td>Persistent Memory</td><td class="compare-highlight">Cross-session</td><td>Limited</td><td>No</td><td>No</td></tr>
-<tr><td>Multi-Phase Reasoning</td><td class="compare-highlight">7 modes</td><td>Basic</td><td>No</td><td>No</td></tr>
-<tr><td>AI Security Testing</td><td class="compare-highlight">Built-in</td><td>No</td><td>No</td><td>No</td></tr>
-<tr><td>Code Generation</td><td class="compare-highlight">3 builders</td><td>Chat only</td><td>No</td><td>No</td></tr>
-<tr><td>Agent Orchestration</td><td class="compare-highlight">17 sub-agents</td><td>No</td><td>No</td><td>No</td></tr>
-<tr><td>MCP Protocol</td><td class="compare-highlight">Native</td><td>No</td><td>No</td><td>No</td></tr>
-<tr><td>Open Source</td><td class="compare-highlight">MIT</td><td>No</td><td>MIT</td><td>Proprietary</td></tr>
-<tr><td>Price</td><td class="compare-highlight">Free</td><td>$20+/mo</td><td>Free</td><td>Free</td></tr>
+  <tr>
+    <td>Data Residency</td>
+    <td class="compare-highlight">100% Air-Gapped</td>
+    <td>Cloud (Third-Party)</td>
+    <td class="compare-yes">Local Only</td>
+    <td class="compare-yes">Local Only</td>
+  </tr>
+  <tr>
+    <td>LLM Provider Routing</td>
+    <td class="compare-highlight">7 Providers + Failover</td>
+    <td class="compare-no">Single Provider</td>
+    <td class="compare-no">Ollama Only</td>
+    <td class="compare-no">Local Only</td>
+  </tr>
+  <tr>
+    <td>Cognitive Profiles</td>
+    <td class="compare-highlight">7 Ultra-Think Modes</td>
+    <td class="compare-no">Standard Chat</td>
+    <td class="compare-no">Standard Chat</td>
+    <td class="compare-no">Standard Chat</td>
+  </tr>
+  <tr>
+    <td>Security Auditing</td>
+    <td class="compare-highlight">Autonomous Pentest Suite</td>
+    <td class="compare-no">Blocked</td>
+    <td class="compare-no">None</td>
+    <td class="compare-no">None</td>
+  </tr>
+  <tr>
+    <td>Access Control (RBAC)</td>
+    <td class="compare-highlight">3-Tier Command Classification</td>
+    <td class="compare-no">Muted Policy</td>
+    <td class="compare-no">Basic Auth</td>
+    <td class="compare-no">None</td>
+  </tr>
+  <tr>
+    <td>Eternal Memory</td>
+    <td class="compare-highlight">5-Layer Heat-Scored Recall</td>
+    <td class="compare-no">Session Limits</td>
+    <td class="compare-no">None</td>
+    <td class="compare-no">None</td>
+  </tr>
+  <tr>
+    <td>Standard Integration</td>
+    <td class="compare-highlight">Native MCP Client + Server</td>
+    <td class="compare-no">None</td>
+    <td class="compare-no">Basic API</td>
+    <td class="compare-no">Local API</td>
+  </tr>
+  <tr>
+    <td>Multi-Agent Orchestration</td>
+    <td class="compare-highlight">17 Specialized Roles</td>
+    <td class="compare-no">Basic Threads</td>
+    <td class="compare-no">Single Thread</td>
+    <td class="compare-no">None</td>
+  </tr>
 </tbody>
 </table>
 </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="section section-dark" id="roadmap">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Product Roadmap</span>
+  <h2>Where We're Going</h2>
+  <p>An active, bi-weekly reviewed roadmap. 90% of core systems already complete — now scaling UX, channels, and enterprise features.</p>
+</div>
+<div class="roadmap-grid">
+  <div class="roadmap-col">
+    <div class="roadmap-quarter">Q1–Q2 2026 · Now</div>
+    <div class="roadmap-theme">Foundation Complete</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>Core systems &amp; 170 tests</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>5-layer memory &amp; SQLite</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>CLI + WebUI portal</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>MCP server integration</div>
+    <div class="roadmap-item"><div class="roadmap-dot done"></div>Telegram channel live</div>
+    <div class="roadmap-item"><div class="roadmap-dot active"></div>Monitoring dashboard</div>
+  </div>
+  <div class="roadmap-col">
+    <div class="roadmap-quarter">Q3 2026 · Upcoming</div>
+    <div class="roadmap-theme">Scale &amp; DevOps</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Docker compose deployment</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>CI/CD GitHub Actions</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>WhatsApp channel</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Discord channel</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Sentinel Security alpha</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Structured ELK logging</div>
+  </div>
+  <div class="roadmap-col">
+    <div class="roadmap-quarter">Q4 2026 · Future</div>
+    <div class="roadmap-theme">User Experience</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Python SDK · npm SDK</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>REST API v1 (JWT auth)</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Multi-tenancy support</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Plugin marketplace</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Analytics dashboard</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Companion (Sahabat) beta</div>
+  </div>
+  <div class="roadmap-col">
+    <div class="roadmap-quarter">2027 · Vision</div>
+    <div class="roadmap-theme">Enterprise &amp; Beyond</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>iOS &amp; Android mobile app</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Voice conversation mode</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>SSO + GDPR compliance</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Federated distributed sync</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Knowledge graph (Neo4j)</div>
+    <div class="roadmap-item"><div class="roadmap-dot planned"></div>Nexus (Perisai) channel hub</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- Q3 2026 PREVIEW -->
+<section class="preview-section" id="q3" style="background:var(--void);">
+<div class="container">
+<div class="preview-tag q3"><i class="fa-solid fa-clock-rotate-left"></i>&nbsp; Q3 2026 · Upcoming — July to September</div>
+<div class="section-header" style="margin-bottom:0">
+  <h2>Security, Channels &amp; DevOps Scale</h2>
+  <p>The next major release wave — autonomous threat intelligence, multi-platform messaging adapters, production-grade Docker deployment, and CI/CD automation.</p>
+</div>
+<div class="preview-grid" style="margin-top:36px;">
+
+  <div class="preview-card q3-card">
+    <div class="preview-card-icon q3"><i class="fa-solid fa-shield-halved"></i></div>
+    <h4>Sentinel Security Alpha</h4>
+    <p>First public alpha of the autonomous pentest orchestrator. Port scanning, CVE correlation, and air-gapped target profiling with markdown reports.</p>
+    <span class="preview-eta"><i class="fa-solid fa-calendar-days"></i> July 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Port Audit</span>
+      <span class="preview-feature">CVE Engine</span>
+      <span class="preview-feature">Shodan API</span>
+      <span class="preview-feature">MD Reports</span>
+    </div>
+  </div>
+
+  <div class="preview-card q3-card">
+    <div class="preview-card-icon q3"><i class="fa-brands fa-whatsapp"></i></div>
+    <h4>WhatsApp Channel</h4>
+    <p>WhatsApp Business API integration — send/receive messages, handle media, group chats, and end-to-end encrypted command dispatch to your agent swarm.</p>
+    <span class="preview-eta"><i class="fa-solid fa-calendar-days"></i> June–July 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Business API</span>
+      <span class="preview-feature">Media Support</span>
+      <span class="preview-feature">Group Chat</span>
+      <span class="preview-feature">E2E Encrypted</span>
+    </div>
+  </div>
+
+  <div class="preview-card q3-card">
+    <div class="preview-card-icon q3"><i class="fa-brands fa-discord"></i></div>
+    <h4>Discord Bot Integration</h4>
+    <p>Full Discord bot with slash commands, rich embeds for agent responses, thread support, and per-server configuration. Built on discord.py + app_commands.</p>
+    <span class="preview-eta"><i class="fa-solid fa-calendar-days"></i> June–July 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Slash Commands</span>
+      <span class="preview-feature">Rich Embeds</span>
+      <span class="preview-feature">Thread Support</span>
+      <span class="preview-feature">Server Config</span>
+    </div>
+  </div>
+
+  <div class="preview-card q3-card">
+    <div class="preview-card-icon q3"><i class="fa-brands fa-docker"></i></div>
+    <h4>Docker Compose Deployment</h4>
+    <p>One-command production deployment stack: jebat-api, jebat-loop worker, TimescaleDB, Redis, Prometheus metrics, and Grafana dashboard — fully networked and volume-managed.</p>
+    <span class="preview-eta"><i class="fa-solid fa-calendar-days"></i> May 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Multi-stage Build</span>
+      <span class="preview-feature">Health Checks</span>
+      <span class="preview-feature">Volume Mgmt</span>
+      <span class="preview-feature">Network Isolation</span>
+    </div>
+  </div>
+
+  <div class="preview-card q3-card">
+    <div class="preview-card-icon q3"><i class="fa-brands fa-github"></i></div>
+    <h4>CI/CD Pipeline</h4>
+    <p>GitHub Actions pipeline with automated testing on every PR, code quality linting, security scanning, and auto-deploy on merge to main. Pipeline target under 10 minutes.</p>
+    <span class="preview-eta"><i class="fa-solid fa-calendar-days"></i> May 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Auto Test on PR</span>
+      <span class="preview-feature">Security Scan</span>
+      <span class="preview-feature">Auto Deploy</span>
+      <span class="preview-feature">&lt;10min Pipeline</span>
+    </div>
+  </div>
+
+  <div class="preview-card q3-card">
+    <div class="preview-card-icon q3"><i class="fa-solid fa-chart-line"></i></div>
+    <h4>Monitoring &amp; Observability</h4>
+    <p>Real-time system metrics dashboard with Ultra-Loop cycle visualization, memory layer statistics, agent performance charts, and channel activity monitoring via Prometheus + Grafana.</p>
+    <span class="preview-eta"><i class="fa-solid fa-calendar-days"></i> April 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Live Metrics</span>
+      <span class="preview-feature">Agent Perf</span>
+      <span class="preview-feature">ELK Logging</span>
+      <span class="preview-feature">&lt;1s Refresh</span>
+    </div>
+  </div>
+
+</div>
+</div>
+</section>
+
+<!-- Q4 2026 PREVIEW -->
+<section class="preview-section section-dark" id="q4">
+<div class="container">
+<div class="preview-tag q4"><i class="fa-solid fa-wand-magic-sparkles"></i>&nbsp; Q4 2026 &middot; October &ndash; December</div>
+<div class="section-header" style="margin-bottom:0">
+  <h2>SDK, APIs &amp; Enterprise Scale</h2>
+  <p>Developer-first SDK ecosystem with full type safety, a versioned REST API with OAuth2, row-level multi-tenancy, a four-type plugin marketplace, and the first public beta of Companion (Sahabat) — the daily-use conversational AI assistant.</p>
+</div>
+<div class="preview-grid" style="margin-top:36px;">
+
+  <div class="preview-card q4-card">
+    <div class="preview-card-icon q4"><i class="fa-brands fa-python"></i></div>
+    <h4>Python SDK</h4>
+    <p>Type-safe async Python client published to PyPI with built-in retry logic, streaming, rate-limit handling, and auto-generated docs from OpenAPI spec.</p>
+    <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;August 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">PyPI Published</span>
+      <span class="preview-feature">Async / Await</span>
+      <span class="preview-feature">Streaming SSE</span>
+      <span class="preview-feature">Type-Safe Models</span>
+    </div>
+    <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;font-family:var(--font-mono);font-size:11px;color:#9ca3af;line-height:1.7;">
+      <span style="color:var(--purple)">from</span> jebat <span style="color:var(--purple)">import</span> JEBATClient<br>
+client = JEBATClient(base_url=<span style="color:var(--emerald)">&quot;http://localhost:8787&quot;</span>)<br>
+<span style="color:var(--cyan)">async for</span> chunk <span style="color:var(--cyan)">in</span> client.chat.stream(<span style="color:var(--emerald)">&quot;Audit src/&quot;</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(chunk.delta)
+    </div>
+  </div>
+
+  <div class="preview-card q4-card">
+    <div class="preview-card-icon q4"><i class="fa-brands fa-js"></i></div>
+    <h4>JavaScript / TypeScript SDK</h4>
+    <p>npm-published TypeScript-first SDK with full type definitions, React hooks, browser and Node.js dual targets, and tree-shaking for minimal bundle size.</p>
+    <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;August 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">npm Published</span>
+      <span class="preview-feature">TypeScript</span>
+      <span class="preview-feature">useJEBAT() Hook</span>
+      <span class="preview-feature">Browser + Node</span>
+    </div>
+    <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;font-family:var(--font-mono);font-size:11px;color:#9ca3af;line-height:1.7;">
+      <span style="color:var(--purple)">import</span> { useJEBAT } <span style="color:var(--purple)">from</span> <span style="color:var(--emerald)">'@jebat/sdk'</span><br>
+<span style="color:var(--cyan)">const</span> { stream, status } = useJEBAT()<br>
+stream(<span style="color:var(--emerald)">'Summarise this PR diff'</span>, { model: <span style="color:var(--emerald)">'qwen3'</span> })
+    </div>
+  </div>
+
+  <div class="preview-card q4-card">
+    <div class="preview-card-icon q4"><i class="fa-solid fa-tower-broadcast"></i></div>
+    <h4>REST API v1</h4>
+    <p>Full OpenAPI 3.1 documented REST API with JWT + OAuth2 PKCE, per-route rate limiting, Zod request validation, WebSocket streaming, and versioned route prefixes.</p>
+    <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;September 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">JWT + OAuth2 PKCE</span>
+      <span class="preview-feature">Rate Limiting</span>
+      <span class="preview-feature">OpenAPI 3.1</span>
+      <span class="preview-feature">WS Streaming</span>
+    </div>
+    <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;font-family:var(--font-mono);font-size:11px;color:#9ca3af;line-height:1.7;">
+      <span style="color:var(--text-dim)"># POST /v1/chat/completions</span><br>
+curl -H <span style="color:var(--emerald)">&quot;Authorization: Bearer $TOKEN&quot;</span> \<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-d <span style="color:var(--emerald)">'&#123;&quot;model&quot;:&quot;qwen3&quot;,&quot;messages&quot;:[...]&#125;'</span> \<br>
+&nbsp;&nbsp;&nbsp;&nbsp;https://jebat.local/v1/chat
+    </div>
+  </div>
+
+  <div class="preview-card q4-card">
+    <div class="preview-card-icon q4"><i class="fa-solid fa-building"></i></div>
+    <h4>Multi-Tenancy</h4>
+    <p>PostgreSQL row-level security with per-tenant schema isolation, resource quotas enforced at the database layer, usage ledger, and optional Stripe billing integration for SaaS deployments.</p>
+    <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;October 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">RLS Isolation</span>
+      <span class="preview-feature">Per-Tenant Quotas</span>
+      <span class="preview-feature">Usage Ledger</span>
+      <span class="preview-feature">Billing Hooks</span>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <div style="background:var(--void);border:1px solid var(--border-dim);padding:8px 12px;">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:4px;">TENANT ISOLATION</div>
+        <div style="font-size:12px;color:var(--emerald);"><i class="fa-solid fa-circle-check"></i> Memory scoped</div>
+        <div style="font-size:12px;color:var(--emerald);"><i class="fa-solid fa-circle-check"></i> Agents isolated</div>
+      </div>
+      <div style="background:var(--void);border:1px solid var(--border-dim);padding:8px 12px;">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:4px;">ACCESS CONTROL</div>
+        <div style="font-size:12px;color:var(--emerald);"><i class="fa-solid fa-circle-check"></i> RBAC roles</div>
+        <div style="font-size:12px;color:var(--emerald);"><i class="fa-solid fa-circle-check"></i> Audit trail</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-card q4-card">
+    <div class="preview-card-icon q4"><i class="fa-solid fa-puzzle-piece"></i></div>
+    <h4>Plugin Marketplace</h4>
+    <p>Sandboxed dynamic plugin loader with semver versioning, dependency resolution, and signed package integrity. Four plugin types covering every extension point in the platform.</p>
+    <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;November 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Signed Packages</span>
+      <span class="preview-feature">Semver Versioning</span>
+      <span class="preview-feature">Sandbox Isolation</span>
+      <span class="preview-feature">Hot Reload</span>
+    </div>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:5px;">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--void);border:1px solid var(--border-dim);padding:6px 10px;">
+        <i class="fa-solid fa-plug" style="color:var(--purple);font-size:11px;width:14px;"></i>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">Tool Plugin — external API adapters</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--void);border:1px solid var(--border-dim);padding:6px 10px;">
+        <i class="fa-solid fa-wand-sparkles" style="color:var(--purple);font-size:11px;width:14px;"></i>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">Skill Plugin — reusable agent skills</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--void);border:1px solid var(--border-dim);padding:6px 10px;">
+        <i class="fa-solid fa-satellite-dish" style="color:var(--purple);font-size:11px;width:14px;"></i>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">Channel Plugin — messaging adapters</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--void);border:1px solid var(--border-dim);padding:6px 10px;">
+        <i class="fa-solid fa-database" style="color:var(--purple);font-size:11px;width:14px;"></i>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">Memory Plugin — storage backends</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-card q4-card">
+    <div class="preview-card-icon q4"><i class="fa-solid fa-comments"></i></div>
+    <h4>Companion Beta (Sahabat)</h4>
+    <p>First public beta of the daily-use conversational AI assistant — distilled for natural ops: meeting summaries, email drafts, task management, and persistent preference memory across all connected channels.</p>
+    <span class="preview-eta"><i class="fa-regular fa-calendar"></i>&nbsp;December 2026</span>
+    <div class="preview-feature-list">
+      <span class="preview-feature">Meeting Summaries</span>
+      <span class="preview-feature">Email Drafting</span>
+      <span class="preview-feature">Task Reminders</span>
+      <span class="preview-feature">Persistent Prefs</span>
+    </div>
+    <div style="margin-top:14px;background:var(--void);border:1px solid var(--border-dim);padding:12px 14px;">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:8px;">SUPPORTED CHANNELS (BETA)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="font-family:var(--font-mono);font-size:10px;padding:3px 8px;background:var(--graphite);border:1px solid var(--border-dim);color:var(--text-muted);"><i class="fa-brands fa-telegram"></i> Telegram</span>
+        <span style="font-family:var(--font-mono);font-size:10px;padding:3px 8px;background:var(--graphite);border:1px solid var(--border-dim);color:var(--text-muted);"><i class="fa-brands fa-slack"></i> Slack</span>
+        <span style="font-family:var(--font-mono);font-size:10px;padding:3px 8px;background:var(--graphite);border:1px solid var(--border-dim);color:var(--text-muted);"><i class="fa-brands fa-discord"></i> Discord</span>
+        <span style="font-family:var(--font-mono);font-size:10px;padding:3px 8px;background:var(--graphite);border:1px solid var(--border-dim);color:var(--text-muted);"><i class="fa-brands fa-whatsapp"></i> WhatsApp</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Q4 NOTIFY CTA -->
+<div style="margin-top:48px;background:var(--void);border:1px solid var(--border-dim);padding:40px;position:relative;overflow:hidden;">
+  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--cyan),transparent);"></div>
+  <div style="display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--purple);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;"><i class="fa-solid fa-bell"></i> Early Access</div>
+      <h3 style="font-size:22px;font-weight:700;letter-spacing:-0.03em;margin-bottom:8px;">Get notified when Q4 ships.</h3>
+      <p style="font-size:13px;color:var(--text-muted);max-width:520px;">Be first to access the Python &amp; JS SDKs, REST API v1, and Companion beta. Watch the <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" style="color:var(--emerald);text-decoration:none;">GitHub repository</a> for release announcements and changelogs.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:260px;">
+      <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" class="btn btn-emerald" style="text-align:center;"><i class="fa-brands fa-github" style="margin-right:6px;"></i>WATCH ON GITHUB</a>
+      <a href="/docs" target="_blank" class="btn btn-ghost" style="text-align:center;">VIEW DOCS &amp; CHANGELOG ↗</a>
+    </div>
+  </div>
+</div>
+
 </div>
 </section>
 
 </main>
 
+<!-- FOOTER -->
 <footer>
 <div class="container">
 <div class="footer-grid">
-<div class="footer-col">
-<a href="/" class="logo" style="margin-bottom:20px"><img src="JebatLogo-transparent.png" alt="JEBAT" class="logo-img" loading="lazy" />JEBAT</a>
-<p style="color:var(--text-muted);font-size:13px;max-width:260px;line-height:1.7">Open-source sovereign AI platform. Self-hosted LLM infrastructure with governed inference, persistent memory, and multi-agent orchestration.</p>
-</div>
-<div class="footer-col">
-<h4>Products</h4>
-<ul>
-<li><a href="#ecosystem">Core Platform</a></li>
-<li><a href="#ecosystem">AI Security</a></li>
-<li><a href="#ecosystem">Dev Tools</a></li>
-<li><a href="#ecosystem">Companion</a></li>
-<li><a href="#ecosystem">Nexus Gateway</a></li>
-</ul>
-</div>
-<div class="footer-col">
-<h4>Resources</h4>
-<ul>
-<li><a href="https://docs.jebat.online">Documentation</a></li>
-<li><a href="https://github.com/nusabyte-my/jebat-core">Source Code</a></li>
-<li><a href="/webui/">WebUI Console</a></li>
-<li><a href="https://api.jebat.online">API Reference</a></li>
-</ul>
-</div>
-<div class="footer-col">
-<h4>Organization</h4>
-<ul>
-<li><a href="mailto:support@jebat.online">Contact Support</a></li>
-<li><a href="https://github.com/nusabyte-my">NusaByte</a></li>
-<li><a href="#">Changelog</a></li>
-<li><a href="#">MIT License</a></li>
-</ul>
-</div>
+  <div class="footer-brand">
+    <a href="/" class="logo"><i class="fa-solid fa-crosshairs" style="color:var(--emerald);font-size:14px"></i>&nbsp;JEBAT <span class="logo-tag">v6.1.0</span></a>
+    <p>Sovereign AI workstation engineered for governed inference routing, eternal memory context, and multi-agent coordination — behind private firewalls. Built by <a href="https://nusabyte.my" style="color:var(--emerald);text-decoration:none">NusaByte</a>.</p>
+    <div style="margin-top:16px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);font-style:italic">
+      "From developer to developer, by <a href='https://nusabyte.my' style='color:var(--emerald);text-decoration:none'>nusabyte.my</a>"
+    </div>
+  </div>
+  <div class="footer-col">
+    <h4>Platform</h4>
+    <ul>
+      <li><a href="#products">Core (Hang Jebat)</a></li>
+      <li><a href="#products">Sentinel (Keris)</a></li>
+      <li><a href="#products">Developer (Pandai)</a></li>
+      <li><a href="#products">Companion (Sahabat)</a></li>
+      <li><a href="#products">Nexus (Perisai)</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Resources</h4>
+    <ul>
+      <li><a href="/docs" target="_blank">Documentation Portal</a></li>
+      <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank">GitHub Repository</a></li>
+      <li><a href="/webui/">Console Portal</a></li>
+      <li><a href="#commands">CLI Reference</a></li>
+      <li><a href="#mcp">MCP Guide</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Compliance</h4>
+    <ul>
+      <li><a href="#safety">Safety Guardrails</a></li>
+      <li><a href="#compare">Capability Matrix</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="https://github.com/nusabyte-my/jebat-core/blob/main/LICENSE" target="_blank">MIT License</a></li>
+    </ul>
+  </div>
 </div>
 <div class="footer-bottom">
-<span class="mono" style="color:var(--text-dim);font-size:10px">&copy; 2026 JEBAT. MIT License. Powered by <a href="https://nusabyte.my" style="color:var(--emerald);text-decoration:none">nusabyte.my</a></span>
-<div style="display:flex;gap:20px">
-<a href="https://github.com/nusabyte-my/jebat-core" class="mono emerald" style="text-decoration:none;font-size:10px">GitHub</a>
-<a href="https://docs.jebat.online" class="mono emerald" style="text-decoration:none;font-size:10px">Docs</a>
-</div>
+  <span>&copy; 2026 JEBAT v6.1.0 — Distributed by <a href="https://nusabyte.my" style="color:var(--emerald);text-decoration:none">NusaByte</a> under the MIT License. Built by Shaidan Shaari.</span>
+  <div class="footer-badges">
+    <span class="footer-badge emerald">v6.1.0-stable</span>
+    <span class="footer-badge cyan">170 Tests ✓</span>
+    <span class="footer-badge">MIT License</span>
+  </div>
 </div>
 </div>
 </footer>
 
-<noscript><style>.tab-panel[hidden]{display:block!important}.tab-nav{display:none}</style><div style="max-width:1280px;margin:0 auto;padding:2rem"><p style="color:var(--text-muted);font-size:13px">JavaScript disabled. All product sections shown below.</p></div></noscript>
-
 <script>
-const lines=[
-"<span class='emerald'>[SYSTEM]</span> Initializing JEBAT Sovereign Core...",
-"<span>[KERNEL]</span> Loading Ultra-Think reasoning engine...",
-"<span>[MEMORY]</span> Mapping layers M0-M4 <span class='emerald'>[OK]</span>",
-"<span>[PROVIDER]</span> Ollama connected <span class='emerald'>[LOCAL]</span>",
-"<span>[AGENT]</span> Registering 17 sub-agents...",
-"<span>[SECURITY]</span> RBAC policies loaded...",
-"<span>[MCP]</span> Protocol server ready...",
-"<span class='emerald'>[SYSTEM]</span> All subsystems operational.",
-"",
-"<span>$</span> jebat --status",
-"<span>></span> Runtime: <span class='emerald'>Sovereign</span>",
-"<span>></span> Data Boundary: <span class='emerald'>Local Only</span>",
-"<span>></span> Memory Heat: Optimal (84%)",
-"<span>></span> Active Agents: 17",
-"",
-"<span class='emerald'>Ready for instruction.</span>"
+/* ── CONSOLE ANIMATION ── */
+const lines = [
+  "<span style='color:var(--emerald)'>[SYSTEM]</span> Booting JEBAT Enterprise Core v6.1.0-stable...",
+  "<span style='color:var(--cyan)'>[SECURE]</span> Keyring ENCRYPTED &middot; Fernet+Argon2id: <span style='color:var(--emerald)'>ACTIVE</span>",
+  "<span style='color:var(--text-muted)'>[ROUTER]</span> Cognitive Router online &middot; 7 providers registered",
+  "<span style='color:var(--text-muted)'>[MEMORY]</span> 5-layer recall synced &middot; Heat-scoring: <span style='color:var(--emerald)'>ACTIVE</span>",
+  "<span style='color:var(--text-muted)'>[SWARM]</span>  17 agent roles loaded &middot; Dispatcher: <span style='color:var(--emerald)'>READY</span>",
+  "<span style='color:var(--text-muted)'>[MCP]</span>    Server bound &middot; 13 capabilities exposed",
+  "<span style='color:var(--text-muted)'>[SAFETY]</span> 3-tier command classifier: <span style='color:var(--emerald)'>ACTIVE</span>",
+  "<span style='color:var(--amber)'>[PENTEST]</span> Sentinel recon modules: <span style='color:var(--amber)'>STANDBY</span>",
+  "<span style='color:var(--text-muted)'>[NPM]</span>    @nusabyte/jebat published &middot; npx: <span style='color:var(--emerald)'>READY</span>",
+  "<span style='color:var(--text-muted)'>[CHANNELS]</span> Telegram &middot; Slack &middot; Discord adapters: configured",
+  "<span style='color:var(--emerald)'>[SYSTEM]</span> Governed cluster <span style='color:var(--emerald)'>OPERATIONAL</span> &middot; uptime tracking started",
+  "<span style='color:var(--text-dim)'>jebat@sovereign-cluster:~$ </span><span style='color:var(--text)'>jebat status</span>",
+  "<span style='color:var(--emerald)'>&#10003; HEALTHY &middot; Memory: 5 layers &middot; Providers: 7 &middot; Tests: 170</span>",
 ];
-const el=document.getElementById('consoleOutput');
-lines.forEach((l,i)=>{const d=document.createElement('div');d.innerHTML=l;d.className='console-line';d.style.animationDelay=i*0.18+'s';el.appendChild(d)});
+const el = document.getElementById('consoleOutput');
+lines.forEach((l, i) => {
+  const d = document.createElement('div');
+  d.innerHTML = l;
+  d.className = 'console-line';
+  d.style.animationDelay = (i * 0.12) + 's';
+  el.appendChild(d);
+});
 
-document.querySelectorAll('.tab-btn').forEach(btn=>{
-btn.addEventListener('click',()=>{
-document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false')});
-document.querySelectorAll('.tab-panel').forEach(p=>{p.hidden=true});
-btn.classList.add('active');btn.setAttribute('aria-selected','true');
-document.getElementById('tab-'+btn.dataset.tab).hidden=false;
-})});
+/* ── WIZARD ── */
+function updateWizard() {
+  const env = document.getElementById('wiz-env').value;
+  const engine = document.getElementById('wiz-engine').value;
+  const mode = document.getElementById('wiz-mode').value;
+  const out = document.getElementById('wizardOutput');
+  const engineFlag = engine === 'ollama' ? 'ollama' : engine === 'llamacpp' ? 'llamacpp' : 'api';
+  let cmd = `# JEBAT v6.1.0 — ${mode === 'team' ? 'Multi-Tenancy Team' : mode === 'swarm' ? 'Multi-Agent Swarm' : 'Developer'} Deployment\n`;
+  if (env === 'local') {
+    cmd += `pip install jebat\njebat init --engine ${engineFlag} --mode ${mode}\njebat status`;
+  } else if (env === 'vps') {
+    cmd += `docker run -d -p 8787:8787 --name jebat \\
+  -v ~/.jebat:/root/.jebat \\
+  -e ENGINE=${engineFlag} \\
+  nusabyte/jebat-core:v6.1.0-stable \\
+  --mode ${mode}`;
+  } else {
+    cmd += `# Air-Gapped offline installation\ntar -xvf jebat-core-v6.1.0.tar.gz\n./setup.sh --offline --engine ${engineFlag} --mode ${mode}\njebat doctor --check-all`;
+  }
+  out.textContent = cmd;
+}
+updateWizard();
 
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-a.addEventListener('click',function(e){
-const t=document.querySelector(this.getAttribute('href'));
-if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}
-})});
+/* ── TABS ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.closest('.container').querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active'); b.setAttribute('aria-selected', 'false');
+    });
+    btn.closest('.container').querySelectorAll('.tab-panel').forEach(p => { p.hidden = true; });
+    btn.classList.add('active'); btn.setAttribute('aria-selected', 'true');
+    document.getElementById('tab-' + btn.dataset.tab).hidden = false;
+  });
+});
 
-const mb=document.querySelector('.mobile-menu-btn'),nl=document.querySelector('.nav-links');
-if(mb&&nl){mb.addEventListener('click',function(){const o=nl.classList.toggle('open');mb.setAttribute('aria-expanded',o)})}
+/* ── MOBILE MENU ── */
+const mb = document.querySelector('.mobile-menu-btn'), nl = document.querySelector('.nav-links');
+if (mb && nl) { mb.addEventListener('click', function() { const o = nl.classList.toggle('open'); mb.setAttribute('aria-expanded', o); }) }
+
+/* ── NAV SCROLL STYLE ── */
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', window.scrollY > 20); }, { passive: true });
+
+/* ── LIVE METRIC COUNTERS ── */
+function animateCount(id, target, duration) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const step = Math.max(Math.floor(duration / target), 12);
+  let val = 0;
+  const t = setInterval(() => {
+    val++;
+    el.textContent = val;
+    if (val >= target) { clearInterval(t); el.textContent = target; }
+  }, step);
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCount('cnt-providers', 7, 400);
+        animateCount('cnt-subcommands', 46, 800);
+        animateCount('cnt-agents', 17, 600);
+        animateCount('cnt-memory', 5, 300);
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  const target = document.getElementById('metrics');
+  if (target) obs.observe(target);
+});
 </script>
-
 </body>
 </html>

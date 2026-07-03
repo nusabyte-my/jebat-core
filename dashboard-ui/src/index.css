@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 2%;
+    --foreground: 240 5% 96%;
+    --card: 240 10% 4%;
+    --card-foreground: 240 5% 96%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 240 5% 96%;
+    --primary: 158 79% 39%;
+    --primary-foreground: 240 10% 2%;
+    --secondary: 240 6% 10%;
+    --secondary-foreground: 240 5% 96%;
+    --muted: 240 6% 10%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 188 92% 47%;
+    --accent-foreground: 240 5% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 12%;
+    --input: 240 6% 12%;
+    --ring: 158 79% 39%;
+    --radius: 0px;
+  }
+
+  .dark {
+    --background: 240 10% 2%;
+    --foreground: 240 5% 96%;
+    --card: 240 10% 4%;
+    --card-foreground: 240 5% 96%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 240 5% 96%;
+    --primary: 158 79% 39%;
+    --primary-foreground: 240 10% 2%;
+    --secondary: 240 6% 10%;
+    --secondary-foreground: 240 5% 96%;
+    --muted: 240 6% 10%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 188 92% 47%;
+    --accent-foreground: 240 5% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 12%;
+    --input: 240 6% 12%;
+    --ring: 158 79% 39%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-in {
+    animation: animate-in 0.2s ease-out;
+  }
+  
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+::selection {
+  @apply bg-primary/20 text-primary-foreground;
+}

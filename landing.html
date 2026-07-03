@@ -1,1899 +1,1170 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>JEBAT - The Complete AI Development Ecosystem</title>
-        <meta
-            name="description"
-            content="JEBAT combines Ultra-Think reasoning, eternal memory, and multi-domain agents to create the most advanced AI development assistant ever built."
-        />
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap"
-            rel="stylesheet"
-        />
-
-        <style>
-            /* ==================== CSS Variables ==================== */
-            :root {
-                --primary: #6366f1;
-                --primary-light: #818cf8;
-                --primary-dark: #4f46e5;
-                --secondary: #06b6d4;
-                --secondary-light: #22d3ee;
-                --accent: #f59e0b;
-                --danger: #ef4444;
-                --success: #10b981;
-                --purple: #a855f7;
-                --pink: #ec4899;
-
-                --dark: #0f172a;
-                --dark-light: #1e293b;
-                --dark-lighter: #334155;
-                --gray: #64748b;
-                --gray-light: #94a3b8;
-                --light: #f1f5f9;
-                --white: #ffffff;
-
-                --gradient-primary: linear-gradient(
-                    135deg,
-                    #6366f1 0%,
-                    #06b6d4 100%
-                );
-                --gradient-secondary: linear-gradient(
-                    135deg,
-                    #a855f7 0%,
-                    #ec4899 100%
-                );
-                --gradient-dark: linear-gradient(
-                    180deg,
-                    #0f172a 0%,
-                    #1e293b 100%
-                );
-                --gradient-glow: linear-gradient(
-                    135deg,
-                    rgba(99, 102, 241, 0.3) 0%,
-                    rgba(6, 182, 212, 0.3) 100%
-                );
-
-                --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-                --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-                --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.3);
-            }
-
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            html {
-                scroll-behavior: smooth;
-                scroll-padding-top: 80px;
-            }
-
-            body {
-                font-family:
-                    "Inter",
-                    -apple-system,
-                    BlinkMacSystemFont,
-                    sans-serif;
-                background: var(--dark);
-                color: var(--light);
-                line-height: 1.7;
-                overflow-x: hidden;
-                position: relative;
-            }
-
-            body::before {
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background:
-                    radial-gradient(
-                        circle at 20% 30%,
-                        rgba(99, 102, 241, 0.08) 0%,
-                        transparent 40%
-                    ),
-                    radial-gradient(
-                        circle at 80% 70%,
-                        rgba(6, 182, 212, 0.08) 0%,
-                        transparent 40%
-                    ),
-                    radial-gradient(
-                        circle at 50% 50%,
-                        rgba(168, 85, 247, 0.05) 0%,
-                        transparent 60%
-                    );
-                pointer-events: none;
-                z-index: 0;
-            }
-
-            .container {
-                max-width: 1400px;
-                margin: 0 auto;
-                padding: 0 2rem;
-                position: relative;
-                z-index: 1;
-            }
-
-            /* ==================== Animated Background Particles ==================== */
-            .particles {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                pointer-events: none;
-                z-index: 0;
-                overflow: hidden;
-            }
-
-            .particle {
-                position: absolute;
-                width: 4px;
-                height: 4px;
-                background: var(--primary);
-                border-radius: 50%;
-                opacity: 0.3;
-                animation: float 15s infinite;
-            }
-
-            .particle:nth-child(1) {
-                left: 10%;
-                animation-delay: 0s;
-            }
-            .particle:nth-child(2) {
-                left: 20%;
-                animation-delay: 2s;
-            }
-            .particle:nth-child(3) {
-                left: 30%;
-                animation-delay: 4s;
-            }
-            .particle:nth-child(4) {
-                left: 50%;
-                animation-delay: 1s;
-            }
-            .particle:nth-child(5) {
-                left: 60%;
-                animation-delay: 3s;
-            }
-            .particle:nth-child(6) {
-                left: 70%;
-                animation-delay: 5s;
-            }
-            .particle:nth-child(7) {
-                left: 80%;
-                animation-delay: 2.5s;
-            }
-            .particle:nth-child(8) {
-                left: 90%;
-                animation-delay: 4.5s;
-            }
-
-            @keyframes float {
-                0%,
-                100% {
-                    transform: translateY(100vh) rotate(0deg);
-                    opacity: 0;
-                }
-                10% {
-                    opacity: 0.3;
-                }
-                90% {
-                    opacity: 0.3;
-                }
-                100% {
-                    transform: translateY(-100vh) rotate(720deg);
-                    opacity: 0;
-                }
-            }
-
-            /* ==================== Navigation ==================== */
-            nav {
-                position: fixed;
-                top: 0;
-                width: 100%;
-                background: rgba(15, 23, 42, 0.85);
-                backdrop-filter: blur(20px);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                z-index: 1000;
-                padding: 1rem 0;
-                transition: all 0.3s;
-            }
-
-            nav.scrolled {
-                background: rgba(15, 23, 42, 0.95);
-                box-shadow: var(--shadow-lg);
-            }
-
-            nav .container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .logo {
-                font-size: 1.75rem;
-                font-weight: 900;
-                background: var(--gradient-primary);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                text-decoration: none;
-                transition: transform 0.3s;
-            }
-
-            .logo:hover {
-                transform: scale(1.05);
-            }
-
-            .logo-icon {
-                font-size: 2.25rem;
-                filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
-            }
-
-            .nav-links {
-                display: flex;
-                gap: 2.5rem;
-                list-style: none;
-                align-items: center;
-            }
-
-            .nav-links a {
-                color: var(--gray-light);
-                text-decoration: none;
-                font-weight: 500;
-                font-size: 0.95rem;
-                transition: all 0.3s;
-                position: relative;
-            }
-
-            .nav-links a:hover {
-                color: var(--white);
-            }
-
-            .nav-links a::after {
-                content: "";
-                position: absolute;
-                bottom: -8px;
-                left: 0;
-                width: 0;
-                height: 2px;
-                background: var(--gradient-primary);
-                transition: width 0.3s;
-            }
-
-            .nav-links a:hover::after {
-                width: 100%;
-            }
-
-            .nav-cta {
-                background: var(--gradient-primary);
-                color: var(--white);
-                padding: 0.75rem 1.5rem;
-                border-radius: 10px;
-                text-decoration: none;
-                font-weight: 600;
-                transition: all 0.3s;
-                box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-            }
-
-            .nav-cta:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-            }
-
-            .mobile-menu-btn {
-                display: none;
-                flex-direction: column;
-                gap: 5px;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 5px;
-            }
-
-            .mobile-menu-btn span {
-                width: 25px;
-                height: 3px;
-                background: var(--light);
-                border-radius: 2px;
-                transition: all 0.3s;
-            }
-
-            /* ==================== Hero Section ==================== */
-            .hero {
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-                padding-top: 80px;
-                overflow: hidden;
-            }
-
-            .hero-bg-glow {
-                position: absolute;
-                width: 600px;
-                height: 600px;
-                background: radial-gradient(
-                    circle,
-                    rgba(99, 102, 241, 0.2) 0%,
-                    transparent 70%
-                );
-                border-radius: 50%;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                animation: pulse-glow 8s ease-in-out infinite;
-            }
-
-            @keyframes pulse-glow {
-                0%,
-                100% {
-                    transform: translate(-50%, -50%) scale(1);
-                    opacity: 0.5;
-                }
-                50% {
-                    transform: translate(-50%, -50%) scale(1.2);
-                    opacity: 0.8;
-                }
-            }
-
-            .hero-content {
-                text-align: center;
-                z-index: 2;
-                max-width: 1000px;
-            }
-
-            .hero-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                background: rgba(99, 102, 241, 0.1);
-                border: 1px solid rgba(99, 102, 241, 0.3);
-                border-radius: 50px;
-                padding: 0.5rem 1.25rem;
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: var(--primary-light);
-                margin-bottom: 2rem;
-                animation: fadeInDown 0.8s ease;
-                backdrop-filter: blur(10px);
-            }
-
-            .hero-badge .badge-new {
-                background: var(--gradient-secondary);
-                padding: 0.2rem 0.6rem;
-                border-radius: 20px;
-                font-size: 0.7rem;
-                color: var(--white);
-            }
-
-            .hero h1 {
-                font-size: clamp(2.5rem, 6vw, 5rem);
-                font-weight: 900;
-                line-height: 1.1;
-                margin-bottom: 1.5rem;
-                letter-spacing: -0.02em;
-            }
-
-            .hero h1 .gradient-text {
-                background: var(--gradient-primary);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                display: inline;
-            }
-
-            .hero h1 .white-text {
-                background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                display: inline;
-            }
-
-            .hero p {
-                font-size: clamp(1.1rem, 2vw, 1.35rem);
-                color: var(--gray-light);
-                max-width: 700px;
-                margin: 0 auto 2.5rem;
-                line-height: 1.8;
-            }
-
-            .hero-buttons {
-                display: flex;
-                gap: 1rem;
-                justify-content: center;
-                flex-wrap: wrap;
-                margin-bottom: 3rem;
-            }
-
-            .btn {
-                padding: 1rem 2rem;
-                border-radius: 12px;
-                font-weight: 600;
-                text-decoration: none;
-                transition: all 0.3s;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.75rem;
-                cursor: pointer;
-                border: none;
-                font-size: 1rem;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .btn::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255, 255, 255, 0.2),
-                    transparent
-                );
-                transition: left 0.5s;
-            }
-
-            .btn:hover::before {
-                left: 100%;
-            }
-
-            .btn-primary {
-                background: var(--gradient-primary);
-                color: var(--white);
-                box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-            }
-
-            .btn-primary:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 40px rgba(99, 102, 241, 0.5);
-            }
-
-            .btn-secondary {
-                background: rgba(255, 255, 255, 0.05);
-                color: var(--light);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-            }
-
-            .btn-secondary:hover {
-                background: rgba(255, 255, 255, 0.1);
-                border-color: rgba(255, 255, 255, 0.2);
-                transform: translateY(-3px);
-            }
-
-            .hero-cta-text {
-                font-size: 0.875rem;
-                color: var(--gray);
-                margin-top: 1rem;
-            }
-
-            .hero-stats {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 2rem;
-                max-width: 800px;
-                margin: 4rem auto 0;
-                padding: 2rem;
-                background: rgba(255, 255, 255, 0.02);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 20px;
-                backdrop-filter: blur(10px);
-            }
-
-            .hero-stat {
-                text-align: center;
-            }
-
-            .hero-stat-number {
-                font-size: 2.5rem;
-                font-weight: 900;
-                background: var(--gradient-primary);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                display: block;
-            }
-
-            .hero-stat-label {
-                color: var(--gray);
-                font-size: 0.875rem;
-                margin-top: 0.5rem;
-            }
-
-            /* ==================== Scroll Animations ==================== */
-            @keyframes fadeInDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .animate-on-scroll {
-                opacity: 0;
-                transform: translateY(50px);
-                transition: all 0.8s ease;
-            }
-
-            .animate-on-scroll.visible {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            /* ==================== Features Section ==================== */
-            .features {
-                padding: 8rem 0;
-                position: relative;
-            }
-
-            .section-header {
-                text-align: center;
-                margin-bottom: 4rem;
-            }
-
-            .section-label {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                background: rgba(99, 102, 241, 0.1);
-                border: 1px solid rgba(99, 102, 241, 0.3);
-                border-radius: 50px;
-                padding: 0.5rem 1.25rem;
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: var(--primary-light);
-                margin-bottom: 1rem;
-                backdrop-filter: blur(10px);
-            }
-
-            .section-title {
-                font-size: clamp(2rem, 4vw, 3rem);
-                font-weight: 800;
-                margin-bottom: 1rem;
-                letter-spacing: -0.02em;
-            }
-
-            .section-subtitle {
-                color: var(--gray-light);
-                font-size: 1.125rem;
-                max-width: 600px;
-                margin: 0 auto;
-                line-height: 1.8;
-            }
-
-            .features-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                gap: 2rem;
-            }
-
-            .feature-card {
-                background: rgba(30, 41, 59, 0.5);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 24px;
-                padding: 2.5rem;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                position: relative;
-                overflow: hidden;
-                backdrop-filter: blur(10px);
-            }
-
-            .feature-card::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: var(--gradient-primary);
-                transform: scaleX(0);
-                transition: transform 0.4s;
-            }
-
-            .feature-card::after {
-                content: "";
-                position: absolute;
-                top: -50%;
-                left: -50%;
-                width: 200%;
-                height: 200%;
-                background: radial-gradient(
-                    circle,
-                    rgba(99, 102, 241, 0.05) 0%,
-                    transparent 70%
-                );
-                opacity: 0;
-                transition: opacity 0.4s;
-            }
-
-            .feature-card:hover {
-                transform: translateY(-8px);
-                border-color: rgba(99, 102, 241, 0.3);
-                box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
-            }
-
-            .feature-card:hover::before {
-                transform: scaleX(1);
-            }
-
-            .feature-card:hover::after {
-                opacity: 1;
-            }
-
-            .feature-icon {
-                font-size: 3rem;
-                margin-bottom: 1.5rem;
-                display: inline-block;
-                filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
-            }
-
-            .feature-title {
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 1rem;
-                color: var(--white);
-            }
-
-            .feature-description {
-                color: var(--gray-light);
-                margin-bottom: 1.5rem;
-                line-height: 1.7;
-            }
-
-            .feature-list {
-                list-style: none;
-            }
-
-            .feature-list li {
-                padding: 0.6rem 0;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                color: var(--light);
-                font-size: 0.95rem;
-            }
-
-            .feature-list li::before {
-                content: "✓";
-                color: var(--success);
-                font-weight: 700;
-                font-size: 1.1rem;
-            }
-
-            /* ==================== Thinking Modes Section ==================== */
-            .thinking-modes {
-                padding: 8rem 0;
-                background: rgba(30, 41, 59, 0.3);
-                position: relative;
-            }
-
-            .modes-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 2rem;
-                margin-top: 3rem;
-            }
-
-            .mode-card {
-                background: rgba(30, 41, 59, 0.5);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 20px;
-                padding: 2rem;
-                text-align: center;
-                transition: all 0.4s;
-                backdrop-filter: blur(10px);
-                position: relative;
-                overflow: hidden;
-            }
-
-            .mode-card::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: var(--gradient-primary);
-                opacity: 0;
-                transition: opacity 0.4s;
-            }
-
-            .mode-card:hover {
-                transform: scale(1.05);
-                border-color: rgba(99, 102, 241, 0.3);
-            }
-
-            .mode-card:hover::before {
-                opacity: 0.05;
-            }
-
-            .mode-icon {
-                font-size: 3.5rem;
-                margin-bottom: 1rem;
-                display: block;
-                position: relative;
-                z-index: 1;
-            }
-
-            .mode-name {
-                font-size: 1.25rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-                position: relative;
-                z-index: 1;
-            }
-
-            .mode-speed {
-                display: inline-block;
-                padding: 0.25rem 0.75rem;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-                position: relative;
-                z-index: 1;
-            }
-
-            .speed-instant {
-                background: rgba(16, 185, 129, 0.2);
-                color: var(--success);
-            }
-            .speed-fast {
-                background: rgba(6, 182, 212, 0.2);
-                color: var(--secondary);
-            }
-            .speed-medium {
-                background: rgba(245, 158, 11, 0.2);
-                color: var(--accent);
-            }
-            .speed-slow {
-                background: rgba(239, 68, 68, 0.2);
-                color: var(--danger);
-            }
-
-            .mode-desc {
-                color: var(--gray-light);
-                font-size: 0.95rem;
-                line-height: 1.6;
-                position: relative;
-                z-index: 1;
-            }
-
-            /* ==================== Code Demo Section ==================== */
-            .code-demo {
-                padding: 8rem 0;
-                background: rgba(15, 23, 42, 0.5);
-            }
-
-            .code-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 4rem;
-                align-items: center;
-            }
-
-            .code-content h3 {
-                font-size: 2rem;
-                font-weight: 800;
-                margin-bottom: 1rem;
-            }
-
-            .code-content p {
-                color: var(--gray-light);
-                margin-bottom: 2rem;
-                line-height: 1.8;
-            }
-
-            .code-preview {
-                background: #0d1117;
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                border-radius: 20px;
-                overflow: hidden;
-                box-shadow: var(--shadow-2xl);
-            }
-
-            .code-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 1rem 1.5rem;
-                background: rgba(255, 255, 255, 0.02);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            }
-
-            .code-title {
-                font-size: 0.875rem;
-                color: var(--gray);
-            }
-
-            .code-dots {
-                display: flex;
-                gap: 0.5rem;
-            }
-
-            .code-dot {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-            }
-
-            .code-dot:nth-child(1) {
-                background: #ff5f56;
-            }
-            .code-dot:nth-child(2) {
-                background: #ffbd2e;
-            }
-            .code-dot:nth-child(3) {
-                background: #27ca40;
-            }
-
-            .code-body {
-                padding: 1.5rem;
-                font-family: "Fira Code", monospace;
-                font-size: 0.85rem;
-                line-height: 2;
-                overflow-x: auto;
-            }
-
-            .code-keyword {
-                color: #ff7b72;
-            }
-            .code-function {
-                color: #d2a8ff;
-            }
-            .code-string {
-                color: #a5d6ff;
-            }
-            .code-comment {
-                color: #8b949e;
-            }
-            .code-class {
-                color: #ffa657;
-            }
-            .code-number {
-                color: #79c0ff;
-            }
-
-            /* ==================== Live Chat Widget ==================== */
-            .chat-widget {
-                position: fixed;
-                bottom: 2rem;
-                right: 2rem;
-                z-index: 999;
-            }
-
-            .chat-button {
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background: var(--gradient-primary);
-                border: none;
-                cursor: pointer;
-                box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-                transition: all 0.3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-            }
-
-            .chat-button:hover {
-                transform: scale(1.1);
-                box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
-            }
-
-            .chat-button.pulse {
-                animation: chat-pulse 2s infinite;
-            }
-
-            @keyframes chat-pulse {
-                0%,
-                100% {
-                    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-                }
-                50% {
-                    box-shadow: 0 4px 40px rgba(99, 102, 241, 0.6);
-                }
-            }
-
-            .chat-window {
-                position: absolute;
-                bottom: 80px;
-                right: 0;
-                width: 380px;
-                height: 500px;
-                background: var(--dark-light);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 20px;
-                box-shadow: var(--shadow-2xl);
-                display: none;
-                flex-direction: column;
-                overflow: hidden;
-                backdrop-filter: blur(20px);
-            }
-
-            .chat-window.open {
-                display: flex;
-                animation: slideIn 0.3s ease;
-            }
-
-            @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .chat-header {
-                background: var(--gradient-primary);
-                padding: 1.25rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .chat-header h4 {
-                font-size: 1rem;
-                font-weight: 700;
-            }
-
-            .chat-close {
-                background: none;
-                border: none;
-                color: var(--white);
-                font-size: 1.5rem;
-                cursor: pointer;
-                opacity: 0.8;
-                transition: opacity 0.3s;
-            }
-
-            .chat-close:hover {
-                opacity: 1;
-            }
-
-            .chat-messages {
-                flex: 1;
-                padding: 1.25rem;
-                overflow-y: auto;
-            }
-
-            .chat-message {
-                margin-bottom: 1rem;
-                padding: 0.875rem 1rem;
-                border-radius: 12px;
-                max-width: 85%;
-                animation: messageIn 0.3s ease;
-            }
-
-            @keyframes messageIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .chat-message.bot {
-                background: rgba(99, 102, 241, 0.1);
-                border: 1px solid rgba(99, 102, 241, 0.2);
-                margin-right: auto;
-            }
-
-            .chat-message.user {
-                background: var(--gradient-primary);
-                margin-left: auto;
-            }
-
-            .chat-input {
-                padding: 1rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
-                display: flex;
-                gap: 0.75rem;
-            }
-
-            .chat-input input {
-                flex: 1;
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 10px;
-                padding: 0.75rem 1rem;
-                color: var(--light);
-                font-size: 0.95rem;
-                outline: none;
-                transition: border-color 0.3s;
-            }
-
-            .chat-input input:focus {
-                border-color: var(--primary);
-            }
-
-            .chat-input button {
-                background: var(--gradient-primary);
-                border: none;
-                border-radius: 10px;
-                width: 44px;
-                height: 44px;
-                cursor: pointer;
-                transition: all 0.3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.25rem;
-            }
-
-            .chat-input button:hover {
-                transform: scale(1.05);
-            }
-
-            /* ==================== CTA Section ==================== */
-            .cta {
-                padding: 8rem 0;
-            }
-
-            .cta-box {
-                background: var(--gradient-primary);
-                border-radius: 32px;
-                padding: 4rem;
-                position: relative;
-                overflow: hidden;
-                text-align: center;
-            }
-
-            .cta-box::before {
-                content: "";
-                position: absolute;
-                top: -50%;
-                left: -50%;
-                width: 200%;
-                height: 200%;
-                background: radial-gradient(
-                    circle,
-                    rgba(255, 255, 255, 0.1) 0%,
-                    transparent 70%
-                );
-                animation: rotate 20s linear infinite;
-            }
-
-            @keyframes rotate {
-                from {
-                    transform: rotate(0deg);
-                }
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            .cta-content {
-                position: relative;
-                z-index: 1;
-            }
-
-            .cta-title {
-                font-size: clamp(2rem, 4vw, 3rem);
-                font-weight: 800;
-                margin-bottom: 1rem;
-                color: var(--white);
-            }
-
-            .cta-text {
-                font-size: 1.125rem;
-                opacity: 0.95;
-                margin-bottom: 2rem;
-                max-width: 600px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .btn-white {
-                background: var(--white);
-                color: var(--primary);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            }
-
-            .btn-white:hover {
-                background: var(--light);
-                transform: translateY(-3px);
-                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-            }
-
-            /* ==================== Footer ==================== */
-            footer {
-                background: var(--dark-light);
-                padding: 4rem 0 2rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
-            }
-
-            .footer-grid {
-                display: grid;
-                grid-template-columns: 2fr repeat(3, 1fr);
-                gap: 3rem;
-                margin-bottom: 3rem;
-            }
-
-            .footer-brand p {
-                color: var(--gray);
-                margin: 1rem 0;
-                line-height: 1.8;
-            }
-
-            .footer-social {
-                display: flex;
-                gap: 1rem;
-                margin-top: 1.5rem;
-            }
-
-            .footer-social a {
-                width: 40px;
-                height: 40px;
-                border-radius: 10px;
-                background: rgba(255, 255, 255, 0.05);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.25rem;
-                text-decoration: none;
-                transition: all 0.3s;
-            }
-
-            .footer-social a:hover {
-                background: var(--primary);
-                transform: translateY(-3px);
-            }
-
-            .footer-title {
-                font-size: 1rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-                color: var(--white);
-            }
-
-            .footer-links {
-                list-style: none;
-            }
-
-            .footer-links li {
-                margin-bottom: 0.75rem;
-            }
-
-            .footer-links a {
-                color: var(--gray);
-                text-decoration: none;
-                transition: color 0.3s;
-                font-size: 0.95rem;
-            }
-
-            .footer-links a:hover {
-                color: var(--primary-light);
-            }
-
-            .footer-bottom {
-                text-align: center;
-                padding-top: 2rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
-                color: var(--gray);
-                font-size: 0.875rem;
-            }
-
-            /* ==================== Responsive ==================== */
-            @media (max-width: 1024px) {
-                .code-container {
-                    grid-template-columns: 1fr;
-                    gap: 3rem;
-                }
-
-                .footer-grid {
-                    grid-template-columns: 1fr 1fr;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .nav-links {
-                    display: none;
-                }
-
-                .mobile-menu-btn {
-                    display: flex;
-                }
-
-                .hero-stats {
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 1rem;
-                    padding: 1.5rem;
-                }
-
-                .hero-stat-number {
-                    font-size: 2rem;
-                }
-
-                .features-grid,
-                .modes-grid {
-                    grid-template-columns: 1fr;
-                }
-
-                .footer-grid {
-                    grid-template-columns: 1fr;
-                }
-
-                .chat-window {
-                    width: calc(100vw - 2rem);
-                    right: -1rem;
-                }
-            }
-
-            /* ==================== Loading Animation ==================== */
-            .loading {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: var(--dark);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-                transition: opacity 0.5s;
-            }
-
-            .loading.hidden {
-                opacity: 0;
-                pointer-events: none;
-            }
-
-            .loading-spinner {
-                width: 60px;
-                height: 60px;
-                border: 4px solid rgba(99, 102, 241, 0.2);
-                border-top-color: var(--primary);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <!-- Loading Screen -->
-        <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JEBAT — Tactical Agent CLI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset & Base ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;border-radius:0px !important}
+html{scroll-behavior:smooth}
+body{
+  background:#030303;color:#c8c8c8;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:15px;line-height:1.6;
+  min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── Design Tokens ─── */
+:root{
+  --ink:#030303;
+  --zinc:#09090b;
+  --zinc-2:#18181b;
+  --zinc-3:#27272a;
+  --zinc-4:#3f3f46;
+  --cyan:#06b6d4;
+  --cyan-dim:rgba(6,182,212,0.08);
+  --cyan-glow:rgba(6,182,212,0.15);
+  --emerald:#10b981;
+  --emerald-dim:rgba(16,185,129,0.08);
+  --emerald-glow:rgba(16,185,129,0.25);
+  --purple:#8b5cf6;
+  --amber:#f59e0b;
+  --green:#10b981;
+  --red:#ef4444;
+  --surface:#09090b;
+  --border:#1c1c1f;
+  --text:rgba(200,200,200,0.95);
+  --text-dim:rgba(200,200,200,0.5);
+  --mono:'JetBrains Mono','Fira Code',monospace;
+  --display:'Space Grotesk',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --nav-h:56px;
+}
+
+/* ─── Utilities ─── */
+.mono{font-family:var(--mono);font-size:13px}
+.display{font-family:var(--display)}
+.muted{color:var(--text-dim)}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 10px;border-radius:0px !important;
+  font-size:11px;font-weight:500;letter-spacing:0.5px;
+  border:1px solid var(--zinc-3);
+  background:var(--zinc-2);color:var(--text);
+}
+.badge-cyan{border-color:rgba(6,182,212,0.3);background:var(--cyan-dim);color:var(--cyan)}
+.badge-amber{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08);color:var(--amber)}
+.badge-green{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--green)}
+.badge-red{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:var(--red)}
+.section-label{
+  font-family:var(--mono);font-size:11px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--cyan);margin-bottom:12px;
+}
+.section-sub{max-width:520px;color:var(--text-dim);margin-bottom:40px;font-size:14px}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--zinc-3);border-radius:0px !important}
+
+/* ─── Nav ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  background:rgba(3,3,3,0.85);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo .mark{
+  width:28px;height:28px;border:1.5px solid var(--emerald);
+  border-radius:0px !important;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:14px;font-weight:700;color:var(--emerald);
+  position:relative;
+}
+.nav-logo .mark::after{
+  content:'';position:absolute;inset:-3px;
+  border:1px solid var(--emerald);border-radius:0px !important;opacity:0.3;
+}
+.nav-logo span{
+  font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:-0.3px;color:#e8e8e8;
+}
+.nav-logo small{
+  font-size:11px;color:var(--text-dim);margin-top:-8px;font-family:var(--mono);
+}
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none}
+.nav-links li a{
+  color:var(--text-dim);text-decoration:none;font-size:13px;
+  padding:6px 14px;border-radius:0px !important;transition:all 0.2s;
+  font-weight:500;font-family:var(--body);
+}
+.nav-links li a:hover,.nav-links li a.active{color:#e8e8e8;background:var(--zinc-2)}
+.nav-links li a.active{border:1px solid var(--zinc-3)}
+.nav-btn{
+  padding:6px 16px;border-radius:0px !important;border:1px solid var(--emerald);
+  background:transparent;color:var(--emerald);font-size:13px;
+  cursor:pointer;transition:all 0.2s;font-family:var(--body);font-weight:500;
+}
+.nav-btn:hover{background:var(--emerald-dim);box-shadow:0 0 20px var(--emerald-glow)}
+.hamburger{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer}
+
+/* ─── Pages ─── */
+.page{display:none;padding-top:var(--nav-h);min-height:100vh}
+.page.active{display:block}
+
+/* ─── Hero ─── */
+.hero{
+  min-height:90vh;display:flex;flex-direction:column;justify-content:center;
+  padding:80px 24px 60px;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-30%;left:-10%;
+  width:60%;height:80%;
+  background:radial-gradient(ellipse at center,var(--cyan-dim) 0%,transparent 70%);
+  opacity:0.4;pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;bottom:-20%;right:-5%;
+  width:50%;height:60%;
+  background:radial-gradient(ellipse at center,rgba(139,92,246,0.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-content{max-width:820px;margin:0 auto;position:relative;z-index:2;width:100%}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:24px}
+.hero h1{
+  font-family:var(--display);font-size:clamp(40px,7vw,72px);
+  font-weight:700;line-height:1.05;letter-spacing:-1.5px;
+  color:#f0f0f0;margin-bottom:20px;
+}
+.hero h1 .hl{background:linear-gradient(135deg,var(--cyan) 0%,var(--purple) 50%,var(--amber) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{
+  font-size:clamp(16px,2vw,19px);color:var(--text-dim);
+  max-width:600px;line-height:1.7;margin-bottom:36px;
+}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 28px;border-radius:8px;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all 0.25s;text-decoration:none;
+  font-family:var(--body);
+}
+.btn-cyan{
+  background:var(--cyan);color:var(--ink);border:none;
+  box-shadow:0 0 30px var(--cyan-glow);
+}
+.btn-cyan:hover{background:#33f3ff;box-shadow:0 0 50px var(--cyan-glow);transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid var(--zinc-3);color:var(--text)}
+.btn-ghost:hover{border-color:var(--zinc-4);background:var(--zinc-2)}
+
+/* ─── Stats Bar ─── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--border);border-radius:12px;overflow:hidden;
+  margin-top:48px;border:1px solid var(--border);
+}
+.stat-item{
+  background:var(--surface);padding:24px 20px;text-align:center;
+}
+.stat-value{
+  font-family:var(--display);font-size:32px;font-weight:700;
+  color:var(--cyan);line-height:1;margin-bottom:4px;
+}
+.stat-label{font-size:12px;color:var(--text-dim);font-family:var(--mono);letter-spacing:0.5px}
+.stat-item:nth-child(2) .stat-value{color:var(--purple)}
+.stat-item:nth-child(3) .stat-value{color:var(--amber)}
+.stat-item:nth-child(4) .stat-value{color:var(--green)}
+
+/* ─── Sections ─── */
+.section{
+  padding:80px 24px;max-width:1100px;margin:0 auto;width:100%;
+}
+.section-header{text-align:center;margin-bottom:56px}
+.section-header h2{
+  font-family:var(--display);font-size:clamp(28px,4vw,44px);
+  font-weight:700;color:#f0f0f0;letter-spacing:-0.8px;margin-bottom:12px;
+}
+.section-header p{color:var(--text-dim);max-width:560px;margin:0 auto;font-size:15px}
+
+/* ─── Feature Grid ─── */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px}
+.feature-card{
+  background:var(--surface);padding:32px 28px;
+  border:1px solid var(--border);border-radius:0;
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.feature-card:hover{border-color:var(--zinc-3);background:var(--zinc)}
+.feature-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.feature-card:hover::before{opacity:1}
+.feature-card .icon{font-size:24px;margin-bottom:16px;display:block;color:var(--cyan)}
+.feature-card h3{font-family:var(--display);font-size:16px;font-weight:600;color:#e8e8e8;margin-bottom:8px}
+.feature-card p{font-size:13px;color:var(--text-dim);line-height:1.6}
+.feature-card .tag{
+  display:inline-block;margin-top:12px;font-size:11px;
+  font-family:var(--mono);color:var(--cyan);border:1px solid var(--cyan-dim);
+  padding:2px 8px;border-radius:4px;
+}
+
+/* ─── Cmd Grid ─── */
+.cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px}
+.cmd-item{
+  background:var(--surface);padding:16px 20px;
+  border:1px solid var(--border);transition:all 0.2s;
+}
+.cmd-item:hover{border-color:var(--zinc-3);background:var(--zinc)}
+.cmd-item code{font-family:var(--mono);font-size:13px;color:var(--cyan);display:block;margin-bottom:4px}
+.cmd-item .desc{font-size:12px;color:var(--text-dim)}
+
+/* ─── Cap Table ─── */
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:2px}
+.cap-item{
+  background:var(--surface);padding:20px 24px;
+  border:1px solid var(--border);display:flex;align-items:flex-start;gap:14px;transition:all 0.2s;
+}
+.cap-item:hover{border-color:var(--zinc-3);background:var(--zinc)}
+.cap-item .dot{width:8px;height:8px;border-radius:4px;margin-top:5px;flex-shrink:0}
+.cap-item h4{font-family:var(--display);font-size:14px;font-weight:600;color:#e8e8e8;margin-bottom:4px}
+.cap-item p{font-size:12px;color:var(--text-dim)}
+
+/* ─── MCP IDE Grid ─── */
+.ide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.ide-card{
+  background:var(--surface);padding:24px;border:1px solid var(--border);
+  text-align:center;transition:all 0.3s;
+}
+.ide-card:hover{border-color:var(--zinc-3);background:var(--zinc);transform:translateY(-2px)}
+.ide-card .ide-icon{font-size:36px;margin-bottom:12px}
+.ide-card h4{font-family:var(--display);font-size:14px;font-weight:600;color:#e8e8e8;margin-bottom:4px}
+.ide-card p{font-size:12px;color:var(--text-dim);margin-bottom:12px}
+.ide-card .proto{font-family:var(--mono);font-size:11px;color:var(--text-dim);background:var(--zinc-2);padding:4px 10px;border-radius:4px;display:inline-block}
+
+/* ─── Dashboard ─── */
+.dash-rows{display:flex;flex-direction:column;gap:2px}
+.dash-row{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.dash-card{
+  background:var(--surface);padding:24px;border:1px solid var(--border);
+  min-height:120px;
+}
+.dash-card h3{
+  font-family:var(--display);font-size:13px;font-weight:600;
+  color:var(--text-dim);margin-bottom:12px;letter-spacing:0.5px;
+  text-transform:uppercase;
+}
+.dash-card .value{
+  font-family:var(--display);font-size:36px;font-weight:700;color:#f0f0f0;
+}
+.dash-card .sub{font-size:12px;color:var(--text-dim);margin-top:4px}
+.dash-card .bar-track{
+  height:6px;background:var(--zinc-2);border-radius:3px;overflow:hidden;margin-top:12px;
+}
+.dash-card .bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.dash-card .dash-list{list-style:none}
+.dash-card .dash-list li{
+  display:flex;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid var(--zinc-2);
+  font-size:13px;color:var(--text);
+}
+.dash-card .dash-list li:last-child{border:none}
+.dash-card .dash-list .key{color:var(--text-dim);font-family:var(--mono);font-size:12px}
+.dash-card .dash-list .val{font-family:var(--mono);font-size:12px}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status-dot.green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+
+/* ─── Chat ─── */
+.chat-container{
+  max-width:680px;margin:0 auto;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;
+}
+.chat-header{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--display);font-size:14px;font-weight:600;color:#e8e8e8;
+}
+.chat-messages{padding:16px 20px;min-height:300px;max-height:400px;overflow-y:auto}
+.chat-msg{display:flex;gap:10px;margin-bottom:16px}
+.chat-msg .avatar{
+  width:28px;height:28px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0;
+}
+.chat-msg.user .avatar{background:var(--zinc-2);color:var(--cyan);border:1px solid var(--cyan-dim)}
+.chat-msg.agent .avatar{background:var(--zinc-2);color:var(--purple);border:1px solid rgba(139,92,246,0.2)}
+.chat-msg .bubble{
+  background:var(--zinc);padding:10px 14px;border-radius:0px !important;
+  font-size:13px;line-height:1.6;max-width:85%;color:var(--text);
+  font-family:var(--mono);
+}
+.chat-msg.agent .bubble{background:var(--zinc-2);border:1px solid var(--border)}
+.chat-msg .time{font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:4px}
+.chat-input{
+  display:flex;padding:12px 16px;border-top:1px solid var(--border);gap:8px;
+}
+.chat-input input{
+  flex:1;background:var(--zinc);border:1px solid var(--zinc-3);border-radius:6px;
+  padding:10px 14px;color:var(--text);font-size:13px;outline:none;
+  font-family:var(--body);
+}
+.chat-input input:focus{border-color:var(--cyan-dim)}
+.chat-input button{
+  background:var(--cyan);color:var(--ink);border:none;padding:10px 18px;
+  border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;
+  transition:all 0.2s;
+}
+.chat-input button:hover{background:#33f3ff}
+
+/* ─── Footer ─── */
+footer{
+  border-top:1px solid var(--border);padding:48px 24px 32px;margin-top:40px;
+}
+.footer-grid{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;
+}
+footer h4{font-family:var(--display);font-size:13px;font-weight:600;color:#e8e8e8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px}
+footer p,footer a{font-size:13px;color:var(--text-dim);text-decoration:none;line-height:2;display:block}
+footer a:hover{color:var(--cyan)}
+.footer-bottom{
+  max-width:1100px;margin:40px auto 0;padding-top:20px;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;color:var(--text-dim);
+}
+.footer-bottom .mono{color:var(--cyan)}
+
+/* ─── Corner Brackets ─── */
+.corner-brackets{position:relative}
+.corner-brackets::before{
+  content:'┌';position:absolute;top:-1px;left:-1px;
+  font-family:var(--mono);font-size:10px;color:var(--cyan);opacity:0.5;pointer-events:none;
+}
+.corner-brackets::after{
+  content:'┘';position:absolute;bottom:-1px;right:-1px;
+  font-family:var(--mono);font-size:10px;color:var(--cyan);opacity:0.5;pointer-events:none;
+}
+
+/* ─── Price Tiers ─── */
+.tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:900px;margin:0 auto}
+.tier-card{
+  background:var(--surface);padding:32px 28px;border:1px solid var(--border);
+  text-align:center;transition:all 0.3s;position:relative;
+}
+.tier-card.featured{border-color:var(--cyan-dim)}
+.tier-card.featured::before{
+  content:'RECOMMENDED';position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  background:var(--cyan);color:var(--ink);padding:2px 12px;border-radius:0 0 6px 6px;
+}
+.tier-card h3{font-family:var(--display);font-size:18px;font-weight:600;color:#e8e8e8;margin-bottom:4px}
+.tier-card .price{font-family:var(--display);font-size:36px;font-weight:700;color:var(--cyan);margin:16px 0}
+.tier-card .price small{font-size:14px;color:var(--text-dim);font-weight:400}
+.tier-card ul{list-style:none;text-align:left;margin:20px 0}
+.tier-card ul li{padding:6px 0;font-size:13px;color:var(--text-dim);display:flex;align-items:center;gap:8px}
+.tier-card ul li::before{content:'→';color:var(--cyan);font-family:var(--mono);font-size:12px}
+
+/* ─── Floating elements ─── */
+.floating{
+  animation:floating 6s ease-in-out infinite;
+}
+@keyframes floating{
+  0%,100%{transform:translateY(0px)}
+  50%{transform:translateY(-10px)}
+}
+
+/* ─── Responsive ─── */
+@media(max-width:900px){
+  .dash-row{grid-template-columns:1fr}
+  .ide-grid{grid-template-columns:1fr 1fr}
+  .tier-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .nav-links{display:none;position:absolute;top:var(--nav-h);left:0;right:0;
+    background:rgba(3,3,3,0.95);flex-direction:column;padding:12px;border-bottom:1px solid var(--border);
+  }
+  .nav-links.show{display:flex}
+  .hamburger{display:block}
+  .feature-grid{grid-template-columns:1fr}
+  .cmd-grid{grid-template-columns:1fr}
+  .cap-grid{grid-template-columns:1fr}
+  .ide-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── Navigation ─── -->
+<nav>
+  <a href="#" class="nav-logo" onclick="navigate('home')">
+    <div class="mark">J</div>
+    <div>
+      <span>JEBAT</span>
+      <small style="display:block">v6.0.0</small>
+    </div>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#" data-page="home" class="active" onclick="navigate('home')">Home</a></li>
+    <li><a href="#" data-page="agent" onclick="navigate('agent')">Agent CLI</a></li>
+    <li><a href="#" data-page="pentest" onclick="navigate('pentest')">Pentest</a></li>
+    <li><a href="#" data-page="swarm" onclick="navigate('swarm')">Orchestration</a></li>
+    <li><a href="#" data-page="mcp" onclick="navigate('mcp')">MCP</a></li>
+    <li><a href="#" data-page="dashboard" onclick="navigate('dashboard')">Dashboard</a></li>
+    <li><a href="#" data-page="chat" onclick="navigate('chat')">Chat</a></li>
+  </ul>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a href="https://github.com/shaidanshaari/jebat" target="_blank" style="color:var(--text-dim);text-decoration:none;font-size:13px;font-family:var(--mono)">gh:shaidanshaari/jebat</a>
+    <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('show')">☰</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: HOME / LANDING                        -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge badge-cyan">v6.0.0</span>
+        <span class="badge badge-amber">46 subcommands</span>
+        <span class="badge badge-green">64 tests</span>
+      </div>
+      <h1>Tactical <span class="hl">Agent CLI</span><br>for the Terminal</h1>
+      <p>JEBAT is a full-spectrum autonomous agent CLI — built for developers who think in commands, not clicks. Multi-agent orchestration, embedded pentest frameworks, MCP-native IDE integration, and cost-optimized LLM dispatch. All from one binary.</p>
+      <div class="hero-actions">
+        <a href="#" class="btn btn-cyan" onclick="navigate('dashboard')">&#9654; Explore Dashboard</a>
+        <a href="#" class="btn btn-ghost" onclick="navigate('agent')">View Subcommands →</a>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-value">46</div>
+          <div class="stat-label">subcommands</div>
         </div>
-
-        <!-- Particles Background -->
-        <div class="particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
+        <div class="stat-item">
+          <div class="stat-value">7</div>
+          <div class="stat-label">thinking modes</div>
         </div>
-
-        <!-- Navigation -->
-        <nav id="navbar">
-            <div class="container">
-                <a href="#" class="logo">
-                    <span class="logo-icon">🗡️</span>
-                    JEBAT
-                </a>
-                <ul class="nav-links">
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#thinking">Thinking Modes</a></li>
-                    <li><a href="#demo">Demo</a></li>
-                    <li><a href="#docs">Docs</a></li>
-                </ul>
-                <a
-                    href="https://github.com/nusabyte-my/jebat-core"
-                    class="nav-cta"
-                    >Get Started →</a
-                >
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </nav>
-
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-bg-glow"></div>
-            <div class="container">
-                <div class="hero-content">
-                    <span class="hero-badge">
-                        🚀 Version 2.0 Now Available
-                        <span class="badge-new">NEW</span>
-                    </span>
-                    <h1>
-                        <span class="white-text">The Complete</span><br />
-                        <span class="gradient-text">AI-Powered</span><br />
-                        <span class="white-text">Development Ecosystem</span>
-                    </h1>
-                    <p>
-                        JEBAT combines <strong>Ultra-Think reasoning</strong>,
-                        <strong>eternal memory</strong>, and
-                        <strong>multi-domain agents</strong> to create the most
-                        advanced AI development assistant ever built.
-                    </p>
-                    <div class="hero-buttons">
-                        <a
-                            href="https://github.com/nusabyte-my/jebat-core"
-                            class="btn btn-primary"
-                        >
-                            ⭐ Star on GitHub
-                        </a>
-                        <a href="#demo" class="btn btn-secondary">
-                            ▶️ Live Demo
-                        </a>
-                    </div>
-                    <p class="hero-cta-text">
-                        👆 No installation required • Free forever
-                    </p>
-
-                    <div class="hero-stats">
-                        <div class="hero-stat">
-                            <span class="hero-stat-number">5</span>
-                            <span class="hero-stat-label">Memory Layers</span>
-                        </div>
-                        <div class="hero-stat">
-                            <span class="hero-stat-number">6</span>
-                            <span class="hero-stat-label">Thinking Modes</span>
-                        </div>
-                        <div class="hero-stat">
-                            <span class="hero-stat-number">100%</span>
-                            <span class="hero-stat-label">Open Source</span>
-                        </div>
-                        <div class="hero-stat">
-                            <span class="hero-stat-number">∞</span>
-                            <span class="hero-stat-label">Possibilities</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="features" id="features">
-            <div class="container">
-                <div class="section-header animate-on-scroll">
-                    <span class="section-label">✨ Features</span>
-                    <h2 class="section-title">Powerful Capabilities</h2>
-                    <p class="section-subtitle">
-                        Built with cutting-edge AI technology to supercharge
-                        your development workflow
-                    </p>
-                </div>
-                <div class="features-grid">
-                    <div class="feature-card animate-on-scroll">
-                        <div class="feature-icon">🧠</div>
-                        <h3 class="feature-title">JEBAT Cortex</h3>
-                        <p class="feature-description">
-                            Deep reasoning engine with multiple thinking modes
-                            for complex problem-solving
-                        </p>
-                        <ul class="feature-list">
-                            <li>Deliberate Mode (Analytical)</li>
-                            <li>Creative Mode (Generative)</li>
-                            <li>Critical Mode (Evaluation)</li>
-                            <li>Strategic Mode (Planning)</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card animate-on-scroll">
-                        <div class="feature-icon">♾️</div>
-                        <h3 class="feature-title">JEBAT Continuum</h3>
-                        <p class="feature-description">
-                            Continuous processing loop with context preservation
-                            and iterative refinement
-                        </p>
-                        <ul class="feature-list">
-                            <li>Perpetual Execution</li>
-                            <li>Context Preservation</li>
-                            <li>Iterative Improvement</li>
-                            <li>Auto-Recovery</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card animate-on-scroll">
-                        <div class="feature-icon">🗄️</div>
-                        <h3 class="feature-title">Eternal Memory</h3>
-                        <p class="feature-description">
-                            5-layer memory system with heat-based consolidation
-                            and importance scoring
-                        </p>
-                        <ul class="feature-list">
-                            <li>Sensory Buffer (M0)</li>
-                            <li>Episodic Memory (M1)</li>
-                            <li>Semantic Memory (M2)</li>
-                            <li>Conceptual Memory (M3)</li>
-                            <li>Procedural Memory (M4)</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card animate-on-scroll">
-                        <div class="feature-icon">🤖</div>
-                        <h3 class="feature-title">Multi-Agent System</h3>
-                        <p class="feature-description">
-                            Specialized agents for different domains working
-                            together seamlessly
-                        </p>
-                        <ul class="feature-list">
-                            <li>Code Analysis Agent</li>
-                            <li>Security Review Agent</li>
-                            <li>Documentation Agent</li>
-                            <li>Testing Agent</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card animate-on-scroll">
-                        <div class="feature-icon">🔌</div>
-                        <h3 class="feature-title">Plugin Architecture</h3>
-                        <p class="feature-description">
-                            Extend JEBAT with custom plugins for any use case
-                        </p>
-                        <ul class="feature-list">
-                            <li>Dynamic Loading</li>
-                            <li>Sandboxed Execution</li>
-                            <li>Version Management</li>
-                            <li>Dependency Resolution</li>
-                        </ul>
-                    </div>
-                    <div class="feature-card animate-on-scroll">
-                        <div class="feature-icon">📊</div>
-                        <h3 class="feature-title">Analytics Dashboard</h3>
-                        <p class="feature-description">
-                            Real-time monitoring and insights into your AI
-                            assistant's performance
-                        </p>
-                        <ul class="feature-list">
-                            <li>Live Metrics</li>
-                            <li>Usage Analytics</li>
-                            <li>Performance Tracking</li>
-                            <li>Custom Alerts</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Thinking Modes Section -->
-        <section class="thinking-modes" id="thinking">
-            <div class="container">
-                <div class="section-header animate-on-scroll">
-                    <span class="section-label">🎯 Ultra-Think</span>
-                    <h2 class="section-title">6 Thinking Modes</h2>
-                    <p class="section-subtitle">
-                        Choose the right thinking mode for any task
-                    </p>
-                </div>
-                <div class="modes-grid">
-                    <div class="mode-card animate-on-scroll">
-                        <span class="mode-icon">⚡</span>
-                        <h3 class="mode-name">FAST</h3>
-                        <span class="mode-speed speed-instant">Instant</span>
-                        <p class="mode-desc">
-                            Quick, intuitive responses for simple questions and
-                            immediate answers
-                        </p>
-                    </div>
-                    <div class="mode-card animate-on-scroll">
-                        <span class="mode-icon">🤔</span>
-                        <h3 class="mode-name">DELIBERATE</h3>
-                        <span class="mode-speed speed-fast">Fast</span>
-                        <p class="mode-desc">
-                            Balanced reasoning with logical analysis for most
-                            development tasks
-                        </p>
-                    </div>
-                    <div class="mode-card animate-on-scroll">
-                        <span class="mode-icon">🧠</span>
-                        <h3 class="mode-name">DEEP</h3>
-                        <span class="mode-speed speed-medium">Medium</span>
-                        <p class="mode-desc">
-                            Complex multi-layered analysis for challenging
-                            problems
-                        </p>
-                    </div>
-                    <div class="mode-card animate-on-scroll">
-                        <span class="mode-icon">📊</span>
-                        <h3 class="mode-name">STRATEGIC</h3>
-                        <span class="mode-speed speed-medium">Medium</span>
-                        <p class="mode-desc">
-                            Long-term planning and architectural decision-making
-                        </p>
-                    </div>
-                    <div class="mode-card animate-on-scroll">
-                        <span class="mode-icon">🎨</span>
-                        <h3 class="mode-name">CREATIVE</h3>
-                        <span class="mode-speed speed-medium">Medium</span>
-                        <p class="mode-desc">
-                            Innovative lateral thinking for novel solutions
-                        </p>
-                    </div>
-                    <div class="mode-card animate-on-scroll">
-                        <span class="mode-icon">🔍</span>
-                        <h3 class="mode-name">CRITICAL</h3>
-                        <span class="mode-speed speed-slow">Slow</span>
-                        <p class="mode-desc">
-                            Analytical evaluation and quality assessment
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Code Demo Section -->
-        <section class="code-demo" id="demo">
-            <div class="container">
-                <div class="code-container">
-                    <div class="code-content animate-on-scroll">
-                        <span class="section-label">💻 Demo</span>
-                        <h3>Simple to Use</h3>
-                        <p>
-                            JEBAT provides an elegant Python API that's easy to
-                            integrate into your workflow. Get started in minutes
-                            with intuitive, well-documented methods.
-                        </p>
-                        <a href="#docs" class="btn btn-primary"
-                            >View Full Documentation →</a
-                        >
-                    </div>
-                    <div class="code-preview animate-on-scroll">
-                        <div class="code-header">
-                            <span class="code-title">example.py</span>
-                            <div class="code-dots">
-                                <span class="code-dot"></span>
-                                <span class="code-dot"></span>
-                                <span class="code-dot"></span>
-                            </div>
-                        </div>
-                        <div class="code-body">
-                            <span class="code-keyword">from</span> jebat_sdk
-                            <span class="code-keyword">import</span> JEBATClient
-
-                            <span class="code-keyword">async with</span>
-                            JEBATClient()
-                            <span class="code-keyword">as</span> client:
-                            <span class="code-comment"># Chat with JEBAT</span>
-                            response =
-                            <span class="code-keyword">await</span> client.chat(
-                            <span class="code-string">"What is AI?"</span>,
-                            mode=<span class="code-string">"deliberate"</span>
-                            )
-                            <span class="code-function">print</span
-                            >(response.response)
-
-                            <span class="code-comment"># Store a memory</span>
-                            <span class="code-keyword">await</span>
-                            client.store_memory(
-                            <span class="code-string">"I prefer Python"</span>,
-                            user_id=<span class="code-string">"user1"</span>
-                            )
-
-                            <span class="code-comment"># Search memories</span>
-                            memories =
-                            <span class="code-keyword">await</span>
-                            client.search_memories(
-                            <span class="code-string">"Python"</span>,
-                            user_id=<span class="code-string">"user1"</span>
-                            )
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section class="cta">
-            <div class="container">
-                <div class="cta-box animate-on-scroll">
-                    <div class="cta-content">
-                        <h2 class="cta-title">Ready to Get Started?</h2>
-                        <p class="cta-text">
-                            Join thousands of developers using JEBAT to build
-                            better software faster.
-                        </p>
-                        <a
-                            href="https://github.com/nusabyte-my/jebat-core"
-                            class="btn btn-white"
-                        >
-                            🚀 Start Building Free
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer id="docs">
-            <div class="container">
-                <div class="footer-grid">
-                    <div class="footer-brand">
-                        <a href="#" class="logo">
-                            <span class="logo-icon">🗡️</span>
-                            JEBAT
-                        </a>
-                        <p>
-                            The complete AI-powered development ecosystem with
-                            Ultra-Think reasoning, eternal memory, and
-                            multi-domain agents.
-                        </p>
-                        <div class="footer-social">
-                            <a
-                                href="https://github.com/nusabyte-my/jebat-core"
-                                title="GitHub"
-                                >📦</a
-                            >
-                            <a href="#" title="Twitter">🐦</a>
-                            <a href="#" title="Discord">💬</a>
-                            <a href="#" title="LinkedIn">💼</a>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="footer-title">Product</h4>
-                        <ul class="footer-links">
-                            <li><a href="#features">Features</a></li>
-                            <li><a href="#thinking">Thinking Modes</a></li>
-                            <li><a href="#demo">Demo</a></li>
-                            <li><a href="#">Pricing</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="footer-title">Resources</h4>
-                        <ul class="footer-links">
-                            <li><a href="#">Documentation</a></li>
-                            <li><a href="#">API Reference</a></li>
-                            <li><a href="#">Examples</a></li>
-                            <li><a href="#">Blog</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="footer-title">Company</h4>
-                        <ul class="footer-links">
-                            <li><a href="#">About</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Contact</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>
-                        &copy; 2026 JEBAT. Open source under MIT License. Built
-                        with ❤️ for developers.
-                    </p>
-                </div>
-            </div>
-        </footer>
-
-        <!-- Chat Widget -->
-        <div class="chat-widget">
-            <button
-                class="chat-button pulse"
-                id="chatButton"
-                title="Chat with JEBAT"
-            >
-                💬
-            </button>
-            <div class="chat-window" id="chatWindow">
-                <div class="chat-header">
-                    <h4>🗡️ JEBAT Assistant</h4>
-                    <button class="chat-close" id="chatClose">×</button>
-                </div>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="chat-message bot">
-                        Hi! I'm JEBAT, your AI assistant. How can I help you
-                        today?
-                    </div>
-                </div>
-                <div class="chat-input">
-                    <input
-                        type="text"
-                        id="chatInput"
-                        placeholder="Type a message..."
-                    />
-                    <button id="chatSend">➤</button>
-                </div>
-            </div>
+        <div class="stat-item">
+          <div class="stat-value">4</div>
+          <div class="stat-label">LLM providers</div>
         </div>
+        <div class="stat-item">
+          <div class="stat-value">6</div>
+          <div class="stat-label">IDE integrations</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <script>
-            // ==================== Loading Screen ====================
-            window.addEventListener("load", () => {
-                const loading = document.getElementById("loading");
-                setTimeout(() => {
-                    loading.classList.add("hidden");
-                }, 500);
-            });
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">// capabilities</span>
+      <h2>Everything a Terminal<br>Agent Should Be</h2>
+      <p>From one-shot chat to multi-agent swarm orchestration to full-spectrum pentest automation — JEBAT collapses the toolchain.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Multi-Agent Orchestration</h3>
+        <p>Dispatch specialized sub-agents with role-based swarm profiles (cavement, lean, deep). Cache identical goals. Cost-aware model routing.</p>
+        <span class="tag">swarm orchestration</span>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Embedded Pentest Suite</h3>
+        <p>Nmap, nuclei, gobuster, sqlmap, nikto — orchestrated through a single entrypoint. Automated target reconnaissance to exploit chain mapping.</p>
+        <span class="tag">security automation</span>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>MCP-Native Architecture</h3>
+        <p>Model Context Protocol out of the box. Connect JEBAT to VSCode, Zed, Cursor, Windsurf, Trae. Each IDE gets full tool capability negotiation.</p>
+        <span class="tag">stdio / http</span>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Token Telemetry & Auto-Tuning</h3>
+        <p>Every LLM call records usage. Auto-profile tuner monitors spend budgets and recommends profile downgrades before costs spike. Semantic chunking saves 40-60% tokens on compaction.</p>
+        <span class="tag">cost optimization</span>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Agent Loop with Thinking Modes</h3>
+        <p>7 thinking profiles from cavement (free-tier) to deep (premium reasoning) with full conversation compaction, tool execution, and error recovery.</p>
+        <span class="tag">agent loop</span>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Cross-Platform SDK</h3>
+        <p>Python CLI works on Linux, macOS, Windows (git-bash). Plugin system, skills registry, persistent session search, cron jobs, social dispatch.</p>
+        <span class="tag">cross-platform</span>
+      </div>
+    </div>
+  </div>
 
-            // ==================== Navbar Scroll Effect ====================
-            window.addEventListener("scroll", () => {
-                const navbar = document.getElementById("navbar");
-                if (window.scrollY > 50) {
-                    navbar.classList.add("scrolled");
-                } else {
-                    navbar.classList.remove("scrolled");
-                }
-            });
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">// ecosystem</span>
+      <h2>Thinking Modes</h2>
+      <p>Three operational profiles that govern cost, model routing, and dispatch depth. Switch with <code class="mono">jebat profile tune --apply</code>.</p>
+    </div>
+    <div class="tier-grid">
+      <div class="tier-card">
+        <h3>Cavement</h3>
+        <div class="price">$0<small>/day</small></div>
+        <p style="font-size:13px;color:var(--text-dim)">Free-tier. Budget floor. Model: free provider routes.</p>
+        <ul>
+          <li>Free-tier LLM routing</li>
+          <li>Basic chat & tools</li>
+          <li>No cost cap</li>
+          <li>No orchestration depth</li>
+        </ul>
+      </div>
+      <div class="tier-card featured">
+        <h3>Lean</h3>
+        <div class="price">$0.50<small>/day cap</small></div>
+        <p style="font-size:13px;color:var(--text-dim)">Balanced. Mid-tier reasoning. Default operational profile.</p>
+        <ul>
+          <li>Mid-tier model routing</li>
+          <li>Full subcommand set</li>
+          <li>Swarm orchestration</li>
+          <li>Token telemetry active</li>
+          <li>Daily budget cap</li>
+        </ul>
+      </div>
+      <div class="tier-card">
+        <h3>Deep</h3>
+        <div class="price">$2.00<small>/day cap</small></div>
+        <p style="font-size:13px;color:var(--text-dim)">Premium reasoning. Full depth. Taming Sari consensus mode.</p>
+        <ul>
+          <li>Premium model routing</li>
+          <li>LEGENDARY consensus mode</li>
+          <li>Full swarm depth</li>
+          <li>Semantic compaction</li>
+          <li>Weekly budget cap</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
-            // ==================== Scroll Animations ====================
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: "0px 0px -100px 0px",
-            };
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">// quick start</span>
+      <h2>From Zero to Agent<br>in One Command</h2>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:640px;margin:0 auto;font-family:var(--mono);font-size:13px;line-height:2">
+      <div style="color:var(--text-dim)">$ <span style="color:var(--cyan)">pip install jebat</span></div>
+      <div style="color:var(--text-dim)">$ <span style="color:var(--cyan)">jebat init</span></div>
+      <div style="color:var(--green)">  ✓ Config initialized at ~/.jebat/config.yaml</div>
+      <div style="color:var(--text-dim)">$ <span style="color:var(--cyan)">jebat chat "deploy a FastAPI app"</span></div>
+      <div style="color:var(--green)">  ✓ Agent running · profile: lean · model: claude-sonnet-4</div>
+      <div style="color:var(--text-dim)">$ <span style="color:var(--cyan)">jebat pentest -t example.com</span></div>
+      <div style="color:var(--text-dim)">  Scanning target · nuclei · gobuster · sqlmap · nikto</div>
+      <div style="color:var(--green)">  ✓ Report written to ~/reports/pentest_example.com.md</div>
+    </div>
+  </div>
 
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add("visible");
-                    }
-                });
-            }, observerOptions);
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="width:24px;height:24px;border:1.5px solid var(--cyan);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12px;font-weight:700;color:var(--cyan)">J</div>
+          <span style="font-family:var(--display);font-size:15px;font-weight:600;color:#e8e8e8">JEBAT</span>
+        </div>
+        <p style="line-height:1.6">Full-spectrum autonomous agent CLI. Because warriors remember everything that matters.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <a href="#" onclick="navigate('agent')">Agent CLI</a>
+        <a href="#" onclick="navigate('pentest')">Pentest</a>
+        <a href="#" onclick="navigate('swarm')">Orchestration</a>
+        <a href="#" onclick="navigate('mcp')">MCP</a>
+        <a href="#" onclick="navigate('dashboard')">Dashboard</a>
+      </div>
+      <div>
+        <h4>Docs</h4>
+        <a href="https://github.com/shaidanshaari/jebat" target="_blank">GitHub</a>
+        <a href="#">Installation</a>
+        <a href="#">Configuration</a>
+        <a href="#">MCP Setup</a>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <span>NusaByte</span>
+        <span>shaidanshaari/jebat</span>
+        <span>MIT License</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 NusaByte</span>
+      <span class="mono">JEBAT v6.0.0 · 46 subcommands · 64 tests · 0 failures</span>
+    </div>
+  </footer>
+</div>
 
-            document.querySelectorAll(".animate-on-scroll").forEach((el) => {
-                observer.observe(el);
-            });
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: AGENT CLI                             -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-agent">
+  <div class="section" style="padding-top:100px">
+    <div class="hero-badge" style="margin-bottom:12px"><span class="badge badge-cyan">agent CLI</span></div>
+    <h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);font-weight:700;color:#f0f0f0;letter-spacing:-1px;margin-bottom:16px">Full Subcommand<br>Reference</h1>
+    <p style="max-width:600px;color:var(--text-dim);margin-bottom:40px;font-size:15px">46 subcommands organized by capability domain. Every command is a direct terminal entrypoint — no separate daemon required.</p>
 
-            // ==================== Chat Widget ====================
-            const chatButton = document.getElementById("chatButton");
-            const chatWindow = document.getElementById("chatWindow");
-            const chatClose = document.getElementById("chatClose");
-            const chatInput = document.getElementById("chatInput");
-            const chatSend = document.getElementById("chatSend");
-            const chatMessages = document.getElementById("chatMessages");
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// core</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat status</code><span class="desc">System health, profile, provider status</span></div>
+      <div class="cmd-item"><code>jebat init</code><span class="desc">First-run setup wizard</span></div>
+      <div class="cmd-item"><code>jebat config</code><span class="desc">View/edit YAML configuration</span></div>
+      <div class="cmd-item"><code>jebat doctor</code><span class="desc">Diagnose environment issues</span></div>
+      <div class="cmd-item"><code>jebat session</code><span class="desc">Session management & search</span></div>
+      <div class="cmd-item"><code>jebat optimize</code><span class="desc">Run all 4 optimization layers</span></div>
+    </div>
 
-            let chatOpen = false;
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// llm & providers</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat llm-providers</code><span class="desc">List supported providers</span></div>
+      <div class="cmd-item"><code>jebat llm-config</code><span class="desc">Model, temperature, tokens</span></div>
+      <div class="cmd-item"><code>jebat llm-auth</code><span class="desc">Check auth status per provider</span></div>
+      <div class="cmd-item"><code>jebat llm-best-provider</code><span class="desc">Auto-select best route</span></div>
+      <div class="cmd-item"><code>jebat free-models</code><span class="desc">Available free-tier models</span></div>
+      <div class="cmd-item"><code>jebat cost</code><span class="desc">Cost tracking & live telemetry</span></div>
+    </div>
 
-            chatButton.addEventListener("click", () => {
-                chatOpen = !chatOpen;
-                chatWindow.classList.toggle("open");
-                chatButton.classList.toggle("pulse");
-                if (chatOpen) {
-                    chatInput.focus();
-                }
-            });
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// chat & interaction</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat chat</code><span class="desc">One-shot agent query</span></div>
+      <div class="cmd-item"><code>jebat chat-repl</code><span class="desc">Interactive REPL session</span></div>
+      <div class="cmd-item"><code>jebat chat-project</code><span class="desc">Project-aware chat context</span></div>
+      <div class="cmd-item"><code>jebat loop</code><span class="desc">Continuous agent loop</span></div>
+      <div class="cmd-item"><code>jebat think</code><span class="desc">Deep reasoning mode (UltraThink)</span></div>
+    </div>
 
-            chatClose.addEventListener("click", () => {
-                chatOpen = false;
-                chatWindow.classList.remove("open");
-                chatButton.classList.add("pulse");
-            });
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// tools & automation</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat file</code><span class="desc">File read/write/search</span></div>
+      <div class="cmd-item"><code>jebat exec</code><span class="desc">Run shell commands</span></div>
+      <div class="cmd-item"><code>jebat git</code><span class="desc">Git operations</span></div>
+      <div class="cmd-item"><code>jebat search</code><span class="desc">Web or local search</span></div>
+      <div class="cmd-item"><code>jebat cron</code><span class="desc">Schedule recurring tasks</span></div>
+      <div class="cmd-item"><code>jebat delegate</code><span class="desc">Spawn subagent</span></div>
+    </div>
 
-            function sendMessage() {
-                const message = chatInput.value.trim();
-                if (!message) return;
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// security & intelligence</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat pentest</code><span class="desc">Full-spectrum pentest automation</span></div>
+      <div class="cmd-item"><code>jebat sandbox</code><span class="desc">Isolated execution environment</span></div>
+      <div class="cmd-item"><code>jebat telemetry</code><span class="desc">Usage tracking & reporting</span></div>
+      <div class="cmd-item"><code>jebat safety</code><span class="desc">Security policy configuration</span></div>
+      <div class="cmd-item"><code>jebat undo</code><span class="desc">Rollback last action</span></div>
+    </div>
 
-                // Add user message
-                const userMsg = document.createElement("div");
-                userMsg.className = "chat-message user";
-                userMsg.textContent = message;
-                chatMessages.appendChild(userMsg);
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// orchestration & swarm</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat agent</code><span class="desc">Manage agent instances</span></div>
+      <div class="cmd-item"><code>jebat mcp</code><span class="desc">MCP server management</span></div>
+      <div class="cmd-item"><code>jebat tools</code><span class="desc">Tool registry & discovery</span></div>
+      <div class="cmd-item"><code>jebat skills</code><span class="desc">Skills registry (procedural memory)</span></div>
+      <div class="cmd-item"><code>jebat wiki</code><span class="desc">Knowledge base (LLM Wiki)</span></div>
+      <div class="cmd-item"><code>jebat plugins</code><span class="desc">Plugin management</span></div>
+    </div>
 
-                chatInput.value = "";
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// profile & cache</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat profile</code><span class="desc">Show/tune/export/import profile</span></div>
+      <div class="cmd-item"><code>jebat cache</code><span class="desc">Swarm cache stats & invalidate</span></div>
+      <div class="cmd-item"><code>jebat mode-guide</code><span class="desc">Thinking mode reference</span></div>
+      <div class="cmd-item"><code>jebat memory</code><span class="desc">Persistent memory management</span></div>
+      <div class="cmd-item"><code>jebat todo</code><span class="desc">Personal task list</span></div>
+    </div>
 
-                // Scroll to bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// social & communication</span>
+    </div>
+    <div class="cmd-grid" style="margin-bottom:40px">
+      <div class="cmd-item"><code>jebat social</code><span class="desc">Send to Telegram/Discord/Twitter</span></div>
+      <div class="cmd-item"><code>jebat tts</code><span class="desc">Text to speech output</span></div>
+      <div class="cmd-item"><code>jebat auth</code><span class="desc">Credential management (keyring)</span></div>
+    </div>
+  </div>
+</div>
 
-                // Simulate bot response (demo)
-                setTimeout(() => {
-                    const botMsg = document.createElement("div");
-                    botMsg.className = "chat-message bot";
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: PENTEST                               -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-pentest">
+  <div class="section" style="padding-top:100px">
+    <div class="hero-badge" style="margin-bottom:12px"><span class="badge badge-red">pentest</span><span class="badge badge-cyan" style="margin-left:8px">authorized use only</span></div>
+    <h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);font-weight:700;color:#f0f0f0;letter-spacing:-1px;margin-bottom:16px">Embedded Pentest<br>Orchestration</h1>
+    <p style="max-width:600px;color:var(--text-dim);margin-bottom:40px;font-size:15px">Six industry-standard tools orchestrated through a single CLI entrypoint. Automated reconnaissance, route discovery, injection testing, and report generation.</p>
 
-                    // Simple demo responses
-                    const responses = {
-                        hello: "Hello! How can I help you today?",
-                        hi: "Hi there! What would you like to know?",
-                        "what is jebat":
-                            "JEBAT is an advanced AI assistant with eternal memory and deep reasoning capabilities!",
-                        features:
-                            "JEBAT has Ultra-Think reasoning, 5-layer memory, multi-agent system, and more!",
-                        help: "I can help you with coding, analysis, planning, and more. Just ask!",
-                    };
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// toolchain</span>
+    </div>
+    <div class="cap-grid" style="margin-bottom:48px">
+      <div class="cap-item">
+        <div class="dot" style="background:var(--cyan)"></div>
+        <div><h4>nuclei</h4><p>Template-based vulnerability scanning. 8000+ community templates for CVE, misconfig, exposure detection.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--purple)"></div>
+        <div><h4>nmap</h4><p>Port scanning, service fingerprinting, OS detection. Full NSE script integration.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--amber)"></div>
+        <div><h4>gobuster</h4><p>Directory/file brute-forcing, DNS subdomain enumeration, vhost discovery.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--green)"></div>
+        <div><h4>sqlmap</h4><p>Automated SQL injection detection and exploitation. Full POST/GET/cookie injection surface.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--red)"></div>
+        <div><h4>nikto</h4><p>Web server scanner. 6700+ potentially dangerous files/CGIs, outdated version detection.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--cyan)"></div>
+        <div><h4>dnsx + httpx</h4><p>DNS resolution and HTTP probing. Subdomain validation and live host filtering.</p></div>
+      </div>
+    </div>
 
-                    const lowerMsg = message.toLowerCase();
-                    let response =
-                        "That's interesting! Tell me more about what you'd like to accomplish?";
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// pipeline</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;font-family:var(--mono);font-size:13px;line-height:2.2;margin-bottom:48px">
+      <div style="color:var(--cyan)"># Reconnaissance Phase</div>
+      <div style="color:var(--text-dim)">$ jebat pentest -t example.com --recon</div>
+      <div style="color:var(--green)">  → nuclei: 12 findings · nmap: 8 open ports · gobuster: 24 dirs</div>
+      <div style="color:var(--text-dim);margin-top:8px"></div>
+      <div style="color:var(--cyan)"># Injection Phase</div>
+      <div style="color:var(--text-dim)">$ jebat pentest -t example.com --inject</div>
+      <div style="color:var(--green)">  → sqlmap: 3 injectable params · nikto: 2 CVE matches</div>
+      <div style="color:var(--text-dim);margin-top:8px"></div>
+      <div style="color:var(--cyan)"># Full Spectrum</div>
+      <div style="color:var(--text-dim)">$ jebat pentest -t example.com --full</div>
+      <div style="color:var(--green)">  → Report: ~/reports/pentest_example.com_20260331.md</div>
+    </div>
 
-                    for (const [key, value] of Object.entries(responses)) {
-                        if (lowerMsg.includes(key)) {
-                            response = value;
-                            break;
-                        }
-                    }
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// capabilities</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Automated Recon</h3>
+        <p>DNS resolution → port scan → service fingerprint → directory enumeration → tech stack detection.</p>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Vulnerability Assessment</h3>
+        <p>Template-driven CVE scanning, web server misconfiguration detection, SSL/TLS analysis.</p>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Exploit Chain Mapping</h3>
+        <p>Correlates findings across tools to build an attack chain — from initial foothold to privilege escalation.</p>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Report Generation</h3>
+        <p>Structured Markdown reports per target. Includes CVSS scores, exploit PoCs, and remediation recommendations.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
-                    botMsg.textContent = response;
-                    chatMessages.appendChild(botMsg);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }, 1000);
-            }
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: SWARM / ORCHESTRATION                 -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-swarm">
+  <div class="section" style="padding-top:100px">
+    <div class="hero-badge" style="margin-bottom:12px"><span class="badge badge-purple" style="border-color:rgba(139,92,246,0.3);background:rgba(139,92,246,0.08);color:var(--purple)">orchestration</span></div>
+    <h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);font-weight:700;color:#f0f0f0;letter-spacing:-1px;margin-bottom:16px">Multi-Agent Swarm<br>Orchestration</h1>
+    <p style="max-width:600px;color:var(--text-dim);margin-bottom:40px;font-size:15px">Pasukan JEBAT — specialized role-based agents dispatched in parallel. Each swarm role carries a distinct behavioral profile, cost budget, and model preference.</p>
 
-            chatSend.addEventListener("click", sendMessage);
-            chatInput.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") {
-                    sendMessage();
-                }
-            });
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// swarm roles</span>
+    </div>
+    <div class="cap-grid" style="margin-bottom:48px">
+      <div class="cap-item">
+        <div class="dot" style="background:var(--cyan)"></div>
+        <div><h4>Planner</h4><p>Breaks goals into actionable tasks. Strategic decomposition with dependency ordering.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--purple)"></div>
+        <div><h4>Implementer</h4><p>Executes planned tasks — code generation, file manipulation, shell commands.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--amber)"></div>
+        <div><h4>Reviewer</h4><p>Validates output against requirements. Security scan, lint, style checks.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--green)"></div>
+        <div><h4>Researcher</h4><p>Web search, documentation lookup, API discovery. Context gathering.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--red)"></div>
+        <div><h4>Critic</h4><p>Adversarial testing. Finds edge cases, failure modes, and security holes.</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--cyan)"></div>
+        <div><h4>Synthesizer</h4><p>Merges swarm outputs. Conflict resolution via Taming Sari consensus algorithm.</p></div>
+      </div>
+    </div>
 
-            // ==================== Mobile Menu ====================
-            const mobileMenuBtn = document.getElementById("mobileMenuBtn");
-            const navLinks = document.querySelector(".nav-links");
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// features</span>
+    </div>
+    <div class="feature-grid" style="margin-bottom:48px">
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Role-Based Profiles</h3>
+        <p>Each swarm role uses its own cavement/lean/deep profile. Planner uses deep, implementer uses lean, reviewer uses cavement — cost-optimized by role.</p>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Swarm Result Cache</h3>
+        <p>SHA256-hashed goals skip re-dispatch. Cache stats via `jebat cache stats`. Invalidate with `jebat cache invalidate --age 24h`.</p>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>Taming Sari Consensus</h3>
+        <p>LEGENDARY mode only. Detects contradictions between role outputs, marks consensus/veto per claim, merges non-conflicting sections.</p>
+      </div>
+      <div class="feature-card corner-brackets">
+        <span class="icon">◈</span>
+        <h3>AgentLoop Bridge</h3>
+        <p>--execute flag runs swarm roles via AgentLoop, not just prints prompts. Real LLM dispatch with failover.</p>
+      </div>
+    </div>
 
-            mobileMenuBtn.addEventListener("click", () => {
-                navLinks.style.display =
-                    navLinks.style.display === "flex" ? "none" : "flex";
-                if (navLinks.style.display === "flex") {
-                    navLinks.style.flexDirection = "column";
-                    navLinks.style.position = "absolute";
-                    navLinks.style.top = "100%";
-                    navLinks.style.left = "0";
-                    navLinks.style.right = "0";
-                    navLinks.style.background = "rgba(15,23,42,0.95)";
-                    navLinks.style.padding = "1rem";
-                    navLinks.style.gap = "1rem";
-                }
-            });
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// cost optimization</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;font-family:var(--mono);font-size:13px">
+        <div><div style="color:var(--cyan);margin-bottom:8px">Cavement</div><div style="color:var(--text-dim)">kr/claude-sonnet-4.5</div><div style="color:var(--text-dim)">$0.00/day cap</div><div style="color:var(--text-dim)">Reviewer, Critic roles</div></div>
+        <div><div style="color:var(--purple);margin-bottom:8px">Lean</div><div style="color:var(--text-dim)">claude-sonnet-4</div><div style="color:var(--text-dim)">$0.50/day cap</div><div style="color:var(--text-dim)">Implementer, Researcher roles</div></div>
+        <div><div style="color:var(--amber);margin-bottom:8px">Deep</div><div style="color:var(--text-dim)">claude-sonnet-4 (premium)</div><div style="color:var(--text-dim)">$2.00/day cap</div><div style="color:var(--text-dim)">Planner, Synthesizer roles</div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-            // ==================== Smooth Scroll ====================
-            document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-                anchor.addEventListener("click", function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(
-                        this.getAttribute("href"),
-                    );
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                        });
-                    }
-                });
-            });
-        </script>
-    </body>
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: MCP                                   -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-mcp">
+  <div class="section" style="padding-top:100px">
+    <div class="hero-badge" style="margin-bottom:12px"><span class="badge badge-cyan">mcp</span><span class="badge badge-amber" style="margin-left:8px">model context protocol</span></div>
+    <h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);font-weight:700;color:#f0f0f0;letter-spacing:-1px;margin-bottom:16px">MCP-Native IDE<br>Integration</h1>
+    <p style="max-width:600px;color:var(--text-dim);margin-bottom:40px;font-size:15px">JEBAT speaks Model Context Protocol natively. No adapters, no wrappers — connect any MCP-compatible IDE directly to the JEBAT agent loop.</p>
+
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// supported IDEs</span>
+    </div>
+    <div class="ide-grid" style="margin-bottom:48px">
+      <div class="ide-card">
+        <div class="ide-icon">◉</div>
+        <h4>VSCode</h4>
+        <p>Full MCP integration via .vscode/mcp.json</p>
+        <span class="proto">stdio · 10 capabilities</span>
+      </div>
+      <div class="ide-card">
+        <div class="ide-icon">◉</div>
+        <h4>Zed</h4>
+        <p>Built-in MCP support. Configure in settings.json</p>
+        <span class="proto">stdio · 8 capabilities</span>
+      </div>
+      <div class="ide-card">
+        <div class="ide-icon">◉</div>
+        <h4>Cursor</h4>
+        <p>Native MCP (v0.40+). Add server in AI settings</p>
+        <span class="proto">stdio · 9 capabilities</span>
+      </div>
+      <div class="ide-card">
+        <div class="ide-icon">◉</div>
+        <h4>Windsurf</h4>
+        <p>MCP with Cascade + Flow integration</p>
+        <span class="proto">stdio · 10 capabilities</span>
+      </div>
+      <div class="ide-card">
+        <div class="ide-icon">◉</div>
+        <h4>Trae</h4>
+        <p>Built-in MCP. Add via AI Assistants settings</p>
+        <span class="proto">stdio · 8 capabilities</span>
+      </div>
+      <div class="ide-card">
+        <div class="ide-icon">◉</div>
+        <h4>Antigravity</h4>
+        <p>Python IDE MCP plugin support</p>
+        <span class="proto">stdio · 7 capabilities</span>
+      </div>
+    </div>
+
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// capabilities exposed via MCP</span>
+    </div>
+    <div class="cap-grid" style="margin-bottom:48px">
+      <div class="cap-item">
+        <div class="dot" style="background:var(--cyan)"></div>
+        <div><h4>code.read</h4><p>Read and analyze code files from the workspace</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--cyan)"></div>
+        <div><h4>code.write</h4><p>Create and modify code files</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--purple)"></div>
+        <div><h4>code.review</h4><p>Security and quality review</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--purple)"></div>
+        <div><h4>code.generate</h4><p>Generate code from natural language</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--amber)"></div>
+        <div><h4>project.scaffold</h4><p>Create full project structure</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--amber)"></div>
+        <div><h4>git.operations</h4><p>Git commands: commit, push, branch</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--green)"></div>
+        <div><h4>test.run</h4><p>Run test suites per project</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--green)"></div>
+        <div><h4>debug.analyze</h4><p>Analyze errors and stack traces</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--red)"></div>
+        <div><h4>db.connect</h4><p>Secure database operations</p></div>
+      </div>
+      <div class="cap-item">
+        <div class="dot" style="background:var(--red)"></div>
+        <div><h4>ml.train</h4><p>ML model training pipelines</p></div>
+      </div>
+    </div>
+
+    <div class="section-header" style="text-align:left;margin-bottom:24px">
+      <span class="section-label">// security</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:13px">
+        <div>
+          <div style="color:var(--cyan);font-weight:600;margin-bottom:8px;font-family:var(--display)">Sandboxed Execution</div>
+          <div style="color:var(--text-dim);line-height:1.8">
+            <span class="status-dot green"></span>Allowed paths: ~/projects, ~/dev<br>
+            <span class="status-dot amber"></span>Blocked commands: rm -rf, sudo<br>
+            <span class="status-dot amber"></span>Require confirm: file.write, git.push
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--cyan);font-weight:600;margin-bottom:8px;font-family:var(--display)">Explicit Permissions</div>
+          <div style="color:var(--text-dim);line-height:1.8">
+            <span class="status-dot green"></span>Per-capability opt-in<br>
+            <span class="status-dot green"></span>Configurable blocklist<br>
+            <span class="status-dot green"></span>Audit log per session
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: DASHBOARD                             -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="section" style="padding-top:100px">
+    <div class="hero-badge" style="margin-bottom:12px"><span class="badge badge-cyan">dashboard</span></div>
+    <h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);font-weight:700;color:#f0f0f0;letter-spacing:-1px;margin-bottom:40px">System Dashboard</h1>
+
+    <div class="dash-rows">
+      <div class="dash-row">
+        <div class="dash-card corner-brackets">
+          <h3>Active Profile</h3>
+          <div class="value">lean</div>
+          <div class="sub">Model: claude-sonnet-4 · Daily cap: $0.50</div>
+          <div class="bar-track"><div class="bar-fill" style="width:12%;background:var(--cyan)"></div></div>
+          <div class="sub" style="margin-top:6px">$0.06 / $0.50 spent today</div>
+        </div>
+        <div class="dash-card corner-brackets">
+          <h3>LLM Usage (24h)</h3>
+          <div class="value">142k</div>
+          <div class="sub">tokens consumed · 27 calls · avg 5.2k/call</div>
+          <div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--purple)"></div></div>
+          <div class="sub" style="margin-top:6px">Cache hit rate: 38%</div>
+        </div>
+      </div>
+      <div class="dash-row">
+        <div class="dash-card corner-brackets">
+          <h3>Cost Breakdown</h3>
+          <ul class="dash-list">
+            <li><span class="key">claude-sonnet-4</span><span class="val" style="color:var(--amber)">$0.042</span></li>
+            <li><span class="key">claude-sonnet-4.5</span><span class="val" style="color:var(--cyan)">$0.014</span></li>
+            <li><span class="key">gpt-4o</span><span class="val" style="color:var(--text)">$0.008</span></li>
+            <li><span class="key">Total today</span><span class="val" style="color:var(--green)">$0.064</span></li>
+          </ul>
+        </div>
+        <div class="dash-card corner-brackets">
+          <h3>Swarm Cache</h3>
+          <div class="value">0</div>
+          <div class="sub">entries · 0 bytes · $0.00 saved</div>
+          <div style="margin-top:16px">
+            <span class="badge badge-cyan" style="cursor:pointer" onclick="document.querySelector('#swarm-cache-evict')">cache invalidate</span>
+            <span class="badge" style="margin-left:8px">TTL: 7 days</span>
+          </div>
+        </div>
+      </div>
+      <div class="dash-row">
+        <div class="dash-card corner-brackets">
+          <h3>Optimization Suite</h3>
+          <ul class="dash-list">
+            <li><span class="key">Token Telemetry</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Active</span></li>
+            <li><span class="key">Auto-Profile Tuner</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Active</span></li>
+            <li><span class="key">Swarm Cache</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Active</span></li>
+            <li><span class="key">Semantic Chunking</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Active</span></li>
+          </ul>
+        </div>
+        <div class="dash-card corner-brackets">
+          <h3>Providers</h3>
+          <ul class="dash-list">
+            <li><span class="key">Anthropic</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Connected</span></li>
+            <li><span class="key">OpenAI</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Connected</span></li>
+            <li><span class="key">OpenRouter</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Connected</span></li>
+            <li><span class="key">Custom</span><span class="val" style="color:var(--green)"><span class="status-dot green"></span>Connected</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: CHAT                                  -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-chat">
+  <div class="section" style="padding-top:100px;max-width:760px">
+    <div class="hero-badge" style="margin-bottom:12px"><span class="badge badge-cyan">chat</span></div>
+    <h1 style="font-family:var(--display);font-size:clamp(28px,4vw,42px);font-weight:700;color:#f0f0f0;letter-spacing:-1px;margin-bottom:32px">Agent Chat Interface</h1>
+
+    <div class="chat-container">
+      <div class="chat-header">
+        <span class="status-dot green"></span>
+        JEBAT Agent · lean profile · claude-sonnet-4
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg agent">
+          <div class="avatar">J</div>
+          <div>
+            <div class="bubble">JEBAT ready. 46 subcommands, 7 thinking modes, all tools loaded. Ask me anything or just start typing a command.</div>
+            <div class="time">just now</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="type a command or question..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── SPA Navigation ─── */
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const link = document.querySelector(`.nav-links a[data-page="${page}"]`);
+  if(link) link.classList.add('active');
+  document.getElementById('navLinks').classList.remove('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ─── Chat ─── */
+const responses = [
+  "Scanning target with nuclei... 3 findings (XSS, open S3, missing CSP headers).",
+  "Running `jebat pentest -t staging.internal --recon`. Estimated 45s.",
+  "Swarm dispatch: Planner→Implementer→Reviewer→Synthesizer. Goal: 'deploy FastAPI auth'.",
+  "Cost today: $0.064. Profile: lean. Recommend staying on lean — budget healthy.",
+  "MCP server running on stdio. 10 capabilities registered. VSCode client connected.",
+  "Cache stats: 0 entries. No repeated swarm goals yet — first dispatch is always cold.",
+  "Semantic chunking saved 52% on conversation compaction this session.",
+  "Available: chat, chat-repl, chat-project. Try `jebat chat-repl` for interactive mode.",
+  "Thinking mode: deep (LEGENDARY). Taming Sari consensus enabled on swarm outputs.",
+  "Profile tune: current=lean, recommended=deep. --apply to switch."
+];
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const msgBox = document.getElementById('chatMessages');
+
+  // User message
+  const userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg user';
+  userDiv.innerHTML = `<div class="avatar">U</div><div><div class="bubble">${escapeHtml(text)}</div><div class="time">just now</div></div>`;
+  msgBox.appendChild(userDiv);
+  input.value = '';
+
+  // Auto response
+  setTimeout(() => {
+    const agentDiv = document.createElement('div');
+    agentDiv.className = 'chat-msg agent';
+    agentDiv.innerHTML = `<div class="avatar">J</div><div><div class="bubble">${responses[Math.floor(Math.random()*responses.length)]}</div><div class="time">just now</div></div>`;
+    msgBox.appendChild(agentDiv);
+    msgBox.scrollTop = msgBox.scrollHeight;
+  }, 600);
+
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ─── Dashboard bar animation ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0%';
+      setTimeout(() => b.style.width = w, 50);
+    });
+  }, 300);
+});
+</script>
+</body>
 </html>

@@ -1,45 +1,20 @@
 {
-  "mcp": {
-    "enabled": true,
-    "servers": {
+  "ai": {
+    "providers": {
       "jebat": {
-        "type": "stdio",
-        "command": "python",
-        "arguments": ["-m", "jebat.mcp.server"],
-        "env": {
-          "JEBAT_MODE": "assistant",
-          "JEBAT_PROJECT": "${ZED_WORKSPACE}"
+        "name": "JEBAT AI",
+        "type": "openai-compatible",
+        "api_url": "http://localhost:8000/api/v1",
+        "api_key": "jebat-local-key",
+        "models": {
+          "chat": "jebat-pro",
+          "completion": "jebat-fast"
         }
       }
     },
-    "tools": {
-      "jebat": {
-        "enabled": [
-          "code.read",
-          "code.write",
-          "code.generate",
-          "code.review",
-          "project.scaffold"
-        ]
-      }
-    }
+    "default_provider": "jebat"
   },
-
-  "ai": {
-    "default_provider": "jebat",
-    "inline_suggestions": true,
-    "chat_enabled": true,
-    "auto_review": true
-  },
-
-  "jebat": {
-    "enabled": true,
-    "context_aware": true,
-    "auto_review_on_save": false,
-    "suggestions": {
-      "inline": true,
-      "popup": true,
-      "trigger_delay_ms": 500
-    }
+  "features": {
+    "inline_completion_provider": "jebat"
   }
 }

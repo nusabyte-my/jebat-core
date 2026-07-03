@@ -158,6 +158,8 @@ jebat config|llm-*|doctor     # Configuration & health
 | **[IMPLEMENTATION_FINAL.md](IMPLEMENTATION_FINAL.md)** | Implementation status | 20 min | ⭐⭐ |
 | **[STATUS_COMPLETE.md](STATUS_COMPLETE.md)** | Detailed status | 15 min | ⭐ |
 | **[ROADMAP.md](ROADMAP.md)** | Future roadmap | 30 min | ⭐⭐ |
+| **[Q2_2026_EXECUTION_PLAN.md](Q2_2026_EXECUTION_PLAN.md)** | Q2 2026 sprint plan | 15 min | ⭐⭐ |
+| **[DEPLOYMENT.md](DEPLOYMENT.md)** | Deployment guide | 10 min | ⭐⭐ |
 
 ### Task Management
 
@@ -247,7 +249,9 @@ jebat config|llm-*|doctor     # Configuration & health
 | ARCHITECTURE.md | ✅ Complete | 2026-02-18 | 1.0.0 |
 | IMPLEMENTATION_FINAL.md | ✅ Complete | 2026-02-18 | 1.0.0 |
 | STATUS_COMPLETE.md | ✅ Complete | 2026-02-18 | 1.0.0 |
-| ROADMAP.md | ✅ Complete | 2026-02-18 | 1.0.0 |
+| ROADMAP.md | ✅ Complete | 2026-06-15 | 1.0.0 |
+| Q2_2026_EXECUTION_PLAN.md | ✅ Complete | 2026-06-15 | 1.0.0 |
+| DEPLOYMENT.md | ✅ Complete | 2026-06-15 | 1.0.0 |
 | tasks/todo.md | 🟡 Active | Updated daily | - |
 | tasks/lessons.md | 🟡 Active | Updated per session | - |
 
@@ -386,7 +390,7 @@ jebat config|llm-*|doctor     # Configuration & health
 
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| Total Documents | 9 | 10+ | ✅ |
+| Total Documents | 12 | 10+ | ✅ |
 | Total Pages | ~200 | 200+ | ✅ |
 | Code Examples | 50+ | 50+ | ✅ |
 | Test Files | 4 | 10+ | 🟡 |

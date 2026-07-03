@@ -1,24 +1,142 @@
-# docker-compose.yml — quick JEBAT deployment
-#   docker compose up -d        # start in background
-#   docker compose run jebat    # interactive session
-
 version: "3.9"
 
 services:
-  jebat:
-    build: .
-    image: jebat:latest
-    container_name: jebat
-    stdin_open: true    # docker run -i
-    tty: true           # docker run -t
-    volumes:
-      # Mount config so API keys persist between container restarts
-      - ~/.jebat:/root/.jebat
-      # Optional: mount your project directory
-      - ${PWD:-.}:/workspace
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: jebat-postgres
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - SHODAN_API_KEY=${SHODAN_API_KEY:-}
-    entrypoint: ["jebat"]
-    command: ["--help"]
+      POSTGRES_DB: ${POSTGRES_DB:-jebat}
+      POSTGRES_USER: ${POSTGRES_USER:-jebat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jebat} -d ${POSTGRES_DB:-jebat}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - jebat-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: jebat-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - jebat-network
+
+  jebat-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jebat-api
+    command: ["python", "-m", "jebat.services.api.jebat_api"]
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-jebat}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-jebat}
+      - REDIS_URL=redis://redis:6379
+      - MONITORING_API_URL=http://jebat-api:8000
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "2G"
+    networks:
+      - jebat-network
+
+  jebat-loop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jebat-loop
+    command: ["python", "-m", "jebat.features.ultra_loop.runner"]
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-jebat}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-jebat}
+      - REDIS_URL=redis://redis:6379
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "1G"
+    restart: unless-stopped
+    networks:
+      - jebat-network
+
+  monitoring:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jebat-monitoring
+    command: ["python", "-m", "jebat.monitoring.dashboard.app", "--host", "0.0.0.0", "--port", "8501"]
+    environment:
+      - MONITORING_API_URL=http://jebat-api:8000
+      - MONITORING_REFRESH_SECONDS=2
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      jebat-api:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+    networks:
+      - jebat-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  jebat-network:
+    driver: bridge

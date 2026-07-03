@@ -216,7 +216,7 @@ class ProductSelector:
 
         table = Table(
             title="🗡️ JEBAT Product Family",
-            box=ROUNDED,
+            box=DOUBLE,
             border_style="green",
             title_style="bold cyan",
         )
