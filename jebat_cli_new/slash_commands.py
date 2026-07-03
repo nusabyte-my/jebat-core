@@ -1,5 +1,5 @@
 """
-JEBAT — slash commands with OpenClaude-style command palette behavior.
+JEBAT — slash commands (OpenClaude-style command palette).
 """
 
 from __future__ import annotations
@@ -24,10 +24,10 @@ class SlashCommand:
 
 
 COMMANDS = [
-    SlashCommand(name="help", aliases=["h"], help="Show available commands", usage="[command]"),
-    SlashCommand(name="provider", aliases=["prov"], help="Switch provider", usage="<provider>"),
+    SlashCommand(name="help", aliases=["h", "?"], help="Show this help", usage="[command]"),
+    SlashCommand(name="provider", aliases=["prov", "p"], help="Switch provider", usage="<provider>"),
     SlashCommand(name="model", aliases=["m"], help="Switch model", usage="<model>"),
-    SlashCommand(name="preset", aliases=["p"], help="Change preset", usage="fast|deliberate|deep|strategic|creative|critical"),
+    SlashCommand(name="preset", aliases=["pr"], help="Change preset", usage="fast|deliberate|deep|strategic|creative|critical"),
     SlashCommand(name="tools", aliases=["t"], help="Toggle tool use", usage="on|off"),
     SlashCommand(name="yolo", aliases=["y"], help="Toggle auto-approve tool calls", usage="on|off"),
     SlashCommand(name="commit", aliases=["ci"], help="Auto-commit changes", usage="[message]"),

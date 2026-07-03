@@ -61,22 +61,42 @@ When you are done, output your final answer as: FINAL_ANSWER: <your answer>
 def _parse_tool_calls(text: str) -> List[dict]:
     """Extract JSON tool calls from agent output."""
     calls = []
+    in_json_block = False
+    json_lines = []
+    
     for line in text.splitlines():
-        line = line.strip()
-        if line.startswith("```json") and line.endswith("```"):
+        stripped = line.strip()
+        
+        # Handle markdown code blocks
+        if stripped.startswith("```json"):
+            in_json_block = True
+            json_lines = []
+            continue
+        elif stripped == "```" and in_json_block:
+            in_json_block = False
+            json_text = "\n".join(json_lines).strip()
             try:
-                obj = json.loads(line[7:-3].strip())
+                obj = json.loads(json_text)
+                if "tool" in obj:
+                    calls.append(obj)
+            except json.JSONDecodeError:
+                pass
+            json_lines = []
+            continue
+        
+        if in_json_block:
+            json_lines.append(line)
+            continue
+        
+        # Handle bare JSON lines
+        if stripped.startswith("{") and stripped.endswith("}"):
+            try:
+                obj = json.loads(stripped)
                 if "tool" in obj:
                     calls.append(obj)
             except json.JSONDecodeError:
                 continue
-        elif line.startswith("{") and line.endswith("}"):
-            try:
-                obj = json.loads(line)
-                if "tool" in obj:
-                    calls.append(obj)
-            except json.JSONDecodeError:
-                continue
+    
     return calls
 
 

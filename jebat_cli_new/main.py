@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI — unified entrypoint.
+JEBAT CLI — unified coding-agent CLI (OpenClaude-style).
 
 Examples:
-  python -m jebat_cli_new code [prompt]
-  python -m jebat_cli_new code --auto-commit "Fix the bug"
-  python -m jebat_cli_new code --yolo "Refactor this"
-  python -m jebat_cli_new chat [prompt]
-  python -m jebat_cli_new provider list
-  python -m jebat_cli_new provider add openai --id work --api-key sk-...
-  python -m jebat_cli_new agent run [prompt]
-  python -m jebat_cli_new repl
+  jebat code "Fix the bug in auth.py"
+  jebat code --auto-commit "Refactor the login flow"
+  jebat code --yolo "Delete the test files"
+  jebat code --provider openai --model gpt-4o-mini "Explain this"
+  jebat chat "What is the capital of France?"
+  jebat provider list
+  jebat provider add openai --id work --api-key sk-...
+  jebat provider use work
+  jebat repl
 """
 
 from __future__ import annotations
@@ -45,6 +46,14 @@ def _default_model(kind: str) -> str:
     }.get(kind, "")
 
 
+def _print_banner(provider: str, model: str):
+    """Print OpenClaude-style banner."""
+    print()
+    print("  JEBAT  ⚔️  unified coding agent")
+    print(f"  provider: {provider}  model: {model}")
+    print()
+
+
 def _run_with_auto_commit(agent: AgentLoop, prompt: str, provider: str, model: str,
                            auto_commit: bool = False, yolo: bool = False,
                            project_path: Optional[str] = None):
@@ -76,7 +85,7 @@ def _run_with_auto_commit(agent: AgentLoop, prompt: str, provider: str, model: s
 def cmd_code(args, registry: ProviderRegistry):
     provider = args.provider or "ollama"
     model = args.model or "qwen2.5-coder:7b"
-    TerminalUX.info(f"code provider={provider} model={model}")
+    _print_banner(provider, model)
 
     # Load project context if path provided
     project_context = ""
@@ -120,25 +129,37 @@ def cmd_chat(args, registry: ProviderRegistry):
 
 def cmd_provider(args, registry: ProviderRegistry):
     if args.action == "list":
-        for key in registry.providers:
-            print(key)
+        providers = list(registry.providers.keys())
+        if not providers:
+            print("  No providers configured.")
+            print("  Add one: jebat provider add <kind> --id <id>")
+        else:
+            print("  Configured providers:")
+            for key in providers:
+                cfg = registry.configs.get(key)
+                if cfg:
+                    print(f"    {key} ({cfg.kind}, model={cfg.model})")
+                else:
+                    print(f"    {key}")
         return
+
     if args.action == "use":
         target = args.provider
         if target not in registry.configs and target not in registry.providers:
-            print(f"Unknown provider: {target}")
-            print(f"Available: {', '.join(registry.configs.keys())}")
+            print(f"  Unknown provider: {target}")
+            print(f"  Available: {', '.join(registry.configs.keys())}")
             sys.exit(1)
         cfg = registry.configs.get(target)
         if cfg:
-            print(f"Using provider: {target} (model={cfg.model}, base={cfg.api_base})")
+            print(f"  Using provider: {target} (model={cfg.model}, base={cfg.api_base})")
         else:
-            print(f"Using provider: {target}")
+            print(f"  Using provider: {target}")
         return
+
     if args.action == "add":
         kind = (args.provider or "").strip().lower()
         if kind not in {"ollama", "openai", "anthropic", "gemini", "github"}:
-            print("Supported provider kinds: ollama|openai|anthropic|gemini|github")
+            print("  Supported provider kinds: ollama|openai|anthropic|gemini|github")
             return
         provider_id = getattr(args, "provider_id", None) or kind
         config = ProviderConfig(
@@ -152,12 +173,14 @@ def cmd_provider(args, registry: ProviderRegistry):
         from jebat_cli_new.providers import _provider_factory
         impl = _provider_factory(config, kind)
         registry.register(config.id, impl, cfg=config)
-        print(f"Added provider: {config.id} ({kind})")
+        print(f"  Added provider: {config.id} ({kind})")
         return
-    raise SystemExit("Use: jebat provider list|use <provider>|add <kind> --id <id>")
+
+    raise SystemExit("  Usage: jebat provider list|use <provider>|add <kind> --id <id>")
 
 
 def cmd_agent_run(args, registry: ProviderRegistry):
+    _print_banner(args.provider or "ollama", args.model or "qwen2.5-coder:7b")
     agent = AgentLoop(
         registry,
         default_provider=args.provider or "ollama",
@@ -175,10 +198,21 @@ def cmd_repl(registry: ProviderRegistry):
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog="jebat", description="JEBAT unified coding-agent CLI v6.1+")
+    parser = argparse.ArgumentParser(
+        prog="jebat",
+        description="JEBAT unified coding-agent CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  jebat code "Fix the bug in auth.py"
+  jebat code --auto-commit --yolo "Refactor the login flow"
+  jebat provider add openai --id work --api-key sk-...
+  jebat repl
+        """,
+    )
     sub = parser.add_subparsers(dest="command")
 
-    code = sub.add_parser("code", help="Coding agent")
+    code = sub.add_parser("code", help="Coding agent with tool use")
     code.add_argument("prompt", nargs="?")
     code.add_argument("--provider", default="ollama")
     code.add_argument("--model", default="qwen2.5-coder:7b")
@@ -187,13 +221,15 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     code.add_argument("--safety", default="auto", choices=["auto", "confirm", "off"])
     code.add_argument("--no-stream", action="store_true")
     code.add_argument("--auto-commit", "-a", action="store_true", help="Auto-commit after file changes")
-    code.add_argument("--preset", dest="preset", choices=["fast", "deliberate", "deep", "strategic", "creative", "critical"])
+    code.add_argument("--preset", dest="preset",
+                     choices=["fast", "deliberate", "deep", "strategic", "creative", "critical"])
 
-    chat = sub.add_parser("chat", help="Chat agent")
+    chat = sub.add_parser("chat", help="Chat agent (no tools)")
     chat.add_argument("prompt", nargs="?")
     chat.add_argument("--provider", default="ollama")
     chat.add_argument("--model", default="qwen2.5-coder:7b")
-    chat.add_argument("--preset", dest="preset", choices=["fast", "deliberate", "deep", "strategic", "creative", "critical"])
+    chat.add_argument("--preset", dest="preset",
+                     choices=["fast", "deliberate", "deep", "strategic", "creative", "critical"])
 
     prov = sub.add_parser("provider", help="Provider management")
     prov_sub = prov.add_subparsers(dest="action")
@@ -235,11 +271,11 @@ def main(argv: Optional[Sequence[str]] = None):
         if args.action == "run":
             cmd_agent_run(args, registry)
         else:
-            raise SystemExit("Use: jebat agent run [prompt]")
+            raise SystemExit("  Usage: jebat agent run [prompt]")
     elif args.command == "repl":
         cmd_repl(registry)
     else:
-        raise SystemExit("Use: jebat code|chat|provider|agent|repl")
+        raise SystemExit("  Usage: jebat code|chat|provider|agent|repl")
 
 
 if __name__ == "__main__":

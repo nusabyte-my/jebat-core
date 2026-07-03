@@ -1,5 +1,5 @@
 """
-JEBAT — interactive REPL with Pi-style UX, provider switching, and auto-commit.
+JEBAT — interactive REPL (OpenClaude-style).
 """
 
 from __future__ import annotations
@@ -35,21 +35,25 @@ class REPL:
         self.preset = "deliberate"
 
     def start(self):
-        TerminalUX.banner()
-        print(f" provider : {self.provider}")
-        print(f" model    : {self.model}")
-        print(f" preset   : {self.preset}")
-        print(f" yolo     : {self.yolo}")
-        print(f" auto-commit: {self.auto_commit}")
-        print(" /help, /plan, /provider, /model, /preset, /yolo, /commit, /clear, /exit")
+        """Start the interactive REPL."""
+        print()
+        print("  JEBAT  ⚔️  unified coding agent")
+        print(f"  provider: {self.provider}  model: {self.model}")
+        print(f"  preset: {self.preset}  yolo: {self.yolo}  auto-commit: {self.auto_commit}")
+        print()
+        print("  /help, /plan, /provider, /model, /preset, /yolo, /commit, /clear, /exit")
+        print()
+
         while True:
             try:
-                raw = input(f"\n[{self.provider}:{self.model}]>> ").rstrip()
-            except KeyboardInterrupt:
+                raw = input(f"  [{self.provider}:{self.model}] ").rstrip()
+            except (KeyboardInterrupt, EOFError):
                 print()
                 break
+
             if not raw:
                 continue
+
             if raw.startswith("/"):
                 handled = self._handle_slash(raw)
                 if handled is False:
@@ -61,60 +65,74 @@ class REPL:
                 streaming_print(text, self.provider, self.model)
 
     def _handle_slash(self, raw: str):
+        """Handle slash commands."""
         cmd = match_command(raw)
         if not cmd:
             print(render_help())
             return True
+
         parts = raw.strip().split(maxsplit=1)
         args = parts[1] if len(parts) > 1 else ""
+
         if cmd.name == "help":
             print(render_help(args or None))
             return True
+
         if cmd.name == "exit":
-            print("Exiting.")
+            print("  Exiting.")
             return False
+
         if cmd.name == "clear":
             self.agent.messages.clear()
+            print("  Conversation cleared.")
             return True
+
         if cmd.name == "provider":
             if args:
                 self.provider = args.split()[0]
-            print(f"provider={self.provider}")
+            print(f"  provider: {self.provider}")
             return True
+
         if cmd.name == "model":
             if args:
                 self.model = args.split()[0]
-            print(f"model={self.model}")
+            print(f"  model: {self.model}")
             return True
+
         if cmd.name == "preset":
             key = (args or self.preset).strip()
             if key in PRESETS:
                 self.preset = key
-                print(f"preset={self.preset}")
+                print(f"  preset: {self.preset}")
             else:
-                print(f"Unknown preset: {key}")
+                print(f"  Unknown preset: {key}")
             return True
+
         if cmd.name == "plan":
             out = self.agent.run_plan_then_answer(args or raw.replace("/plan", "", 1), provider=self.provider, model=self.model)
             streaming_print(out.response.text, self.provider, self.model)
             return True
+
         if cmd.name == "system":
             self.sys_prompt = args
-            print(f"system prompt set ({len(self.sys_prompt)} chars)")
+            print(f"  System prompt set ({len(self.sys_prompt)} chars)")
             return True
+
         if cmd.name in {"tools", "yolo"}:
             val = (args or "toggle").strip().lower()
             if cmd.name == "tools":
                 self.tools_enabled = not self.tools_enabled if val == "toggle" else val in {"on", "true", "1"}
-                print(f"tools_enabled={self.tools_enabled}")
+                print(f"  tools: {self.tools_enabled}")
             else:
                 self.yolo = not self.yolo if val == "toggle" else val in {"on", "true", "1"}
                 self.agent.yolo = self.yolo
-                print(f"yolo={self.yolo}")
+                print(f"  yolo: {self.yolo}")
             return True
+
         if cmd.name == "commit":
             self._do_auto_commit(args)
             return True
+
         print(render_help())
         return True
 
@@ -129,6 +147,7 @@ class REPL:
             TerminalUX.warn(f"Commit failed: {result}")
 
     def _call_runtime(self, prompt: str) -> tuple[str, int]:
+        """Call the agent runtime."""
         full = prompt
         if self.sys_prompt:
             full = f"SYSTEM: {self.sys_prompt}\nUSER: {full}"
