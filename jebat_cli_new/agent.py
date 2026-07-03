@@ -245,10 +245,11 @@ class AgentLoop:
         return answer_step
 
     def interactive(self, provider: Optional[str] = None, model: Optional[str] = None,
-                   mode: str = "auto"):
+                   mode: str = "auto", style: str = "openclaude"):
         """OpenClaude-style interactive REPL."""
         provider_name = provider or self.default_provider
         model_name = model or self.model
+        self.style = style
 
         print()
         print("  JEBAT  ⚔️  unified coding agent")

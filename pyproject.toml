@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 [project.scripts]
-jebat = "jebat_cli_new.main:main"
+jebat = "jebat_cli_new.jebat:main"
 
 [project.urls]
 Homepage = "https://jebat.online"
