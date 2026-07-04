@@ -130,7 +130,7 @@ def _extract_steps(text: str) -> List[str]:
 class AgentLoop:
     def __init__(self, registry: ProviderRegistry, default_provider: str = "ollama",
                  model: str = "qwen2.5-coder:7b", yolo: bool = False,
-                 auto_commit: bool = False, style: str = "openclaude"):
+                 auto_commit: bool = False, style: str = "jebat"):
         self.registry = registry
         self.default_provider = default_provider
         self.model = model
@@ -138,7 +138,7 @@ class AgentLoop:
         self.max_iterations = 8
         self.yolo = yolo
         self.auto_commit = auto_commit
-        self.style = style  # "openclaude" or "openmanus"
+        self.style = style  # "jebat" or "openmanus"
 
     def _render_history(self, limit: int = 8) -> str:
         return "\n".join(
@@ -245,7 +245,7 @@ class AgentLoop:
         return answer_step
 
     def interactive(self, provider: Optional[str] = None, model: Optional[str] = None,
-                   mode: str = "auto", style: str = "openclaude"):
+                   mode: str = "auto", style: str = "jebat"):
         """OpenClaude-style interactive REPL."""
         provider_name = provider or self.default_provider
         model_name = model or self.model

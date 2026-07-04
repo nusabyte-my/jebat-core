@@ -47,7 +47,7 @@ def _default_model(kind: str) -> str:
     }.get(kind, "")
 
 
-def _print_banner(provider: str, model: str, style: str = "openclaude"):
+def _print_banner(provider: str, model: str, style: str = "jebat"):
     """Print style-aware banner."""
     print()
     if style == "openmanus":
@@ -89,7 +89,7 @@ def _run_with_auto_commit(agent: AgentLoop, prompt: str, provider: str, model: s
 def cmd_code(args, registry: ProviderRegistry):
     provider = args.provider or "ollama"
     model = args.model or "qwen2.5-coder:7b"
-    style = getattr(args, "style", "openclaude")
+    style = getattr(args, "style", "jebat")
     _print_banner(provider, model, style)
 
     # Load project context if path provided
@@ -186,7 +186,7 @@ def cmd_provider(args, registry: ProviderRegistry):
 
 
 def cmd_agent_run(args, registry: ProviderRegistry):
-    style = getattr(args, "style", "openclaude")
+    style = getattr(args, "style", "jebat")
     _print_banner(args.provider or "ollama", args.model or "qwen2.5-coder:7b", style)
     agent = AgentLoop(
         registry,
@@ -199,7 +199,7 @@ def cmd_agent_run(args, registry: ProviderRegistry):
     print(out.response.text)
 
 
-def cmd_repl(registry: ProviderRegistry, style: str = "openclaude"):
+def cmd_repl(registry: ProviderRegistry, style: str = "jebat"):
     from jebat_cli_new.repl import REPL
     agent = AgentLoop(registry, default_provider="ollama", model="qwen2.5-coder:7b", style=style)
     REPL(agent, style=style).start()
@@ -212,7 +212,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Styles:
-  openclaude  — Minimal, fast, direct (default)
+  jebat  — Minimal, fast, direct (default)
   openmanus   — Multi-step planning, detailed execution
 
 Examples:
@@ -228,7 +228,7 @@ Examples:
     code.add_argument("prompt", nargs="?")
     code.add_argument("--provider", default="ollama")
     code.add_argument("--model", default="qwen2.5-coder:7b")
-    code.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
+    code.add_argument("--style", choices=["jebat", "openmanus"], default="jebat")
     code.add_argument("--project-path", dest="project_path")
     code.add_argument("--yolo", action="store_true", help="Bypass safety confirmations")
     code.add_argument("--safety", default="auto", choices=["auto", "confirm", "off"])
@@ -241,7 +241,7 @@ Examples:
     chat.add_argument("prompt", nargs="?")
     chat.add_argument("--provider", default="ollama")
     chat.add_argument("--model", default="qwen2.5-coder:7b")
-    chat.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
+    chat.add_argument("--style", choices=["jebat", "openmanus"], default="jebat")
     chat.add_argument("--preset", dest="preset",
                      choices=["fast", "deliberate", "deep", "strategic", "creative", "critical"])
 
@@ -264,11 +264,11 @@ Examples:
     run.add_argument("prompt", nargs="?")
     run.add_argument("--provider", default="ollama")
     run.add_argument("--model", default="qwen2.5-coder:7b")
-    run.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
+    run.add_argument("--style", choices=["jebat", "openmanus"], default="jebat")
     run.add_argument("--yolo", action="store_true")
 
     repl_p = sub.add_parser("repl", help="Interactive REPL")
-    repl_p.add_argument("--style", choices=["openclaude", "openmanus"], default="openclaude")
+    repl_p.add_argument("--style", choices=["jebat", "openmanus"], default="jebat")
 
     return parser.parse_args(argv)
 
@@ -289,7 +289,7 @@ def main(argv: Optional[Sequence[str]] = None):
         else:
             raise SystemExit("  Usage: jebat agent run [prompt]")
     elif args.command == "repl":
-        style = getattr(args, "style", "openclaude")
+        style = getattr(args, "style", "jebat")
         cmd_repl(registry, style=style)
     else:
         raise SystemExit("  Usage: jebat code|chat|provider|agent|repl")

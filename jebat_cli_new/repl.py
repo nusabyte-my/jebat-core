@@ -23,7 +23,7 @@ PRESETS = {
 
 
 class REPL:
-    def __init__(self, agent: AgentLoop, style: str = "openclaude"):
+    def __init__(self, agent: AgentLoop, style: str = "jebat"):
         self.agent = agent
         self.provider = agent.default_provider
         self.model = agent.model
@@ -141,12 +141,12 @@ class REPL:
 
         if cmd.name == "style":
             new_style = (args or "").strip().lower()
-            if new_style in {"openclaude", "openmanus"}:
+            if new_style in {"jebat", "openmanus"}:
                 self.style = new_style
                 self.agent.style = new_style
                 print(f"  style: {self.style}")
             else:
-                print("  Styles: openclaude, openmanus")
+                print("  Styles: jebat, openmanus")
             return True
 
         print(render_help())
