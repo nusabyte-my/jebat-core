@@ -1,7 +1,7 @@
 {
   "name": "@nusabyte/jebat",
-  "version": "6.1.0",
-  "description": "JEBAT v6.1 — Sovereign AI Platform & Agent Workstation. Self-hosted, privacy-first AI agent with eternal memory, multi-agent swarms, and security auditing. Runs via npx/bunx with auto Python installation.",
+  "version": "7.5.0",
+  "description": "JEBAT v7.5 — Sovereign AI Platform & Agent Workstation. Self-hosted, privacy-first AI agent with eternal memory, multi-agent swarms, and security auditing. Runs via npx/bunx with auto Python installation.",
   "type": "module",
   "bin": {
     "jebat": "./bin/jebat.js"

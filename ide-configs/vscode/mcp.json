@@ -2,8 +2,9 @@
   "mcp": {
     "servers": {
       "jebat": {
-        "command": "jebat",
+        "command": "npx",
         "args": [
+          "@nusabyte/jebat",
           "mcp",
           "serve",
           "--transport",
