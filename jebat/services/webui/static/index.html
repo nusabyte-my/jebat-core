@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JEBAT — Sovereign AI Platform</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="description" content="JEBAT Sovereign AI Platform — 5 products, 1 memory, infinite agents" />
+  <meta property="og:title" content="JEBAT — Sovereign AI Platform" />
+  <meta property="og:description" content="Hang Jebat's memory. Sahabat's voice. Keris's shield. Pandai's mind. Perisai's reach." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#030303" />
   <link rel="stylesheet" href="/webui/static/css/stealth.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
@@ -74,9 +80,52 @@
     .bottom-bar { position: fixed; bottom: 0; left: var(--sidebar-width); right: 0; height: 28px; background: var(--bg-surface); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: var(--text-muted); gap: 16px; z-index: 50; }
     .bottom-bar kbd { display: inline-block; padding: 0 4px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 2px; font-family: var(--font-mono); font-size: 10px; }
     @media (max-width: 768px) { .bottom-bar { left: 0; } }
+
+    /* ── Progress Bar ── */
+    .progress-bar { position: fixed; top: 0; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--cyan), var(--purple)); z-index: 10002; transition: width 0.3s ease; box-shadow: 0 0 8px var(--cyan-dim); }
+    .progress-bar.active { width: 100%; }
+
+    /* ── Theme Toggle ── */
+    .theme-toggle { cursor: pointer; font-size: 16px; }
+
+    /* ── Breadcrumb Nav ── */
+    .topbar-breadcrumb span { cursor: pointer; transition: color var(--transition-fast); }
+    .topbar-breadcrumb span:hover { color: var(--cyan); }
+
+    /* ── Confirmation Dialog ── */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10003; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px; width: 400px; max-width: 90vw; box-shadow: var(--shadow-lg); text-align: center; }
+    .confirm-title { font-size: 18px; font-weight: 600; color: var(--text-bright); margin-bottom: 8px; }
+    .confirm-msg { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+    /* ── Drag & Drop Zone ── */
+    .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 32px; text-align: center; color: var(--text-muted); transition: all var(--transition-fast); }
+    .drop-zone.dragover { border-color: var(--cyan); background: var(--cyan-glow); color: var(--cyan); }
+    .drop-zone-icon { font-size: 32px; margin-bottom: 8px; }
+
+    /* ── SVG Empty States ── */
+    .empty-illustration { width: 120px; height: 120px; margin: 0 auto 16px; opacity: 0.6; }
+
+    /* ── Print Styles ── */
+    @media print {
+      .sidebar, .topbar, .bottom-bar, .activity-drawer, .toast-container,
+      .search-overlay, .shortcuts-overlay, .confirm-overlay { display: none !important; }
+      .app-layout { grid-template-columns: 1fr !important; grid-template-areas: "main" !important; }
+      .main-content { padding: 0 !important; }
+      body { background: white !important; color: black !important; }
+      body::after { display: none !important; }
+      .card { border: 1px solid #ddd !important; background: white !important; }
+      .stat-value, h1, h2, h3 { color: black !important; }
+      a { color: #0066cc !important; }
+    }
   </style>
 </head>
 <body>
+  <!-- Progress Bar -->
+  <div class="progress-bar" id="progress-bar"></div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
@@ -113,9 +162,25 @@
   <div class="activity-drawer" id="activity-drawer">
     <div class="activity-drawer-header">
       <div class="activity-drawer-title">📋 Activity Log</div>
-      <button class="btn btn-sm" onclick="toggleActivity()">✕ Close</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="exportActivity('json')" title="Export JSON">📥 JSON</button>
+        <button class="btn btn-sm" onclick="exportActivity('csv')" title="Export CSV">📥 CSV</button>
+        <button class="btn btn-sm" onclick="toggleActivity()">✕ Close</button>
+      </div>
     </div>
     <div class="activity-drawer-body" id="activity-body"></div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirm-title">Confirm Action</div>
+      <div class="confirm-msg" id="confirm-msg">Are you sure?</div>
+      <div class="confirm-actions">
+        <button class="btn" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+      </div>
+    </div>
   </div>
 
   <!-- Mobile Sidebar Backdrop -->
@@ -235,6 +300,7 @@
         <button class="btn btn-sm" onclick="openSearch()" title="Search (Ctrl+K)">🔍</button>
         <button class="btn btn-sm" onclick="toggleActivity()" title="Activity Log (Ctrl+L)">📋</button>
         <button class="btn btn-sm" onclick="showShortcuts()" title="Shortcuts (?)">⌨️</button>
+        <span class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</span>
         <div class="topbar-status">
           <span class="topbar-status-dot" id="status-dot"></span>
           <span id="status-text">Connected</span>
@@ -506,6 +572,107 @@
 
     // ── Initial activity ──
     logActivity('SYS', 'WebUI loaded');
+
+    // ═══════════════════════════════════════════════════
+    // 8. PROGRESS BAR
+    // ═══════════════════════════════════════════════════
+    const progressBar = document.getElementById('progress-bar');
+    function showProgress() { progressBar.style.width = '40%'; }
+    function hideProgress() { progressBar.style.width = '100%'; setTimeout(() => { progressBar.style.width = '0'; }, 300); }
+
+    // ═══════════════════════════════════════════════════
+    // 9. THEME TOGGLE
+    // ═══════════════════════════════════════════════════
+    const themeBtn = document.getElementById('theme-btn');
+    function getTheme() { return localStorage.getItem('jebat_theme') || 'dark'; }
+    function setTheme(theme) {
+      localStorage.setItem('jebat_theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+      themeBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
+      logActivity('SYS', `Theme: ${theme}`);
+    }
+    function toggleTheme() { setTheme(getTheme() === 'dark' ? 'light' : 'dark'); }
+    window.toggleTheme = toggleTheme;
+    setTheme(getTheme());
+
+    // ═══════════════════════════════════════════════════
+    // 10. BREADCRUMB NAVIGATION
+    // ═══════════════════════════════════════════════════
+    const breadcrumb = document.getElementById('page-breadcrumb');
+    if (breadcrumb) {
+      breadcrumb.addEventListener('click', e => {
+        const span = e.target.closest('span[data-page]');
+        if (span) { navigate(span.dataset.page); history.pushState(null, '', '#' + span.dataset.page); }
+      });
+    }
+    // Update breadcrumb to clickable spans on navigate
+    const origNavigate = navigate;
+    window.navigate = async function(name) {
+      showProgress();
+      await origNavigate(name);
+      hideProgress();
+      if (breadcrumb) breadcrumb.innerHTML = `<span data-page="dashboard" style="cursor:pointer">jebat</span> / <span data-page="${name}">${name}</span>`;
+    };
+
+    // ═══════════════════════════════════════════════════
+    // 11. CONFIRMATION DIALOG
+    // ═══════════════════════════════════════════════════
+    const confirmOverlay = document.getElementById('confirm-overlay');
+    const confirmTitle = document.getElementById('confirm-title');
+    const confirmMsg = document.getElementById('confirm-msg');
+    const confirmOk = document.getElementById('confirm-ok');
+    const confirmCancel = document.getElementById('confirm-cancel');
+    let confirmResolve = null;
+
+    function confirm(title, msg) {
+      return new Promise(resolve => {
+        confirmTitle.textContent = title;
+        confirmMsg.textContent = msg;
+        confirmOverlay.classList.add('open');
+        confirmResolve = resolve;
+      });
+    }
+    window.confirm = confirm;
+
+    confirmOk.addEventListener('click', () => { confirmOverlay.classList.remove('open'); if (confirmResolve) confirmResolve(true); });
+    confirmCancel.addEventListener('click', () => { confirmOverlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); });
+    confirmOverlay.addEventListener('click', e => { if (e.target === confirmOverlay) { confirmOverlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); } });
+
+    // ═══════════════════════════════════════════════════
+    // 12. ACTIVITY LOG EXPORT
+    // ═══════════════════════════════════════════════════
+    function exportActivity(format) {
+      let content, mime, ext;
+      if (format === 'csv') {
+        content = 'Time,Action,Detail\n' + activityLog.map(e => `"${e.time}","${e.action}","${e.detail}"`).join('\n');
+        mime = 'text/csv'; ext = 'csv';
+      } else {
+        content = JSON.stringify(activityLog, null, 2);
+        mime = 'application/json'; ext = 'json';
+      }
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `jebat-activity.${ext}`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      toast(`Activity log exported as ${ext.toUpperCase()}`, 'success');
+    }
+    window.exportActivity = exportActivity;
+
+    // ═══════════════════════════════════════════════════
+    // 13. DRAG & DROP (for Sahabat)
+    // ═══════════════════════════════════════════════════
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', e => e.preventDefault());
+    window.handleFileDrop = async function(e, callback) {
+      e.preventDefault();
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      for (const file of files) {
+        const text = await file.text();
+        toast(`Loaded: ${file.name} (${file.size} bytes)`, 'info');
+        if (callback) callback(file.name, text);
+      }
+    };
   </script>
 </body>
 </html>

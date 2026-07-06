@@ -889,6 +889,9 @@ def _mount_static(app: FastAPI) -> None:
         app.mount("/webui/static/js", StaticFiles(directory=str(js_dir)), name="webui_js")
     if not any(route.path == "/webui/static/partials" for route in app.routes if hasattr(route, "path")):
         app.mount("/webui/static/partials", StaticFiles(directory=str(STATIC_DIR / "partials")), name="webui_partials")
+    # Mount root static for favicon, images, etc.
+    if not any(route.path == "/webui/static" for route in app.routes if hasattr(route, "path")):
+        app.mount("/webui/static", StaticFiles(directory=str(STATIC_DIR)), name="webui_static")
 
 
 # ==================== Utility Functions ====================

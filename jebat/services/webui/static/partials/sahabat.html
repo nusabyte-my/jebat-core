@@ -18,7 +18,7 @@
   .sahabat-input-row { display: flex; gap: var(--space-sm); }
   .sahabat-input-row .input { flex: 1; }
   .sahabat-welcome { text-align: center; padding: var(--space-3xl, 80px) var(--space-lg); }
-  .sahabat-welcome-icon { font-size: 64px; margin-bottom: var(--space-md); }
+  .sahabat-welcome-icon { width: 120px; height: 120px; margin: 0 auto var(--space-md); }
   .sahabat-welcome h2 { color: var(--text-bright); margin-bottom: var(--space-sm); }
   .sahabat-welcome p { color: var(--text-muted); max-width: 500px; margin: 0 auto; }
   .sahabat-quick-actions { display: flex; gap: var(--space-sm); justify-content: center; margin-top: var(--space-lg); flex-wrap: wrap; }
@@ -43,9 +43,19 @@
   </div>
   <div class="sahabat-messages" id="sahabat-messages">
     <div class="sahabat-welcome">
-      <div class="sahabat-welcome-icon">🤖</div>
+      <svg class="sahabat-welcome-icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="58" stroke="#22c55e" stroke-width="1" opacity="0.3"/>
+        <circle cx="60" cy="60" r="40" stroke="#22c55e" stroke-width="0.5" opacity="0.2"/>
+        <text x="60" y="72" text-anchor="middle" font-size="48">🤖</text>
+      </svg>
       <h2>Hey, I'm Sahabat</h2>
       <p>Your AI companion for daily operations. Ask me anything — from daily briefings to meeting summaries to task management.</p>
+      <div style="margin-top:16px">
+        <div class="drop-zone" id="sahabat-drop" style="max-width:400px;margin:0 auto">
+          <div class="drop-zone-icon">📄</div>
+          <div>Drag & drop a file here (meeting transcript, notes, etc.)</div>
+        </div>
+      </div>
       <div class="sahabat-quick-actions">
         <button class="sahabat-quick-btn" onclick="sendQuick('Give me my daily briefing')">📋 Daily Briefing</button>
         <button class="sahabat-quick-btn" onclick="sendQuick('Show my pending tasks')">✅ Pending Tasks</button>
@@ -68,10 +78,8 @@
   const sendBtn = document.getElementById('sahabat-send');
 
   function addMessage(text, role) {
-    // Remove welcome if present
     const welcome = messages.querySelector('.sahabat-welcome');
     if (welcome) welcome.remove();
-
     const div = document.createElement('div');
     div.className = `sahabat-msg ${role}`;
     div.textContent = text;
@@ -79,17 +87,13 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
-  function sendQuick(text) {
-    input.value = text;
-    sendMessage();
-  }
+  function sendQuick(text) { input.value = text; sendMessage(); }
 
   async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
     addMessage(text, 'user');
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -98,13 +102,26 @@
       });
       const data = await res.json();
       addMessage(data.reply || data.error || 'No response', 'assistant');
-    } catch (e) {
-      addMessage('Connection error — is the JEBAT API running?', 'assistant');
-    }
+    } catch { addMessage('Connection error — is the JEBAT API running?', 'assistant'); }
   }
 
   sendBtn.addEventListener('click', sendMessage);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+  // Drag & drop
+  const dropZone = document.getElementById('sahabat-drop');
+  if (dropZone) {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFileDrop(e, (name, text) => {
+        const preview = text.length > 500 ? text.substring(0, 500) + '...' : text;
+        addMessage(`[Uploaded: ${name}]\n\n${preview}`, 'system');
+      });
+    });
+  }
 
   // Tab switching
   document.querySelectorAll('.sahabat-tab').forEach(tab => {
