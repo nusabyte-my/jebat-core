@@ -1213,6 +1213,57 @@ async def main():
     companion_meeting.add_argument("--followup", action="store_true", help="Generate follow-up email")
     companion_stats = companion_subparsers.add_parser("stats", help="Show companion statistics")
 
+    # Keris command — Sentinel Security (pentest orchestrator)
+    keris_parser = subparsers.add_parser("keris", help="Keris — Sentinel Security: autonomous pentest orchestrator")
+    keris_subparsers = keris_parser.add_subparsers(dest="keris_action")
+    keris_scan = keris_subparsers.add_parser("scan", help="Run pentest scan")
+    keris_scan.add_argument("target", help="Target domain or IP")
+    keris_scan.add_argument("--profile", default="quick", choices=["quick", "standard", "full", "vuln"], help="Scan profile")
+    keris_scan.add_argument("--no-orchestrator", action="store_true", help="Skip swarm orchestration")
+    keris_assess = keris_subparsers.add_parser("assess", help="Quick security assessment")
+    keris_assess.add_argument("target", help="Target domain or IP")
+    keris_history = keris_subparsers.add_parser("history", help="Show scan history")
+
+    # Nexus command — Perisai Multi-Channel Bot Orchestrator
+    nexus_parser = subparsers.add_parser("nexus", help="Nexus — Multi-channel bot orchestrator (Perisai)")
+    nexus_subparsers = nexus_parser.add_subparsers(dest="nexus_action")
+    nexus_list = nexus_subparsers.add_parser("list", help="List configured channels")
+    nexus_add = nexus_subparsers.add_parser("add", help="Add a channel")
+    nexus_add.add_argument("platform", choices=["telegram", "discord", "slack", "signal", "matrix", "whatsapp"])
+    nexus_add.add_argument("channel_id", help="Channel identifier")
+    nexus_add.add_argument("--token", default="", help="Bot token")
+    nexus_add.add_argument("--webhook", default="", help="Webhook URL")
+    nexus_rm = nexus_subparsers.add_parser("remove", help="Remove a channel")
+    nexus_rm.add_argument("channel_id", help="Channel to remove")
+    nexus_send = nexus_subparsers.add_parser("send", help="Send a message")
+    nexus_send.add_argument("channel_id", help="Target channel")
+    nexus_send.add_argument("content", help="Message content")
+    nexus_bc = nexus_subparsers.add_parser("broadcast", help="Broadcast to all channels")
+    nexus_bc.add_argument("content", help="Message content")
+    nexus_health = nexus_subparsers.add_parser("health", help="Health check all channels")
+    nexus_stats = nexus_subparsers.add_parser("stats", help="Show Nexus statistics")
+
+    # Design command — DESIGN.md integration (designmd.ai)
+    design_parser = subparsers.add_parser("design", help="DESIGN.md — search/download design systems from designmd.ai")
+    design_subparsers = design_parser.add_subparsers(dest="design_action")
+    design_search = design_subparsers.add_parser("search", help="Search design systems")
+    design_search.add_argument("query", help="Search query")
+    design_search.add_argument("--tag", action="append", default=[], help="Filter by tag")
+    design_search.add_argument("--sort", default="trending", choices=["trending", "downloads", "likes", "newest"])
+    design_search.add_argument("--limit", type=int, default=5)
+    design_get = design_subparsers.add_parser("get", help="View a design system")
+    design_get.add_argument("slug", help="Design system slug (user/name)")
+    design_dl = design_subparsers.add_parser("download", help="Download a design system as DESIGN.md")
+    design_dl.add_argument("slug", help="Design system slug")
+    design_dl.add_argument("-o", "--output", help="Output path (default: ./DESIGN.md)")
+    design_ul = design_subparsers.add_parser("upload", help="Upload a DESIGN.md file")
+    design_ul.add_argument("file", help="Path to DESIGN.md file")
+    design_ul.add_argument("--name", help="Display name")
+    design_ul.add_argument("--tags", default="", help="Comma-separated tags")
+    design_lint = design_subparsers.add_parser("lint", help="Lint a DESIGN.md file")
+    design_lint.add_argument("file", help="Path to DESIGN.md file")
+    design_tags = design_subparsers.add_parser("tags", help="List available tags")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -2332,6 +2383,192 @@ async def main():
 
             else:
                 companion_parser.print_help()
+
+        elif args.command == "keris":
+            from jebat.features.sentinel.keris import KerisSentinel
+
+            sentinel = KerisSentinel()
+
+            if args.keris_action == "scan":
+                print(f"\n🛡️  Keris: Scanning {args.target} [{args.profile}]...\n")
+                import asyncio
+                result, _ = asyncio.run(sentinel.scan(
+                    args.target,
+                    profile=args.profile,
+                    use_orchestrator=not args.no_orchestrator,
+                ))
+                print(f"   Scan complete: {result.severity} (score: {result.score}/100)")
+                print(f"   Duration: {result.duration_seconds:.0f}s")
+                if result.vulnerabilities:
+                    print(f"   Vulnerabilities: {len(result.vulnerabilities)}")
+                if result.cve_findings:
+                    print(f"   CVE Findings: {len(result.cve_findings)}")
+
+                print(f"\n📊 Analyzing...\n")
+                briefing, provider = asyncio.run(sentinel.analyze(result))
+                print(sentinel.format_briefing(briefing))
+
+            elif args.keris_action == "assess":
+                print(f"\n🛡️  Keris: Quick assessment of {args.target}...\n")
+                import asyncio
+                briefing, provider = asyncio.run(sentinel.quick_assessment(args.target))
+                print(sentinel.format_briefing(briefing))
+
+            elif args.keris_action == "history":
+                history = sentinel.get_history(10)
+                scans = history["scans"]
+                print(f"\n📜 Scan History ({len(scans)}):")
+                for s in scans:
+                    print(f"   [{s['severity']}] {s['target']} ({s['scan_type']}) — {s['start_time'][:10]}")
+
+            else:
+                keris_parser.print_help()
+
+        elif args.command == "nexus":
+            from jebat.features.nexus.perisai import PerisaiNexus, ChannelConfig
+
+            nexus = PerisaiNexus()
+
+            if args.nexus_action == "list":
+                channels = nexus.list_channels()
+                if not channels:
+                    print("  No channels configured.")
+                    print("  Use: jebat nexus add <platform> <channel_id>")
+                else:
+                    print(f"\n📡 Channels ({len(channels)}):")
+                    for c in channels:
+                        status = "✅" if c["enabled"] and c["has_token"] else "⚠️"
+                        print(f"  {status} [{c['platform']}] {c['channel_id']}")
+
+            elif args.nexus_action == "add":
+                config = ChannelConfig(
+                    channel_id=args.channel_id,
+                    platform=args.platform,
+                    bot_token=args.token,
+                    webhook_url=args.webhook,
+                )
+                nexus.add_channel(config)
+                print(f"  ✅ Added {args.platform} channel: {args.channel_id}")
+
+            elif args.nexus_action == "remove":
+                if nexus.remove_channel(args.channel_id):
+                    print(f"  ✅ Removed channel: {args.channel_id}")
+                else:
+                    print(f"  ❌ Channel not found: {args.channel_id}")
+
+            elif args.nexus_action == "send":
+                import asyncio
+                result = asyncio.run(nexus.send(args.channel_id, args.content))
+                if result.get("ok"):
+                    print(f"  ✅ Message sent to {args.channel_id}")
+                else:
+                    print(f"  ❌ Failed: {result.get('error', 'Unknown error')}")
+
+            elif args.nexus_action == "broadcast":
+                import asyncio
+                results = asyncio.run(nexus.broadcast(args.content))
+                print(f"\n📡 Broadcast to {len(results)} channels:")
+                for ch, res in results.items():
+                    status = "✅" if res.get("ok") else "❌"
+                    print(f"  {status} {ch}")
+
+            elif args.nexus_action == "health":
+                import asyncio
+                results = asyncio.run(nexus.health_check())
+                print(f"\n🏥 Health Check:")
+                for ch, info in results.items():
+                    status = "✅" if info["healthy"] else "❌"
+                    print(f"  {status} [{info['platform']}] {ch}")
+
+            elif args.nexus_action == "stats":
+                stats = nexus.get_stats()
+                print(f"\n📊 Nexus Stats:")
+                print(f"   Channels: {stats['active_channels']}/{stats['total_channels']}")
+                if stats["platforms"]:
+                    print(f"   Platforms: {', '.join(f'{k}({v})' for k, v in stats['platforms'].items())}")
+                print(f"   Messages: {stats['total_messages']}")
+
+            else:
+                nexus_parser.print_help()
+
+        elif args.command == "design":
+            from jebat.features.design.designmd import DesignMDClient
+
+            client = DesignMDClient()
+
+            if args.design_action == "search":
+                print(f"\n🔍 Searching: {args.query}...\n")
+                systems, error = client.search(
+                    args.query,
+                    tags=args.tag if args.tag else None,
+                    sort=args.sort,
+                    limit=args.limit,
+                )
+                if error:
+                    print(f"  ❌ {error}")
+                elif not systems:
+                    print("  No results found.")
+                else:
+                    print(f"  Found {len(systems)} design systems:\n")
+                    for i, s in enumerate(systems, 1):
+                        tags = ", ".join(s.tags[:3]) if s.tags else ""
+                        print(f"  {i}. {s.name} ({s.slug})")
+                        print(f"     {s.description[:80]}")
+                        print(f"     ↓ {s.downloads} downloads | ❤ {s.likes} likes | {tags}")
+                        print()
+
+            elif args.design_action == "get":
+                print(f"\n📖 Loading {args.slug}...\n")
+                system, error = client.get(args.slug)
+                if error:
+                    print(f"  ❌ {error}")
+                elif system:
+                    print(f"  {system.name} by {system.author}")
+                    print(f"  {system.description}")
+                    print(f"  Tags: {', '.join(system.tags)}")
+                    if system.content:
+                        print(f"\n{'='*60}\n")
+                        print(system.content[:2000])
+
+            elif args.design_action == "download":
+                output = args.output or "DESIGN.md"
+                print(f"\n⬇️  Downloading {args.slug} → {output}...\n")
+                ok, msg = client.download(args.slug, output_path=output)
+                if ok:
+                    print(f"  ✅ {msg}")
+                else:
+                    print(f"  ❌ {msg}")
+
+            elif args.design_action == "upload":
+                tags = [t.strip() for t in args.tags.split(",")] if args.tags else None
+                print(f"\n⬆️  Uploading {args.file}...\n")
+                ok, msg = client.upload(args.file, name=args.name, tags=tags)
+                if ok:
+                    print(f"  ✅ {msg}")
+                else:
+                    print(f"  ❌ {msg}")
+
+            elif args.design_action == "lint":
+                print(f"\n🔎 Linting {args.file}...\n")
+                ok, msg = client.lint(args.file)
+                if ok:
+                    print(f"  ✅ {msg}")
+                else:
+                    print(f"  ❌ {msg}")
+
+            elif args.design_action == "tags":
+                tags, error = client.tags()
+                if error:
+                    print(f"  ❌ {error}")
+                elif tags:
+                    print(f"\n🏷️  Tags ({len(tags)}):")
+                    for tag in tags:
+                        print(f"  • {tag}")
+                else:
+                    print("  No tags found.")
+
+            else:
+                design_parser.print_help()
 
         return 0
 
