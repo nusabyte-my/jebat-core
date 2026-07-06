@@ -6,17 +6,139 @@
   <title>JEBAT — Sovereign AI Platform</title>
   <link rel="stylesheet" href="/webui/static/css/stealth.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Toast System ── */
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--text-primary); box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease; min-width: 280px; max-width: 420px; }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    .toast.warning { border-left: 3px solid var(--amber); }
+    .toast.info { border-left: 3px solid var(--cyan); }
+    .toast-icon { font-size: 16px; flex-shrink: 0; }
+    .toast-msg { flex: 1; }
+    .toast-close { cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 2px 4px; }
+    .toast-close:hover { color: var(--text-primary); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
+
+    /* ── Global Search Palette ── */
+    .search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10001; display: none; align-items: flex-start; justify-content: center; padding-top: 15vh; backdrop-filter: blur(4px); }
+    .search-overlay.open { display: flex; }
+    .search-palette { width: 560px; max-width: 90vw; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg), var(--shadow-glow-cyan); overflow: hidden; }
+    .search-palette-input { width: 100%; padding: 16px 20px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-bright); font-family: var(--font); font-size: 16px; outline: none; }
+    .search-palette-input::placeholder { color: var(--text-muted); }
+    .search-results { max-height: 360px; overflow-y: auto; padding: 8px; }
+    .search-result { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; transition: background 0.1s; }
+    .search-result:hover, .search-result.active { background: var(--bg-hover); }
+    .search-result-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+    .search-result-text { flex: 1; }
+    .search-result-name { font-size: 14px; color: var(--text-bright); }
+    .search-result-desc { font-size: 12px; color: var(--text-muted); }
+    .search-result-badge { font-size: 11px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 9999px; background: var(--bg-elevated); color: var(--text-muted); }
+    .search-footer { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); }
+    .search-footer kbd { display: inline-block; padding: 1px 5px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 3px; font-family: var(--font-mono); font-size: 11px; }
+
+    /* ── Keyboard Shortcuts Overlay ── */
+    .shortcuts-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10001; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .shortcuts-overlay.open { display: flex; }
+    .shortcuts-panel { width: 520px; max-width: 90vw; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-lg); }
+    .shortcuts-title { font-size: 18px; font-weight: 600; color: var(--text-bright); margin-bottom: 16px; }
+    .shortcut-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .shortcut-row:last-child { border-bottom: none; }
+    .shortcut-keys { display: flex; gap: 4px; }
+    .shortcut-keys kbd { display: inline-block; padding: 3px 8px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 4px; font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); min-width: 24px; text-align: center; }
+    .shortcut-desc { font-size: 13px; color: var(--text-secondary); }
+
+    /* ── Activity Log Drawer ── */
+    .activity-drawer { position: fixed; bottom: 0; left: 0; right: 0; height: 0; background: var(--bg-surface); border-top: 1px solid var(--border); z-index: 999; transition: height 0.3s ease; overflow: hidden; }
+    .activity-drawer.open { height: 240px; }
+    .activity-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+    .activity-drawer-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .activity-drawer-body { padding: 8px 16px; overflow-y: auto; height: calc(100% - 40px); font-family: var(--font-mono); font-size: 12px; }
+    .activity-entry { display: flex; gap: 12px; padding: 4px 0; color: var(--text-secondary); }
+    .activity-time { color: var(--text-muted); flex-shrink: 0; }
+    .activity-action { color: var(--cyan); flex-shrink: 0; }
+    .activity-detail { color: var(--text-primary); }
+
+    /* ── Mobile Sidebar Toggle ── */
+    .sidebar-toggle { display: none; background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+    @media (max-width: 768px) {
+      .sidebar-toggle { display: block; }
+      .sidebar { position: fixed; left: -260px; z-index: 1000; width: 260px; transition: left 0.3s ease; }
+      .sidebar.open { left: 0; }
+      .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+      .sidebar-backdrop.open { display: block; }
+    }
+
+    /* ── Bottom Bar (shortcuts hint) ── */
+    .bottom-bar { position: fixed; bottom: 0; left: var(--sidebar-width); right: 0; height: 28px; background: var(--bg-surface); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: var(--text-muted); gap: 16px; z-index: 50; }
+    .bottom-bar kbd { display: inline-block; padding: 0 4px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 2px; font-family: var(--font-mono); font-size: 10px; }
+    @media (max-width: 768px) { .bottom-bar { left: 0; } }
+  </style>
 </head>
 <body>
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Global Search Palette -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-palette">
+      <input class="search-palette-input" id="search-input" type="text" placeholder="Search pages, skills, commands..." autocomplete="off" />
+      <div class="search-results" id="search-results"></div>
+      <div class="search-footer">
+        <span><kbd>↑↓</kbd> Navigate</span>
+        <span><kbd>↵</kbd> Open</span>
+        <span><kbd>Esc</kbd> Close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts Overlay -->
+  <div class="shortcuts-overlay" id="shortcuts-overlay">
+    <div class="shortcuts-panel">
+      <div class="shortcuts-title">⌨️ Keyboard Shortcuts</div>
+      <div class="shortcut-row"><div class="shortcut-desc">Open search</div><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>K</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Show shortcuts</div><div class="shortcut-keys"><kbd>?</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Dashboard</div><div class="shortcut-keys"><kbd>G</kbd> <kbd>D</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Chat</div><div class="shortcut-keys"><kbd>G</kbd> <kbd>C</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Sahabat</div><div class="shortcut-keys"><kbd>G</kbd> <kbd>S</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Keris</div><div class="shortcut-keys"><kbd>G</kbd> <kbd>K</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Perisai</div><div class="shortcut-keys"><kbd>G</kbd> <kbd>P</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Toggle activity log</div><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>L</kbd></div></div>
+      <div class="shortcut-row"><div class="shortcut-desc">Close overlay / modal</div><div class="shortcut-keys"><kbd>Esc</kbd></div></div>
+    </div>
+  </div>
+
+  <!-- Activity Log Drawer -->
+  <div class="activity-drawer" id="activity-drawer">
+    <div class="activity-drawer-header">
+      <div class="activity-drawer-title">📋 Activity Log</div>
+      <button class="btn btn-sm" onclick="toggleActivity()">✕ Close</button>
+    </div>
+    <div class="activity-drawer-body" id="activity-body"></div>
+  </div>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
   <div class="app-layout">
     <!-- ═══ Sidebar ═══ -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
+        <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
         <div class="sidebar-brand-icon">J</div>
         <div>
           <div class="sidebar-brand-text">JEBAT</div>
           <div class="sidebar-brand-version">v6.1.0</div>
         </div>
+      </div>
+
+      <!-- Search Trigger -->
+      <div class="sidebar-section" style="padding-top:var(--space-sm)">
+        <button class="btn" style="width:100%;justify-content:flex-start;gap:8px;color:var(--text-muted);font-size:13px" onclick="openSearch()">
+          <span>🔍</span> Search...
+          <span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--bg-elevated);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Ctrl+K</span>
+        </button>
       </div>
 
       <!-- Platform -->
@@ -105,40 +227,227 @@
     <!-- ═══ Topbar ═══ -->
     <header class="topbar">
       <div class="topbar-left">
+        <button class="sidebar-toggle" id="topbar-toggle" style="display:none">☰</button>
         <div class="topbar-title" id="page-title">Dashboard</div>
         <div class="topbar-breadcrumb" id="page-breadcrumb">jebat / dashboard</div>
       </div>
       <div class="topbar-right">
+        <button class="btn btn-sm" onclick="openSearch()" title="Search (Ctrl+K)">🔍</button>
+        <button class="btn btn-sm" onclick="toggleActivity()" title="Activity Log (Ctrl+L)">📋</button>
+        <button class="btn btn-sm" onclick="showShortcuts()" title="Shortcuts (?)">⌨️</button>
         <div class="topbar-status">
           <span class="topbar-status-dot" id="status-dot"></span>
           <span id="status-text">Connected</span>
         </div>
-        <button class="btn btn-sm" id="btn-settings" title="Settings">⚙️</button>
       </div>
     </header>
 
     <!-- ═══ Main Content ═══ -->
-    <main class="main-content" id="app-shell">
+    <main class="main-content" id="app-shell" style="padding-bottom:40px">
       <!-- Loaded by router -->
     </main>
   </div>
 
+  <!-- Bottom Bar -->
+  <div class="bottom-bar">
+    <span><kbd>Ctrl</kbd>+<kbd>K</kbd> Search</span>
+    <span><kbd>?</kbd> Shortcuts</span>
+    <span><kbd>Ctrl</kbd>+<kbd>L</kbd> Log</span>
+    <span style="margin-left:auto" id="bottom-page">dashboard</span>
+  </div>
+
   <script src="/webui/static/js/api.js"></script>
   <script>
-    // ═══ Shell Router ═══
+    // ═══════════════════════════════════════════════════
+    // 1. TOAST SYSTEM
+    // ═══════════════════════════════════════════════════
+    const toastContainer = document.getElementById('toast-container');
+    const TOAST_ICONS = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    const TOAST_DURATION = 4000;
+
+    function toast(message, type = 'info', duration = TOAST_DURATION) {
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<span class="toast-icon">${TOAST_ICONS[type]}</span><span class="toast-msg">${message}</span><span class="toast-close" onclick="this.parentElement.remove()">✕</span>`;
+      toastContainer.appendChild(el);
+      setTimeout(() => { el.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => el.remove(), 300); }, duration);
+      logActivity(type.toUpperCase(), message);
+      return el;
+    }
+    window.toast = toast;
+
+    // ═══════════════════════════════════════════════════
+    // 2. GLOBAL SEARCH PALETTE
+    // ═══════════════════════════════════════════════════
+    const SEARCH_ITEMS = [
+      { icon: '📊', name: 'Dashboard', desc: 'Platform overview', page: 'dashboard', badge: 'Platform' },
+      { icon: '💬', name: 'Chat', desc: 'Universal LLM chat', page: 'chat', badge: 'Platform' },
+      { icon: '⚙️', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
+      { icon: '🤖', name: 'Sahabat', desc: 'Conversational AI companion', page: 'sahabat', badge: 'v1.0' },
+      { icon: '🛡️', name: 'Keris', desc: 'Sentinel Security — pentest', page: 'keris', badge: 'v1.0' },
+      { icon: '💻', name: 'Pandai', desc: 'Developer Suite', page: 'pandai', badge: 'v1.0' },
+      { icon: '🌐', name: 'Perisai', desc: 'Nexus multi-channel bot', page: 'perisai', badge: 'v1.0' },
+      { icon: '🧠', name: 'Skills', desc: 'Procedural memory browser', page: 'skills', badge: 'System' },
+      { icon: '🤝', name: 'Agents', desc: 'Multi-agent orchestration', page: 'agents', badge: 'System' },
+      { icon: '📡', name: 'Channels', desc: 'Gateway connections', page: 'channels', badge: 'System' },
+      { icon: '🔧', name: 'Setup', desc: 'Environment & providers', page: 'setup', badge: 'System' },
+    ];
+
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    let searchIdx = 0;
+
+    function openSearch() {
+      searchOverlay.classList.add('open');
+      searchInput.value = '';
+      searchInput.focus();
+      renderSearchResults('');
+      logActivity('NAV', 'Opened search palette');
+    }
+    function closeSearch() { searchOverlay.classList.remove('open'); }
+    window.openSearch = openSearch;
+
+    function renderSearchResults(query) {
+      const q = query.toLowerCase();
+      const filtered = q ? SEARCH_ITEMS.filter(i =>
+        i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q) || i.badge.toLowerCase().includes(q)
+      ) : SEARCH_ITEMS;
+
+      searchIdx = 0;
+      searchResults.innerHTML = filtered.map((item, i) => `
+        <div class="search-result ${i === 0 ? 'active' : ''}" data-page="${item.page}" data-idx="${i}">
+          <span class="search-result-icon">${item.icon}</span>
+          <div class="search-result-text">
+            <div class="search-result-name">${item.name}</div>
+            <div class="search-result-desc">${item.desc}</div>
+          </div>
+          <span class="search-result-badge">${item.badge}</span>
+        </div>
+      `).join('') || '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px">No results found</div>';
+
+      searchResults.querySelectorAll('.search-result').forEach(el => {
+        el.addEventListener('click', () => { navigate(el.dataset.page); history.pushState(null, '', '#' + el.dataset.page); closeSearch(); });
+      });
+    }
+
+    searchInput.addEventListener('input', e => renderSearchResults(e.target.value));
+    searchInput.addEventListener('keydown', e => {
+      const items = searchResults.querySelectorAll('.search-result');
+      if (e.key === 'ArrowDown') { e.preventDefault(); searchIdx = Math.min(searchIdx + 1, items.length - 1); items.forEach((el, i) => el.classList.toggle('active', i === searchIdx)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); searchIdx = Math.max(searchIdx - 1, 0); items.forEach((el, i) => el.classList.toggle('active', i === searchIdx)); }
+      else if (e.key === 'Enter') { const active = items[searchIdx]; if (active) { navigate(active.dataset.page); history.pushState(null, '', '#' + active.dataset.page); closeSearch(); } }
+      else if (e.key === 'Escape') { closeSearch(); }
+    });
+    searchOverlay.addEventListener('click', e => { if (e.target === searchOverlay) closeSearch(); });
+
+    // ═══════════════════════════════════════════════════
+    // 3. KEYBOARD SHORTCUTS
+    // ═══════════════════════════════════════════════════
+    const shortcutsOverlay = document.getElementById('shortcuts-overlay');
+    function showShortcuts() { shortcutsOverlay.classList.add('open'); logActivity('NAV', 'Opened shortcuts overlay'); }
+    function hideShortcuts() { shortcutsOverlay.classList.remove('open'); }
+    window.showShortcuts = showShortcuts;
+    shortcutsOverlay.addEventListener('click', e => { if (e.target === shortcutsOverlay) hideShortcuts(); });
+
+    // G+{key} navigation
+    let gPending = false;
+    const G_MAP = { d: 'dashboard', c: 'chat', s: 'sahabat', k: 'keris', p: 'perisai', a: 'agents', n: 'channels', t: 'setup' };
+
+    document.addEventListener('keydown', e => {
+      // Skip if typing in input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      // Ctrl+K = search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); return; }
+      // Ctrl+L = activity log
+      if ((e.ctrlKey || e.metaKey) && e.key === 'l') { e.preventDefault(); toggleActivity(); return; }
+      // Escape = close overlays
+      if (e.key === 'Escape') { closeSearch(); hideShortcuts(); return; }
+      // ? = shortcuts
+      if (e.key === '?') { showShortcuts(); return; }
+      // G + key navigation
+      if (gPending) {
+        gPending = false;
+        const page = G_MAP[e.key.toLowerCase()];
+        if (page) { navigate(page); history.pushState(null, '', '#' + page); toast(`Navigated to ${page}`, 'info', 1500); }
+        return;
+      }
+      if (e.key === 'g' || e.key === 'G') { gPending = true; setTimeout(() => { gPending = false; }, 800); }
+    });
+
+    // ═══════════════════════════════════════════════════
+    // 4. ACTIVITY LOG
+    // ═══════════════════════════════════════════════════
+    const activityDrawer = document.getElementById('activity-drawer');
+    const activityBody = document.getElementById('activity-body');
+    const activityLog = [];
+    const MAX_ACTIVITY = 100;
+
+    function logActivity(action, detail) {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      activityLog.unshift({ time, action, detail });
+      if (activityLog.length > MAX_ACTIVITY) activityLog.pop();
+      renderActivity();
+    }
+    window.logActivity = logActivity;
+
+    function renderActivity() {
+      activityBody.innerHTML = activityLog.map(e => `
+        <div class="activity-entry">
+          <span class="activity-time">${e.time}</span>
+          <span class="activity-action">[${e.action}]</span>
+          <span class="activity-detail">${e.detail}</span>
+        </div>
+      `).join('');
+    }
+
+    function toggleActivity() { activityDrawer.classList.toggle('open'); }
+    window.toggleActivity = toggleActivity;
+
+    // ═══════════════════════════════════════════════════
+    // 5. MOBILE SIDEBAR
+    // ═══════════════════════════════════════════════════
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    function toggleSidebar() { sidebar.classList.toggle('open'); backdrop.classList.toggle('open'); }
+    document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
+    document.getElementById('topbar-toggle')?.addEventListener('click', toggleSidebar);
+    backdrop.addEventListener('click', toggleSidebar);
+
+    // Show topbar toggle on mobile
+    function checkMobile() {
+      const tt = document.getElementById('topbar-toggle');
+      if (tt) tt.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+    }
+    window.addEventListener('resize', checkMobile);
+    checkMobile();
+
+    // ═══════════════════════════════════════════════════
+    // 6. SESSION PERSISTENCE
+    // ═══════════════════════════════════════════════════
+    function saveSession() {
+      try {
+        const page = location.hash.replace('#', '') || 'dashboard';
+        localStorage.setItem('jebat_last_page', page);
+      } catch {}
+    }
+    function loadSession() {
+      try {
+        return localStorage.getItem('jebat_last_page') || 'dashboard';
+      } catch { return 'dashboard'; }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 7. SHELL ROUTER
+    // ═══════════════════════════════════════════════════
     const partialCache = {};
     const PAGE_TITLES = {
-      dashboard: 'Dashboard',
-      chat: 'Chat',
-      control: 'Control Center',
-      sahabat: 'Sahabat — Companion',
-      keris: 'Keris — Sentinel Security',
-      pandai: 'Pandai — Developer Suite',
-      perisai: 'Perisai — Nexus',
-      skills: 'Skills',
-      agents: 'Agents',
-      channels: 'Channels',
-      setup: 'Setup',
+      dashboard: 'Dashboard', chat: 'Chat', control: 'Control Center',
+      sahabat: 'Sahabat — Companion', keris: 'Keris — Sentinel Security',
+      pandai: 'Pandai — Developer Suite', perisai: 'Perisai — Nexus',
+      skills: 'Skills', agents: 'Agents', channels: 'Channels', setup: 'Setup',
     };
 
     async function loadPartial(name) {
@@ -151,15 +460,10 @@
       } catch { return null; }
     }
 
-    function removeScripts(container) {
-      container.querySelectorAll('script').forEach(s => s.remove());
-    }
-
+    function removeScripts(container) { container.querySelectorAll('script').forEach(s => s.remove()); }
     function runScripts(container) {
       container.querySelectorAll('script:not([src])').forEach(old => {
-        const s = document.createElement('script');
-        s.textContent = old.textContent;
-        old.replaceWith(s);
+        const s = document.createElement('script'); s.textContent = old.textContent; old.replaceWith(s);
       });
     }
 
@@ -167,54 +471,41 @@
       const main = document.getElementById('app-shell');
       const title = document.getElementById('page-title');
       const breadcrumb = document.getElementById('page-breadcrumb');
+      const bottomPage = document.getElementById('bottom-page');
       if (!main) return;
 
-      // Active nav
-      document.querySelectorAll('.sidebar-link').forEach(lnk => {
-        lnk.classList.toggle('active', lnk.dataset.page === name);
-      });
-
-      // Update topbar
+      document.querySelectorAll('.sidebar-link').forEach(lnk => lnk.classList.toggle('active', lnk.dataset.page === name));
       title.textContent = PAGE_TITLES[name] || name;
       breadcrumb.textContent = `jebat / ${name}`;
+      bottomPage.textContent = name;
+      saveSession();
 
-      // Loading skeleton
       main.innerHTML = '<div style="padding:48px"><div class="skeleton" style="height:200px;margin-bottom:16px"></div><div class="skeleton" style="height:120px"></div></div>';
-
-      // Load partial
       const partial = await loadPartial(name);
       if (!partial) {
-        main.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">🚧</div>
-            <div class="empty-state-title">Coming Soon</div>
-            <div class="empty-state-desc">This page is under development.</div>
-          </div>`;
+        main.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚧</div><div class="empty-state-title">Coming Soon</div><div class="empty-state-desc">This page is under development.</div></div>';
         return;
       }
-
-      removeScripts(main);
-      main.innerHTML = partial;
-      runScripts(main);
+      removeScripts(main); main.innerHTML = partial; runScripts(main);
+      logActivity('NAV', `→ ${name}`);
     }
+    window.navigate = navigate;
 
-    // ── Init ──
+    // ── Nav clicks ──
     document.querySelectorAll('.sidebar-link[data-page]').forEach(lnk => {
-      lnk.addEventListener('click', e => {
-        e.preventDefault();
-        const page = lnk.dataset.page;
-        history.pushState(null, '', `#${page}`);
-        navigate(page);
-      });
+      lnk.addEventListener('click', e => { e.preventDefault(); const p = lnk.dataset.page; history.pushState(null, '', `#${p}`); navigate(p); });
     });
 
     // ── Hash routing ──
     function handleHash() {
-      const hash = location.hash.replace('#', '') || 'dashboard';
+      const hash = location.hash.replace('#', '') || loadSession();
       navigate(hash);
     }
     window.addEventListener('hashchange', handleHash);
     handleHash();
+
+    // ── Initial activity ──
+    logActivity('SYS', 'WebUI loaded');
   </script>
 </body>
 </html>
