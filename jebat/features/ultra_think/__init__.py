@@ -1,11 +1,27 @@
-"""Ultra-Think deep reasoning engine."""
+"""
+JEBAT Ultra-Think
 
-from jebat.features.ultra_think.core import (
-    UltraThink,
+Deep reasoning and analysis system.
+"""
+
+from .database_repository import UltraThinkRepository
+from .ultra_think import (
     ThinkingMode,
-    ThinkingTrace,
+    ThinkingPhase,
     ThinkingResult,
+    ThinkingTrace,
+    ThoughtNode,
+    UltraThink,
     create_ultra_think,
 )
 
-__all__ = ["UltraThink", "ThinkingMode", "ThinkingTrace", "ThinkingResult", "create_ultra_think"]
+__all__ = [
+    "UltraThink",
+    "ThinkingMode",
+    "ThinkingPhase",
+    "ThoughtNode",
+    "ThinkingTrace",
+    "ThinkingResult",
+    "create_ultra_think",
+    "UltraThinkRepository",
+]

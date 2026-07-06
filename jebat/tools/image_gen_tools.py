@@ -7,7 +7,9 @@ provider (OpenAI DALL-E by default, configurable via config.yaml).
 from __future__ import annotations
 
 import base64
+import json
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any

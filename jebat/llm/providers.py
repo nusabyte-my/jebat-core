@@ -1,322 +1,476 @@
-"""LLM providers with failover and streaming support."""
-
 from __future__ import annotations
 
-import asyncio
-import json
-import os
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, Protocol
+from urllib.parse import urljoin
 
-from jebat.llm.config import JebatLLMConfig
-
-
-class BaseProvider:
-    name: str = "base"
-
-    async def generate(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> str:
-        raise NotImplementedError
-
-    async def generate_stream(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> AsyncIterator[str]:
-        """Default: yield the full response as a single chunk (non-streaming providers)."""
-        result = await self.generate(prompt, system_prompt=system_prompt, **kwargs)
-        yield result
+from .auth import get_provider_secret
+from .config import JebatLLMConfig
+from .ninerouter_provider import NineRouterProvider, build_ninerouter_provider, NINEROUTER_DEFAULT_HOST
+from .token_usage import TokenUsage, usage_from_texts
 
 
-class LocalEchoProvider(BaseProvider):
-    name = "local"
-
-    async def generate(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> str:
-        return f"[local echo] system: {system_prompt} | prompt: {prompt}"
-
-    async def generate_stream(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> AsyncIterator[str]:
-        """Simulate token-by-token streaming for local echo."""
-        full = await self.generate(prompt, system_prompt=system_prompt, **kwargs)
-        words = full.split(" ")
-        for i, word in enumerate(words):
-            prefix = "" if i == 0 else " "
-            yield prefix + word
-            await asyncio.sleep(0.02)  # simulate token delay
+class LLMProvider(Protocol):
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        ...
 
 
-class OpenAIProvider(BaseProvider):
-    """OpenAI-compatible provider. Subclass and override _make_client for
-    alternative endpoints (e.g. llama.cpp, OpenRouter).
-    """
-    name = "openai"
-    _default_model: str = "gpt-4o"
-    _error_label: str = "OpenAI"
-
-    def _make_client(self, **kwargs: Any):  # type: ignore[no-untyped-def]
-        from openai import AsyncOpenAI
-        return AsyncOpenAI()
-
-    async def generate(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> str:
-        try:
-            client = self._make_client(**kwargs)
-            messages = []
-            if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-            messages.append({"role": "user", "content": prompt})
-            resp = await client.chat.completions.create(
-                model=kwargs.get("model", self._default_model),
-                messages=messages,
-                temperature=kwargs.get("temperature", 0.2),
-                max_tokens=kwargs.get("max_tokens", 4096),
-            )
-            return resp.choices[0].message.content or ""
-        except Exception as exc:
-            raise RuntimeError(f"{self._error_label} provider error: {exc}") from exc
-
-    async def generate_stream(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> AsyncIterator[str]:
-        try:
-            client = self._make_client(**kwargs)
-            messages = []
-            if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-            messages.append({"role": "user", "content": prompt})
-            stream = await client.chat.completions.create(
-                model=kwargs.get("model", self._default_model),
-                messages=messages,
-                temperature=kwargs.get("temperature", 0.2),
-                max_tokens=kwargs.get("max_tokens", 4096),
-                stream=True,
-            )
-            async for chunk in stream:
-                delta = chunk.choices[0].delta if chunk.choices else None
-                if delta and delta.content:
-                    yield delta.content
-        except Exception as exc:
-            raise RuntimeError(f"{self._error_label} streaming error: {exc}") from exc
+@dataclass(slots=True)
+class ProviderGeneration:
+    text: str
+    usage: TokenUsage
 
 
-class AnthropicProvider(BaseProvider):
-    name = "anthropic"
-
-    async def generate(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> str:
-        try:
-            import anthropic
-            client = anthropic.AsyncAnthropic()
-            resp = await client.messages.create(
-                model=kwargs.get("model", "claude-sonnet-4-20250514"),
-                max_tokens=kwargs.get("max_tokens", 4096),
-                system=system_prompt if system_prompt else anthropic.NOT_GIVEN,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return resp.content[0].text if resp.content else ""
-        except Exception as exc:
-            raise RuntimeError(f"Anthropic provider error: {exc}") from exc
-
-    async def generate_stream(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> AsyncIterator[str]:
-        try:
-            import anthropic
-            client = anthropic.AsyncAnthropic()
-            async with client.messages.stream(
-                model=kwargs.get("model", "claude-sonnet-4-20250514"),
-                max_tokens=kwargs.get("max_tokens", 4096),
-                system=system_prompt if system_prompt else anthropic.NOT_GIVEN,
-                messages=[{"role": "user", "content": prompt}],
-            ) as stream:
-                async for text in stream.text_stream:
-                    yield text
-        except Exception as exc:
-            raise RuntimeError(f"Anthropic streaming error: {exc}") from exc
+def _input_for_usage(prompt: str, system_prompt: str | None = None) -> str:
+    return "\n\n".join(part for part in [system_prompt or "", prompt] if part)
 
 
-class OllamaProvider(BaseProvider):
-    name = "ollama"
+@dataclass(slots=True)
+class LocalEchoProvider:
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
 
-    def __init__(self, base_url: Optional[str] = None) -> None:
-        self._base_url = base_url or "http://localhost:11434"
-
-    async def generate(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> str:
-        import httpx
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-        async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(
-                f"{self._base_url}/api/chat",
-                json={
-                    "model": kwargs.get("model", "qwen2.5-coder:7b"),
-                    "messages": messages,
-                    "stream": False,
-                    "options": {
-                        "temperature": kwargs.get("temperature", 0.2),
-                        "num_predict": kwargs.get("max_tokens", 4096),
-                    },
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("message", {}).get("content", "")
-
-    async def generate_stream(self, prompt: str, system_prompt: str = "", **kwargs: Any) -> AsyncIterator[str]:
-        import httpx
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-        async with httpx.AsyncClient(timeout=120) as client:
-            async with client.stream(
-                "POST",
-                f"{self._base_url}/api/chat",
-                json={
-                    "model": kwargs.get("model", "qwen2.5-coder:7b"),
-                    "messages": messages,
-                    "stream": True,
-                    "options": {
-                        "temperature": kwargs.get("temperature", 0.2),
-                        "num_predict": kwargs.get("max_tokens", 4096),
-                    },
-                },
-            ) as resp:
-                resp.raise_for_status()
-                async for line in resp.aiter_lines():
-                    if line:
-                        try:
-                            data = json.loads(line)
-                            content = data.get("message", {}).get("content", "")
-                            if content:
-                                yield content
-                        except json.JSONDecodeError:
-                            continue
-
-
-class LlamaCppProvider(OpenAIProvider):
-    """llama.cpp server via its OpenAI-compatible HTTP API."""
-    name = "llamacpp"
-    _default_model: str = "local-model"
-    _error_label: str = "llama.cpp"
-
-    def __init__(self, base_url: Optional[str] = None) -> None:
-        self._base_url = base_url or os.getenv("LLAMA_CPP_HOST", "http://127.0.0.1:8080")
-
-    def _make_client(self, **kwargs: Any):  # type: ignore[no-untyped-def]
-        from openai import AsyncOpenAI
-        return AsyncOpenAI(base_url=f"{self._base_url}/v1", api_key="none")
-
-
-class OpenRouterProvider(OpenAIProvider):
-    """OpenRouter multi-provider gateway (OpenAI-compatible API)."""
-    name = "openrouter"
-    _default_model: str = "openai/gpt-4o"
-    _error_label: str = "OpenRouter"
-
-    def _make_client(self, **kwargs: Any):  # type: ignore[no-untyped-def]
-        from openai import AsyncOpenAI
-        api_key = os.getenv("OPENROUTER_API_KEY", "")
-        if not api_key:
-            raise RuntimeError(
-                "OPENROUTER_API_KEY env var is not set. "
-                "Set it to your OpenRouter API key to use this provider."
-            )
-        return AsyncOpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=api_key,
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        preface = system_prompt.strip() if system_prompt else "JEBAT local fallback"
+        text = f"{preface}\n\n{prompt}".strip()
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(_input_for_usage(prompt, system_prompt), text, provider="local"),
         )
 
 
-# ---------------------------------------------------------------------------
-# Provider registry
-# ---------------------------------------------------------------------------
+@dataclass(slots=True)
+class OpenAIProvider:
+    api_key: str
+    model: str
+    temperature: float
+    max_tokens: int
 
-_PROVIDER_MAP: Dict[str, type] = {
-    "openai": OpenAIProvider,
-    "anthropic": AnthropicProvider,
-    "ollama": OllamaProvider,
-    "llamacpp": LlamaCppProvider,
-    "openrouter": OpenRouterProvider,
-    "local": LocalEchoProvider,
-}
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        try:
+            from openai import AsyncOpenAI
+        except ImportError as exc:
+            raise RuntimeError("openai package is not installed") from exc
+
+        client = AsyncOpenAI(api_key=self.api_key)
+        response = await client.responses.create(
+            model=self.model,
+            input=[
+                {
+                    "role": "system",
+                    "content": [{"type": "input_text", "text": system_prompt or "You are JEBAT."}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": prompt}],
+                },
+            ],
+            temperature=self.temperature,
+            max_output_tokens=self.max_tokens,
+        )
+        text = getattr(response, "output_text", "") or ""
+        if not text:
+            output = getattr(response, "output", []) or []
+            parts: list[str] = []
+            for item in output:
+                for content in getattr(item, "content", []) or []:
+                    maybe_text = getattr(content, "text", "")
+                    if isinstance(maybe_text, str) and maybe_text:
+                        parts.append(maybe_text)
+            text = "\n".join(parts).strip()
+        if not text:
+            raise RuntimeError("OpenAI response did not contain text output")
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider="openai",
+                raw_usage=getattr(response, "usage", None),
+            ),
+        )
 
 
-def _get_provider(name: str) -> BaseProvider:
-    cls = _PROVIDER_MAP.get(name)
-    if cls is None:
+@dataclass(slots=True)
+class AnthropicProvider:
+    api_key: str
+    model: str
+    temperature: float
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        try:
+            import anthropic
+        except ImportError as exc:
+            raise RuntimeError("anthropic package is not installed") from exc
+
+        client = anthropic.AsyncAnthropic(api_key=self.api_key)
+        response = await client.messages.create(
+            model=self.model,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            system=system_prompt or "You are JEBAT.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        parts: list[str] = []
+        for block in response.content:
+            text = getattr(block, "text", None)
+            if isinstance(text, str):
+                parts.append(text)
+        text = "\n".join(parts).strip()
+        if not text:
+            raise RuntimeError("Anthropic response did not contain text output")
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider="anthropic",
+                raw_usage=getattr(response, "usage", None),
+            ),
+        )
+
+
+@dataclass(slots=True)
+class GoogleProvider:
+    api_key: str
+    model: str
+    temperature: float
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        model_name = self.model if self.model.startswith("gemini") else f"gemini/{self.model}"
+        payload = {
+            "system_instruction": {"parts": [{"text": system_prompt or "You are JEBAT."}]},
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": self.temperature,
+                "maxOutputTokens": self.max_tokens,
+            },
+        }
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model_name}:generateContent?key={self.api_key}"
+        )
+        import httpx
+
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+        data = response.json()
+        candidates = data.get("candidates", [])
+        parts: list[str] = []
+        for candidate in candidates:
+            content = candidate.get("content", {})
+            for part in content.get("parts", []):
+                text = part.get("text")
+                if isinstance(text, str):
+                    parts.append(text)
+        text = "\n".join(parts).strip()
+        if not text:
+            raise RuntimeError("Google response did not contain text output")
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider="google",
+                raw_usage=data.get("usageMetadata", {}),
+            ),
+        )
+
+
+@dataclass(slots=True)
+class OpenRouterProvider:
+    api_key: str
+    model: str
+    temperature: float
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        import httpx
+
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices", [])
+        text = ""
+        if choices:
+            message = choices[0].get("message", {})
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                text = content.strip()
+        if not text:
+            raise RuntimeError("OpenRouter response did not contain text output")
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider="openrouter",
+                raw_usage=data.get("usage", {}),
+            ),
+        )
+
+
+@dataclass(slots=True)
+class LlamaCppProvider:
+    model: str
+    host: str
+    temperature: float
+    top_p: float
+    top_k: int
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "top_k": self.top_k,
+            "max_tokens": self.max_tokens,
+            "stream": False,
+        }
+        import httpx
+
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(
+                urljoin(self.host.rstrip("/") + "/", "v1/chat/completions"),
+                json=payload,
+            )
+            response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices", [])
+        text = ""
+        if choices:
+            message = choices[0].get("message", {})
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                text = content.strip()
+        if not text:
+            raise RuntimeError("llama.cpp response did not contain text output")
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider="llamacpp",
+                raw_usage=data.get("usage", {}),
+            ),
+        )
+
+
+@dataclass(slots=True)
+class OllamaProvider:
+    model: str
+    host: str
+    temperature: float
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        payload = {
+            "model": self.model,
+            "system": system_prompt or "You are JEBAT.",
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": self.temperature},
+        }
+        import httpx
+
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(
+                urljoin(self.host.rstrip("/") + "/", "api/generate"),
+                json=payload,
+            )
+            response.raise_for_status()
+        data = response.json()
+        text = str(data.get("response", "")).strip()
+        if not text:
+            raise RuntimeError("Ollama response did not contain text output")
+        raw_usage = {
+            key: value
+            for key, value in data.items()
+            if key in {"prompt_eval_count", "eval_count", "total_duration", "load_duration"}
+        }
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider="ollama",
+                raw_usage=raw_usage,
+            ),
+        )
+
+
+def build_provider(config: JebatLLMConfig) -> LLMProvider:
+    provider = config.provider.lower()
+    if provider == "openai":
+        api_key = get_provider_secret("openai")
+        return OpenAIProvider(
+            api_key=api_key,
+            model=config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
+    if provider == "google":
+        api_key = get_provider_secret("google")
+        return GoogleProvider(
+            api_key=api_key,
+            model=config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
+    if provider == "anthropic":
+        api_key = get_provider_secret("anthropic")
+        return AnthropicProvider(
+            api_key=api_key,
+            model=config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
+    if provider == "openrouter":
+        api_key = get_provider_secret("openrouter")
+        return OpenRouterProvider(
+            api_key=api_key,
+            model=config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
+    if provider == "llamacpp":
+        return LlamaCppProvider(
+            model=config.model,
+            host=config.llamacpp_host,
+            temperature=config.temperature,
+            top_p=config.top_p,
+            top_k=config.top_k,
+            max_tokens=config.max_tokens,
+        )
+    if provider == "ollama":
+        return OllamaProvider(
+            model=config.model,
+            host=config.ollama_host,
+            temperature=config.temperature,
+        )
+    if provider == "ninerouter":
+        return build_ninerouter_provider(config)
+    if provider == "local":
         return LocalEchoProvider()
-    return cls()
+    raise ValueError(f"unsupported provider: {config.provider}")
 
-
-def list_supported_providers() -> List[Dict[str, str]]:
-    return [
-        {"name": "openai", "description": "OpenAI API"},
-        {"name": "anthropic", "description": "Anthropic Claude"},
-        {"name": "ollama", "description": "Ollama local"},
-        {"name": "llamacpp", "description": "llama.cpp server (OpenAI-compatible)"},
-        {"name": "openrouter", "description": "OpenRouter (multi-provider gateway)"},
-        {"name": "local", "description": "Local echo provider"},
-    ]
-
-
-# ---------------------------------------------------------------------------
-# Failover generation
-# ---------------------------------------------------------------------------
 
 async def generate_with_failover(
     config: JebatLLMConfig,
     prompt: str,
-    system_prompt: str = "",
-    **kwargs: Any,
-) -> Tuple[str, str]:
-    """Try the primary provider, then fall back through the list."""
-    providers_to_try = [config.provider] + list(config.fallback_providers)
-    last_error: Optional[Exception] = None
-
-    for provider_name in providers_to_try:
-        provider = _get_provider(provider_name)
+    system_prompt: str | None = None,
+    *,
+    return_metadata: bool = False,
+) -> tuple[str | ProviderGeneration, str]:
+    attempts = [config.provider, *[name for name in config.fallback_providers if name != config.provider]]
+    errors: list[str] = []
+    for provider_name in attempts:
+        candidate = JebatLLMConfig(
+            provider=provider_name,
+            model=config.model,
+            temperature=config.temperature,
+            top_p=config.top_p,
+            top_k=config.top_k,
+            max_tokens=config.max_tokens,
+            ollama_host=config.ollama_host,
+            llamacpp_host=config.llamacpp_host,
+            fallback_providers=(),
+            history_path=config.history_path,
+        )
         try:
-            result = await provider.generate(
-                prompt,
-                system_prompt=system_prompt,
-                model=config.model,
-                temperature=config.temperature,
-                max_tokens=config.max_tokens,
-                **kwargs,
-            )
-            return result, provider_name
+            provider = build_provider(candidate)
+            if return_metadata and hasattr(provider, "generate_with_metadata"):
+                return await provider.generate_with_metadata(prompt=prompt, system_prompt=system_prompt), provider_name
+            return await provider.generate(prompt=prompt, system_prompt=system_prompt), provider_name
         except Exception as exc:
-            last_error = exc
-            continue
-
-    raise RuntimeError(
-        f"All providers failed. Last error: {last_error}"
-    )
+            errors.append(f"{provider_name}: {exc}")
+    raise RuntimeError("all providers failed: " + "; ".join(errors))
 
 
-async def generate_stream_with_failover(
-    config: JebatLLMConfig,
-    prompt: str,
-    system_prompt: str = "",
-    **kwargs: Any,
-) -> AsyncIterator[str]:
-    """Try the primary provider's stream, then fall back through the list.
-
-    Yields text chunks as they arrive. The provider name is sent as the
-    first SSE event so the client knows which backend is active.
-    """
-    providers_to_try = [config.provider] + list(config.fallback_providers)
-    last_error: Optional[Exception] = None
-
-    for provider_name in providers_to_try:
-        provider = _get_provider(provider_name)
-        try:
-            # Yield provider info as first event
-            yield {"type": "metadata", "provider": provider_name, "model": config.model}
-            async for chunk in provider.generate_stream(
-                prompt,
-                system_prompt=system_prompt,
-                model=config.model,
-                temperature=config.temperature,
-                max_tokens=config.max_tokens,
-                **kwargs,
-            ):
-                yield {"type": "token", "content": chunk}
-            yield {"type": "done", "provider": provider_name}
-            return
-        except Exception as exc:
-            last_error = exc
-            continue
-
-    yield {"type": "error", "message": f"All providers failed: {last_error}"}
+def list_supported_providers() -> list[dict[str, str]]:
+    return [
+        {"name": "openai", "env": "OPENAI_API_KEY", "notes": "OpenAI Responses API"},
+        {"name": "google", "env": "GOOGLE_API_KEY or GEMINI_API_KEY", "notes": "Google Gemini API"},
+        {"name": "anthropic", "env": "ANTHROPIC_API_KEY", "notes": "Anthropic Messages API"},
+        {"name": "openrouter", "env": "OPENROUTER_API_KEY", "notes": "OpenRouter chat completions"},
+        {"name": "llamacpp", "env": "LLAMA_CPP_HOST", "notes": "llama.cpp OpenAI-compatible server"},
+        {"name": "ollama", "env": "OLLAMA_HOST", "notes": "Local Ollama daemon"},
+        {"name": "ninerouter", "env": "NINEROUTER_HOST + NINEROUTER_API_KEY", "notes": "9Router FREE AI proxy (kr/oc/glm/mm/vtx models)"},
+        {"name": "local", "env": "-", "notes": "Deterministic offline fallback"},
+    ]

@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
@@ -25,7 +26,7 @@ from typing import Any, Callable, Coroutine, Dict, List, Optional
 import httpx
 
 from jebat.config import JebatConfig, load_config
-from jebat.tools import TOOL_REGISTRY, register_tool
+from jebat.tools import TOOL_REGISTRY, ToolDef, register_tool
 
 logger = logging.getLogger(__name__)
 
@@ -518,8 +519,8 @@ class MCPClient:
         await transport.start()
         self._transports[name] = transport
 
-        # MCP handshake: initialize (validates protocolVersion internally)
-        await self._initialize(name)
+        # MCP handshake: initialize
+        init_result = await self._initialize(name)
 
         # Discover tools
         await self._discover_tools(name)
@@ -599,21 +600,6 @@ class MCPClient:
 
         response = await transport.send_request(request)
         result = _extract_result(response)
-
-        # Validate the handshake — a server that returns no protocolVersion
-        # (or an error block instead of a result) should not be treated as ready.
-        if not isinstance(result, dict) or not result.get("protocolVersion"):
-            raise RuntimeError(
-                f"MCP server '{server_name}' returned an invalid initialize "
-                f"response (no protocolVersion): {result!r}"
-            )
-        server_proto = result.get("protocolVersion")
-        if server_proto != MCP_PROTOCOL_VERSION:
-            logger.warning(
-                "MCP server '%s' speaks protocol %s; client expects %s — "
-                "continuing, but capabilities may differ.",
-                server_name, server_proto, MCP_PROTOCOL_VERSION,
-            )
 
         self._server_info[server_name] = result
 

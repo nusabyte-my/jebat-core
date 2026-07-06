@@ -2,7 +2,8 @@
 API endpoints for JEBAT monitoring dashboard.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Dict, Any, List
+from fastapi.responses import JSONResponse
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta
 import logging
 

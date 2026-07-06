@@ -18,9 +18,10 @@ import asyncio
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -224,7 +225,7 @@ async def file_patch(
         
         count = content.count(old_string)
         if count == 0:
-            return {"error": "old_string not found in file", "path": str(resolved)}
+            return {"error": f"old_string not found in file", "path": str(resolved)}
         
         if not replace_all and count > 1:
             return {

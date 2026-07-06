@@ -4,9 +4,12 @@ Git tools for commit, diff, blame, log, apply, branch management.
 Essential for any coding CLI agent — table stakes alongside Hermes/Claude Code/Codex.
 """
 
+import json
 import os
 import subprocess
 import re
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from jebat.tools import register_tool, ToolDef
@@ -427,6 +430,7 @@ def git_stash(**kwargs) -> dict[str, Any]:
 # ─── Module Register ────────────────────────────────────────────────────
 
 # Wire tool handlers to ToolDefs and register in global TOOL_REGISTRY
+import asyncio
 from jebat.tools import register_tool
 
 _HANDLER_MAP = {
@@ -460,4 +464,4 @@ for tool_def in GIT_TOOLS:
             description=tool_def.description,
         )
 
-print("[PendekarGit] 8 git tools registered: commit, diff, log, blame, status, branch, apply, stash")
+print(f"[PendekarGit] 8 git tools registered: commit, diff, log, blame, status, branch, apply, stash")

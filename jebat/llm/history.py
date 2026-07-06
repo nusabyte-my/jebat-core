@@ -1,41 +1,45 @@
-"""Chat history persistence using JSONL files."""
-
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List
 
 
-@dataclass
+@dataclass(slots=True)
 class ChatTurn:
     role: str
     content: str
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
 
 class ChatHistoryStore:
-    """Append-only JSONL chat history per session."""
-
-    def __init__(self, path: Path):
-        self.path = path
+    def __init__(self, path: str | Path) -> None:
+        self.path = Path(path).expanduser()
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def append(self, session_id: str, role: str, content: str) -> None:
-        entry = {"session_id": session_id, "role": role, "content": content}
-        with open(self.path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+        record = {"session_id": session_id, **asdict(ChatTurn(role=role, content=content))}
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
 
-    def load(self, session_id: str) -> List[ChatTurn]:
-        turns: List[ChatTurn] = []
+    def load(self, session_id: str, limit: int = 20) -> list[ChatTurn]:
         if not self.path.exists():
-            return turns
-        with open(self.path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                entry = json.loads(line)
-                if entry.get("session_id") == session_id:
-                    turns.append(ChatTurn(role=entry["role"], content=entry["content"]))
-        return turns
+            return []
+        rows: list[ChatTurn] = []
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            item = json.loads(line)
+            if item.get("session_id") != session_id:
+                continue
+            rows.append(
+                ChatTurn(
+                    role=str(item.get("role", "user")),
+                    content=str(item.get("content", "")),
+                    created_at=str(item.get("created_at", "")),
+                )
+            )
+        return rows[-limit:]

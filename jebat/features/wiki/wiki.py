@@ -7,6 +7,7 @@ search with rank-fusion.  Includes a WikiRAG helper for prompt injection.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess

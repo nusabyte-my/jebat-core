@@ -2,13 +2,16 @@
 Storage layer for JEBAT monitoring subsystem.
 Handles persistence of metrics to TimescaleDB.
 """
+import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from uuid import uuid4
 
 import asyncpg
+from pydantic import BaseModel
 
-from .models import MonitoringSnapshot
+from .models import ComponentStats, MonitoringSnapshot
 
 logger = logging.getLogger(__name__)
 

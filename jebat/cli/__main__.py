@@ -103,6 +103,18 @@ def add_subcommand_parsers(parser: argparse.ArgumentParser):
     repl_parser.add_argument("--yolo", action="store_true", help="YOLO mode — auto-approve ALL tool calls")
     repl_parser.add_argument("--session", "-s", help="Resume a specific session by ID")
 
+    # Code command — Hermes-style coding agent with multi-agent orchestration
+    code_parser = subparsers.add_parser("code", help="Hermes-style coding agent with multi-agent orchestration")
+    code_parser.add_argument("prompt", nargs="?", help="Coding prompt (omit for interactive mode)")
+    code_parser.add_argument("--provider", help="Override provider")
+    code_parser.add_argument("--model", help="Override model")
+    code_parser.add_argument("--preset", help="Chat preset (fast, deliberate, deep, strategic, creative, critical)")
+    code_parser.add_argument("--project-path", default=".", help="Project root path")
+    code_parser.add_argument("--yolo", action="store_true", help="YOLO mode — auto-approve ALL tool calls")
+    code_parser.add_argument("--safety", default="auto", help="Safety tier (auto/confirm/dangerous)")
+    code_parser.add_argument("--no-stream", action="store_true", help="Disable streaming output")
+    code_parser.add_argument("--auto-commit", "-a", action="store_true", help="Auto-commit changes to git")
+
     # Conversation command
     conv_parser = subparsers.add_parser("conversation", help="Manage persistent chat conversations")
     conv_sub = conv_parser.add_subparsers(dest="conv_command")

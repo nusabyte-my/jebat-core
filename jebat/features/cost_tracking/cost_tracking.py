@@ -16,6 +16,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 # ── Pricing Data (per 1M tokens) ─────────────────────────────────────────
@@ -388,67 +389,6 @@ def get_pricing() -> str:
 
 from jebat.tools import register_tool  # noqa: E402
 
-# ── Auto-profile Tuner ─────────────────────────────────────────────────────
-# Uses real cost data to recommend profile switching when budgets are exceeded.
-
-BUDGET_CAPS: dict[str, float] = {
-    "daily_warn": 0.50,   # Warn at $0.50/day
-    "daily_critical": 1.00,  # Force reduction at $1.00/day
-    "weekly_warn": 3.00,
-    "weekly_critical": 5.00,
-}
-
-
-def recommend_profile() -> dict:
-    """Analyse recent cost data and recommend a profile level + action.
-
-    Returns:
-        dict with keys: recommended_profile, reason, cost_today, cost_weekly, action
-    """
-    from jebat.features.cost_tracking.cost_tracking import get_daily_summary, get_weekly_summary
-
-    today = get_daily_summary()
-    week = get_weekly_summary()
-
-    cost_today = today.total_cost_usd
-    cost_weekly = week.total_cost_usd
-
-    recommendation = "cavement"
-    reasons: list[str] = []
-
-    if cost_today >= BUDGET_CAPS["daily_critical"] or cost_weekly >= BUDGET_CAPS["weekly_critical"]:
-        recommendation = "cavement"
-        reasons.append(f"cost critical - ${cost_today:.2f} today, ${cost_weekly:.2f}/week")
-    elif cost_today >= BUDGET_CAPS["daily_warn"] or cost_weekly >= BUDGET_CAPS["weekly_warn"]:
-        recommendation = "lean"
-        reasons.append(f"cost warning - ${cost_today:.2f} today, ${cost_weekly:.2f}/week")
-    else:
-        recommendation = "deep"
-        reasons.append("budget healthy")
-
-    return {
-        "recommended_profile": recommendation,
-        "reason": "; ".join(reasons),
-        "cost_today": round(cost_today, 4),
-        "cost_weekly": round(cost_weekly, 4),
-        "action": "switch" if recommendation != "deep" else "keep",
-    }
-
-
-def tune_prompt_profile(current_profile: str = "deep") -> str:
-    """Return the recommended profile based on real cost data.
-
-    Args:
-        current_profile: The profile currently active.
-
-    Returns:
-        Recommended profile name (cavement, lean, or deep).
-    """
-    rec = recommend_profile()
-    return rec["recommended_profile"]
-
-
-
 register_tool(
     name="cost_record",
     description="Record token usage with provider/model/tokens and calculate cost",
@@ -479,60 +419,3 @@ register_tool(
     handler=get_pricing,
     schema={},
 )
-
-
-# ── Profile Export/Import ──────────────────────────────────────────────────
-
-_PROFILES_EXPORT_FIELDS = (
-    "current_profile", "cost_limit_daily", "cost_limit_weekly",
-    "last_tuned", "total_spent_today", "total_spent_this_week",
-    "recommended_profile", "tune_errors",
-)
-
-
-def export_profiles(path: str = "") -> str:
-    """Export current profile state to a JSON file. Returns path written."""
-    data = {"version": 1, "exported_at": __import__("time").time(), "profiles": {}}
-    for profile_name in ["cavement", "lean", "deep"]:
-        data["profiles"][profile_name] = tune_prompt_profile(profile_name)
-    data["recommendation"] = recommend_profile()
-    if not path:
-        path = os.path.join(
-            os.path.dirname(__file__), f"profiles_{int(__import__('time').time())}.json"
-        )
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w") as f:
-        __import__("json").dump(data, f, indent=2)
-    return path
-
-
-def import_profiles(path: str) -> dict:
-    """Import profile state from a JSON file. Returns parsed data."""
-    with open(path) as f:
-        data = __import__("json").load(f)
-    return {
-        "version": data.get("version", 0),
-        "profiles": data.get("profiles", {}),
-        "recommendation": data.get("recommendation", {}),
-        "file": path,
-    }
-
-
-def profile_info(detail: str = "short") -> dict:
-    """Show current profile information."""
-    rec = recommend_profile()
-    info = {
-        "current_profile": rec.get("current_profile", "lean"),
-        "recommended_profile": rec.get("recommended_profile", "lean"),
-        "cost_today": rec.get("cost_today", 0.0),
-        "cost_this_week": rec.get("cost_this_week", 0.0),
-        "action": rec.get("action", "keep"),
-"daily_limit": BUDGET_CAPS["daily_critical"],
-        "weekly_limit": BUDGET_CAPS["weekly_critical"],
-    }
-    if detail == "full":
-        profiles_data = {}
-        for pn in ["cavement", "lean", "deep"]:
-            profiles_data[pn] = tune_prompt_profile(pn)
-        info["profiles"] = profiles_data
-    return info

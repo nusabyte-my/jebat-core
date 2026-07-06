@@ -25,8 +25,13 @@ from jebat.llm import (
     resolve_llm_config,
     build_chat_system_prompt,
     apply_chat_preset,
+    estimate_tokens,
 )
 from jebat.llm.chat_runtime import (
+    CHAT_PRESETS,
+    normalize_chat_preset,
+    list_chat_presets,
+    apply_runtime_overrides,
     ChatGenerationMetadata,
 )
 from jebat.tools import TOOL_REGISTRY, call_tool, classify_tool_call
@@ -63,6 +68,7 @@ def _build_project_context_section(project_path: str | None = None) -> str:
 
     Returns empty string if no context files are found.
     """
+    import os
 
     root = Path(project_path) if project_path else Path.cwd()
     root = root.resolve()
@@ -223,38 +229,73 @@ def _format_tool_result_for_llm(tool_name: str, result: Any, error: str | None) 
     return f"Tool {tool_name} result: {str(result)[:4000]}"
 
 
-def _build_tool_system_prompt_appendix() -> str:
+def _build_tool_system_prompt_appendix(max_tools: int = 0) -> str:
     """Build a system prompt section describing available tools.
+
+    When max_tools > 0, only the most commonly used tools are listed with
+    brief descriptions (no parameter details) to save context space for
+    local/small models. When 0, all tools are listed with full parameters.
 
     Only includes tools that are currently registered in TOOL_REGISTRY.
     """
     if not TOOL_REGISTRY:
         return ""
 
-    tool_descriptions = []
-    for name, tool_def in sorted(TOOL_REGISTRY.items()):
-        desc = tool_def.description or "No description"
-        # Brief schema summary
-        props = tool_def.schema.get("properties", {})
-        required = tool_def.schema.get("required", [])
-        param_summary = ""
-        if props:
-            param_parts = []
-            for pname, pinfo in props.items():
-                ptype = pinfo.get("type", "any")
-                req_marker = "*" if pname in required else ""
-                param_parts.append(f"{pname}{req_marker}: {ptype}")
-            param_summary = "(" + ", ".join(param_parts) + ")"
+    # Tools most likely needed by a coding agent — listed first with brief descriptions
+    CORE_TOOLS = [
+        "file_read", "file_write", "file_patch", "file_search", "file_tree",
+        "terminal", "execute_code",
+        "git_status", "git_diff", "git_log", "git_commit", "git_stash", "git_branch",
+        "delegate_task",
+        "search_web",
+        "clarify",
+    ]
 
-        tool_descriptions.append(f"  - {name}{param_summary}: {desc}")
+    tool_descriptions = []
+
+    if max_tools > 0:
+        # Brief mode: only list core tools, no parameter details
+        tool_descriptions.append("  Most useful tools (use these first):")
+        for name in CORE_TOOLS:
+            tdef = TOOL_REGISTRY.get(name)
+            if tdef:
+                desc = (tdef.description or "No description")[:80]
+                tool_descriptions.append(f"    {name}: {desc}")
+        tool_descriptions.append("")
+        tool_descriptions.append(f"  All {len(TOOL_REGISTRY)} tools are available — use any tool by its registered name.")
+        tool_descriptions.append("")
+    else:
+        # Full mode: all tools with parameter details
+        for name, tool_def in sorted(TOOL_REGISTRY.items()):
+            desc = tool_def.description or "No description"
+            props = tool_def.schema.get("properties", {})
+            required = tool_def.schema.get("required", [])
+            param_summary = ""
+            if props:
+                param_parts = []
+                for pname, pinfo in props.items():
+                    ptype = pinfo.get("type", "any")
+                    req_marker = "*" if pname in required else ""
+                    param_parts.append(f"{pname}{req_marker}: {ptype}")
+                param_summary = "(" + ", ".join(param_parts) + ")"
+
+            tool_descriptions.append(f"  - {name}{param_summary}: {desc}")
 
     return (
         "\n\nAvailable tools:\n"
         + "\n".join(tool_descriptions)
-        + "\n\nTo call a tool, use the format:\n"
-        + "Action: <tool_name>\n"
-        + "Action Input: <json parameters>\n"
-        + "\nAfter receiving the Observation, continue reasoning or provide your final answer."
+        + "\n\n## Tool Use Format\n"
+        + "To call a tool, use EXACTLY this format (one tool per response):\n"
+        + "Action: tool_name\n"
+        + 'Action Input: {"param1": "value1"}\n'
+        + "\nExample:\n"
+        + 'Action: file_tree\n'
+        + 'Action Input: {"path": "."}\n'
+        + "\nAfter you send a tool call, you will receive:\n"
+        + "Observation: <tool result>\n\n"
+        + "Then either call another tool or provide your FINAL answer.\n"
+        + "Your final answer should be plain text without Action: or Observation: prefixes.\n"
+        + "Do NOT include the Observation: text in your own response."
     )
 
 
@@ -320,84 +361,38 @@ def _compact_conversation_history(
     messages: list[dict[str, str]],
     max_tokens: int = DEFAULT_MAX_CONTEXT_TOKENS,
 ) -> list[dict[str, str]]:
-    """Compact conversation history using semantic chunking.
+    """Truncate conversation history to fit within a token budget.
 
-    Instead of naive truncation (keep last N messages), this function:
-    1. Groups consecutive messages into topic chunks by detecting
-       subject shifts (new user queries, tool results, etc.)
-    2. Compresses old chunks by keeping only the first + last message
-       from each chunk (preserves context without full verbosity)
-    3. Always keeps the most recent chunk intact for coherence
-
-    This preserves topic boundaries while reducing token usage by ~40-60%.
+    Keeps the system message (if any) and the most recent N messages,
+    dropping oldest messages first. Uses a rough 4-chars-per-token estimate.
     """
     if not messages:
         return []
 
-    from jebat.llm.token_usage import estimate_tokens
-
+    # Rough token estimate: ~4 chars per token
     def msg_tokens(msg: dict[str, str]) -> int:
-        return estimate_tokens(msg.get("content", ""))
+        return len(msg.get("content", "")) // 4 + 1
 
     total = sum(msg_tokens(m) for m in messages)
     if total <= max_tokens:
         return messages
 
-    # ── Semantic chunking ──────────────────────────────────────────────
-    # Detect topic boundaries: new user message after assistant/tool output
-    # marks a fresh topic segment.
-    chunks: list[list[int]] = [[]]  # list of message-index groups
-    current_chunk: list[int] = [0]  # always start with first message
+    # Keep the first message (usually system or initial user prompt)
+    # and trim from the middle
+    result = [messages[0]]
+    remaining_budget = max_tokens - msg_tokens(messages[0])
 
-    for i in range(1, len(messages)):
-        prev_role = messages[i - 1].get("role", "")
-        curr_role = messages[i].get("role", "")
-        # New chunk when: user speaks after assistant/tool, or system boundary
-        if curr_role == "user" and prev_role in ("assistant", "tool"):
-            chunks.append(current_chunk)
-            current_chunk = [i]
+    # Add messages from newest to oldest until budget exhausted
+    for msg in reversed(messages[1:]):
+        t = msg_tokens(msg)
+        if t <= remaining_budget:
+            result.append(msg)
+            remaining_budget -= t
         else:
-            current_chunk.append(i)
+            break
 
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    # ── Compression strategy ───────────────────────────────────────────
-    # Keep the last chunk fully intact (recent context is critical).
-    # For older chunks, keep only first + last message (boundary preservation).
-    result_indices: list[int] = []
-
-    for ci, chunk in enumerate(chunks):
-        is_last = ci == len(chunks) - 1
-        if is_last:
-            # Keep entire last chunk — recent context must be coherent
-            result_indices.extend(chunk)
-        elif len(chunk) <= 2:
-            # Small chunks: keep everything
-            result_indices.extend(chunk)
-        else:
-            # Large old chunk: keep first + last (topic boundaries)
-            result_indices.append(chunk[0])
-            result_indices.append(chunk[-1])
-
-    # Build result
-    result = [messages[i] for i in sorted(result_indices)]
-
-    # If still over budget, fall back to naive truncation
-    if sum(msg_tokens(m) for m in result) > max_tokens:
-        # Keep first message + newest messages until budget exhausted
-        fallback = [messages[0]]
-        remaining_budget = max_tokens - msg_tokens(messages[0])
-        for msg in reversed(messages[1:]):
-            t = msg_tokens(msg)
-            if t <= remaining_budget:
-                fallback.append(msg)
-                remaining_budget -= t
-            else:
-                break
-        return [fallback[0]] + list(reversed(fallback[1:]))
-
-    return result
+    # Reverse back to chronological order (first message stays first)
+    return [result[0]] + list(reversed(result[1:]))
 
 
 # ── Retry Helper ──────────────────────────────────────────────────────────
@@ -482,6 +477,7 @@ class AgentLoop:
         max_context_tokens: int = DEFAULT_MAX_CONTEXT_TOKENS,
         interactive_confirm: Any | None = None,
         session_id: str | None = None,
+        system_prompt: str | None = None,
     ):
         self.config = config or resolve_llm_config(
             provider_override=provider_override,
@@ -494,6 +490,7 @@ class AgentLoop:
         self.max_context_tokens = max_context_tokens
         self.interactive_confirm = interactive_confirm
         self.session_id = session_id
+        self._custom_system_prompt = system_prompt
         self._session_manager = None  # Lazy init
 
         # Accumulated tool call history for this run
@@ -549,37 +546,6 @@ class AgentLoop:
             except ImportError:
                 pass  # Module may not be available (e.g. playwright not installed)
 
-    def _record_call_telemetry(
-        self,
-        provider: str,
-        model: str,
-        usage: dict,
-        iteration: int,
-    ) -> None:
-        """Record an LLM call to the cost tracking engine for real-time telemetry.
-
-        Called on every LLM response in the agent loop so the
-        cost dashboard always has fresh data.
-        """
-        try:
-            from jebat.features.cost_tracking.cost_tracking import record_usage
-
-            prompt_tok = usage.get("prompt_tokens", 0)
-            completion_tok = usage.get("completion_tokens", 0)
-
-            record_usage(
-                provider=provider,
-                model=model,
-                input_tokens=prompt_tok,
-                output_tokens=completion_tok,
-                operation="agent" if self._tool_steps else "chat",
-                session_id=self.session_id or "",
-            )
-        except Exception:
-            # Cost tracking is fire-and-forget — never crash
-            # the agent loop for a telemetry failure.
-            pass
-
     async def run(
         self,
         user_message: str,
@@ -605,7 +571,10 @@ class AgentLoop:
         total_tokens: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
         # Build the augmented system prompt with tool descriptions
-        base_system_prompt = build_chat_system_prompt(mode=mode)
+        if self._custom_system_prompt:
+            base_system_prompt = self._custom_system_prompt
+        else:
+            base_system_prompt = build_chat_system_prompt(mode=mode)
 
         # Inject project context (AGENTS.md, MEMORY.md, DESIGN.md, etc.)
         project_context = _build_project_context_section()
@@ -622,7 +591,10 @@ class AgentLoop:
             pass  # Wiki not available — skip gracefully
 
         self._ensure_tools_imported()
-        tool_appendix = _build_tool_system_prompt_appendix()
+        # Local/small models get a brief tool listing to save context space
+        provider = self.config.provider if hasattr(self.config, 'provider') else ''
+        max_tools = 15 if provider in ('ollama', 'llamacpp', 'local') else 0
+        tool_appendix = _build_tool_system_prompt_appendix(max_tools=max_tools)
         full_system_prompt = base_system_prompt + tool_appendix
 
         # Working prompt — starts with user message, gets augmented with observations
@@ -670,6 +642,7 @@ class AgentLoop:
                         model_override=self.config.model,
                         temperature_override=self.config.temperature,
                         return_metadata=True,
+                        system_prompt_override=full_system_prompt,
                     ),
                     max_retries=3,
                     base_delay=2.0,
@@ -716,14 +689,6 @@ class AgentLoop:
                 total_tokens["completion_tokens"] += metadata.usage.get("completion_tokens", 0)
                 total_tokens["total_tokens"] += metadata.usage.get("total_tokens", 0)
 
-                # Token telemetry: record every LLM call to cost tracking
-                self._record_call_telemetry(
-                    provider=used_provider,
-                    model=getattr(used_config, "model", "unknown") if used_config else "unknown",
-                    usage=metadata.usage,
-                    iteration=iterations,
-                )
-
             # Detect tool calls — ReAct pattern first (works with any provider)
             tool_calls = _extract_react_tool_calls(response_text)
 
@@ -764,6 +729,7 @@ class AgentLoop:
 
             # Execute tool calls
             observation_parts = []
+            consecutive_failures = 0
             for tool_name, params in tool_calls:
                 step = await self._execute_tool_call(tool_name, params)
                 self._tool_steps.append(step)
@@ -771,6 +737,52 @@ class AgentLoop:
                 result_text = _format_tool_result_for_llm(tool_name, step.result, step.error)
                 observation_parts.append(f"Observation: {result_text}")
                 self._tool_observations.append(result_text)
+
+                if step.error:
+                    consecutive_failures += 1
+                else:
+                    consecutive_failures = 0
+
+            # Break if model is stuck in a hallucination loop (5+ consecutive tool failures)
+            if consecutive_failures >= 5:
+                error_msg = (
+                    f"Agent loop halted: {consecutive_failures} consecutive tool failures. "
+                    f"The model appears stuck outputting invalid tool calls.\n"
+                    f"Last tool: {tool_calls[-1][0] if tool_calls else 'none'}\n"
+                    f"Tip: The local model may need a system prompt adjustment or a larger model."
+                )
+                sm.add_message(self.session_id, "assistant", error_msg)
+                return AgentResult(
+                    final_response=error_msg,
+                    tool_calls_made=self._tool_steps,
+                    iterations_used=iterations,
+                    tokens_used=total_tokens,
+                    provider_used=used_provider,
+                    error="Consecutive tool failures exceeded threshold",
+                    session_id=self.session_id,
+                )
+
+            # Break if exact same tool call is repeated 3+ times across iterations
+            call_signature = json.dumps([(n, p) for n, p in tool_calls], sort_keys=True)
+            if not hasattr(self, '_recent_call_sigs'):
+                self._recent_call_sigs = []
+            self._recent_call_sigs.append(call_signature)
+            if len(self._recent_call_sigs) >= 3 and len(set(self._recent_call_sigs[-3:])) == 1:
+                error_msg = (
+                    f"Agent loop halted: same tool call repeated 3 times.\n"
+                    f"Repeated call: {call_signature[:200]}\n"
+                    f"Tip: The model is stuck in a loop. Try a different prompt or a larger model."
+                )
+                sm.add_message(self.session_id, "assistant", error_msg)
+                return AgentResult(
+                    final_response=error_msg,
+                    tool_calls_made=self._tool_steps,
+                    iterations_used=iterations,
+                    tokens_used=total_tokens,
+                    provider_used=used_provider,
+                    error="Repeated tool call loop detected",
+                    session_id=self.session_id,
+                )
 
             # Feed observations back to the LLM as the next prompt
             # Include the LLM's thinking + the observations
@@ -821,23 +833,12 @@ class AgentLoop:
 
         # Check if tool exists
         if tool_name not in TOOL_REGISTRY:
-            # Suggest the closest valid tool names so the LLM can self-correct
-            # on the next turn instead of burning iterations on a dead end.
-            import difflib
-            suggestions = difflib.get_close_matches(
-                tool_name, list(TOOL_REGISTRY.keys()), n=3, cutoff=0.5
-            )
-            hint = (
-                f" Did you mean: {', '.join(suggestions)}?"
-                if suggestions
-                else f" Available tools: {', '.join(sorted(TOOL_REGISTRY.keys())[:15])}."
-            )
             return ToolCallStep(
                 tool_name=tool_name,
                 params=params,
                 result=None,
                 duration_ms=int((time.time() - start) * 1000),
-                error=f"Tool '{tool_name}' not found in registry.{hint}",
+                error=f"Tool '{tool_name}' not found in registry",
             )
 
         # Safety approval

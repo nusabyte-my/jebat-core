@@ -148,6 +148,7 @@ async def generate_chat_reply(
     max_tokens_override: int | None = None,
     conversation_messages: list[dict[str, str]] | None = None,
     return_metadata: bool = False,
+    system_prompt_override: str | None = None,
 ) -> tuple[str, str, JebatLLMConfig] | tuple[str, str, JebatLLMConfig, ChatGenerationMetadata]:
     config = apply_chat_preset(
         resolve_llm_config(
@@ -168,10 +169,15 @@ async def generate_chat_reply(
         provider=config.provider,
         conversation_messages=conversation_messages,
     )
+    # Use custom system prompt if provided, otherwise build default
+    if system_prompt_override:
+        system_prompt = system_prompt_override
+    else:
+        system_prompt = build_chat_system_prompt(mode, preset=preset)
     response, used_provider = await generate_with_failover(
         config=config,
         prompt=prepared.prompt,
-        system_prompt=build_chat_system_prompt(mode, preset=preset),
+        system_prompt=system_prompt,
         return_metadata=return_metadata,
     )
     if not return_metadata:

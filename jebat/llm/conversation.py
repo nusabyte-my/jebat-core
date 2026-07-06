@@ -25,15 +25,8 @@ def prepare_chat_prompt(
 ) -> PreparedPrompt:
     profile = select_prompt_profile(prompt, mode=mode)
     messages = [dict(item) for item in (conversation_messages or []) if isinstance(item, dict)]
-    if profile == "cavement":
-        keep_recent = 1
-        summary_chars = 200
-    elif profile == "lean":
-        keep_recent = 2
-        summary_chars = 420
-    else:
-        keep_recent = 4
-        summary_chars = 760
+    keep_recent = 2 if profile == "lean" else 4
+    summary_chars = 420 if profile == "lean" else 760
 
     if not messages:
         wrapped_prompt = _wrap_prompt(prompt, profile=profile)
@@ -86,34 +79,27 @@ def prepare_chat_prompt(
 
 
 def select_prompt_profile(prompt: str, mode: str | None = None) -> str:
-    """Select the prompt profile: 'cavement' (aggressive), 'lean', or 'deep'.
-    
-    cavement = RTK-style: minimal context, aggressive compression, short summaries
-    lean     = default for most tasks
-    deep     = strategic/architecture/security/design tasks
-    """
     mode_name = (mode or "").strip().lower()
     if mode_name in {"deep", "strategic", "critical"}:
         return "deep"
-    if mode_name in {"cavement", "caveman", "rtk", "minimal", "fast"}:
-        return "cavement"
 
     text = prompt.lower()
     deep_markers = (
-        "review", "audit", "security", "compare", "analyze",
-        "architecture", "tradeoff", "migration", "rollout",
-        "design", "plan", "strategy",
+        "review",
+        "audit",
+        "security",
+        "compare",
+        "analyze",
+        "architecture",
+        "tradeoff",
+        "migration",
+        "rollout",
+        "design",
+        "plan",
+        "strategy",
     )
     if any(marker in text for marker in deep_markers):
         return "deep"
-        
-    cavement_markers = (
-        "quick", "fix", "patch", "typo", "simple", "one-liner",
-        "what is", "where", "show me", "list", "find",
-    )
-    if any(marker in text for marker in cavement_markers):
-        return "cavement"
-        
     return "lean"
 
 

@@ -32,7 +32,7 @@ async def clarify(question: str, choices: list[str] | None = None) -> dict[str, 
     lines: list[str] = []
     lines.append("")
     lines.append("─" * 40)
-    lines.append("  JEBAT wants to clarify:")
+    lines.append(f"  JEBAT wants to clarify:")
     lines.append(f"  {question}")
     lines.append("")
 

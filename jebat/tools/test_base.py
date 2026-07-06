@@ -1,5 +1,6 @@
 """Test tool registry infrastructure."""
 
+import pytest
 
 from jebat.tools.base import BaseTool, ToolRegistry
 

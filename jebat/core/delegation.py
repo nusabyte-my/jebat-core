@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
@@ -132,7 +133,6 @@ class DelegationManager:
                 self._run_isolated_loop(
                     subagent_id=subagent_id,
                     system_prompt=system_prompt,
-                    goal=config.goal,
                     allowed_tools=allowed_tools,
                     model=model,
                     provider=provider,
@@ -302,7 +302,6 @@ class DelegationManager:
         self,
         subagent_id: str,
         system_prompt: str,
-        goal: str,
         allowed_tools: dict[str, ToolDef],
         model: str,
         provider: str,
@@ -338,7 +337,7 @@ class DelegationManager:
             )
 
             # Run the loop and capture the task as an asyncio.Task for cancellation
-            task = asyncio.create_task(loop.run(goal))
+            task = asyncio.create_task(loop.run(config.goal))
             self._active_subagents[subagent_id] = task
             agent_result: AgentResult = await task
 
@@ -366,7 +365,7 @@ class DelegationManager:
             return await self._fallback_direct_llm(
                 subagent_id=subagent_id,
                 system_prompt=system_prompt,
-                goal=goal,
+                goal=config.goal if hasattr(self, "_current_config") else system_prompt,
                 model=model,
                 provider=provider,
                 allowed_tools=allowed_tools,

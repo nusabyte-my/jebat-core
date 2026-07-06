@@ -32,6 +32,9 @@ virtualenv/
 # IDE
 .vscode/
 .idea/
+.cursor/
+.trae/
+.windsurf/
 *.swp
 *.swo
 *~
@@ -42,6 +45,9 @@ virtualenv/
 .classpath
 .settings/
 *.iml
+.kilo.json
+.kilo/
+.openclaude-profile.json
 
 # Testing
 .pytest_cache/
@@ -143,6 +149,19 @@ docker-secrets/
 *.bak
 *.backup
 *.old
+
+# GGUF / Model files
+gguf-models/
+*.gguf
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Embedded git repos (treat as submodules or ignore)
+integrations/OpenManus/
+integrations/openclaude/
+integrations/pi/
 
 # AI Agent Caches (large, ephemeral)
 .claude/

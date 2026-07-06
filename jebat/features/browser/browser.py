@@ -8,7 +8,10 @@ first tool call; tears down gracefully on timeout or shutdown.
 
 from __future__ import annotations
 
+import asyncio
 import base64
+import re
+import sys
 from typing import Any
 
 from jebat.tools import register_tool

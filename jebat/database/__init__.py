@@ -1,27 +1,11 @@
-"""JEBAT database package — connection management, repositories, and models."""
+"""
+JEBAT Database System
 
-from jebat.database.connection_manager import (
-    DatabaseManager,
-    RedisManager,
-    CircuitBreakerState,
-    ConnectionState,
-    DatabaseType,
-    get_db_manager,
-    get_redis_manager,
-    get_db,
-    get_redis,
-    close_all,
-)
+Database connection management, models, and repositories.
+"""
 
-__all__ = [
-    "DatabaseManager",
-    "RedisManager",
-    "CircuitBreakerState",
-    "ConnectionState",
-    "DatabaseType",
-    "get_db_manager",
-    "get_redis_manager",
-    "get_db",
-    "get_redis",
-    "close_all",
-]
+from .connection_manager import DatabaseManager
+from .models import get_db_models
+from .repositories import RepositoryManager
+
+__all__ = ["DatabaseManager", "RepositoryManager", "get_db_models"]

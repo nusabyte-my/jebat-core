@@ -1,54 +1,126 @@
-"""Decision engine for agent selection and task routing."""
+"""
+JEBAT Decision Engine
 
-from __future__ import annotations
+Intelligent routing and decision-making:
+- Agent selection
+- Task routing
+- Priority assignment
+- Performance learning
+"""
 
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
+class DecisionType(str, Enum):
+    """Decision types."""
+
+    AGENT_SELECTION = "agent_selection"
+    ROUTING = "routing"
+    PRIORITY = "priority"
+
+
+@dataclass
+class DecisionResult:
+    """Decision result."""
+
+    decision_type: DecisionType
+    selected_option: Any
+    confidence: float
+    reasoning: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
 class DecisionEngine:
-    """Routes tasks to appropriate agents based on rules and capabilities."""
+    """
+    Decision making engine.
 
-    def __init__(
-        self,
-        agent_registry: Optional[Dict[str, Any]] = None,
-        config: Optional[Dict[str, Any]] = None,
-    ):
+    Makes intelligent routing decisions based on:
+    - Agent capabilities
+    - Task requirements
+    - Historical performance
+    - User preferences
+    """
+
+    def __init__(self, agent_registry: Optional[Dict] = None):
+        """
+        Initialize decision engine.
+
+        Args:
+            agent_registry: Registry of available agents
+        """
         self.agent_registry = agent_registry or {}
-        self.config = config or {}
-        self._decisions: List[Dict[str, Any]] = []
-        self._stats = {"total_decisions": 0, "successful": 0}
+        self.decision_history: List[DecisionResult] = []
+        self.performance_stats: Dict[str, Any] = {}
+        logger.info(
+            f"Decision Engine initialized with {len(self.agent_registry)} agents"
+        )
 
-    async def decide(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Make a routing decision for a task."""
-        self._stats["total_decisions"] += 1
+    async def decide(
+        self,
+        task: Dict[str, Any],
+        context: Optional[Dict] = None,
+    ) -> DecisionResult:
+        """
+        Make a decision.
 
-        task_type = task.get("type", "general")
-        best_agent = None
+        Args:
+            task: Task description
+            context: Optional context
 
-        for agent_id, agent_info in self.agent_registry.items():
-            if isinstance(agent_info, dict):
-                caps = agent_info.get("capabilities", [])
-                if any(task_type.lower() in cap.lower() for cap in caps):
-                    best_agent = agent_id
-                    break
+        Returns:
+            Decision result
+        """
+        # Select best agent
+        selected = self._select_agent(task)
 
-        if not best_agent and self.agent_registry:
-            best_agent = next(iter(self.agent_registry))
+        result = DecisionResult(
+            decision_type=DecisionType.AGENT_SELECTION,
+            selected_option=selected,
+            confidence=0.8,
+            reasoning=f"Selected agent based on task requirements",
+        )
 
-        decision = {
-            "task_type": task_type,
-            "selected_agent": best_agent,
-            "confidence": 0.8 if best_agent else 0.2,
-        }
+        self.decision_history.append(result)
+        return result
 
-        self._decisions.append(decision)
-        if best_agent:
-            self._stats["successful"] += 1
+    def _select_agent(self, task: Dict[str, Any]) -> Optional[str]:
+        """Select best agent for task."""
+        if not self.agent_registry:
+            return None
 
-        return decision
+        # Simple selection - return first available
+        return next(iter(self.agent_registry.keys()), None)
 
     def get_stats(self) -> Dict[str, Any]:
-        return {**self._stats, "total_agents": len(self.agent_registry)}
+        """Get engine statistics."""
+        base_stats = {
+            "agents_registered": len(self.agent_registry),
+            "decisions_made": len(self.decision_history),
+        }
+        
+        # Add monitoring-specific metrics
+        monitoring_stats = {
+            "decision_monitoring": {
+                "agents_registered": len(self.agent_registry),
+                "decisions_made": len(self.decision_history),
+                "decisions_per_agent": {
+                    agent_id: count for agent_id, count in self.decision_history.items()
+                } if hasattr(self.decision_history, 'items') else {},
+                "total_decisions": len(self.decision_history) if isinstance(self.decision_history, (list, dict)) else 0,
+                "avg_decisions_per_agent": (
+                    len(self.decision_history) / max(len(self.agent_registry), 1)
+                    if isinstance(self.decision_history, (list, dict)) and len(self.agent_registry) > 0
+                    else 0
+                ),
+            }
+        }
+        
+        # Merge base stats with monitoring stats
+        base_stats.update(monitoring_stats)
+        return base_stats

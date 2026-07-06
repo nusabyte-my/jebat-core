@@ -15,8 +15,11 @@ import difflib
 import hashlib
 import json
 import os
-from dataclasses import dataclass
+import shutil
+import time
+from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -76,7 +79,7 @@ def auto_backup(path: str, operation: str = "write") -> FileSnapshot | None:
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
-    except (OSError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError) as e:
         return None
 
     snapshot = FileSnapshot(
@@ -267,7 +270,7 @@ def diff_backup(path: str, version: int = -1) -> str:
     diff_lines = list(difflib.unified_diff(
         current_content.splitlines(keepends=True),
         backup_content.splitlines(keepends=True),
-        fromfile="current",
+        fromfile=f"current",
         tofile=f"backup v{version}",
     ))
 

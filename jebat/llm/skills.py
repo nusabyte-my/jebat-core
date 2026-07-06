@@ -1,106 +1,150 @@
-"""Skill loading, selection, and prompt building for LLM context."""
-
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Iterable
+
+from jebat.mcp.skill_registry import Skill, SkillRegistry
 
 
-@dataclass
-class SkillEntry:
+@dataclass(frozen=True, slots=True)
+class SelectedSkill:
     name: str
+    category: str
+    description: str
+    source_path: str
     content: str
-    tags: List[str] = field(default_factory=list)
-
-
-class SkillRegistry:
-    """Registry of available skills loaded from markdown files."""
-
-    def __init__(self):
-        self._skills: Dict[str, SkillEntry] = {}
-
-    def register(self, skill: SkillEntry) -> None:
-        self._skills[skill.name] = skill
-
-    def get(self, name: str) -> Optional[SkillEntry]:
-        return self._skills.get(name)
-
-    def get_all_skills(self) -> List[SkillEntry]:
-        return list(self._skills.values())
-
-    def search(self, query: str) -> List[SkillEntry]:
-        query_lower = query.lower()
-        return [s for s in self._skills.values() if any(t in query_lower for t in s.tags)]
+    score: int = 0
 
 
 def default_skills_path() -> Path:
-    """Return path to the tokguru skills directory."""
-    candidate = Path(__file__).parent.parent.parent / "jebat-tokguru" / "skills"
-    if candidate.exists():
-        return candidate
-    # Fallback: create a minimal built-in registry
-    return Path("skills")
+    configured = os.getenv("JEBAT_SKILLS_PATH")
+    if configured:
+        return Path(configured).expanduser()
+    repo_path = Path(__file__).resolve().parents[2] / "jebat-tokguru"
+    if repo_path.exists():
+        return repo_path
+    return Path("~/.jebat/tokguru").expanduser()
 
 
-def build_skill_registry(path: Path) -> SkillRegistry:
-    registry = SkillRegistry()
+def build_skill_registry(skills_path: str | Path | None = None) -> SkillRegistry:
+    return SkillRegistry(str(skills_path or default_skills_path()), auto_load=True)
 
-    # Built-in skills
-    built_in = [
-        SkillEntry(name="python-patterns", content="# Python Patterns\nPython best practices and design patterns.", tags=["python", "patterns", "design"]),
-        SkillEntry(name="cortex-reasoning", content="# Cortex Reasoning\nAdvanced reasoning and system design patterns.", tags=["reasoning", "system", "design", "architecture"]),
-        SkillEntry(name="jebat-agent", content="# JEBAT Agent\nJEBAT daily coding copilot and agent behavior.", tags=["jebat", "agent", "coding", "copilot"]),
-    ]
-    for skill in built_in:
-        registry.register(skill)
 
-    # Try loading from disk
-    if path.exists():
-        for md_file in path.rglob("*.md"):
-            content = md_file.read_text(encoding="utf-8", errors="replace")
-            name = md_file.stem
-            tags = [word.lower() for word in name.replace("-", " ").split()]
-            registry.register(SkillEntry(name=name, content=content, tags=tags))
-
-    return registry
+def summarize_skill(skill: Skill) -> dict[str, str]:
+    return {
+        "name": skill.name,
+        "category": skill.category,
+        "description": skill.description,
+        "path": skill.path,
+    }
 
 
 def select_relevant_skills(
     prompt: str,
-    registry: SkillRegistry,
-    max_skills: int = 3,
-) -> List[SkillEntry]:
-    prompt_lower = prompt.lower()
-    scored: List[Tuple[float, SkillEntry]] = []
-    for skill in registry.get_all_skills():
-        score = sum(1 for tag in skill.tags if tag in prompt_lower)
+    registry: SkillRegistry | None = None,
+    requested_skills: Iterable[str] | None = None,
+    limit: int = 2,
+    auto_discover: bool = True,
+) -> list[SelectedSkill]:
+    active_registry = registry or build_skill_registry()
+    selected: list[SelectedSkill] = []
+    seen: set[str] = set()
+
+    for name in requested_skills or ():
+        skill = active_registry.get_skill(name)
+        if not skill:
+            continue
+        selected.append(_convert_skill(skill, score=10_000))
+        seen.add(skill.name)
+
+    if not auto_discover:
+        return selected[:limit]
+
+    prompt_tokens = set(_tokenize(prompt))
+    scored: list[SelectedSkill] = []
+    for skill in active_registry.get_all_skills():
+        if skill.name in seen:
+            continue
+        haystack = " ".join(
+            [
+                skill.name,
+                skill.description,
+                skill.category,
+                " ".join(skill.tags),
+                skill.content[:500],
+            ]
+        ).lower()
+        score = 0
+        for token in prompt_tokens:
+            if token in haystack:
+                score += 1
         if score > 0:
-            scored.append((score, skill))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [s for _, s in scored[:max_skills]]
+            scored.append(_convert_skill(skill, score=score))
+
+    scored.sort(key=lambda item: (-item.score, item.name))
+    selected.extend(scored[: max(0, limit - len(selected))])
+    return selected[:limit]
 
 
 def build_skill_prompt(
     prompt: str,
-    registry: SkillRegistry,
-    requested_skills: Optional[List[str]] = None,
+    registry: SkillRegistry | None = None,
+    requested_skills: Iterable[str] | None = None,
+    limit: int = 2,
     auto_discover: bool = True,
-) -> Tuple[str, List[SkillEntry]]:
-    selected: List[SkillEntry] = []
+    full_guidance_limit: int = 1,
+) -> tuple[str, list[SelectedSkill]]:
+    selected = select_relevant_skills(
+        prompt=prompt,
+        registry=registry,
+        requested_skills=requested_skills,
+        limit=limit,
+        auto_discover=auto_discover,
+    )
+    if not selected:
+        return prompt, []
 
-    if requested_skills:
-        for name in requested_skills:
-            skill = registry.get(name)
-            if skill:
-                selected.append(skill)
+    skill_sections = []
+    for index, skill in enumerate(selected):
+        body = skill.content.strip()
+        guidance_limit = 1000 if index < full_guidance_limit else 220
+        if len(body) > guidance_limit:
+            body = body[:guidance_limit].rstrip() + ("\n..." if index < full_guidance_limit else "...")
 
-    if auto_discover and not selected:
-        selected = select_relevant_skills(prompt, registry)
+        section = [
+            f"Skill: {skill.name}",
+            f"Category: {skill.category}",
+            f"Description: {skill.description}",
+            f"Source: {skill.source_path}",
+        ]
+        if index < full_guidance_limit:
+            section.extend(["Guidance:", body])
+        else:
+            section.extend(["Summary:", body])
+        skill_sections.append("\n".join(section))
 
-    parts = []
-    for skill in selected:
-        parts.append(f"Skill: {skill.name}\n{skill.content}")
+    enriched_prompt = (
+        "Apply the following JEBAT skills when answering.\n\n"
+        + "\n\n".join(skill_sections)
+        + "\n\nUser request:\n"
+        + prompt
+    )
+    return enriched_prompt, selected
 
-    return "\n\n".join(parts), selected
+
+def _convert_skill(skill: Skill, score: int) -> SelectedSkill:
+    return SelectedSkill(
+        name=skill.name,
+        category=skill.category,
+        description=skill.description,
+        source_path=skill.path,
+        content=skill.content,
+        score=score,
+    )
+
+
+def _tokenize(text: str) -> list[str]:
+    return [token for token in re.findall(r"[a-zA-Z0-9_-]{3,}", text.lower()) if token]

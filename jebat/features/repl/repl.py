@@ -15,12 +15,15 @@ This is the primary user-facing interface. Features:
 
 from __future__ import annotations
 
+import asyncio
+import json
 import os
 import signal
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from jebat.config import load_config
 from jebat.features.session import SessionManager
@@ -58,19 +61,19 @@ def _print(text: str, style: str = "") -> None:
         print(text)
 
 
-def _input_line(prompt: str = "> ") -> str:
+async def _input_line(prompt: str = "> ") -> str:
     """Get a line of input, supporting history via prompt_toolkit."""
     if PROMPT_TOOLKIT_AVAILABLE and _is_interactive_tty():
         history_path = Path.home() / ".jebat" / "repl_history.txt"
         history_path.parent.mkdir(parents=True, exist_ok=True)
         session = PromptSession(history=FileHistory(str(history_path)))
         try:
-            return session.prompt(prompt, multiline=False)
-        except KeyboardInterrupt:
+            return await session.prompt_async(prompt, multiline=False)
+        except (EOFError, KeyboardInterrupt):
             return ""
     else:
         try:
-            return input(prompt)
+            return await asyncio.to_thread(input, prompt)
         except (EOFError, KeyboardInterrupt):
             return ""
 
@@ -177,7 +180,7 @@ class ReplLoop:
 
         while self.running:
             try:
-                user_input = _input_line("\n> ")
+                user_input = await _input_line("\n> ")
                 if not user_input:
                     continue
 

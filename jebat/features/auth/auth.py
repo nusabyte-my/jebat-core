@@ -435,6 +435,7 @@ async def auth_list() -> dict[str, Any]:
     # Keyring
     if _keyring_available():
         try:
+            import keyring as kr
             # keyring doesn't support listing; probe known providers
             for prov in SUPPORTED_PROVIDERS:
                 for kt in ("API_KEY", "SECRET_KEY"):

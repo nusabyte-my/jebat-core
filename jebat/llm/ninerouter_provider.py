@@ -39,11 +39,6 @@ import httpx
 from .config import JebatLLMConfig
 from .token_usage import TokenUsage, usage_from_texts
 
-# NOTE: ProviderGeneration is imported lazily inside the method that uses it.
-# A module-level import here creates a circular import (providers.py imports
-# build_ninerouter_provider from this module before ProviderGeneration is
-# defined), which breaks the entire jebat.llm package at import time.
-
 
 # ── Defaults ──────────────────────────────────────────────────────────────
 
@@ -118,8 +113,6 @@ class NineRouterProvider:
             if error:
                 raise RuntimeError(f"9Router error: {error.get('message', error)}")
             raise RuntimeError("9Router response did not contain text output")
-
-        from .providers import ProviderGeneration  # lazy: avoids import cycle
 
         return ProviderGeneration(
             text=text,

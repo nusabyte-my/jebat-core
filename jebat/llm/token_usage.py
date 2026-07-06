@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
 from typing import Any, Mapping
@@ -56,8 +57,10 @@ def estimate_tokens(text: str, *, model: str = "", provider: str = "") -> int:
     if token_count is not None:
         return token_count
 
-    # Conservative fallback: 5 chars ≈ 1 token (RTK-style)
-    return max(1, len(stripped) // 5)
+    # Conservative fallback when a model tokenizer is unavailable locally.
+    pieces = re.findall(r"\w+|[^\w\s]", stripped, re.UNICODE)
+    heuristic = max(len(stripped) // 4, int(len(pieces) * 0.75))
+    return max(1, heuristic)
 
 
 def _normalize_provider_usage(raw_usage: Any) -> dict[str, Any]:

@@ -30,7 +30,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -168,17 +168,12 @@ class SamplingHandler:
 
         # Use JEBAT's 9Router LLM proxy
         try:
-            from dataclasses import replace
             from jebat.llm import generate_with_failover, load_llm_config
             config = self._config or load_llm_config()
 
-            # Honor IDE-supplied sampling params (config is frozen — rebuild it).
-            config = replace(
-                config,
-                model=preferred_model or config.model,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            # Override model if IDE specifies one
+            if preferred_model:
+                config.model = preferred_model
 
             response_text, used_provider = await generate_with_failover(
                 config=config,

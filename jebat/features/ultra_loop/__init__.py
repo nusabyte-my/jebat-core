@@ -1,10 +1,23 @@
-"""Ultra-Loop continuous processing engine."""
+"""
+JEBAT Ultra-Loop
 
-from jebat.features.ultra_loop.core import (
-    UltraLoop,
+Continuous processing and learning system.
+"""
+
+from .database_repository import UltraLoopRepository
+from .ultra_loop import (
+    LoopContext,
+    LoopMetrics,
     LoopPhase,
-    PhaseContext,
+    UltraLoop,
     create_ultra_loop,
 )
 
-__all__ = ["UltraLoop", "LoopPhase", "PhaseContext", "create_ultra_loop"]
+__all__ = [
+    "UltraLoop",
+    "LoopPhase",
+    "LoopContext",
+    "LoopMetrics",
+    "create_ultra_loop",
+    "UltraLoopRepository",
+]

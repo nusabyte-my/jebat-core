@@ -17,44 +17,68 @@ dependencies = [
   "pyyaml>=6.0.1",
   "python-dotenv>=1.0.0",
   "rich>=13.7.0",
+  "prompt-toolkit>=3.0.43",
+  "structlog>=24.1.0",
+  "sqlalchemy>=2.0.0",
+  "asyncpg>=0.29.0",
+  "aiohttp>=3.9.1",
+]
+
+[project.optional-dependencies]
+ml = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.4.0",
+    "xgboost>=2.0.0",
+    "lightgbm>=4.0.0",
+]
+nlp = [
+    "sentence-transformers>=2.3.0",
+    "spacy>=3.7.0",
+    "nltk>=3.8.0",
+]
+server = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "prometheus-client>=0.19.0",
+    "opentelemetry-api>=1.21.0",
+    "opentelemetry-sdk>=1.21.0",
+    "python-json-logger>=2.0.0",
+    "streamlit>=1.32.0",
+]
+db = [
+    "pymongo>=4.6.0",
+    "redis>=5.0.1",
+    "alembic>=1.13.0",
+]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-asyncio>=0.23.3",
+    "pytest-cov>=4.1.0",
+    "black>=24.1.0",
+    "mypy>=1.8.0",
+    "isort>=5.13.0",
+]
+monitoring = [
+    "python-json-logger>=2.0.0",
+    "streamlit>=1.32.0",
+]
+all = [
+    "jebat[ml,nlp,server,db,dev,monitoring]",
 ]
 
 [project.scripts]
-jebat = "apps.api.cli.jebat_cli:run"
-jebat-server = "apps.api.main:main"
+jebat = "jebat.cli.jebat_cli:run"
 
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["apps*"]
+where = ["."]
+include = ["jebat", "jebat.*"]
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 asyncio_mode = "auto"
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-  "-v",
-  "--tb=short",
-  "--strict-markers",
-]
-markers = [
-  "unit: Unit tests (no external dependencies)",
-  "integration: Integration tests (may use mocked services)",
-  "api: API endpoint tests (httpx AsyncClient against FastAPI)",
-  "client: Direct client class unit tests (no HTTP layer)",
-  "auth: Authentication and key management tests",
-  "ghost: Ghost Database feature tests",
-  "catalyst: Catalyst Observability feature tests",
-  "chat: Chat sync and streaming tests",
-  "logging: Request logging and middleware tests",
-  "slow: Tests that take more than a few seconds",
-]
-testpaths = ["."]
-pythonpath = ["jebat-core"]
-filterwarnings = [
-  "ignore::DeprecationWarning",
-  "ignore::RuntimeWarning:jebat.api.logging",
-]
