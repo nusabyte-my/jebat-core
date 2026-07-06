@@ -151,7 +151,7 @@ ERROR_PAGE = """<!DOCTYPE html>
 app = FastAPI(
     title="JEBAT WebUI",
     description="Sovereign AI Platform — Enterprise Web Interface",
-    version="6.1.0",
+    version="7.0.0",
 )
 
 # CORS — tightened for production

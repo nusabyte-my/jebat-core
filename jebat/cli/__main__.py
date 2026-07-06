@@ -38,7 +38,7 @@ Run 'jebat <command> --help' for command-specific help.
     )
 
     parser.add_argument("--debug", action="store_true", help="Show full traceback on errors")
-    parser.add_argument("--version", action="version", version="JEBAT 6.1.0")
+    parser.add_argument("--version", action="version", version="JEBAT 7.0.0")
 
     return parser
 

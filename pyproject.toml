@@ -1,7 +1,7 @@
 [project]
 name = "jebat"
-version = "6.1.0"
-description = "JEBAT v6.1 — Sovereign AI Platform & Agent Workstation. ReAct loop, 89 tools, MCP, pentest engine, FTS5 wiki, 5-layer memory, multi-agent swarms, Docker sandbox, voice I/O, GitOps"
+version = "7.0.0"
+description = "JEBAT v7.0 — Sovereign AI Platform & Agent Workstation. Platform Suite (Sahabat, Keris, Pandai, Perisai), Stealth-Dark Tactical WebUI, 25 enterprise features, MCP, pentest engine, 5-layer memory, multi-agent swarms, voice I/O, GitOps"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}

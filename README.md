@@ -1,6 +1,6 @@
-# JEBAT v6.1 — Sovereign AI Platform & Agent Workstation
+# JEBAT v7.0 — Sovereign AI Platform & Agent Workstation
 
-![Version](https://img.shields.io/badge/version-v6.1.0--stable-10b981?style=flat-square)
+![Version](https://img.shields.io/badge/version-v7.0.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-145%2F145--passing-10b981?style=flat-square)
@@ -404,7 +404,7 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v6.1 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v7.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
 | **LLM Provider Routing** | **6 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
@@ -466,7 +466,7 @@ jebat doctor
 ```
 jebat-core/
   ├── jebat/                  # Active runtime modules
-  │   ├── cli/                # Entrypoints (jebat_cli.py v6.1.0)
+  │   ├── cli/                # Entrypoints (jebat_cli.py v7.0.0)
   │   ├── core/               # Cognitive loops (agent_loop, orchestrator, delegation)
   │   ├── mcp/                # MCP server + skill registry + adapter
   │   ├── services/           # WebUI, MCP protocol, API gateway
