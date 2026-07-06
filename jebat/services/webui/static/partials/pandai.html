@@ -1,0 +1,71 @@
+<!-- Pandai — Developer Suite -->
+<style>
+  .pandai-layout { display: flex; flex-direction: column; gap: var(--space-lg); }
+  .pandai-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-md); }
+  .pandai-tool {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: var(--space-lg); cursor: pointer; transition: all var(--transition-base);
+  }
+  .pandai-tool:hover { border-color: var(--purple-dim); box-shadow: var(--shadow-glow-purple); }
+  .pandai-tool-icon { font-size: 28px; margin-bottom: var(--space-sm); }
+  .pandai-tool-name { font-weight: 600; color: var(--text-bright); margin-bottom: var(--space-xs); }
+  .pandai-tool-desc { font-size: var(--font-size-sm); color: var(--text-secondary); }
+</style>
+
+<div class="pandai-layout">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 style="margin:0">💻 Pandai</h2>
+      <p style="margin:0;font-size:var(--font-size-sm)">Developer Suite — MCP-native sandboxed code workspace</p>
+    </div>
+    <span class="badge badge-purple">v1.0</span>
+  </div>
+
+  <div class="pandai-tools">
+    <div class="pandai-tool" onclick="location.hash='#chat'">
+      <div class="pandai-tool-icon">⚡</div>
+      <div class="pandai-tool-name">Code Agent</div>
+      <div class="pandai-tool-desc">Interactive code generation, review, and debugging via chat</div>
+    </div>
+    <div class="pandai-tool" onclick="location.hash='#chat'">
+      <div class="pandai-tool-icon">🏗️</div>
+      <div class="pandai-tool-name">Project Scaffold</div>
+      <div class="pandai-tool-desc">Generate project structure with best practices</div>
+    </div>
+    <div class="pandai-tool" onclick="location.hash='#chat'">
+      <div class="pandai-tool-icon">🔍</div>
+      <div class="pandai-tool-name">Code Review</div>
+      <div class="pandai-tool-desc">AI-powered code review with security analysis</div>
+    </div>
+    <div class="pandai-tool" onclick="location.hash='#chat'">
+      <div class="pandai-tool-icon">🐛</div>
+      <div class="pandai-tool-name">Debug Analyzer</div>
+      <div class="pandai-tool-desc">Analyze errors and get fix suggestions</div>
+    </div>
+    <div class="pandai-tool" onclick="location.hash='#skills'">
+      <div class="pandai-tool-icon">🎨</div>
+      <div class="pandai-tool-name">Design Systems</div>
+      <div class="pandai-tool-desc">Search & download DESIGN.md from designmd.ai</div>
+    </div>
+    <div class="pandai-tool" onclick="location.hash='#chat'">
+      <div class="pandai-tool-icon">🧪</div>
+      <div class="pandai-tool-name">Test Runner</div>
+      <div class="pandai-tool-desc">Run and analyze test suites</div>
+    </div>
+  </div>
+
+  <!-- Workspace -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Active Workspace</div>
+    </div>
+    <div class="terminal">
+      <div><span class="prompt">$</span> <span class="output">jebat workspace status</span></div>
+      <div class="output">  Project: JEBAT Platform</div>
+      <div class="output">  Root: D:/Jebat</div>
+      <div class="output">  Branch: main</div>
+      <div class="output">  Language: Python 3.13</div>
+      <div class="output">  MCP Server: running (stdio + HTTP)</div>
+    </div>
+  </div>
+</div>

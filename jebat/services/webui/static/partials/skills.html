@@ -1,114 +1,42 @@
-<!-- skills partial -->
-<div class="container section-sm">
-  <h2>Skills</h2>
-  <p class="small muted" style="margin-bottom: var(--space-lg);">Registered skill modules from the skill registry. Import from Hermes, OpenClaw, Claude Code, and Codex.</p>
-</div>
+<!-- Skills -->
+<div>
+  <h2 style="margin-bottom:var(--space-lg)">🧠 Skills</h2>
+  <p class="text-muted mb-lg">Procedural memory — reusable approaches for recurring tasks.</p>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="row">
-    <input class="input" id="skill-search" type="search" placeholder="Filter skills…" style="max-width: 320px;" />
-    <div class="btn-group">
-      <button class="btn btn-outline btn-sm" id="btn-import-hermes">Import from Hermes</button>
-      <button class="btn btn-outline btn-sm" id="btn-import-claude">Import from Claude</button>
-      <button class="btn btn-outline btn-sm" id="btn-import-codex">Import from Codex</button>
-    </div>
+  <div class="flex gap-sm mb-lg">
+    <input class="input" id="skills-search" placeholder="Search skills..." style="max-width:400px" />
+    <button class="btn btn-sm" id="skills-refresh">↻ Refresh</button>
   </div>
-</div>
 
-<div class="container">
-  <div class="list" id="skill-list">Loading…</div>
-</div>
-
-<div class="container section" id="skill-detail" style="display: none;">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title" id="skill-detail-name"></div>
-      <button class="btn btn-outline btn-sm" id="skill-detail-close">Close</button>
-    </div>
-    <div class="card-body">
-      <div class="meta-row" id="skill-detail-tags" style="margin-bottom: var(--space-md);"></div>
-      <pre id="skill-detail-body"></pre>
+  <div class="grid grid-auto" id="skills-grid">
+    <div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-state-icon">🧠</div>
+      <div class="empty-state-title">Loading skills...</div>
     </div>
   </div>
 </div>
 
 <script>
-  let allSkills = [];
-
-  async function loadSkills(filter = '') {
+  async function loadSkills() {
     try {
-      const meta = await API.consoleMeta();
-      const skills = meta.skills || {};
-
-      // Normalize to flat array of {name, description, path, category}
-      allSkills = (skills.top || []).map(s =>
-        typeof s === 'string' ? { name: s, description: '' } : s
-      );
-      const count = skills.count || allSkills.length;
-
-      const filtered = filter
-        ? allSkills.filter(s => {
-            const term = filter.toLowerCase();
-            return (s.name || '').toLowerCase().includes(term) ||
-                   (s.description || '').toLowerCase().includes(term) ||
-                   (s.category || '').toLowerCase().includes(term);
-          })
-        : allSkills;
-
-      const list = document.getElementById('skill-list');
-      const statsInfo = `<p class="small muted" style="margin-bottom: var(--space-sm);">${count} skills registered</p>`;
-
-      if (filtered.length === 0) {
-        list.innerHTML = statsInfo + '<div class="empty"><h3>No skills found</h3><p>Try a different search or import from other agents.</p></div>';
+      const res = await fetch('/api/skills');
+      const data = await res.json();
+      const grid = document.getElementById('skills-grid');
+      if (!data.skills || data.skills.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🧠</div><div class="empty-state-title">No skills found</div></div>';
         return;
       }
-
-      list.innerHTML = statsInfo + filtered.map(s => {
-        const name = s.name;
-        const desc = s.description || '';
-        const cat = s.category ? `<span class="chip">${s.category}</span>` : '';
-        return `<div class="list-item">
-          <div><strong>${name}</strong>${cat}<br><span class="small muted">${desc}</span></div>
-          <button class="btn btn-outline btn-sm" data-skill="${name}">View</button>
-        </div>`;
-      }).join('');
-
-      list.querySelectorAll('[data-skill]').forEach(btn => {
-        btn.addEventListener('click', () => viewSkill(btn.dataset.skill));
-      });
-    } catch (e) {
-      document.getElementById('skill-list').innerHTML = `<div class="empty"><h3>Cannot load skills</h3><p>${e.message}</p></div>`;
-    }
+      grid.innerHTML = data.skills.map(s => `
+        <div class="card" style="cursor:pointer">
+          <div class="card-header">
+            <div class="card-title text-sm">${s.name}</div>
+            <span class="badge badge-muted">${s.category || 'general'}</span>
+          </div>
+          <p class="text-sm text-muted">${s.description || ''}</p>
+        </div>
+      `).join('');
+    } catch { document.getElementById('skills-grid').innerHTML = '<div class="text-red text-sm">Failed to load skills</div>'; }
   }
-
-  function viewSkill(name) {
-    const skill = allSkills.find(s => s.name === name);
-    document.getElementById('skill-detail-name').textContent = name;
-    document.getElementById('skill-detail-tags').innerHTML =
-      skill && skill.category ? `<span class="chip">${skill.category}</span>` : '';
-    document.getElementById('skill-detail-body').textContent =
-      skill ? (skill.source || `Skill details not available in WebUI. Use CLI: jebat skill view ${name}`) :
-      `Skill details not available in this view. Use CLI: jebat skill view ${name}`;
-    document.getElementById('skill-detail').style.display = 'block';
-  }
-
-  document.getElementById('skill-detail-close').addEventListener('click', () => {
-    document.getElementById('skill-detail').style.display = 'none';
-  });
-
-  document.getElementById('skill-search').addEventListener('input', e => loadSkills(e.target.value));
-  document.getElementById('btn-import-hermes').addEventListener('click', () => importSkills('hermes'));
-  document.getElementById('btn-import-claude').addEventListener('click', () => importSkills('claude'));
-  document.getElementById('btn-import-codex').addEventListener('click', () => importSkills('codex'));
-
-  async function importSkills(source) {
-    try {
-      const res = await API.post('/skills/import', { source, action: 'preview' });
-      alert(`Import preview: ${res.count || 0} skills from ${source}`);
-    } catch (e) {
-      alert(`Import failed: ${e.message}`);
-    }
-  }
-
   loadSkills();
+  document.getElementById('skills-refresh')?.addEventListener('click', loadSkills);
 </script>

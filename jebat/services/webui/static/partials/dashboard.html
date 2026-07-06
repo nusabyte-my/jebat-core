@@ -1,91 +1,133 @@
-<!-- dashboard partial -->
+<!-- Dashboard partial -->
 <style>
-  /* dashboard-specific overrides */
-  .kpi-value { font-size: var(--size-h1); font-weight: var(--weight-medium); color: var(--black); }
-  .kpi-label { font-size: var(--size-caption); color: var(--stone); text-transform: uppercase; letter-spacing: 0.06em; }
-  .runtime-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--gray-light); }
-  .runtime-row:last-child { border-bottom: none; }
+  .dash-hero {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    margin-bottom: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, var(--cyan-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .dash-hero-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: var(--space-sm);
+  }
+  .dash-hero-sub {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+  }
+  .dash-hero-sub .highlight { color: var(--cyan); font-weight: 600; }
+  .product-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-md); margin-top: var(--space-lg); }
+  .product-tile {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .product-tile:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .product-tile-icon { font-size: 28px; }
+  .product-tile-name { font-size: var(--font-size-lg); font-weight: 600; color: var(--text-bright); }
+  .product-tile-codename { font-size: var(--font-size-xs); color: var(--text-muted); font-family: var(--font-mono); }
+  .product-tile-desc { font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.4; }
 </style>
 
-<div class="container section-sm">
-  <h2>Dashboard</h2>
-  <p class="small muted" style="margin-bottom: var(--space-lg);">Live system overview. Auto-refreshes every 5s.</p>
-</div>
-
-<!-- KPI cards -->
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="grid grid-4">
-    <div class="card" style="text-align: center;">
-      <div class="kpi-label">Model</div>
-      <div class="kpi-value" id="kpi-model">—</div>
-    </div>
-    <div class="card" style="text-align: center;">
-      <div class="kpi-label">Provider</div>
-      <div class="kpi-value" id="kpi-provider">—</div>
-    </div>
-    <div class="card" style="text-align: center;">
-      <div class="kpi-label">Safety</div>
-      <div class="kpi-value" id="kpi-safety">—</div>
-    </div>
-    <div class="card" style="text-align: center;">
-      <div class="kpi-label">Uptime</div>
-      <div class="kpi-value" id="kpi-uptime">—</div>
-    </div>
+<div class="dash-hero">
+  <div class="dash-hero-title">Welcome to JEBAT</div>
+  <div class="dash-hero-sub">
+    Sovereign AI Platform & Agent Workstation — <span class="highlight">5 products, 1 memory, infinite agents</span>
   </div>
 </div>
 
-<!-- Component status -->
-<div class="container">
-  <div class="grid grid-2">
-    <div class="card">
-      <div class="card-header"><div class="card-title">Components</div></div>
-      <div id="component-list" class="card-body">Loading…</div>
-    </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title">Runtime Config</div></div>
-      <div id="runtime-dump" class="card-body">Loading…</div>
-    </div>
-  </div>
+<div class="product-grid">
+  <a class="product-tile" href="#sahabat">
+    <div class="product-tile-icon">🤖</div>
+    <div class="product-tile-name">Sahabat</div>
+    <div class="product-tile-codename">Companion v1.0</div>
+    <div class="product-tile-desc">Conversational AI for daily tasks, briefings & meetings</div>
+    <span class="badge badge-green">Live</span>
+  </a>
+  <a class="product-tile" href="#keris">
+    <div class="product-tile-icon">🛡️</div>
+    <div class="product-tile-name">Keris</div>
+    <div class="product-tile-codename">Sentinel Security v1.0</div>
+    <div class="product-tile-desc">Autonomous pentest orchestrator & CVE correlation</div>
+    <span class="badge badge-green">Live</span>
+  </a>
+  <a class="product-tile" href="#pandai">
+    <div class="product-tile-icon">💻</div>
+    <div class="product-tile-name">Pandai</div>
+    <div class="product-tile-codename">Developer Suite v1.0</div>
+    <div class="product-tile-desc">MCP-native sandboxed code workspace</div>
+    <span class="badge badge-green">Live</span>
+  </a>
+  <a class="product-tile" href="#perisai">
+    <div class="product-tile-icon">🌐</div>
+    <div class="product-tile-name">Perisai</div>
+    <div class="product-tile-codename">Nexus v1.0</div>
+    <div class="product-tile-desc">Multi-channel bot orchestrator — 6+ platforms</div>
+    <span class="badge badge-green">Live</span>
+  </a>
+  <a class="product-tile" href="#chat">
+    <div class="product-tile-icon">🗡️</div>
+    <div class="product-tile-name">Core</div>
+    <div class="product-tile-codename">Hang Jebat v6.1</div>
+    <div class="product-tile-desc">5-layer memory, Ultra-Think, agent swarms</div>
+    <span class="badge badge-cyan">Platform</span>
+  </a>
 </div>
 
-<!-- Console meta -->
-<div class="container" style="margin-top: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Console Health</div></div>
-    <div class="card-body" id="console-dump">Loading…</div>
+<!-- Quick Stats -->
+<div class="grid grid-4 mt-lg">
+  <div class="stat-card cyan">
+    <div class="stat-label">Active Providers</div>
+    <div class="stat-value" id="stat-providers">—</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-label">Skills Loaded</div>
+    <div class="stat-value" id="stat-skills">—</div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-label">Agents Running</div>
+    <div class="stat-value" id="stat-agents">0</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Memory Layers</div>
+    <div class="stat-value">5</div>
   </div>
 </div>
 
 <script>
-  async function refreshDashboard() {
+  // Load stats from API
+  (async () => {
     try {
-      const [status, runtime] = await Promise.all([
-        API.status(), API.runtime()
-      ]);
-
-      // Components from /api/status
-      const comps = status.components || {};
-      document.getElementById('component-list').innerHTML = Object.entries(comps)
-        .map(([k, v]) => `<div class="runtime-row"><span>${k}</span><span class="chip chip-ok">${v}</span></div>`)
-        .join('');
-
-      // Provider / model from /api/runtime
-      const prov = runtime.provider || {};
-      document.getElementById('kpi-model').textContent = prov.configured_model || '—';
-      document.getElementById('kpi-provider').textContent = prov.effective || '—';
-      document.getElementById('kpi-safety').textContent = prov.configured || '—';
-      document.getElementById('kpi-uptime').textContent = '—';
-
-      // Dump raw runtime
-      document.getElementById('runtime-dump').innerHTML = '<pre>' + JSON.stringify(runtime, null, 2) + '</pre>';
-      document.getElementById('console-dump').textContent = 'N/A';
-    } catch (err) {
-      console.error('Dashboard refresh failed:', err);
-    }
-  }
-
-  refreshDashboard();
-  setInterval(() => {
-    if (document.getElementById('kpi-model')) refreshDashboard();
-  }, 5000);
+      if (typeof API !== 'undefined') {
+        const rt = await API.runtime();
+        const providers = Object.keys(rt.providers?.catalog || {});
+        document.getElementById('stat-providers').textContent = providers.length || '—';
+      }
+    } catch {}
+  })();
 </script>

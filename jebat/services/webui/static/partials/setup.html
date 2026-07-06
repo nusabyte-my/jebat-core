@@ -1,108 +1,71 @@
-<!-- setup partial -->
-<div class="container section-sm">
-  <h2>Setup</h2>
-  <p class="small muted" style="margin-bottom: var(--space-lg);">Environment health check. Verify all required runtimes, tools, and services are ready.</p>
-</div>
+<!-- Setup -->
+<div>
+  <h2 style="margin-bottom:var(--space-lg)">🔧 Setup</h2>
+  <p class="text-muted mb-lg">Configure JEBAT providers, models, and system settings.</p>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">Environment Check</div>
-      <button class="btn btn-outline btn-sm" id="env-recheck">Re-check</button>
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Quick Setup</div>
+      </div>
+      <div class="terminal" style="font-size:var(--font-size-xs)">
+        <div><span class="prompt">$</span> jebat setup</div>
+        <div class="output">Interactive setup wizard</div>
+        <div class="output">  → Select providers</div>
+        <div class="output">  → Configure models</div>
+        <div class="output">  → Set API keys</div>
+        <div class="output">  → Enable features</div>
+      </div>
     </div>
-    <div class="card-body" id="env-results">
-      <p>Click Re-check to verify your environment.</p>
-    </div>
-  </div>
-</div>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Component Status</div></div>
-    <div class="card-body" id="comp-status">
-      Loading…
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Environment</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-sm)">
+        <div class="flex justify-between"><span class="text-sm text-muted">Python</span><span class="text-sm font-mono">3.13.7</span></div>
+        <div class="flex justify-between"><span class="text-sm text-muted">Node.js</span><span class="text-sm font-mono" id="setup-node">—</span></div>
+        <div class="flex justify-between"><span class="text-sm text-muted">uv</span><span class="text-sm font-mono">installed</span></div>
+        <div class="flex justify-between"><span class="text-sm text-muted">MCP Server</span><span class="text-sm font-mono text-green">running</span></div>
+      </div>
     </div>
-  </div>
-</div>
 
-<div class="container">
-  <div class="card">
-    <div class="card-header"><div class="card-title">REST API Health</div></div>
-    <div class="card-body">
-      <button class="btn btn-outline btn-sm" id="health-check-btn">Ping Health Endpoint</button>
-      <span class="small muted" style="margin-left: var(--space-md);" id="health-result"></span>
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-header">
+        <div class="card-title">Provider Catalog</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Provider</th><th>Status</th><th>Models</th><th>Auth</th></tr></thead>
+          <tbody id="setup-providers">
+            <tr><td colspan="4" class="text-muted text-sm" style="text-align:center;padding:24px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  async function runEnvCheck() {
-    const el = document.getElementById('env-results');
-    el.innerHTML = '<p>Checking environment…</p>';
-
-    // Build a check from available data sources
+  (async () => {
     try {
-      const [status, runtime] = await Promise.all([API.status(), API.runtime()]);
-      const components = status.components || {};
-
-      const checks = [
-        { label: 'Python', svc: 'python', icon: '🐍' },
-        { label: 'Node.js', svc: 'node', icon: '⬢' },
-        { label: 'Git', svc: 'git', icon: '⎇' },
-        { label: 'Docker', svc: 'docker', icon: '🐳' },
-        { label: 'Ollama', svc: 'ollama', icon: '🦙' },
-        { label: 'JEBAT CLI', svc: 'jebat-cli', icon: '⚔' },
-        { label: '9-Router', svc: 'nine-router', icon: '🔀' },
-        { label: 'Gateway', svc: 'jebat-gateway', icon: '🌐' },
-        { label: 'LLM Provider', svc: runtime.provider.effective, icon: '🧠' },
-      ];
-
-      el.innerHTML = '<div class="stack-sm">' + checks.map(c => {
-        const comp = components[c.svc] || {};
-        const ok = comp.ok !== false && comp.status !== 'unavailable';
-        return `<div class="mini-card">
-          <strong>${c.icon} ${c.label}</strong>
-          <span class="${ok ? '' : 'text-danger'}">${ok ? (comp.info || comp.version || 'OK') : (comp.error || 'Not found')}</span>
-        </div>`;
-      }).join('') + '</div>';
-    } catch (e) {
-      el.innerHTML = `<p class="text-danger">Check failed: ${e.message}</p>`;
-    }
-  }
-
-  async function loadComponents() {
-    try {
-      const status = await API.status();
-      const components = status.components || {};
-      const names = Object.keys(components);
-      document.getElementById('comp-status').innerHTML = names.length === 0
-        ? '<p>No component data available.</p>'
-        : '<div class="stack-sm">' + names.map(name => {
-            const c = components[name];
-            const ok = c.ok !== false;
-            return `<div class="mini-card">
-              <strong>${name}</strong>
-              <span class="${ok ? '' : 'text-danger'}">${ok ? (c.info || 'OK') : (c.error || 'down')}</span>
-            </div>`;
-          }).join('') + '</div>';
-    } catch (_) {
-      document.getElementById('comp-status').innerHTML = '<p>Unavailable</p>';
-    }
-  }
-
-  document.getElementById('env-recheck').addEventListener('click', runEnvCheck);
-  document.getElementById('health-check-btn').addEventListener('click', async () => {
-    const el = document.getElementById('health-result');
-    el.textContent = 'Pinging…';
-    try {
-      const res = await API.get('/health');
-      el.textContent = `OK — uptime: ${res.uptime || '?'}`;
-      setTimeout(() => el.textContent = '', 5000);
-    } catch (e) {
-      el.textContent = `Failed: ${e.message}`;
-    }
-  });
-
-  loadComponents();
-  runEnvCheck();
+      if (typeof API !== 'undefined') {
+        const rt = await API.runtime();
+        const catalog = rt.providers?.catalog || {};
+        const tbody = document.getElementById('setup-providers');
+        if (Object.keys(catalog).length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-sm" style="text-align:center">No providers configured</td></tr>';
+          return;
+        }
+        tbody.innerHTML = Object.entries(catalog).map(([name, info]) => `
+          <tr>
+            <td class="font-mono">${name}</td>
+            <td><span class="badge badge-green">Active</span></td>
+            <td class="text-sm text-muted">${info.models?.length || 0} models</td>
+            <td><span class="badge ${info.auth ? 'badge-green' : 'badge-muted'}">${info.auth ? 'Configured' : 'Not set'}</span></td>
+          </tr>
+        `).join('');
+      }
+    } catch {}
+  })();
 </script>

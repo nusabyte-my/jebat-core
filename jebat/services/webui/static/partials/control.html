@@ -1,213 +1,89 @@
-<!-- control partial -->
-<div class="container section-sm">
-  <h2>Control</h2>
-  <p class="small muted" style="margin-bottom: var(--space-lg);">LLM provider configuration, auth keys, model selection, and safety settings.</p>
-</div>
+<!-- Control Center -->
+<style>
+  .control-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-md); }
+</style>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Active Configuration</div></div>
-    <div class="card-body">
-      <div class="grid grid-3">
-        <div class="mini-card">
-          <strong>Provider</strong>
-          <span id="ctrl-provider">—</span>
-        </div>
-        <div class="mini-card">
-          <strong>Model</strong>
-          <span id="ctrl-model">—</span>
-        </div>
-        <div class="mini-card">
-          <strong>Fallback</strong>
-          <span id="ctrl-fallbacks">—</span>
-        </div>
+<div>
+  <h2 style="margin-bottom:var(--space-lg)">⚙️ Control Center</h2>
+
+  <div class="control-grid">
+    <!-- Runtime Status -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Runtime</div>
+        <span class="badge badge-green" id="ctrl-runtime-status">Active</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-sm)">
+        <div class="flex justify-between"><span class="text-sm text-muted">Provider</span><span class="text-sm font-mono" id="ctrl-provider">—</span></div>
+        <div class="flex justify-between"><span class="text-sm text-muted">Model</span><span class="text-sm font-mono" id="ctrl-model">—</span></div>
+        <div class="flex justify-between"><span class="text-sm text-muted">Profile</span><span class="text-sm font-mono" id="ctrl-profile">default</span></div>
+      </div>
+      <div class="mt-md">
+        <button class="btn btn-sm" id="ctrl-refresh">↻ Refresh</button>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Provider &amp; Model</div></div>
-    <div class="card-body">
-      <div class="form-group">
-        <label class="form-label">Provider</label>
-        <select class="select" id="ctrl-provider-select"></select>
+    <!-- Provider Auth -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Provider Auth</div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Model</label>
-        <input class="input" id="ctrl-model-input" type="text" placeholder="claude-sonnet-4" />
-      </div>
-      <div style="margin-top: var(--space-md);">
-        <button class="btn btn-black" id="ctrl-apply">Apply</button>
-        <span class="small muted" style="margin-left: var(--space-md);" id="ctrl-apply-status"></span>
+      <div style="display:flex;flex-direction:column;gap:var(--space-sm)">
+        <select class="select" id="ctrl-auth-provider">
+          <option value="">Select provider...</option>
+        </select>
+        <input class="input" id="ctrl-auth-secret" type="password" placeholder="API Key" />
+        <button class="btn btn-primary btn-sm" id="ctrl-auth-save">Save Key</button>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Provider Auth</div></div>
-    <div class="card-body">
-      <div class="form-group">
-        <label class="form-label">Provider</label>
-        <select class="select" id="auth-provider-select"></select>
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Quick Actions</div>
       </div>
-      <div class="form-group">
-        <label class="form-label">API Key / Secret</label>
-        <input class="input" id="auth-key" type="password" placeholder="sk-… or token" />
-      </div>
-      <div class="form-group" id="auth-host-group" style="display:none;">
-        <label class="form-label">Host (for self-hosted providers)</label>
-        <input class="input" id="auth-host" placeholder="http://localhost:11434" />
-      </div>
-      <div style="margin-top: var(--space-md);">
-        <button class="btn btn-black" id="auth-save">Save Key</button>
-        <span class="small muted" style="margin-left: var(--space-md);" id="auth-status"></span>
+      <div style="display:flex;flex-direction:column;gap:var(--space-sm)">
+        <button class="btn" onclick="location.hash='#sahabat'">🤖 Open Sahabat</button>
+        <button class="btn" onclick="location.hash='#keris'">🛡️ Open Keris</button>
+        <button class="btn" onclick="location.hash='#perisai'">🌐 Open Perisai</button>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">9-Router</div></div>
-    <div class="card-body">
-      <div class="form-row">
-        <div class="mini-card">
-          <strong>Timeout (s)</strong>
-          <span id="ctrl-router-timeout">30</span>
-        </div>
-        <div class="mini-card">
-          <strong>Cache</strong>
-          <span id="ctrl-router-cache">enabled</span>
-        </div>
+    <!-- System Info -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">System</div>
       </div>
-      <div class="btn-group" style="margin-top: var(--space-md);">
-        <button class="btn btn-outline btn-sm" id="ctrl-router-start">Start Router</button>
-        <button class="btn btn-outline btn-sm" id="ctrl-router-stop">Stop Router</button>
-        <button class="btn btn-outline btn-sm" id="ctrl-router-status">Check Status</button>
+      <div class="terminal" style="font-size:var(--font-size-xs)">
+        <div><span class="prompt">$</span> jebat --version</div>
+        <div class="output">JEBAT v6.1.0</div>
+        <div><span class="prompt">$</span> python --version</div>
+        <div class="output">Python 3.13.7</div>
       </div>
-      <span class="small muted" style="margin-left: var(--space-md);" id="ctrl-router-status-text"></span>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Fallback Chain</div></div>
-    <div class="card-body">
-      <pre id="ctrl-fallback-chain">Loading…</pre>
-      <button class="btn btn-outline btn-sm" id="ctrl-fallback-reload" style="margin-top: var(--space-sm);">Reload</button>
     </div>
   </div>
 </div>
 
 <script>
-  let providerCatalog = {};
-  let currentProvider = 'local';
-  let currentModel = '';
-
-  async function loadConfig() {
+  document.getElementById('ctrl-refresh')?.addEventListener('click', async () => {
     try {
-      const rt = await API.runtime();
-      const p = rt.provider;
-      const ps = rt.providers;
-      providerCatalog = ps.catalog || {};
+      if (typeof API !== 'undefined') {
+        const rt = await API.runtime();
+        document.getElementById('ctrl-provider').textContent = rt.provider || '—';
+        document.getElementById('ctrl-model').textContent = rt.model || '—';
+        document.getElementById('ctrl-profile').textContent = rt.profile || 'default';
 
-      currentProvider = p.effective;
-      currentModel = p.model || '';
-
-      document.getElementById('ctrl-provider').textContent = p.effective;
-      document.getElementById('ctrl-model').textContent = p.model || '—';
-      document.getElementById('ctrl-fallbacks').textContent = (p.fallbacks || []).join(', ') || 'none';
-
-      // Provider dropdowns
-      const available = ps.available || [];
-      const provOpts = available.map(pr =>
-        `<option value="${pr.provider}" ${pr.provider === p.effective ? 'selected' : ''}>${pr.label || pr.provider}</option>`
-      ).join('');
-      document.getElementById('ctrl-provider-select').innerHTML = provOpts;
-      document.getElementById('auth-provider-select').innerHTML = provOpts;
-
-      document.getElementById('ctrl-model-input').value = p.model || '';
-
-      // Show/hide host field for local/ollama providers
-      document.getElementById('auth-provider-select').addEventListener('change', () => {
-        const prov = document.getElementById('auth-provider-select').value;
-        const needsHost = prov === 'ollama' || prov === 'local' || prov === 'vllm' || prov === 'custom';
-        document.getElementById('auth-host-group').style.display = needsHost ? '' : 'none';
-      });
-
-      // Fallback chain
-      await loadFallbackChain();
-    } catch (e) {
-      console.warn('Control config load failed:', e);
-    }
-  }
-
-  async function loadFallbackChain() {
-    try {
-      const rt = await API.runtime();
-      const chain = rt.provider.fallback_options || rt.provider.fallbacks || [];
-      document.getElementById('ctrl-fallback-chain').textContent = chain.length
-        ? chain.map((f, i) => `${i + 1}. ${f}`).join('\n')
-        : 'No fallback chain configured.';
-    } catch (_) {
-      document.getElementById('ctrl-fallback-chain').textContent = 'Unavailable';
-    }
-  }
-
-  // Apply provider + model
-  document.getElementById('ctrl-apply').addEventListener('click', async () => {
-    const statusEl = document.getElementById('ctrl-apply-status');
-    try {
-      await API.setRuntime({
-        provider: document.getElementById('ctrl-provider-select').value,
-        model: document.getElementById('ctrl-model-input').value
-      });
-      statusEl.textContent = 'Applied. Reload to see changes.';
-      setTimeout(() => statusEl.textContent = '', 3000);
-    } catch (e) {
-      statusEl.textContent = 'Error: ' + e.message;
-    }
+        const catalog = rt.providers?.catalog || {};
+        const sel = document.getElementById('ctrl-auth-provider');
+        sel.innerHTML = '<option value="">Select provider...</option>';
+        for (const name of Object.keys(catalog)) {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          sel.appendChild(opt);
+        }
+      }
+    } catch {}
   });
-
-  // Save API key
-  document.getElementById('auth-save').addEventListener('click', async () => {
-    const statusEl = document.getElementById('auth-status');
-    const provider = document.getElementById('auth-provider-select').value;
-    const secret = document.getElementById('auth-key').value;
-    if (!secret) { statusEl.textContent = 'Enter a key first.'; return; }
-
-    try {
-      const host = document.getElementById('auth-host').value || undefined;
-      await API.post('/provider-auth', { provider, secret, host });
-      statusEl.textContent = 'Key saved.';
-      document.getElementById('auth-key').value = '';
-      setTimeout(() => statusEl.textContent = '', 3000);
-    } catch (e) {
-      statusEl.textContent = 'Error: ' + e.message;
-    }
-  });
-
-  // 9-Router buttons
-  async function routerAction(action) {
-    const statusEl = document.getElementById('ctrl-router-status-text');
-    statusEl.textContent = `${action}…`;
-    try {
-      const res = await API.post(`/nine-router/${action}`, {});
-      statusEl.textContent = res.message || res.status || 'OK';
-      setTimeout(() => statusEl.textContent = '', 5000);
-    } catch (e) {
-      statusEl.textContent = `Failed: ${e.message}`;
-    }
-  }
-  document.getElementById('ctrl-router-start').addEventListener('click', () => routerAction('start'));
-  document.getElementById('ctrl-router-stop').addEventListener('click', () => routerAction('stop'));
-  document.getElementById('ctrl-router-status').addEventListener('click', () => routerAction('status'));
-  document.getElementById('ctrl-fallback-reload').addEventListener('click', loadFallbackChain);
-
-  loadConfig();
+  document.getElementById('ctrl-refresh')?.click();
 </script>

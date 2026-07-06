@@ -1,47 +1,154 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JEBAT</title>
-  <link rel="stylesheet" href="/webui/static/css/brutalist.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <title>JEBAT — Sovereign AI Platform</title>
+  <link rel="stylesheet" href="/webui/static/css/stealth.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="nav">
-    <a class="nav-brand" href="#home" data-page="home">
-      <div class="nav-brand-icon">J</div>
-      JEBAT
-    </a>
-    <div class="nav-links" id="nav-links">
-      <a class="nav-link" data-page="dashboard" href="#dashboard">Dashboard</a>
-      <a class="nav-link" data-page="chat" href="#chat">Chat</a>
-      <a class="nav-link" data-page="control" href="#control">Control</a>
-      <a class="nav-link" data-page="skills" href="#skills">Skills</a>
-      <a class="nav-link" data-page="agents" href="#agents">Agents</a>
-      <a class="nav-link" data-page="channels" href="#channels">Channels</a>
-      <a class="nav-link" data-page="station" href="#station">Station</a>
-      <a class="nav-link" data-page="learning" href="#learning">Learning</a>
-      <a class="nav-link" data-page="setup" href="#setup">Setup</a>
-    </div>
-  </nav>
+  <div class="app-layout">
+    <!-- ═══ Sidebar ═══ -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">J</div>
+        <div>
+          <div class="sidebar-brand-text">JEBAT</div>
+          <div class="sidebar-brand-version">v6.1.0</div>
+        </div>
+      </div>
 
-  <!-- Status strip -->
-  <div id="status-strip" class="status-strip"></div>
+      <!-- Platform -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Platform</div>
+        <a class="sidebar-link active" data-page="dashboard" href="#dashboard">
+          <span class="sidebar-link-icon">📊</span> Dashboard
+        </a>
+        <a class="sidebar-link" data-page="chat" href="#chat">
+          <span class="sidebar-link-icon">💬</span> Chat
+          <span class="sidebar-link-badge">6P</span>
+        </a>
+        <a class="sidebar-link" data-page="control" href="#control">
+          <span class="sidebar-link-icon">⚙️</span> Control
+        </a>
+      </div>
 
-  <!-- Page content -->
-  <main id="app-shell"></main>
+      <!-- Products -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Products</div>
+        <a class="sidebar-link" data-page="sahabat" href="#sahabat">
+          <span class="sidebar-link-icon">🤖</span> Sahabat
+          <span class="sidebar-link-badge">v1.0</span>
+        </a>
+        <a class="sidebar-link" data-page="keris" href="#keris">
+          <span class="sidebar-link-icon">🛡️</span> Keris
+          <span class="sidebar-link-badge">v1.0</span>
+        </a>
+        <a class="sidebar-link" data-page="pandai" href="#pandai">
+          <span class="sidebar-link-icon">💻</span> Pandai
+          <span class="sidebar-link-badge">v1.0</span>
+        </a>
+        <a class="sidebar-link" data-page="perisai" href="#perisai">
+          <span class="sidebar-link-icon">🌐</span> Perisai
+          <span class="sidebar-link-badge">v1.0</span>
+        </a>
+      </div>
+
+      <!-- System -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">System</div>
+        <a class="sidebar-link" data-page="skills" href="#skills">
+          <span class="sidebar-link-icon">🧠</span> Skills
+        </a>
+        <a class="sidebar-link" data-page="agents" href="#agents">
+          <span class="sidebar-link-icon">🤝</span> Agents
+        </a>
+        <a class="sidebar-link" data-page="channels" href="#channels">
+          <span class="sidebar-link-icon">📡</span> Channels
+        </a>
+        <a class="sidebar-link" data-page="setup" href="#setup">
+          <span class="sidebar-link-icon">🔧</span> Setup
+        </a>
+      </div>
+
+      <!-- Product Status Footer -->
+      <div class="sidebar-products">
+        <div class="sidebar-product">
+          <span class="sidebar-product-icon">🗡️</span>
+          <span class="sidebar-product-name">Core</span>
+          <span class="sidebar-product-status"></span>
+        </div>
+        <div class="sidebar-product">
+          <span class="sidebar-product-icon">🛡️</span>
+          <span class="sidebar-product-name">Keris</span>
+          <span class="sidebar-product-status"></span>
+        </div>
+        <div class="sidebar-product">
+          <span class="sidebar-product-icon">💻</span>
+          <span class="sidebar-product-name">Pandai</span>
+          <span class="sidebar-product-status"></span>
+        </div>
+        <div class="sidebar-product">
+          <span class="sidebar-product-icon">🤖</span>
+          <span class="sidebar-product-name">Sahabat</span>
+          <span class="sidebar-product-status"></span>
+        </div>
+        <div class="sidebar-product">
+          <span class="sidebar-product-icon">🌐</span>
+          <span class="sidebar-product-name">Perisai</span>
+          <span class="sidebar-product-status"></span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ Topbar ═══ -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-breadcrumb" id="page-breadcrumb">jebat / dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-status">
+          <span class="topbar-status-dot" id="status-dot"></span>
+          <span id="status-text">Connected</span>
+        </div>
+        <button class="btn btn-sm" id="btn-settings" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- ═══ Main Content ═══ -->
+    <main class="main-content" id="app-shell">
+      <!-- Loaded by router -->
+    </main>
+  </div>
 
   <script src="/webui/static/js/api.js"></script>
   <script>
-    // ── Shell router ──
+    // ═══ Shell Router ═══
     const partialCache = {};
+    const PAGE_TITLES = {
+      dashboard: 'Dashboard',
+      chat: 'Chat',
+      control: 'Control Center',
+      sahabat: 'Sahabat — Companion',
+      keris: 'Keris — Sentinel Security',
+      pandai: 'Pandai — Developer Suite',
+      perisai: 'Perisai — Nexus',
+      skills: 'Skills',
+      agents: 'Agents',
+      channels: 'Channels',
+      setup: 'Setup',
+    };
 
     async function loadPartial(name) {
-      const res = await fetch(`/webui/partials/${name}?r=${Math.random()}`);
-      if (!res.ok) return;
-      partialCache[name] = await res.text();
+      if (partialCache[name]) return partialCache[name];
+      try {
+        const res = await fetch(`/webui/partials/${name}?r=${Date.now()}`);
+        if (!res.ok) return null;
+        partialCache[name] = await res.text();
+        return partialCache[name];
+      } catch { return null; }
     }
 
     function removeScripts(container) {
@@ -58,51 +165,56 @@
 
     async function navigate(name) {
       const main = document.getElementById('app-shell');
+      const title = document.getElementById('page-title');
+      const breadcrumb = document.getElementById('page-breadcrumb');
       if (!main) return;
 
-      // Active nav link
-      document.querySelectorAll('.nav-link').forEach(lnk => {
+      // Active nav
+      document.querySelectorAll('.sidebar-link').forEach(lnk => {
         lnk.classList.toggle('active', lnk.dataset.page === name);
       });
 
-      // Show skeleton
-      main.innerHTML = '<div class="section">Loading…</div>';
+      // Update topbar
+      title.textContent = PAGE_TITLES[name] || name;
+      breadcrumb.textContent = `jebat / ${name}`;
 
-      // Load partial if not cached
-      await loadPartial(name);
-      const partial = partialCache[name];
+      // Loading skeleton
+      main.innerHTML = '<div style="padding:48px"><div class="skeleton" style="height:200px;margin-bottom:16px"></div><div class="skeleton" style="height:120px"></div></div>';
+
+      // Load partial
+      const partial = await loadPartial(name);
       if (!partial) {
-        main.innerHTML = '<div class="empty"><h3>Not found</h3><p>Page /' + name + ' is missing.</p></div>';
+        main.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🚧</div>
+            <div class="empty-state-title">Coming Soon</div>
+            <div class="empty-state-desc">This page is under development.</div>
+          </div>`;
         return;
       }
 
+      removeScripts(main);
       main.innerHTML = partial;
       runScripts(main);
-      window.location.hash = name;
     }
 
-    // Bind nav clicks
-    document.addEventListener('click', e => {
-      const link = e.target.closest('[data-page]');
-      if (!link) return;
-      e.preventDefault();
-      navigate(link.dataset.page);
+    // ── Init ──
+    document.querySelectorAll('.sidebar-link[data-page]').forEach(lnk => {
+      lnk.addEventListener('click', e => {
+        e.preventDefault();
+        const page = lnk.dataset.page;
+        history.pushState(null, '', `#${page}`);
+        navigate(page);
+      });
     });
 
-    // Bind hash changes
-    window.addEventListener('hashchange', () => {
-      const name = (window.location.hash || '#home').replace('#', '');
-      navigate(name);
-    });
-
-    // Init
-    async function boot() {
-      updateStatusStrip();
-      const initial = (window.location.hash || '#home').replace('#', '');
-      await navigate(initial);
+    // ── Hash routing ──
+    function handleHash() {
+      const hash = location.hash.replace('#', '') || 'dashboard';
+      navigate(hash);
     }
-
-    boot();
+    window.addEventListener('hashchange', handleHash);
+    handleHash();
   </script>
 </body>
 </html>

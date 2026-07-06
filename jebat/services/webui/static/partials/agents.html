@@ -1,114 +1,33 @@
-<!-- agents partial -->
-<div class="container section-sm">
-  <h2>Agents</h2>
-  <p class="small muted" style="margin-bottom: var(--space-lg);">The JEBAT agent force. Malaysian codenames, combat roles. Or-Pacak!</p>
-</div>
+<!-- Agents -->
+<div>
+  <h2 style="margin-bottom:var(--space-lg)">🤝 Agents</h2>
+  <p class="text-muted mb-lg">Multi-agent orchestration — delegate tasks to specialized workers.</p>
 
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Active Agents</div></div>
-    <div class="card-body" id="agents-list">Loading…</div>
-  </div>
-</div>
-
-<div class="container" style="margin-bottom: var(--space-lg);">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Gateway Agents</div></div>
-    <div class="card-body" id="gateway-agents">
-      <p>Loading gateway agent registry…</p>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Active Agents</div>
+        <span class="badge badge-cyan">0</span>
+      </div>
+      <p class="text-sm text-muted">No agents currently running.</p>
     </div>
-  </div>
-</div>
-
-<div class="container">
-  <div class="card">
-    <div class="card-header"><div class="card-title">Orchestration Status</div></div>
-    <div class="card-body">
-      <div class="grid grid-2" id="orch-status">
-        <div class="mini-card">
-          <strong>Orchestrator</strong>
-          <span>Bendahara</span>
-        </div>
-        <div class="mini-card">
-          <strong>Mode</strong>
-          <span id="orch-mode">—</span>
-        </div>
-        <div class="mini-card">
-          <strong>Sub-agents</strong>
-          <span id="orch-count">—</span>
-        </div>
-        <div class="mini-card">
-          <strong>Auto-dispatch</strong>
-          <span id="orch-auto">—</span>
-        </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Completed Tasks</div>
+        <span class="badge badge-green">0</span>
+      </div>
+      <p class="text-sm text-muted">No tasks completed yet.</p>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Agent Config</div>
+      </div>
+      <div class="terminal" style="font-size:var(--font-size-xs)">
+        <div><span class="prompt">$</span> jebat agents status</div>
+        <div class="output">  Max concurrent: 3</div>
+        <div class="output">  Max depth: 1</div>
+        <div class="output">  Orchestrator: enabled</div>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-  const DEFAULT_AGENTS = [
-    { name: 'Tukang', role: 'Heavy Construction', spec: 'Large-scale code generation, refactors, scaffolding', icon: '🔨' },
-    { name: 'Hulubalang', role: 'Cyber Warrior', spec: 'Red team, pentest, exploit dev, vulnerability assessment', icon: '🛡' },
-    { name: 'Pawang', role: 'System Mystic', spec: 'Debugging, root-cause analysis, performance profiling', icon: '✨' },
-    { name: 'Pengacara', role: 'Code Lawyer', spec: 'Code review, compliance, best practices enforcement', icon: '⚖' },
-    { name: 'Bendahara', role: 'Treasurer/Orchestrator', spec: 'Task routing, resource allocation, multi-agent coordination', icon: '🎯' },
-    { name: 'PendekarGit', role: 'Git Warrior', spec: 'Branch management, merging, rebasing, PR pipelines', icon: '⚔' },
-  ];
-
-  function renderAgentCard(a) {
-    return `<div class="mini-card">
-      <strong>${a.icon || '🤖'} ${a.name}</strong>
-      <span style="font-size:12px; color: var(--color-muted);">${a.role}</span>
-      <span style="margin-top: 4px;">${a.spec || a.description || ''}</span>
-      <span class="chip" style="font-size:10px;">${a.state || a.status || 'ready'}</span>
-    </div>`;
-  }
-
-  function renderAgentGrid(agents) {
-    return '<div class="grid grid-2">' + agents.map(renderAgentCard).join('') + '</div>';
-  }
-
-  // Load gateway agents from console meta
-  async function loadGatewayAgents() {
-    try {
-      const meta = await API.consoleMeta();
-      const gw = meta['jebat-gateway'] || {};
-      const names = gw.agent_names || [];
-
-      if (names.length === 0) {
-        document.getElementById('gateway-agents').innerHTML = '<p class="small muted">No gateway agents configured.</p>';
-        return;
-      }
-
-      document.getElementById('gateway-agents').innerHTML =
-        '<div class="stack-sm">' + names.map(name =>
-          `<div class="mini-card"><strong>${name}</strong><span>Gateway-managed</span></div>`
-        ).join('') + '</div>';
-    } catch (_) {
-      document.getElementById('gateway-agents').innerHTML = '<p>Gateway agent data unavailable.</p>';
-    }
-  }
-
-  async function loadAgents() {
-    try {
-      // Try to get agent status from backend
-      const res = await API.get('/agents/status');
-      const agents = res.agents || res.list || [];
-      document.getElementById('agents-list').innerHTML = agents.length > 0
-        ? renderAgentGrid(agents)
-        : renderAgentGrid(DEFAULT_AGENTS);
-      document.getElementById('orch-mode').textContent = res.mode || 'auto';
-      document.getElementById('orch-count').textContent = res.sub_agents || agents.length || DEFAULT_AGENTS.length;
-      document.getElementById('orch-auto').textContent = res.auto_dispatch ? 'yes' : 'no';
-    } catch (_) {
-      document.getElementById('agents-list').innerHTML = renderAgentGrid(DEFAULT_AGENTS);
-      document.getElementById('orch-mode').textContent = 'standby';
-      document.getElementById('orch-count').textContent = DEFAULT_AGENTS.length;
-      document.getElementById('orch-auto').textContent = 'offline';
-    }
-  }
-
-  loadAgents();
-  loadGatewayAgents();
-</script>
