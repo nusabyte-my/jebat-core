@@ -1,668 +1,1425 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>JEBAT | Unified AI Operator Framework</title>
-        <meta
-            name="description"
-            content="Enterprise-grade AI operator framework with governed inference, heat-scored memory, and auditable orchestration."
-        />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT — Sovereign AI Platform</title>
+    <meta name="description" content="Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Named after Malay heritage — rooted in the legend of Hang Jebat.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════
+           JEBAT Platform Suite — Stealth-Dark Tactical
+           ═══════════════════════════════════════════ */
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Code+Pro:wght@400;500;600&display=swap"
-            rel="stylesheet"
-        />
+        :root {
+            --canvas: #030303;
+            --surface: #0a0a0f;
+            --card: #09090b;
+            --border: #1a1a24;
+            --zinc-2: #1c1c1f;
+            --zinc-3: #27272a;
+            --zinc-4: #3f3f46;
+            --cyan: #00f0ff;
+            --cyan-dim: rgba(0, 240, 255, 0.08);
+            --cyan-glow: rgba(0, 240, 255, 0.25);
+            --purple: #8b5cf6;
+            --purple-dim: rgba(139, 92, 246, 0.08);
+            --amber: #f59e0b;
+            --amber-dim: rgba(245, 158, 11, 0.08);
+            --green: #22c55e;
+            --red: #ef4444;
+            --text: #f0f0f0;
+            --text-body: #c8c8c8;
+            --text-dim: rgba(200, 200, 200, 0.5);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
 
-        <style>
-            /* ==================== Design System: Operator Console ==================== */
-            :root {
-                --void: #030303;
-                --graphite: #09090b;
-                --emerald: #10b981;
-                --emerald-dim: rgba(16, 185, 129, 0.08);
-                --emerald-glow: rgba(16, 185, 129, 0.25);
-                --cyan: #06b6d4;
-                --cyan-dim: rgba(6, 182, 212, 0.08);
-                --border-dim: #1c1c1f;
-                --border-mid: #27272a;
-                --border-bright: #3f3f46;
-                
-                --text-primary: #fafafa;
-                --text-muted: #a1a1aa;
-                --text-dim: #52525b;
-                
-                --font-sans: "Inter", -apple-system, sans-serif;
-                --font-mono: "JetBrains Mono", monospace;
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--canvas);
+            color: var(--text);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* CRT Scanline Overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent, transparent 2px,
+                rgba(255,255,255,0.015) 2px, rgba(255,255,255,0.015) 4px
+            );
+        }
+
+        /* ─── Layout ─── */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+        .section { padding: 80px 0; }
+
+        /* ─── Typography ─── */
+        .mono {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 16px;
+        }
+
+        h1, h2, h3 { font-family: var(--font-display); }
+
+        /* ─── Navigation ─── */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 56px;
+            background: rgba(3, 3, 3, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .logo-mark {
+            width: 32px;
+            height: 32px;
+            border: 1.5px solid var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .logo-mark::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border: 1px solid var(--cyan);
+            opacity: 0.2;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+            background: var(--zinc-2);
+            border-color: var(--zinc-3);
+        }
+
+        .nav-links a.active {
+            color: var(--cyan);
+            border-color: var(--border);
+            background: var(--cyan-dim);
+        }
+
+        /* ─── Buttons ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cyan {
+            background: var(--cyan);
+            color: var(--canvas);
+            border-color: var(--cyan);
+        }
+
+        .btn-cyan:hover {
+            box-shadow: 0 0 20px var(--cyan-glow), 0 0 40px rgba(0,240,255,0.1);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border-color: var(--zinc-3);
+        }
+
+        .btn-ghost:hover {
+            background: var(--zinc-2);
+            border-color: var(--zinc-4);
+        }
+
+        /* ─── Pill Badge ─── */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 1px solid var(--border);
+        }
+
+        .pill-live {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--green);
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .pill-beta {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0, 240, 255, 0.25);
+        }
+
+        .pill-planned {
+            background: var(--purple-dim);
+            color: var(--purple);
+            border-color: rgba(139, 92, 246, 0.25);
+        }
+
+        .pill-soon {
+            background: var(--amber-dim);
+            color: var(--amber);
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+
+        .pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .pill-live .pill-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .pill-beta .pill-dot { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+        .pill-planned .pill-dot { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+        .pill-soon .pill-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+        /* ─── Hero ─── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 56px;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 30%, rgba(0,240,255,0.06) 0%, transparent 60%),
+                        radial-gradient(ellipse at 20% 70%, rgba(139,92,246,0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        .hero-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .hero-eyebrow::before,
+        .hero-eyebrow::after {
+            content: '';
+            width: 40px;
+            height: 1px;
+            background: var(--cyan);
+            opacity: 0.4;
+        }
+
+        h1.hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(40px, 7vw, 72px);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -1.5px;
+            margin-bottom: 24px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--cyan), var(--purple), var(--amber));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 18px;
+            color: var(--text-body);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 64px;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .hero-stat-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* ─── Platform Architecture Bar ─── */
+        .arch-bar {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            padding: 16px 0;
+            overflow: hidden;
+        }
+
+        .arch-marquee {
+            display: flex;
+            gap: 60px;
+            animation: marquee 40s linear infinite;
+            width: max-content;
+        }
+
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        .arch-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .arch-item .pulse {
+            width: 6px;
+            height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px var(--cyan); }
+            100% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        /* ─── Products Section ─── */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .product-card {
+            background: var(--canvas);
+            padding: 48px 40px;
+            position: relative;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            background: var(--surface);
+        }
+
+        .product-card::before {
+            content: '┌';
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--cyan);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card::after {
+            content: '┘';
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--cyan);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:hover::before,
+        .product-card:hover::after {
+            opacity: 0.5;
+        }
+
+        .product-card:hover {
+            border-color: var(--cyan);
+            box-shadow: inset 0 1px 0 var(--cyan), 0 0 30px rgba(0,240,255,0.05);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .product-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .product-name {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .product-codename {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 16px;
+        }
+
+        .product-desc {
+            color: var(--text-body);
+            font-size: 14px;
+            line-height: 1.7;
+            flex: 1;
+            margin-bottom: 24px;
+        }
+
+        .product-features {
+            list-style: none;
+            margin-bottom: 32px;
+            flex: 1;
+        }
+
+        .product-features li {
+            font-size: 13px;
+            color: var(--text-body);
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-features li::before {
+            content: '›';
+            color: var(--cyan);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-link {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--cyan);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            transition: opacity 0.2s;
+        }
+
+        .product-link:hover { opacity: 0.7; }
+
+        /* ─── Core Product (Featured) ─── */
+        .product-core {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            padding: 0;
+        }
+
+        .product-core-left {
+            padding: 64px 56px;
+            border-right: 1px solid var(--border);
+        }
+
+        .product-core-right {
+            padding: 64px 56px;
+            background: var(--surface);
+        }
+
+        .core-terminal {
+            background: var(--canvas);
+            border: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.8;
+            overflow: hidden;
+        }
+
+        .core-terminal-header {
+            background: var(--card);
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .term-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--zinc-3);
+        }
+
+        .term-dot.active { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+
+        .core-terminal-body {
+            padding: 20px;
+            color: var(--text-body);
+        }
+
+        .core-terminal-body .cyan { color: var(--cyan); }
+        .core-terminal-body .green { color: var(--green); }
+        .core-terminal-body .purple { color: var(--purple); }
+        .core-terminal-body .amber { color: var(--amber); }
+        .core-terminal-body .dim { color: var(--text-dim); }
+
+        .thinking-modes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .thinking-mode {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            background: var(--canvas);
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .thinking-mode:hover {
+            border-color: var(--cyan);
+            background: var(--cyan-dim);
+        }
+
+        .thinking-mode .mode-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .thinking-mode .mode-name {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+
+        /* ─── Memory Section ─── */
+        .memory-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .memory-layer {
+            display: grid;
+            grid-template-columns: 140px 1fr 200px;
+            align-items: center;
+            padding: 20px 24px;
+            background: var(--canvas);
+            transition: background 0.3s;
+        }
+
+        .memory-layer:hover { background: var(--surface); }
+
+        .heat-bar {
+            height: 3px;
+            background: var(--border);
+            position: relative;
+            margin: 0 32px;
+        }
+
+        .heat-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan-glow);
+            transition: width 1.5s ease-out;
+        }
+
+        /* ─── Protocol Section ─── */
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .protocol-card {
+            background: var(--canvas);
+            padding: 40px 32px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .protocol-card:hover {
+            background: var(--surface);
+        }
+
+        .protocol-icon {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .protocol-name {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .protocol-desc {
+            font-size: 13px;
+            color: var(--text-body);
+            line-height: 1.6;
+        }
+
+        /* ─── Timeline ─── */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            padding: 60px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 88px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--amber));
+            opacity: 0.3;
+        }
+
+        .timeline-item {
+            text-align: center;
+            position: relative;
+            flex: 1;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-dot.green { background: var(--green); box-shadow: 0 0 12px var(--green); }
+        .timeline-dot.cyan { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+        .timeline-dot.amber { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+        .timeline-dot.purple { background: var(--purple); box-shadow: 0 0 12px var(--purple); }
+
+        .timeline-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .timeline-product {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* ─── Quick Start ─── */
+        .quickstart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .quickstart-card {
+            background: var(--canvas);
+            padding: 40px 36px;
+        }
+
+        .quickstart-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quickstart-card pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-body);
+            overflow-x: auto;
+        }
+
+        .quickstart-card pre .comment { color: var(--text-dim); }
+        .quickstart-card pre .cmd { color: var(--cyan); }
+
+        /* ─── Footer ─── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 60px 0 40px;
+            background: var(--canvas);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 40px;
+            margin-bottom: 48px;
+        }
+
+        .footer-col h4 {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        .footer-col ul { list-style: none; }
+
+        .footer-col li { margin-bottom: 10px; }
+
+        .footer-col a {
+            color: var(--text-body);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover { color: var(--cyan); }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-bottom p {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--cyan); }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 900px) {
+            .product-core {
+                grid-template-columns: 1fr;
             }
+            .product-core-left { border-right: none; border-bottom: 1px solid var(--border); }
+            .protocol-grid { grid-template-columns: 1fr; }
+            .quickstart-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .timeline { flex-wrap: wrap; gap: 24px; }
+            .timeline::before { display: none; }
+        }
 
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                -webkit-font-smoothing: antialiased;
-                border-radius: 0px !important;
-            }
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .hero-stats { flex-direction: column; gap: 24px; }
+            .products-grid { grid-template-columns: 1fr; }
+            .thinking-modes { grid-template-columns: 1fr; }
+            .memory-layer { grid-template-columns: 1fr; gap: 12px; }
+            .heat-bar { margin: 0; }
+            .footer-grid { grid-template-columns: 1fr; }
+        }
 
-            body {
-                background: var(--void);
-                color: var(--text-primary);
-                font-family: var(--font-sans);
-                line-height: 1.5;
-                overflow-x: hidden;
-            }
+        /* ─── Thin Scrollbar ─── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--canvas); }
+        ::-webkit-scrollbar-thumb { background: var(--zinc-3); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--zinc-4); }
+    </style>
+</head>
+<body>
 
-            .container {
-                max-width: 1280px;
-                margin: 0 auto;
-                padding: 0 2rem;
-            }
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="#" class="logo">
+                <div class="logo-mark">🗡</div>
+                JEBAT
+            </a>
+            <ul class="nav-links">
+                <li><a href="#platform" class="active">Platform</a></li>
+                <li><a href="#memory">Memory</a></li>
+                <li><a href="#protocol">Protocol</a></li>
+                <li><a href="#quickstart">Quick Start</a></li>
+                <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
 
-            /* ==================== Typography ==================== */
-            h1, h2, h3 {
-                font-weight: 400;
-                letter-spacing: -0.04em;
-            }
-
-            .mono {
-                font-family: var(--font-mono);
-                font-size: 12px;
-                text-transform: uppercase;
-                letter-spacing: 1.2px;
-            }
-
-            .emerald-text { color: var(--emerald); }
-
-            /* ==================== Navigation ==================== */
-            nav {
-                position: fixed;
-                top: 0;
-                width: 100%;
-                background: rgba(3, 3, 3, 0.85);
-                backdrop-filter: blur(12px);
-                border-bottom: 1px solid var(--border-dim);
-                z-index: 1000;
-                padding: 1rem 0;
-            }
-
-            nav .container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .logo {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                text-decoration: none;
-                color: var(--text-primary);
-                font-weight: 600;
-                font-size: 1.1rem;
-            }
-
-            .nav-links {
-                display: flex;
-                gap: 2.5rem;
-                list-style: none;
-            }
-
-            .nav-links a {
-                color: var(--text-muted);
-                text-decoration: none;
-                font-size: 13px;
-                font-weight: 500;
-                transition: color 0.2s;
-            }
-
-            .nav-links a:hover { color: var(--text-primary); }
-
-            .btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 10px 24px;
-                border-radius: 0px !important;
-                font-size: 14px;
-                font-weight: 500;
-                text-decoration: none;
-                transition: all 0.2s;
-                border: 1px solid transparent;
-                cursor: pointer;
-            }
-
-            .btn-emerald {
-                background: var(--emerald);
-                color: var(--void);
-            }
-
-            .btn-emerald:hover {
-                background: #34d399;
-                box-shadow: 0 0 20px var(--emerald-glow);
-            }
-
-            .btn-outline {
-                background: transparent;
-                color: var(--text-primary);
-                border-color: var(--border-bright);
-            }
-
-            .btn-outline:hover {
-                background: var(--graphite);
-                border-color: var(--emerald);
-            }
-
-            /* ==================== Hero Section ==================== */
-            .hero {
-                padding: 180px 0 100px;
-                text-align: center;
-                position: relative;
-            }
-
-            .hero h1 {
-                font-size: 72px; /* Precision 72px */
-                line-height: 1.0; /* Zero leading */
-                margin-bottom: 24px;
-                color: var(--text-primary);
-                font-weight: 500;
-            }
-
-            .hero p {
-                font-size: 18px;
-                color: var(--text-muted);
-                max-width: 600px;
-                margin: 0 auto 48px;
-                line-height: 1.6;
-            }
-
-            .hero-actions {
-                display: flex;
-                justify-content: center;
-                gap: 16px;
-                margin-bottom: 80px;
-            }
-
-            /* ==================== Terminal Console ==================== */
-            .console {
-                max-width: 900px;
-                margin: 0 auto;
-                background: var(--void);
-                border: 1px solid var(--border-mid);
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-                text-align: left;
-            }
-
-            .console-header {
-                background: var(--graphite);
-                padding: 12px 16px;
-                border-bottom: 1px solid var(--border-dim);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .console-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border-bright); }
-            .console-dot.active { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
-
-            .console-body {
-                padding: 24px;
-                font-family: var(--font-mono);
-                font-size: 14px;
-                color: #e0e0e0;
-                height: 320px;
-                overflow-y: auto;
-                line-height: 1.6;
-            }
-
-            /* ==================== Status Strip ==================== */
-            .status-strip {
-                border-top: 1px solid var(--border-dim);
-                border-bottom: 1px solid var(--border-dim);
-                background: var(--void);
-                padding: 16px 0;
-                overflow: hidden;
-            }
-
-            .strip-content {
-                display: flex;
-                gap: 60px;
-                animation: marquee 40s linear infinite;
-                width: max-content;
-            }
-
-            @keyframes marquee {
-                from { transform: translateX(0); }
-                to { transform: translateX(-50%); }
-            }
-
-            .strip-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                color: var(--text-muted);
-            }
-
-            .pulse-dot {
-                width: 6px;
-                height: 6px;
-                background: var(--emerald);
-                border-radius: 50%;
-                animation: pulse 2s infinite;
-            }
-
-            @keyframes pulse {
-                0% { opacity: 0.4; transform: scale(0.8); }
-                50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px var(--emerald); }
-                100% { opacity: 0.4; transform: scale(0.8); }
-            }
-
-            /* ==================== Memory Model Section ==================== */
-            .section { padding: 120px 0; }
-            
-            .section-header {
-                margin-bottom: 80px;
-                max-width: 600px;
-            }
-
-            .section-header h2 {
-                font-size: 42px;
-                margin-top: 16px;
-                margin-bottom: 24px;
-            }
-
-            .memory-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .memory-layer {
-                display: grid;
-                grid-template-columns: 140px 1fr 200px;
-                align-items: center;
-                padding: 24px;
-                background: var(--graphite);
-                border: 1px solid var(--border-dim);
-                transition: border-color 0.3s, background 0.3s;
-            }
-
-            .memory-layer:hover {
-                border-color: var(--emerald-glow);
-                background: #1c1c1c;
-            }
-
-            .heat-bar {
-                height: 4px;
-                background: var(--border-dim);
-                border-radius: 2px;
-                position: relative;
-                margin: 0 40px;
-            }
-
-            .heat-fill {
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 100%;
-                background: var(--emerald);
-                box-shadow: 0 0 15px var(--emerald);
-            }
-
-            /* ==================== Dashboard Panels ==================== */
-            .panel-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-                gap: 1px;
-                background: var(--border-dim);
-                border: 1px solid var(--border-dim);
-            }
-
-            .panel {
-                background: var(--void);
-                padding: 48px;
-                transition: background 0.3s;
-            }
-
-            .panel:hover { background: var(--graphite); }
-
-            .panel h3 { font-size: 24px; margin-bottom: 16px; }
-            .panel p { color: var(--text-muted); font-size: 15px; }
-
-            /* ==================== Integration Grid ==================== */
-            .stack-grid {
-                display: grid;
-                grid-template-columns: repeat(6, 1fr);
-                gap: 1px;
-                background: var(--border-dim);
-                margin-top: 60px;
-            }
-
-            .stack-item {
-                aspect-ratio: 1;
-                background: var(--void);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-                filter: grayscale(1); /* Monochrome by default */
-                opacity: 0.4;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .stack-item:hover {
-                filter: grayscale(0); /* Full color on hover */
-                opacity: 1;
-                background: var(--graphite);
-                z-index: 1;
-                box-shadow: inset 0 0 20px var(--emerald-dim);
-            }
-
-            .stack-item svg {
-                width: 32px;
-                height: 32px;
-                transition: transform 0.3s;
-            }
-
-            .stack-item:hover svg {
-                transform: scale(1.1);
-            }
-
-            .stack-item span { font-size: 10px; color: var(--text-dim); }
-            .stack-item:hover span { color: var(--emerald); }
-
-            /* ==================== Footer ==================== */
-            footer {
-                padding: 100px 0 60px;
-                border-top: 1px solid var(--border-dim);
-                background: var(--void);
-            }
-
-            .footer-grid {
-                display: grid;
-                grid-template-columns: 2fr repeat(3, 1fr);
-                gap: 40px;
-                margin-bottom: 80px;
-            }
-
-            .footer-col h4 { font-size: 14px; margin-bottom: 24px; color: var(--text-primary); }
-            .footer-col ul { list-style: none; }
-            .footer-col li { margin-bottom: 12px; }
-            .footer-col a { color: var(--text-muted); text-decoration: none; font-size: 14px; }
-            .footer-col a:hover { color: var(--emerald); }
-
-            /* ==================== Responsive ==================== */
-            @media (max-width: 1024px) {
-                .hero h1 { font-size: 64px; }
-                .stack-grid { grid-template-columns: repeat(4, 1fr); }
-            }
-
-            @media (max-width: 768px) {
-                .hero h1 { font-size: 48px; }
-                .nav-links { display: none; }
-                .memory-layer { grid-template-columns: 1fr; gap: 16px; }
-                .heat-bar { margin: 16px 0; }
-                .footer-grid { grid-template-columns: 1fr 1fr; }
-            }
-        </style>
-    </head>
-    <body>
-        <!-- Navigation -->
-        <nav>
-            <div class="container">
-                <a href="#" class="logo">
-                    <span class="emerald-text">🗡️</span> JEBAT
-                </a>
-                <ul class="nav-links">
-                    <li><a href="#architecture">Architecture</a></li>
-                    <li><a href="#memory">Memory</a></li>
-                    <li><a href="#security">Security</a></li>
-                    <li><a href="https://github.com/nusabyte-my/jebat-core">Source</a></li>
-                </ul>
-                <div class="nav-actions">
-                    <a href="/autoconnect/" class="btn btn-emerald">Get Started</a>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="container">
-                <span class="mono emerald-text">Operator Ready v6.1.0-stable</span>
-                <h1>Unified AI<br><span class="emerald-text">Operator</span> Framework</h1>
-                <p>Governed inference, multi-step reasoning, and Context Heat-Scoring for enterprise-scale AI implementation. Built for developers who demand control.</p>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-eyebrow">Sovereign AI Platform</div>
+                <h1 class="hero-title">
+                    The <span class="gradient-text">JEBAT</span><br>Platform Suite
+                </h1>
+                <p class="hero-sub">
+                    Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Named after Malay heritage — rooted in the legend of Hang Jebat.
+                </p>
                 <div class="hero-actions">
-                    <a href="/autoconnect/" class="btn btn-emerald">Deploy Workspace</a>
-                    <a href="#architecture" class="btn btn-outline">Review Architecture</a>
+                    <a href="#quickstart" class="btn btn-cyan">Get Started →</a>
+                    <a href="#platform" class="btn btn-ghost">View Products</a>
                 </div>
-
-                <!-- Live Terminal -->
-                <div class="console">
-                    <div class="console-header">
-                        <div class="console-dot active"></div>
-                        <div class="console-dot"></div>
-                        <div class="console-dot"></div>
-                        <span class="mono" style="font-size: 10px; color: var(--text-dim); margin-left: 8px;">jebat_operator_boot.sh</span>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-value gradient-text">5</div>
+                        <div class="hero-stat-label">AI Products</div>
                     </div>
-                    <div class="console-body" id="consoleOutput">
-                        <div class="emerald-text">[SYSTEM] Initializing JEBAT Core...</div>
-                        <div>[KERNEL] Loading cognitive modules...</div>
-                        <div>[MEMORY] Mapping layers M0-M4 [OK]</div>
-                        <div>[AGENT] Registering Specialist: Architect...</div>
-                        <div>[AGENT] Registering Specialist: Security...</div>
-                        <div>[AGENT] Registering Specialist: DevOps...</div>
-                        <div class="emerald-text">[SYSTEM] All subsystems operational.</div>
-                        <br>
-                        <div>$ jebat --status</div>
-                        <div>> Runtime: Synchronized</div>
-                        <div>> Memory Heat: Optimal (84%)</div>
-                        <div>> Active Channels: 12</div>
-                        <br>
-                        <div class="emerald-text">Ready for instruction.</div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value gradient-text">1</div>
+                        <div class="hero-stat-label">Memory Layer</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value gradient-text">89</div>
+                        <div class="hero-stat-label">Tools</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value gradient-text">6</div>
+                        <div class="hero-stat-label">Providers</div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- Status Strip -->
-        <div class="status-strip">
-            <div class="strip-content">
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">AGENT HUB</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">MEMORY ENGINE</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">ULTRA-THINK LOOP</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">SECURITY CONSOLE</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">PORTAL BRIDGE</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">MCP PROTOCOL</span></div>
-                <!-- Duplicate -->
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">AGENT HUB</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">MEMORY ENGINE</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">ULTRA-THINK LOOP</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">SECURITY CONSOLE</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">PORTAL BRIDGE</span></div>
-                <div class="strip-item"><div class="pulse-dot"></div> <span class="mono">MCP PROTOCOL</span></div>
             </div>
         </div>
+    </section>
 
-        <!-- Memory Model Section -->
-        <section class="section" id="memory">
-            <div class="container">
-                <div class="section-header">
-                    <span class="mono emerald-text">Continuum Persistence</span>
-                    <h2>5-Layer Memory Model</h2>
-                    <p>Context preservation that scales from milliseconds to years using Context Heat-Scoring.</p>
-                </div>
+    <!-- Architecture Marquee -->
+    <div class="arch-bar">
+        <div class="arch-marquee">
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">AGENT SWARM</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MCP PROTOCOL BUS</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">5-LAYER MEMORY</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ULTRA-THINK ENGINE</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">6-PROVIDER ROUTER</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SENTINEL SECURITY</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">CODEX SANDBOX</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-CHANNEL</span></div>
+            <!-- Duplicate for seamless loop -->
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">AGENT SWARM</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MCP PROTOCOL BUS</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">5-LAYER MEMORY</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ULTRA-THINK ENGINE</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">6-PROVIDER ROUTER</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SENTINEL SECURITY</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">CODEX SANDBOX</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-CHANNEL</span></div>
+        </div>
+    </div>
 
-                <div class="memory-grid">
-                    <div class="memory-layer">
-                        <span class="mono emerald-text">M0 Sensory</span>
-                        <div class="heat-bar"><div class="heat-fill" style="width: 95%;"></div></div>
-                        <span class="mono" style="color: var(--text-muted);">Hot / Buffering</span>
-                    </div>
-                    <div class="memory-layer">
-                        <span class="mono emerald-text">M1 Episodic</span>
-                        <div class="heat-bar"><div class="heat-fill" style="width: 75%;"></div></div>
-                        <span class="mono" style="color: var(--text-muted);">Warm / Recent</span>
-                    </div>
-                    <div class="memory-layer">
-                        <span class="mono emerald-text">M2 Semantic</span>
-                        <div class="heat-bar"><div class="heat-fill" style="width: 50%;"></div></div>
-                        <span class="mono" style="color: var(--text-muted);">Neutral / Facts</span>
-                    </div>
-                    <div class="memory-layer">
-                        <span class="mono emerald-text">M3 Conceptual</span>
-                        <div class="heat-bar"><div class="heat-fill" style="width: 30%;"></div></div>
-                        <span class="mono" style="color: var(--text-muted);">Cool / Patterns</span>
-                    </div>
-                    <div class="memory-layer">
-                        <span class="mono emerald-text">M4 Procedural</span>
-                        <div class="heat-bar"><div class="heat-fill" style="width: 15%;"></div></div>
-                        <span class="mono" style="color: var(--text-muted);">Cold / Long-term</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Platform Products -->
+    <section class="section" id="platform">
+        <div class="container">
+            <div class="section-label">Platform Suite</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
+                Five products. One memory.<br>Unified by protocol.
+            </h2>
 
-        <!-- Trust Signals Section -->
-        <section class="section" id="security" style="background: #0d0d0d;">
-            <div class="container">
-                <div class="section-header">
-                    <span class="mono emerald-text">Governed Operations</span>
-                    <h2>Enterprise Reviewability</h2>
-                    <p>Designed for regulated environments where Governed Inference must be visible, auditable, and restricted.</p>
-                </div>
+            <div class="products-grid">
 
-                <div class="panel-grid">
-                    <div class="panel">
-                        <div class="mono emerald-text" style="margin-bottom: 24px;">01 / Hardening</div>
-                        <h3>Data Boundaries</h3>
-                        <p>Strict VPC isolation and self-hosted deployments. Your secrets and operational data never leave your secure perimeter.</p>
-                    </div>
-                    <div class="panel">
-                        <div class="mono emerald-text" style="margin-bottom: 24px;">02 / Compliance</div>
-                        <h3>RBAC Hardening</h3>
-                        <p>Granular role-based access control for agent capabilities. Define exactly what your AI can read, write, and execute.</p>
-                    </div>
-                    <div class="panel">
-                        <div class="mono emerald-text" style="margin-bottom: 24px;">03 / Assurance</div>
-                        <h3>Orchestration Handoff</h3>
-                        <p>Complete historical record of orchestration handoffs. Every decision and agent interaction is captured for security review.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Integration Grid -->
-        <section class="section">
-            <div class="container">
-                <div class="section-header" style="text-align: center; margin: 0 auto 60px;">
-                    <span class="mono emerald-text">Ecosystem</span>
-                    <h2>Integration Stack</h2>
-                </div>
-                
-                <div class="stack-grid">
-                    <div class="stack-item">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                        <span class="mono">FastAPI</span>
-                    </div>
-                    <div class="stack-item">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-                        <span class="mono">Next.js</span>
-                    </div>
-                    <div class="stack-item">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
-                        <span class="mono">Python</span>
-                    </div>
-                    <div class="stack-item">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2zm0-10h2v8h-2z"/></svg>
-                        <span class="mono">PostgreSQL</span>
-                    </div>
-                    <div class="stack-item">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
-                        <span class="mono">Ollama</span>
-                    </div>
-                    <div class="stack-item">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
-                        <span class="mono">Llama.cpp</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer>
-            <div class="container">
-                <div class="footer-grid">
-                    <div class="footer-col">
-                        <a href="#" class="logo" style="margin-bottom: 24px;">
-                            <span class="emerald-text">🗡️</span> JEBAT
-                        </a>
-                        <p style="color: var(--text-muted); font-size: 14px; max-width: 240px;">Unified AI Operator framework for governed, private operations.</p>
-                    </div>
-                    <div class="footer-col">
-                        <h4>Platform</h4>
-                        <ul>
-                            <li><a href="#">Agent Hub</a></li>
-                            <li><a href="#">Memory Engine</a></li>
-                            <li><a href="#">Ultra-Think</a></li>
-                            <li><a href="#">Security</a></li>
+                <!-- JEBAT Core — Featured -->
+                <div class="product-card product-core">
+                    <div class="product-core-left">
+                        <div class="product-header">
+                            <div class="product-icon">🗡</div>
+                            <span class="pill pill-live"><span class="pill-dot"></span> Live v6.1</span>
+                        </div>
+                        <div class="product-name">JEBAT Core</div>
+                        <div class="product-codename">Hang Jebat</div>
+                        <p class="product-desc">
+                            Sovereign inference router with 7 reasoning modes, 5-layer memory &amp; multi-agent swarm orchestration. The central nervous system of the platform.
+                        </p>
+                        <ul class="product-features">
+                            <li>7 Thinking Modes — from Ultra-Lite to Ultra-Think</li>
+                            <li>5-Layer Heat-Scored Memory — M0 Sensory through M4 Procedural</li>
+                            <li>Multi-Agent Swarm — Tukang, Hulubalang, Pawang, Syahbandar, Bendahara</li>
+                            <li>6-Provider LLM Router with automatic failover</li>
+                            <li>89 Registered Tools — file ops, git, browser, code gen, analytics</li>
                         </ul>
+                        <div class="product-footer">
+                            <a href="#" class="product-link">View Architecture →</a>
+                        </div>
                     </div>
-                    <div class="footer-col">
-                        <h4>Resources</h4>
-                        <ul>
-                            <li><a href="#">Documentation</a></li>
-                            <li><a href="#">API Reference</a></li>
-                            <li><a href="#">GitHub</a></li>
-                            <li><a href="#">Changelog</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-col">
-                        <h4>Company</h4>
-                        <ul>
-                            <li><a href="#">About</a></li>
-                            <li><a href="#">Privacy</a></li>
-                            <li><a href="#">Security</a></li>
-                            <li><a href="#">Contact</a></li>
-                        </ul>
+                    <div class="product-core-right">
+                        <div class="section-label" style="margin-bottom:20px;">7 Thinking Modes</div>
+                        <div class="thinking-modes">
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div>
+                                <span class="mode-name">Ultra-Lite</span>
+                            </div>
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div>
+                                <span class="mode-name">Balanced</span>
+                            </div>
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div>
+                                <span class="mode-name">Precise</span>
+                            </div>
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div>
+                                <span class="mode-name">Deep</span>
+                            </div>
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div>
+                                <span class="mode-name">Ultra-Think</span>
+                            </div>
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div>
+                                <span class="mode-name">Autonomous</span>
+                            </div>
+                            <div class="thinking-mode">
+                                <div class="mode-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div>
+                                <span class="mode-name">Strategic</span>
+                            </div>
+                        </div>
+                        <div class="core-terminal" style="margin-top:24px;">
+                            <div class="core-terminal-header">
+                                <div class="term-dot active"></div>
+                                <div class="term-dot"></div>
+                                <div class="term-dot"></div>
+                                <span class="mono" style="font-size:10px;color:var(--text-dim);margin-left:8px;">jebat_core.sys</span>
+                            </div>
+                            <div class="core-terminal-body">
+                                <div><span class="cyan">[CORE]</span> Sovereign inference router <span class="green">online</span></div>
+                                <div><span class="cyan">[MEM]</span> 5-layer memory engine <span class="green">active</span></div>
+                                <div><span class="cyan">[SWARM]</span> 6 specialist agents <span class="green">registered</span></div>
+                                <div><span class="cyan">[MCP]</span> Protocol bus <span class="green">listening</span></div>
+                                <div><span class="dim">──────────────────────────</span></div>
+                                <div><span class="purple">MODE:</span> ultra-think</div>
+                                <div><span class="purple">HEAT:</span> <span class="green">optimal</span> (84%)</div>
+                                <div><span class="purple">TOOLS:</span> 89 registered</div>
+                                <div><span class="green">Ready for instruction.</span></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 40px; border-top: 1px solid var(--border-dim);">
-                    <p class="mono" style="color: var(--text-dim); font-size: 10px;">&copy; 2026 JEBAT CORE. MIT LICENSE.</p>
-                    <div style="display: flex; gap: 24px;">
-                        <a href="#" class="mono emerald-text" style="text-decoration: none; font-size: 10px;">Twitter</a>
-                        <a href="#" class="mono emerald-text" style="text-decoration: none; font-size: 10px;">Discord</a>
+
+                <!-- Sentinel Security -->
+                <div class="product-card">
+                    <div class="product-header">
+                        <div class="product-icon">⚔</div>
+                        <span class="pill pill-soon"><span class="pill-dot"></span> Q3 2026</span>
                     </div>
+                    <div class="product-name">Sentinel Security</div>
+                    <div class="product-codename">Keris</div>
+                    <p class="product-desc">
+                        Autonomous pentest orchestrator for air-gapped threat reconnaissance &amp; CVE correlation.
+                    </p>
+                    <ul class="product-features">
+                        <li>Autonomous vulnerability scanning</li>
+                        <li>CVE correlation engine</li>
+                        <li>Air-gapped threat intelligence</li>
+                        <li>Real-time security posture dashboard</li>
+                    </ul>
+                    <div class="product-footer">
+                        <a href="#" class="product-link">View Roadmap →</a>
+                    </div>
+                </div>
+
+                <!-- Developer Suite -->
+                <div class="product-card">
+                    <div class="product-header">
+                        <div class="product-icon">⌨</div>
+                        <span class="pill pill-beta"><span class="pill-dot"></span> Live v1.0</span>
+                    </div>
+                    <div class="product-name">Developer Suite</div>
+                    <div class="product-codename">Pandai</div>
+                    <p class="product-desc">
+                        MCP-native sandboxed code workspace for VS Code, Cursor, Zed &amp; Windsurf.
+                    </p>
+                    <ul class="product-features">
+                        <li>MCP-native code generation &amp; review</li>
+                        <li>Sandboxed execution environment</li>
+                        <li>IDE integration (Cursor, Zed, Windsurf, VS Code)</li>
+                        <li>Workspace installer — auto-detect &amp; configure</li>
+                    </ul>
+                    <div class="product-footer">
+                        <a href="#" class="product-link">Install Now →</a>
+                    </div>
+                </div>
+
+                <!-- Companion -->
+                <div class="product-card">
+                    <div class="product-header">
+                        <div class="product-icon">💬</div>
+                        <span class="pill pill-planned"><span class="pill-dot"></span> Planned</span>
+                    </div>
+                    <div class="product-name">Companion</div>
+                    <div class="product-codename">Sahabat</div>
+                    <p class="product-desc">
+                        Conversational AI for daily operations, meeting summaries &amp; task management.
+                    </p>
+                    <ul class="product-features">
+                        <li>Conversational task management</li>
+                        <li>Meeting summary &amp; action items</li>
+                        <li>Daily briefings &amp; schedule awareness</li>
+                        <li>Cross-product memory access</li>
+                    </ul>
+                    <div class="product-footer">
+                        <a href="#" class="product-link">Stay Tuned →</a>
+                    </div>
+                </div>
+
+                <!-- Nexus -->
+                <div class="product-card">
+                    <div class="product-header">
+                        <div class="product-icon">🌐</div>
+                        <span class="pill pill-soon"><span class="pill-dot"></span> Q4 2026</span>
+                    </div>
+                    <div class="product-name">Nexus</div>
+                    <div class="product-codename">Perisai</div>
+                    <p class="product-desc">
+                        Multi-channel bot orchestrator — Telegram, Discord, Slack, Signal, Matrix, WhatsApp.
+                    </p>
+                    <ul class="product-features">
+                        <li>6+ messaging platform support</li>
+                        <li>Unified bot orchestration</li>
+                        <li>Cross-channel memory persistence</li>
+                        <li>Channel-aware response routing</li>
+                    </ul>
+                    <div class="product-footer">
+                        <a href="#" class="product-link">View Roadmap →</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline -->
+    <section class="section" style="padding-top:0;">
+        <div class="container">
+            <div class="section-label">Delivery Timeline</div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot green"></div>
+                    <div class="timeline-label">Live Now</div>
+                    <div class="timeline-product">JEBAT Core v6.1</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot cyan"></div>
+                    <div class="timeline-label">Live Now</div>
+                    <div class="timeline-product">Developer Suite v1.0</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot amber"></div>
+                    <div class="timeline-label">Q3 2026</div>
+                    <div class="timeline-product">Sentinel Security</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot purple"></div>
+                    <div class="timeline-label">Q4 2026</div>
+                    <div class="timeline-product">Nexus</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot purple" style="opacity:0.5"></div>
+                    <div class="timeline-label">2027</div>
+                    <div class="timeline-product">Companion</div>
                 </div>
             </div>
-        </footer>
+        </div>
+    </section>
 
-        <script>
-            // Live Terminal Animation Logic
-            const consoleOutput = document.getElementById('consoleOutput');
-            const lines = [
-                "<span class='emerald-text'>[SYSTEM]</span> Initializing JEBAT Core...",
-                "<span>[KERNEL]</span> Loading cognitive modules...",
-                "<span>[MEMORY]</span> Mapping layers M0-M4 <span class='emerald-text'>[OK]</span>",
-                "<span>[AGENT]</span> Registering Specialist: Architect...",
-                "<span>[AGENT]</span> Registering Specialist: Security...",
-                "<span>[AGENT]</span> Registering Specialist: DevOps...",
-                "<span class='emerald-text'>[SYSTEM]</span> All subsystems operational.",
-                "<br>",
-                "<span>$</span> jebat --status",
-                "<span>></span> Runtime: Synchronized",
-                "<span>></span> Memory Heat: Optimal (84%)",
-                "<span>></span> Active Channels: 12",
-                "<br>",
-                "<span class='emerald-text'>Ready for instruction.</span>"
-            ];
+    <!-- 5-Layer Memory -->
+    <section class="section" id="memory" style="background:var(--surface);">
+        <div class="container">
+            <div class="section-label">Shared Memory Layer</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
+                5-Layer Memory Model
+            </h2>
+            <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:48px;line-height:1.7;">
+                Context preservation that scales from milliseconds to years. All five products share this unified memory layer via Context Heat-Scoring.
+            </p>
+            <div class="memory-grid">
+                <div class="memory-layer">
+                    <span class="mono" style="color:var(--cyan)">M0 Sensory</span>
+                    <div class="heat-bar"><div class="heat-fill" style="width:95%;"></div></div>
+                    <span class="mono" style="color:var(--text-dim)">Hot / Buffering</span>
+                </div>
+                <div class="memory-layer">
+                    <span class="mono" style="color:var(--cyan)">M1 Episodic</span>
+                    <div class="heat-bar"><div class="heat-fill" style="width:75%;"></div></div>
+                    <span class="mono" style="color:var(--text-dim)">Warm / Recent</span>
+                </div>
+                <div class="memory-layer">
+                    <span class="mono" style="color:var(--purple)">M2 Semantic</span>
+                    <div class="heat-bar"><div class="heat-fill" style="width:50%;"></div></div>
+                    <span class="mono" style="color:var(--text-dim)">Neutral / Facts</span>
+                </div>
+                <div class="memory-layer">
+                    <span class="mono" style="color:var(--purple)">M3 Conceptual</span>
+                    <div class="heat-bar"><div class="heat-fill" style="width:30%;"></div></div>
+                    <span class="mono" style="color:var(--text-dim)">Cool / Patterns</span>
+                </div>
+                <div class="memory-layer">
+                    <span class="mono" style="color:var(--amber)">M4 Procedural</span>
+                    <div class="heat-bar"><div class="heat-fill" style="width:15%;"></div></div>
+                    <span class="mono" style="color:var(--text-dim)">Cold / Long-term</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            // In a real implementation, this would type out line by line.
-            // For this static revamp, the content is pre-filled but styled for impact.
-        </script>
-    </body>
+    <!-- MCP Protocol -->
+    <section class="section" id="protocol">
+        <div class="container">
+            <div class="section-label">Protocol Bus</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
+                MCP Protocol Bus
+            </h2>
+            <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:48px;line-height:1.7;">
+                Model Context Protocol connects all five products. Every tool, memory layer, and agent capability is exposed via a unified protocol interface.
+            </p>
+            <div class="protocol-grid">
+                <div class="protocol-card">
+                    <div class="protocol-icon">🔌</div>
+                    <div class="protocol-name">stdio + HTTP</div>
+                    <p class="protocol-desc">Run as stdio for IDE integration or HTTP for remote access. Both transports fully supported.</p>
+                </div>
+                <div class="protocol-card">
+                    <div class="protocol-icon">🛠</div>
+                    <div class="protocol-name">8 Native Tools</div>
+                    <p class="protocol-desc">Code read/write/generate/review, project scaffold, git ops, test runner, debug analyzer.</p>
+                </div>
+                <div class="protocol-card">
+                    <div class="protocol-icon">🔗</div>
+                    <div class="protocol-name">Skill Bridge</div>
+                    <p class="protocol-desc">Tok Guru skills auto-exposed as MCP tools. OpenCode-style SKILL.md with YAML frontmatter.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section" id="quickstart" style="background:var(--surface);">
+        <div class="container">
+            <div class="section-label">Quick Start</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
+                Start in 30 seconds
+            </h2>
+            <div class="quickstart-grid">
+                <div class="quickstart-card">
+                    <h3><span style="color:var(--cyan)">npx</span> Zero Install</h3>
+                    <pre><span class="comment"># Interactive REPL</span>
+<span class="cmd">npx @nusabyte/jebat repl</span>
+
+<span class="comment"># One-shot chat</span>
+<span class="cmd">npx @nusabyte/jebat chat "Explain memory consolidation"</span>
+
+<span class="comment"># With bun</span>
+<span class="cmd">bunx @nusabyte/jebat repl</span></pre>
+                </div>
+                <div class="quickstart-card">
+                    <h3><span style="color:var(--purple)">pip</span> Global Install</h3>
+                    <pre><span class="comment"># Via pip</span>
+<span class="cmd">pip install jebat</span>
+<span class="cmd">jebat repl</span>
+
+<span class="comment"># Via npm global</span>
+<span class="cmd">npm install -g @nusabyte/jebat</span>
+<span class="cmd">jebat repl</span></pre>
+                </div>
+                <div class="quickstart-card">
+                    <h3><span style="color:var(--amber)">MCP</span> IDE Integration</h3>
+                    <pre><span class="comment"># Add to .cursor/mcp.json</span>
+{
+  <span class="cmd">"mcpServers"</span>: {
+    <span class="cmd">"jebat"</span>: {
+      <span class="cmd">"command"</span>: <span class="cmd">"python"</span>,
+      <span class="cmd">"args"</span>: [<span class="cmd">"-m"</span>, <span class="cmd">"jebat.mcp.server"</span>]
+    }
+  }
+}</pre>
+                </div>
+                <div class="quickstart-card">
+                    <h3><span style="color:var(--green)">git</span> Source Build</h3>
+                    <pre><span class="comment"># Clone & install</span>
+<span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git</span>
+<span class="cmd">cd jebat-core</span>
+<span class="cmd">pip install -e .</span>
+<span class="cmd">jebat repl</span></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="logo" style="margin-bottom:16px;">
+                        <div class="logo-mark" style="width:28px;height:28px;font-size:12px;">🗡</div>
+                        JEBAT
+                    </div>
+                    <p style="color:var(--text-dim);font-size:13px;max-width:240px;line-height:1.6;">
+                        Sovereign AI Platform. Five products. One memory. Unified by protocol.
+                    </p>
+                </div>
+                <div class="footer-col">
+                    <h4>Products</h4>
+                    <ul>
+                        <li><a href="#">JEBAT Core</a></li>
+                        <li><a href="#">Sentinel Security</a></li>
+                        <li><a href="#">Developer Suite</a></li>
+                        <li><a href="#">Companion</a></li>
+                        <li><a href="#">Nexus</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">MCP Reference</a></li>
+                        <li><a href="#">GitHub</a></li>
+                        <li><a href="#">Changelog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">NusaByte</a></li>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Security</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NusaByte. MIT License.</p>
+                <div class="footer-links">
+                    <a href="#">GitHub</a>
+                    <a href="#">Discord</a>
+                    <a href="#">Twitter</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Active nav link on scroll
+        const sections = document.querySelectorAll('.section[id]');
+        const navLinks = document.querySelectorAll('.nav-links a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Animate heat bars on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.querySelectorAll('.heat-fill').forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0%';
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                bar.style.width = width;
+                            });
+                        });
+                    });
+                }
+            });
+        }, { threshold: 0.3 });
+
+        const memorySection = document.querySelector('.memory-grid');
+        if (memorySection) observer.observe(memorySection);
+    </script>
+
+</body>
 </html>
