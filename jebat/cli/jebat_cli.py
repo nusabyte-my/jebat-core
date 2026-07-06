@@ -1194,6 +1194,25 @@ async def main():
     tts_voices_cmd.add_argument("language", nargs="?", default=None,
                                 help="Language prefix filter (e.g., 'en', 'ms', 'zh', 'ja')")
 
+    # Companion command — Sahabat (conversational AI for daily ops)
+    companion_parser = subparsers.add_parser("companion", help="Sahabat Companion — conversational AI for daily ops")
+    companion_subparsers = companion_parser.add_subparsers(dest="companion_action")
+    companion_chat = companion_subparsers.add_parser("chat", help="Interactive chat with Sahabat")
+    companion_chat.add_argument("--provider", help="Override provider")
+    companion_chat.add_argument("--model", help="Override model")
+    companion_briefing = companion_subparsers.add_parser("briefing", help="Generate daily briefing")
+    companion_briefing.add_argument("--timezone", default="Asia/Kuala_Lumpur", help="Timezone")
+    companion_tasks = companion_subparsers.add_parser("tasks", help="Task management")
+    companion_tasks.add_argument("task_action", nargs="?", default="list", help="add/list/complete/stats")
+    companion_tasks.add_argument("--title", help="Task title (for add)")
+    companion_tasks.add_argument("--priority", default="medium", help="Priority (low/medium/high/urgent)")
+    companion_tasks.add_argument("--id", dest="task_id", help="Task ID (for complete)")
+    companion_meeting = companion_subparsers.add_parser("meeting", help="Summarize meeting transcript")
+    companion_meeting.add_argument("--file", help="Transcript file path")
+    companion_meeting.add_argument("--title", help="Meeting title")
+    companion_meeting.add_argument("--followup", action="store_true", help="Generate follow-up email")
+    companion_stats = companion_subparsers.add_parser("stats", help="Show companion statistics")
+
     # Free-models command — list free/cheap AI models via 9Router
     freemodels_parser = subparsers.add_parser("free-models", help="List free/cheap AI models available via 9Router")
     freemodels_parser.add_argument("--setup", action="store_true", help="Print 9Router setup guide")
@@ -2193,6 +2212,126 @@ async def main():
 
             else:
                 tts_parser.print_help()
+
+        elif args.command == "companion":
+            import asyncio as _aio
+
+            def _run(coro):
+                def _f():
+                    return _aio.run(coro)
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+                    return ex.submit(_f).result()
+
+            from jebat.features.companion import SahabatCompanion, DailyBriefing, TaskManager, MeetingSummarizer
+
+            if args.companion_action == "chat":
+                comp = SahabatCompanion(provider=args.provider, model=args.model)
+                print("\n🤖 Sahabat — JEBAT Companion")
+                print("   Conversational AI for daily operations")
+                print("   Type 'quit' to exit, 'stats' for info\n")
+                session = comp.start_session()
+
+                async def _chat_loop():
+                    while True:
+                        try:
+                            user_input = input("You: ").strip()
+                        except (EOFError, KeyboardInterrupt):
+                            print("\n👋 Goodbye!")
+                            break
+                        if not user_input:
+                            continue
+                        if user_input.lower() in ("quit", "exit", "q"):
+                            print("\n👋 Goodbye!")
+                            break
+                        if user_input.lower() == "stats":
+                            stats = comp.get_stats()
+                            print(f"\n📊 Sessions: {stats['total_sessions']} | Messages: {stats['total_messages']}")
+                            if stats['recent_topics']:
+                                print(f"   Recent: {', '.join(stats['recent_topics'][:3])}\n")
+                            continue
+                        response, provider = await comp.chat(user_input, session=session)
+                        print(f"\nSahabat [{provider}]: {response}\n")
+
+                _run(_chat_loop())
+
+            elif args.companion_action == "briefing":
+                briefing = DailyBriefing()
+                print("\n🌅 Generating your daily briefing...\n")
+                result = _run(briefing.generate(timezone_str=args.timezone))
+                print(f"📅 {result.date} | Provider: {result.provider}")
+                print(f"   Tasks: {result.task_count} | Topics: {len(result.recent_topics)}\n")
+                print(result.content)
+
+            elif args.companion_action == "tasks":
+                tm = TaskManager()
+                action = args.task_action
+
+                if action == "add":
+                    if not args.title:
+                        print("  Usage: jebat companion tasks add --title 'Task name'")
+                    else:
+                        task = tm.add_task(title=args.title, priority=args.priority)
+                        print(f"  ✅ Task added: {task.title} [{task.priority}] ({task.task_id})")
+
+                elif action == "complete":
+                    if not args.task_id:
+                        print("  Usage: jebat companion tasks complete --id <task-id>")
+                    else:
+                        task = tm.complete_task(args.task_id)
+                        if task:
+                            print(f"  ✅ Completed: {task.title}")
+                        else:
+                            print(f"  ❌ Task not found: {args.task_id}")
+
+                elif action == "stats":
+                    stats = tm.get_stats()
+                    print(f"\n📊 Task Stats:")
+                    print(f"   Total: {stats['total']} | Pending: {stats['pending']} | Completed: {stats['completed']}")
+                    print(f"   Urgent: {stats['urgent']} | Rate: {stats['completion_rate']}")
+
+                else:  # list
+                    tasks = tm.list_tasks(status="pending", limit=20)
+                    print(f"\n📋 Pending Tasks ({len(tasks)}):")
+                    print(tm.format_tasks(tasks))
+
+            elif args.companion_action == "meeting":
+                summarizer = MeetingSummarizer()
+                if args.file:
+                    from pathlib import Path as _P
+                    transcript = _P(args.file).read_text(encoding="utf-8")
+                else:
+                    print("  Paste your meeting transcript (Ctrl+D to finish):")
+                    import sys as _sys
+                    transcript = _sys.stdin.read()
+
+                if not transcript.strip():
+                    print("  ❌ No transcript provided.")
+                else:
+                    print("\n📝 Summarizing meeting...\n")
+                    meeting = _run(summarizer.summarize(
+                        transcript=transcript,
+                        title=args.title,
+                        generate_followup=args.followup,
+                    ))
+                    print(summarizer.format_meeting(meeting))
+
+            elif args.companion_action == "stats":
+                comp = SahabatCompanion()
+                stats = comp.get_stats()
+                tm = TaskManager()
+                task_stats = tm.get_stats()
+                print(f"\n🤖 Sahabat Companion Stats:")
+                print(f"   Sessions: {stats['total_sessions']}")
+                print(f"   Messages: {stats['total_messages']}")
+                print(f"   Tasks: {task_stats['total']} ({task_stats['pending']} pending)")
+                if stats['recent_topics']:
+                    print(f"   Recent topics:")
+                    for topic in stats['recent_topics'][:5]:
+                        print(f"     • {topic}")
+
+            else:
+                companion_parser.print_help()
 
         return 0
 
