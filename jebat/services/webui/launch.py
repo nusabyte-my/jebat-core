@@ -245,6 +245,131 @@ async def session_check():
 
 
 # ═══════════════════════════════════════════════════════════════
+# System Metrics API
+# ═══════════════════════════════════════════════════════════════
+import os
+
+@app.get("/api/system/metrics")
+async def system_metrics():
+    """Real-time system metrics: CPU, memory, disk, uptime."""
+    try:
+        import psutil
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage("/")
+        return {
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory": {"total_gb": round(mem.total / 1e9, 1), "used_gb": round(mem.used / 1e9, 1), "percent": mem.percent},
+            "disk": {"total_gb": round(disk.total / 1e9, 1), "used_gb": round(disk.used / 1e9, 1), "percent": disk.percent},
+            "uptime_seconds": round(time.time() - psutil.boot_time()),
+            "pid": os.getpid(),
+        }
+    except ImportError:
+        return {"cpu_percent": 0, "memory": {"total_gb": 0, "used_gb": 0, "percent": 0}, "disk": {"total_gb": 0, "used_gb": 0, "percent": 0}, "note": "psutil not installed"}
+
+
+# ═══════════════════════════════════════════════════════════════
+# Keris Sentinel API
+# ═══════════════════════════════════════════════════════════════
+@app.get("/api/keris/history")
+async def keris_history():
+    """Get recent Keris scan history."""
+    try:
+        from jebat.features.sentinel.keris import KerisSentinel
+        sentinel = KerisSentinel()
+        history = sentinel.get_history(20)
+        return history
+    except Exception as e:
+        return {"scans": [], "error": str(e)}
+
+
+@app.post("/api/keris/scan")
+async def keris_scan(request: Request):
+    """Trigger a Keris scan. Body: {target, profile}."""
+    try:
+        body = await request.json()
+        target = body.get("target", "")
+        profile = body.get("profile", "quick")
+        if not target:
+            return JSONResponse(status_code=400, content={"error": "target required"})
+        from jebat.features.sentinel.keris import KerisSentinel
+        import asyncio
+        sentinel = KerisSentinel()
+        result, _ = asyncio.run(sentinel.scan(target, profile=profile, use_orchestrator=True))
+        briefing, provider = asyncio.run(sentinel.analyze(result))
+        return {
+            "severity": result.severity,
+            "score": result.score,
+            "duration_seconds": result.duration_seconds,
+            "vulnerabilities": len(result.vulnerabilities) if result.vulnerabilities else 0,
+            "cve_findings": len(result.cve_findings) if result.cve_findings else 0,
+            "briefing": sentinel.format_briefing(briefing),
+            "provider": provider,
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ═══════════════════════════════════════════════════════════════
+# Nexus Perisai API
+# ═══════════════════════════════════════════════════════════════
+@app.get("/api/nexus/channels")
+async def nexus_channels():
+    """List configured Nexus channels."""
+    try:
+        from jebat.features.nexus.perisai import PerisaiNexus
+        nexus = PerisaiNexus()
+        return {"channels": nexus.list_channels()}
+    except Exception as e:
+        return {"channels": [], "error": str(e)}
+
+
+@app.post("/api/nexus/send")
+async def nexus_send(request: Request):
+    """Send a message via Nexus. Body: {channel_id, content}."""
+    try:
+        body = await request.json()
+        channel_id = body.get("channel_id", "")
+        content = body.get("content", "")
+        if not channel_id or not content:
+            return JSONResponse(status_code=400, content={"error": "channel_id and content required"})
+        from jebat.features.nexus.perisai import PerisaiNexus
+        import asyncio
+        nexus = PerisaiNexus()
+        result = asyncio.run(nexus.send(channel_id, content))
+        return result
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/nexus/broadcast")
+async def nexus_broadcast(request: Request):
+    """Broadcast to all channels. Body: {content}."""
+    try:
+        body = await request.json()
+        content = body.get("content", "")
+        if not content:
+            return JSONResponse(status_code=400, content={"error": "content required"})
+        from jebat.features.nexus.perisai import PerisaiNexus
+        import asyncio
+        nexus = PerisaiNexus()
+        results = asyncio.run(nexus.broadcast(content))
+        return {"results": results}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/nexus/stats")
+async def nexus_stats():
+    """Nexus channel statistics."""
+    try:
+        from jebat.features.nexus.perisai import PerisaiNexus
+        nexus = PerisaiNexus()
+        return nexus.get_stats()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════
 # Custom Error Handlers
 # ═══════════════════════════════════════════════════════════════
 @app.exception_handler(404)

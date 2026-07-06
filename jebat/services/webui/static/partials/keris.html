@@ -1,132 +1,101 @@
-<!-- Keris — Sentinel Security Dashboard -->
+<!-- Keris — Sentinel Security -->
 <style>
-  .keris-layout { display: flex; flex-direction: column; gap: var(--space-lg); }
-  .keris-scan-bar { display: flex; gap: var(--space-sm); align-items: center; }
-  .keris-scan-bar .input { flex: 1; max-width: 500px; }
-  .keris-findings { display: flex; flex-direction: column; gap: var(--space-sm); }
-  .keris-finding {
-    display: flex; align-items: center; gap: var(--space-md);
-    padding: var(--space-md); background: var(--bg-card);
-    border: 1px solid var(--border); border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-  }
-  .keris-finding:hover { border-color: var(--border-hover); }
-  .keris-finding-severity {
-    width: 48px; height: 48px; border-radius: var(--radius-md);
-    display: flex; align-items: center; justify-content: center;
-    font-size: var(--font-size-xs); font-weight: 700; font-family: var(--font-mono);
-    flex-shrink: 0;
-  }
-  .keris-finding-severity.critical { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid var(--red-dim); }
-  .keris-finding-severity.high { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber-dim); }
-  .keris-finding-severity.medium { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid var(--purple-dim); }
-  .keris-finding-severity.low { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid var(--green-dim); }
-  .keris-finding-severity.info { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border); }
-  .keris-finding-info { flex: 1; }
-  .keris-finding-title { font-weight: 600; color: var(--text-bright); font-size: var(--font-size-base); }
-  .keris-finding-desc { font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: 2px; }
-  .keris-finding-cve { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--cyan); margin-top: 4px; }
-  .keris-finding-cvss { font-family: var(--font-mono); font-size: var(--font-size-sm); color: var(--text-muted); flex-shrink: 0; }
+  .keris-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .keris-layout { grid-template-columns: 1fr; } }
+  .scan-form { display: flex; gap: 8px; margin-bottom: 16px; }
+  .scan-form input { flex: 1; }
+  .scan-result { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
+  .scan-history-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .severity-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; }
+  .sev-critical { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .sev-high { background: rgba(249,115,22,0.15); color: #f97316; }
+  .sev-medium { background: rgba(234,179,8,0.15); color: #eab308; }
+  .sev-low { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .sev-info { background: rgba(99,102,241,0.15); color: #6366f1; }
 </style>
 
+<div class="page-header">
+  <div>
+    <h1 class="page-title">🛡️ Keris — Sentinel Security</h1>
+    <p class="page-desc">Autonomous pentest orchestrator with AI analysis</p>
+  </div>
+</div>
+
+<div class="scan-form">
+  <input type="text" id="keris-target" placeholder="Target domain or IP (e.g. example.com)" class="input" />
+  <select id="keris-profile" class="input" style="flex:0 0 120px">
+    <option value="quick">Quick</option>
+    <option value="standard" selected>Standard</option>
+    <option value="full">Full</option>
+    <option value="vuln">Vuln Only</option>
+  </select>
+  <button class="btn btn-primary" onclick="runScan()">🔍 Scan</button>
+</div>
+
 <div class="keris-layout">
-  <div class="flex items-center justify-between">
-    <div>
-      <h2 style="margin:0">🛡️ Keris</h2>
-      <p style="margin:0;font-size:var(--font-size-sm)">Sentinel Security — Autonomous Pentest Orchestrator</p>
-    </div>
-    <span class="badge badge-green">v1.0</span>
-  </div>
-
-  <!-- Scan Bar -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">Quick Assessment</div>
-    </div>
-    <div class="keris-scan-bar">
-      <input class="input" id="keris-target" placeholder="Target domain or IP (e.g. example.com)" />
-      <select class="select" id="keris-profile" style="max-width:150px">
-        <option value="quick">Quick</option>
-        <option value="standard">Standard</option>
-        <option value="full">Full</option>
-        <option value="vuln">Vuln Only</option>
-      </select>
-      <button class="btn btn-primary" id="keris-scan-btn">🔍 Scan</button>
+  <div>
+    <div class="section-title" style="margin-bottom:8px">Scan Result</div>
+    <div class="scan-result" id="scan-result">
+      Enter a target and click Scan to begin a security assessment.
     </div>
   </div>
-
-  <!-- Stats -->
-  <div class="grid grid-4">
-    <div class="stat-card cyan">
-      <div class="stat-label">Total Scans</div>
-      <div class="stat-value" id="keris-total-scans">0</div>
+  <div>
+    <div class="section-title" style="margin-bottom:8px">History</div>
+    <div id="scan-history">
+      <div style="color: var(--text-muted); font-size: 13px">Loading...</div>
     </div>
-    <div class="stat-card red">
-      <div class="stat-label">Critical Findings</div>
-      <div class="stat-value" id="keris-critical">0</div>
-    </div>
-    <div class="stat-card amber">
-      <div class="stat-label">High Findings</div>
-      <div class="stat-value" id="keris-high">0</div>
-    </div>
-    <div class="stat-card green">
-      <div class="stat-label">Briefings</div>
-      <div class="stat-value" id="keris-briefings">0</div>
-    </div>
-  </div>
-
-  <!-- Findings -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">Recent Findings</div>
-      <button class="btn btn-sm" id="keris-refresh">↻ Refresh</button>
-    </div>
-    <div class="keris-findings" id="keris-findings">
-      <div class="empty-state" style="padding:32px">
-        <div class="empty-state-icon">🛡️</div>
-        <div class="empty-state-title">No scans yet</div>
-        <div class="empty-state-desc">Enter a target above to run your first security assessment.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Briefing -->
-  <div class="card" id="keris-briefing-card" style="display:none">
-    <div class="card-header">
-      <div class="card-title">📊 Security Briefing</div>
-    </div>
-    <div id="keris-briefing-content" style="white-space:pre-wrap;font-family:var(--font-mono);font-size:var(--font-size-sm);line-height:1.6;color:var(--text-secondary)"></div>
   </div>
 </div>
 
 <script>
-  const scanBtn = document.getElementById('keris-scan-btn');
-  const targetInput = document.getElementById('keris-target');
+async function runScan() {
+  const target = document.getElementById('keris-target').value.trim();
+  const profile = document.getElementById('keris-profile').value;
+  if (!target) { toast('Enter a target', 'error'); return; }
 
-  scanBtn.addEventListener('click', async () => {
-    const target = targetInput.value.trim();
-    if (!target) return;
-    scanBtn.textContent = '⏳ Scanning...';
-    scanBtn.disabled = true;
+  const resultEl = document.getElementById('scan-result');
+  resultEl.innerHTML = '<span class="skeleton skeleton-text" style="width:80%"></span><br><span class="skeleton skeleton-text" style="width:60%"></span><br><span class="skeleton skeleton-text" style="width:70%"></span><br><br>Scanning ' + target + ' (' + profile + ')...';
+  toast('Scan started: ' + target, 'info');
+  logActivity('KERIS', 'Scan started: ' + target + ' [' + profile + ']');
 
-    try {
-      const res = await fetch('/api/keris/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target, profile: document.getElementById('keris-profile').value }),
-      });
-      const data = await res.json();
-      if (data.briefing) {
-        document.getElementById('keris-briefing-card').style.display = '';
-        document.getElementById('keris-briefing-content').textContent = data.briefing;
-      }
-    } catch (e) {
-      console.error('Scan error:', e);
+  try {
+    const r = await fetch('/api/keris/scan', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({target, profile})
+    });
+    const data = await r.json();
+    if (data.error) {
+      resultEl.textContent = 'Error: ' + data.error;
+      toast('Scan failed: ' + data.error, 'error');
+    } else {
+      resultEl.textContent = data.briefing || JSON.stringify(data, null, 2);
+      toast('Scan complete — ' + data.severity + ' (score: ' + data.score + '/100)', 'success');
+      logActivity('KERIS', 'Scan complete: ' + target + ' — ' + data.severity);
+      loadHistory();
     }
+  } catch (e) {
+    resultEl.textContent = 'Network error: ' + e.message;
+    toast('Scan failed', 'error');
+  }
+}
 
-    scanBtn.textContent = '🔍 Scan';
-    scanBtn.disabled = false;
-  });
+async function loadHistory() {
+  try {
+    const r = await fetch('/api/keris/history');
+    const data = await r.json();
+    const scans = (data.scans || []).slice(0, 10);
+    const el = document.getElementById('scan-history');
+    if (scans.length === 0) {
+      el.innerHTML = '<div style="color: var(--text-muted); font-size: 13px">No scan history yet.</div>';
+      return;
+    }
+    el.innerHTML = scans.map(s => {
+      const sev = (s.severity || 'info').toLowerCase();
+      return '<div class="scan-history-item"><span class="severity-badge sev-' + sev + '">' + (s.severity || '?') + '</span> ' + s.target + ' <span style="color:var(--text-muted)">' + (s.start_time || '').slice(0, 10) + '</span></div>';
+    }).join('');
+  } catch (e) {}
+}
 
-  targetInput.addEventListener('keydown', e => { if (e.key === 'Enter') scanBtn.click(); });
+loadHistory();
 </script>

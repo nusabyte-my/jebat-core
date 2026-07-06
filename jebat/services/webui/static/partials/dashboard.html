@@ -1,133 +1,132 @@
-<!-- Dashboard partial -->
+<!-- Dashboard — System Overview -->
 <style>
-  .dash-hero {
-    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-surface) 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: var(--space-2xl);
-    margin-bottom: var(--space-lg);
-    position: relative;
-    overflow: hidden;
-  }
-  .dash-hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, var(--cyan-glow) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .dash-hero-title {
-    font-size: var(--font-size-3xl);
-    font-weight: 700;
-    color: var(--text-bright);
-    margin-bottom: var(--space-sm);
-  }
-  .dash-hero-sub {
-    font-size: var(--font-size-lg);
-    color: var(--text-secondary);
-  }
-  .dash-hero-sub .highlight { color: var(--cyan); font-weight: 600; }
-  .product-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-md); margin-top: var(--space-lg); }
-  .product-tile {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-  .product-tile:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-  .product-tile-icon { font-size: 28px; }
-  .product-tile-name { font-size: var(--font-size-lg); font-weight: 600; color: var(--text-bright); }
-  .product-tile-codename { font-size: var(--font-size-xs); color: var(--text-muted); font-family: var(--font-mono); }
-  .product-tile-desc { font-size: var(--font-size-sm); color: var(--text-secondary); line-height: 1.4; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .metric-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .metric-value { font-size: 28px; font-weight: 700; font-family: var(--font-mono); color: var(--cyan); }
+  .metric-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .metric-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .metric-bar-fill.green { background: #22c55e; }
+  .metric-bar-fill.amber { background: var(--amber); }
+  .metric-bar-fill.red { background: var(--red); }
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .product-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; cursor: pointer; transition: all var(--transition-fast); }
+  .product-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+  .product-card h3 { font-size: 16px; margin-bottom: 4px; color: var(--text-bright); }
+  .product-card p { font-size: 13px; color: var(--text-muted); margin: 0; }
+  .product-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; }
+  .badge-live { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .recent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .recent-grid { grid-template-columns: 1fr; } }
 </style>
 
-<div class="dash-hero">
-  <div class="dash-hero-title">Welcome to JEBAT</div>
-  <div class="dash-hero-sub">
-    Sovereign AI Platform & Agent Workstation — <span class="highlight">5 products, 1 memory, infinite agents</span>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-desc">JEBAT Platform — Sovereign AI Overview</p>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="refreshDashboard()">↻ Refresh</button>
+</div>
+
+<!-- System Metrics -->
+<div class="metrics-grid" id="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-label">CPU</div>
+    <div class="metric-value" id="m-cpu">—</div>
+    <div class="metric-bar"><div class="metric-bar-fill green" id="m-cpu-bar" style="width:0%"></div></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Memory</div>
+    <div class="metric-value" id="m-mem">—</div>
+    <div class="metric-bar"><div class="metric-bar-fill green" id="m-mem-bar" style="width:0%"></div></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Disk</div>
+    <div class="metric-value" id="m-disk">—</div>
+    <div class="metric-bar"><div class="metric-bar-fill green" id="m-disk-bar" style="width:0%"></div></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Uptime</div>
+    <div class="metric-value" id="m-uptime">—</div>
   </div>
 </div>
 
+<!-- Products -->
+<div class="section-title" style="margin-bottom:12px">Products</div>
 <div class="product-grid">
-  <a class="product-tile" href="#sahabat">
-    <div class="product-tile-icon">🤖</div>
-    <div class="product-tile-name">Sahabat</div>
-    <div class="product-tile-codename">Companion v1.0</div>
-    <div class="product-tile-desc">Conversational AI for daily tasks, briefings & meetings</div>
-    <span class="badge badge-green">Live</span>
-  </a>
-  <a class="product-tile" href="#keris">
-    <div class="product-tile-icon">🛡️</div>
-    <div class="product-tile-name">Keris</div>
-    <div class="product-tile-codename">Sentinel Security v1.0</div>
-    <div class="product-tile-desc">Autonomous pentest orchestrator & CVE correlation</div>
-    <span class="badge badge-green">Live</span>
-  </a>
-  <a class="product-tile" href="#pandai">
-    <div class="product-tile-icon">💻</div>
-    <div class="product-tile-name">Pandai</div>
-    <div class="product-tile-codename">Developer Suite v1.0</div>
-    <div class="product-tile-desc">MCP-native sandboxed code workspace</div>
-    <span class="badge badge-green">Live</span>
-  </a>
-  <a class="product-tile" href="#perisai">
-    <div class="product-tile-icon">🌐</div>
-    <div class="product-tile-name">Perisai</div>
-    <div class="product-tile-codename">Nexus v1.0</div>
-    <div class="product-tile-desc">Multi-channel bot orchestrator — 6+ platforms</div>
-    <span class="badge badge-green">Live</span>
-  </a>
-  <a class="product-tile" href="#chat">
-    <div class="product-tile-icon">🗡️</div>
-    <div class="product-tile-name">Core</div>
-    <div class="product-tile-codename">Hang Jebat v6.1</div>
-    <div class="product-tile-desc">5-layer memory, Ultra-Think, agent swarms</div>
-    <span class="badge badge-cyan">Platform</span>
-  </a>
+  <div class="product-card" onclick="navigate('sahabat')">
+    <h3>🤖 Sahabat <span class="product-badge badge-live">Live</span></h3>
+    <p>Companion — memory, briefing, meeting intelligence</p>
+  </div>
+  <div class="product-card" onclick="navigate('keris')">
+    <h3>🛡️ Keris <span class="product-badge badge-live">Live</span></h3>
+    <p>Sentinel — autonomous pentest, vulnerability scanning</p>
+  </div>
+  <div class="product-card" onclick="navigate('perisai')">
+    <h3>📡 Perisai <span class="product-badge badge-live">Live</span></h3>
+    <p>Nexus — multi-channel bot orchestrator</p>
+  </div>
+  <div class="product-card" onclick="navigate('pandai')">
+    <h3>⚡ Pandai <span class="product-badge badge-live">Live</span></h3>
+    <p>Developer — skills, tools, code generation</p>
+  </div>
 </div>
 
-<!-- Quick Stats -->
-<div class="grid grid-4 mt-lg">
-  <div class="stat-card cyan">
-    <div class="stat-label">Active Providers</div>
-    <div class="stat-value" id="stat-providers">—</div>
+<!-- Recent Activity -->
+<div class="recent-grid">
+  <div class="card">
+    <div class="section-title" style="margin-bottom:8px">Recent Scans</div>
+    <div id="recent-scans" style="font-size:13px; color: var(--text-muted)">Loading...</div>
   </div>
-  <div class="stat-card purple">
-    <div class="stat-label">Skills Loaded</div>
-    <div class="stat-value" id="stat-skills">—</div>
-  </div>
-  <div class="stat-card amber">
-    <div class="stat-label">Agents Running</div>
-    <div class="stat-value" id="stat-agents">0</div>
-  </div>
-  <div class="stat-card green">
-    <div class="stat-label">Memory Layers</div>
-    <div class="stat-value">5</div>
+  <div class="card">
+    <div class="section-title" style="margin-bottom:8px">System Info</div>
+    <div id="system-info" style="font-size:13px; color: var(--text-muted)">Loading...</div>
   </div>
 </div>
 
 <script>
-  // Load stats from API
-  (async () => {
-    try {
-      if (typeof API !== 'undefined') {
-        const rt = await API.runtime();
-        const providers = Object.keys(rt.providers?.catalog || {});
-        document.getElementById('stat-providers').textContent = providers.length || '—';
-      }
-    } catch {}
-  })();
+async function refreshDashboard() {
+  try {
+    const r = await fetch('/api/system/metrics');
+    const m = await r.json();
+    document.getElementById('m-cpu').textContent = m.cpu_percent + '%';
+    document.getElementById('m-mem').textContent = m.memory.percent + '%';
+    document.getElementById('m-disk').textContent = m.disk.percent + '%';
+    const h = Math.floor(m.uptime_seconds / 3600);
+    const d = Math.floor(h / 24);
+    document.getElementById('m-uptime').textContent = d > 0 ? d + 'd ' + (h % 24) + 'h' : h + 'h ' + Math.floor((m.uptime_seconds % 3600) / 60) + 'm';
+
+    ['cpu', 'mem', 'disk'].forEach(k => {
+      const val = k === 'cpu' ? m.cpu_percent : k === 'mem' ? m.memory.percent : m.disk.percent;
+      const bar = document.getElementById('m-' + k + '-bar');
+      bar.style.width = val + '%';
+      bar.className = 'metric-bar-fill ' + (val > 80 ? 'red' : val > 60 ? 'amber' : 'green');
+    });
+
+    const info = [
+      'Platform: JEBAT v6.1.0',
+      'PID: ' + m.pid,
+      'Memory: ' + m.memory.used_gb + ' / ' + m.memory.total_gb + ' GB',
+      'Disk: ' + m.disk.used_gb + ' / ' + m.disk.total_gb + ' GB',
+    ];
+    document.getElementById('system-info').innerHTML = info.map(i => '<div style="margin-bottom:4px">• ' + i + '</div>').join('');
+
+    const hr = await fetch('/api/keris/history');
+    const hist = await hr.json();
+    const scans = (hist.scans || []).slice(0, 5);
+    if (scans.length === 0) {
+      document.getElementById('recent-scans').innerHTML = '<div>No scans yet. Run: <code>jebat keris scan &lt;target&gt;</code></div>';
+    } else {
+      document.getElementById('recent-scans').innerHTML = scans.map(s =>
+        '<div style="margin-bottom:4px">• [' + s.severity + '] ' + s.target + ' — ' + (s.start_time || '').slice(0, 10) + '</div>'
+      ).join('');
+    }
+  } catch (e) {
+    console.error('Dashboard refresh failed:', e);
+  }
+}
+
+// Auto-refresh every 30s
+refreshDashboard();
+setInterval(refreshDashboard, 30000);
 </script>

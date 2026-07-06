@@ -1,0 +1,131 @@
+<!-- Settings — Provider Configuration -->
+<style>
+  .settings-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+  .settings-section h3 { font-size: 14px; color: var(--text-bright); margin-bottom: 12px; }
+  .setting-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .setting-label { min-width: 120px; font-size: 13px; color: var(--text-muted); }
+  .setting-value { flex: 1; }
+  .provider-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .provider-item { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; cursor: pointer; transition: all var(--transition-fast); }
+  .provider-item:hover { border-color: var(--cyan); }
+  .provider-item.active { border-color: var(--cyan); background: rgba(0,240,255,0.05); }
+  .provider-item h4 { font-size: 13px; margin-bottom: 4px; color: var(--text-bright); }
+  .provider-item p { font-size: 12px; color: var(--text-muted); margin: 0; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">⚙️ Settings</h1>
+    <p class="page-desc">Provider configuration and system preferences</p>
+  </div>
+</div>
+
+<!-- Provider Selection -->
+<div class="settings-section">
+  <h3>AI Provider</h3>
+  <div class="provider-grid" id="provider-grid">
+    <div class="provider-item" data-provider="openai" onclick="selectProvider('openai')">
+      <h4>🟢 OpenAI</h4>
+      <p>GPT-4o, GPT-4.1, o3 — best general reasoning</p>
+    </div>
+    <div class="provider-item" data-provider="anthropic" onclick="selectProvider('anthropic')">
+      <h4>🟣 Anthropic</h4>
+      <p>Claude Sonnet 4, Opus 4 — best coding</p>
+    </div>
+    <div class="provider-item" data-provider="google" onclick="selectProvider('google')">
+      <h4>🔵 Google</h4>
+      <p>Gemini 2.5 Pro — best multimodal</p>
+    </div>
+    <div class="provider-item" data-provider="openrouter" onclick="selectProvider('openrouter')">
+      <h4>🌐 OpenRouter</h4>
+      <p>Multi-model gateway — 200+ models</p>
+    </div>
+    <div class="provider-item" data-provider="ollama" onclick="selectProvider('ollama')">
+      <h4>🦙 Ollama (Local)</h4>
+      <p>Local inference — free, private</p>
+    </div>
+    <div class="provider-item" data-provider="9router" onclick="selectProvider('9router')">
+      <h4>🆓 9Router</h4>
+      <p>Free models — no API key needed</p>
+    </div>
+  </div>
+</div>
+
+<!-- Current Config -->
+<div class="settings-section">
+  <h3>Current Configuration</h3>
+  <div id="config-display" style="font-size: 13px; color: var(--text-muted)">Loading...</div>
+</div>
+
+<!-- System Preferences -->
+<div class="settings-section">
+  <h3>Preferences</h3>
+  <div class="setting-row">
+    <span class="setting-label">Theme</span>
+    <div class="setting-value">
+      <button class="btn btn-sm" onclick="toggleTheme()" id="pref-theme-btn">🌙 Dark</button>
+    </div>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Language</span>
+    <div class="setting-value">
+      <button class="btn btn-sm" onclick="toggleLang()" id="pref-lang-btn">EN</button>
+    </div>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Session Timeout</span>
+    <div class="setting-value" style="font-size:13px; color: var(--text-muted)">15 minutes inactivity</div>
+  </div>
+</div>
+
+<!-- API Endpoints -->
+<div class="settings-section">
+  <h3>API Endpoints</h3>
+  <div style="font-size: 12px; font-family: var(--font-mono); color: var(--text-muted)">
+    <div style="margin-bottom:4px">GET  /health — Health check</div>
+    <div style="margin-bottom:4px">GET  /api/system/metrics — System metrics</div>
+    <div style="margin-bottom:4px">GET  /api/audit — Audit trail</div>
+    <div style="margin-bottom:4px">GET  /api/keris/history — Scan history</div>
+    <div style="margin-bottom:4px">POST /api/keris/scan — Trigger scan</div>
+    <div style="margin-bottom:4px">GET  /api/nexus/channels — List channels</div>
+    <div style="margin-bottom:4px">POST /api/nexus/send — Send message</div>
+    <div style="margin-bottom:4px">POST /api/nexus/broadcast — Broadcast</div>
+  </div>
+</div>
+
+<script>
+function selectProvider(provider) {
+  document.querySelectorAll('.provider-item').forEach(el => el.classList.remove('active'));
+  document.querySelector('[data-provider="' + provider + '"]').classList.add('active');
+  toast('Provider: ' + provider, 'info');
+  logActivity('SETTINGS', 'Provider selected: ' + provider);
+}
+
+async function loadConfig() {
+  try {
+    const r = await fetch('/webui/api/status');
+    const data = await r.json();
+    const provider = data.provider || 'unknown';
+    const model = data.model || 'unknown';
+    document.getElementById('config-display').innerHTML = [
+      'Provider: <strong style="color:var(--cyan)">' + provider + '</strong>',
+      'Model: <strong style="color:var(--cyan)">' + model + '</strong>',
+      'Version: JEBAT v6.1.0',
+    ].map(i => '<div style="margin-bottom:4px">• ' + i + '</div>').join('');
+
+    // Highlight active provider
+    const p = provider.toLowerCase();
+    document.querySelectorAll('.provider-item').forEach(el => {
+      if (p.includes(el.dataset.provider)) el.classList.add('active');
+    });
+  } catch (e) {
+    document.getElementById('config-display').textContent = 'Failed to load config';
+  }
+}
+
+// Sync preference buttons with current state
+document.getElementById('pref-theme-btn').textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '☀️ Light' : '🌙 Dark';
+document.getElementById('pref-lang-btn').textContent = (localStorage.getItem('jebat_lang') || 'en').toUpperCase();
+
+loadConfig();
+</script>

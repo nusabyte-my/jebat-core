@@ -1,126 +1,132 @@
-<!-- Perisai — Nexus Multi-Channel Dashboard -->
+<!-- Perisai — Nexus Multi-Channel -->
 <style>
-  .nexus-layout { display: flex; flex-direction: column; gap: var(--space-lg); }
-  .nexus-channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-md); }
-  .nexus-channel {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: var(--space-lg); transition: all var(--transition-base);
-  }
-  .nexus-channel:hover { border-color: var(--border-hover); }
-  .nexus-channel-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md); }
-  .nexus-channel-icon { font-size: 24px; }
-  .nexus-channel-name { font-weight: 600; color: var(--text-bright); }
-  .nexus-channel-platform { font-size: var(--font-size-xs); color: var(--text-muted); font-family: var(--font-mono); }
-  .nexus-channel-status { margin-left: auto; }
-  .nexus-channel-actions { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
-  .nexus-platform-icon { font-size: 32px; }
-  .nexus-send-area { display: flex; gap: var(--space-sm); }
-  .nexus-send-area .input { flex: 1; }
+  .channel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .channel-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .channel-card h3 { font-size: 14px; margin-bottom: 8px; color: var(--text-bright); }
+  .channel-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .ch-active { background: #22c55e; }
+  .ch-inactive { background: var(--text-muted); }
+  .send-form { display: flex; gap: 8px; margin-bottom: 16px; }
+  .send-form input { flex: 1; }
 </style>
 
-<div class="nexus-layout">
-  <div class="flex items-center justify-between">
-    <div>
-      <h2 style="margin:0">🌐 Perisai — Nexus</h2>
-      <p style="margin:0;font-size:var(--font-size-sm)">Multi-Channel Bot Orchestrator</p>
-    </div>
-    <div class="flex gap-sm">
-      <button class="btn btn-sm" id="nexus-health">🏥 Health</button>
-      <button class="btn btn-primary btn-sm" id="nexus-add-btn">+ Add Channel</button>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="grid grid-4">
-    <div class="stat-card cyan">
-      <div class="stat-label">Total Channels</div>
-      <div class="stat-value" id="nexus-total">0</div>
-    </div>
-    <div class="stat-card green">
-      <div class="stat-label">Active</div>
-      <div class="stat-value" id="nexus-active">0</div>
-    </div>
-    <div class="stat-card purple">
-      <div class="stat-label">Platforms</div>
-      <div class="stat-value" id="nexus-platforms">0</div>
-    </div>
-    <div class="stat-card amber">
-      <div class="stat-label">Messages</div>
-      <div class="stat-value" id="nexus-messages">0</div>
-    </div>
-  </div>
-
-  <!-- Channels -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">Connected Channels</div>
-    </div>
-    <div class="nexus-channels" id="nexus-channels">
-      <div class="empty-state" style="padding:32px;grid-column:1/-1">
-        <div class="empty-state-icon">📡</div>
-        <div class="empty-state-title">No channels configured</div>
-        <div class="empty-state-desc">Add a messaging platform to get started.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Broadcast -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">📢 Broadcast</div>
-    </div>
-    <div class="nexus-send-area">
-      <input class="input" id="nexus-broadcast-input" placeholder="Message to broadcast to all channels..." />
-      <button class="btn btn-primary" id="nexus-broadcast-btn">Send to All</button>
-    </div>
-  </div>
-
-  <!-- Health Modal -->
-  <div class="card" id="nexus-health-card" style="display:none">
-    <div class="card-header">
-      <div class="card-title">🏥 Channel Health</div>
-      <button class="btn btn-sm" onclick="document.getElementById('nexus-health-card').style.display='none'">✕</button>
-    </div>
-    <div id="nexus-health-results"></div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">📡 Perisai — Nexus</h1>
+    <p class="page-desc">Multi-channel bot orchestrator</p>
   </div>
 </div>
 
+<!-- Send Message -->
+<div class="send-form">
+  <select id="nexus-channel" class="input" style="flex:0 0 200px">
+    <option value="">Select channel...</option>
+  </select>
+  <input type="text" id="nexus-message" placeholder="Message content..." class="input" />
+  <button class="btn btn-primary" onclick="sendMessage()">📤 Send</button>
+  <button class="btn" onclick="broadcastMessage()">📡 Broadcast</button>
+</div>
+
+<!-- Channels -->
+<div class="section-title" style="margin-bottom:12px">Channels</div>
+<div class="channel-grid" id="channel-grid">
+  <div style="color: var(--text-muted); font-size: 13px">Loading channels...</div>
+</div>
+
+<!-- Stats -->
+<div class="card" style="margin-top:16px">
+  <div class="section-title" style="margin-bottom:8px">Nexus Stats</div>
+  <div id="nexus-stats" style="font-size: 13px; color: var(--text-muted)">Loading...</div>
+</div>
+
 <script>
-  const PLATFORM_ICONS = {
-    telegram: '📱', discord: '🎮', slack: '💼',
-    signal: '🔒', matrix: '🔗', whatsapp: '📞', webhook: '🌐'
-  };
+async function loadChannels() {
+  try {
+    const r = await fetch('/api/nexus/channels');
+    const data = await r.json();
+    const channels = data.channels || [];
+    const grid = document.getElementById('channel-grid');
+    const select = document.getElementById('nexus-channel');
 
-  document.getElementById('nexus-add-btn').addEventListener('click', () => {
-    const platform = prompt('Platform (telegram/discord/slack/signal/matrix/whatsapp):');
-    if (!platform) return;
-    const channelId = prompt('Channel ID:');
-    if (!channelId) return;
-    const token = prompt('Bot token or webhook URL (optional):');
+    // Update select
+    select.innerHTML = '<option value="">Select channel...</option>' +
+      channels.map(c => '<option value="' + c.channel_id + '">[' + c.platform + '] ' + c.channel_id + '</option>').join('');
 
-    fetch('/api/nexus/add', {
+    if (channels.length === 0) {
+      grid.innerHTML = '<div style="color: var(--text-muted); font-size: 13px">No channels configured. Use: <code>jebat nexus add &lt;platform&gt; &lt;channel_id&gt;</code></div>';
+      return;
+    }
+
+    grid.innerHTML = channels.map(c => {
+      const active = c.enabled && c.has_token;
+      return '<div class="channel-card"><h3><span class="channel-status ' + (active ? 'ch-active' : 'ch-inactive') + '"></span>' + c.platform + '</h3><div style="font-size:12px;color:var(--text-muted)">' + c.channel_id + '</div><div style="font-size:12px;margin-top:4px">' + (active ? '✅ Connected' : '⚠️ No token') + '</div></div>';
+    }).join('');
+
+    logActivity('NEXUS', 'Channels loaded: ' + channels.length);
+  } catch (e) {
+    console.error('Failed to load channels:', e);
+  }
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/nexus/stats');
+    const s = await r.json();
+    if (s.error) return;
+    document.getElementById('nexus-stats').innerHTML = [
+      'Channels: ' + (s.active_channels || 0) + '/' + (s.total_channels || 0) + ' active',
+      'Messages: ' + (s.total_messages || 0),
+      s.platforms ? 'Platforms: ' + Object.entries(s.platforms).map(([k,v]) => k + '(' + v + ')').join(', ') : '',
+    ].filter(Boolean).map(i => '<div style="margin-bottom:4px">• ' + i + '</div>').join('');
+  } catch (e) {}
+}
+
+async function sendMessage() {
+  const channel = document.getElementById('nexus-channel').value;
+  const content = document.getElementById('nexus-message').value.trim();
+  if (!channel || !content) { toast('Select a channel and enter a message', 'error'); return; }
+
+  try {
+    const r = await fetch('/api/nexus/send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ platform, channel_id: channelId, token: token || '' }),
-    }).then(() => location.reload());
-  });
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({channel_id: channel, content})
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast('Message sent to ' + channel, 'success');
+      logActivity('NEXUS', 'Message sent: ' + channel);
+      document.getElementById('nexus-message').value = '';
+    } else {
+      toast('Failed: ' + (data.error || 'Unknown error'), 'error');
+    }
+  } catch (e) {
+    toast('Network error', 'error');
+  }
+}
 
-  document.getElementById('nexus-health').addEventListener('click', async () => {
-    const card = document.getElementById('nexus-health-card');
-    const results = document.getElementById('nexus-health-results');
-    card.style.display = '';
-    results.innerHTML = '<div class="spinner"></div>';
-    try {
-      const res = await fetch('/api/nexus/health');
-      const data = await res.json();
-      results.innerHTML = Object.entries(data).map(([ch, info]) => `
-        <div class="flex items-center gap-sm" style="padding:8px 0;border-bottom:1px solid var(--border)">
-          <span class="status-dot ${info.healthy ? 'online' : 'error'}"></span>
-          <span style="font-family:var(--font-mono);font-size:var(--font-size-sm)">${info.platform}</span>
-          <span style="color:var(--text-secondary);font-size:var(--font-size-sm)">${ch}</span>
-          <span class="badge ${info.healthy ? 'badge-green' : 'badge-red'}" style="margin-left:auto">${info.healthy ? 'OK' : 'FAIL'}</span>
-        </div>
-      `).join('');
-    } catch { results.innerHTML = '<div class="text-red text-sm">Failed to check health</div>'; }
-  });
+async function broadcastMessage() {
+  const content = document.getElementById('nexus-message').value.trim();
+  if (!content) { toast('Enter a message', 'error'); return; }
+  if (!await confirm('Broadcast', 'Send this message to ALL channels?')) return;
+
+  try {
+    const r = await fetch('/api/nexus/broadcast', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({content})
+    });
+    const data = await r.json();
+    const results = data.results || {};
+    const ok = Object.values(results).filter(r => r.ok).length;
+    toast('Broadcast: ' + ok + '/' + Object.keys(results).length + ' succeeded', ok > 0 ? 'success' : 'error');
+    logActivity('NEXUS', 'Broadcast: ' + ok + '/' + Object.keys(results).length);
+    document.getElementById('nexus-message').value = '';
+  } catch (e) {
+    toast('Network error', 'error');
+  }
+}
+
+loadChannels();
+loadStats();
 </script>
