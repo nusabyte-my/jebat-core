@@ -1,0 +1,12 @@
+{
+  "name": "JEBAT — Sovereign AI Platform",
+  "short_name": "JEBAT",
+  "description": "5 products, 1 memory, infinite agents",
+  "start_url": "/webui/",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#030303",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

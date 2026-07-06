@@ -1,7 +1,7 @@
 """JEBAT WebUI Launcher — Enterprise Edition
 
 Launch the immersive web interface for JEBAT.
-Includes rate limiting, CORS tightening, error pages, and health checks.
+Includes rate limiting, CORS, error pages, CSP, audit trail, and session management.
 
 Usage:
     python -m jebat.services.webui.launch [--host 0.0.0.0] [--port 8787]
@@ -11,7 +11,8 @@ import argparse
 import logging
 import sys
 import time
-from collections import defaultdict
+import uuid
+from collections import defaultdict, deque
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -69,6 +70,65 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 # ═══════════════════════════════════════════════════════════════
+# CSP Headers Middleware
+# ═══════════════════════════════════════════════════════════════
+CSP_DIRECTIVES = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data:; "
+    "connect-src 'self' ws: wss:; "
+    "frame-ancestors 'none'"
+)
+
+class CSPMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/webui") or request.url.path == "/":
+            response.headers["Content-Security-Policy"] = CSP_DIRECTIVES
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
+# ═══════════════════════════════════════════════════════════════
+# Request ID Middleware
+# ═══════════════════════════════════════════════════════════════
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        rid = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = rid
+        return response
+
+
+# ═══════════════════════════════════════════════════════════════
+# Audit Trail (in-memory, last 500 entries)
+# ═══════════════════════════════════════════════════════════════
+audit_log: deque = deque(maxlen=500)
+
+class AuditMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start = time.time()
+        response = await call_next(request)
+        duration_ms = round((time.time() - start) * 1000, 1)
+        path = request.url.path
+        # Log API calls and navigation, skip static files
+        if not path.startswith("/webui/static") and path != "/favicon.svg":
+            audit_log.append({
+                "ts": time.time(),
+                "method": request.method,
+                "path": path,
+                "status": response.status_code,
+                "duration_ms": duration_ms,
+                "ip": request.client.host if request.client else "-",
+            })
+        return response
+
+
+# ═══════════════════════════════════════════════════════════════
 # Error Pages
 # ═══════════════════════════════════════════════════════════════
 ERROR_PAGE = """<!DOCTYPE html>
@@ -105,6 +165,15 @@ app.add_middleware(
 
 # Rate limiting
 app.add_middleware(RateLimitMiddleware)
+
+# CSP + security headers
+app.add_middleware(CSPMiddleware)
+
+# Request ID tracking
+app.add_middleware(RequestIDMiddleware)
+
+# Audit trail
+app.add_middleware(AuditMiddleware)
 
 # Include WebUI router
 app.include_router(webui_router)
@@ -157,8 +226,22 @@ async def health_check():
         "service": "jebat-webui",
         "version": "6.1.0",
         "timestamp": time.time(),
-        "features": ["rate-limiting", "cors", "error-pages", "activity-log"],
+        "features": ["rate-limiting", "cors", "csp", "error-pages", "audit-trail", "request-id"],
     }
+
+
+@app.get("/api/audit")
+async def get_audit_log(limit: int = 50):
+    """Audit trail — last N requests with method, path, status, duration."""
+    entries = list(audit_log)[-limit:]
+    entries.reverse()  # newest first
+    return {"entries": entries, "total": len(audit_log)}
+
+
+@app.get("/api/session/check")
+async def session_check():
+    """Session check — client uses this to verify session is still active."""
+    return {"active": True, "timestamp": time.time()}
 
 
 # ═══════════════════════════════════════════════════════════════

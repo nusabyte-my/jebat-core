@@ -10,6 +10,7 @@
   <meta property="og:description" content="Hang Jebat's memory. Sahabat's voice. Keris's shield. Pandai's mind. Perisai's reach." />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#030303" />
+  <link rel="manifest" href="/webui/static/manifest.json" />
   <link rel="stylesheet" href="/webui/static/css/stealth.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
@@ -108,6 +109,36 @@
     /* ── SVG Empty States ── */
     .empty-illustration { width: 120px; height: 120px; margin: 0 auto 16px; opacity: 0.6; }
 
+    /* ── Skeleton Loading ── */
+    .skeleton { background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-hover) 50%, var(--bg-elevated) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-md); }
+    .skeleton-text { height: 14px; margin-bottom: 8px; }
+    .skeleton-title { height: 24px; width: 60%; margin-bottom: 12px; }
+    .skeleton-card { height: 120px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── Session Timeout Overlay ── */
+    .session-overlay { position: fixed; inset: 0; background: rgba(3,3,3,0.95); z-index: 10010; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+    .session-overlay.open { display: flex; }
+    .session-box { text-align: center; }
+    .session-box h2 { font-size: 24px; color: var(--text-bright); margin-bottom: 8px; }
+    .session-box p { color: var(--text-muted); margin-bottom: 24px; }
+
+    /* ── i18n Toggle ── */
+    .i18n-toggle { cursor: pointer; font-size: 13px; padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--text-muted); background: transparent; }
+    .i18n-toggle:hover { color: var(--cyan); border-color: var(--cyan); }
+
+    /* ── Copy Button ── */
+    .copy-btn { position: absolute; top: 8px; right: 8px; padding: 4px 8px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 12px; cursor: pointer; opacity: 0; transition: opacity var(--transition-fast); }
+    .copy-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+    .copy-target:hover .copy-btn { opacity: 1; }
+
+    /* ── Reduced Motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      .progress-bar { transition: none; }
+      .skeleton { animation: none; }
+    }
+
     /* ── Print Styles ── */
     @media print {
       .sidebar, .topbar, .bottom-bar, .activity-drawer, .toast-container,
@@ -180,6 +211,16 @@
         <button class="btn" id="confirm-cancel">Cancel</button>
         <button class="btn btn-danger" id="confirm-ok">Confirm</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Session Timeout Overlay -->
+  <div class="session-overlay" id="session-overlay">
+    <div class="session-box">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2>Session Expired</h2>
+      <p>You've been inactive for a while. Click below to continue.</p>
+      <button class="btn btn-primary" onclick="unlockSession()">Unlock Session</button>
     </div>
   </div>
 
@@ -301,6 +342,7 @@
         <button class="btn btn-sm" onclick="toggleActivity()" title="Activity Log (Ctrl+L)">📋</button>
         <button class="btn btn-sm" onclick="showShortcuts()" title="Shortcuts (?)">⌨️</button>
         <span class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</span>
+        <button class="i18n-toggle" onclick="toggleLang()" id="lang-btn" title="Toggle language">EN</button>
         <div class="topbar-status">
           <span class="topbar-status-dot" id="status-dot"></span>
           <span id="status-text">Connected</span>
@@ -672,6 +714,124 @@
         toast(`Loaded: ${file.name} (${file.size} bytes)`, 'info');
         if (callback) callback(file.name, text);
       }
+    };
+
+    // ═══════════════════════════════════════════════════
+    // 14. SESSION TIMEOUT (15 min inactivity)
+    // ═══════════════════════════════════════════════════
+    const SESSION_TIMEOUT = 15 * 60 * 1000;
+    let sessionTimer = null;
+    const sessionOverlay = document.getElementById('session-overlay');
+
+    function resetSession() {
+      clearTimeout(sessionTimer);
+      sessionTimer = setTimeout(() => {
+        sessionOverlay.classList.add('open');
+        logActivity('SYS', 'Session expired (inactivity)');
+      }, SESSION_TIMEOUT);
+    }
+    window.unlockSession = function() {
+      sessionOverlay.classList.remove('open');
+      resetSession();
+      toast('Session unlocked', 'success');
+      logActivity('SYS', 'Session unlocked');
+    };
+    ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt =>
+      document.addEventListener(evt, resetSession, { passive: true })
+    );
+    resetSession();
+
+    // ═══════════════════════════════════════════════════
+    // 15. i18n (Malay/English)
+    // ═══════════════════════════════════════════════════
+    const i18n = {
+      en: { search: 'Search', settings: 'Settings', dashboard: 'Dashboard', chat: 'Chat', skills: 'Skills', agents: 'Agents', channels: 'Channels', connected: 'Connected', expired: 'Session Expired', unlock: 'Unlock Session' },
+      ms: { search: 'Cari', settings: 'Tetapan', dashboard: 'Papan Pemuka', chat: 'Sembang', skills: 'Kemahiran', agents: 'Ejen', channels: 'Saluran', connected: 'Bersambung', expired: 'Sesi Tamat Tempoh', unlock: 'Buka Sesi' },
+    };
+    let currentLang = localStorage.getItem('jebat_lang') || 'en';
+    const langBtn = document.getElementById('lang-btn');
+
+    function toggleLang() {
+      currentLang = currentLang === 'en' ? 'ms' : 'en';
+      localStorage.setItem('jebat_lang', currentLang);
+      langBtn.textContent = currentLang.toUpperCase();
+      document.documentElement.lang = currentLang;
+      logActivity('SYS', `Language: ${currentLang}`);
+      toast(`Language: ${currentLang === 'en' ? 'English' : 'Bahasa Melayu'}`, 'info');
+    }
+    window.toggleLang = toggleLang;
+    langBtn.textContent = currentLang.toUpperCase();
+    document.documentElement.lang = currentLang;
+
+    // ═══════════════════════════════════════════════════
+    // 16. COPY TO CLIPBOARD
+    // ═══════════════════════════════════════════════════
+    window.copyText = async function(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('Copied to clipboard', 'success');
+      } catch {
+        toast('Copy failed', 'error');
+      }
+    };
+
+    // ═══════════════════════════════════════════════════
+    // 17. FOCUS TRAP (for modals)
+    // ═══════════════════════════════════════════════════
+    function trapFocus(element) {
+      const focusable = element.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (focusable.length === 0) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      element.addEventListener('keydown', e => {
+        if (e.key !== 'Tab') return;
+        if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+        else { if (document.activeElement === last) { e.preventDefault(); first.focus(); } }
+      });
+      first.focus();
+    }
+    // Apply focus trap to confirm dialog
+    const confirmEl = document.getElementById('confirm-overlay');
+    const origConfirmShow = confirm;
+    window.confirm = function(title, msg) {
+      return new Promise(resolve => {
+        confirmTitle.textContent = title;
+        confirmMsg.textContent = msg;
+        confirmOverlay.classList.add('open');
+        confirmResolve = resolve;
+        trapFocus(confirmOverlay.querySelector('.confirm-box'));
+      });
+    };
+
+    // ═══════════════════════════════════════════════════
+    // 18. LAZY LOADING (IntersectionObserver)
+    // ═══════════════════════════════════════════════════
+    if ('IntersectionObserver' in window) {
+      const lazyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            if (el.dataset.src) { el.src = el.dataset.src; el.removeAttribute('data-src'); }
+            el.classList.add('loaded');
+            lazyObserver.unobserve(el);
+          }
+        });
+      }, { rootMargin: '100px' });
+      window.observeLazy = (el) => lazyObserver.observe(el);
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 19. SERVICE WORKER
+    // ═══════════════════════════════════════════════════
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/webui/static/sw.js').catch(() => {});
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 20. SKELETON LOADING HELPER
+    // ═══════════════════════════════════════════════════
+    window.skeleton = function(type = 'card', count = 1) {
+      const cls = type === 'text' ? 'skeleton skeleton-text' : type === 'title' ? 'skeleton skeleton-title' : 'skeleton skeleton-card';
+      return Array(count).fill(`<div class="${cls}" style="margin-bottom:8px"></div>`).join('');
     };
   </script>
 </body>
