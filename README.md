@@ -30,6 +30,9 @@ npx @nusabyte/jebat chat "Explain the memory consolidation algorithm"
 # Run agent task
 npx @nusabyte/jebat agent "Audit all API endpoints in src/services"
 
+# Generate code
+npx @nusabyte/jebat code "Create a REST API with FastAPI"
+
 # Launch WebUI
 npx @nusabyte/jebat webui
 
@@ -58,6 +61,37 @@ git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
 pip install -e .
 jebat repl
+```
+
+---
+
+## Remote Ollama Endpoint
+
+JEBAT uses a remote Ollama instance hosted on a dedicated server with AMD EPYC 9354P (8 vCPU, 32GB RAM).
+
+```bash
+# Default endpoint (zero config)
+# https://jebat.online/ollama
+
+# Models available:
+#   - qwen2.5-coder:7b (4.7GB, fast coding)
+#   - qwen2.5:14b (9GB, general purpose)
+
+# Test the endpoint
+curl https://jebat.online/ollama/v1/models
+
+# Use with JEBAT
+jebat chat "Hello from jebat.online"
+```
+
+### Configuration
+
+```yaml
+# ~/.jebat/config.yaml
+llm:
+  provider: ollama
+  model: qwen2.5-coder:7b
+  api_base: https://jebat.online/ollama  # Default endpoint
 ```
 
 ---
@@ -170,6 +204,7 @@ POST /webui/api/runtime         Runtime control
 | `jebat repl` | **Interactive REPL** — streaming, tools, history |
 | `jebat chat "prompt"` | One-shot chat with tool calling |
 | `jebat agent "task"` | Run one-shot agent with tool-calling |
+| `jebat code "prompt"` | Generate code from description |
 | `jebat webui` | Launch Stealth-Dark WebUI |
 | `jebat status` | System health & provider status |
 | `jebat doctor` | Diagnose environment issues |
@@ -191,7 +226,6 @@ POST /webui/api/runtime         Runtime control
 | `jebat file read\|write\|patch\|search\|undo\|tree` | Safe file ops with backups |
 | `jebat tools list\|inspect` | Inspect all registered tools |
 | `jebat skills list\|search\|show` | Tok Guru skills |
-| `jebat code "description"` | Generate code from description |
 
 ### Platform Suite
 
@@ -416,6 +450,7 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 | **Web Interface** | **Stealth-Dark Tactical (25 features)** | Chat UI | Basic UI | Local UI |
 | **Platform Suite** | **5 Products, 1 Memory** | Single Product | None | None |
 | **npx / npm** | **Zero-install wrapper** | N/A | N/A | N/A |
+| **Remote Inference** | **AMD EPYC 9354P (8 vCPU/32GB)** | Cloud GPU | Local GPU | Local GPU |
 
 ---
 
@@ -427,6 +462,7 @@ Config file: `~/.jebat/config.yaml`
 llm:
   provider: ollama
   model: qwen2.5-coder:7b
+  api_base: https://jebat.online/ollama
   fallback_providers:
     - openai
     - anthropic
@@ -522,6 +558,61 @@ To safeguard target servers, JEBAT categorizes all tool execution into permissio
 - [CLI Agent Status](CLI_AGENT_STATUS.md) — Gap analysis & implementation status
 - [Deployment](DEPLOYMENT.md) — Deployment guide
 - [Roadmap](ROADMAP.md) — Future plans
+
+---
+
+## Model Fine-Tuning (JEBAT-Builder)
+
+Train a custom model that knows YOUR code style and JEBAT architecture.
+
+### Free Cloud GPU Options
+
+| Platform | GPU | VRAM | Free Tier | Best For |
+|----------|-----|------|-----------|----------|
+| **Google Colab** | T4 | 15GB | ✅ Unlimited sessions | Quick experiments |
+| **Kaggle** | T4 x2 | 30GB | ✅ 30h/week | Medium fine-tunes |
+| **AWS SageMaker** | T4 | 16GB | ✅ 4h/session | Quick tests |
+| **Paperspace** | M4000 | 8GB | ✅ Limited hours | Development |
+| **Lightning AI** | T4 | 16GB | ✅ 22h/month | Development |
+| **GCP Free Tier** | T4/V100/A100 | Varies | ✅ $300 credit | Serious training |
+
+### Paid Options (Cheapest)
+
+| Platform | GPU | Cost/Hour | Best For |
+|----------|-----|-----------|----------|
+| **RunPod** | RTX 3090 24GB | $0.45 | Budget training |
+| **Vast.ai** | RTX 3090 | $0.20-0.40 | Cheapest |
+| **Lambda** | A100 80GB | $1.10 | Production |
+| **Together.ai** | A100 80GB | $1.36 | Fine-tuning API |
+
+### Fine-Tuning Steps
+
+```bash
+# Step 1: Create training dataset from your repos
+python -m jebat.ml.create_dataset --repos /path/to/your/code
+
+# Step 2: Fine-tune on Google Colab (free T4 GPU)
+# - Use Unsloth for efficient LoRA (4-bit quantization)
+# - Base model: qwen2.5-coder:7b
+# - Time: 2-4 hours
+# - Cost: $0
+
+# Step 3: Export as GGUF
+python -m jebat.ml.export_gguf --model ./finetuned_model --format Q4_K_M
+
+# Step 4: Deploy to jebat.online
+scp ./jebat-builder.Q4_K_M.gguf root@72.62.255.206:/tmp/
+ssh root@72.62.255.206 "ollama create jebat-builder -f /tmp/Modelfile"
+```
+
+### Your Hardware
+
+| Device | GPU | VRAM | Training Capability |
+|--------|-----|------|---------------------|
+| **Laptop** | RTX 3060 | 6GB | QLoRA for 3B-4B models |
+| **Server .206** | None (CPU) | N/A | Inference only |
+| **Google Colab** | T4 | 15GB | LoRA for 7B-13B models |
+| **Kaggle** | T4 x2 | 30GB | QLoRA for 7B-13B models |
 
 ---
 

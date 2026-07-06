@@ -55,7 +55,7 @@ function installJebat() {
 }
 
 function runJebat(args) {
-  const pythonArgs = ['-m', 'jebat.cli', ...args];
+  const pythonArgs = ['-m', 'jebat_cli_new', ...args];
   
   // Use spawn for interactive mode (REPL)
   const isInteractive = args.includes('repl') || args.length === 0;
@@ -93,7 +93,7 @@ async function main() {
   
   // Handle special flags
   if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
-    console.log(`JEBAT v6.1.0 — Sovereign AI Platform & Agent Workstation
+    console.log(`JEBAT v7.0.0 — Sovereign AI Platform & Agent Workstation
     
 Usage: npx jebat [command] [options]
 
@@ -101,6 +101,8 @@ Commands:
   repl              Start interactive REPL (default)
   chat <prompt>     One-shot chat with tool calling
   agent <prompt>    Run one-shot agent task
+  code <prompt>     Generate code from description
+  webui             Launch Stealth-Dark WebUI
   config show|set   Configuration management
   file read|write|patch|search|undo|tree  File operations
   tools list|inspect  List/inspect registered tools
@@ -113,17 +115,23 @@ Examples:
   npx jebat repl
   npx jebat chat "Hello JEBAT"
   npx jebat agent "Analyze this codebase"
+  npx jebat code "Create a REST API"
+  npx jebat webui
   npx jebat config show
 
 Installation:
   This wrapper installs the Python package automatically on first run.
   Requires: Python 3.11+ and pip
+
+Remote Ollama:
+  JEBAT uses https://jebat.online/ollama as the default endpoint.
+  Models: qwen2.5-coder:7b, qwen2.5:14b (CPU inference on AMD EPYC)
 `);
     return;
   }
   
   if (args.includes('--version') || args.includes('-v')) {
-    console.log('JEBAT 6.1.0 (npm wrapper)');
+    console.log('JEBAT 7.0.0 (npm wrapper)');
     return;
   }
   
@@ -138,16 +146,16 @@ Installation:
   }
   
   // Check if jebat is installed
-  const checkResult = spawnSync(PYTHON_CMD, ['-c', 'import jebat; print(jebat.__version__)'], { 
-    stdio: 'pipe',
+  const checkResult = spawnSync(PYTHON_CMD, ['-c', 'import jebat_cli_new; print("OK")'], { 
+    stdio: 'pipe', 
     encoding: 'utf-8'
   });
   
-  if (checkResult.status !== 0 || !checkResult.stdout.includes('6.1')) {
-    log('JEBAT not found or outdated. Installing...');
+  if (checkResult.status !== 0) {
+    log('JEBAT not found. Installing...');
     installJebat();
   } else {
-    log(`JEBAT ${checkResult.stdout.trim()} already installed`);
+    log(`JEBAT installed`);
   }
   
   // Run JEBAT
