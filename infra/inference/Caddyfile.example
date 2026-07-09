@@ -1,0 +1,40 @@
+# Caddyfile.example — expose the local JEBAT unified router as jebat.online/v1
+#
+# The router already serves an OpenAI-compatible API at http://127.0.0.1:8000/v1
+# (merging Ollama + llama.cpp). To make `jebat.online/v1` the live public
+# endpoint, point your DNS A/AAAA (or CNAME) for jebat.online at this host's
+# public IP, then run Caddy (or any TLS-terminating reverse proxy) like:
+#
+#   caddy run --config infra/inference/Caddyfile.example
+#
+# Caddy auto-provisions TLS via Let's Encrypt when the name is publicly
+# reachable. For a box behind NAT, use a tunnel (Cloudflare Tunnel / Tailscale
+# funnel) instead of exposing port 443 directly.
+
+jebat.online {
+    # Optional: require a bearer token so only configured clients can call.
+    # The jebat CLI sends Authorization: Bearer <api_key> for kind=openai.
+    # basicauth /v1/* {
+    #     jebat {$JEBAT_API_TOKEN}
+    # }
+
+    reverse_proxy 127.0.0.1:8000
+
+    # Sensible timeouts for streaming chat completions.
+    reverse_proxy {
+        transport http {
+            read_timeout 300s
+            write_timeout 300s
+        }
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}
+
+# If you also serve the OpenWebUI UI publicly:
+# openwebui.jebat.online {
+#     reverse_proxy 127.0.0.1:8080
+# }

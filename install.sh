@@ -115,20 +115,23 @@ EOF
 chmod +x "$BIN_DIR/jebat"
 c_ok "launcher: $BIN_DIR/jebat"
 
-# ── default inference provider (jebat.online) ──────────────────────────
-c_step "configuring default inference provider (jebat.online)"
+# ── default inference provider (local unified router) ─────────────────
+c_step "configuring default inference provider (local unified router)"
 python3 - <<PY
 import json, os
 p = os.path.expanduser("~/.jebat/jebat-cli-providers.json")
 os.makedirs(os.path.dirname(p), exist_ok=True)
-# Fresh-install defaults: JEBAT Online (OpenAI-compatible) as the active default,
-# plus a local Ollama entry for offline use.
+# Fresh-install default: the LOCAL unified router (OpenAI-compatible) at
+# http://127.0.0.1:8000/v1, which merges Ollama + llama.cpp backends.
+# This works out-of-the-box (no external dependency).
+# When you stand up the public API, swap jebat-online's api_base to
+# https://jebat.online/v1 (see infra/inference/Caddyfile.example).
 defaults = {
     "jebat-online": {
         "id": "jebat-online",
-        "name": "JEBAT Online",
-        "api_base": "https://jebat.online/v1",
-        "model": "jebat",
+        "name": "JEBAT Online (local router)",
+        "api_base": "http://127.0.0.1:8000/v1",
+        "model": "qwen2.5:3b",
         "api_key": None,
         "kind": "openai",
         "active": True,
@@ -154,8 +157,8 @@ if os.path.exists(p):
 json.dump(defaults, open(p, "w"), indent=2)
 print("wrote", p)
 PY
-c_ok "default provider: jebat.online (https://jebat.online/v1) — OpenAI-compatible"
-c_warn "verify the endpoint is live; adjust model name in ~/.jebat/jebat-cli-providers.json if needed"
+c_ok "default provider: local unified router (http://127.0.0.1:8000/v1) — OpenAI-compatible"
+c_warn "to use the public endpoint later, set jebat-online api_base -> https://jebat.online/v1 (see infra/inference/Caddyfile.example)"
 
 # ── DESIGNmd CLI (companion tool) ──────────────────────────────────────
 c_step "installing DESIGNmd CLI"
