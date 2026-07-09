@@ -74,18 +74,18 @@ PROVIDER_PRICING = {
 # Each entry: (kind, display_name, api_base, default_model, needs_key, description)
 
 PROVIDER_KINDS = [
-    ("ollama",          "Ollama",          "http://127.0.0.1:11434",                     "qwen2.5-coder:7b",       False, "Local inference · zero cost"),
-    ("openai",          "OpenAI",          "https://api.openai.com/v1",                  "gpt-4o",                 True,  "GPT-4o, o3, o4-mini, GPT-4.1"),
-    ("anthropic",       "Anthropic",       "https://api.anthropic.com",                  "claude-sonnet-4-20250514",True, "Claude Opus 4, Sonnet 4, Haiku 3.5"),
-    ("gemini",          "Google Gemini",   "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-pro", True, "Gemini 2.5 Pro/Flash"),
-    ("github",          "GitHub Models",   "https://models.github.ai/inference",         "openai/gpt-4o-mini",     True, "Free tier available with GitHub token"),
+    ("ollama",          "Ollama",          "http://127.0.0.1:11434",                     "qwen2.5:3b",             False, "Local inference · zero cost"),
+    ("openai",          "OpenAI",          "https://api.openai.com/v1",                  "gpt-5",                  True,  "GPT-5, GPT-5-mini, GPT-4.1, o3, o4-mini"),
+    ("anthropic",       "Anthropic",       "https://api.anthropic.com",                  "claude-sonnet-4-20250514",True, "Claude Opus 4.1, Sonnet 4.1, Haiku 4.5"),
+    ("gemini",          "Google Gemini",   "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-pro", True, "Gemini 2.5 Pro/Flash (OpenAI-compatible)"),
+    ("github",          "GitHub Models",   "https://models.github.ai/inference",         "openai/gpt-5",           True,  "Free tier available with GitHub token"),
     ("openrouter",      "OpenRouter",      "https://openrouter.ai/api/v1",               "anthropic/claude-sonnet-4", True, "150+ models, pay-per-token"),
     ("groq",            "Groq",            "https://api.groq.com/openai/v1",             "llama-3.3-70b-versatile",True, "Ultra-fast inference, free tier"),
     ("cerebras",        "Cerebras",        "https://api.cerebras.ai/v1",                 "llama-3.3-70b",          True, "Fastest inference globally"),
     ("mistral",         "Mistral",         "https://api.mistral.ai/v1",                  "mistral-large-latest",   True, "Mistral Large, Medium, Codestral"),
     ("together",        "Together AI",     "https://api.together.xyz/v1",                "meta-llama/Llama-3.3-70B-Instruct-Turbo", True, "Open-source model hosting"),
-    ("deepseek",        "DeepSeek",        "https://api.deepseek.com/v1",                "deepseek-chat",          True, "DeepSeek V3/R1, very affordable"),
-    ("xai",             "xAI (Grok)",      "https://api.x.ai/v1",                        "grok-3",                 True, "Grok-3, Grok-3 Mini"),
+    ("deepseek",        "DeepSeek",        "https://api.deepseek.com/v1",                "deepseek-chat",          True, "DeepSeek V3.1/R1, very affordable"),
+    ("xai",             "xAI (Grok)",      "https://api.x.ai/v1",                        "grok-4",                 True, "Grok-4, Grok-4 Mini"),
     ("cloudflare",      "Cloudflare AI",   "https://api.cloudflare.com/client/v4",        "@cf/meta/llama-3.3-70b-instruct-fp16", False, "Free Workers AI inference"),
     ("sambanova",       "SambaNova",       "https://api.sambanova.ai/v1",                "Meta-Llama-3.3-70B-Instruct", True, "Free tier, fast inference"),
     ("novita",          "Novita AI",       "https://api.novita.ai/v3/openai",            "deepseek-r1",            True, "Cheap R1/LLaMA access"),
@@ -112,23 +112,27 @@ MODEL_CATALOG = {
         ("gemma3:4b",             "Gemma 3 4B",              128000, 8192,  0, 0, ["code", "local"]),
     ],
     "openai": [
-        ("gpt-4o",                "GPT-4o",                  128000, 16384, 2.5, 10, ["vision", "code", "fast"]),
-        ("gpt-4o-mini",           "GPT-4o Mini",             128000, 16384, 0.15, 0.6, ["vision", "code", "cheap"]),
-        ("gpt-4.1",               "GPT-4.1",                 1047576, 32768, 2, 8, ["code", "long"]),
-        ("gpt-4.1-mini",          "GPT-4.1 Mini",            1047576, 32768, 0.4, 1.6, ["code", "long", "cheap"]),
-        ("gpt-4.1-nano",          "GPT-4.1 Nano",            1047576, 32768, 0.1, 0.4, ["code", "long", "ultra-cheap"]),
-        ("o3",                    "o3",                      200000, 100000, 10, 40, ["reasoning", "code"]),
-        ("o3-mini",               "o3-mini",                 200000, 100000, 1.1, 4.4, ["reasoning", "code", "cheap"]),
-        ("o4-mini",               "o4-mini",                 200000, 100000, 1.1, 4.4, ["reasoning", "code"]),
+        ("gpt-5",                 "GPT-5",                  272000, 32768, 10, 30, ["reasoning", "code", "best"]),
+        ("gpt-5-mini",            "GPT-5 Mini",             272000, 32768, 1.25, 5, ["reasoning", "code", "cheap"]),
+        ("gpt-5-nano",            "GPT-5 Nano",             272000, 32768, 0.5, 2, ["code", "ultra-cheap"]),
+        ("gpt-4.1",               "GPT-4.1",                1047576, 32768, 2, 8, ["code", "long"]),
+        ("gpt-4.1-mini",          "GPT-4.1 Mini",           1047576, 32768, 0.4, 1.6, ["code", "long", "cheap"]),
+        ("gpt-4o",                "GPT-4o",                 128000, 16384, 2.5, 10, ["vision", "code", "fast"]),
+        ("gpt-4o-mini",           "GPT-4o Mini",            128000, 16384, 0.15, 0.6, ["vision", "code", "cheap"]),
+        ("o3",                    "o3",                     200000, 100000, 10, 40, ["reasoning", "code"]),
+        ("o4-mini",               "o4-mini",                200000, 100000, 1.1, 4.4, ["reasoning", "code"]),
     ],
     "anthropic": [
-        ("claude-opus-4-20250514",   "Claude Opus 4",        200000, 32000, 15, 75, ["reasoning", "code", "best"]),
-        ("claude-sonnet-4-20250514", "Claude Sonnet 4",      200000, 64000, 3, 15, ["reasoning", "code"]),
-        ("claude-haiku-3-5-20241022","Claude Haiku 3.5",     200000, 8192, 0.8, 4, ["code", "fast", "cheap"]),
+        ("claude-opus-4-1",         "Claude Opus 4.1",      200000, 32000, 15, 75, ["reasoning", "code", "best"]),
+        ("claude-sonnet-4-1",       "Claude Sonnet 4.1",    200000, 64000, 3, 15, ["reasoning", "code"]),
+        ("claude-haiku-4-5",        "Claude Haiku 4.5",      200000, 8192, 0.8, 4, ["code", "fast", "cheap"]),
+        ("claude-opus-4-20250514",  "Claude Opus 4",        200000, 32000, 15, 75, ["reasoning", "code"]),
+        ("claude-sonnet-4-20250514","Claude Sonnet 4",      200000, 64000, 3, 15, ["reasoning", "code"]),
     ],
     "gemini": [
         ("gemini-2.5-pro",        "Gemini 2.5 Pro",          1048576, 65536, 1.25, 10, ["reasoning", "code", "long"]),
         ("gemini-2.5-flash",      "Gemini 2.5 Flash",        1048576, 65536, 0.15, 0.6, ["reasoning", "code", "cheap"]),
+        ("gemini-2.5-flash-lite", "Gemini 2.5 Flash-Lite",   1048576, 65536, 0.1, 0.4, ["code", "cheap", "ultra-cheap"]),
         ("gemini-2.0-flash",      "Gemini 2.0 Flash",        1048576, 8192, 0.1, 0.4, ["code", "fast"]),
     ],
     "openrouter": [
@@ -154,6 +158,8 @@ MODEL_CATALOG = {
         ("deepseek-reasoner",          "DeepSeek R1",        128000, 8192, 0.55, 2.19, ["reasoning"]),
     ],
     "xai": [
+        ("grok-4",                     "Grok 4",              131072, 16384, 3, 15, ["reasoning", "code", "best"]),
+        ("grok-4-mini",               "Grok 4 Mini",         131072, 16384, 0.3, 0.5, ["code", "cheap"]),
         ("grok-3",                     "Grok 3",             131072, 16384, 3, 15, ["code"]),
         ("grok-3-mini",                "Grok 3 Mini",        131072, 16384, 0.3, 0.5, ["code", "cheap"]),
     ],
@@ -1525,6 +1531,8 @@ class ProviderConfig:
     model: str
     api_key: Optional[str] = None
     kind: str = "ollama"
+    auth_method: str = "key"
+    auth_ref: Optional[str] = None
     active: bool = False
 
 
@@ -1553,6 +1561,8 @@ class ProviderRegistry:
             data[key] = {
                 "id": cfg.id, "name": cfg.name, "api_base": cfg.api_base,
                 "model": cfg.model, "api_key": cfg.api_key, "kind": cfg.kind,
+                "auth_method": getattr(cfg, "auth_method", "key"),
+                "auth_ref": getattr(cfg, "auth_ref", None),
                 "active": key == self.active_id,
             }
         PROVIDER_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -3423,27 +3433,48 @@ def _interactive_add_provider(registry, kind=None):
 
         # API key
         api_key = None
+        auth_method = "key"
+        auth_ref = None
         if needs_key:
-            api_key_input = input(f"  {C.CYAN}API key{C.RESET} [{C.DIM}sk-...{C.RESET}]: ").strip()
+            api_key_input = input(f"  {C.CYAN}API key{C.RESET} [{C.DIM}sk-... (leave blank to use env/store){C.RESET}]: ").strip()
             if api_key_input:
                 api_key = api_key_input
             elif kind not in ("ollama", "cloudflare"):
-                cprint(f"  {C.YELLOW}⚠ No API key. Provider may not work.{C.RESET}")
+                cprint(f"  {C.YELLOW}⚠ No inline key — choose an auth method below.{C.RESET}")
+            # Auth method: how the key is supplied. Supported by every paid
+            # provider (OpenAI, Anthropic, Gemini, xAI, DeepSeek, ...).
+            cprint(f"  {C.DIM}Auth method — how JEBAT supplies the key:{C.RESET}")
+            cprint(f"  {C.DIM}  key   = paste the key inline (stored in providers.json){C.RESET}")
+            cprint(f"  {C.DIM}  env   = read from an ENV var at runtime (recommended){C.RESET}")
+            cprint(f"  {C.DIM}  store = read from the JEBAT auth store (~/.jebat/auth/tokens.json){C.RESET}")
+            am = input(f"  {C.CYAN}Auth method{C.RESET} [{C.DIM}key/env/store{C.RESET}]: ").strip().lower() or "key"
+            if am == "env":
+                auth_method = "env"
+                auth_ref = input(f"  {C.CYAN}Env var name{C.RESET} [{C.DIM}{kind.upper()}_API_KEY{C.RESET}]: ").strip() or f"{kind.upper()}_API_KEY"
+            elif am == "store":
+                auth_method = "store"
+                auth_ref = input(f"  {C.CYAN}Stored key name{C.RESET} [{C.DIM}set via /apikey{C.RESET}]: ").strip() or None
+                if not auth_ref:
+                    cprint(f"  {C.YELLOW}⚠ No stored key name — provider may not authenticate.{C.RESET}")
+            # 'key' keeps the inline api_key captured above
     except (EOFError, KeyboardInterrupt):
         cprint(f"\n  {C.DIM}Cancelled.{C.RESET}")
         return
 
-    cfg = ProviderConfig(id=pid, name=display, api_base=api_base, model=model, api_key=api_key, kind=kind)
+    cfg = ProviderConfig(id=pid, name=display, api_base=api_base, model=model,
+                        api_key=api_key, kind=kind, auth_method=auth_method, auth_ref=auth_ref)
     registry.register(pid, cfg)
     registry.use(pid)
 
     # Show confirmation
+    _key_mask = (api_key[:8] + "••••") if api_key else "None"
     cprint(f"\n  {C.GREEN}✓{C.RESET} {C.BOLD}Added: {pid}{C.RESET}")
     _info_panel("Provider Details", [
         ("Provider", f"{display} ({kind})"),
         ("Model", model),
         ("Endpoint", api_base),
-        ("Key", masked[:8] + "••••" if api_key else "None"),
+        ("Auth", f"{auth_method}" + (f" → {auth_ref}" if auth_ref else "")),
+        ("Key", _key_mask),
     ], theme="success")
     cprint(f"\n  {C.GREEN}●{C.RESET} Active provider set to {C.BOLD}{pid}{C.RESET}")
     cprint(f"  {C.DIM}Test it: /health or send a message{C.RESET}\n")

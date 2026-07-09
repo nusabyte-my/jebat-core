@@ -7,14 +7,14 @@ from __future__ import annotations
 import json, time, urllib.request
 from typing import Optional
 
-from jebat_cli_new.models import ProviderConfig, CompletionRequest, CompletionResponse
+from jebat_cli_new.models import ProviderConfig, CompletionRequest, CompletionResponse, resolve_api_key
 
 
 class AnthropicProviderImpl:
     def __init__(self, config: ProviderConfig):
         self.config = config
         self.api_base = (config.api_base or "https://api.anthropic.com").rstrip("/")
-        self.api_key = config.api_key or ""
+        self.api_key = resolve_api_key(config)
 
     def complete(self, request: CompletionRequest) -> CompletionResponse:
         url = f"{self.api_base}/v1/messages"
