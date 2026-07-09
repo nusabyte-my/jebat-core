@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+#
+# JEBAT Core installer — Hermes-style bootstrap.
+# One script, three surfaces: CLI, Desktop, MCP. No sudo required.
+#
+#   curl -fsSL https://jebat.online/install.sh | bash
+#   curl -fsSL https://jebat.online/install.sh | bash -s -- --desktop
+#   curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
+#
+# Profiles:
+#   (default)      install the JEBAT CLI only
+#   --cli          CLI only (explicit)
+#   --desktop      CLI + Desktop launcher (Electron app)
+#   --mcp          CLI + MCP server (stdio + IDE config helper)
+#   --all          everything above
+#   --no-inference skip the local unified inference stack (Ollama/llama.cpp/router/OpenWebUI)
+#
+set -euo pipefail
+
+# ── constants ────────────────────────────────────────────────────────
+JEBAT_VERSION="7.0.0"
+REPO_URL="https://github.com/nusabyte-my/jebat-core.git"
+INSTALL_DIR="${JEBAT_HOME:-$HOME/.local/jebat}"
+BIN_DIR="$HOME/.local/bin"
+VENV_DIR="$INSTALL_DIR/venv"
+PY_REQ="3.11"
+
+# profile flags
+DO_CLI=1
+DO_DESKTOP=0
+DO_MCP=0
+DO_INFERENCE=1
+
+# ── helpers ───────────────────────────────────────────────────────────
+c_banner() { printf '\033[1;35m%s\033[0m\n' "$1"; }
+c_step()   { printf '\033[1;36m  ›\033[0m %s\n' "$1"; }
+c_ok()     { printf '\033[1;32m  ✓\033[0m %s\n' "$1"; }
+c_warn()   { printf '\033[1;33m  !\033[0m %s\n' "$1"; }
+c_fail()   { printf '\033[1;31m  ✗\033[0m %s\n' "$1"; }
+c_comp()   { printf '\033[1;34m    ├─\033[0m %s\n' "$1"; }
+
+need_cmd() { command -v "$1" >/dev/null 2>&1 || { c_fail "required: $1"; exit 1; }; }
+
+# ── parse args ────────────────────────────────────────────────────────
+for a in "$@"; do
+  case "$a" in
+    --cli)        DO_CLI=1 ;;
+    --desktop)    DO_CLI=1; DO_DESKTOP=1 ;;
+    --mcp)        DO_CLI=1; DO_MCP=1 ;;
+    --all)        DO_CLI=1; DO_DESKTOP=1; DO_MCP=1 ;;
+    --no-inference) DO_INFERENCE=0 ;;
+    -h|--help)    sed -n '2,20p' "$0"; exit 0 ;;
+    *) c_warn "unknown flag: $a (ignored)";;
+  esac
+done
+
+# ── banner ─────────────────────────────────────────────────────────────
+echo
+c_banner "🗡️  JEBAT Core — Sovereign AI Workstation  v$JEBAT_VERSION"
+c_banner "    installing for: $(whoami)@$(uname -s) $(uname -m)"
+echo
+c_step "selected components:"
+[ "$DO_CLI" -eq 1 ]        && c_comp "CLI            (jebat repl / chat / code / agent)"
+[ "$DO_DESKTOP" -eq 1 ]    && c_comp "Desktop        (UI in jebat-dev → jebat desktop; snippet prepped)"
+[ "$DO_MCP" -eq 1 ]        && c_comp "MCP surface     (IDE snippet prepped; server in jebat-dev)"
+[ "$DO_INFERENCE" -eq 1 ]  && c_comp "Inference stack (Ollama + llama.cpp + router + OpenWebUI)"
+echo
+
+# ── preflight ─────────────────────────────────────────────────────────
+c_step "preflight checks"
+need_cmd python3
+need_cmd git
+PYV=$(python3 -c 'import sys;print("%d.%d"%sys.version_info[:2])')
+c_ok "python3 $PYV found"
+command -v node >/dev/null 2>&1 && c_ok "node $(node -v) found" || c_warn "node not found — DESIGNmd CLI + Desktop need it (npm install -g designmd later)"
+mkdir -p "$BIN_DIR" "$INSTALL_DIR"
+c_ok "install dir: $INSTALL_DIR"
+
+# ── clone / update source ──────────────────────────────────────────────
+c_step "fetching JEBAT Core source"
+if [ -d "$INSTALL_DIR/.git" ]; then
+  git -C "$INSTALL_DIR" pull --ff-only >/dev/null 2>&1 && c_ok "updated existing checkout" || c_warn "pull failed; using existing tree"
+else
+  git clone --depth 1 "$REPO_URL" "$INSTALL_DIR" >/dev/null 2>&1 && c_ok "cloned $REPO_URL" || { c_fail "clone failed (network?)"; exit 1; }
+fi
+
+# ── python venv ───────────────────────────────────────────────────────
+c_step "provisioning Python virtualenv"
+if [ ! -x "$VENV_DIR/bin/python" ]; then
+  python3 -m venv "$VENV_DIR"
+  c_ok "created venv at $VENV_DIR"
+else
+  c_ok "venv already present"
+fi
+# shellcheck disable=SC1091
+source "$VENV_DIR/bin/activate"
+python -m pip install --quiet --upgrade pip
+c_ok "pip upgraded"
+
+# ── install CLI (editable from checkout) ───────────────────────────────
+c_step "installing JEBAT CLI"
+# The cloned repo root is the package (pyproject defines `jebat`).
+# Some layouts nest it under ./jebat-core — detect by pyproject presence.
+SRC="$INSTALL_DIR"
+if [ ! -f "$SRC/pyproject.toml" ] && [ -f "$INSTALL_DIR/jebat-core/pyproject.toml" ]; then
+  SRC="$INSTALL_DIR/jebat-core"
+fi
+pip install --quiet -e "$SRC" >/dev/null 2>&1 && c_ok "jebat CLI installed (editable from $SRC)" || { c_fail "pip install failed"; exit 1; }
+
+# launcher on PATH
+cat > "$BIN_DIR/jebat" <<EOF
+#!/usr/bin/env bash
+exec "$VENV_DIR/bin/jebat" "\$@"
+EOF
+chmod +x "$BIN_DIR/jebat"
+c_ok "launcher: $BIN_DIR/jebat"
+
+# ── default inference provider (jebat.online) ──────────────────────────
+c_step "configuring default inference provider (jebat.online)"
+python3 - <<PY
+import json, os
+p = os.path.expanduser("~/.jebat/jebat-cli-providers.json")
+os.makedirs(os.path.dirname(p), exist_ok=True)
+# Fresh-install defaults: JEBAT Online (OpenAI-compatible) as the active default,
+# plus a local Ollama entry for offline use.
+defaults = {
+    "jebat-online": {
+        "id": "jebat-online",
+        "name": "JEBAT Online",
+        "api_base": "https://jebat.online/v1",
+        "model": "jebat",
+        "api_key": None,
+        "kind": "openai",
+        "active": True,
+    },
+    "ollama-local": {
+        "id": "ollama-local",
+        "name": "Ollama (local)",
+        "api_base": "http://127.0.0.1:11434",
+        "model": "qwen2.5:3b",
+        "api_key": None,
+        "kind": "ollama",
+        "active": False,
+    },
+}
+# Preserve any existing provider config (e.g. from a prior /provider add).
+if os.path.exists(p):
+    try:
+        existing = json.load(open(p))
+        if isinstance(existing, dict) and existing:
+            defaults = existing
+    except Exception:
+        pass
+json.dump(defaults, open(p, "w"), indent=2)
+print("wrote", p)
+PY
+c_ok "default provider: jebat.online (https://jebat.online/v1) — OpenAI-compatible"
+c_warn "verify the endpoint is live; adjust model name in ~/.jebat/jebat-cli-providers.json if needed"
+
+# ── DESIGNmd CLI (companion tool) ──────────────────────────────────────
+c_step "installing DESIGNmd CLI"
+if command -v node >/dev/null 2>&1; then
+  if command -v designmd >/dev/null 2>&1; then
+    c_ok "designmd already installed ($(designmd --version 2>/dev/null))"
+  else
+    npm install -g designmd >/dev/null 2>&1 && c_ok "designmd installed ($(designmd --version 2>/dev/null))" || c_warn "designmd install failed — run: npm install -g designmd"
+  fi
+else
+  c_warn "node missing — skip designmd; install later: npm install -g designmd"
+fi
+
+# ── MCP / Desktop surfaces (optional) ──────────────────────────────────
+# NOTE: the public jebat-core CLI registers code/chat/provider/agent + REPL.
+# MCP-server and Desktop surfaces are provided by the full Jebat workspace
+# (jebat-dev), not this minimal core checkout. The installer still writes the
+# IDE snippet and records the surface so it's ready when that code is present.
+if [ "$DO_MCP" -eq 1 ]; then
+  c_step "configuring MCP surface"
+  c_ok "IDE snippet written to: $INSTALL_DIR/mcp.ide.json"
+  c_warn "MCP server ships with the full Jebat workspace (jebat-dev), not core CLI — snippet is preconfigured for when present"
+  cat > "$INSTALL_DIR/mcp.ide.json" <<'JSON'
+{
+  "mcpServers": {
+    "jebat": {
+      "command": "jebat",
+      "args": ["mcp", "serve"],
+      "env": {}
+    }
+  }
+}
+JSON
+fi
+
+if [ "$DO_DESKTOP" -eq 1 ]; then
+  c_step "Desktop surface"
+  c_ok "Desktop UI ships with the full Jebat workspace (jebat-dev) — run 'jebat desktop' once that code is installed"
+  c_warn "headless/minimal hosts: install Electron once with 'npm i -g electron' for offline desktop"
+fi
+
+# ── Unified inference stack (optional) ─────────────────────────────────
+if [ "$DO_INFERENCE" -eq 1 ]; then
+  c_step "local unified inference stack"
+  INFRA="$INSTALL_DIR/infra/inference"
+  if [ -d "$INFRA" ]; then
+    c_ok "config + router at: $INFRA"
+    c_ok "backends: llama.cpp (CPU/AVX512 + Iris Xe Vulkan), Ollama, remote vLLM/Ollama"
+    c_ok "router endpoint: http://127.0.0.1:8000/v1  (OpenAI-compatible, merges all backends)"
+    c_ok "OpenWebUI: http://127.0.0.1:8080  (pointed at the router)"
+    c_warn "start it with: $INFRA/start.sh   (or systemd --user: jebat-router.service etc.)"
+  else
+    c_warn "inference stack not found in checkout; skipping"
+  fi
+fi
+
+# ── done ───────────────────────────────────────────────────────────────
+echo
+c_banner "✅ JEBAT Core installed."
+echo
+c_step "verify:"
+echo "    jebat --help              # core commands: repl / chat / code / agent"
+echo "    jebat repl                # starts with default provider: jebat.online"
+echo "    designmd --version        # companion registry tool"
+[ "$DO_MCP" -eq 1 ]      && echo "    jebat mcp serve          # (full workspace) MCP server; snippet at $INSTALL_DIR/mcp.ide.json"
+[ "$DO_DESKTOP" -eq 1 ]  && echo "    jebat desktop            # (full workspace) launch Desktop UI"
+[ "$DO_INFERENCE" -eq 1 ]&& echo "    infra/inference/start.sh  # (full workspace) boot local LLMs"
+echo
+c_step "ensure PATH includes ~/.local/bin:"
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo '    export PATH="$HOME/.local/bin:$PATH"  # add to ~/.bashrc / ~/.zshrc'; ;; esac
+echo

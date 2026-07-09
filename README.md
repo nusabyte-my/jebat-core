@@ -65,6 +65,86 @@ jebat repl
 
 ---
 
+## Installation — Three Surfaces, One Script
+
+JEBAT installs like Hermes: a single self-contained bootstrap that provisions
+Python, the venv, the CLI launcher, and (optionally) the Desktop app and MCP
+server. **No sudo required** — everything lands in `~/.local`.
+
+```bash
+# Zero-install (downloads + runs the bootstrap)
+curl -fsSL https://jebat.online/install.sh | bash            # CLI only
+curl -fsSL https://jebat.online/install.sh | bash -s -- --desktop
+curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
+curl -fsSL https://jebat.online/install.sh | bash -s -- --all
+
+# Or pin a profile explicitly
+curl -fsSL https://jebat.online/install.sh | bash -s -- --cli --no-inference
+```
+
+### What gets installed (components)
+
+| Component | Surface | Purpose |
+|-----------|---------|---------|
+| **JEBAT CLI** | CLI / Desktop / MCP | `jebat repl`, `chat`, `code`, `agent` (core) |
+| **Python venv** | all | Isolated runtime at `~/.local/jebat/venv` (editable install) |
+| **`jebat` launcher** | all | Symlink on `PATH` (`~/.local/bin/jebat`) |
+| **DESIGNmd CLI** | CLI companion | Standalone registry tool (`designmd search/get/download/...`) |
+| **MCP surface** | MCP | IDE snippet prepped at `~/.local/jebat/mcp.ide.json` (server ships with the full Jebat workspace) |
+| **Unified Inference Stack** | CLI / Desktop | Ollama + llama.cpp + router + OpenWebUI (from the full Jebat workspace) |
+| **Desktop surface** | Desktop | `jebat desktop` UI from the full Jebat workspace |
+
+> **Note:** This installer clones the public **core** CLI (`jebat-core`),
+> which exposes `repl`, `chat`, `code`, and `agent`. The `design`, `mcp serve`,
+> and `desktop` surfaces live in the full **Jebat workspace** (`jebat-dev`).
+> The installer still prepares their config (IDE snippet, Electron note) so
+> they activate the moment that code is present.
+
+### Surface quick-reference
+
+```bash
+# CLI — primary surface (core)
+jebat repl                                   # interactive REPL
+jebat chat "hello"                           # one-shot
+jebat code "refactor utils.py"              # coding agent
+jebat --help                                 # full command list
+# Default inference provider is seeded at install: JEBAT Online
+#   (OpenAI-compatible) → https://jebat.online/v1  [switch with /provider <id>]
+#   local Ollama (http://127.0.0.1:11434) is also registered, inactive by default
+
+# DESIGNmd (companion tool, standalone)
+designmd search "dark fintech" --limit 3     # browse the registry
+designmd tags                                # list tags
+
+# MCP — wire into any IDE (full workspace)
+# IDE config written to ~/.local/jebat/mcp.ide.json:
+# { "mcpServers": { "jebat": { "command": "jebat", "args": ["mcp","serve"] } } }
+
+# Desktop — native workstation UI (full workspace)
+jebat desktop                                # launch GUI
+```
+
+### Local Unified Inference Stack (optional, `--no-inference` to skip)
+
+The full Jebat workspace ships a local LLM layer so `jebat` can route to your
+own hardware:
+
+- **llama.cpp** (`llama-server`) — CPU/AVX-512 + Intel Iris Xe (Vulkan)
+- **Ollama** — local GGUF registry
+- **Router** — one OpenAI-compatible endpoint at `http://127.0.0.1:8000/v1`
+  that merges every backend and fans out by model/`@backend`/`?backend=`
+- **OpenWebUI** — chat frontend at `http://127.0.0.1:8080`, pointed at the router
+- **Remote vLLM / Ollama** — offload big models to a GPU host
+
+```bash
+# from the full Jebat workspace checkout:
+infra/inference/start.sh                     # boot the stack
+# or as a user service:
+systemctl --user start jebat-router.service
+```
+
+---
+
 ## Remote Ollama Endpoint
 
 JEBAT uses a remote Ollama instance hosted on a dedicated server with AMD EPYC 9354P (8 vCPU, 32GB RAM).
@@ -234,7 +314,13 @@ POST /webui/api/runtime         Runtime control
 | `jebat companion chat\|briefing\|meeting\|stats` | Sahabat — companion AI |
 | `jebat keris scan\|assess\|history` | Keris — pentest scanner |
 | `jebat nexus list\|add\|remove\|send\|broadcast\|health\|stats` | Perisai — multi-channel bot |
-| `jebat design search\|get\|download\|upload\|lint\|tags` | DESIGN.md integration |
+| `jebat design search "query" [--tag X] [--limit N] [--json]` | Search the DESIGNmd.ai registry (no key needed) |
+| `jebat design get <owner/name> [--json]` | View a design system (needs DESIGNMD_API_KEY) |
+| `jebat design download <owner/name> [-o PATH \| --vault]` | Save a system as DESIGN.md (needs key) |
+| `jebat design upload ./DESIGN.md --name "Kit" --tags a,b` | Publish a DESIGN.md to your account (needs key) |
+| `jebat design tags` | List registry tags (no key needed) |
+| `jebat design sync --tag dark --limit 5 [--vault]` | Bulk-pull tag-matched systems into the vault |
+| `jebat design doctor` | Check install / API key / connectivity |
 
 ### Agent Orchestration
 
