@@ -13,6 +13,11 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
+import time
+import urllib.error
+import urllib.request
 from typing import Dict, Optional, Type
 
 from jebat_cli_new.models import ProviderConfig, Provider
@@ -23,17 +28,87 @@ from jebat_cli_new.provider_gemini import GeminiProviderImpl
 from jebat_cli_new.provider_github import GitHubModelsProviderImpl
 
 
+def _ollama_reachable(host: str, timeout: float = 2.0) -> bool:
+    url = f"{host.rstrip('/')}/api/tags"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
+
+def _ollama_models(host: str) -> list:
+    try:
+        with urllib.request.urlopen(
+            urllib.request.Request(f"{host.rstrip('/')}/api/tags"), timeout=5
+        ) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return [m.get("name", "") for m in data.get("models", [])]
+    except Exception:
+        return []
+
+
+def ensure_ollama(model: str, host: str, pull_timeout: int = 600) -> None:
+    """Best-effort: bring the local Ollama server up and pull `model` if missing.
+
+    Raises nothing fatal on its own — callers still surface the real API error,
+    but this removes the two common 404 causes (server down / model not pulled).
+    """
+    if _ollama_reachable(host):
+        models = _ollama_models(host)
+        if model and model not in models:
+            _ollama_pull(model, pull_timeout)
+        return
+    # Server not reachable — try to start it.
+    if shutil.which("ollama"):
+        try:
+            subprocess.Popen(
+                ["ollama", "serve"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        except Exception:
+            pass
+        # Poll for readiness (ollama serve can take a few seconds).
+        for _ in range(30):
+            if _ollama_reachable(host):
+                break
+            time.sleep(0.5)
+    if not _ollama_reachable(host):
+        return  # leave the downstream connection error to surface clearly
+    if model and model not in _ollama_models(host):
+        _ollama_pull(model, pull_timeout)
+
+
+def _ollama_pull(model: str, timeout: int) -> None:
+    if not shutil.which("ollama"):
+        return
+    try:
+        subprocess.run(
+            ["ollama", "pull", model],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout,
+            check=False,
+        )
+    except Exception:
+        pass
+
+
 class OllamaProviderImpl:
     def __init__(self, config: Optional[ProviderConfig] = None):
         self.config = config or ProviderConfig(id="ollama", name="Ollama", api_base="http://127.0.0.1:11434", kind="ollama")
 
     def complete(self, request):
+        host = self.config.api_base or "http://127.0.0.1:11434"
+        ensure_ollama(request.model, host)
         text, latency_ms = ollama_complete(
             model=request.model,
             prompt=request.prompt,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
-            host=self.config.api_base or "http://127.0.0.1:11434",
+            host=host,
         )
         return type(
             "obj",
