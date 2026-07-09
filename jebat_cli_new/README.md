@@ -74,18 +74,16 @@ text = handler.stream(ollama_stream("qwen2.5-coder:7b", "Hello"))
 jebat_cli_new/
 ├── __init__.py          # Package metadata
 ├── __main__.py          # Module entry point
-├── main.py              # CLI entrypoint
+├── jebat.py             # CLI entrypoint (argparse; console-script: jebat_cli_new.jebat:main)
 ├── models.py            # Shared data classes
-├── providers.py         # Provider registry
-├── provider_ollama.py   # Ollama provider
-├── provider_openai.py   # OpenAI provider
-├── provider_anthropic.py # Anthropic provider
-├── provider_gemini.py   # Gemini provider
-├── provider_github.py   # GitHub Models provider
+├── providers.py         # Provider registry + factory (OllamaProviderImpl here)
+├── provider_openai.py   # OpenAI provider impl
+├── provider_anthropic.py # Anthropic provider impl
+├── provider_gemini.py   # Gemini provider impl
+├── provider_github.py   # GitHub Models provider impl
 ├── agent.py             # Agent loop with tools
 ├── runner.py            # Ollama completion helper
 ├── tools.py             # Native tool definitions
-├── stream.py            # Streaming support
 ├── slash_commands.py    # Slash commands
 ├── repl.py              # Interactive REPL
 └── ux.py                # Terminal UX
