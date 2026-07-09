@@ -1,6 +1,6 @@
-# JEBAT v7.0 — Sovereign AI Platform & Agent Workstation
+# JEBAT v7.5 — Sovereign AI Platform & Agent Workstation
 
-![Version](https://img.shields.io/badge/version-v7.0.0--stable-10b981?style=flat-square)
+![Version](https://img.shields.io/badge/version-v7.5.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-145%2F145--passing-10b981?style=flat-square)
@@ -42,24 +42,25 @@ bunx @nusabyte/jebat repl
 
 **Requirements:** Node.js >= 18, Python >= 3.11, pip
 
-### Option 2: Global Install
+### Option 2: Global Install (via npm)
 
 ```bash
-# Via npm
+# Installs the npx wrapper globally; first run bootstraps the Python core
 npm install -g @nusabyte/jebat
 jebat repl
-
-# Via pip directly
-pip install jebat
-jebat repl
 ```
+
+> The npm package is a thin launcher — on first run it downloads and runs the
+> bootstrap (`curl -fsSL https://jebat.online/install.sh | bash`), which provisions
+> Python, the venv, and the `jebat` launcher in `~/.local`. There is no separate
+> `pip install jebat` package; the bootstrap is the supported install path.
 
 ### Option 3: Source Build
 
 ```bash
 git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
-pip install -e .
+curl -fsSL https://jebat.online/install.sh | bash   # bootstrap the core CLI
 jebat repl
 ```
 
@@ -173,6 +174,47 @@ llm:
   model: qwen2.5-coder:7b
   api_base: https://jebat.online/ollama  # Default endpoint
 ```
+
+---
+
+## Providers & Auth
+
+JEBAT routes to **17 providers** — OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral, Groq, Cerebras, Together, OpenRouter, GitHub Models, Cloudflare, SambaNova, Novita, Z.AI, local Ollama, or any OpenAI-compatible endpoint. Add one interactively from the REPL:
+
+```bash
+jebat repl            # then: /provider add
+```
+
+### Auth method — `key` / `env` / `store`
+
+Every keyed provider (Gemini, Anthropic, and any OpenAI-compatible) supports three ways to supply the API key. Choose at add time; the key is resolved at runtime via `resolve_api_key()`.
+
+| Method | How it works | Best for |
+|--------|--------------|----------|
+| `key`  | Paste the key inline (stored in `~/.jebat/jebat-cli-providers.json`) | Quick local use |
+| `env`  | Read from an env var at runtime (e.g. `ANTHROPIC_API_KEY`) | CI / shared machines — secret never hits disk |
+| `store`| Named key from the JEBAT auth store (`~/.jebat/auth/tokens.json`, set via `/apikey`) | Multiple / rotated keys |
+
+`env` and `store` keep secrets out of the provider config — recommended for anything shared.
+
+### Models (refreshed catalog)
+
+Defaults point at current models:
+
+- **OpenAI** → `gpt-5` (+ `gpt-5-mini` / `gpt-5-nano`), `gpt-4.1`, `o3`, `o4-mini`
+- **Anthropic** → `claude-opus-4-1` / `claude-sonnet-4-1` / `claude-haiku-4-5`
+- **xAI** → `grok-4` (+ `grok-4-mini`)
+- **Gemini** → `gemini-2.5-pro` / `gemini-2.5-flash`
+- **GitHub Models** → `openai/gpt-5` (free tier with a GitHub token)
+- **Local Ollama** → `qwen2.5:3b` (avoids a 404 when a bigger model isn't pulled)
+
+### Local Ollama auto-start
+
+When Ollama is the selected provider, JEBAT auto-starts `ollama serve` if it isn't running and auto-pulls the chosen model if it isn't pulled — no manual setup.
+
+### Default provider
+
+Install seeds **JEBAT Online** (`https://jebat.online/v1`, OpenAI-compatible) as the active default; local Ollama is registered but inactive. Switch any time with `/provider <id>`.
 
 ---
 
@@ -524,10 +566,10 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v7.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v7.5 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
-| **LLM Provider Routing** | **6 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
+| **LLM Provider Routing** | **17 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
 | **MCP Server** | **Native (8 tools + skills)** | None | Basic API | Local API |
 | **Cognitive Profiles** | **7 Thinking Modes (Ultra-Think)** | Standard Chat | Standard Chat | Standard Chat |
 | **Security Auditing** | **Autonomous Pentest Suite** | Blocked | None | None |
@@ -588,7 +630,7 @@ jebat doctor
 ```
 jebat-core/
   ├── jebat/                  # Active runtime modules
-  │   ├── cli/                # Entrypoints (jebat_cli.py v7.0.0)
+  │   ├── cli/                # Entrypoints (jebat_cli.py v7.5)
   │   ├── core/               # Cognitive loops (agent_loop, orchestrator, delegation)
   │   ├── mcp/                # MCP server + skill registry + adapter
   │   ├── services/           # WebUI, MCP protocol, API gateway

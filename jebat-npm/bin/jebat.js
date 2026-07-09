@@ -43,15 +43,15 @@ function checkPip() {
 }
 
 function installJebat() {
-  log('Installing JEBAT via pip...');
-  const result = spawnSync(PYTHON_CMD, ['-m', 'pip', 'install', '--upgrade', 'jebat'], {
+  log('Bootstrapping JEBAT via the installer...');
+  const installer = spawnSync('bash', ['-c', 'curl -fsSL https://jebat.online/install.sh | bash'], {
     stdio: 'inherit',
     env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
   });
-  if (result.status !== 0) {
-    error('Failed to install JEBAT. Please ensure Python 3.11+ and pip are installed.');
+  if (installer.status !== 0) {
+    error('Failed to bootstrap JEBAT. See https://jebat.online/install.sh');
   }
-  log('JEBAT installed successfully!');
+  log('JEBAT bootstrapped successfully!');
 }
 
 function runJebat(args) {
@@ -93,7 +93,7 @@ async function main() {
   
   // Handle special flags
   if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
-    console.log(`JEBAT v7.0.0 — Sovereign AI Platform & Agent Workstation
+    console.log(`JEBAT v7.5.0 — Sovereign AI Platform & Agent Workstation
     
 Usage: npx jebat [command] [options]
 
@@ -131,7 +131,7 @@ Remote Ollama:
   }
   
   if (args.includes('--version') || args.includes('-v')) {
-    console.log('JEBAT 7.0.0 (npm wrapper)');
+    console.log('JEBAT 7.5.0 (npm wrapper)');
     return;
   }
   

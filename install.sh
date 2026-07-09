@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────
-JEBAT_VERSION="7.0.0"
+JEBAT_VERSION="7.5.0"
 REPO_URL="https://github.com/nusabyte-my/jebat-core.git"
 INSTALL_DIR="${JEBAT_HOME:-$HOME/.local/jebat}"
 BIN_DIR="$HOME/.local/bin"
