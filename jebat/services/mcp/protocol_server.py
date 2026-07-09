@@ -1,4 +1,4 @@
-﻿"""
+"""
 MCP (Model Context Protocol) Server Implementation
 
 This module implements a standardized protocol server for AI clients,
