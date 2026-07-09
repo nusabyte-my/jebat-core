@@ -6,6 +6,12 @@
 router:
   host: 127.0.0.1
   port: 8000
+  # Per-request upstream timeout (seconds). A hung backend returns 502
+  # instead of blocking the client forever. 0 = no timeout (not recommended).
+  timeout: 120
+  # How long /v1/models results are cached before re-probing backends (s).
+  # Pass ?refresh=1 to force a refresh on demand.
+  model_cache_ttl: 30
   # The endpoint the router advertises under /v1/models.
   # By default the router shows models from ALL backends merged.
   merge_models: true
