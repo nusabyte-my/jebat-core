@@ -13,6 +13,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
+from jebat_cli_new.models import CompletionRequest, CompletionResponse
+from jebat_cli_new.providers import (
+    OllamaProviderImpl,
+    OpenAIProviderImpl,
+    AnthropicProviderImpl,
+    GeminiProviderImpl,
+    GitHubModelsProviderImpl,
+)
 
 
 VERSION = "7.5"
@@ -1998,17 +2006,17 @@ class Agent:
                 prompt=prompt, temperature=0.2, max_tokens=4096
             )
             if kind == "ollama":
-                provider_impl = OllamaProvider(cfg)
+                provider_impl = OllamaProviderImpl(cfg)
             elif kind == "openai":
-                provider_impl = OpenAIProvider(cfg)
+                provider_impl = OpenAIProviderImpl(cfg)
             elif kind == "anthropic":
-                provider_impl = AnthropicProvider(cfg)
+                provider_impl = AnthropicProviderImpl(cfg)
             elif kind == "gemini":
-                provider_impl = GeminiProvider(cfg)
+                provider_impl = GeminiProviderImpl(cfg)
             elif kind == "github":
-                provider_impl = GitHubProvider(cfg)
+                provider_impl = GitHubModelsProviderImpl(cfg)
             else:
-                provider_impl = OllamaProvider(cfg)
+                provider_impl = OllamaProviderImpl(cfg)
             resp = provider_impl.complete(req)
         except Exception as e:
             self.spinner.stop()
@@ -2126,13 +2134,13 @@ class Agent:
                 prompt=prompt, temperature=0.2, max_tokens=4096
             )
             if kind == "ollama":
-                provider_impl = OllamaProvider(cfg)
+                provider_impl = OllamaProviderImpl(cfg)
             elif kind == "openai":
-                provider_impl = OpenAIProvider(cfg)
+                provider_impl = OpenAIProviderImpl(cfg)
             elif kind == "anthropic":
-                provider_impl = AnthropicProvider(cfg)
+                provider_impl = AnthropicProviderImpl(cfg)
             else:
-                provider_impl = OllamaProvider(cfg)
+                provider_impl = OllamaProviderImpl(cfg)
             resp = provider_impl.complete(req)
         except Exception as e:
             self.spinner.stop()
