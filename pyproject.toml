@@ -69,7 +69,7 @@ all = [
 ]
 
 [project.scripts]
-jebat = "jebat.cli.jebat_cli:run"
+jebat = "jebat_cli_new.jebat:main"
 
 [build-system]
 requires = ["setuptools>=68.0"]
