@@ -76,8 +76,7 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["jebat_cli_new*"]
-include = ["jebat", "jebat.*"]
+include = ["jebat", "jebat.*", "jebat_cli_new*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
