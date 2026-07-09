@@ -1,0 +1,9 @@
+name: JEBAT
+type: stdio
+command: jebat
+args:
+  - mcp
+  - serve
+  - --transport
+  - stdio
+env: {}

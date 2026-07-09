@@ -1,0 +1,16 @@
+{
+  "mcp": {
+    "servers": {
+      "jebat": {
+        "command": "npx",
+        "args": [
+          "@nusabyte/jebat",
+          "mcp",
+          "serve",
+          "--transport",
+          "stdio"
+        ]
+      }
+    }
+  }
+}

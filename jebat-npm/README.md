@@ -1,4 +1,4 @@
-# 🗡️ JEBAT v6.1 — Sovereign AI Platform & Agent Workstation
+# 🗡️ JEBAT v7.5 — Sovereign AI Platform & Agent Workstation
 
 [![npm version](https://img.shields.io/npm/v/@nusabyte/jebat?style=flat-square&color=10b981)](https://www.npmjs.com/package/@nusabyte/jebat)
 [![npm downloads](https://img.shields.io/npm/dm/@nusabyte/jebat?style=flat-square&color=06b6d4)](https://www.npmjs.com/package/@nusabyte/jebat)
@@ -78,155 +78,234 @@ jebat repl
 | `jebat config show\|set\|reset\|edit` | Full configuration management |
 | `jebat file read\|write\|patch\|search\|undo\|tree` | Safe file ops with backups |
 | `jebat tools list\|inspect` | Inspect all 89 registered tools |
-| `jebat memory store\|search\|stats` | 5-layer eternal memory |
-| `jebat status` | System health & provider status |
-| `jebat --version` | Show version |
-| `jebat --help` | Show help |
 
 ---
 
-## 🔧 Configuration
+## 🔌 REPL Commands (v7.5)
 
-Config file: `~/.jebat/jebat.yaml`
+### Session
+| Command | Description |
+|---------|-------------|
+| `/help` | Show categorized help |
+| `/clear` | Clear screen |
+| `/exit` | Exit session |
+| `/banner` | Re-show JEBAT banner |
+| `/version` | Show version |
 
-```yaml
-agent:
-  default_model: "qwen2.5-coder:7b"
-  default_provider: "ollama"
-  safety_mode: "confirm"
-  max_iterations: 10
-  stream_tokens: true
+### Providers & Models
+| Command | Description |
+|---------|-------------|
+| `/provider add` | Interactive provider wizard with model browser |
+| `/provider remove` | Remove a provider |
+| `/provider test` | Test all providers |
+| `/provider <id>` | Switch active provider |
+| `/model` | Show model catalog for current provider |
+| `/model <number\|name>` | Switch model |
+| `/providers` | Health-check all providers |
+| `/health` | Ping all providers |
+| `/ping` | Test provider connectivity |
 
-llm_providers:
-  ollama_host: "http://localhost:11434"
-  fallback_providers: ["openrouter", "groq", "openai"]
+### Memory
+| Command | Description |
+|---------|-------------|
+| `/memory` | List stored memory |
+| `/mem+ <key> = <value>` | Store key/value in memory |
+| `/mem` | Show memory entries |
+| `/memory+ <key> = <value> <tags>` | Store memory with tags |
+| `/recall <query>` | Search memory by query |
 
-security:
-  enable_guardrails: true
-  audit_log: true
-```
+### Tasks
+| Command | Description |
+|---------|-------------|
+| `/tasks` | List recent tasks |
+| `/task <id>` | Show task details |
+| `/agentdb` | Show agent run database |
+| `/search <query>` | Search tasks in DB |
 
-### Quick Config Commands
-```bash
-# Show config
-npx @nusabyte/jebat config show
+### Modes
+| Command | Description |
+|---------|-------------|
+| `/mode` | List/switch operating modes |
+| `/mode <name>` | Switch mode (code, security, brainstorm, review, debug, devops, research, fullstack) |
+| `/brainstorm <topic>` | Brainstorm on a topic |
+| `/scan <path>` | Security scan codebase |
+| `/audit <path>` | Audit dependencies |
+| `/ports <host>` | Scan open ports |
+| `/detect <path>` | Detect frameworks/stack |
+| `/scaffold <fw> <name>` | Scaffold new project |
+| `/pentest` | Penetration testing checklist |
 
-# Set value
-npx @nusabyte/jebat config set agent.safety_mode confirm
+### Skills
+| Command | Description |
+|---------|-------------|
+| `/skills` | List bundled + installed skills |
+| `/skill <name>` | View skill content |
 
-# Edit in $EDITOR
-npx @nusabyte/jebat config edit
-```
+### Info
+| Command | Description |
+|---------|-------------|
+| `/status` | Show agent status |
+| `/ctx` | Show session context tracker |
+| `/history` | Show session history |
+| `/diff` | Show git diff |
+
+### Export
+| Command | Description |
+|---------|-------------|
+| `/export` | Export backup |
+| `/export-md` | Export chat as markdown |
+| `/commit <msg>` | Git commit with message |
+
+### Agent
+| Command | Description |
+|---------|-------------|
+| `/agents` | List agent profiles |
+| `/swarm <task>` | Multi-agent orchestration |
+| `/delegate <agent>:<task>` | Delegate to sub-agent |
+| `/auth` | Manage auth tokens |
+| `/apikey <name>:<key>` | Store API key |
+
+### Security
+| Command | Description |
+|---------|-------------|
+| `/validate <string>` | Validate input for injection |
+| `/ratelimit` | Show rate limiter status |
+
+### UI
+| Command | Description |
+|---------|-------------|
+| `/skin` | Switch UI skin |
+| `/think` | Toggle think mode |
+| `/verbose` | Toggle verbose output |
+| `/compact` | Toggle compact mode |
+| `/ghost` | Toggle ghost mode (silent) |
+| `/plan` | Toggle plan mode |
 
 ---
 
-## 🏗️ Architecture
+## 🧠 Features
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  JEBAT Wrapper (this package)                                │
-│  • Auto-installs Python package via pip                      │
-│  • Forwards CLI arguments                                    │
-│  • Handles stdin/stdout for REPL                             │
-└───────────────────────┬─────────────────────────────────────┘
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│  JEBAT Python Core (pip install jebat)                       │
-│  • ReAct AgentLoop (Think→Act→Observe)                       │
-│  • Ultra-Think (7 reasoning modes)                           │
-│  • Ultra-Loop (autonomous agent)                             │
-│  • 5-Layer Memory (M0→M4 with heat scoring)                  │
-│  • 89 Tools (file, git, browser, web, vision, sandbox...)    │
-│  • MCP Client + Server                                       │
-│  • Multi-Agent Swarms (Tukang/Hulubalang/Pawang)             │
-└─────────────────────────────────────────────────────────────┘
-```
+### 17 Providers
+- **Local**: Ollama (zero cost)
+- **Cloud**: OpenAI, Anthropic, Gemini, GitHub, OpenRouter, Groq, Cerebras, Mistral, Together, DeepSeek, xAI, SambaNova, Novita, Z.AI, Cloudflare AI
+- **Custom**: Any OpenAI-compatible endpoint
+
+### 8 Operating Modes
+- 💻 **Code** — Default code writing
+- 🛡️ **Security** — Security scanning & hardening
+- 🧠 **Brainstorm** — Creative thinking
+- 🔍 **Review** — Code review
+- 🐛 **Debug** — Systematic debugging
+- 🚀 **DevOps** — Infrastructure & deployment
+- 📚 **Research** — Deep research
+- 🌐 **Fullstack** — End-to-end development
+
+### 27 Skills
+- Bundled from jebat-core/skills/
+- Auto-loaded based on context
+- View with `/skills` and `/skill <name>`
+
+### Cybersecurity Tools
+- `/scan` — Vulnerability scanning (secrets, SQLi, XSS, command injection)
+- `/audit` — Dependency auditing
+- `/ports` — Port scanning
+- `/pentest` — Penetration testing checklist
+
+### Framework Tools
+- `/detect` — Detect frameworks/tech stack
+- `/scaffold` — Scaffold new projects (FastAPI, Flask, Express)
+
+### Memory System
+- Dual-layer: global + per-project
+- Context memory loop (learns from interactions)
+- `/recall` — Search memory by query
+
+### Context Tracking
+- `/ctx` — Track files read, tools used, decisions
+- Auto-updates during agent runs
+
+### Multi-Agent
+- `/swarm` — Auto-orchestrate with multiple agents
+- `/delegate` — Delegate to specific agent profiles
+- 7 agent profiles: coder, reviewer, security, debugger, devops, researcher, planner
+
+### Auth & Security
+- `/auth` — Token management
+- `/apikey` — API key storage
+- Rate limiting (60 calls/minute)
+- Input validation
 
 ---
 
-## 🔐 Security & Privacy
+## 🔧 MCP Integration
 
-- **100% Local** — No data leaves your machine
-- **Encrypted Storage** — Fernet (API keys) + Argon2id (passwords)
-- **Audit Logging** — All tool executions tracked
-- **3-Tier Safety** — auto / confirm / dangerous
-- **Sandbox Isolation** — Docker for untrusted code
-- **No Telemetry** — Opt-in only
+JEBAT supports MCP (Model Context Protocol) for integration with other AI tools.
 
----
+### MCP Server Configuration
 
-## 🤝 MCP Integration
+Add to your MCP client config:
 
-```bash
-# Connect to MCP servers
-npx @nusabyte/jebat mcp connect --stdio "python -m my_server"
-npx @nusabyte/jebat mcp connect --http http://localhost:8080/mcp
-
-# List & call
-npx @nusabyte/jebat mcp list
-npx @nusabyte/jebat mcp call server tool '{"param": "value"}'
+```json
+{
+  "mcpServers": {
+    "jebat": {
+      "command": "npx",
+      "args": ["@nusabyte/jebat", "mcp"]
+    }
+  }
+}
 ```
 
----
+### MCP Tools Available
 
-## 🌍 Platform Support
+| Tool | Description |
+|------|-------------|
+| `jebat_code` | Execute code with tool calling |
+| `jebat_file` | Read/write/patch files |
+| `jebat_search` | Search codebase |
+| `jebat_terminal` | Execute shell commands |
+| `jebat_memory` | Store/recall memory |
 
-| OS | Shell | Status |
-|----|-------|--------|
-| macOS | zsh/fish/bash | ✅ Full |
-| Linux | bash/zsh/fish | ✅ Full |
-| Windows | PowerShell/CMD/Git Bash | ✅ Full |
-| WSL2 | bash | ✅ Full |
+### MCP Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `JEBAT_PROVIDER` | Set provider (ollama, openai, anthropic, etc.) |
+| `JEBAT_MODEL` | Set model name |
+| `JEBAT_API_KEY` | Set API key |
 
 ---
 
 ## 📚 Documentation
 
-- [Full README](https://github.com/nusabyte-my/jebat-core/blob/main/README.md)
-- [Architecture](https://github.com/nusabyte-my/jebat-core/blob/main/ARCHITECTURE.md)
-- [Quick Reference](https://github.com/nusabyte-my/jebat-core/blob/main/QUICK_REFERENCE.md)
-- [Deployment](https://github.com/nusabyte-my/jebat-core/blob/main/DEPLOYMENT.md)
-- [Roadmap](https://github.com/nusabyte-my/jebat-core/blob/main/ROADMAP.md)
+- [JEBAT CLI Guide](https://github.com/nusabyte-my/jebat-core/blob/master/README.md)
+- [MCP Integration](./MCP.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Changelog](./CHANGELOG.md)
 
 ---
 
-## 🤝 Contributing
+## 🏢 Enterprise Features
 
-```bash
-# Clone repo
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core/jebat-npm
+- **Audit Logging** — SQLite-backed with timestamps, tool usage, latency
+- **Cost Tracking** — Per-session cost estimation
+- **Session Persistence** — Save/restore conversations
+- **Export** — Markdown, JSON, backup formats
+- **Ghost Mode** — Silent execution
+- **Plan Mode** — Planning before execution
 
-# Test locally
-npm link
-jebat repl
-```
+---
+
+## 🔒 Security
+
+- **Zero Data Leakage** — All inference runs locally or via encrypted channels
+- **Rate Limiting** — 60 calls/minute default
+- **Input Validation** — SQL injection, XSS, command injection detection
+- **API Key Storage** — Encrypted local storage
+- **Audit Trail** — Complete action logging
 
 ---
 
 ## 📄 License
 
-**MIT License** — See [LICENSE](../LICENSE) file.
-
-Developed under strict data residency governance by **NusaByte**.\
-Built with ❤️ by **Shaidan Shaari (humm1ngb1rd)**.
-
----
-
-## 🙏 Acknowledgments
-
-- **Python core:** [jebat-core](https://github.com/nusabyte-my/jebat-core)
-- **Ollama** — Local LLM inference
-- **LangGraph** — Cognitive orchestration
-- **Rich / prompt-toolkit** — Terminal interfaces
-- **Playwright** — Browser automation
-
----
-
-## 🗡️ The JEBAT Way
-
-> *"Hang Jebat fought with loyalty and honor. JEBAT remembers with precision and purpose."*
-
-**Your AI. Your Data. Your Legacy.**
-
-🗡️ **JEBAT v6.1** — *Because warriors remember everything that matters.*
+MIT © [NusaByte](https://nusabyte.cloud) (humm1ngb1rd)

@@ -1,5 +1,6 @@
 """Test terminal executor."""
 
+import sys
 import pytest
 
 from jebat.terminal.executor import TerminalExecutor
@@ -18,7 +19,7 @@ async def test_run_simple_command() -> None:
 async def test_run_with_timeout() -> None:
     exec = TerminalExecutor()
     # Sleep longer than timeout — must be killed
-    result = await exec.run("sleep 10", timeout=1)
+    result = await exec.run(f'{sys.executable} -c "import time; time.sleep(10)"', timeout=1)
     assert result["exit_code"] == -1
     assert "TIMEOUT" in result["output"]
 
@@ -62,7 +63,7 @@ async def test_background_start_poll_wait() -> None:
 async def test_background_kill() -> None:
     exec = TerminalExecutor()
     # Start a long-running process
-    start_result = await exec.start_bg("sleep 30")
+    start_result = await exec.start_bg(f'{sys.executable} -c "import time; time.sleep(30)"')
     session_id = start_result["session_id"]
 
     # Kill it
@@ -80,7 +81,7 @@ async def test_bg_nonexistent_session() -> None:
 @pytest.mark.asyncio
 async def test_list_background_processes() -> None:
     exec = TerminalExecutor()
-    await exec.start_bg("sleep 30")
+    await exec.start_bg(f'{sys.executable} -c "import time; time.sleep(30)"')
     result = exec.list_bg()
     assert "processes" in result
     assert len(result["processes"]) > 0
