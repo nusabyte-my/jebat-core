@@ -1,0 +1,19 @@
+[Unit]
+Description=Jebat Inference — llama.cpp server (local AVX-512 / Iris Xe)
+After=jebat-ollama.service
+Requires=jebat-ollama.service
+# wait for ollama port so /health is meaningful (not strictly required)
+
+[Service]
+Type=simple
+Environment=PATH=/home/humm1ngb1rd/.local/jebat-infer/venv/bin:/usr/bin:/bin
+WorkingDirectory=/home/humm1ngb1rd/.local/jebat-infer
+ExecStart=/home/humm1ngb1rd/.local/jebat-infer/venv/bin/llama-server \
+    --host 127.0.0.1 --port 8081 \
+    --model /home/humm1ngb1rd/.cache/llama/qwen2.5-3b-instruct-q4_k_m.gguf \
+    --ctx-size 8192 --threads 8
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=jebat-infer.target

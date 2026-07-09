@@ -1,0 +1,17 @@
+[Unit]
+Description=Jebat Inference — OpenWebUI (:8080) pointing at router (:8000)
+After=jebat-router.service
+Requires=jebat-router.service
+
+[Service]
+Type=simple
+Environment=PATH=/home/humm1ngb1rd/.local/open-webui/venv/bin:/usr/bin:/bin
+Environment=OPENAI_API_BASE_URL=http://127.0.0.1:8000/v1
+Environment=WEBUI_AUTH=False
+WorkingDirectory=/home/humm1ngb1rd/.local/open-webui
+ExecStart=/home/humm1ngb1rd/.local/open-webui/venv/bin/open-webui serve
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=jebat-infer.target

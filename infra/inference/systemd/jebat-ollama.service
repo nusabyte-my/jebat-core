@@ -1,0 +1,14 @@
+[Unit]
+Description=Jebat Inference — Ollama local LLM server
+After=network.target
+
+[Service]
+Type=simple
+# ollama binary lives in user space
+Environment=PATH=/home/humm1ngb1rd/.local/bin:/usr/bin:/bin
+ExecStart=/home/humm1ngb1rd/.local/bin/ollama serve
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=jebat-infer.target

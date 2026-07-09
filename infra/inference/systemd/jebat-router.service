@@ -1,0 +1,16 @@
+[Unit]
+Description=Jebat Inference — unified OpenAI-compatible router (:8000)
+After=jebat-ollama.service jebat-llamacpp.service
+Requires=jebat-ollama.service jebat-llamacpp.service
+
+[Service]
+Type=simple
+Environment=PATH=/home/humm1ngb1rd/.local/jebat-infer/venv/bin:/usr/bin:/bin
+WorkingDirectory=/home/humm1ngb1rd/.local/jebat-infer
+ExecStart=/home/humm1ngb1rd/.local/jebat-infer/venv/bin/python \
+    /home/humm1ngb1rd/.local/jebat-infer/router.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=jebat-infer.target

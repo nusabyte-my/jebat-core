@@ -1,0 +1,6 @@
+[Unit]
+Description=Jebat Inference stack (ollama + llama.cpp + router + openwebui)
+# Aggregate target. Enable this; starting it brings up all four services.
+
+[Install]
+WantedBy=default.target

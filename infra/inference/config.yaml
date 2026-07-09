@@ -1,0 +1,70 @@
+# Jebat Inference — unified local + remote routing config
+# Lives in user space (/home persists; system partitions do not).
+# All engines expose an OpenAI-compatible API; the router speaks that
+# protocol to every backend so clients (OpenWebUI, curl, SDKs) never change.
+
+router:
+  host: 127.0.0.1
+  port: 8000
+  # The endpoint the router advertises under /v1/models.
+  # By default the router shows models from ALL backends merged.
+  merge_models: true
+
+# ---- LOCAL: llama.cpp (llama-server) ---------------------------------------
+# Best for: single-user chat, long context, embedding, CPU+AVX512, Iris Xe via Vulkan.
+llamacpp:
+  enabled: true
+  base_url: http://127.0.0.1:8081
+  # Models are files. The router maps a logical name -> a .gguf path so you
+  # can address them by friendly names. Add your own.
+  models:
+    "qwen2.5-3b-cpp":
+      path: /home/humm1ngb1rd/.cache/llama/qwen2.5-3b-instruct-q4_k_m.gguf
+      ctx: 16384
+  # Default launch args for `llama-server` when started via this stack.
+  launch:
+    host: 127.0.0.1
+    port: 8081
+    ctx: 8192
+    threads: 8
+    # Iris Xe (Intel iGPU) via Vulkan: set to the comma-separated device list.
+    # Leave empty ("") to run CPU-only (uses AVX-512). Vulkan helps throughput
+    # but CPU is rock-solid here. Try "0" then benchmark.
+    gpu: ""
+    # RPC offload to another box: "host:port" or "" (disabled).
+    rpc: ""
+
+# ---- LOCAL: Ollama ---------------------------------------------------------
+# Best for: one-command model mgmt, registry pull, GGUF auto-quant, broad catalog.
+ollama:
+  enabled: true
+  base_url: http://127.0.0.1:11434
+  # Ollama exposes models by their registry tag (e.g. "qwen2.5:7b").
+  # The router will list/passthrough whatever `ollama list` shows.
+
+# ---- REMOTE: vLLM (OpenAI-compatible) --------------------------------------
+# Best for: high-throughput, many concurrent users, big GPUs, FP8/AWQ/GPTQ.
+# Run vLLM on a GPU box/Colab/RunPod and point here. Disabled until configured.
+vllm:
+  enabled: false
+  base_url: http://<gpu-box>:8000
+  api_key: "EMPTY"          # set if your remote requires a key
+  models: []                # optional explicit alias map (remote tag -> friendly name)
+
+# ---- REMOTE: Ollama (on another machine) -----------------------------------
+# Same protocol as local Ollama; useful to offload a big model to a GPU host.
+# This is the Jebat central Ollama box (qwen2.5:14b, hermes3, phi3, llama3.1:8b...).
+# Reachable from the VPS network / tunnel; may be unreachable from local Wi-Fi
+# (router shows it "down" in /health but the rest keeps working).
+remote_ollama:
+  enabled: true
+  base_url: http://72.62.255.206:11434
+
+# ---- ROUTING RULES ---------------------------------------------------------
+# The router picks a backend for a model name in this order:
+#   1. explicit alias match in any backend's `models` map
+#   2. name appears in that backend's /v1/models list
+#   3. fallback: first enabled backend
+# You can force a backend with model suffix: "name@ollama", "name@llamacpp",
+# "name@vllm", "name@remote_ollama".
+default_backend: ollama
