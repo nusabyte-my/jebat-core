@@ -1,6 +1,6 @@
 [project]
 name = "jebat"
-version = "7.0.0"
+version = "7.5.0"
 description = "JEBAT v7.0 — Sovereign AI Platform & Agent Workstation. Platform Suite (Sahabat, Keris, Pandai, Perisai), Stealth-Dark Tactical WebUI, 25 enterprise features, MCP, pentest engine, 5-layer memory, multi-agent swarms, voice I/O, GitOps"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -76,7 +76,7 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["."]
+include = ["jebat_cli_new*"]
 include = ["jebat", "jebat.*"]
 
 [tool.pytest.ini_options]
