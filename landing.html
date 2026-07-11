@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JEBAT — Sovereign AI Platform</title>
-    <meta name="description" content="Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Named after Malay heritage — rooted in the legend of Hang Jebat.">
+    <title>JEBAT v7.5 — Sovereign AI Platform</title>
+    <meta name="description" content="Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. 17 providers, 47 tools, 145 tests — fully air-gapped.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* ═══════════════════════════════════════════
-           JEBAT Platform Suite — Stealth-Dark Tactical
-           ═══════════════════════════════════════════ */
-
         :root {
             --canvas: #030303;
             --surface: #0a0a0f;
@@ -29,6 +25,7 @@
             --amber: #f59e0b;
             --amber-dim: rgba(245, 158, 11, 0.08);
             --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.08);
             --red: #ef4444;
             --text: #f0f0f0;
             --text-body: #c8c8c8;
@@ -38,10 +35,7 @@
             --font-mono: 'JetBrains Mono', monospace;
         }
 
-        * {
-            margin: 0; padding: 0; box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
         body {
             background: var(--canvas);
@@ -51,7 +45,6 @@
             overflow-x: hidden;
         }
 
-        /* CRT Scanline Overlay */
         body::after {
             content: '';
             position: fixed;
@@ -65,11 +58,9 @@
             );
         }
 
-        /* ─── Layout ─── */
         .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
         .section { padding: 80px 0; }
 
-        /* ─── Typography ─── */
         .mono {
             font-family: var(--font-mono);
             font-size: 11px;
@@ -88,7 +79,6 @@
 
         h1, h2, h3 { font-family: var(--font-display); }
 
-        /* ─── Navigation ─── */
         nav {
             position: fixed;
             top: 0;
@@ -167,7 +157,6 @@
             background: var(--cyan-dim);
         }
 
-        /* ─── Buttons ─── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -203,7 +192,6 @@
             border-color: var(--zinc-4);
         }
 
-        /* ─── Pill Badge ─── */
         .pill {
             display: inline-flex;
             align-items: center;
@@ -217,29 +205,10 @@
             border: 1px solid var(--border);
         }
 
-        .pill-live {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--green);
-            border-color: rgba(34, 197, 94, 0.25);
-        }
-
-        .pill-beta {
-            background: var(--cyan-dim);
-            color: var(--cyan);
-            border-color: rgba(0, 240, 255, 0.25);
-        }
-
-        .pill-planned {
-            background: var(--purple-dim);
-            color: var(--purple);
-            border-color: rgba(139, 92, 246, 0.25);
-        }
-
-        .pill-soon {
-            background: var(--amber-dim);
-            color: var(--amber);
-            border-color: rgba(245, 158, 11, 0.25);
-        }
+        .pill-live { background: rgba(34, 197, 94, 0.1); color: var(--green); border-color: rgba(34, 197, 94, 0.25); }
+        .pill-beta { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0, 240, 255, 0.25); }
+        .pill-planned { background: var(--purple-dim); color: var(--purple); border-color: rgba(139, 92, 246, 0.25); }
+        .pill-soon { background: var(--amber-dim); color: var(--amber); border-color: rgba(245, 158, 11, 0.25); }
 
         .pill-dot {
             width: 6px;
@@ -252,7 +221,6 @@
         .pill-planned .pill-dot { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
         .pill-soon .pill-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
 
-        /* ─── Hero ─── */
         .hero {
             min-height: 100vh;
             display: flex;
@@ -327,18 +295,17 @@
             display: flex;
             justify-content: center;
             gap: 16px;
-            margin-bottom: 64px;
+            margin-bottom: 48px;
         }
 
         .hero-stats {
             display: flex;
             justify-content: center;
             gap: 48px;
+            flex-wrap: wrap;
         }
 
-        .hero-stat {
-            text-align: center;
-        }
+        .hero-stat { text-align: center; }
 
         .hero-stat-value {
             font-family: var(--font-display);
@@ -356,7 +323,28 @@
             margin-top: 4px;
         }
 
-        /* ─── Platform Architecture Bar ─── */
+        .hero-version-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .ver-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-body);
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+        }
+
+        .ver-badge .num { color: var(--cyan); font-weight: 600; }
+        .ver-badge .pass { color: var(--green); }
+
         .arch-bar {
             border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
@@ -389,16 +377,15 @@
             height: 6px;
             background: var(--cyan);
             border-radius: 50%;
-            animation: pulse 2s infinite;
+            animation: pulse-anim 2s infinite;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-anim {
             0% { opacity: 0.4; transform: scale(0.8); }
             50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px var(--cyan); }
             100% { opacity: 0.4; transform: scale(0.8); }
         }
 
-        /* ─── Products Section ─── */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -416,12 +403,10 @@
             flex-direction: column;
         }
 
-        .product-card:hover {
-            background: var(--surface);
-        }
+        .product-card:hover { background: var(--surface); }
 
         .product-card::before {
-            content: '┌';
+            content: '\250C';
             position: absolute;
             top: 12px;
             left: 12px;
@@ -433,7 +418,7 @@
         }
 
         .product-card::after {
-            content: '┘';
+            content: '\2518';
             position: absolute;
             bottom: 12px;
             right: 12px;
@@ -445,9 +430,7 @@
         }
 
         .product-card:hover::before,
-        .product-card:hover::after {
-            opacity: 0.5;
-        }
+        .product-card:hover::after { opacity: 0.5; }
 
         .product-card:hover {
             border-color: var(--cyan);
@@ -513,7 +496,7 @@
         }
 
         .product-features li::before {
-            content: '›';
+            content: '\203A';
             color: var(--cyan);
             font-weight: 600;
             font-size: 14px;
@@ -536,7 +519,6 @@
 
         .product-link:hover { opacity: 0.7; }
 
-        /* ─── Core Product (Featured) ─── */
         .product-core {
             grid-column: 1 / -1;
             display: grid;
@@ -582,11 +564,7 @@
 
         .term-dot.active { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
 
-        .core-terminal-body {
-            padding: 20px;
-            color: var(--text-body);
-        }
-
+        .core-terminal-body { padding: 20px; color: var(--text-body); }
         .core-terminal-body .cyan { color: var(--cyan); }
         .core-terminal-body .green { color: var(--green); }
         .core-terminal-body .purple { color: var(--purple); }
@@ -631,45 +609,7 @@
             color: var(--text);
         }
 
-        /* ─── Memory Section ─── */
-        .memory-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .memory-layer {
-            display: grid;
-            grid-template-columns: 140px 1fr 200px;
-            align-items: center;
-            padding: 20px 24px;
-            background: var(--canvas);
-            transition: background 0.3s;
-        }
-
-        .memory-layer:hover { background: var(--surface); }
-
-        .heat-bar {
-            height: 3px;
-            background: var(--border);
-            position: relative;
-            margin: 0 32px;
-        }
-
-        .heat-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: var(--cyan);
-            box-shadow: 0 0 12px var(--cyan-glow);
-            transition: width 1.5s ease-out;
-        }
-
-        /* ─── Protocol Section ─── */
-        .protocol-grid {
+        .q1-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 2px;
@@ -677,36 +617,82 @@
             border: 1px solid var(--border);
         }
 
-        .protocol-card {
+        .q1-card {
             background: var(--canvas);
-            padding: 40px 32px;
-            text-align: center;
-            transition: all 0.3s;
+            padding: 36px 32px;
+            transition: background 0.3s;
         }
 
-        .protocol-card:hover {
-            background: var(--surface);
-        }
+        .q1-card:hover { background: var(--surface); }
 
-        .protocol-icon {
-            font-size: 32px;
+        .q1-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
             margin-bottom: 20px;
+            font-size: 18px;
         }
 
-        .protocol-name {
-            font-family: var(--font-display);
+        .q1-card h3 {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
         }
 
-        .protocol-desc {
+        .q1-card p {
             font-size: 13px;
             color: var(--text-body);
             line-height: 1.6;
         }
 
-        /* ─── Timeline ─── */
+        .q1-card .q1-meta {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--cyan);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .github-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .github-stat {
+            background: var(--canvas);
+            padding: 32px 24px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .github-stat:hover { background: var(--surface); }
+
+        .github-stat-value {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .github-stat-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .github-stat .cyan { color: var(--cyan); }
+        .github-stat .purple { color: var(--purple); }
+        .github-stat .amber { color: var(--amber); }
+        .github-stat .green { color: var(--green); }
+
         .timeline {
             display: flex;
             justify-content: space-between;
@@ -762,7 +748,125 @@
             color: var(--text);
         }
 
-        /* ─── Quick Start ─── */
+        .mcp-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .mcp-card {
+            background: var(--canvas);
+            padding: 40px 36px;
+        }
+
+        .mcp-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mcp-card pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-body);
+            overflow-x: auto;
+        }
+
+        .mcp-card pre .comment { color: var(--text-dim); }
+        .mcp-card pre .cmd { color: var(--cyan); }
+        .mcp-card pre .key { color: var(--purple); }
+        .mcp-card pre .str { color: var(--green); }
+
+        .mcp-ide-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        .mcp-ide-item {
+            background: var(--canvas);
+            padding: 24px 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .mcp-ide-item:hover {
+            background: var(--surface);
+            border-color: var(--cyan);
+        }
+
+        .mcp-ide-name {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .mcp-ide-icon { font-size: 28px; margin-bottom: 12px; }
+
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .docs-card {
+            background: var(--canvas);
+            padding: 36px 32px;
+            transition: background 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .docs-card:hover { background: var(--surface); }
+
+        .docs-card-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .docs-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .docs-card p {
+            font-size: 13px;
+            color: var(--text-body);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .docs-card .docs-arrow {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--cyan);
+            letter-spacing: 0.5px;
+        }
+
         .quickstart-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -799,7 +903,6 @@
         .quickstart-card pre .comment { color: var(--text-dim); }
         .quickstart-card pre .cmd { color: var(--cyan); }
 
-        /* ─── Footer ─── */
         footer {
             border-top: 1px solid var(--border);
             padding: 60px 0 40px;
@@ -868,13 +971,14 @@
 
         .footer-links a:hover { color: var(--cyan); }
 
-        /* ─── Responsive ─── */
         @media (max-width: 900px) {
-            .product-core {
-                grid-template-columns: 1fr;
-            }
+            .product-core { grid-template-columns: 1fr; }
             .product-core-left { border-right: none; border-bottom: 1px solid var(--border); }
-            .protocol-grid { grid-template-columns: 1fr; }
+            .q1-grid { grid-template-columns: 1fr; }
+            .github-grid { grid-template-columns: 1fr 1fr; }
+            .mcp-grid { grid-template-columns: 1fr; }
+            .mcp-ide-grid { grid-template-columns: repeat(3, 1fr); }
+            .docs-grid { grid-template-columns: 1fr; }
             .quickstart-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .timeline { flex-wrap: wrap; gap: 24px; }
@@ -887,12 +991,11 @@
             .hero-stats { flex-direction: column; gap: 24px; }
             .products-grid { grid-template-columns: 1fr; }
             .thinking-modes { grid-template-columns: 1fr; }
-            .memory-layer { grid-template-columns: 1fr; gap: 12px; }
-            .heat-bar { margin: 0; }
+            .github-grid { grid-template-columns: 1fr; }
+            .mcp-ide-grid { grid-template-columns: repeat(2, 1fr); }
             .footer-grid { grid-template-columns: 1fr; }
         }
 
-        /* ─── Thin Scrollbar ─── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--canvas); }
         ::-webkit-scrollbar-thumb { background: var(--zinc-3); }
@@ -901,7 +1004,6 @@
 </head>
 <body>
 
-    <!-- Navigation -->
     <nav>
         <div class="container">
             <a href="#" class="logo">
@@ -910,25 +1012,31 @@
             </a>
             <ul class="nav-links">
                 <li><a href="#platform" class="active">Platform</a></li>
-                <li><a href="#memory">Memory</a></li>
-                <li><a href="#protocol">Protocol</a></li>
+                <li><a href="#q1">Q1 2026</a></li>
+                <li><a href="#mcp">MCP</a></li>
+                <li><a href="#docs">Docs</a></li>
                 <li><a href="#quickstart">Quick Start</a></li>
                 <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank">GitHub</a></li>
             </ul>
         </div>
     </nav>
 
-    <!-- Hero -->
     <section class="hero">
         <div class="hero-bg"></div>
         <div class="container">
             <div class="hero-content">
                 <div class="hero-eyebrow">Sovereign AI Platform</div>
+                <div class="hero-version-badges">
+                    <span class="ver-badge"><span class="num">v7.5</span> Stable</span>
+                    <span class="ver-badge"><span class="pass">✓</span> 145/145 Tests</span>
+                    <span class="ver-badge"><span class="pass">✓</span> 47 MCP Tools</span>
+                    <span class="ver-badge"><span class="pass">✓</span> MIT License</span>
+                </div>
                 <h1 class="hero-title">
                     The <span class="gradient-text">JEBAT</span><br>Platform Suite
                 </h1>
                 <p class="hero-sub">
-                    Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Named after Malay heritage — rooted in the legend of Hang Jebat.
+                    Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. 17 providers, 47 tools, 145 tests — fully air-gapped. Named after Malay heritage — rooted in the legend of Hang Jebat.
                 </p>
                 <div class="hero-actions">
                     <a href="#quickstart" class="btn btn-cyan">Get Started →</a>
@@ -944,11 +1052,11 @@
                         <div class="hero-stat-label">Memory Layer</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value gradient-text">89</div>
-                        <div class="hero-stat-label">Tools</div>
+                        <div class="hero-stat-value gradient-text">47</div>
+                        <div class="hero-stat-label">MCP Tools</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value gradient-text">6</div>
+                        <div class="hero-stat-value gradient-text">17</div>
                         <div class="hero-stat-label">Providers</div>
                     </div>
                 </div>
@@ -956,30 +1064,31 @@
         </div>
     </section>
 
-    <!-- Architecture Marquee -->
     <div class="arch-bar">
         <div class="arch-marquee">
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">AGENT SWARM</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">17 PROVIDER ROUTER</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MCP PROTOCOL BUS</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">5-LAYER MEMORY</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ULTRA-THINK ENGINE</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">6-PROVIDER ROUTER</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-AGENT SWARM</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SENTINEL SECURITY</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">CODEX SANDBOX</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-CHANNEL</span></div>
-            <!-- Duplicate for seamless loop -->
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">AGENT SWARM</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">AUTO-START OLLAMA</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">NPM / NPX ZERO-INSTALL</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">STREAMABLE HTTP MCP</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">3-TIER RBAC</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">17 PROVIDER ROUTER</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MCP PROTOCOL BUS</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">5-LAYER MEMORY</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ULTRA-THINK ENGINE</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">6-PROVIDER ROUTER</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-AGENT SWARM</span></div>
             <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SENTINEL SECURITY</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">CODEX SANDBOX</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-CHANNEL</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">AUTO-START OLLAMA</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">NPM / NPX ZERO-INSTALL</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">STREAMABLE HTTP MCP</span></div>
+            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">3-TIER RBAC</span></div>
         </div>
     </div>
 
-    <!-- Platform Products -->
     <section class="section" id="platform">
         <div class="container">
             <div class="section-label">Platform Suite</div>
@@ -989,60 +1098,38 @@
 
             <div class="products-grid">
 
-                <!-- JEBAT Core — Featured -->
                 <div class="product-card product-core">
                     <div class="product-core-left">
                         <div class="product-header">
                             <div class="product-icon">🗡</div>
-                            <span class="pill pill-live"><span class="pill-dot"></span> Live v6.1</span>
+                            <span class="pill pill-live"><span class="pill-dot"></span> Live v7.5</span>
                         </div>
                         <div class="product-name">JEBAT Core</div>
                         <div class="product-codename">Hang Jebat</div>
                         <p class="product-desc">
-                            Sovereign inference router with 7 reasoning modes, 5-layer memory &amp; multi-agent swarm orchestration. The central nervous system of the platform.
+                            Sovereign inference router with 7 reasoning modes, 5-layer memory &amp; multi-agent swarm orchestration. Routes to 17 providers with automatic failover.
                         </p>
                         <ul class="product-features">
-                            <li>7 Thinking Modes — from Ultra-Lite to Ultra-Think</li>
-                            <li>5-Layer Heat-Scored Memory — M0 Sensory through M4 Procedural</li>
-                            <li>Multi-Agent Swarm — Tukang, Hulubalang, Pawang, Syahbandar, Bendahara</li>
-                            <li>6-Provider LLM Router with automatic failover</li>
-                            <li>89 Registered Tools — file ops, git, browser, code gen, analytics</li>
+                            <li>7 Thinking Modes — Fast, Deliberate, Deep, Strategic, Creative, Critical, Custom</li>
+                            <li>5-Layer Memory — M0 Sensory through M4 Procedural</li>
+                            <li>Multi-Agent Swarm — Tukang, Hulubalang, Pawang, Syahbandar, Bendahara, Penyemak</li>
+                            <li>17-Provider LLM Router with automatic failover</li>
+                            <li>47 Registered MCP Tools — file ops, git, browser, code gen, analytics</li>
                         </ul>
                         <div class="product-footer">
-                            <a href="#" class="product-link">View Architecture →</a>
+                            <a href="https://github.com/nusabyte-my/jebat-core" class="product-link">View on GitHub →</a>
                         </div>
                     </div>
                     <div class="product-core-right">
                         <div class="section-label" style="margin-bottom:20px;">7 Thinking Modes</div>
                         <div class="thinking-modes">
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div>
-                                <span class="mode-name">Ultra-Lite</span>
-                            </div>
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div>
-                                <span class="mode-name">Balanced</span>
-                            </div>
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div>
-                                <span class="mode-name">Precise</span>
-                            </div>
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div>
-                                <span class="mode-name">Deep</span>
-                            </div>
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div>
-                                <span class="mode-name">Ultra-Think</span>
-                            </div>
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div>
-                                <span class="mode-name">Autonomous</span>
-                            </div>
-                            <div class="thinking-mode">
-                                <div class="mode-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div>
-                                <span class="mode-name">Strategic</span>
-                            </div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div><span class="mode-name">Fast</span></div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div><span class="mode-name">Deliberate</span></div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div><span class="mode-name">Deep</span></div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div><span class="mode-name">Strategic</span></div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div><span class="mode-name">Creative</span></div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div><span class="mode-name">Critical</span></div>
+                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span class="mode-name">Custom</span></div>
                         </div>
                         <div class="core-terminal" style="margin-top:24px;">
                             <div class="core-terminal-header">
@@ -1052,35 +1139,35 @@
                                 <span class="mono" style="font-size:10px;color:var(--text-dim);margin-left:8px;">jebat_core.sys</span>
                             </div>
                             <div class="core-terminal-body">
-                                <div><span class="cyan">[CORE]</span> Sovereign inference router <span class="green">online</span></div>
+                                <div><span class="cyan">[CORE]</span> Sovereign inference router <span class="green">online</span> <span class="dim">v7.5</span></div>
                                 <div><span class="cyan">[MEM]</span> 5-layer memory engine <span class="green">active</span></div>
                                 <div><span class="cyan">[SWARM]</span> 6 specialist agents <span class="green">registered</span></div>
-                                <div><span class="cyan">[MCP]</span> Protocol bus <span class="green">listening</span></div>
+                                <div><span class="cyan">[MCP]</span> 47 tools on protocol bus <span class="green">listening</span></div>
+                                <div><span class="cyan">[LLM]</span> 17 providers <span class="green">routed</span> with failover</div>
                                 <div><span class="dim">──────────────────────────</span></div>
-                                <div><span class="purple">MODE:</span> ultra-think</div>
-                                <div><span class="purple">HEAT:</span> <span class="green">optimal</span> (84%)</div>
-                                <div><span class="purple">TOOLS:</span> 89 registered</div>
+                                <div><span class="purple">MODE:</span> deliberate</div>
+                                <div><span class="purple">TOOLS:</span> 47 registered</div>
+                                <div><span class="purple">TESTS:</span> <span class="green">145/145 passing</span></div>
                                 <div><span class="green">Ready for instruction.</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sentinel Security -->
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">⚔</div>
-                        <span class="pill pill-soon"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
                     </div>
                     <div class="product-name">Sentinel Security</div>
                     <div class="product-codename">Keris</div>
                     <p class="product-desc">
-                        Autonomous pentest orchestrator for air-gapped threat reconnaissance &amp; CVE correlation.
+                        Autonomous pentest orchestrator for air-gapped threat reconnaissance &amp; CVE correlation with AI-powered analysis.
                     </p>
                     <ul class="product-features">
-                        <li>Autonomous pentest orchestration</li>
+                        <li>Autonomous pentest orchestration with scan profiles</li>
                         <li>CVE correlation &amp; CVSS scoring</li>
-                        <li>Swarm-based multi-agent analysis</li>
+                        <li>Quick, Standard, Full &amp; Vuln scan profiles</li>
                         <li>Executive security briefings</li>
                     </ul>
                     <div class="product-footer">
@@ -1088,30 +1175,28 @@
                     </div>
                 </div>
 
-                <!-- Developer Suite -->
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">⌨</div>
-                        <span class="pill pill-beta"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
                     </div>
                     <div class="product-name">Developer Suite</div>
                     <div class="product-codename">Pandai</div>
                     <p class="product-desc">
-                        MCP-native sandboxed code workspace for VS Code, Cursor, Zed &amp; Windsurf.
+                        Skills, tools, code generation &amp; MCP-native sandboxed workspace. Integrates with Cursor, VS Code, Zed &amp; Windsurf.
                     </p>
                     <ul class="product-features">
                         <li>MCP-native code generation &amp; review</li>
                         <li>Sandboxed execution environment</li>
-                        <li>IDE integration (Cursor, Zed, Windsurf, VS Code)</li>
+                        <li>IDE integration (Cursor, Zed, Windsurf, VS Code, JetBrains)</li>
                         <li>Workspace installer — auto-detect &amp; configure</li>
                     </ul>
                     <div class="product-footer">
-                        <a href="#" class="product-link">Install Now →</a>
+                        <a href="#mcp" class="product-link">View MCP Setup →</a>
                     </div>
                 </div>
 
-                <!-- Companion -->
-                <div class="product-card product-featured">
+                <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">💬</div>
                         <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
@@ -1119,7 +1204,7 @@
                     <div class="product-name">Companion</div>
                     <div class="product-codename">Sahabat</div>
                     <p class="product-desc">
-                        Conversational AI for daily operations, meeting summaries &amp; task management.
+                        Conversational AI for daily operations, meeting summaries, briefings &amp; task management with persistent memory.
                     </p>
                     <ul class="product-features">
                         <li>Persistent conversational memory</li>
@@ -1128,38 +1213,26 @@
                         <li>Integrated task management</li>
                         <li>Multi-session chat history</li>
                     </ul>
-                    <div class="product-terminal">
-                        <span class="terminal-prompt">$</span> jebat companion chat<br>
-                        <span class="terminal-output">🤖 Sahabat — JEBAT Companion</span><br>
-                        <span class="terminal-output">   Type your message and press Enter</span><br><br>
-                        <span class="terminal-prompt">You:</span> What's on my plate today?<br>
-                        <span class="terminal-output">Sahabat [ollama]: You have 3 pending tasks...</span><br>
-                        <span class="terminal-prompt">$</span> jebat companion briefing<br>
-                        <span class="terminal-output">🌅 Good morning! Here's your daily briefing...</span><br>
-                        <span class="terminal-prompt">$</span> jebat companion tasks add --title "Review PR" --priority high<br>
-                        <span class="terminal-output">✅ Task added: Review PR [high] (task-a1b2c3d4)</span>
-                    </div>
                     <div class="product-footer">
-                        <a href="#" class="product-link">Get Started →</a>
+                        <a href="#quickstart" class="product-link">Get Started →</a>
                     </div>
                 </div>
 
-                <!-- Nexus -->
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">🌐</div>
-                        <span class="pill pill-soon"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
                     </div>
                     <div class="product-name">Nexus</div>
                     <div class="product-codename">Perisai</div>
                     <p class="product-desc">
-                        Multi-channel bot orchestrator — Telegram, Discord, Slack, Signal, Matrix, WhatsApp.
+                        Multi-channel bot orchestrator — Telegram, Discord, Slack, Signal, Matrix &amp; WhatsApp — unified under one memory layer.
                     </p>
                     <ul class="product-features">
                         <li>6+ messaging platform support</li>
                         <li>Unified bot orchestration</li>
                         <li>Cross-channel memory persistence</li>
-                        <li>Channel health monitoring</li>
+                        <li>Channel health monitoring &amp; broadcast</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#quickstart" class="product-link">Get Started →</a>
@@ -1170,112 +1243,245 @@
         </div>
     </section>
 
-    <!-- Timeline -->
     <section class="section" style="padding-top:0;">
         <div class="container">
             <div class="section-label">Delivery Timeline</div>
             <div class="timeline">
                 <div class="timeline-item">
-                    <div class="timeline-dot green"></div>
-                    <div class="timeline-label">Live Now</div>
-                    <div class="timeline-product">JEBAT Core v6.1</div>
-                </div>
-                <div class="timeline-item">
                     <div class="timeline-dot cyan"></div>
-                    <div class="timeline-label">Live Now</div>
-                    <div class="timeline-product">Developer Suite v1.0</div>
+                    <div class="timeline-label">Q1 2026</div>
+                    <div class="timeline-product">Platform Suite Launch</div>
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-dot green"></div>
-                    <div class="timeline-label">Live Now</div>
-                    <div class="timeline-product">Sentinel Security v1.0</div>
+                    <div class="timeline-label">Q2 2026</div>
+                    <div class="timeline-product">v7.0 Core + WebUI</div>
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-dot green"></div>
-                    <div class="timeline-label">Live Now</div>
-                    <div class="timeline-product">Companion v1.0</div>
+                    <div class="timeline-label">Now — Q3</div>
+                    <div class="timeline-product">v7.5 Unified CLI + MCP</div>
                 </div>
                 <div class="timeline-item">
-                    <div class="timeline-dot green"></div>
-                    <div class="timeline-label">Live Now</div>
-                    <div class="timeline-product">Nexus v1.0</div>
+                    <div class="timeline-dot amber"></div>
+                    <div class="timeline-label">Q3 2026</div>
+                    <div class="timeline-product">Ghost DB + Catalyst O11y</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot purple"></div>
+                    <div class="timeline-label">Q4 2026</div>
+                    <div class="timeline-product">SDK + Enterprise RBAC</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 5-Layer Memory -->
-    <section class="section" id="memory" style="background:var(--surface);">
+    <section class="section" id="q1" style="background:var(--surface);">
         <div class="container">
-            <div class="section-label">Shared Memory Layer</div>
-            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
-                5-Layer Memory Model
+            <div class="section-label">Q1 2026 Achieved</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:16px;">
+                What shipped in Q1
             </h2>
             <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:48px;line-height:1.7;">
-                Context preservation that scales from milliseconds to years. All five products share this unified memory layer via Context Heat-Scoring.
+                The Platform Suite went from concept to production. All five products shipped with shared memory, MCP protocol bus, and full air-gap support.
             </p>
-            <div class="memory-grid">
-                <div class="memory-layer">
-                    <span class="mono" style="color:var(--cyan)">M0 Sensory</span>
-                    <div class="heat-bar"><div class="heat-fill" style="width:95%;"></div></div>
-                    <span class="mono" style="color:var(--text-dim)">Hot / Buffering</span>
+            <div class="q1-grid">
+                <div class="q1-card">
+                    <div class="q1-icon" style="border-color:var(--cyan);">🏗</div>
+                    <div class="q1-meta">Platform Foundation</div>
+                    <h3>5-Product Suite</h3>
+                    <p>Core, Sentinel Security, Developer Suite, Companion &amp; Nexus — each shipping with full documentation, CLI integration, and WebUI dashboards.</p>
                 </div>
-                <div class="memory-layer">
-                    <span class="mono" style="color:var(--cyan)">M1 Episodic</span>
-                    <div class="heat-bar"><div class="heat-fill" style="width:75%;"></div></div>
-                    <span class="mono" style="color:var(--text-dim)">Warm / Recent</span>
+                <div class="q1-card">
+                    <div class="q1-icon" style="border-color:var(--purple);">🧠</div>
+                    <div class="q1-meta">Cognitive Layer</div>
+                    <h3>Memory + MCP</h3>
+                    <p>5-layer heat-scored memory system with PostgreSQL persistence. Native MCP server with 47 tools exposed over stdio, HTTP SSE &amp; Streamable HTTP transports.</p>
                 </div>
-                <div class="memory-layer">
-                    <span class="mono" style="color:var(--purple)">M2 Semantic</span>
-                    <div class="heat-bar"><div class="heat-fill" style="width:50%;"></div></div>
-                    <span class="mono" style="color:var(--text-dim)">Neutral / Facts</span>
+                <div class="q1-card">
+                    <div class="q1-icon" style="border-color:var(--amber);">🛡</div>
+                    <div class="q1-meta">Enterprise Readiness</div>
+                    <h3>Security &amp; RBAC</h3>
+                    <p>3-tier safety classification (Auto/Confirm/Dangerous), Fernet + Argon2id encryption, API key rotation, and air-gap compatible deployment topology.</p>
                 </div>
-                <div class="memory-layer">
-                    <span class="mono" style="color:var(--purple)">M3 Conceptual</span>
-                    <div class="heat-bar"><div class="heat-fill" style="width:30%;"></div></div>
-                    <span class="mono" style="color:var(--text-dim)">Cool / Patterns</span>
+                <div class="q1-card">
+                    <div class="q1-icon" style="border-color:var(--green);">🔌</div>
+                    <div class="q1-meta">Integration</div>
+                    <h3>17 Providers + MCP</h3>
+                    <p>Provider router supporting OpenAI, Anthropic, Gemini, Ollama, llama.cpp, OpenRouter, Groq, GitHub Models &amp; more. Auto-failover with health monitoring.</p>
                 </div>
-                <div class="memory-layer">
-                    <span class="mono" style="color:var(--amber)">M4 Procedural</span>
-                    <div class="heat-bar"><div class="heat-fill" style="width:15%;"></div></div>
-                    <span class="mono" style="color:var(--text-dim)">Cold / Long-term</span>
+                <div class="q1-card">
+                    <div class="q1-icon" style="border-color:var(--cyan);">📦</div>
+                    <div class="q1-meta">Deployment</div>
+                    <h3>npx Zero-Install</h3>
+                    <p>One-command bootstrap via npx/npm. Local inference stack with Ollama + llama.cpp + router. Docker Compose for production with PostgreSQL, Redis, Prometheus &amp; Grafana.</p>
+                </div>
+                <div class="q1-card">
+                    <div class="q1-icon" style="border-color:var(--purple);">📋</div>
+                    <div class="q1-meta">Quality</div>
+                    <h3>145 Tests Passing</h3>
+                    <p>10 test suites covering agents, channels, memory, database, LLM CLI, and integration. Full coverage of the ReAct agent loop, provider router, and MCP protocol.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- MCP Protocol -->
-    <section class="section" id="protocol">
+    <section class="section" id="mcp">
         <div class="container">
-            <div class="section-label">Protocol Bus</div>
-            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
-                MCP Protocol Bus
+            <div class="section-label">MCP Server</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:16px;">
+                Native MCP Protocol Bus
             </h2>
             <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:48px;line-height:1.7;">
-                Model Context Protocol connects all five products. Every tool, memory layer, and agent capability is exposed via a unified protocol interface.
+                JEBAT exposes 47 tools over the Model Context Protocol. Wire any MCP-compatible IDE into your sovereign AI stack in seconds.
             </p>
-            <div class="protocol-grid">
-                <div class="protocol-card">
-                    <div class="protocol-icon">🔌</div>
-                    <div class="protocol-name">stdio + HTTP</div>
-                    <p class="protocol-desc">Run as stdio for IDE integration or HTTP for remote access. Both transports fully supported.</p>
+
+            <div class="section-label">Supported IDEs</div>
+            <div class="mcp-ide-grid">
+                <div class="mcp-ide-item">
+                    <div class="mcp-ide-icon">🖥</div>
+                    <div class="mcp-ide-name">Cursor</div>
+                    <div class="mono" style="color:var(--green);font-size:9px;">.cursor/mcp.json</div>
                 </div>
-                <div class="protocol-card">
-                    <div class="protocol-icon">🛠</div>
-                    <div class="protocol-name">8 Native Tools</div>
-                    <p class="protocol-desc">Code read/write/generate/review, project scaffold, git ops, test runner, debug analyzer.</p>
+                <div class="mcp-ide-item">
+                    <div class="mcp-ide-icon">⎇</div>
+                    <div class="mcp-ide-name">VS Code</div>
+                    <div class="mono" style="color:var(--green);font-size:9px;">via Continue/Cline</div>
                 </div>
-                <div class="protocol-card">
-                    <div class="protocol-icon">🔗</div>
-                    <div class="protocol-name">Skill Bridge</div>
-                    <p class="protocol-desc">Tok Guru skills auto-exposed as MCP tools. OpenCode-style SKILL.md with YAML frontmatter.</p>
+                <div class="mcp-ide-item">
+                    <div class="mcp-ide-icon">⚡</div>
+                    <div class="mcp-ide-name">Zed</div>
+                    <div class="mono" style="color:var(--green);font-size:9px;">mcp.json config</div>
+                </div>
+                <div class="mcp-ide-item">
+                    <div class="mcp-ide-icon">🌊</div>
+                    <div class="mcp-ide-name">Windsurf</div>
+                    <div class="mono" style="color:var(--green);font-size:9px;">.windsurf/mcp.json</div>
+                </div>
+                <div class="mcp-ide-item">
+                    <div class="mcp-ide-icon">◈</div>
+                    <div class="mcp-ide-name">JetBrains</div>
+                    <div class="mono" style="color:var(--green);font-size:9px;">MCP Plugin</div>
+                </div>
+            </div>
+
+            <div class="mcp-grid">
+                <div class="mcp-card">
+                    <h3><span style="color:var(--cyan)">stdio</span> IDE Integration</h3>
+                    <pre><span class="comment"># Add to .cursor/mcp.json</span>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"jebat"</span>: {
+      <span class="key">"command"</span>: <span class="str">"python"</span>,
+      <span class="key">"args"</span>: [<span class="str">"-m"</span>, <span class="str">"jebat.features.mcp.mcp_server"</span>]
+    }
+  }
+}</pre>
+                </div>
+                <div class="mcp-card">
+                    <h3><span style="color:var(--purple)">HTTP</span> Remote Access</h3>
+                    <pre><span class="comment"># Start HTTP transport</span>
+<span class="cmd">jebat mcp serve --transport http --port 8099</span>
+
+<span class="comment"># Streamable HTTP (MCP 2025-03-26)</span>
+<span class="cmd">jebat mcp serve --transport streamable-http --port 8100</span>
+
+<span class="comment"># List available tools</span>
+<span class="cmd">jebat mcp serve --help</span></pre>
+                </div>
+                <div class="mcp-card">
+                    <h3><span style="color:var(--amber)">Cli</span> Quick Start</h3>
+                    <pre><span class="comment"># Start as stdio server (for IDE)</span>
+<span class="cmd">jebat mcp serve --transport stdio</span>
+
+<span class="comment"># Generate IDE config templates</span>
+<span class="cmd">jebat mcp serve --print-ide-config</span></pre>
+                </div>
+                <div class="mcp-card">
+                    <h3><span style="color:var(--green)">npx</span> Zero-Install MCP</h3>
+                    <pre><span class="comment"># Via npx (no install required)</span>
+<span class="cmd">npx @nusabyte/jebat mcp serve</span>
+
+<span class="comment"># Connect external MCP server</span>
+<span class="cmd">jebat mcp connect --http http://host:8100/mcp</span></pre>
+                </div>
+            </div>
+
+            <div style="margin-top:48px;">
+                <div class="section-label">47 MCP Tools</div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:16px;">
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_react_run</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_think</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_delegate</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_sandbox_exec</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_memory_recall</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_voice_listen</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_browser_nav</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_pentest_scan</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_file_write</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_wiki_search</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_cron_add</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_channel_send</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_safety_classify</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_mcp_connect</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_ultra_loop</div>
+                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">+31 more</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Quick Start -->
-    <section class="section" id="quickstart" style="background:var(--surface);">
+    <section class="section" id="docs" style="background:var(--surface);">
+        <div class="container">
+            <div class="section-label">Documentation</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:16px;">
+                Read the docs. Ship with confidence.
+            </h2>
+            <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:48px;line-height:1.7;">
+                Comprehensive guides covering installation, deployment, architecture, API reference, and operational playbooks.
+            </p>
+            <div class="docs-grid">
+                <a href="README.md" class="docs-card">
+                    <div class="docs-card-icon" style="border-color:var(--cyan);">📖</div>
+                    <h3>README v7.5</h3>
+                    <p>Complete platform reference — CLI commands, provider config, MCP server, platform suite, agent orchestration, and fine-tuning guide.</p>
+                    <span class="docs-arrow">Read the README →</span>
+                </a>
+                <a href="docs.html" class="docs-card">
+                    <div class="docs-card-icon" style="border-color:var(--purple);">📚</div>
+                    <h3>Documentation Portal</h3>
+                    <p>Installation guides, deployment playbooks (local, Docker, VPS, air-gapped), LLM provider configuration, memory system, agent orchestration, MCP integration &amp; API reference.</p>
+                    <span class="docs-arrow">Open Docs Portal →</span>
+                </a>
+                <a href="https://github.com/nusabyte-my/jebat-core" class="docs-card">
+                    <div class="docs-card-icon" style="border-color:var(--amber);">📦</div>
+                    <h3>GitHub Repository</h3>
+                    <p>Source code, issues, releases &amp; PRs. v7.5 with 145 passing tests, 47 MCP tools, 17 providers, and 5-product platform suite.</p>
+                    <span class="docs-arrow">View on GitHub →</span>
+                </a>
+                <a href="#quickstart" class="docs-card">
+                    <div class="docs-card-icon" style="border-color:var(--green);">🚀</div>
+                    <h3>Quick Start Guide</h3>
+                    <p>Get running in 30 seconds with npx zero-install. REPL, chat, agent, MCP server &amp; WebUI — no prerequisites beyond Node.js &amp; Python.</p>
+                    <span class="docs-arrow">Get Started →</span>
+                </a>
+                <a href="docs.html#guide-llm" class="docs-card">
+                    <div class="docs-card-icon" style="border-color:var(--cyan);">⚙</div>
+                    <h3>LLM Provider Guide</h3>
+                    <p>Configure 17 providers with auto-failover. Ultra-Think reasoning modes. Ollama auto-start, llama.cpp GGUF, OpenRouter gateway &amp; local router.</p>
+                    <span class="docs-arrow">Provider Guide →</span>
+                </a>
+                <a href="docs.html#guide-mcp" class="docs-card">
+                    <div class="docs-card-icon" style="border-color:var(--purple);">🔌</div>
+                    <h3>MCP Integration Guide</h3>
+                    <p>Connect JEBAT to any MCP-compatible IDE. stdio for local, HTTP for remote, Streamable HTTP for MCP 2025-03-26. 47 tools exposed.</p>
+                    <span class="docs-arrow">MCP Guide →</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="quickstart">
         <div class="container">
             <div class="section-label">Quick Start</div>
             <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
@@ -1310,7 +1516,7 @@
   <span class="cmd">"mcpServers"</span>: {
     <span class="cmd">"jebat"</span>: {
       <span class="cmd">"command"</span>: <span class="cmd">"python"</span>,
-      <span class="cmd">"args"</span>: [<span class="cmd">"-m"</span>, <span class="cmd">"jebat.mcp.server"</span>]
+      <span class="cmd">"args"</span>: [<span class="cmd">"-m"</span>, <span class="cmd">"jebat.features.mcp.mcp_server"</span>]
     }
   }
 }</pre>
@@ -1327,7 +1533,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
         <div class="container">
             <div class="footer-grid">
@@ -1337,51 +1542,51 @@
                         JEBAT
                     </div>
                     <p style="color:var(--text-dim);font-size:13px;max-width:240px;line-height:1.6;">
-                        Sovereign AI Platform. Five products. One memory. Unified by protocol.
+                        Sovereign AI Platform. Five products. One memory. Unified by protocol.<br><br>
+                        <span class="mono" style="font-size:10px;">v7.5 · 145 Tests · MIT</span>
                     </p>
                 </div>
                 <div class="footer-col">
                     <h4>Products</h4>
                     <ul>
-                        <li><a href="#">JEBAT Core</a></li>
-                        <li><a href="#">Sentinel Security</a></li>
-                        <li><a href="#">Developer Suite</a></li>
-                        <li><a href="#">Companion</a></li>
-                        <li><a href="#">Nexus</a></li>
+                        <li><a href="#platform">JEBAT Core v7.5</a></li>
+                        <li><a href="#platform">Sentinel Security</a></li>
+                        <li><a href="#platform">Developer Suite</a></li>
+                        <li><a href="#platform">Companion</a></li>
+                        <li><a href="#platform">Nexus</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
                     <h4>Resources</h4>
                     <ul>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">MCP Reference</a></li>
-                        <li><a href="#">GitHub</a></li>
-                        <li><a href="#">Changelog</a></li>
+                        <li><a href="README.md">README v7.5</a></li>
+                        <li><a href="docs.html">Documentation Portal</a></li>
+                        <li><a href="#mcp">MCP Reference</a></li>
+                        <li><a href="https://github.com/nusabyte-my/jebat-core">GitHub</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
                     <h4>Company</h4>
                     <ul>
-                        <li><a href="#">NusaByte</a></li>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Security</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="https://github.com/nusabyte-my">NusaByte</a></li>
+                        <li><a href="https://github.com/nusabyte-my/jebat-core">About</a></li>
+                        <li><a href="docs.html#guide-security">Security</a></li>
+                        <li><a href="https://github.com/nusabyte-my/jebat-core/issues">Contact</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 NusaByte. MIT License.</p>
+                <p>&copy; 2026 NusaByte. MIT License. Built by Shaidan Shaari (humm1ngb1rd).</p>
                 <div class="footer-links">
-                    <a href="#">GitHub</a>
-                    <a href="#">Discord</a>
-                    <a href="#">Twitter</a>
+                    <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a>
+                    <a href="README.md">README</a>
+                    <a href="docs.html">Docs</a>
                 </div>
             </div>
         </div>
     </footer>
 
     <script>
-        // Smooth scroll for nav links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1392,10 +1597,8 @@
             });
         });
 
-        // Active nav link on scroll
         const sections = document.querySelectorAll('.section[id]');
         const navLinks = document.querySelectorAll('.nav-links a');
-
         window.addEventListener('scroll', () => {
             let current = '';
             sections.forEach(section => {
@@ -1411,26 +1614,6 @@
                 }
             });
         });
-
-        // Animate heat bars on scroll
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.querySelectorAll('.heat-fill').forEach(bar => {
-                        const width = bar.style.width;
-                        bar.style.width = '0%';
-                        requestAnimationFrame(() => {
-                            requestAnimationFrame(() => {
-                                bar.style.width = width;
-                            });
-                        });
-                    });
-                }
-            });
-        }, { threshold: 0.3 });
-
-        const memorySection = document.querySelector('.memory-grid');
-        if (memorySection) observer.observe(memorySection);
     </script>
 
 </body>

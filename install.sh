@@ -173,25 +173,30 @@ else
 fi
 
 # ── MCP / Desktop surfaces (optional) ──────────────────────────────────
-# NOTE: the public jebat-core CLI registers code/chat/provider/agent + REPL.
-# MCP-server and Desktop surfaces are provided by the full Jebat workspace
-# (jebat-dev), not this minimal core checkout. The installer still writes the
-# IDE snippet and records the surface so it's ready when that code is present.
 if [ "$DO_MCP" -eq 1 ]; then
   c_step "configuring MCP surface"
-  c_ok "IDE snippet written to: $INSTALL_DIR/mcp.ide.json"
-  c_warn "MCP server ships with the full Jebat workspace (jebat-dev), not core CLI — snippet is preconfigured for when present"
-  cat > "$INSTALL_DIR/mcp.ide.json" <<'JSON'
+
+  # Install standalone MCP entry point
+  if [ -f "$SRC/jebat-mcp" ]; then
+    install -m 755 "$SRC/jebat-mcp" "$BIN_DIR/jebat-mcp"
+    c_ok "standalone entry point: $BIN_DIR/jebat-mcp"
+  fi
+
+  # Write IDE config snippet
+  PYTHON_BIN="$(command -v python3)"
+  cat > "$INSTALL_DIR/mcp.ide.json" <<JSON
 {
   "mcpServers": {
     "jebat": {
-      "command": "jebat",
-      "args": ["mcp", "serve"],
-      "env": {}
+      "command": "$PYTHON_BIN",
+      "args": ["$BIN_DIR/jebat-mcp"]
     }
   }
 }
 JSON
+  c_ok "IDE snippet: $INSTALL_DIR/mcp.ide.json"
+  c_ok "MCP server exposes 47 tools over stdio/HTTP/streamable-http"
+  c_ok "generate IDE configs: jebat-mcp --print-ide-config"
 fi
 
 if [ "$DO_DESKTOP" -eq 1 ]; then

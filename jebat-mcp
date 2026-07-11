@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""
+JEBAT MCP Server — Standalone Entry Point for IDE Integration.
+
+Usage (stdio, for IDEs):
+    python /path/to/jebat-mcp
+
+Usage (HTTP, for remote access):
+    python /path/to/jebat-mcp --transport http --port 8099
+
+Usage (Streamable HTTP, MCP 2025-03-26):
+    python /path/to/jebat-mcp --transport streamable-http --port 8100
+
+IDE Config:
+    python /path/to/jebat-mcp --print-ide-config
+"""
+
+import argparse
+import os
+import sys
+
+# Ensure project root is on the path
+_project_root = os.path.dirname(os.path.abspath(__file__))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="JEBAT MCP Server — IDE Integration"
+    )
+    parser.add_argument(
+        "--transport", "-t",
+        default="stdio",
+        choices=["stdio", "http", "streamable-http"],
+        help="Transport mode (default: stdio)"
+    )
+    parser.add_argument(
+        "--port", "-p",
+        type=int,
+        default=8099,
+        help="HTTP port (default: 8099)"
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="HTTP host (default: 127.0.0.1)"
+    )
+    parser.add_argument(
+        "--print-ide-config",
+        action="store_true",
+        help="Print IDE configuration templates and exit"
+    )
+
+    args = parser.parse_args()
+
+    if args.print_ide_config:
+        _print_ide_configs()
+        return
+
+    from jebat.features.mcp.mcp_server import run_server
+    run_server(transport=args.transport, port=args.port, host=args.host)
+
+
+def _print_ide_configs():
+    """Print IDE config templates for Cursor, VS Code, Zed, Windsurf, JetBrains."""
+    this_script = os.path.abspath(__file__)
+
+    configs = {
+        "Cursor": {
+            "file": ".cursor/mcp.json",
+            "config": {
+                "mcpServers": {
+                    "jebat": {
+                        "command": sys.executable or "python3",
+                        "args": [this_script],
+                    }
+                }
+            }
+        },
+        "VS Code (Continue/Cline)": {
+            "file": ".vscode/mcp.json or Continue config",
+            "config": {
+                "mcpServers": {
+                    "jebat": {
+                        "command": sys.executable or "python3",
+                        "args": [this_script],
+                    }
+                }
+            }
+        },
+        "Zed": {
+            "file": ".zed/mcp.json",
+            "config": {
+                "mcpServers": {
+                    "jebat": {
+                        "command": sys.executable or "python3",
+                        "args": [this_script],
+                    }
+                }
+            }
+        },
+        "Windsurf": {
+            "file": ".windsurf/mcp.json",
+            "config": {
+                "mcpServers": {
+                    "jebat": {
+                        "command": sys.executable or "python3",
+                        "args": [this_script],
+                    }
+                }
+            }
+        },
+        "JetBrains (MCP Plugin)": {
+            "file": "Settings > Tools > MCP > Add Server",
+            "config": f"Command: {sys.executable or 'python3'} {this_script}\nMode: stdio"
+        },
+        "HTTP Remote": {
+            "file": "Any MCP-compatible IDE",
+            "config": {
+                "mcpServers": {
+                    "jebat": {
+                        "url": "http://127.0.0.1:8099/mcp",
+                    }
+                }
+            }
+        }
+    }
+
+    print("=" * 60)
+    print("  JEBAT MCP Server — IDE Configuration Templates")
+    print("=" * 60)
+    print()
+    print(f"  Server path: {this_script}")
+    print(f"  Python:      {sys.executable or 'python3'}")
+    print(f"  Transport:   stdio (default) | http | streamable-http")
+    print()
+    print("─" * 60)
+
+    for ide_name, info in configs.items():
+        print(f"\n  [{ide_name}]")
+        print(f"  Config location: {info['file']}")
+        print()
+        import json
+        if isinstance(info["config"], dict):
+            print(f"  {json.dumps(info['config'], indent=4)}")
+        else:
+            for line in info["config"].split("\n"):
+                print(f"  {line}")
+        print()
+        print("─" * 60)
+
+    print()
+    print("  Quick start:")
+    print(f"    python {this_script}")
+    print(f"    python {this_script} --transport http --port 8099")
+    print(f"    python {this_script} --transport streamable-http --port 8100")
+    print()
+
+
+if __name__ == "__main__":
+    main()

@@ -19,10 +19,23 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 import asyncpg
-import redis.asyncio as redis
 from asyncpg import Connection, Pool
-from redis.asyncio import Redis
-from redis.asyncio.connection import ConnectionPool as RedisPool
+
+# Redis is optional — gracefully degrade if not installed
+_redis_available = False
+Redis = None
+RedisPool = None
+redis = None
+try:
+    import redis.asyncio as redis_mod
+    from redis.asyncio import Redis as _RedisCls
+    from redis.asyncio.connection import ConnectionPool as _RedisPoolCls
+    redis = redis_mod
+    Redis = _RedisCls
+    RedisPool = _RedisPoolCls
+    _redis_available = True
+except ImportError:
+    pass
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -231,8 +244,11 @@ class DatabaseConnectionManager:
 
     async def _connect_redis(self) -> bool:
         """Establish Redis connection pool."""
+        if not _redis_available:
+            logger.warning("Redis library not installed — skipping Redis connection")
+            return False
         try:
-            self.redis_pool = aioredis.ConnectionPool.from_url(
+            self.redis_pool = RedisPool.from_url(
                 f"redis://:{self.config.password}@{self.config.host}:{self.config.port}/{self.config.redis_db}",
                 max_connections=self.config.pool_size + self.config.max_overflow,
                 socket_timeout=self.config.command_timeout,

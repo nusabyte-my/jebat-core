@@ -253,23 +253,41 @@ class MCPServer:
         }
 
     def _ensure_tools_loaded(self) -> None:
-        """Import all JEBAT tool modules to populate TOOL_REGISTRY."""
+        """Import all JEBAT tool modules to populate TOOL_REGISTRY.
+
+        Each import is wrapped individually so one missing dependency
+        doesn't block the rest — the server stays up with a partial
+        tool set and logs which modules couldn't load.
+        """
         if self._tools_loaded:
             return
-        try:
-            from jebat.features.fileops import file_ops
-            from jebat.features.terminal import terminal_exec
-            from jebat.features.browser import browser
-            from jebat.features.vision import vision
-            from jebat.features.search import web_search
-            from jebat.features.auth import auth
-            from jebat.features.cron import cron
-            from jebat.features.wiki import wiki
-            from jebat.features.image_gen import image_gen
-        except ImportError:
-            pass  # Some modules may not be available in all environments
+
+        _tool_modules = [
+            ("fileops", "jebat.features.fileops"),
+            ("terminal", "jebat.features.terminal"),
+            ("browser", "jebat.features.browser"),
+            ("vision", "jebat.features.vision"),
+            ("web_search", "jebat.features.search"),
+            ("auth", "jebat.features.auth"),
+            ("cron", "jebat.features.cron"),
+            ("wiki", "jebat.features.wiki"),
+            ("image_gen", "jebat.features.image_gen"),
+        ]
+        _loaded = 0
+        _failed = []
+        for name, mod_path in _tool_modules:
+            try:
+                __import__(mod_path)
+                _loaded += 1
+            except ImportError as e:
+                _failed.append((name, str(e)))
+
         self._tools_loaded = True
-        logger.info(f"MCP server loaded {len(TOOL_REGISTRY)} tools into registry")
+        failed = ", ".join(f"{n}({e})" for n, e in _failed)
+        if failed:
+            logger.info(f"MCP loaded {_loaded}/{len(_tool_modules)} tool modules; skipped: {failed}")
+        else:
+            logger.info(f"MCP server loaded {_loaded} tool modules, {len(TOOL_REGISTRY)} tools")
 
     async def _handle_tools_list(self, params: Dict) -> Dict:
         """Return all registered JEBAT tools as MCP tool definitions."""
