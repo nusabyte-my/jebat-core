@@ -680,59 +680,97 @@
         .github-stat .green { color: var(--green); }
 
         .timeline {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
             position: relative;
-            padding: 60px 0;
+            padding-left: 48px;
         }
 
         .timeline::before {
             content: '';
             position: absolute;
-            top: 88px;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--amber));
-            opacity: 0.3;
+            left: 19px;
+            top: 12px;
+            bottom: 12px;
+            width: 2px;
+            background: linear-gradient(180deg, var(--green), var(--cyan) 40%, var(--purple) 70%, var(--amber));
+            opacity: 0.4;
         }
 
         .timeline-item {
-            text-align: center;
             position: relative;
-            flex: 1;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            background: var(--canvas);
+            transition: all 0.25s;
+            margin-bottom: 2px;
         }
 
-        .timeline-dot {
-            width: 12px;
-            height: 12px;
+        .timeline-item:last-child { margin-bottom: 0; }
+
+        .timeline-item:hover {
+            background: var(--surface);
+            border-color: var(--cyan);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -37px;
+            top: 32px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            margin: 0 auto 16px;
-            position: relative;
+            border: 2px solid var(--border);
+            background: var(--canvas);
             z-index: 1;
         }
 
-        .timeline-dot.green { background: var(--green); box-shadow: 0 0 12px var(--green); }
-        .timeline-dot.cyan { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
-        .timeline-dot.amber { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
-        .timeline-dot.purple { background: var(--purple); box-shadow: 0 0 12px var(--purple); }
+        .timeline-item.shipped::before { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px var(--green); }
+        .timeline-item.active::before { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 14px var(--cyan); }
+        .timeline-item.upcoming::before { background: var(--zinc-3); border-color: var(--zinc-3); }
 
-        .timeline-label {
+        .tl-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .tl-badge {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 2px;
+        }
+
+        .tl-badge.shipped { background: rgba(0,200,100,0.12); color: var(--green); border: 1px solid rgba(0,200,100,0.2); }
+        .tl-badge.active { background: rgba(0,240,255,0.1); color: var(--cyan); border: 1px solid rgba(0,240,255,0.2); }
+        .tl-badge.upcoming { background: rgba(255,255,255,0.04); color: var(--text-dim); border: 1px solid var(--border); }
+
+        .tl-label {
             font-family: var(--font-mono);
             font-size: 10px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             color: var(--text-dim);
+        }
+
+        .tl-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
             margin-bottom: 6px;
         }
 
-        .timeline-product {
-            font-family: var(--font-display);
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
+        .tl-desc {
+            font-size: 13px;
+            color: var(--text-body);
+            line-height: 1.6;
         }
+
+        .tl-desc strong { color: var(--text); }
 
         .mcp-grid {
             display: grid;
@@ -965,8 +1003,6 @@
             .docs-grid { grid-template-columns: 1fr; }
             .quickstart-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
-            .timeline { flex-wrap: wrap; gap: 24px; }
-            .timeline::before { display: none; }
         }
 
         @media (max-width: 640px) {
@@ -976,6 +1012,9 @@
             .github-grid { grid-template-columns: 1fr; }
             .mcp-ide-grid { grid-template-columns: repeat(2, 1fr); }
             .footer-grid { grid-template-columns: 1fr; }
+            .timeline { padding-left: 36px; }
+            .timeline-item { padding: 24px 24px; }
+            .timeline-item::before { left: -31px; width: 12px; height: 12px; }
         }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -1222,32 +1261,56 @@
     <section class="section" style="padding-top:0;">
         <div class="container">
             <div class="section-label">Delivery Timeline</div>
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:40px;">
+                From concept to <span class="gradient-text" style="background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">production</span>
+            </h2>
             <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-dot cyan"></div>
-                    <div class="timeline-label">Q1 2026</div>
-                    <div class="timeline-product">Platform Suite Launch</div>
+
+                <div class="timeline-item shipped">
+                    <div class="tl-top">
+                        <span class="tl-badge shipped">Shipped</span>
+                        <span class="tl-label">Q1 2026</span>
+                    </div>
+                    <div class="tl-title">Platform Suite Launch</div>
+                    <p class="tl-desc">All five products shipped with shared memory, MCP protocol bus, and full air-gap support. <strong>v6.0 initial release.</strong></p>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot green"></div>
-                    <div class="timeline-label">Q2 2026</div>
-                    <div class="timeline-product">v7.0 Core + WebUI</div>
+
+                <div class="timeline-item shipped">
+                    <div class="tl-top">
+                        <span class="tl-badge shipped">Shipped</span>
+                        <span class="tl-label">Q2 2026</span>
+                    </div>
+                    <div class="tl-title">v7.0 Core + WebUI</div>
+                    <p class="tl-desc">Major Core upgrade with 7 thinking modes, 5-layer memory, multi-agent swarm. WebUI with dashboard, agents, channels, and settings panels. <strong>47 MCP tools.</strong></p>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot green"></div>
-                    <div class="timeline-label">Now — Q3</div>
-                    <div class="timeline-product">v7.5 Unified CLI + MCP</div>
+
+                <div class="timeline-item active">
+                    <div class="tl-top">
+                        <span class="tl-badge active">In Progress</span>
+                        <span class="tl-label">Now — Q3 2026</span>
+                    </div>
+                    <div class="tl-title">v7.5 Unified CLI + MCP</div>
+                    <p class="tl-desc">Unified command-line interface across all products. Streamable HTTP MCP transport. NPM/NPX zero-install bootstrap. <strong>Auto-start Ollama, 3-tier RBAC.</strong></p>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot amber"></div>
-                    <div class="timeline-label">Q3 2026</div>
-                    <div class="timeline-product">Ghost DB + Catalyst O11y</div>
+
+                <div class="timeline-item upcoming">
+                    <div class="tl-top">
+                        <span class="tl-badge upcoming">Upcoming</span>
+                        <span class="tl-label">Q3 2026</span>
+                    </div>
+                    <div class="tl-title">Ghost DB + Catalyst O11y</div>
+                    <p class="tl-desc">Embedded vector database for offline RAG. Observability stack with distributed tracing, custom dashboards, and alert rules on the MCP bus.</p>
                 </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot purple"></div>
-                    <div class="timeline-label">Q4 2026</div>
-                    <div class="timeline-product">SDK + Enterprise RBAC</div>
+
+                <div class="timeline-item upcoming">
+                    <div class="tl-top">
+                        <span class="tl-badge upcoming">Upcoming</span>
+                        <span class="tl-label">Q4 2026</span>
+                    </div>
+                    <div class="tl-title">SDK + Enterprise RBAC</div>
+                    <p class="tl-desc">TypeScript &amp; Python SDKs with full API coverage. Enterprise role-based access control with team management, audit logs, and SSO integration.</p>
                 </div>
+
             </div>
         </div>
     </section>
