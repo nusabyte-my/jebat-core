@@ -55,24 +55,40 @@ echo ""
 echo "[1/4] Adding /deploy-webhook to nginx..."
 NGINX_MAIN="/etc/nginx/sites-enabled/jebat.online"
 if [ -f "$NGINX_MAIN" ]; then
-    # Inject the location block before the final closing brace
-    sed -i '/^}$/i\
-    # JEBAT auto-deploy webhook (added by setup-webhook-deploy.sh)\
-    location /deploy-webhook {\
-        proxy_pass http://127.0.0.1:'"$PORT"';\
-        proxy_set_header Host $host;\
-        proxy_set_header X-Real-IP $remote_addr;\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
-        proxy_set_header X-Forwarded-Proto https;\
-        proxy_buffering off;\
-        proxy_cache off;\
-        proxy_read_timeout 120s;\
-        proxy_send_timeout 30s;\
-        client_max_body_size 10m;\
-        access_log /var/log/nginx/deploy-webhook.access.log;\
-        error_log  /var/log/nginx/deploy-webhook.error.log;\
-    }' "$NGINX_MAIN"
-    echo "  injected location into $NGINX_MAIN"
+    python3 -c "
+import re, sys
+path = '$NGINX_MAIN'
+with open(path) as f:
+    content = f.read()
+# Remove any existing broken deploy-webhook artifacts
+content = re.sub(r'\s*#.*auto-deploy.*webhook.*', '', content)
+content = re.sub(r'\s*location /deploy-webhook \{.*?\}', '', content, flags=re.DOTALL)
+content = re.sub(r'\n{3,}', '\n\n', content)
+# Insert proper location block before the last }
+location = '''
+    # JEBAT auto-deploy webhook
+    location /deploy-webhook {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 30s;
+        client_max_body_size 10m;
+        access_log /var/log/nginx/deploy-webhook.access.log;
+        error_log  /var/log/nginx/deploy-webhook.error.log;
+    }
+'''
+idx = content.rfind('}')
+if idx != -1:
+    content = content[:idx] + location + content[idx:]
+with open(path, 'w') as f:
+    f.write(content)
+print('  injected location into $NGINX_MAIN')
+"
 else
     echo "  WARNING: $NGINX_MAIN not found — add webhook location manually"
 fi
