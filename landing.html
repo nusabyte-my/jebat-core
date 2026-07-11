@@ -220,6 +220,9 @@
         .pill-beta .pill-dot { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
         .pill-planned .pill-dot { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
         .pill-soon .pill-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+        .pill-mcp { background: rgba(139, 92, 246, 0.12); color: var(--purple); border-color: rgba(139, 92, 246, 0.25); }
+
+        .ver-badge .pass { color: var(--green); }
 
         .hero {
             min-height: 100vh;
@@ -344,6 +347,23 @@
 
         .ver-badge .num { color: var(--cyan); font-weight: 600; }
         .ver-badge .pass { color: var(--green); }
+
+        .eyebrow-pulse {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse-dot 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.75); }
+        }
+        .hero-stat:last-child .hero-stat-value {
+            background: linear-gradient(135deg, var(--purple), #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
         .arch-bar {
             border-top: 1px solid var(--border);
@@ -1025,22 +1045,27 @@
         <div class="hero-bg"></div>
         <div class="container">
             <div class="hero-content">
-                <div class="hero-eyebrow">Sovereign AI Platform</div>
+                <div class="hero-eyebrow">
+                    <span class="eyebrow-pulse"></span>
+                    Sovereign AI Platform — Air-Gapped by Design
+                </div>
                 <div class="hero-version-badges">
                     <span class="ver-badge"><span class="num">v7.5</span> Stable</span>
                     <span class="ver-badge"><span class="pass">✓</span> 145/145 Tests</span>
                     <span class="ver-badge"><span class="pass">✓</span> 47 MCP Tools</span>
                     <span class="ver-badge"><span class="pass">✓</span> MIT License</span>
+                    <span class="ver-badge"><span class="pass">⬡</span> Zero Telemetry</span>
                 </div>
                 <h1 class="hero-title">
-                    The <span class="gradient-text">JEBAT</span><br>Platform Suite
+                    Your <span class="gradient-text">Sovereign</span><br>AI Workstation
                 </h1>
                 <p class="hero-sub">
-                    Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. 17 providers, 47 tools, 145 tests — fully air-gapped. Named after Malay heritage — rooted in the legend of Hang Jebat.
+                    One platform. Five specialized AI products. A unified memory that persists across every tool, every agent, every session. <strong>No data leaves your network.</strong>
                 </p>
                 <div class="hero-actions">
-                    <a href="#quickstart" class="btn btn-cyan">Get Started →</a>
-                    <a href="#platform" class="btn btn-ghost">View Products</a>
+                    <a href="#quickstart" class="btn btn-cyan">Install in 30s <span style="font-size:14px;">→</span></a>
+                    <a href="#platform" class="btn btn-ghost">Explore Suite</a>
+                    <a href="#mcp" class="btn btn-ghost" style="border-color:var(--purple);color:var(--purple);">IDE Integration</a>
                 </div>
                 <div class="hero-stats">
                     <div class="hero-stat">
@@ -1049,7 +1074,7 @@
                     </div>
                     <div class="hero-stat">
                         <div class="hero-stat-value gradient-text">1</div>
-                        <div class="hero-stat-label">Memory Layer</div>
+                        <div class="hero-stat-label">Unified Memory</div>
                     </div>
                     <div class="hero-stat">
                         <div class="hero-stat-value gradient-text">47</div>
@@ -1057,7 +1082,11 @@
                     </div>
                     <div class="hero-stat">
                         <div class="hero-stat-value gradient-text">17</div>
-                        <div class="hero-stat-label">Providers</div>
+                        <div class="hero-stat-label">LLM Providers</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value gradient-text">6</div>
+                        <div class="hero-stat-label">IDE Integrations</div>
                     </div>
                 </div>
             </div>
@@ -1092,9 +1121,15 @@
     <section class="section" id="platform">
         <div class="container">
             <div class="section-label">Platform Suite</div>
-            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:48px;">
-                Five products. One memory.<br>Unified by protocol.
+            <h2 style="font-size:clamp(28px,4vw,44px);font-weight:700;margin-bottom:16px;">
+                Five products.
+                <span class="gradient-text" style="background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">One memory.</span>
+                Unified by protocol.
             </h2>
+            <p style="color:var(--text-dim);font-size:16px;max-width:580px;margin:0 auto 56px;line-height:1.6;">
+                Every product shares the same 5-layer memory engine and MCP protocol bus.
+                Install what you need. They all talk to each other.
+            </p>
 
             <div class="products-grid">
 
@@ -1158,17 +1193,19 @@
                     <div class="product-header">
                         <div class="product-icon">⚔</div>
                         <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-mcp" style="margin-left:6px;">MCP Native</span>
                     </div>
-                    <div class="product-name">Sentinel Security</div>
+                    <div class="product-name">Sentinel</div>
                     <div class="product-codename">Keris</div>
                     <p class="product-desc">
-                        Autonomous pentest orchestrator for air-gapped threat reconnaissance &amp; CVE correlation with AI-powered analysis.
+                        Autonomous security orchestrator. Scans networks, correlates CVEs, scores risks — all through the JEBAT MCP tool bus.
                     </p>
                     <ul class="product-features">
                         <li>Autonomous pentest orchestration with scan profiles</li>
-                        <li>CVE correlation &amp; CVSS scoring</li>
-                        <li>Quick, Standard, Full &amp; Vuln scan profiles</li>
-                        <li>Executive security briefings</li>
+                        <li>Real-time CVE correlation &amp; CVSS v3 scoring</li>
+                        <li>Quick, Standard, Full &amp; Vulnerability scan profiles</li>
+                        <li>Air-gapped operation — zero external egress</li>
+                        <li>Executive security briefings with remediation paths</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#quickstart" class="product-link">Get Started →</a>
@@ -1179,17 +1216,19 @@
                     <div class="product-header">
                         <div class="product-icon">⌨</div>
                         <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-mcp" style="margin-left:6px;">IDE Ready</span>
                     </div>
                     <div class="product-name">Developer Suite</div>
                     <div class="product-codename">Pandai</div>
                     <p class="product-desc">
-                        Skills, tools, code generation &amp; MCP-native sandboxed workspace. Integrates with Cursor, VS Code, Zed &amp; Windsurf.
+                        MCP-native development environment. Code generation, review, sandboxed execution — integrated with every major IDE.
                     </p>
                     <ul class="product-features">
-                        <li>MCP-native code generation &amp; review</li>
-                        <li>Sandboxed execution environment</li>
-                        <li>IDE integration (Cursor, Zed, Windsurf, VS Code, JetBrains)</li>
-                        <li>Workspace installer — auto-detect &amp; configure</li>
+                        <li>MCP-native code generation, review &amp; refactoring</li>
+                        <li>Sandboxed Python/JS/Go execution environment</li>
+                        <li>IDE integration — Cursor, VS Code, Zed, Windsurf, JetBrains</li>
+                        <li>Auto-detect workspace &amp; one-command IDE config</li>
+                        <li>Git-aware change planning &amp; patch generation</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#mcp" class="product-link">View MCP Setup →</a>
@@ -1204,14 +1243,14 @@
                     <div class="product-name">Companion</div>
                     <div class="product-codename">Sahabat</div>
                     <p class="product-desc">
-                        Conversational AI for daily operations, meeting summaries, briefings &amp; task management with persistent memory.
+                        Conversational AI for daily team operations. Persistent memory, meeting intelligence, task tracking — always in sync with Core.
                     </p>
                     <ul class="product-features">
-                        <li>Persistent conversational memory</li>
-                        <li>Daily briefing generator</li>
-                        <li>Meeting transcript summarizer</li>
-                        <li>Integrated task management</li>
-                        <li>Multi-session chat history</li>
+                        <li>Persistent long-term conversational memory</li>
+                        <li>Daily briefing &amp; standup report generator</li>
+                        <li>Meeting transcript summarization</li>
+                        <li>Team task management with assignment tracking</li>
+                        <li>Multi-session chat with cross-session context</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#quickstart" class="product-link">Get Started →</a>
@@ -1226,19 +1265,29 @@
                     <div class="product-name">Nexus</div>
                     <div class="product-codename">Perisai</div>
                     <p class="product-desc">
-                        Multi-channel bot orchestrator — Telegram, Discord, Slack, Signal, Matrix &amp; WhatsApp — unified under one memory layer.
+                        Multi-channel bot orchestrator. One memory layer across Telegram, Discord, Slack, WhatsApp, Signal, and Matrix.
                     </p>
                     <ul class="product-features">
-                        <li>6+ messaging platform support</li>
-                        <li>Unified bot orchestration</li>
-                        <li>Cross-channel memory persistence</li>
-                        <li>Channel health monitoring &amp; broadcast</li>
+                        <li>6 messaging platforms — Telegram, Discord, Slack, Signal, Matrix, WhatsApp</li>
+                        <li>Unified bot orchestration from a single config</li>
+                        <li>Cross-channel memory persistence through Core</li>
+                        <li>Channel health monitoring &amp; broadcast commands</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#quickstart" class="product-link">Get Started →</a>
                     </div>
                 </div>
 
+            </div>
+
+            <div class="suite-footer" style="text-align:center;margin-top:56px;padding:24px;border:1px solid var(--border);border-radius:12px;background:var(--surface);">
+                <div style="font-size:14px;color:var(--text-dim);margin-bottom:8px;">
+                    <span class="pill" style="background:rgba(0,200,200,0.1);color:var(--cyan);border:none;font-size:11px;padding:3px 10px;">SHARED LAYER</span>
+                </div>
+                <p style="font-size:clamp(13px,1.5vw,15px);color:var(--text);margin:0;">
+                    Every product connects to the same <strong style="color:var(--cyan);">5-layer memory engine</strong> and communicates over the <strong style="color:var(--purple);">MCP protocol bus</strong>.
+                    Install <code style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px;font-size:13px;">npx @nusabyte/jebat</code> and all five are ready.
+                </p>
             </div>
         </div>
     </section>
