@@ -28,16 +28,21 @@ echo "  now at $COMMIT_SHORT"
 
 # ── 2. Install dependencies ─────────────────────────────────────
 echo "[2/5] Installing Python dependencies..."
-# Prefer venv, fallback to --break-system-packages for PEP 668 systems
+REQ_FILE="requirements.txt"
+[ -f requirements.prod.txt ] && REQ_FILE="requirements.prod.txt"
+
 if [ -f .venv/bin/pip ]; then
-    .venv/bin/pip install -r requirements.prod.txt --quiet 2>/dev/null || \
-    .venv/bin/pip install -r requirements.txt --quiet 2>/dev/null || true
-elif pip install -r requirements.prod.txt --quiet --break-system-packages 2>/dev/null; then
-    :
-elif pip install -r requirements.txt --quiet --break-system-packages 2>/dev/null; then
-    :
+    # Use existing venv
+    .venv/bin/pip install -r "$REQ_FILE" --quiet 2>/dev/null && \
+        echo "  deps installed via .venv" || true
+elif [ -n "$PIP_REQUIRE_VIRTUALENV" ]; then
+    # PEP 668 system — bypass with env override
+    PIP_REQUIRE_VIRTUALENV=false pip install -r "$REQ_FILE" --quiet 2>/dev/null && \
+        echo "  deps installed (PEP 668 bypass)" || true
 else
-    echo "  WARNING: pip install failed — continuing (landing page deploy does not need deps)"
+    pip install -r "$REQ_FILE" --quiet --break-system-packages 2>/dev/null && \
+        echo "  deps installed" || \
+        echo "  WARNING: pip install failed — landing page deploy does not need deps"
 fi
 
 # ── 3. Copy landing page ────────────────────────────────────────
