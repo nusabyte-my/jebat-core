@@ -28,10 +28,16 @@ echo "  now at $COMMIT_SHORT"
 
 # ── 2. Install dependencies ─────────────────────────────────────
 echo "[2/5] Installing Python dependencies..."
-if [ -f requirements.prod.txt ]; then
-    pip install -r requirements.prod.txt --quiet
-elif [ -f requirements.txt ]; then
-    pip install -r requirements.txt --quiet
+# Prefer venv, fallback to --break-system-packages for PEP 668 systems
+if [ -f .venv/bin/pip ]; then
+    .venv/bin/pip install -r requirements.prod.txt --quiet 2>/dev/null || \
+    .venv/bin/pip install -r requirements.txt --quiet 2>/dev/null || true
+elif pip install -r requirements.prod.txt --quiet --break-system-packages 2>/dev/null; then
+    :
+elif pip install -r requirements.txt --quiet --break-system-packages 2>/dev/null; then
+    :
+else
+    echo "  WARNING: pip install failed — continuing (landing page deploy does not need deps)"
 fi
 
 # ── 3. Copy landing page ────────────────────────────────────────

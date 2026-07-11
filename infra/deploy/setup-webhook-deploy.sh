@@ -17,8 +17,7 @@ SECRET=""
 PORT="8081"
 REPO_DIR="/var/www/jebat-core"
 WEBHOOK_SCRIPT="$REPO_DIR/infra/deploy/deploy-webhook.py"
-NGINX_CONF_SRC="$REPO_DIR/infra/deploy/nginx.webhook.conf"
-NGINX_CONF_DST="/etc/nginx/sites-enabled/jebat.webhook.conf"
+NGINX_CONF_SRC="$REPO_DIR/infra/deploy/nginx.webhook.conf"  # reference only (injected into main config)
 SERVICE_FILE="/etc/systemd/system/jebat-deploy-webhook.service"
 
 while [ $# -gt 0 ]; do
@@ -52,14 +51,30 @@ echo "  Port:       $PORT"
 echo "  Secret:     ${SECRET:0:4}... (set)"
 echo ""
 
-# ── 1. Nginx config ────────────────────────────────────────────
-echo "[1/4] Installing nginx config..."
-if [ -f "$NGINX_CONF_SRC" ]; then
-    cp "$NGINX_CONF_SRC" "$NGINX_CONF_DST"
-    echo "  nginx config: $NGINX_CONF_DST"
+# ── 1. Inject webhook location into main jebat.online nginx config ──
+echo "[1/4] Adding /deploy-webhook to nginx..."
+NGINX_MAIN="/etc/nginx/sites-enabled/jebat.online"
+if [ -f "$NGINX_MAIN" ]; then
+    # Inject the location block before the final closing brace
+    sed -i '/^}$/i\
+    # JEBAT auto-deploy webhook (added by setup-webhook-deploy.sh)\
+    location /deploy-webhook {\
+        proxy_pass http://127.0.0.1:'"$PORT"';\
+        proxy_set_header Host $host;\
+        proxy_set_header X-Real-IP $remote_addr;\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
+        proxy_set_header X-Forwarded-Proto https;\
+        proxy_buffering off;\
+        proxy_cache off;\
+        proxy_read_timeout 120s;\
+        proxy_send_timeout 30s;\
+        client_max_body_size 10m;\
+        access_log /var/log/nginx/deploy-webhook.access.log;\
+        error_log  /var/log/nginx/deploy-webhook.error.log;\
+    }' "$NGINX_MAIN"
+    echo "  injected location into $NGINX_MAIN"
 else
-    echo "  WARNING: nginx.webhook.conf not found at $NGINX_CONF_SRC"
-    echo "  Create it manually: proxy /deploy-webhook to 127.0.0.1:$PORT"
+    echo "  WARNING: $NGINX_MAIN not found — add webhook location manually"
 fi
 
 # ── 2. Systemd service ─────────────────────────────────────────
@@ -103,8 +118,9 @@ else
     exit 1
 fi
 
-systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || \
-    echo "  WARNING: reload nginx manually"
+# Reload nginx (test config first, then reload)
+nginx -t 2>/dev/null && (systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null) && \
+    echo "  nginx reloaded" || echo "  WARNING: nginx config test failed — check 'nginx -t'"
 
 echo ""
 echo "============================================"
