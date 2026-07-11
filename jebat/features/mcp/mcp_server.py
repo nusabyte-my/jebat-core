@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import sys
 import traceback
 import uuid
@@ -380,47 +381,57 @@ class MCPServer:
         logger.info(f"Starting MCP server on stdio transport")
         sys.stderr.write(f"[JEBAT MCP Server] Starting on stdio, "
                          f"protocol v{MCP_PROTOCOL_VERSION}\n")
+        sys.stderr.flush()
 
-        reader = asyncio.StreamReader()
-        protocol = asyncio.StreamReaderProtocol(reader)
-        await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
+        # Read/write on the raw file descriptors. connect_read_pipe() and
+        # sys.stdin.buffer.detach().read(1) both treat a subprocess pipe as an
+        # immediate EOF and kill the server, so we use os.read/os.write which
+        # block correctly until the IDE sends data or closes the pipe.
+        infd = sys.stdin.fileno()
+        outfd = sys.stdout.fileno()
 
-        writer_transport, writer_protocol = await asyncio.get_event_loop().connect_write_pipe(
-            asyncio.streams.FlowControlMixin, sys.stdout
-        )
-        writer = asyncio.StreamWriter(writer_transport, writer_protocol, reader,
-                                       asyncio.get_event_loop())
+        def blocking_readline() -> Optional[bytes]:
+            data = b""
+            while True:
+                chunk = os.read(infd, 1)
+                if chunk == b"":
+                    # EOF — client disconnected
+                    return data if data else None
+                data += chunk
+                if chunk == b"\n":
+                    return data
+
+        async def read_line() -> Optional[bytes]:
+            return await asyncio.get_event_loop().run_in_executor(None, blocking_readline)
+
+        def write_line(payload: bytes) -> None:
+            os.write(outfd, payload + b"\n")
 
         try:
             while True:
-                line = await reader.readline()
-                if not line:
-                    # EOF — client disconnected
+                raw = await read_line()
+                if raw is None:
                     logger.info("MCP client disconnected (EOF)")
                     break
 
-                line = line.strip()
+                line = raw.strip()
                 if not line:
                     continue
 
                 try:
-                    request = json.loads(line)
+                    request = json.loads(line.decode("utf-8", errors="replace"))
                 except json.JSONDecodeError as e:
-                    writer.write(make_error(None, MCPError.PARSE_ERROR,
-                                           f"JSON parse error: {e}").encode() + b"\n")
-                    await writer.drain()
+                    write_line(make_error(None, MCPError.PARSE_ERROR,
+                                          f"JSON parse error: {e}").encode())
                     continue
 
                 response = await self.handle_request(request)
                 if response is not None:
-                    writer.write(response.encode() + b"\n")
-                    await writer.drain()
+                    write_line(response.encode())
 
         except Exception as e:
             logger.error(f"Stdio server error: {e}")
             sys.stderr.write(f"[JEBAT MCP Server] Error: {e}\n")
-        finally:
-            writer.close()
 
     # ── HTTP Transport (SSE + StreamableHTTP) ────────────────────────────
 
