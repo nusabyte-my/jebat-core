@@ -9,26 +9,30 @@ OUTPUT="${1:-/var/www/jebat.online/og-image.png}"
 WIDTH=1200
 HEIGHT=630
 
-python3 << PY
+python3 - "$WIDTH" "$HEIGHT" "$OUTPUT" << 'PY'
 from PIL import Image, ImageDraw, ImageFont
-import os
+import os, sys
 
-img = Image.new('RGB', ($WIDTH, $HEIGHT), color=(3, 3, 3))
+W = int(sys.argv[1])
+H = int(sys.argv[2])
+OUT = sys.argv[3]
+
+img = Image.new('RGB', (W, H), color=(3, 3, 3))
 draw = ImageDraw.Draw(img)
 
 # Accent bar at top
-draw.rectangle([0, 0, $WIDTH, 4], fill=(0, 240, 255))
+draw.rectangle([0, 0, W, 4], fill=(0, 240, 255))
 
 # Grid lines (subtle)
-for x in range(0, $WIDTH, 60):
-    draw.line([(x, 0), (x, $HEIGHT)], fill=(15, 15, 25), width=1)
-for y in range(0, $HEIGHT, 60):
-    draw.line([(0, y), ($WIDTH, y)], fill=(15, 15, 25), width=1)
+for x in range(0, W, 60):
+    draw.line([(x, 0), (x, H)], fill=(15, 15, 25), width=1)
+for y in range(0, H, 60):
+    draw.line([(0, y), (W, y)], fill=(15, 15, 25), width=1)
 
 # Terminal frame
 margin = 60
 draw.rectangle(
-    [margin, margin, $WIDTH - margin, $HEIGHT - margin],
+    [margin, margin, W - margin, H - margin],
     outline=(26, 26, 36), width=2
 )
 
@@ -60,10 +64,10 @@ for name, code, desc in products:
     y += 40
 
 # Bottom bar
-draw.rectangle([margin, $HEIGHT - 80, $WIDTH - margin, $HEIGHT - margin], outline=(26, 26, 36), width=1)
-draw.text((100, $HEIGHT - 64), "npx @nusabyte/jebat  |  47 MCP Tools  |  17 Providers  |  MIT License", fill=(80, 80, 100), font=font_mono)
+draw.rectangle([margin, H - 80, W - margin, H - margin], outline=(26, 26, 36), width=1)
+draw.text((100, H - 64), "npx @nusabyte/jebat  |  47 MCP Tools  |  17 Providers  |  MIT License", fill=(80, 80, 100), font=font_mono)
 
-os.makedirs(os.path.dirname("$OUTPUT"), exist_ok=True)
-img.save("$OUTPUT")
-print(f"OG image saved: $OUTPUT  ({WIDTH}x{HEIGHT})")
+os.makedirs(os.path.dirname(OUT), exist_ok=True)
+img.save(OUT)
+print(f"OG image saved: {OUT}  ({W}x{H})")
 PY
