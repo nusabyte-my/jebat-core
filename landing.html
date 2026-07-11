@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JEBAT v7.5 — Sovereign AI Platform</title>
     <meta name="description" content="Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. 17 providers, 47 tools, 145 tests — fully air-gapped.">
+    <meta property="og:title" content="JEBAT v7.5 — Sovereign AI Platform">
+    <meta property="og:description" content="Your sovereign AI workstation. Five products, one unified memory layer, zero telemetry. Self-hosted, air-gapped, MIT licensed.">
+    <meta property="og:image" content="https://jebat.online/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jebat.online">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="JEBAT v7.5 — Sovereign AI Platform">
+    <meta name="twitter:description" content="Your sovereign AI workstation. Five products, one unified memory layer, zero telemetry. Self-hosted, air-gapped, MIT licensed.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -155,6 +166,44 @@
             color: var(--cyan);
             border-color: var(--border);
             background: var(--cyan-dim);
+        }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .nav-toggle span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--text);
+            transition: all 0.2s;
+            border-radius: 2px;
+        }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        @media (max-width: 768px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 56px; left: 0; right: 0;
+                background: rgba(3,3,3,0.95);
+                backdrop-filter: blur(16px);
+                border-bottom: 1px solid var(--border);
+                flex-direction: column;
+                padding: 16px 24px;
+                gap: 4px;
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a { font-size: 15px; padding: 10px 14px; }
         }
 
         .btn {
@@ -1006,7 +1055,6 @@
         }
 
         @media (max-width: 640px) {
-            .nav-links { display: none; }
             .hero-actions { flex-direction: column; align-items: center; }
             .hero-stats { flex-direction: column; gap: 24px; }
             .products-grid { grid-template-columns: 1fr; }
@@ -1030,6 +1078,9 @@
                 <div class="logo-mark">🗡</div>
                 JEBAT
             </a>
+            <button class="nav-toggle" aria-label="Toggle navigation" onclick="this.classList.toggle('open');document.querySelector('.nav-links').classList.toggle('open')">
+                <span></span><span></span><span></span>
+            </button>
             <ul class="nav-links">
                 <li><a href="#platform" class="active">Platform</a></li>
                 <li><a href="#q1">Q1 2026</a></li>
@@ -1192,7 +1243,7 @@
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">⚔</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v3.1</span>
                         <span class="pill pill-mcp" style="margin-left:6px;">MCP Native</span>
                     </div>
                     <div class="product-name">Sentinel</div>
@@ -1215,7 +1266,7 @@
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">⌨</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v2.2</span>
                         <span class="pill pill-mcp" style="margin-left:6px;">IDE Ready</span>
                     </div>
                     <div class="product-name">Developer Suite</div>
@@ -1238,7 +1289,7 @@
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">💬</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v2.1</span>
                     </div>
                     <div class="product-name">Companion</div>
                     <div class="product-codename">Sahabat</div>
@@ -1260,7 +1311,7 @@
                 <div class="product-card">
                     <div class="product-header">
                         <div class="product-icon">🌐</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.0</span>
+                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.5</span>
                     </div>
                     <div class="product-name">Nexus</div>
                     <div class="product-codename">Perisai</div>
