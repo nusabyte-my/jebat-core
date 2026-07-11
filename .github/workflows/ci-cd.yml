@@ -59,6 +59,65 @@ jobs:
       - name: Run integration tests
         run: python -m pytest -m "integration" -v --tb=short --strict-markers
 
+  # ─── Inference Stack Tests (live Ollama + router) ────────────────
+  inference:
+    name: Inference Stack (live)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Install Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama and pull a small model
+        run: |
+          # run ollama in the background for the test
+          nohup ollama serve > /tmp/ollama.log 2>&1 &
+          # wait for the daemon
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          ollama pull qwen2.5:0.5b
+          ollama pull nomic-embed-text
+
+      - name: Start the Jebat inference router
+        run: |
+          pip install fastapi uvicorn httpx pyyaml
+          # point config at the local ollama we just started; disable remote
+          python - <<'PY'
+          import re, pathlib
+          p = pathlib.Path("infra/inference/config.yaml")
+          s = p.read_text()
+          s = re.sub(r"enabled:\s*true", "enabled: false", s)  # remote_ollama off in CI
+          p.write_text(s)
+          PY
+          nohup python infra/inference/router.py > /tmp/router.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+
+      - name: Run inference stack tests
+        env:
+          INFER_TEST_OLLAMA_MODEL: qwen2.5:0.5b
+          INFER_TEST_CPP_MODEL: qwen2.5:0.5b
+          INFER_TEST_EMBED_MODEL: nomic-embed-text
+        run: python -m pytest -m "inference" -v --tb=short --strict-markers infra/inference/test_infer_stack.py
+
   # ─── Full Suite with Coverage ────────────────────────────────────
   coverage:
     name: Full Suite + Coverage
@@ -160,8 +219,6 @@ jobs:
         run: |
           echo "Deploying commit ${{ github.sha }} to staging (72.62.255.206)"
           ssh root@72.62.255.206 "cd /var/www/jebat-core && \
-        run: |
-          ssh root@72.62.255.206 "cd /var/www/jebat-core && \
             git fetch origin main && \
             git reset --hard origin/main && \
             echo '✅ Code updated on staging'"
@@ -220,8 +277,6 @@ jobs:
       - name: Pull latest code on production VPS
         run: |
           echo "Deploying commit ${{ github.sha }} to production (72.62.254.65)"
-          ssh root@72.62.254.65 "cd /var/www/jebat-core && \
-        run: |
           ssh root@72.62.254.65 "cd /var/www/jebat-core && \
             git fetch origin main && \
             git reset --hard origin/main && \
