@@ -455,110 +455,94 @@
             100% { opacity: 0.4; transform: scale(0.8); }
         }
 
+        .product-hero {
+            background: var(--canvas);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s;
+        }
+
+        .product-hero:hover {
+            background: var(--surface);
+            box-shadow: inset 0 0 0 1px var(--cyan);
+            z-index: 1;
+        }
+
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
             background: var(--border);
             border: 1px solid var(--border);
         }
 
         .product-card {
             background: var(--canvas);
-            padding: 48px 40px;
-            position: relative;
-            transition: all 0.3s;
+            padding: 34px 30px;
             display: flex;
             flex-direction: column;
+            transition: all 0.25s;
         }
-
-        .product-card:hover { background: var(--surface); }
-
-        .product-card::before {
-            content: '\250C';
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--cyan);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .product-card::after {
-            content: '\2518';
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--cyan);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .product-card:hover::before,
-        .product-card:hover::after { opacity: 0.5; }
 
         .product-card:hover {
-            border-color: var(--cyan);
-            box-shadow: inset 0 1px 0 var(--cyan), 0 0 30px rgba(0,240,255,0.05);
+            background: var(--surface);
+            box-shadow: inset 0 0 0 1px var(--cyan);
+            z-index: 1;
         }
 
         .product-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .product-icon {
-            width: 48px;
-            height: 48px;
+            width: 38px;
+            height: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 17px;
             border: 1px solid var(--border);
             background: var(--surface);
         }
 
         .product-name {
             font-family: var(--font-display);
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 1px;
         }
 
         .product-codename {
             font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 1px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             color: var(--cyan);
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         .product-desc {
             color: var(--text-body);
-            font-size: 14px;
-            line-height: 1.7;
-            flex: 1;
-            margin-bottom: 24px;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 18px;
         }
 
         .product-features {
             list-style: none;
-            margin-bottom: 32px;
-            flex: 1;
+            margin-bottom: auto;
         }
 
         .product-features li {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-body);
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border);
+            padding: 3px 0;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -568,18 +552,21 @@
             content: '\203A';
             color: var(--cyan);
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .product-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-top: 18px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
         }
 
         .product-link {
             font-family: var(--font-mono);
-            font-size: 12px;
+            font-size: 11px;
             color: var(--cyan);
             text-decoration: none;
             letter-spacing: 0.5px;
@@ -588,94 +575,24 @@
 
         .product-link:hover { opacity: 0.7; }
 
-        .product-core {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            padding: 0;
+        .p-hero-h {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 600;
         }
-
-        .product-core-left {
-            padding: 64px 56px;
-            border-right: 1px solid var(--border);
-        }
-
-        .product-core-right {
-            padding: 64px 56px;
-            background: var(--surface);
-        }
-
-        .core-terminal {
-            background: var(--canvas);
-            border: 1px solid var(--border);
+        .p-hero-sub {
             font-family: var(--font-mono);
-            font-size: 13px;
-            line-height: 1.8;
-            overflow: hidden;
-        }
-
-        .core-terminal-header {
-            background: var(--card);
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .term-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--zinc-3);
-        }
-
-        .term-dot.active { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
-
-        .core-terminal-body { padding: 20px; color: var(--text-body); }
-        .core-terminal-body .cyan { color: var(--cyan); }
-        .core-terminal-body .green { color: var(--green); }
-        .core-terminal-body .purple { color: var(--purple); }
-        .core-terminal-body .amber { color: var(--amber); }
-        .core-terminal-body .dim { color: var(--text-dim); }
-
-        .thinking-modes {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 24px;
-        }
-
-        .thinking-mode {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            background: var(--canvas);
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-
-        .thinking-mode:hover {
-            border-color: var(--cyan);
-            background: var(--cyan-dim);
-        }
-
-        .thinking-mode .mode-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .thinking-mode .mode-name {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            color: var(--text);
+            color: var(--cyan);
+        }
+        .p-hero-desc {
+            color: var(--text-body);
+            font-size: 14px;
+            line-height: 1.65;
+            max-width: 640px;
+            margin-bottom: 20px;
         }
 
         .q1-grid {
@@ -1041,8 +958,6 @@
         .footer-links a:hover { color: var(--cyan); }
 
         @media (max-width: 900px) {
-            .product-core { grid-template-columns: 1fr; }
-            .product-core-left { border-right: none; border-bottom: 1px solid var(--border); }
             .q1-grid { grid-template-columns: 1fr; }
             .github-grid { grid-template-columns: 1fr 1fr; }
             .mcp-grid { grid-template-columns: 1fr; }
@@ -1058,7 +973,6 @@
             .hero-actions { flex-direction: column; align-items: center; }
             .hero-stats { flex-direction: column; gap: 24px; }
             .products-grid { grid-template-columns: 1fr; }
-            .thinking-modes { grid-template-columns: 1fr; }
             .github-grid { grid-template-columns: 1fr; }
             .mcp-ide-grid { grid-template-columns: repeat(2, 1fr); }
             .footer-grid { grid-template-columns: 1fr; }
@@ -1182,63 +1096,28 @@
                 Install what you need. They all talk to each other.
             </p>
 
-            <div class="products-grid">
-
-                <div class="product-card product-core">
-                    <div class="product-core-left">
-                        <div class="product-header">
-                            <div class="product-icon">🗡</div>
-                            <span class="pill pill-live"><span class="pill-dot"></span> Live v7.5</span>
-                        </div>
-                        <div class="product-name">JEBAT Core</div>
-                        <div class="product-codename">Hang Jebat</div>
-                        <p class="product-desc">
-                            Sovereign inference router with 7 reasoning modes, 5-layer memory &amp; multi-agent swarm orchestration. Routes to 17 providers with automatic failover.
-                        </p>
-                        <ul class="product-features">
-                            <li>7 Thinking Modes — Fast, Deliberate, Deep, Strategic, Creative, Critical, Custom</li>
-                            <li>5-Layer Memory — M0 Sensory through M4 Procedural</li>
-                            <li>Multi-Agent Swarm — Tukang, Hulubalang, Pawang, Syahbandar, Bendahara, Penyemak</li>
-                            <li>17-Provider LLM Router with automatic failover</li>
-                            <li>47 Registered MCP Tools — file ops, git, browser, code gen, analytics</li>
-                        </ul>
-                        <div class="product-footer">
-                            <a href="https://github.com/nusabyte-my/jebat-core" class="product-link">View on GitHub →</a>
-                        </div>
-                    </div>
-                    <div class="product-core-right">
-                        <div class="section-label" style="margin-bottom:20px;">7 Thinking Modes</div>
-                        <div class="thinking-modes">
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div><span class="mode-name">Fast</span></div>
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></div><span class="mode-name">Deliberate</span></div>
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div><span class="mode-name">Deep</span></div>
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div><span class="mode-name">Strategic</span></div>
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div><span class="mode-name">Creative</span></div>
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--amber);box-shadow:0 0 6px var(--amber)"></div><span class="mode-name">Critical</span></div>
-                            <div class="thinking-mode"><div class="mode-dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span class="mode-name">Custom</span></div>
-                        </div>
-                        <div class="core-terminal" style="margin-top:24px;">
-                            <div class="core-terminal-header">
-                                <div class="term-dot active"></div>
-                                <div class="term-dot"></div>
-                                <div class="term-dot"></div>
-                                <span class="mono" style="font-size:10px;color:var(--text-dim);margin-left:8px;">jebat_core.sys</span>
-                            </div>
-                            <div class="core-terminal-body">
-                                <div><span class="cyan">[CORE]</span> Sovereign inference router <span class="green">online</span> <span class="dim">v7.5</span></div>
-                                <div><span class="cyan">[MEM]</span> 5-layer memory engine <span class="green">active</span></div>
-                                <div><span class="cyan">[SWARM]</span> 6 specialist agents <span class="green">registered</span></div>
-                                <div><span class="cyan">[MCP]</span> 47 tools on protocol bus <span class="green">listening</span></div>
-                                <div><span class="cyan">[LLM]</span> 17 providers <span class="green">routed</span> with failover</div>
-                                <div><span class="dim">──────────────────────────</span></div>
-                                <div><span class="purple">MODE:</span> deliberate</div>
-                                <div><span class="purple">TOOLS:</span> 47 registered</div>
-                                <div><span class="purple">TESTS:</span> <span class="green">145/145 passing</span></div>
-                                <div><span class="green">Ready for instruction.</span></div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="product-hero">
+                <div class="product-header">
+                    <div class="product-icon">🗡</div>
+                    <span class="pill pill-live"><span class="pill-dot"></span> Live v7.5</span>
                 </div>
+                <div class="p-hero-h">JEBAT Core</div>
+                <div class="p-hero-sub">Hang Jebat</div>
+                <p class="p-hero-desc">
+                    Sovereign inference router with 7 reasoning modes, 5-layer memory &amp; multi-agent swarm orchestration. Routes to 17 providers with automatic failover.
+                </p>
+                <ul class="product-features">
+                    <li>7 Thinking Modes — Fast, Deliberate, Deep, Strategic, Creative, Critical, Custom</li>
+                    <li>5-Layer Memory — M0 Sensory through M4 Procedural</li>
+                    <li>Multi-Agent Swarm — Tukang, Hulubalang, Pawang, Syahbandar, Bendahara, Penyemak</li>
+                    <li>17-Provider LLM Router with automatic failover</li>
+                </ul>
+                <div class="product-footer">
+                    <a href="https://github.com/nusabyte-my/jebat-core" class="product-link">View on GitHub →</a>
+                </div>
+            </div>
+
+            <div class="products-grid">
 
                 <div class="product-card">
                     <div class="product-header">
@@ -1256,7 +1135,6 @@
                         <li>Real-time CVE correlation &amp; CVSS v3 scoring</li>
                         <li>Quick, Standard, Full &amp; Vulnerability scan profiles</li>
                         <li>Air-gapped operation — zero external egress</li>
-                        <li>Executive security briefings with remediation paths</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#quickstart" class="product-link">Get Started →</a>
@@ -1279,7 +1157,6 @@
                         <li>Sandboxed Python/JS/Go execution environment</li>
                         <li>IDE integration — Cursor, VS Code, Zed, Windsurf, JetBrains</li>
                         <li>Auto-detect workspace &amp; one-command IDE config</li>
-                        <li>Git-aware change planning &amp; patch generation</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#mcp" class="product-link">View MCP Setup →</a>
@@ -1301,7 +1178,6 @@
                         <li>Daily briefing &amp; standup report generator</li>
                         <li>Meeting transcript summarization</li>
                         <li>Team task management with assignment tracking</li>
-                        <li>Multi-session chat with cross-session context</li>
                     </ul>
                     <div class="product-footer">
                         <a href="#quickstart" class="product-link">Get Started →</a>
