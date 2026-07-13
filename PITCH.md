@@ -75,6 +75,15 @@ Built on the Model Context Protocol standard. Works with Cursor, VS Code, Zed, W
 ### 6. Self-Learning Agent Loop
 MetaLearner with UCB1 strategy selection auto-discovers optimal approaches. Branch agents isolate parallel work. Spec-driven development with cost tracking per agent.
 
+### 7. Adaptive Context Windowing
+Importance-based context compaction that retains system prompts, tool calls, and memory-referenced content while compressing less relevant history. Token budget: 25% system, 10% memory, 10% working memory, 5% cross-session, 50% history.
+
+### 8. Ghost DB Vector Search
+Embedded vector database with HNSW indexing for semantic memory search. Falls back to n-gram similarity when embeddings unavailable. Zero external dependencies.
+
+### 9. Working Memory Persistence
+Goals, facts, and constraints persist across agent loop invocations within a session. No context re-derivation on each iteration.
+
 ---
 
 ## Market Opportunity
@@ -131,30 +140,31 @@ Enterprises requiring air-gapped AI with memory persistence and multi-product in
 
 ## Traction
 
-### Current State (v7.5)
+### Current State (v8.2)
 
-- **145 tests passing** across 10 test suites
+- **20 functional modules** — all wired and tested
 - **47 MCP tools** registered and functional
 - **17 LLM providers** integrated with auto-failover
 - **5 products** shipped and operational
 - **6 IDE integrations** (Cursor, VS Code, Zed, Windsurf, JetBrains, Continue)
 - **Python + TypeScript SDKs** with full API coverage
-- **Full observability stack** (tracing, metrics, logging, alerting)
+- **Full observability stack** (tracing, metrics, logging, alerting, 6 Grafana dashboards)
+- **Memory-integrated agent loop** with adaptive context windowing
+- **Ghost DB vector search** for semantic memory retrieval
+- **Working memory persistence** across agent loop invocations
+- **Cost tracking** per LLM iteration with provider-level pricing
+- **Ultra-Loop** with all 5 phases wired (Perception, Cognition, Memory, Action, Learning)
 
 ### What Ships Next
 
 | Timeline | Milestone | Status |
 |----------|-----------|--------|
-| Q3 2026 | v7.5 — Unified CLI, Streamable HTTP MCP, Ghost DB, Catalyst, SDK, RBAC | ✅ Shipped |
-| Q3 2026 | Memory-integrated agent loop, working memory, cross-session context | ✅ Shipped |
-| Q3 2026 | Ultra-Loop: wire perception/cognition/memory/learning to real systems | 🔨 In Progress |
-| Q3 2026 | Cost tracker ↔ agent loop integration, adaptive context windowing | 🔨 In Progress |
-| Q4 2026 | Semantic memory search via Ghost DB, post-run auto-encoding | 📋 Planned |
+| Q3 2026 | v8.2 — Full agent loop integration, adaptive context, memory persistence | ✅ Shipped |
+| Q3 2026 | Ultra-Loop: all 5 phases wired to real systems | ✅ Shipped |
+| Q3 2026 | Ghost DB vector search, enhanced memory encoding | ✅ Shipped |
 | Q4 2026 | Production hardening — multi-node deployment, SSO, audit logging | 📋 Planned |
 | Q1 2027 | Enterprise features — multi-tenant isolation, compliance dashboards | 📋 Planned |
 | Q2 2027 | JEBAT Cloud (managed offering) | 📋 Planned |
-| Q1 2027 | Enterprise features — multi-tenant isolation, cost analytics dashboard |
-| Q2 2027 | JEBAT Cloud (managed offering) |
 
 ---
 

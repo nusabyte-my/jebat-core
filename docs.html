@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JEBAT v6.1 Documentation — Guides, Deployment &amp; API Reference</title>
+<title>JEBAT v8.2 Documentation — Guides, Deployment &amp; API Reference</title>
 <meta name="description" content="Comprehensive JEBAT documentation: installation guides, deployment instructions, API reference, architecture overview, and operational playbooks for the sovereign AI platform." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -581,22 +581,33 @@ API Server (72.62.254.65:8000)
 <!-- ═══════════════ GUIDE: MEMORY ═══════════════ -->
 <section id="guide-memory">
 <h2>Memory System</h2>
-<p>JEBAT implements a 5-layer eternal memory system with heat-scored retrieval for persistent cross-session context.</p>
+<p>JEBAT implements a 6-type hierarchical memory system with Ebbinghaus forgetting curves, Ghost DB vector search, and automatic consolidation.</p>
 
-<h3>Memory Layers</h3>
+<h3>Memory Types</h3>
 <table>
-  <thead><tr><th>Layer</th><th>Purpose</th><th>Storage</th><th>Retention</th></tr></thead>
+  <thead><tr><th>Type</th><th>Purpose</th><th>Retention</th></tr></thead>
   <tbody>
-    <tr><td><strong>Sensory (M0)</strong></td><td>Live working context</td><td>In-memory</td><td>Current session</td></tr>
-    <tr><td><strong>Episodic (M1)</strong></td><td>Session logs &amp; events</td><td>PostgreSQL</td><td>30 days</td></tr>
-    <tr><td><strong>Semantic (M2)</strong></td><td>Concepts &amp; facts</td><td>PostgreSQL</td><td>Permanent</td></tr>
-    <tr><td><strong>Conceptual (M3)</strong></td><td>Abstracted patterns</td><td>PostgreSQL</td><td>Permanent</td></tr>
-    <tr><td><strong>Procedural (M4)</strong></td><td>Action patterns &amp; skills</td><td>PostgreSQL</td><td>Permanent</td></tr>
+    <tr><td><strong>Working</strong></td><td>Live context buffer (goals/facts/constraints)</td><td>Current session</td></tr>
+    <tr><td><strong>Episodic</strong></td><td>Events, experiences, agent runs</td><td>30 days (decays)</td></tr>
+    <tr><td><strong>Semantic</strong></td><td>Facts, knowledge, decisions</td><td>Permanent</td></tr>
+    <tr><td><strong>Procedural</strong></td><td>Skills, action patterns, files modified</td><td>Permanent</td></tr>
+    <tr><td><strong>Emotional</strong></td><td>Affective memories, user preferences</td><td>Variable</td></tr>
+    <tr><td><strong>Prospective</strong></td><td>Future intentions, planned tasks</td><td>Until executed</td></tr>
   </tbody>
 </table>
 
-<h3>Heat Scoring</h3>
-<p>Memories are scored by recency, access frequency, and relevance. Frequently accessed memories stay "hot" and are retrieved first. Unused memories cool down over time but are never deleted.</p>
+<h3>Key Features</h3>
+<table>
+  <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Forgetting Curves</strong></td><td>Ebbinghaus decay with reinforcement from access/consolidation</td></tr>
+    <tr><td><strong>Ghost DB Vector Search</strong></td><td>HNSW indexing for semantic similarity retrieval</td></tr>
+    <tr><td><strong>Auto-Encoding</strong></td><td>Agent loop extracts decisions, files, errors from tool results</td></tr>
+    <tr><td><strong>Working Memory Persistence</strong></td><td>Goals/facts/constraints saved across agent loop invocations</td></tr>
+    <tr><td><strong>Consolidation</strong></td><td>Automatic strengthening and pruning during idle cycles</td></tr>
+    <tr><td><strong>Spreading Activation</strong></td><td>Linked memories activated together for associative recall</td></tr>
+  </tbody>
+</table>
 
 <h3>CLI Usage</h3>
 <pre><span class="comment"># Store a memory</span>
@@ -770,24 +781,37 @@ API Server (72.62.254.65:8000)
 <table>
   <thead><tr><th>Layer</th><th>Components</th><th>Tech</th></tr></thead>
   <tbody>
-    <tr><td><strong>API Gateway</strong></td><td>FastAPI, CORS, API key auth, request logging</td><td>Python, Uvicorn</td></tr>
-    <tr><td><strong>Cognitive Router</strong></td><td>7-mode Ultra-Think, provider failover chain</td><td>Python async</td></tr>
-    <tr><td><strong>Agent Engine</strong></td><td>ReAct loop, swarm orchestrator, 17 roles</td><td>Python asyncio</td></tr>
-    <tr><td><strong>Memory System</strong></td><td>5-layer heat-scored recall, M0-M4</td><td>PostgreSQL, pgvector</td></tr>
-    <tr><td><strong>MCP Protocol</strong></td><td>13 tools, stdio/HTTP transport</td><td>MCP SDK</td></tr>
-    <tr><td><strong>Observability</strong></td><td>Catalyst tracing, HALO analysis, Prometheus</td><td>Python, Grafana</td></tr>
-    <tr><td><strong>Security</strong></td><td>3-tier RBAC, Fernet encryption, Argon2id</td><td>cryptography</td></tr>
-    <tr><td><strong>Persistence</strong></td><td>PostgreSQL (TimescaleDB + pgvector), Redis</td><td>Docker Compose</td></tr>
+    <tr><td><strong>L0 — Interface</strong></td><td>WebUI, CLI, MCP (47 tools), SDK (Py+TS), REST</td><td>Python, TypeScript</td></tr>
+    <tr><td><strong>L1 — Agents</strong></td><td>ReAct Loop, Ultra-Think, Swarm, Branch Agents, Spec-Dev</td><td>Python asyncio</td></tr>
+    <tr><td><strong>L2 — Products</strong></td><td>Core, Sentinel, DevSuite, Companion, Nexus</td><td>5 integrated products</td></tr>
+    <tr><td><strong>L3 — Cognition</strong></td><td>6-Type Memory, Ghost DB, Mimpi, Self-Learning</td><td>SQLite + sqlite-vec</td></tr>
+    <tr><td><strong>L4 — Infrastructure</strong></td><td>17-Provider Router, MCP Bus, Catalyst O11y, RBAC</td><td>Python, Prometheus</td></tr>
+    <tr><td><strong>L5 — Runtime</strong></td><td>SQLite+sqlite-vec, Ollama, Docker, Air-Gapped</td><td>Zero external deps</td></tr>
+  </tbody>
+</table>
+
+<h3>Agent Loop Features</h3>
+<table>
+  <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>ContextManager</strong></td><td>Token-aware context assembly with wiki/memory/history compression</td></tr>
+    <tr><td><strong>Adaptive Compaction</strong></td><td>Importance-based context retention (system > tool calls > memory > recent)</td></tr>
+    <tr><td><strong>Working Memory</strong></td><td>Persistent goals/facts/constraints across agent loop invocations</td></tr>
+    <tr><td><strong>Cost Tracking</strong></td><td>Per-iteration token cost with provider-level pricing</td></tr>
+    <tr><td><strong>Memory Encoding</strong></td><td>Auto-extracts decisions, files modified, errors from tool results</td></tr>
+    <tr><td><strong>Vector Search</strong></td><td>Ghost DB HNSW indexing for semantic memory retrieval</td></tr>
   </tbody>
 </table>
 
 <h3>Data Flow</h3>
 <pre>
-User Request → API Gateway (auth, logging)
-    → Cognitive Router (select provider + reasoning mode)
-    → LLM Provider (OpenAI / Anthropic / Ollama / llama.cpp / OpenRouter)
+User Request → ContextManager (token budget assembly)
+    → Adaptive Compaction (importance-based retention)
+    → Working Memory (goals/facts/constraints injection)
+    → LLM Provider (17 providers with auto-failover)
     → Agent Engine (ReAct loop, tool calls)
-    → Memory System (recall + store)
+    → Memory System (auto-encode outcomes)
+    → Cost Tracker (per-iteration billing)
     → Response (SSE stream or JSON)
 </pre>
 </section>
