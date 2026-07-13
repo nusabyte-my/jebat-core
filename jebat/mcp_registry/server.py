@@ -13,8 +13,8 @@ Provides AI capabilities to IDEs via MCP:
 - Debug analysis
 
 Usage:
-    python -m jebat.mcp.server
-    python -m jebat.mcp.server --port 8787
+    python -m jebat.mcp_registry.server
+    python -m jebat.mcp_registry.server --port 8787
 """
 
 import asyncio
@@ -52,7 +52,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger("jebat.mcp.server")
+logger = logging.getLogger("jebat.mcp_registry.server")
 
 
 class JEBATMCPServer:

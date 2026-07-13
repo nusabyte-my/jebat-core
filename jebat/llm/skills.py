@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from jebat.mcp.skill_registry import Skill, SkillRegistry
+from jebat.mcp_registry.skill_registry import Skill, SkillRegistry
 
 
 @dataclass(frozen=True, slots=True)

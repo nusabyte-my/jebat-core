@@ -29,3 +29,8 @@ asyncpg>=0.29.0
 # Security
 numpy>=1.24.0
 scikit-learn>=1.4.0
+cryptography>=42.0.0
+
+# Integrations
+email-validator>=2.1.0
+mcp>=1.0.0

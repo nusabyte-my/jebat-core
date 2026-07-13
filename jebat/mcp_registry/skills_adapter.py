@@ -4,7 +4,7 @@
 Load and integrate JEBAT Tok Guru skills via MCP.
 
 Usage:
-    from jebat.mcp.skills_adapter import SkillsAdapter
+    from jebat.mcp_registry.skills_adapter import SkillsAdapter
 
     adapter = SkillsAdapter(skills_path="~/.jebat/tokguru")
     await adapter.load_skills()

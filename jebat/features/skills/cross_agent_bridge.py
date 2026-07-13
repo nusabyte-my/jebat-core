@@ -1218,7 +1218,7 @@ class CrossAgentBridge:
         Returns the number of skills registered.
         """
         try:
-            from jebat.mcp.skill_registry import SkillRegistry, Skill as JebatSkill
+            from jebat.mcp_registry.skill_registry import SkillRegistry, Skill as JebatSkill
         except ImportError:
             logger.warning("JEBAT SkillRegistry not available, skipping registration")
             return 0

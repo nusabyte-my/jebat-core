@@ -18,6 +18,9 @@ httpx>=0.26.0
 
 # === Async & HTTP ===
 aiohttp>=3.9.1
+cryptography>=42.0.0
+email-validator>=2.1.0
+mcp>=1.0.0
 websockets>=12.0
 
 # === Utilities ===
