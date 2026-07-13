@@ -1,0 +1,51 @@
+# JEBAT SDK — Python
+name = "jebat-sdk"
+version = "1.0.0"
+description = "Official JEBAT Platform SDK for Python"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "NusaByte.my", email = "sdk@nusabyte.my"}]
+keywords = ["jebat", "ai", "llm", "agents", "mcp", "sentinel", "companion", "nexus"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+async = ["httpx[http2]"]
+mcp = ["mcp>=1.0"]
+cli = ["click>=8.1", "rich>=13.7"]
+dev = ["pytest>=8.2", "pytest-asyncio>=0.23", "ruff>=0.5", "mypy>=1.10"]
+
+[project.urls]
+Homepage = "https://github.com/nusabyte/jebat-sdk"
+Repository = "https://github.com/nusabyte/jebat-sdk"
+Documentation = "https://sdk.jebat.ai/python"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jebat_sdk"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I", "W", "UP", "B", "C4", "SIM", "T20"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
