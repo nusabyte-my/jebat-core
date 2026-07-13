@@ -1,0 +1,5 @@
+# JEBAT static site redirects (Cloudflare Pages)
+# The installer must be served as a script, not the SPA fallback (landing.html).
+# _redirects is evaluated before the SPA rewrite, so this wins.
+/install.sh https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh 302
+/install    https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh 302

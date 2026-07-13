@@ -239,8 +239,8 @@ footer a { color: var(--emerald); text-decoration: none; }
 <span class="comment"># Or with bun</span>
 <span class="cmd">bunx @nusabyte/jebat repl</span>
 
-<span class="comment"># Or Python direct</span>
-<span class="cmd">pip install jebat</span>
+<span class="comment"># Headless / agent / CI: bootstrap is fully non-interactive</span>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --yes --quiet</span>
 <span class="cmd">jebat repl</span></pre>
 
 <div class="info-box tip">
@@ -265,16 +265,24 @@ footer a { color: var(--emerald); text-decoration: none; }
 </table>
 
 <h3>Python Install</h3>
-<pre><span class="comment"># Install from PyPI</span>
-<span class="cmd">pip install jebat</span>
+<pre><span class="comment"># Supported path: the bootstrap script (clones core, builds a venv, no sudo)</span>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash</span>
+<span class="cmd">jebat repl</span>
 
-<span class="comment"># Or install from source</span>
+<span class="comment"># Advanced: editable install from a cloned checkout</span>
 <span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git</span>
 <span class="cmd">cd jebat-core</span>
+<span class="cmd">python -m venv .venv && source .venv/bin/activate</span>
 <span class="cmd">pip install -e .</span>
 
 <span class="comment"># Verify installation</span>
 <span class="cmd">jebat --version</span></pre>
+
+<div class="info-box warn">
+  <strong>⚠️ PyPI name collision:</strong> <code>pip install jebat</code> installs an
+  <em>unrelated</em> package from PyPI (a website checker), <strong>not</strong> JEBAT.
+  JEBAT is not published to PyPI under that name — always use the bootstrap above.
+</div>
 
 <h3>Node.js Wrapper</h3>
 <pre><span class="comment"># Global install</span>
@@ -668,7 +676,15 @@ API Server (72.62.254.65:8000)
   <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">JetBrains</span>
 </div>
 
-<h3>Quick Connect</h3>
+<h3>Quick Connect — Zero Install (Recommended)</h3>
+<pre><span class="comment"># Point your IDE at the public Streamable-HTTP endpoint.</span>
+<span class="comment"># No local install required — works in Cursor, Claude, VS Code, Zed.</span>
+<span class="cmd">https://mcp.jebat.online/mcp</span>
+
+<span class="comment"># Generate a paste-ready config for your client (cursor|vscode|claude|zed):</span>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --print-mcp-config=cursor</span></pre>
+
+<h3>Local Server (optional)</h3>
 <pre><span class="comment"># Start MCP server (stdio transport for Cursor/VS Code)</span>
 <span class="cmd">jebat mcp serve --transport stdio</span>
 
@@ -681,7 +697,7 @@ API Server (72.62.254.65:8000)
 <span class="comment"># List available tools</span>
 <span class="cmd">jebat mcp tools list</span></pre>
 
-<h3>13 Core MCP Tools</h3>
+<h3>MCP Tools — 47 total (13 highlighted)</h3>
 <table>
   <thead><tr><th>#</th><th>Tool</th><th>Capability</th></tr></thead>
   <tbody>

@@ -1,100 +1,135 @@
 #!/usr/bin/env node
-// JEBAT npm wrapper - installs Python package and runs CLI
-// Usage: npx jebat [args...] or bunx jebat [args...]
+// JEBAT npm wrapper — installs the Python package and runs the CLI.
+// Agent-friendly: non-interactive, no prompts, clean exit codes, and a
+// bootstrap URL that always serves plaintext (raw GitHub), with a fallback
+// if the CDN/proxy ever returns HTML instead of the script.
+//
+// Usage: npx @nusabyte/jebat [command] [options]
 
 import { spawnSync, spawn } from 'child_process';
-import { existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { platform } from 'os';
+import https from 'https';
+import os from 'os';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
 const PACKAGE_NAME = 'jebat';
-const PYTHON_CMD = process.platform === 'win32' ? 'python.exe' : 'python3';
+const JEBAT_VERSION = '8.2.0';
 
-function log(msg) {
-  console.error(`[jebat] ${msg}`);
+// Canonical bootstrap script. The raw GitHub URL ALWAYS serves the script as
+// plaintext, so it is the reliable default for both humans and agents.
+const INSTALL_SCRIPT_URL = 'https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh';
+// Fallback CDN URL (proxied). Only used if the primary fails or returns HTML.
+const INSTALL_SCRIPT_URL_ALT = 'https://jebat.online/install.sh';
+
+const IS_WIN = platform() === 'win32';
+const PYTHON_CMD = process.env.JEBAT_PYTHON || (IS_WIN ? 'python.exe' : 'python3');
+
+function log(msg) { console.error(`[jebat] ${msg}`); }
+function error(msg) { console.error(`[jebat] ERROR: ${msg}`); process.exit(1); }
+
+// ── helpers ───────────────────────────────────────────────────────────────
+function hasCommand(cmd) {
+  const r = spawnSync(IS_WIN ? 'where' : 'command', IS_WIN ? [cmd] : ['-v', cmd], { stdio: 'pipe' });
+  return r.status === 0;
 }
 
-function error(msg) {
-  console.error(`[jebat] ERROR: ${msg}`);
-  process.exit(1);
-}
-
-function checkPython() {
-  try {
-    const result = spawnSync(PYTHON_CMD, ['--version'], { stdio: 'pipe' });
-    if (result.status !== 0) {
-      return false;
-    }
-    return true;
-  } catch {
-    return false;
+function findPython() {
+  for (const c of [process.env.JEBAT_PYTHON, 'python3', 'python', 'py'].filter(Boolean)) {
+    const r = spawnSync(c, ['--version'], { stdio: 'pipe' });
+    if (r.status === 0) return c;
   }
+  return null;
 }
 
-function checkPip() {
-  try {
-    const result = spawnSync(PYTHON_CMD, ['-m', 'pip', '--version'], { stdio: 'pipe' });
-    return result.status === 0;
-  } catch {
-    return false;
-  }
-}
-
-function installJebat() {
-  log('Bootstrapping JEBAT via the installer...');
-  const installer = spawnSync('bash', ['-c', 'curl -fsSL https://jebat.online/install.sh | bash'], {
-    stdio: 'inherit',
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+// Fetch a URL and return { ok, isHtml, body }
+function fetchText(url) {
+  return new Promise((resolve) => {
+    const req = https.get(url, { timeout: 20000 }, (res) => {
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return resolve(fetchText(res.headers.location));
+      }
+      if (!res.statusCode || res.statusCode >= 400) {
+        res.resume();
+        return resolve({ ok: false, isHtml: false, body: '' });
+      }
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf8');
+        const isHtml = /^\s*<!DOCTYPE html/i.test(body) || /^\s*<html/i.test(body);
+        resolve({ ok: true, isHtml, body });
+      });
+    });
+    req.on('timeout', () => { req.destroy(); resolve({ ok: false, isHtml: false, body: '' }); });
+    req.on('error', () => resolve({ ok: false, isHtml: false, body: '' }));
   });
-  if (installer.status !== 0) {
-    error('Failed to bootstrap JEBAT. See https://jebat.online/install.sh');
-  }
-  log('JEBAT bootstrapped successfully!');
 }
+
+// Download the installer and run it with bash (--yes --quiet for agents/CI).
+// Falls back to the alternate URL if the primary returns HTML or fails.
+async function installJebat() {
+  log('Bootstrapping JEBAT via the installer…');
+
+  if (!hasCommand('bash')) {
+    if (IS_WIN) {
+      error('bash not found. On Windows, install Git for Windows (adds bash to PATH) or run inside WSL, then retry: npx @nusabyte/jebat repl');
+    }
+    error('bash not found. Install bash and retry: npx @nusabyte/jebat repl');
+  }
+
+  const tryUrl = async (url) => {
+    const r = await fetchText(url);
+    if (!r.ok) { warnOnce(`could not fetch ${url}`); return false; }
+    if (r.isHtml) { warnOnce(`${url} returned HTML instead of a script; trying fallback.`); return false; }
+    const tmp = resolve(os.tmpdir(), `jebat-install-${Date.now()}.sh`);
+    fs.writeFileSync(tmp, r.body, { mode: 0o755 });
+    const install = spawnSync('bash', [tmp, '--yes', '--quiet'], {
+      stdio: 'inherit',
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    });
+    fs.unlinkSync(tmp);
+    return install.status === 0;
+  };
+
+  if (await tryUrl(INSTALL_SCRIPT_URL)) return true;
+  if (await tryUrl(INSTALL_SCRIPT_URL_ALT)) return true;
+  error('Failed to download the JEBAT installer. See https://jebat.online/install.html');
+  return false;
+}
+
+let _warned = false;
+function warnOnce(msg) { if (!_warned) { _warned = true; console.error(`[jebat] ${msg}`); } }
 
 function runJebat(args) {
   const pythonArgs = ['-m', 'jebat_cli_new', ...args];
-  
-  // Use spawn for interactive mode (REPL)
   const isInteractive = args.includes('repl') || args.length === 0;
-  
+
   if (isInteractive && process.stdin.isTTY) {
-    // Interactive mode - use spawn with stdio inherit
     const child = spawn(PYTHON_CMD, pythonArgs, {
       stdio: 'inherit',
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1' }
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1' },
     });
-    
-    child.on('error', (err) => {
-      error(`Failed to start JEBAT: ${err.message}`);
-    });
-    
-    child.on('exit', (code) => {
-      process.exit(code || 0);
-    });
-    
-    // Handle signals
+    child.on('error', (err) => error(`Failed to start JEBAT: ${err.message}`));
+    child.on('exit', (code) => process.exit(code || 0));
     process.on('SIGINT', () => child.kill('SIGINT'));
     process.on('SIGTERM', () => child.kill('SIGTERM'));
   } else {
-    // Non-interactive mode - use spawnSync
     const result = spawnSync(PYTHON_CMD, pythonArgs, {
       stdio: 'inherit',
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
     });
     process.exit(result.status || 0);
   }
 }
 
-async function main() {
-  const args = process.argv.slice(2);
-  
-  // Handle special flags
-  if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
-    console.log(`JEBAT v8.2.0 — Sovereign Agent OS & Agent Workstation
-    
+function printHelp() {
+  console.log(`JEBAT v${JEBAT_VERSION} — Sovereign Agent OS & Agent Workstation
+
 Usage: npx jebat [command] [options]
 
 Commands:
@@ -114,54 +149,49 @@ Commands:
 Examples:
   npx jebat repl
   npx jebat chat "Hello JEBAT"
-  npx jebat agent "Analyze this codebase"
+  npx jebat agent "Audit all API endpoints in src/services"
   npx jebat code "Create a REST API"
   npx jebat webui
-  npx jebat config show
 
 Installation:
   This wrapper installs the Python package automatically on first run.
-  Requires: Python 3.11+ and pip
+  Requires: Python 3.11+ and pip. No sudo required.
+  For AI agents / CI, the installer is fully non-interactive (--yes --quiet).
 
-Remote Ollama:
-  JEBAT uses https://jebat.online/ollama as the default endpoint.
-  Models: qwen2.5-coder:7b, qwen2.5:14b (CPU inference on AMD EPYC)
+Zero-install MCP (no local install needed):
+  Connect your IDE (Cursor / Claude / VS Code / Zed) to:
+    https://mcp.jebat.online/mcp   (Streamable HTTP, 47 tools)
 `);
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
+    printHelp();
     return;
   }
-  
   if (args.includes('--version') || args.includes('-v')) {
-    console.log('JEBAT 8.2.0 (npm wrapper)');
+    console.log(`JEBAT ${JEBAT_VERSION} (npm wrapper)`);
     return;
   }
-  
-  // Check Python
-  if (!checkPython()) {
-    error('Python 3.11+ not found. Please install Python from https://python.org');
-  }
-  
-  // Check pip
-  if (!checkPip()) {
-    error('pip not found. Please install pip (usually comes with Python).');
-  }
-  
-  // Check if jebat is installed
-  const checkResult = spawnSync(PYTHON_CMD, ['-c', 'import jebat_cli_new; print("OK")'], { 
-    stdio: 'pipe', 
-    encoding: 'utf-8'
-  });
-  
-  if (checkResult.status !== 0) {
-    log('JEBAT not found. Installing...');
-    installJebat();
+
+  const py = findPython();
+  if (!py) error('Python 3.11+ not found. Install it from https://python.org and retry.');
+
+  const check = spawnSync(py, ['-c', 'import jebat_cli_new; print("OK")'], { stdio: 'pipe', encoding: 'utf-8' });
+
+  if (check.status !== 0) {
+    log('JEBAT not found. Installing…');
+    const ok = await installJebat();
+    if (!ok) process.exit(1);
+    const recheck = spawnSync(py, ['-c', 'import jebat_cli_new; print("OK")'], { stdio: 'pipe', encoding: 'utf-8' });
+    if (recheck.status !== 0) error('JEBAT install did not complete. Check the logs above.');
   } else {
-    log(`JEBAT installed`);
+    log('JEBAT already installed.');
   }
-  
-  // Run JEBAT
+
   runJebat(args);
 }
 
-main().catch(err => {
-  error(`Unexpected error: ${err.message}`);
-});
+main().catch((err) => error(`Unexpected error: ${err.message}`));

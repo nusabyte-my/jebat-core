@@ -41,7 +41,61 @@ c_comp()   { printf '\033[1;34m    ├─\033[0m %s\n' "$1"; }
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { c_fail "required: $1"; exit 1; }; }
 
+# ── MCP config emission (agent / IDE setup, no install required) ─────────
+# Prints a ready-to-paste MCP server config for the requested client.
+# Two transports are offered:
+#   - stdio  : runs the local JEBAT MCP server (needs the package installed)
+#   - http   : zero-install public endpoint (https://mcp.jebat.online/mcp)
+print_mcp_config() {
+  local client="${1:-generic}"
+  local py="${2:-python3}"
+  local stdio='"jebat": { "command": "'"$py"'", "args": ["-m", "jebat.mcp.server"], "env": { "JEBAT_MCP_TRANSPORT": "stdio" } }'
+  local http='"jebat-online": { "url": "https://mcp.jebat.online/mcp" }'
+  local body
+  body=$(cat <<JSON
+{
+  "mcpServers": {
+    $stdio,
+    $http
+  }
+}
+JSON
+)
+  case "$client" in
+    cursor|vscode)
+      # Cursor and VS Code consume the same mcpServers shape.
+      printf '%s\n' "$body"
+      ;;
+    claude)
+      # Claude Desktop config file (claude_desktop_config.json)
+      printf '%s\n' "$body"
+      ;;
+    zed)
+      # Zed uses context_servers with a stdio source.
+      cat <<JSON
+{
+  "context_servers": {
+    "jebat": {
+      "source": { "type": "stdio", "command": "$py", "args": ["-m", "jebat.mcp.server"] }
+    }
+  }
+}
+JSON
+      ;;
+    generic|*)
+      printf '%s\n' "$body"
+      ;;
+  esac
+  echo >&2 "Paste the config above into your IDE's MCP settings."
+  echo >&2 "Prefer the zero-install 'jebat-online' HTTP endpoint (no local install needed)."
+}
+
 # ── parse args ────────────────────────────────────────────────────────
+ASSUME_YES=0
+QUIET=0
+MCP_CONFIG_CLIENT=""
+MCP_ONLY=0
+PRINT_HELP=0
 for a in "$@"; do
   case "$a" in
     --cli)        DO_CLI=1 ;;
@@ -49,22 +103,53 @@ for a in "$@"; do
     --mcp)        DO_CLI=1; DO_MCP=1 ;;
     --all)        DO_CLI=1; DO_DESKTOP=1; DO_MCP=1 ;;
     --no-inference) DO_INFERENCE=0 ;;
-    -h|--help)    sed -n '2,20p' "$0"; exit 0 ;;
+    -y|--yes|--assume-yes) ASSUME_YES=1 ;;
+    -q|--quiet)   QUIET=1 ;;
+    --mcp-only)   DO_CLI=0; DO_DESKTOP=0; DO_INFERENCE=0; DO_MCP=1; MCP_ONLY=1 ;;
+    --print-mcp-config) MCP_CONFIG_CLIENT="generic" ;;
+    --print-mcp-config=*) MCP_CONFIG_CLIENT="${a#*=}" ;;
+    -h|--help)    PRINT_HELP=1 ;;
     *) c_warn "unknown flag: $a (ignored)";;
   esac
 done
 
+# Agents / CI are non-interactive: auto-assume-yes unless overridden.
+if [ "$ASSUME_YES" -eq 0 ] && [ ! -t 1 ]; then
+  ASSUME_YES=1
+fi
+
+if [ "$PRINT_HELP" -eq 1 ]; then
+  sed -n '2,20p' "$0"
+  exit 0
+fi
+
+# Emit a ready-to-paste MCP config for the requested IDE client and exit.
+# Usage: install.sh --print-mcp-config=cursor   (cursor|vscode|claude|zed|generic)
+if [ -n "$MCP_CONFIG_CLIENT" ]; then
+  PY_BIN="$(command -v python3 || command -v python || echo python3)"
+  print_mcp_config "$MCP_CONFIG_CLIENT" "$PY_BIN"
+  exit 0
+fi
+
+# When only emitting MCP config, skip the rest of the install.
+if [ "$MCP_ONLY" -eq 1 ]; then
+  c_ok "MCP config written to $INSTALL_DIR/mcp.ide.json"
+  exit 0
+fi
+
 # ── banner ─────────────────────────────────────────────────────────────
-echo
-c_banner "🗡️  JEBAT Core — Sovereign Agent OS  v$JEBAT_VERSION"
-c_banner "    installing for: $(whoami)@$(uname -s) $(uname -m)"
-echo
-c_step "selected components:"
-[ "$DO_CLI" -eq 1 ]        && c_comp "CLI            (jebat repl / chat / code / agent / think)"
-[ "$DO_DESKTOP" -eq 1 ]    && c_comp "Desktop        (Stealth-Dark WebUI with full Agent OS)"
-[ "$DO_MCP" -eq 1 ]        && c_comp "MCP surface    (47 tools over stdio/HTTP/streamable-http on :8206)"
-[ "$DO_INFERENCE" -eq 1 ]  && c_comp "Inference stack (Ollama + llama.cpp + router + OpenWebUI)"
-echo
+if [ "$QUIET" -eq 0 ]; then
+  echo
+  c_banner "🗡️  JEBAT Core — Sovereign Agent OS  v$JEBAT_VERSION"
+  c_banner "    installing for: $(whoami)@$(uname -s) $(uname -m)"
+  echo
+  c_step "selected components:"
+  [ "$DO_CLI" -eq 1 ]        && c_comp "CLI            (jebat repl / chat / code / agent / think)"
+  [ "$DO_DESKTOP" -eq 1 ]    && c_comp "Desktop        (Stealth-Dark WebUI with full Agent OS)"
+  [ "$DO_MCP" -eq 1 ]        && c_comp "MCP surface    (47 tools over stdio/HTTP/streamable-http on :8206)"
+  [ "$DO_INFERENCE" -eq 1 ]  && c_comp "Inference stack (Ollama + llama.cpp + router + OpenWebUI)"
+  echo
+fi
 
 # ── preflight ─────────────────────────────────────────────────────────
 c_step "preflight checks"
@@ -182,7 +267,7 @@ if [ "$DO_MCP" -eq 1 ]; then
     c_ok "standalone entry point: $BIN_DIR/jebat-mcp"
   fi
 
-  # Write IDE config snippet
+  # Write IDE config snippet (local stdio + zero-install public HTTP endpoint)
   PYTHON_BIN="$(command -v python3)"
   cat > "$INSTALL_DIR/mcp.ide.json" <<JSON
 {
@@ -192,17 +277,17 @@ if [ "$DO_MCP" -eq 1 ]; then
       "args": ["-m", "jebat.mcp.server"],
       "env": {"JEBAT_MCP_TRANSPORT": "stdio"}
     },
-    "jebat-http": {
-      "url": "http://127.0.0.1:8206/mcp"
+    "jebat-online": {
+      "url": "https://mcp.jebat.online/mcp"
     }
   }
 }
 JSON
   c_ok "IDE snippet: $INSTALL_DIR/mcp.ide.json"
   c_ok "MCP server exposes 47 tools over stdio/HTTP/streamable-http"
-  c_ok "HTTP endpoint: http://127.0.0.1:8206/mcp"
-  c_ok "generate IDE configs: jebat mcp --print-config"
-  c_ok "start MCP server: jebat mcp serve --port 8206"
+  c_ok "zero-install public endpoint: https://mcp.jebat.online/mcp"
+  c_ok "generate IDE configs:  curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --print-mcp-config=cursor"
+  c_ok "start local MCP server: jebat mcp serve --port 8206"
 fi
 
 if [ "$DO_DESKTOP" -eq 1 ]; then

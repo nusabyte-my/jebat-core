@@ -1880,26 +1880,30 @@
 <span class="cmd">bunx @nusabyte/jebat repl</span></pre>
                 </div>
                 <div class="quickstart-card">
-                    <h3><span style="color:var(--purple)">pip</span> Global Install</h3>
-                    <pre><span class="comment"># Via pip</span>
-<span class="cmd">pip install jebat</span>
+                    <h3><span style="color:var(--purple)">bash</span> Bootstrap Install</h3>
+                    <pre><span class="comment"># One script — no sudo, lands in ~/.local</span>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash</span>
 <span class="cmd">jebat repl</span>
 
-<span class="comment"># Via npm global</span>
+<span class="comment"># Or via npm global (bootstraps on first run)</span>
 <span class="cmd">npm install -g @nusabyte/jebat</span>
-<span class="cmd">jebat repl</span></pre>
+<span class="cmd">jebat repl</span>
+
+<span class="comment"># NOTE: `pip install jebat` is an unrelated PyPI package — do NOT use it.</span></pre>
                 </div>
                 <div class="quickstart-card">
                     <h3><span style="color:var(--amber)">MCP</span> IDE Integration</h3>
-                    <pre><span class="comment"># Add to .cursor/mcp.json</span>
+                    <pre><span class="comment"># Zero-install: add to .cursor/mcp.json (no local install needed)</span>
 {
   <span class="cmd">"mcpServers"</span>: {
-    <span class="cmd">"jebat"</span>: {
-      <span class="cmd">"command"</span>: <span class="cmd">"python"</span>,
-      <span class="cmd">"args"</span>: [<span class="cmd">"-m"</span>, <span class="cmd">"jebat.features.mcp.mcp_server"</span>]
+    <span class="cmd">"jebat-online"</span>: {
+      <span class="cmd">"url"</span>: <span class="cmd">"https://mcp.jebat.online/mcp"</span>
     }
   }
-}</pre>
+}
+
+<span class="comment"># Or run the local server (stdio):</span>
+<span class="cmd">python -m jebat.mcp.server</span></pre>
                 </div>
                 <div class="quickstart-card">
                     <h3><span style="color:var(--green)">git</span> Source Build</h3>

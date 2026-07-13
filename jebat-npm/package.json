@@ -1,6 +1,6 @@
 {
   "name": "@nusabyte/jebat",
-  "version": "8.2.0",
+  "version": "8.2.1",
   "description": "JEBAT v8.2 — Sovereign Agent Operating System. 5 integrated products, 6-type memory with Ghost DB vector search, adaptive context windowing, working memory persistence, 17 LLM providers, 47 MCP tools, 6 Grafana dashboards. Air-gapped, MIT licensed.",
   "type": "module",
   "bin": {

@@ -51,16 +51,17 @@ jebat repl
 ```
 
 > The npm package is a thin launcher — on first run it downloads and runs the
-> bootstrap (`curl -fsSL https://jebat.online/install.sh | bash`), which provisions
-> Python, the venv, and the `jebat` launcher in `~/.local`. There is no separate
-> `pip install jebat` package; the bootstrap is the supported install path.
+> bootstrap, which provisions Python, the venv, and the `jebat` launcher in
+> `~/.local`. **Do not run `pip install jebat`** — that name is a unrelated
+> package on PyPI (a website checker) and is **not** JEBAT. The bootstrap is the
+> only supported install path.
 
 ### Option 3: Source Build
 
 ```bash
 git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
-curl -fsSL https://jebat.online/install.sh | bash   # bootstrap the core CLI
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash   # bootstrap the core CLI
 jebat repl
 ```
 
@@ -73,14 +74,21 @@ Python, the venv, the CLI launcher, and (optionally) the Desktop app and MCP
 server. **No sudo required** — everything lands in `~/.local`.
 
 ```bash
-# Zero-install (downloads + runs the bootstrap)
-curl -fsSL https://jebat.online/install.sh | bash            # CLI only
-curl -fsSL https://jebat.online/install.sh | bash -s -- --desktop
-curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
-curl -fsSL https://jebat.online/install.sh | bash -s -- --all
+# Zero-install (downloads + runs the bootstrap). Uses the raw GitHub URL so it
+# always serves the script as plaintext (no CDN/HTML fallback).
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash            # CLI only
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --desktop
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --mcp
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --all
 
 # Or pin a profile explicitly
-curl -fsSL https://jebat.online/install.sh | bash -s -- --cli --no-inference
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --cli --no-inference
+
+# Agent / CI friendly: fully non-interactive
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --yes --quiet
+
+# Emit a ready-to-paste MCP config for your IDE (no install needed)
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --print-mcp-config=cursor
 ```
 
 ### What gets installed (components)
@@ -119,7 +127,17 @@ designmd tags                                # list tags
 
 # MCP — wire into any IDE (full workspace)
 # IDE config written to ~/.local/jebat/mcp.ide.json:
-# { "mcpServers": { "jebat": { "command": "jebat", "args": ["mcp","serve"] } } }
+# { "mcpServers": {
+#     "jebat":        { "command": "python3", "args": ["-m","jebat.mcp.server"], "env": { "JEBAT_MCP_TRANSPORT": "stdio" } },
+#     "jebat-online": { "url": "https://mcp.jebat.online/mcp" }
+# } }
+#
+# Zero-install: point your IDE at the public Streamable-HTTP endpoint — no
+# local install required. Works with Cursor, Claude, VS Code, Zed:
+#   https://mcp.jebat.online/mcp
+# Generate a paste-ready config for your client:
+#   install.sh --print-mcp-config=cursor   (cursor | vscode | claude | zed)
+
 
 # Desktop — native workstation UI (full workspace)
 jebat desktop                                # launch GUI

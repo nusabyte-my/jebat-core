@@ -64,12 +64,14 @@ jebat repl
 ```bash
 git clone https://github.com/nusabyte-my/jebat-core.git
 cd jebat-core
-curl -fsSL https://jebat.online/install.sh | bash   # bootstrap the Python core
+curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash   # bootstrap the Python core
 jebat repl
 ```
 > The npm package is a thin launcher. On first run it downloads and runs the
 > bootstrap, which provisions Python, the venv, and the `jebat` launcher in
-> `~/.local`. There is no `pip install jebat` package.
+> `~/.local`. **Do not run `pip install jebat`** — that name is an unrelated
+> PyPI package (a website checker) and is **not** JEBAT. The bootstrap is the
+> only supported install path.
 
 ---
 
@@ -136,7 +138,7 @@ npx @nusabyte/jebat config edit
 └───────────────────────┬─────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  JEBAT Python Core (pip install jebat)                       │
+│  JEBAT Python Core (via bootstrap — NOT pip install jebat)    │
 │  • ReAct AgentLoop (Think→Act→Observe)                       │
 │  • Ultra-Think (7 reasoning modes)                           │
 │  • Ultra-Loop (autonomous agent)                             │
