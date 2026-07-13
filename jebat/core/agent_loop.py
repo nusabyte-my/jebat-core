@@ -217,16 +217,18 @@ def _extract_api_tool_calls(response_data: Any) -> list[tuple[str, dict[str, Any
 
 
 def _format_tool_result_for_llm(tool_name: str, result: Any, error: str | None) -> str:
-    """Format a tool execution result for inclusion in the next LLM prompt."""
+    """Format a tool execution result for inclusion in the next LLM prompt.
+
+    Token-optimized: truncates aggressively, strips boilerplate.
+    """
     if error:
-        return f"Tool {tool_name} error: {error}"
+        return f"Error({tool_name}): {error[:200]}"
     if isinstance(result, dict):
-        # Truncate large results
         text = json.dumps(result, default=str, ensure_ascii=False)
-        if len(text) > 4000:
-            text = text[:4000] + "... (truncated)"
-        return f"Tool {tool_name} result: {text}"
-    return f"Tool {tool_name} result: {str(result)[:4000]}"
+        if len(text) > 2000:
+            text = text[:2000] + "…"
+        return f"[{tool_name}] {text}"
+    return f"[{tool_name}] {str(result)[:2000]}"
 
 
 def _build_tool_system_prompt_appendix(max_tools: int = 0) -> str:
@@ -349,6 +351,15 @@ def _should_approve_tool(
 MAX_ITERATIONS = 10
 DEFAULT_MAX_CONTEXT_TOKENS = 80_000  # Truncate conversation history beyond this
 
+# Token budget allocation (percentages of total budget)
+TOKEN_BUDGET = {
+    "system_prompt": 0.25,      # 25% for system prompt + project context
+    "memory_context": 0.10,     # 10% for memory recall
+    "working_memory": 0.10,     # 10% for working memory buffer
+    "cross_session": 0.05,      # 5% for cross-session context
+    "history": 0.50,            # 50% for conversation history
+}
+
 
 class _LoopCancelled(Exception):
     """Raised when user cancels the agent loop via Ctrl+C."""
@@ -363,8 +374,8 @@ def _compact_conversation_history(
 ) -> list[dict[str, str]]:
     """Truncate conversation history to fit within a token budget.
 
-    Keeps the system message (if any) and the most recent N messages,
-    dropping oldest messages first. Uses a rough 4-chars-per-token estimate.
+    Importance-aware: keeps system messages + recent messages, drops oldest first.
+    Uses a rough 4-chars-per-token estimate.
     """
     if not messages:
         return []
@@ -393,6 +404,205 @@ def _compact_conversation_history(
 
     # Reverse back to chronological order (first message stays first)
     return [result[0]] + list(reversed(result[1:]))
+
+
+def _summarize_evicted_context(messages: list[dict[str, str]], max_chars: int = 800) -> str:
+    """Create a compact summary of evicted messages for context continuity.
+
+    Extracts key points from dropped messages so the agent retains awareness.
+    """
+    if not messages:
+        return ""
+
+    summary_parts = []
+    for msg in messages:
+        content = msg.get("content", "")
+        role = msg.get("role", "unknown")
+        if not content or role == "system":
+            continue
+        # Take first sentence or first 150 chars
+        first_sentence = content.split(".")[0].strip() if "." in content else content[:150]
+        if first_sentence:
+            summary_parts.append(f"{'U' if role == 'user' else 'A'}: {first_sentence[:150]}")
+
+    if not summary_parts:
+        return ""
+
+    summary = "[Prior context] " + " | ".join(summary_parts[:6])
+    if len(summary) > max_chars:
+        summary = summary[:max_chars] + "…"
+    return summary
+
+
+# ── Working Memory Buffer ─────────────────────────────────────────────────
+
+@dataclass
+class WorkingMemory:
+    """Structured working memory that persists across agent iterations.
+
+    Maintains current goals, discovered facts, and active constraints
+    so the agent doesn't have to re-derive context each iteration.
+    """
+    goals: list[str] = field(default_factory=list)
+    facts: list[str] = field(default_factory=list)
+    constraints: list[str] = field(default_factory=list)
+    _max_items: int = 8
+
+    def add_goal(self, goal: str) -> None:
+        if len(self.goals) < self._max_items and goal not in self.goals:
+            self.goals.append(goal)
+
+    def add_fact(self, fact: str) -> None:
+        if len(self.facts) < self._max_items and fact not in self.facts:
+            self.facts.append(fact)
+
+    def add_constraint(self, constraint: str) -> None:
+        if len(self.constraints) < self._max_items and constraint not in self.constraints:
+            self.constraints.append(constraint)
+
+    def update_from_llm(self, text: str) -> None:
+        """Parse LLM output for structured state updates.
+
+        Looks for lines like:
+          GOAL: implement feature X
+          FACT: project uses TypeScript
+          CONSTRAINT: do not modify database schema
+        """
+        for line in text.split("\n"):
+            line = line.strip()
+            if line.upper().startswith("GOAL:"):
+                self.add_goal(line[5:].strip())
+            elif line.upper().startswith("FACT:"):
+                self.add_fact(line[5:].strip())
+            elif line.upper().startswith("CONSTRAINT:"):
+                self.add_constraint(line[11:].strip())
+
+    def to_prompt_section(self) -> str:
+        """Render working memory as a compact prompt section."""
+        parts = []
+        if self.goals:
+            parts.append("Active goals: " + "; ".join(self.goals[:5]))
+        if self.facts:
+            parts.append("Known facts: " + "; ".join(self.facts[:5]))
+        if self.constraints:
+            parts.append("Constraints: " + "; ".join(self.constraints[:5]))
+        if not parts:
+            return ""
+        return "[Working Memory]\n" + "\n".join(parts)
+
+    def to_dict(self) -> dict:
+        return {
+            "goals": self.goals,
+            "facts": self.facts,
+            "constraints": self.constraints,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "WorkingMemory":
+        wm = cls()
+        wm.goals = data.get("goals", [])
+        wm.facts = data.get("facts", [])
+        wm.constraints = data.get("constraints", [])
+        return wm
+
+
+# ── Memory Integration ───────────────────────────────────────────────────
+
+async def _recall_memories_for_query(query: str, limit: int = 5) -> list[str]:
+    """Retrieve relevant memories from the EnhancedMemorySystem.
+
+    Returns list of memory content strings, or empty list if unavailable.
+    Token-efficient: only returns top-N most relevant.
+    """
+    try:
+        from jebat.features.memory import EnhancedMemorySystem
+        memory = EnhancedMemorySystem()
+        traces = await memory.retrieve(query, limit=limit)
+        return [t.content[:300] for t in traces if t.content]
+    except Exception:
+        return []
+
+
+async def _encode_run_memories(
+    user_message: str,
+    final_response: str,
+    tool_steps: list[ToolCallStep],
+    session_id: str | None = None,
+) -> None:
+    """Encode key outcomes from an agent run as episodic memories.
+
+    Stores: the user intent, final outcome, and any significant tool results.
+    Token-efficient: only encodes meaningful content, skips trivial calls.
+    """
+    try:
+        from jebat.features.memory import EnhancedMemorySystem, MemoryType
+        memory = EnhancedMemorySystem()
+
+        # Encode user intent + agent outcome
+        outcome_text = f"User asked: {user_message[:200]}. Agent responded: {final_response[:300]}"
+        tags = {"agent_run"}
+        if session_id:
+            tags.add(f"session:{session_id}")
+
+        # Count tool usage for tagging
+        tool_names = [s.tool_name for s in tool_steps if not s.error]
+        if tool_names:
+            tags.update(set(tool_names[:3]))
+
+        await memory.encode(
+            content=outcome_text,
+            memory_type=MemoryType.EPISODIC,
+            tags=tags,
+            importance=0.5,
+            context={"session_id": session_id or "", "tool_count": len(tool_steps)},
+        )
+
+        # Encode significant tool results (skip trivial reads)
+        significant_tools = {"file_write", "file_patch", "git_commit", "terminal", "delegate_task"}
+        for step in tool_steps:
+            if step.tool_name in significant_tools and not step.error:
+                result_str = str(step.result)[:200] if step.result else ""
+                if result_str:
+                    await memory.encode(
+                        content=f"Tool {step.tool_name}: {result_str}",
+                        memory_type=MemoryType.PROCEDURAL,
+                        tags={step.tool_name, "tool_result"},
+                        importance=0.4,
+                    )
+    except Exception:
+        pass  # Memory encoding is best-effort
+
+
+# ── Cross-Session Context ────────────────────────────────────────────────
+
+def _load_cross_session_context(query: str, max_chars: int = 1500) -> str:
+    """Load recent session summaries for context continuity.
+
+    Searches across past sessions for relevant context related to the current query.
+    Returns compact context string, or empty if unavailable.
+    """
+    try:
+        from jebat.features.session import SessionManager
+        sm = SessionManager()
+
+        # Search past messages for relevant context
+        results = sm.search_messages(query, limit=5)
+        if not results:
+            return ""
+
+        parts = []
+        for r in results:
+            snippet = r.get("snippet", "")
+            title = r.get("title", "")
+            if snippet:
+                parts.append(f"[{title}] {snippet[:200]}")
+
+        context = "Past sessions: " + " | ".join(parts)
+        if len(context) > max_chars:
+            context = context[:max_chars] + "…"
+        return context
+    except Exception:
+        return ""
 
 
 # ── Retry Helper ──────────────────────────────────────────────────────────
@@ -497,6 +707,9 @@ class AgentLoop:
         self._tool_steps: list[ToolCallStep] = []
         self._tool_observations: list[str] = []
 
+        # Working memory buffer
+        self._working_memory = WorkingMemory()
+
         # Lazy tool module import flag
         self._tools_imported = False
 
@@ -566,11 +779,12 @@ class AgentLoop:
         """
         self._tool_steps = []
         self._tool_observations = []
+        self._working_memory = WorkingMemory()
         iterations = 0
         all_responses: list[str] = []
         total_tokens: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
-        # Build the augmented system prompt with tool descriptions
+        # ── Build system prompt with memory + context ─────────────────
         if self._custom_system_prompt:
             base_system_prompt = self._custom_system_prompt
         else:
@@ -589,6 +803,17 @@ class AgentLoop:
                 base_system_prompt = wiki_context + "\n" + base_system_prompt
         except Exception:
             pass  # Wiki not available — skip gracefully
+
+        # Inject relevant memories from EnhancedMemorySystem
+        memory_context = await _recall_memories_for_query(user_message, limit=5)
+        if memory_context:
+            memory_block = "\n".join(f"[Memory] {m}" for m in memory_context)
+            base_system_prompt += "\n\n" + memory_block
+
+        # Inject cross-session context (past conversations)
+        cross_session = _load_cross_session_context(user_message)
+        if cross_session:
+            base_system_prompt += f"\n\n{cross_session}"
 
         self._ensure_tools_imported()
         # Local/small models get a brief tool listing to save context space
@@ -625,11 +850,16 @@ class AgentLoop:
 
             # ── Context compaction: trim conversation history ─────────
             if len(working_history) > 10:
-                # Rough check — will estimate tokens more carefully
                 working_history = _compact_conversation_history(
                     working_history,
                     max_tokens=self.max_context_tokens,
                 )
+
+            # ── Inject working memory into system prompt ──────────────
+            wm_section = self._working_memory.to_prompt_section()
+            prompt_with_wm = full_system_prompt
+            if wm_section:
+                prompt_with_wm += f"\n\n{wm_section}"
 
             # ── Call LLM with retry on transient errors ───────────────
             try:
@@ -642,7 +872,7 @@ class AgentLoop:
                         model_override=self.config.model,
                         temperature_override=self.config.temperature,
                         return_metadata=True,
-                        system_prompt_override=full_system_prompt,
+                        system_prompt_override=prompt_with_wm,
                     ),
                     max_retries=3,
                     base_delay=2.0,
@@ -689,17 +919,14 @@ class AgentLoop:
                 total_tokens["completion_tokens"] += metadata.usage.get("completion_tokens", 0)
                 total_tokens["total_tokens"] += metadata.usage.get("total_tokens", 0)
 
+            # Update working memory from LLM output
+            self._working_memory.update_from_llm(response_text)
+
             # Detect tool calls — ReAct pattern first (works with any provider)
             tool_calls = _extract_react_tool_calls(response_text)
 
-            # Also check for API-level tool calls if the response contains structured data
-            # (This would come from providers that support native tool calling)
-            # For now, we primarily rely on ReAct text patterns since generate_chat_reply
-            # returns plain text. API-level tool calls would need a different response shape.
-
             if not tool_calls:
                 # No tool calls detected — this is the final response
-                # If it contains a "Final Answer:" prefix, strip it
                 final = response_text
                 final_answer_match = re.match(
                     r"Final Answer:\s*(.*)", response_text, re.IGNORECASE | re.DOTALL
@@ -709,6 +936,14 @@ class AgentLoop:
 
                 # Persist final response
                 sm.add_message(self.session_id, "assistant", final)
+
+                # Encode memories from this run (best-effort, async)
+                try:
+                    await _encode_run_memories(
+                        user_message, final, self._tool_steps, self.session_id
+                    )
+                except Exception:
+                    pass
 
                 # Stream final response if callback is set
                 if stream_callback:
@@ -785,7 +1020,6 @@ class AgentLoop:
                 )
 
             # Feed observations back to the LLM as the next prompt
-            # Include the LLM's thinking + the observations
             observation_block = "\n".join(observation_parts)
             current_prompt = observation_block
 
