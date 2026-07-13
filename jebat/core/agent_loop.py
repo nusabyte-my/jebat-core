@@ -892,6 +892,7 @@ class AgentLoop:
             "jebat.features.cost_tracking.cost_tracking",
             "jebat.features.plugins.plugins",
             "jebat.features.telemetry.telemetry",
+            "jebat.features.pentest.pentest_tools",
         ]
         for mod_name in _tool_modules:
             try:

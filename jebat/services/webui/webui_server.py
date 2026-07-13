@@ -7,6 +7,7 @@ A reliable web interface for JEBAT AI Assistant.
 import asyncio
 import json
 import logging
+import os
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,7 +22,7 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,38 @@ def _data_path(filename: str) -> Path:
     if DATA_DIR is None:
         DATA_DIR = _resolve_data_dir()
     return DATA_DIR / filename
+
+
+_ULTRA_LOOP_INSTANCE = None
+
+
+async def _get_ultra_loop():
+    """Lazily build a runtime Ultra-Loop bridge for channel adapters."""
+    global _ULTRA_LOOP_INSTANCE
+    if _ULTRA_LOOP_INSTANCE is not None:
+        return _ULTRA_LOOP_INSTANCE
+
+    from jebat.features.ultra_loop import create_ultra_loop
+
+    loop = create_ultra_loop(enable_db_persistence=False)
+    try:
+        from jebat.features.ultra_think import create_ultra_think
+
+        loop.ultra_think = await create_ultra_think(config={"max_thoughts": 20})
+    except Exception as exc:
+        logger.warning("Channel bridge: ultra_think unavailable: %s", exc)
+        loop.ultra_think = None
+
+    _ULTRA_LOOP_INSTANCE = loop
+    return loop
+
+
+def _whatsapp_verify_token() -> Optional[str]:
+    """Resolve the WhatsApp verify token from an active channel or env."""
+    channel = ACTIVE_CHANNELS.get("whatsapp")
+    if channel is not None and getattr(channel, "verify_token", None):
+        return channel.verify_token
+    return os.environ.get("WHATSAPP_VERIFY_TOKEN")
 
 
 def _ensure_data_dir() -> None:
@@ -306,21 +339,26 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
     state["last_error"] = None
 
     try:
+        loop = await _get_ultra_loop()
+
         if channel == "telegram":
             from jebat.integrations.channels.telegram import create_telegram_channel
 
-            instance = await create_telegram_channel(bot_token=config["bot_token"])
+            instance = await create_telegram_channel(
+                bot_token=config["bot_token"], ultra_loop=loop
+            )
             await instance.start()
             ACTIVE_CHANNELS[channel] = instance
             state["status"] = "active"
             state["active"] = True
         elif channel == "whatsapp":
-            from jebat.integrations.channels.whatsapp import WhatsAppChannel
+            from jebat.integrations.channels.whatsapp import create_whatsapp_channel
 
-            instance = WhatsAppChannel(
+            instance = await create_whatsapp_channel(
                 phone_number_id=config["phone_number_id"],
                 access_token=config["access_token"],
                 verify_token=config["verify_token"],
+                ultra_loop=loop,
             )
             await instance.start()
             ACTIVE_CHANNELS[channel] = instance
@@ -332,15 +370,19 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
             instance = SlackChannel(
                 bot_token=config["bot_token"],
                 signing_secret=config["signing_secret"],
+                ultra_loop=loop,
             )
             await instance.start()
             ACTIVE_CHANNELS[channel] = instance
             state["status"] = "active"
             state["active"] = True
         elif channel == "discord":
-            from jebat.integrations.channels.discord import DiscordChannel
+            from jebat.integrations.channels.discord import create_discord_channel
 
-            instance = DiscordChannel(bot_token=config["bot_token"])
+            instance = await create_discord_channel(
+                bot_token=config["bot_token"],
+                ultra_loop=loop,
+            )
             task = asyncio.create_task(instance.start())
             CHANNEL_TASKS[channel] = task
             ACTIVE_CHANNELS[channel] = instance
@@ -509,6 +551,53 @@ async def connect_channel(payload: ChannelConnectRequest):
         "connection": connection,
         "instructions": catalog[channel]["instructions"],
     }
+
+
+@webui_router.api_route(
+    "/webui/api/channels/whatsapp/webhook",
+    methods=["GET", "POST"],
+)
+async def whatsapp_webhook(request: Request):
+    """WhatsApp Business API webhook endpoint.
+
+    - GET/POST with hub.mode=subscribe performs the verification handshake
+      and echoes back hub.challenge.
+    - POST with an entry payload dispatches messages to the active
+      WhatsAppChannel.process_webhook.
+    """
+    await _ensure_connection_state()
+
+    if request.method == "GET":
+        params = dict(request.query_params)
+        if params.get("hub.mode") == "subscribe":
+            if params.get("hub.verify_token") == _whatsapp_verify_token():
+                return Response(
+                    content=str(params.get("hub.challenge", "")),
+                    media_type="text/plain",
+                )
+            return Response(content="Forbidden", status_code=403)
+        return Response(content="Bad Request", status_code=400)
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    if isinstance(data, dict) and data.get("hub.mode") == "subscribe":
+        if data.get("hub.verify_token") == _whatsapp_verify_token():
+            return Response(
+                content=str(data.get("hub.challenge", "")),
+                media_type="text/plain",
+            )
+        return Response(content="Forbidden", status_code=403)
+
+    channel = ACTIVE_CHANNELS.get("whatsapp")
+    if channel is not None and hasattr(channel, "process_webhook"):
+        result = await channel.process_webhook(data)
+        return JSONResponse(result)
+
+    logger.warning("WhatsApp webhook received but no active channel")
+    return JSONResponse({"status": "no_active_channel"}, status_code=200)
 
 
 @webui_router.get("/webui/api/workstations/connect")

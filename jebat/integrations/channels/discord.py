@@ -4,7 +4,7 @@ JEBAT Discord Channel Integration
 Discord bot integration for JEBAT AI Assistant.
 
 Features:
-- Slash commands
+- Slash commands (/think, /status, /help)
 - Direct messages
 - Server-specific settings
 - Rich embeds
@@ -20,11 +20,19 @@ Usage:
     await channel.start()
 """
 
-import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+try:
+    import discord
+    from discord import app_commands
+    from discord.ext import commands
+except ImportError:
+    discord = None
+    app_commands = None
+    commands = None
 
 
 class DiscordChannel:
@@ -73,30 +81,26 @@ class DiscordChannel:
         logger.info("DiscordChannel initialized")
 
     async def start(self):
-        """Start Discord bot"""
+        """Start Discord bot gateway client"""
         if self._running:
             logger.warning("Discord bot already running")
             return
 
-        try:
-            # Import discord.py
-            import discord
-            from discord import app_commands
-            from discord.ext import commands
+        if discord is None:
+            logger.error("discord.py not installed. Run: pip install discord.py")
+            return
 
-            # Create bot
+        try:
             intents = discord.Intents.default()
             intents.message_content = True
             intents.dm_typing = True
 
             self._client = commands.Bot(command_prefix="!", intents=intents)
 
-            # Setup event handlers
             @self._client.event
             async def on_ready():
                 logger.info(f"Discord bot logged in as {self._client.user}")
 
-                # Sync slash commands
                 try:
                     synced = await self._client.tree.sync()
                     logger.info(f"Synced {len(synced)} slash commands")
@@ -107,25 +111,16 @@ class DiscordChannel:
 
             @self._client.event
             async def on_message(message):
-                # Ignore bot's own messages
                 if message.author == self._client.user:
                     return
-
-                # Process message
                 await self._process_message(message)
 
-            # Register slash commands
             self._register_slash_commands()
 
-            # Start bot
             await self._client.start(self.bot_token)
 
-        except ImportError:
-            logger.error("discord.py not installed. Run: pip install discord.py")
-            raise
         except Exception as e:
             logger.error(f"Failed to start Discord bot: {e}")
-            raise
 
     async def stop(self):
         """Stop Discord bot"""
@@ -151,7 +146,8 @@ class DiscordChannel:
             """Think about a question"""
             await interaction.response.defer()
 
-            if not self.ultra_loop or not self.ultra_loop.ultra_think:
+            ultra_think = self._get_ultra_think()
+            if not ultra_think:
                 await interaction.followup.send("❌ Ultra-Think not initialized")
                 return
 
@@ -159,7 +155,7 @@ class DiscordChannel:
                 from jebat.features.ultra_think import ThinkingMode
 
                 thinking_mode = ThinkingMode(mode.lower())
-                result = await self.ultra_loop.ultra_think.think(
+                result = await ultra_think.think(
                     problem=question,
                     mode=thinking_mode,
                     timeout=30,
@@ -258,6 +254,44 @@ class DiscordChannel:
 
         logger.info("Slash commands registered")
 
+    def _get_ultra_think(self):
+        """Return the attached Ultra-Think instance, if any."""
+        if not self.ultra_loop:
+            return None
+        return getattr(self.ultra_loop, "ultra_think", None)
+
+    async def _generate_reply(self, text: str, user_id: str) -> str:
+        """
+        Bridge a user message to the Ultra-Loop and produce a reply.
+
+        Stores the message in memory and generates a response via
+        Ultra-Think. Always returns a safe string.
+        """
+        try:
+            if getattr(self.ultra_loop, "memory_manager", None):
+                await self.ultra_loop.memory_manager.store(
+                    content=text,
+                    user_id=str(user_id),
+                )
+
+            ultra_think = self._get_ultra_think()
+            if ultra_think:
+                from jebat.features.ultra_think import ThinkingMode
+
+                result = await ultra_think.think(
+                    problem=text,
+                    mode=ThinkingMode.DELIBERATE,
+                    user_id=str(user_id),
+                    timeout=30,
+                )
+                return result.conclusion[:2000]
+
+            return f"✅ Message received: {text[:200]}"
+
+        except Exception as e:
+            logger.error(f"Discord Ultra-Loop error: {e}")
+            return "⚠️ Sorry, I couldn't process that message right now."
+
     async def _process_message(self, message):
         """Process incoming message"""
         content = message.content
@@ -269,52 +303,46 @@ class DiscordChannel:
             f"Discord message from {author} in {guild or 'DM'}: {content[:50]}..."
         )
 
-        # Handle direct messages
         if isinstance(channel, discord.DMChannel):
             await self._handle_dm(channel, author, content)
             return
 
-        # Handle mentions
         if self._client.user in message.mentions:
-            # Remove mention from content
-            clean_content = content.replace(f"<@{self._client.user.id}>", "").strip()
+            clean_content = content.replace(
+                f"<@{self._client.user.id}>", ""
+            ).strip()
             await self._handle_mention(channel, author, clean_content)
 
     async def _handle_dm(self, channel, author, content):
         """Handle direct message"""
         logger.info(f"DM from {author}: {content}")
 
-        # Process through Ultra-Loop if connected
-        if self.ultra_loop:
-            try:
-                from jebat.features.ultra_think import ThinkingMode
+        reply = await self._generate_reply(content, str(author.id))
 
-                result = await self.ultra_loop.ultra_think.think(
-                    problem=content,
-                    mode=ThinkingMode.DELIBERATE,
-                    user_id=str(author.id),
-                    timeout=30,
-                )
-
-                # Send response
-                await channel.send(result.conclusion[:2000])  # Discord limit
-
-            except Exception as e:
-                logger.error(f"DM processing error: {e}")
-                await channel.send(f"Error processing message: {e}")
+        try:
+            await channel.send(reply)
+        except Exception as e:
+            logger.error(f"Failed to send Discord reply: {e}")
 
     async def _handle_mention(self, channel, author, content):
         """Handle bot mention"""
         logger.info(f"Mention from {author}: {content}")
 
         if not content:
-            await channel.send(
-                "Hi! Use `/think <question>` to ask me something, or just mention me with your question!"
-            )
+            try:
+                await channel.send(
+                    "Hi! Use `/think <question>` to ask me something, or just mention me with your question!"
+                )
+            except Exception as e:
+                logger.error(f"Failed to send Discord reply: {e}")
             return
 
-        # Process question
-        await self._handle_dm(channel, author, content)
+        reply = await self._generate_reply(content, str(author.id))
+
+        try:
+            await channel.send(reply)
+        except Exception as e:
+            logger.error(f"Failed to send Discord reply: {e}")
 
     async def send_message(
         self,
@@ -339,7 +367,6 @@ class DiscordChannel:
         if not channel:
             raise Exception(f"Channel not found: {channel_id}")
 
-        # Create embed if provided
         discord_embed = None
         if embed:
             discord_embed = discord.Embed.from_dict(embed)

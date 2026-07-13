@@ -49,7 +49,7 @@ try:
 except ImportError:
     ErrorRecoverySystem = None
 from jebat.core.cache.smart_cache import CacheManager
-from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
+from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability, skill
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -226,6 +226,7 @@ class SecurityMetrics:
 
 # ==================== Security Skills ====================
 
+@skill
 class SecurityAnalyzeSkill(BaseSkill):
     """
     Security analysis skill for detecting threats and anomalies.
@@ -2078,7 +2079,7 @@ try:
 except ImportError:
     ErrorRecoverySystem = None
 from jebat.core.cache.smart_cache import CacheManager
-from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability
+from jebat.skills.base_skill import BaseSkill, SkillResult, SkillParameter, SkillCapability, skill
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -2235,6 +2236,7 @@ class SecurityMetrics:
 
 # ==================== Security Skills ====================
 
+@skill
 class SecurityAnalyzeSkill(BaseSkill):
     """
     Security analysis skill for detecting threats and anomalies.

@@ -43,6 +43,7 @@ from routers.memory import router as memory_router
 from routers.pentest import router as pentest_router
 from routers.skills import router as skills_router
 from routers.status import router as status_router
+from routers.analytics import router as analytics_router
 from routers.think import router as think_router
 
 _START_TIME = time.time()
@@ -169,6 +170,7 @@ app.include_router(loop_router)
 app.include_router(pentest_router)
 app.include_router(ghost_router)
 app.include_router(catalyst_router)
+app.include_router(analytics_router)
 
 
 # ─── Documentation Portal ───

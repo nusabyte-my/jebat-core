@@ -190,7 +190,7 @@ SRC="$INSTALL_DIR"
 if [ ! -f "$SRC/pyproject.toml" ] && [ -f "$INSTALL_DIR/jebat-core/pyproject.toml" ]; then
   SRC="$INSTALL_DIR/jebat-core"
 fi
-pip install --quiet -e "$SRC" >/dev/null 2>&1 && c_ok "jebat CLI installed (editable from $SRC)" || { c_fail "pip install failed"; exit 1; }
+pip install --quiet -e "${SRC}[security,channels]" >/dev/null 2>&1 && c_ok "jebat CLI installed (editable from $SRC + security,channels extras)" || { c_fail "pip install failed"; exit 1; }
 
 # launcher on PATH
 cat > "$BIN_DIR/jebat" <<EOF

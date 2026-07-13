@@ -288,11 +288,11 @@ class WhatsAppChannel:
         """
         try:
             # Handle verification challenge
-            if "hub.mode" in data:
+            if isinstance(data, dict) and data.get("hub.mode") == "subscribe":
                 return await self._handle_verification(data)
 
             # Handle messages
-            if "entry" in data:
+            if isinstance(data, dict) and "entry" in data:
                 await self._handle_messages(data)
 
             return {"status": "ok"}
@@ -309,10 +309,10 @@ class WhatsAppChannel:
 
         if mode == "subscribe" and token == self.verify_token:
             logger.info("WhatsApp webhook verified")
-            return int(challenge)
+            return {"status": "verified", "challenge": str(challenge)}
         else:
             logger.warning("Webhook verification failed")
-            return 403
+            return {"status": "forbidden", "code": 403}
 
     async def _handle_messages(self, data: Dict):
         """Handle incoming messages"""
@@ -330,6 +330,52 @@ class WhatsAppChannel:
                 for status in statuses:
                     await self._process_status(status)
 
+    def _extract_content(self, message: Dict, message_type: str) -> str:
+        """Extract human-readable content from a WhatsApp message."""
+        if message_type == "text":
+            return message.get("text", {}).get("body", "")
+        if message_type in ("image", "document", "audio", "voice", "video", "sticker"):
+            caption = message.get(message_type, {}).get("caption", "")
+            label = message_type.capitalize()
+            return f"[{label}]{(': ' + caption) if caption else ''}"
+        return "[Unsupported message]"
+
+    async def _process_through_ultra_loop(self, text: str, user_id: str) -> str:
+        """
+        Bridge a user message to the Ultra-Loop and produce a reply.
+
+        Stores the message in memory and generates a response via
+        Ultra-Think. Always returns a safe string so callers can reply.
+        """
+        try:
+            if self.ultra_loop and getattr(self.ultra_loop, "memory_manager", None):
+                await self.ultra_loop.memory_manager.store(
+                    content=text,
+                    user_id=str(user_id),
+                )
+
+            ultra_think = (
+                getattr(self.ultra_loop, "ultra_think", None)
+                if self.ultra_loop
+                else None
+            )
+            if ultra_think:
+                from jebat.features.ultra_think import ThinkingMode
+
+                result = await ultra_think.think(
+                    problem=text,
+                    mode=ThinkingMode.DELIBERATE,
+                    user_id=str(user_id),
+                    timeout=30,
+                )
+                return result.conclusion
+
+            return f"✅ Message received: {text[:200]}"
+
+        except Exception as e:
+            logger.error(f"WhatsApp Ultra-Loop error: {e}")
+            return "⚠️ Sorry, I couldn't process that message right now."
+
     async def _process_message(self, message: Dict, metadata: Dict):
         """Process individual message"""
         from_number = message.get("from", "")
@@ -339,31 +385,24 @@ class WhatsAppChannel:
 
         logger.info(f"Received WhatsApp message from {from_number}: {message_id}")
 
-        # Extract message content
-        content = ""
-        if message_type == "text":
-            content = message.get("text", {}).get("body", "")
-        elif message_type == "image":
-            content = "[Image]"
-        elif message_type == "document":
-            content = "[Document]"
-        elif message_type == "audio":
-            content = "[Audio]"
-        elif message_type == "voice":
-            content = "[Voice message]"
+        content = self._extract_content(message, message_type)
+        if not content:
+            return
 
         # Process through Ultra-Loop if connected
-        if self.ultra_loop:
-            # Store in memory
-            if self.ultra_loop.memory_manager:
-                await self.ultra_loop.memory_manager.store(
-                    content=f"WhatsApp from {from_number}: {content}",
-                    user_id=from_number,
-                )
+        reply = await self._process_through_ultra_loop(content, from_number)
 
-            # Generate response (simplified - would use Ultra-Think in production)
-            response = f"Received your message: {content}"
-            await self.send_message(from_number, response)
+        # Acknowledge read receipt best-effort
+        try:
+            if message_id:
+                await self.mark_as_read(message_id)
+        except Exception as e:
+            logger.debug(f"Failed to mark message read: {e}")
+
+        try:
+            await self.send_message(from_number, reply)
+        except Exception as e:
+            logger.error(f"Failed to send WhatsApp reply: {e}")
 
         # Call message handlers
         for handler in self.message_handlers:

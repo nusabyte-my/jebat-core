@@ -32,6 +32,10 @@ ml = [
     "xgboost>=2.0.0",
     "lightgbm>=4.0.0",
 ]
+security = [
+    "numpy>=1.24.0",
+    "scikit-learn>=1.4.0",
+]
 nlp = [
     "sentence-transformers>=2.3.0",
     "spacy>=3.7.0",
@@ -52,13 +56,16 @@ db = [
     "redis>=5.0.1",
     "alembic>=1.13.0",
 ]
-dev = [
+ dev = [
     "pytest>=7.4.4",
     "pytest-asyncio>=0.23.3",
     "pytest-cov>=4.1.0",
     "black>=24.1.0",
     "mypy>=1.8.0",
     "isort>=5.13.0",
+]
+channels = [
+    "discord.py>=2.3.0",
 ]
 monitoring = [
     "python-json-logger>=2.0.0",
