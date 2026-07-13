@@ -64,14 +64,56 @@ class MemoryManager:
         logger.info("MemoryManager initialized with all memory layers")
 
     def _get_enhanced_memory(self):
-        """Lazily initialize EnhancedMemorySystem."""
+        """Lazily initialize EnhancedMemorySystem (with vector search if configured)."""
         if self._enhanced_memory is None:
             try:
                 from jebat.features.memory import EnhancedMemorySystem
-                self._enhanced_memory = EnhancedMemorySystem()
+
+                ghost_client, embedding_fn = (None, None)
+                if self.config.get("vector_search"):
+                    ghost_client, embedding_fn = self._build_vector_search()
+
+                self._enhanced_memory = EnhancedMemorySystem(
+                    ghost_client=ghost_client,
+                    embedding_fn=embedding_fn,
+                )
             except Exception:
                 pass
         return self._enhanced_memory
+
+    def _build_vector_search(self):
+        """Best-effort build a Ghost DB client + embedding function.
+
+        Returns (ghost_client, embedding_fn) or (None, None) if unavailable
+        (e.g. sqlite-vec not installed, or no embedding model configured). When
+        unavailable, EnhancedMemorySystem transparently falls back to n-gram
+        similarity, so recall still works.
+        """
+        try:
+            import os
+
+            from jebat.features.ghost_db.client import GhostClient, GhostConfig
+            from jebat.features.ghost_db.embeddings import get_embedding_provider
+
+            path = self.config.get("ghost_db_path") or os.path.expanduser(
+                "~/.jebat/ghost/memory.db"
+            )
+            client = GhostClient(config=GhostConfig(path=path))
+
+            provider = get_embedding_provider(
+                self.config.get("embedding_provider", "local"),
+                self.config.get("embedding_model"),
+            )
+
+            def embedding_fn(text: str):
+                return provider.embed([text]).vectors[0].tolist()
+
+            async def aembedding_fn(text: str):
+                return embedding_fn(text)
+
+            return client, aembedding_fn
+        except Exception:
+            return None, None
 
     async def store(
         self,
@@ -174,7 +216,10 @@ class MemoryManager:
             if enhanced:
                 try:
                     traces = await enhanced.retrieve(query, limit=limit - len(results))
+                    seen = {m.content for m in results}
                     for trace in traces:
+                        if trace.content in seen:
+                            continue
                         # Convert trace to legacy Memory format
                         mem = Memory(
                             memory_id=trace.trace_id,
@@ -188,6 +233,7 @@ class MemoryManager:
                             created_at=trace.created_at,
                         )
                         results.append(mem)
+                        seen.add(trace.content)
                         if len(results) >= limit:
                             break
                 except Exception:

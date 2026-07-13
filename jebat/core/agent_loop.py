@@ -14,7 +14,9 @@ Supports two tool-calling patterns:
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
@@ -700,6 +702,37 @@ async def _encode_run_memories(
         pass  # Memory encoding is best-effort
 
 
+# ── Dream / Reflection (Mimpi) ────────────────────────────────────────────
+
+async def _dream_reflection(
+    user_message: str,
+    final_response: str,
+    tool_steps: list,
+    session_id: str | None = None,
+) -> None:
+    """Optional subconscious 'dream' reflection step (Mimpi).
+
+    Runs best-effort after a run to consolidate insights into long-term memory.
+    Gated by JEBAT_DREAM_ENABLED=1 (off by default, so it never affects normal
+    runs). Never raises.
+    """
+    try:
+        import os
+
+        if os.getenv("JEBAT_DREAM_ENABLED") != "1":
+            return
+
+        from jebat.features.mimpi import DreamEngine
+        from jebat.features.memory import EnhancedMemorySystem
+
+        memory = EnhancedMemorySystem()
+        engine = DreamEngine(memory_manager=memory)
+        problem = f"User asked: {user_message[:200]}. Outcome: {final_response[:200]}"
+        await asyncio.wait_for(engine.dream_about_problem(problem), timeout=30)
+    except Exception:
+        pass
+
+
 # ── Cross-Session Context ────────────────────────────────────────────────
 
 def _load_cross_session_context(query: str, max_chars: int = 1500) -> str:
@@ -1127,6 +1160,16 @@ class AgentLoop:
                 try:
                     await _encode_run_memories(
                         user_message, final, self._tool_steps, self.session_id
+                    )
+                except Exception:
+                    pass
+
+                # Subconscious dream/reflection (best-effort, background, gated)
+                try:
+                    asyncio.create_task(
+                        _dream_reflection(
+                            user_message, final, self._tool_steps, self.session_id
+                        )
                     )
                 except Exception:
                     pass

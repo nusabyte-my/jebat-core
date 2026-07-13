@@ -88,3 +88,8 @@ include = ["jebat", "jebat.*", "jebat_cli_new*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "unit: fast tests with no external dependencies",
+    "integration: tests requiring external services (DB, network)",
+    "inference: tests requiring an LLM provider",
+]

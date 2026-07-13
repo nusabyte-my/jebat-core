@@ -58,9 +58,13 @@ from ..code_agent.enhanced_agent import (
     create_orchestration_plan,
 )
 
+# Convenience alias so callers can use a single consistent entrypoint.
+create_self_learning_agent = create_enhanced_agent
+
 __all__ = [
     # SelfLearningAgent (alias for EnhancedCodeAgent)
     "SelfLearningAgent",
+    "create_self_learning_agent",
     "Strategy",
     "LearningGoal",
     "LearningExperience",
@@ -68,15 +72,13 @@ __all__ = [
     "MetaLearner",
     "AlertRule",
     "Alert",
-    "AlertConfig",
     "AlertSeverity",
-    "AlertState",
     "AlertManager",
     "WebhookNotifier",
     "SlackNotifier",
     "PagerDutyNotifier",
     "DEFAULT_ALERT_RULES",
-    
+
     # Memory
     "EnhancedMemorySystem",
     "MemoryType",
@@ -88,7 +90,7 @@ __all__ = [
     "SemanticMemory",
     "ProceduralMemory",
     "SelfLearningMemory",
-    
+
     # Mimpi (Dreams)
     "DreamType",
     "DreamPhase",
@@ -101,10 +103,9 @@ __all__ = [
     "creative_brainstorm",
     "adversarial_dream",
     "planning_dream",
-    
+
     # Enhanced Agent
     "EnhancedCodeAgent",
-    "SelfLearningAgent",
     "LoopConfig",
     "LoopExitCondition",
     "OrchestrationMode",
@@ -117,5 +118,5 @@ __all__ = [
     "AgentMemory",
     "BranchAgentManager",
     "create_enhanced_agent",
-    "create_self_learning_agent",
+    "create_orchestration_plan",
 ]

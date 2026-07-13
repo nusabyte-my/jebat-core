@@ -409,12 +409,13 @@ class EnhancedMemorySystem:
 
         # Include linked traces
         if query.include_linked:
-            linked = set()
+            linked_ids = set()
             for trace in results:
-                for linked_id in trace.linked_traces:
-                    if linked_id in self.traces:
-                        linked.add(self.traces[linked_id])
-            results.extend(linked)
+                linked_ids.update(trace.linked_traces)
+            for linked_id in linked_ids:
+                linked_trace = self.traces.get(linked_id)
+                if linked_trace is not None and linked_trace not in results:
+                    results.append(linked_trace)
 
         # Update access stats
         for trace in results:
@@ -611,22 +612,23 @@ class EnhancedMemorySystem:
     # ── Retrieval Helpers ───────────────────────────────────────────
 
     def _text_similarity(self, text1: str, text2: str) -> float:
-        """Simple text similarity with n-gram fallback"""
-        if self.embedding_fn:
-            # Use embeddings if available
-            return 0.0  # Handled elsewhere
-        
-        # Character n-gram similarity (better than word overlap for partial matches)
+        """Character n-gram similarity fallback.
+
+        Used whenever vector/embedding search is unavailable. Always computes
+        a real score (never 0.0) so recall degrades gracefully instead of
+        returning nothing when an embedding function is configured but vector
+        search is not.
+        """
         def get_ngrams(text: str, n: int = 3) -> Set[str]:
             text = text.lower()
             return {text[i:i+n] for i in range(len(text) - n + 1)}
-        
+
         ngrams1 = get_ngrams(text1)
         ngrams2 = get_ngrams(text2)
-        
+
         if not ngrams1 or not ngrams2:
             return 0.0
-        
+
         intersection = ngrams1.intersection(ngrams2)
         union = ngrams1.union(ngrams2)
         return len(intersection) / len(union) if union else 0.0

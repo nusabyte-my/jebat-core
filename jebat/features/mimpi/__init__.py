@@ -12,6 +12,7 @@ Mimpi enables JEBAT to:
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 import uuid
 from dataclasses import dataclass, field
@@ -23,6 +24,9 @@ from collections import defaultdict
 
 from jebat.features.ultra_think import ThinkingMode, UltraThink
 from jebat.features.ultra_loop import UltraLoop, LoopPhase, LoopContext
+
+
+logger = logging.getLogger(__name__)
 
 
 class DreamType(Enum):
@@ -571,24 +575,69 @@ class DreamEngine:
         """Recall relevant memories for dream seeding"""
         if not self.memory_manager:
             return []
-
-        # Would integrate with memory_manager
+        try:
+            if hasattr(self.memory_manager, "retrieve"):
+                traces = await self.memory_manager.retrieve(context, limit=5)
+                return [
+                    {"concept": (t.content or "")[:80], "content": t.content}
+                    for t in traces
+                ]
+        except Exception:
+            pass
         return []
 
     async def _store_insight_memory(self, insight: str, dream: Dream):
-        """Store dream insight as memory"""
-        if not self.memory_manager:
+        """Store a dream insight into the enhanced memory system."""
+        if not self.memory_manager or not hasattr(self.memory_manager, "encode"):
             return
+        try:
+            from jebat.features.memory import MemoryType
+
+            await self.memory_manager.encode(
+                content=f"[mimpi:{dream.dream_type.value}] insight: {insight}",
+                memory_type=MemoryType.EPISODIC,
+                tags={"mimpi", "dream_insight", dream.dream_type.value},
+                importance=0.6,
+            )
+        except Exception:
+            pass
 
     async def _store_idea_memory(self, idea: str, dream: Dream):
-        """Store actionable idea as memory"""
-        if not self.memory_manager:
+        """Store an actionable dream idea into the enhanced memory system."""
+        if not self.memory_manager or not hasattr(self.memory_manager, "encode"):
             return
+        try:
+            from jebat.features.memory import MemoryType
+
+            await self.memory_manager.encode(
+                content=f"[mimpi:{dream.dream_type.value}] idea: {idea}",
+                memory_type=MemoryType.SEMANTIC,
+                tags={"mimpi", "dream_idea", dream.dream_type.value},
+                importance=0.55,
+            )
+        except Exception:
+            pass
 
     async def _store_dream_memory(self, dream: Dream):
-        """Store complete dream in long-term memory"""
-        if not self.memory_manager:
+        """Store a consolidated dream summary into the enhanced memory system."""
+        if not self.memory_manager or not hasattr(self.memory_manager, "encode"):
             return
+        try:
+            from jebat.features.memory import MemoryType
+
+            await self.memory_manager.encode(
+                content=(
+                    f"[mimpi] type={dream.dream_type.value} "
+                    f"insights={len(dream.insights_generated)} "
+                    f"ideas={len(dream.actionable_ideas)}"
+                ),
+                memory_type=MemoryType.EPISODIC,
+                tags={"mimpi", "dream", dream.dream_type.value},
+                importance=0.5,
+                context={"dream_id": dream.dream_id},
+            )
+        except Exception:
+            pass
 
     def _store_dream(self, dream: Dream):
         """Store dream in history"""
