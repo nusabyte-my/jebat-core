@@ -1304,6 +1304,18 @@ async def main():
     plugins_parser.add_argument("--install-pip", help="Install plugin from pip")
     plugins_parser.add_argument("--uninstall", help="Uninstall a plugin")
 
+    # Pentest command — TukangBesi security scanning
+    pentest_parser = subparsers.add_parser("pentest", help="Security/pentest scanning (TukangBesi)")
+    pentest_parser.add_argument("--list-profiles", action="store_true", help="List available scan profiles")
+    pentest_parser.add_argument("--target", "-t", help="Target host or domain")
+    pentest_parser.add_argument("--profile", "-p", default="quick", help="Scan profile (quick/standard/full/vuln)")
+    pentest_parser.add_argument("--orchestrate", action="store_true", help="Use multi-agent orchestration")
+    pentest_subparsers = pentest_parser.add_subparsers(dest="pentest_command")
+    pentest_scan = pentest_subparsers.add_parser("scan", help="Run a pentest scan")
+    pentest_scan.add_argument("--target", "-t", help="Target host or domain")
+    pentest_scan.add_argument("--profile", "-p", default="quick", help="Scan profile (quick/standard/full/vuln)")
+    pentest_scan.add_argument("--orchestrate", action="store_true", help="Use multi-agent orchestration")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -2569,6 +2581,33 @@ async def main():
 
             else:
                 design_parser.print_help()
+
+        elif args.command == "pentest":
+            from jebat.features.pentest.pentest_core import list_profiles
+
+            if args.list_profiles:
+                profiles = list_profiles()
+                print("Available scan profiles:\n")
+                for p in profiles:
+                    print(f"  - {p['name']}: {p.get('description', '')}")
+            elif args.pentest_command == "scan" or (args.target and not args.list_profiles):
+                target = args.target
+                if not target:
+                    print("Error: --target is required for scan", file=sys.stderr)
+                    return 2
+                profile = args.profile or "quick"
+                from jebat.features.pentest.pentest_orchestrator import PentestOrchestrator
+
+                orch = PentestOrchestrator()
+                result = await orch.orchestrated_scan(
+                    target=target,
+                    scan_type=profile,
+                    enable_agents=args.orchestrate,
+                    enable_consensus=args.orchestrate,
+                )
+                print(orch.generate_orchestrated_report(result))
+            else:
+                pentest_parser.print_help()
 
         return 0
 

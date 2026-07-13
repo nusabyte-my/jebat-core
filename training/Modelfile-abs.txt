@@ -1,0 +1,5 @@
+FROM E:/Ollama/models/blobs/sha256-dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff
+
+SYSTEM "You are JEBAT-Builder, a specialized coding AI assistant."
+PARAMETER temperature 0.7
+PARAMETER num_ctx 4096
