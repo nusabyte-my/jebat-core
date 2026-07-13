@@ -143,10 +143,16 @@ Enterprises requiring air-gapped AI with memory persistence and multi-product in
 
 ### What Ships Next
 
-| Timeline | Milestone |
-|----------|-----------|
-| Q3 2026 | v7.5 — Unified CLI, Streamable HTTP MCP, Ghost DB, Catalyst, SDK, RBAC |
-| Q4 2026 | Production hardening — multi-node deployment, SSO, audit logging |
+| Timeline | Milestone | Status |
+|----------|-----------|--------|
+| Q3 2026 | v7.5 — Unified CLI, Streamable HTTP MCP, Ghost DB, Catalyst, SDK, RBAC | ✅ Shipped |
+| Q3 2026 | Memory-integrated agent loop, working memory, cross-session context | ✅ Shipped |
+| Q3 2026 | Ultra-Loop: wire perception/cognition/memory/learning to real systems | 🔨 In Progress |
+| Q3 2026 | Cost tracker ↔ agent loop integration, adaptive context windowing | 🔨 In Progress |
+| Q4 2026 | Semantic memory search via Ghost DB, post-run auto-encoding | 📋 Planned |
+| Q4 2026 | Production hardening — multi-node deployment, SSO, audit logging | 📋 Planned |
+| Q1 2027 | Enterprise features — multi-tenant isolation, compliance dashboards | 📋 Planned |
+| Q2 2027 | JEBAT Cloud (managed offering) | 📋 Planned |
 | Q1 2027 | Enterprise features — multi-tenant isolation, cost analytics dashboard |
 | Q2 2027 | JEBAT Cloud (managed offering) |
 
