@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEBAT — Sovereign Agent OS | Pitch Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --canvas: #030303;
+            --surface: #08080c;
+            --card: #0a0a10;
+            --border: #16161e;
+            --cyan: #00f0ff;
+            --cyan-dim: rgba(0,240,255,0.06);
+            --cyan-glow: rgba(0,240,255,0.25);
+            --purple: #8b5cf6;
+            --purple-dim: rgba(139,92,246,0.06);
+            --amber: #f59e0b;
+            --amber-dim: rgba(245,158,11,0.06);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.06);
+            --red: #ef4444;
+            --text: #f0f0f0;
+            --text-body: #a8a8b0;
+            --text-dim: rgba(168,168,176,0.45);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--canvas);
+            color: var(--text);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent, transparent 2px,
+                rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px
+            );
+        }
+
+        /* ─── SLIDE SYSTEM ─── */
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 60px;
+            position: relative;
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        .slide-inner {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .slide-number {
+            position: absolute;
+            top: 40px;
+            right: 60px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+
+        .slide-divider {
+            width: 100%;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ─── TYPOGRAPHY ─── */
+        .gradient-text {
+            background: linear-gradient(135deg, var(--cyan), var(--purple), var(--amber));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-cyan {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: clamp(48px, 7vw, 80px);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -2px;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: clamp(32px, 4vw, 48px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -1px;
+        }
+
+        h3 {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label::before {
+            content: '';
+            width: 20px;
+            height: 1px;
+            background: var(--cyan);
+            opacity: 0.5;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-body);
+            max-width: 640px;
+            line-height: 1.7;
+            margin-top: 20px;
+        }
+
+        .mono {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        /* ─── GRID LAYOUTS ─── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 48px;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        .four-col {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        .five-col {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        /* ─── CARDS ─── */
+        .card {
+            background: var(--canvas);
+            padding: 32px 28px;
+        }
+
+        .card:hover { background: var(--card); }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .card h3 {
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--text-body);
+            line-height: 1.65;
+        }
+
+        .card-meta {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--cyan);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .card-stat {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .card-stat-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        /* ─── TABLE ─── */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 32px;
+        }
+
+        .table th {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .table td {
+            font-size: 13px;
+            color: var(--text-body);
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table tr:hover td {
+            background: var(--surface);
+        }
+
+        .table td:first-child {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* ─── PILL ─── */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 1px solid var(--border);
+        }
+
+        .pill-green { background: var(--green-dim); color: var(--green); border-color: rgba(34,197,94,0.2); }
+        .pill-cyan { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0,240,255,0.2); }
+        .pill-purple { background: var(--purple-dim); color: var(--purple); border-color: rgba(139,92,246,0.2); }
+        .pill-amber { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,158,11,0.2); }
+
+        .pill-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .pill-green .pill-dot { background: var(--green); }
+        .pill-cyan .pill-dot { background: var(--cyan); }
+        .pill-purple .pill-dot { background: var(--purple); }
+        .pill-amber .pill-dot { background: var(--amber); }
+
+        /* ─── BAR CHART ─── */
+        .bar-chart {
+            margin-top: 32px;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 60px;
+            gap: 16px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bar-label {
+            font-size: 13px;
+            color: var(--text-body);
+        }
+
+        .bar-track {
+            height: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .bar-value {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            text-align: right;
+        }
+
+        /* ─── TIMELINE ─── */
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        .tl-item {
+            background: var(--canvas);
+            padding: 28px 24px;
+        }
+
+        .tl-item:last-child { background: var(--surface); }
+
+        .tl-phase {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 12px;
+        }
+
+        .tl-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .tl-desc {
+            font-size: 12px;
+            color: var(--text-body);
+            line-height: 1.6;
+        }
+
+        /* ─── LOGOS ─── */
+        .logo-row {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .logo-item {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+
+        /* ─── HERO SLIDE ─── */
+        .hero-slide {
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(0,240,255,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.04) 0%, transparent 40%);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.025;
+            background-image:
+                linear-gradient(var(--cyan) 1px, transparent 1px),
+                linear-gradient(90deg, var(--cyan) 1px, transparent 1px);
+            background-size: 80px 80px;
+        }
+
+        /* ─── ASK SLIDE ─── */
+        .ask-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 48px;
+        }
+
+        .ask-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 36px;
+        }
+
+        .ask-amount {
+            font-family: var(--font-display);
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .ask-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 24px;
+        }
+
+        .ask-list {
+            list-style: none;
+        }
+
+        .ask-list li {
+            font-size: 13px;
+            color: var(--text-body);
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .ask-list li:last-child { border-bottom: none; }
+
+        .ask-list .pct {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--cyan);
+        }
+
+        /* ─── CTA ─── */
+        .cta-box {
+            text-align: center;
+            padding: 80px 40px;
+            background:
+                radial-gradient(ellipse at 50% 50%, rgba(0,240,255,0.06) 0%, transparent 50%);
+            border: 1px solid var(--border);
+            margin-top: 48px;
+        }
+
+        .cta-tagline {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 24px;
+            color: var(--text-body);
+        }
+
+        .cta-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .cta-link {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--cyan);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        /* ─── PRINT ─── */
+        @media print {
+            body { background: #000; }
+            body::after { display: none; }
+            .slide { min-height: auto; padding: 40px; page-break-after: always; }
+            .hero-grid { display: none; }
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 900px) {
+            .slide { padding: 60px 32px; }
+            .two-col { grid-template-columns: 1fr; }
+            .three-col { grid-template-columns: 1fr; }
+            .four-col { grid-template-columns: 1fr 1fr; }
+            .five-col { grid-template-columns: 1fr 1fr; }
+            .timeline { grid-template-columns: 1fr 1fr; }
+            .ask-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 1 — TITLE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide hero-slide">
+        <div class="hero-grid"></div>
+        <div class="slide-inner" style="text-align:center;position:relative;z-index:1;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px;">
+                <div style="width:48px;height:48px;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--cyan-dim);">🗡</div>
+                <span style="font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:4px;">JEBAT</span>
+            </div>
+            <h1><span class="gradient-text">Sovereign</span><br>Agent Operating System</h1>
+            <p class="subtitle" style="margin:24px auto 0;text-align:center;">
+                Five specialized AI products. One persistent memory layer.<br>
+                A unified MCP protocol bus. Zero telemetry.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px;margin-top:40px;">
+                <span class="pill pill-green"><span class="pill-dot"></span> v7.5 Stable</span>
+                <span class="pill pill-cyan"><span class="pill-dot"></span> 145 Tests</span>
+                <span class="pill pill-purple"><span class="pill-dot"></span> 47 MCP Tools</span>
+                <span class="pill pill-amber"><span class="pill-dot"></span> MIT License</span>
+            </div>
+            <div style="margin-top:60px;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);letter-spacing:2px;">
+                NUSAByte · INVESTOR DECK · 2026
+            </div>
+        </div>
+        <div class="slide-number">01 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 2 — THE PROBLEM
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">The Problem</div>
+            <h2>Enterprise AI is stuck<br>on <span class="gradient-text">three critical risks</span></h2>
+
+            <div class="three-col">
+                <div class="card">
+                    <div class="card-icon" style="border-color:var(--red);">🔒</div>
+                    <h3>Data Sovereignty</h3>
+                    <p>Sensitive code, documents, and conversations flow through third-party APIs. Regulated industries — finance, healthcare, defense — cannot comply with data residency requirements.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="border-color:var(--amber);">🔗</div>
+                    <h3>Vendor Lock-in</h3>
+                    <p>Switching LLM providers requires rewriting application logic. Price increases, API changes, and deprecations leave enterprises dependent on a single vendor's roadmap.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="border-color:var(--purple);">🧩</div>
+                    <h3>Fragmented Tooling</h3>
+                    <p>Enterprises cobble together 5-10 disconnected tools. No shared memory. No unified context. Agents restart from zero every session.</p>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:48px;padding:24px;border:1px solid var(--border);background:var(--surface);">
+                <p style="font-family:var(--font-display);font-size:20px;font-weight:600;">
+                    The market has AI products. <span class="gradient-text">It lacks an AI operating system.</span>
+                </p>
+            </div>
+        </div>
+        <div class="slide-number">02 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 3 — THE SOLUTION
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">The Solution</div>
+            <h2>One platform.<br><span class="gradient-cyan">Five products.</span> Your data never leaves.</h2>
+
+            <div class="five-col">
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:28px;margin-bottom:12px;">🗡</div>
+                    <h3 style="font-size:15px;">Core</h3>
+                    <p style="font-size:11px;">Inference router<br>7 reasoning modes<br>17 providers</p>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:28px;margin-bottom:12px;">⚔</div>
+                    <h3 style="font-size:15px;">Sentinel</h3>
+                    <p style="font-size:11px;">Security orchestrator<br>Autonomous pentest<br>CVE correlation</p>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:28px;margin-bottom:12px;">⌨</div>
+                    <h3 style="font-size:15px;">DevSuite</h3>
+                    <p style="font-size:11px;">MCP-native coding<br>Sandboxed execution<br>6 IDE integrations</p>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:28px;margin-bottom:12px;">💬</div>
+                    <h3 style="font-size:15px;">Companion</h3>
+                    <p style="font-size:11px;">Persistent memory<br>Meeting intelligence<br>Task tracking</p>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:28px;margin-bottom:12px;">🌐</div>
+                    <h3 style="font-size:15px;">Nexus</h3>
+                    <p style="font-size:11px;">6 platforms<br>Bot orchestrator<br>Cross-channel memory</p>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:32px;padding:20px;border:1px solid var(--border);background:var(--surface);">
+                <p style="font-size:14px;color:var(--text-body);">
+                    Every product shares the same <strong style="color:var(--cyan);">memory engine</strong> and <strong style="color:var(--purple);">MCP protocol bus</strong>.
+                    Install what you need. They all talk to each other.
+                </p>
+            </div>
+        </div>
+        <div class="slide-number">03 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 4 — TECHNICAL MOATS
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Technical Moats</div>
+            <h2>Six layers competitors<br>can't <span class="gradient-text">easily replicate</span></h2>
+
+            <div class="three-col">
+                <div class="card">
+                    <div class="card-meta">Moat 01</div>
+                    <h3>Zero-Dependency Runtime</h3>
+                    <p>SQLite + sqlite-vec. No PostgreSQL, no Redis, no external vector DB. Single binary via <code>npx</code>.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Moat 02</div>
+                    <h3>Air-Gapped by Design</h3>
+                    <p>No telemetry. No phone-home. Every component runs inside the customer's network. Ollama auto-starts local models.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Moat 03</div>
+                    <h3>Provider-Agnostic Router</h3>
+                    <p>17 LLM backends with automatic failover. Switch providers by changing one config line. Zero code changes.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Moat 04</div>
+                    <h3>Persistent Memory</h3>
+                    <p>6 memory types with Ebbinghaus forgetting curves. Agent remembers what worked across sessions.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Moat 05</div>
+                    <h3>MCP Protocol Native</h3>
+                    <p>Built on the open Model Context Protocol standard. 47 tools. Works with Cursor, VS Code, Zed, Windsurf, JetBrains.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Moat 06</div>
+                    <h3>Self-Learning Agent Loop</h3>
+                    <p>UCB1 strategy selection. Branch agents. Spec-driven dev. Working memory buffer. Cost tracking per agent.</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">04 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 5 — MARKET OPPORTUNITY
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Market Opportunity</div>
+            <h2><span class="gradient-text">$85B TAM</span> by 2028</h2>
+            <p class="subtitle">Enterprise AI platform market (Gartner, 2025)</p>
+
+            <div class="bar-chart">
+                <div class="bar-row">
+                    <div class="bar-label">TAM</div>
+                    <div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));"></div></div>
+                    <div class="bar-value">$85B</div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">SAM</div>
+                    <div class="bar-track"><div class="bar-fill" style="width:14%;background:var(--amber);"></div></div>
+                    <div class="bar-value">$12B</div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">SOM</div>
+                    <div class="bar-track"><div class="bar-fill" style="width:6%;background:var(--green);"></div></div>
+                    <div class="bar-value">$500M</div>
+                </div>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Segment</th>
+                        <th>Pain Point</th>
+                        <th>JEBAT Solution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Financial Services</td>
+                        <td>Regulatory data residency (MAS, SEC, GDPR)</td>
+                        <td>Air-gapped deployment, zero telemetry</td>
+                    </tr>
+                    <tr>
+                        <td>Healthcare</td>
+                        <td>HIPAA compliance, patient data isolation</td>
+                        <td>Self-hosted inference, no external APIs</td>
+                    </tr>
+                    <tr>
+                        <td>Defense / Government</td>
+                        <td>Classified networks, air-gapped facilities</td>
+                        <td>Full offline operation, no internet required</td>
+                    </tr>
+                    <tr>
+                        <td>Software Enterprises</td>
+                        <td>Multi-tool fragmentation, lost context</td>
+                        <td>Unified memory across all AI tools</td>
+                    </tr>
+                    <tr>
+                        <td>Managed Service Providers</td>
+                        <td>Multi-tenant AI platforms</td>
+                        <td>RBAC, cost tracking, enterprise access control</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="slide-number">05 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 6 — COMPETITIVE LANDSCAPE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Competitive Landscape</div>
+            <h2>We don't compete with tools.<br>We <span class="gradient-text">replace the category</span>.</h2>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>JEBAT</th>
+                        <th>LangChain</th>
+                        <th>AutoGPT</th>
+                        <th>OpenAI Platform</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Self-hosted</td>
+                        <td style="color:var(--green);">✓</td>
+                        <td style="color:var(--green);">✓</td>
+                        <td style="color:var(--green);">✓</td>
+                        <td style="color:var(--red);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Air-gapped</td>
+                        <td style="color:var(--green);">✓</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--red);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Multi-product</td>
+                        <td style="color:var(--green);">5 integrated</td>
+                        <td>Library only</td>
+                        <td>Single agent</td>
+                        <td>Single product</td>
+                    </tr>
+                    <tr>
+                        <td>Memory persistence</td>
+                        <td style="color:var(--green);">6-type + forgetting</td>
+                        <td>Basic</td>
+                        <td style="color:var(--red);">None</td>
+                        <td>Session only</td>
+                    </tr>
+                    <tr>
+                        <td>MCP native</td>
+                        <td style="color:var(--green);">✓ (47 tools)</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--red);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Provider routing</td>
+                        <td style="color:var(--green);">17 providers</td>
+                        <td>Multiple</td>
+                        <td>Limited</td>
+                        <td>OpenAI only</td>
+                    </tr>
+                    <tr>
+                        <td>Observability</td>
+                        <td style="color:var(--green);">Built-in (Catalyst)</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td>Basic</td>
+                    </tr>
+                    <tr>
+                        <td>Enterprise RBAC</td>
+                        <td style="color:var(--green);">✓ (3-tier)</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--red);">✗</td>
+                        <td style="color:var(--green);">✓</td>
+                    </tr>
+                    <tr>
+                        <td>License</td>
+                        <td style="color:var(--green);">MIT</td>
+                        <td>MIT</td>
+                        <td>MIT</td>
+                        <td>Proprietary</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="slide-number">06 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 7 — ARCHITECTURE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Architecture</div>
+            <h2>Six-layer <span class="gradient-cyan">sovereign stack</span></h2>
+            <p class="subtitle">Every component runs inside your network. No data leaves.</p>
+
+            <div style="display:flex;flex-direction:column;gap:2px;background:var(--border);border:1px solid var(--border);margin-top:40px;">
+                <div style="display:grid;grid-template-columns:180px 1fr;background:var(--canvas);">
+                    <div style="padding:16px 20px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);border-right:1px solid var(--border);background:var(--surface);">L0 — Interface</div>
+                    <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="pill pill-cyan">WebUI</span>
+                        <span class="pill pill-cyan">CLI</span>
+                        <span class="pill pill-cyan">MCP</span>
+                        <span class="pill pill-cyan">SDK</span>
+                        <span class="pill pill-cyan">REST API</span>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:180px 1fr;background:var(--canvas);">
+                    <div style="padding:16px 20px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);border-right:1px solid var(--border);background:var(--surface);">L1 — Agents</div>
+                    <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="pill pill-purple">ReAct Engine</span>
+                        <span class="pill pill-purple">Ultra-Think</span>
+                        <span class="pill pill-purple">Multi-Agent Swarm</span>
+                        <span class="pill pill-purple">Branch Agents</span>
+                        <span class="pill pill-purple">Spec-Driven Dev</span>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:180px 1fr;background:var(--canvas);">
+                    <div style="padding:16px 20px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);border-right:1px solid var(--border);background:var(--surface);">L2 — Products</div>
+                    <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="pill pill-amber">Core</span>
+                        <span class="pill pill-amber">Sentinel</span>
+                        <span class="pill pill-amber">DevSuite</span>
+                        <span class="pill pill-amber">Companion</span>
+                        <span class="pill pill-amber">Nexus</span>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:180px 1fr;background:var(--canvas);">
+                    <div style="padding:16px 20px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);border-right:1px solid var(--border);background:var(--surface);">L3 — Cognition</div>
+                    <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="pill pill-green">6-Type Memory</span>
+                        <span class="pill pill-green">Working Memory</span>
+                        <span class="pill pill-green">Ghost DB</span>
+                        <span class="pill pill-green">Mimpi Dream</span>
+                        <span class="pill pill-green">Self-Learning</span>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:180px 1fr;background:var(--canvas);">
+                    <div style="padding:16px 20px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);border-right:1px solid var(--border);background:var(--surface);">L4 — Infrastructure</div>
+                    <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="pill" style="background:rgba(239,68,68,0.06);color:var(--red);border-color:rgba(239,68,68,0.2);">17-Provider Router</span>
+                        <span class="pill" style="background:rgba(239,68,68,0.06);color:var(--red);border-color:rgba(239,68,68,0.2);">MCP Bus (47 Tools)</span>
+                        <span class="pill" style="background:rgba(239,68,68,0.06);color:var(--red);border-color:rgba(239,68,68,0.2);">Catalyst O11y</span>
+                        <span class="pill" style="background:rgba(239,68,68,0.06);color:var(--red);border-color:rgba(239,68,68,0.2);">Enterprise RBAC</span>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:180px 1fr;background:var(--canvas);">
+                    <div style="padding:16px 20px;font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);border-right:1px solid var(--border);background:var(--surface);">L5 — Runtime</div>
+                    <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span class="pill">SQLite + sqlite-vec</span>
+                        <span class="pill">Ollama Auto-Start</span>
+                        <span class="pill">Docker Compose</span>
+                        <span class="pill">Air-Gapped Deploy</span>
+                        <span class="pill">Zero Telemetry</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">07 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 8 — TRACTION
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Traction</div>
+            <h2>What ships <span class="gradient-text">today</span></h2>
+
+            <div class="five-col">
+                <div class="card" style="text-align:center;">
+                    <div class="card-stat" style="color:var(--cyan);">5</div>
+                    <div class="card-stat-label">Products</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div class="card-stat" style="color:var(--purple);">47</div>
+                    <div class="card-stat-label">MCP Tools</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div class="card-stat" style="color:var(--amber);">17</div>
+                    <div class="card-stat-label">LLM Providers</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div class="card-stat" style="color:var(--green);">145</div>
+                    <div class="card-stat-label">Tests Passing</div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div class="card-stat" style="color:var(--text);">6</div>
+                    <div class="card-stat-label">IDE Integrations</div>
+                </div>
+            </div>
+
+            <div class="two-col" style="margin-top:32px;">
+                <div class="card">
+                    <div class="card-meta">Also Ships</div>
+                    <h3>Embedded Subsystems</h3>
+                    <p>Ghost DB (vector store), Catalyst O11y (tracing + metrics + logging), Enterprise RBAC, SDK (Python + TypeScript), Mimpi dream engine, Self-learning agent loop, Working memory buffer, Cross-session context.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Quality</div>
+                    <h3>145 Tests Across 10 Suites</h3>
+                    <p>Full coverage of agent loop, provider router, memory system, MCP protocol, channel integrations, security classification, and tool execution.</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">08 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 9 — ROADMAP
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Roadmap</div>
+            <h2>From production to <span class="gradient-text">scale</span></h2>
+
+            <div class="timeline">
+                <div class="tl-item">
+                    <div class="tl-phase">Q3 2026</div>
+                    <div class="tl-title">v7.5 — Unified Platform</div>
+                    <div class="tl-desc">Unified CLI, Streamable HTTP MCP, Ghost DB, Catalyst O11y, SDK, RBAC, Mimpi, Self-learning, Branch agents.</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-phase">Q4 2026</div>
+                    <div class="tl-title">Production Hardening</div>
+                    <div class="tl-desc">Multi-node deployment, SSO integration, audit logging, advanced cost analytics, enterprise support tiers.</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-phase">Q1 2027</div>
+                    <div class="tl-title">Enterprise Features</div>
+                    <div class="tl-desc">Multi-tenant isolation, compliance dashboards, custom agent marketplace, white-label deployment.</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-phase">Q2 2027</div>
+                    <div class="tl-title">JEBAT Cloud</div>
+                    <div class="tl-desc">Managed offering for teams that want cloud without vendor lock-in. Hybrid deployment model.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">09 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 10 — BUSINESS MODEL
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">Business Model</div>
+            <h2>Open source core.<br><span class="gradient-cyan">Enterprise revenue</span>.</h2>
+
+            <div class="three-col">
+                <div class="card">
+                    <div class="card-meta">Revenue Stream 1</div>
+                    <h3>JEBAT Enterprise</h3>
+                    <p>Priority support, SLA guarantees, custom integrations, dedicated architecture review. For teams that need production-grade AI infrastructure.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Revenue Stream 2</div>
+                    <h3>JEBAT Cloud</h3>
+                    <p>Managed deployment for teams that want cloud without vendor lock-in. Hybrid model: your data, our infrastructure.</p>
+                </div>
+                <div class="card">
+                    <div class="card-meta">Revenue Stream 3</div>
+                    <h3>Professional Services</h3>
+                    <p>Architecture review, custom agent development, enterprise training, compliance consulting. High-margin, relationship-building.</p>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:32px;padding:20px;border:1px solid var(--border);background:var(--surface);">
+                <p style="font-size:14px;color:var(--text-body);">
+                    <strong style="color:var(--cyan);">MIT license</strong> ensures adoption.
+                    <strong style="color:var(--purple);">Enterprise features</strong> ensure revenue.
+                    <strong style="color:var(--amber);">Cloud offering</strong> ensures scale.
+                </p>
+            </div>
+        </div>
+        <div class="slide-number">10 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 11 — THE ASK
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide">
+        <div class="slide-inner">
+            <div class="label">The Ask</div>
+            <h2>Pre-seed: <span class="gradient-text">$1.5M</span></h2>
+
+            <div class="ask-grid">
+                <div class="ask-box">
+                    <div class="ask-amount" style="color:var(--cyan);">$1.5M</div>
+                    <div class="ask-label">Pre-Seed Round</div>
+                    <ul class="ask-list">
+                        <li>Engineering (3 hires) <span class="pct">50%</span></li>
+                        <li>Enterprise sales & partnerships <span class="pct">25%</span></li>
+                        <li>Infrastructure & operations <span class="pct">15%</span></li>
+                        <li>Legal & compliance <span class="pct">10%</span></li>
+                    </ul>
+                </div>
+                <div class="ask-box">
+                    <div class="ask-amount" style="color:var(--green);">$1.3M</div>
+                    <div class="ask-label">Grant Credits (Stacked)</div>
+                    <ul class="ask-list">
+                        <li>AWS GAIA (up to) <span class="pct">$1.0M</span></li>
+                        <li>AWS Activate (up to) <span class="pct">$200K</span></li>
+                        <li>Alibaba Catalyst (up to) <span class="pct">$120K</span></li>
+                        <li style="border:none;color:var(--text);font-weight:500;">Total cloud credits <span class="pct" style="color:var(--green);">$1.32M</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="timeline" style="margin-top:32px;">
+                <div class="tl-item">
+                    <div class="tl-phase">6 Months</div>
+                    <div class="tl-title">Design Partners</div>
+                    <div class="tl-desc">5 enterprise design partners, first paying customer.</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-phase">12 Months</div>
+                    <div class="tl-title">Revenue</div>
+                    <div class="tl-desc">50 enterprise deployments, $500K ARR.</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-phase">18 Months</div>
+                    <div class="tl-title">Scale</div>
+                    <div class="tl-desc">JEBAT Cloud launch, $2M ARR, Series A readiness.</div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-phase">24 Months</div>
+                    <div class="tl-title">Market Position</div>
+                    <div class="tl-desc">Category leader in sovereign AI infrastructure.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">11 / 12</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SLIDE 12 — CLOSING
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="slide hero-slide">
+        <div class="hero-grid"></div>
+        <div class="slide-inner" style="text-align:center;position:relative;z-index:1;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:40px;">
+                <div style="width:48px;height:48px;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--cyan-dim);">🗡</div>
+                <span style="font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:4px;">JEBAT</span>
+            </div>
+            <h1>Your AI.<br><span class="gradient-text">Your Infrastructure.</span><br>Your Rules.</h1>
+            <div class="cta-box" style="margin-top:48px;">
+                <div class="cta-links">
+                    <span class="cta-link">github.com/nusabyte-my/jebat-core</span>
+                    <span class="cta-link">jebat.online</span>
+                </div>
+                <div style="margin-top:24px;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);letter-spacing:2px;">
+                    NUSAByte · SHAPING THE FUTURE OF SOVEREIGN AI
+                </div>
+            </div>
+        </div>
+        <div class="slide-number">12 / 12</div>
+    </section>
+
+</body>
+</html>
