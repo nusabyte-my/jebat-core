@@ -7,6 +7,8 @@ import pytest
 
 from jebat.config.manager import ConfigManager
 
+pytestmark = pytest.mark.unit
+
 
 def test_config_layering_and_override() -> None:
     """Test three-layer config: defaults < .env < .jebatrc."""

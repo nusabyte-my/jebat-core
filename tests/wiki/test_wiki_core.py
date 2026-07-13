@@ -5,6 +5,10 @@ import tempfile
 
 from jebat.features.wiki.wiki_core import WikiStore
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_create_and_read_page() -> None:
     with tempfile.TemporaryDirectory() as tmp:
