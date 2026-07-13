@@ -119,9 +119,9 @@
             <div class="install-label">One-line install</div>
             <div class="install-cmd">
                 <span class="comment"># Install JEBAT Agent OS</span><br>
-                curl -fsSL https://jebat.online/install.sh | bash
+                curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash
             </div>
-            <button class="copy-btn" onclick="navigator.clipboard.writeText('curl -fsSL https://jebat.online/install.sh | bash')">Copy</button>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash')">Copy</button>
         </div>
 
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
@@ -190,7 +190,7 @@
         <div id="tab-default" class="tab-content active">
             <div class="code-block">
                 <pre><span class="comment"># Default install — CLI + inference stack</span>
-<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash</span></pre>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash</span></pre>
             </div>
             <ul class="feature-list">
                 <li>JEBAT CLI (repl, chat, code, agent, think)</li>
@@ -204,7 +204,7 @@
         <div id="tab-mcp" class="tab-content">
             <div class="code-block">
                 <pre><span class="comment"># CLI + MCP server for IDE integration</span>
-<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash -s -- <span class="flag">--mcp</span></span></pre>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- <span class="flag">--mcp</span></span></pre>
             </div>
             <ul class="feature-list">
                 <li>Everything in default</li>
@@ -217,7 +217,7 @@
         <div id="tab-all" class="tab-content">
             <div class="code-block">
                 <pre><span class="comment"># Full install — CLI + MCP + Desktop + inference</span>
-<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash -s -- <span class="flag">--all</span></span></pre>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- <span class="flag">--all</span></span></pre>
             </div>
             <ul class="feature-list">
                 <li>Everything in MCP profile</li>
@@ -230,7 +230,7 @@
         <div id="tab-minimal" class="tab-content">
             <div class="code-block">
                 <pre><span class="comment"># CLI only — no inference stack</span>
-<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash -s -- <span class="flag">--cli</span> <span class="flag">--no-inference</span></span></pre>
+<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- <span class="flag">--cli</span> <span class="flag">--no-inference</span></span></pre>
             </div>
             <ul class="feature-list">
                 <li>JEBAT CLI only</li>
