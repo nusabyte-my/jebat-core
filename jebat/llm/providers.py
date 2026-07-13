@@ -330,6 +330,7 @@ class OllamaProvider:
     model: str
     host: str
     temperature: float
+    keep_alive: str = ""  # empty = server default
 
     async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
         return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
@@ -348,6 +349,8 @@ class OllamaProvider:
         }
         import httpx
 
+        if self.keep_alive:
+            payload["keep_alive"] = self.keep_alive
         async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
                 urljoin(self.host.rstrip("/") + "/", "api/generate"),
@@ -373,6 +376,88 @@ class OllamaProvider:
                 raw_usage=raw_usage,
             ),
         )
+
+
+@dataclass(slots=True)
+class CustomOpenAIProvider:
+    """Generic OpenAI-compatible endpoint provider for custom LLM servers."""
+    api_url: str
+    api_key: str
+    model: str
+    temperature: float
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(
+                f"{self.api_url.rstrip('/')}/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices", [])
+        if choices:
+            message = choices[0].get("message", {})
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                return content.strip()
+        raise RuntimeError("Custom endpoint response did not contain text output")
+
+
+TOKENROUTER_BASE_URL = "https://api.tokenrouter.com/v1"
+
+
+@dataclass(slots=True)
+class TokenRouterProvider:
+    """Token Router API provider — unified gateway to 50+ models.
+    Docs: https://tokenrouter.com/docs
+    """
+    api_key: str
+    model: str
+    temperature: float
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(
+                f"{TOKENROUTER_BASE_URL}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices", [])
+        if choices:
+            message = choices[0].get("message", {})
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                return content.strip()
+        raise RuntimeError("Token Router response did not contain text output")
 
 
 def build_provider(config: JebatLLMConfig) -> LLMProvider:
@@ -423,11 +508,28 @@ def build_provider(config: JebatLLMConfig) -> LLMProvider:
             model=config.model,
             host=config.ollama_host,
             temperature=config.temperature,
+            keep_alive=config.ollama_keep_alive,
         )
     if provider == "ninerouter":
         return build_ninerouter_provider(config)
     if provider == "local":
         return LocalEchoProvider()
+    if provider == "custom":
+        return CustomOpenAIProvider(
+            api_url=config.custom_api_url,
+            api_key=config.custom_api_key,
+            model=config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
+    if provider == "tokenrouter":
+        api_key = get_provider_secret("tokenrouter")
+        return TokenRouterProvider(
+            api_key=api_key,
+            model=config.model,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
     raise ValueError(f"unsupported provider: {config.provider}")
 
 
@@ -450,8 +552,11 @@ async def generate_with_failover(
             max_tokens=config.max_tokens,
             ollama_host=config.ollama_host,
             llamacpp_host=config.llamacpp_host,
+            ollama_keep_alive=config.ollama_keep_alive,
             fallback_providers=(),
             history_path=config.history_path,
+            custom_api_url=config.custom_api_url,
+            custom_api_key=config.custom_api_key,
         )
         try:
             provider = build_provider(candidate)
@@ -473,4 +578,6 @@ def list_supported_providers() -> list[dict[str, str]]:
         {"name": "ollama", "env": "OLLAMA_HOST", "notes": "Local Ollama daemon"},
         {"name": "ninerouter", "env": "NINEROUTER_HOST + NINEROUTER_API_KEY", "notes": "9Router FREE AI proxy (kr/oc/glm/mm/vtx models)"},
         {"name": "local", "env": "-", "notes": "Deterministic offline fallback"},
+        {"name": "custom", "env": "JEBAT_CUSTOM_API_URL, JEBAT_CUSTOM_API_KEY", "notes": "Custom OpenAI-compatible endpoint"},
+        {"name": "tokenrouter", "env": "TOKENROUTER_API_KEY", "notes": "Token Router — unified gateway to 50+ models (Free: minimax/MiniMax-M3)"},
     ]

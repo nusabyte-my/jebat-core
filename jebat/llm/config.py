@@ -17,9 +17,13 @@ class JebatLLMConfig:
     top_k: int = 64
     max_tokens: int = 1200
     ollama_host: str = "http://127.0.0.1:11434"
+    ollama_keep_alive: str = ""  # e.g. "5m", "1h", "0" (0 unloads immediately); empty = server default
     llamacpp_host: str = "http://127.0.0.1:8080"
     fallback_providers: tuple[str, ...] = ("local",)
     history_path: str = ".jebat/chat_history.jsonl"
+    # Custom OpenAI-compatible endpoint support
+    custom_api_url: str = ""
+    custom_api_key: str = "sk-dummy"
 
 
 def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
@@ -33,9 +37,13 @@ def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
     max_tokens = int(os.getenv("JEBAT_LLM_MAX_TOKENS", raw.get("max_tokens", 1200)))
     ollama_host = os.getenv("OLLAMA_HOST", raw.get("ollama_host", "http://127.0.0.1:11434"))
     llamacpp_host = os.getenv("LLAMA_CPP_HOST", raw.get("llamacpp_host", "http://127.0.0.1:8080"))
+    ollama_keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", raw.get("ollama_keep_alive", ""))
     fallback_raw = os.getenv("JEBAT_LLM_FALLBACKS", ",".join(raw.get("fallback_providers", ["local"])))
     history_path = os.getenv("JEBAT_CHAT_HISTORY_PATH", raw.get("history_path", ".jebat/chat_history.jsonl"))
     fallbacks = tuple(item.strip().lower() for item in str(fallback_raw).split(",") if item.strip())
+    # Custom endpoint support
+    custom_api_url = os.getenv("JEBAT_CUSTOM_API_URL", raw.get("custom_api_url", ""))
+    custom_api_key = os.getenv("JEBAT_CUSTOM_API_KEY", raw.get("custom_api_key", "sk-dummy"))
 
     return JebatLLMConfig(
         provider=str(provider).strip().lower(),
@@ -46,8 +54,11 @@ def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
         max_tokens=max_tokens,
         ollama_host=str(ollama_host).strip(),
         llamacpp_host=str(llamacpp_host).strip(),
+        ollama_keep_alive=str(ollama_keep_alive).strip(),
         fallback_providers=fallbacks,
         history_path=str(history_path).strip(),
+        custom_api_url=str(custom_api_url).strip(),
+        custom_api_key=str(custom_api_key).strip(),
     )
 
 

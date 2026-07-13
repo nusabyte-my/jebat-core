@@ -86,6 +86,8 @@ PROVIDER_ENV_MAP = {
     "openrouter": ("OPENROUTER_API_KEY",),
     "llamacpp": ("LLAMA_CPP_HOST",),
     "ollama": ("OLLAMA_HOST",),
+    "custom": ("JEBAT_CUSTOM_API_URL", "JEBAT_CUSTOM_API_KEY"),
+    "tokenrouter": ("TOKENROUTER_API_KEY",),
     "local": (),
 }
 
@@ -95,6 +97,8 @@ PROVIDER_PRIORITY = (
     "anthropic",
     "openrouter",
     "llamacpp",
+    "tokenrouter",
+    "custom",
     "ollama",
     "local",
 )

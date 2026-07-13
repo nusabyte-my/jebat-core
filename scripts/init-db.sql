@@ -3,8 +3,16 @@
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgvector";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+-- Try to enable pgvector (optional - requires pgvector to be installed in PostgreSQL)
+DO $$
+BEGIN
+    CREATE EXTENSION IF NOT EXISTS "pgvector";
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'pgvector extension not available - skipping (install pgvector for vector search support)';
+END
+$$;
 
 -- Create database schema (if not using ORM migrations)
 -- Note: Tables will be created by SQLAlchemy ORM on first run

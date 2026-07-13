@@ -9,9 +9,20 @@ This file is the root memory index for the workspace.
 - Codex sessions should also load `CODEX_PROFILE.md`.
 - If duplicate docs exist at the root and in `jebat-core/`, prefer the `jebat-core/` copy unless the user explicitly directs otherwise.
 
+## Active Projects
+
+- **jebat-core** — canonical JEBAT operating center, VPS services, multi-agent model.
+- **ALAND (AlandFeasi)** — `C:\Users\shaid\Desktop\nusabyte\ALAND`. Property feasibility study platform. pnpm monorepo (client + server + shared + packages). Drizzle ORM. Reference models: boom.online, land.tech. Active from 2026-05-17.
+- **Erawan-QSys** — `C:\Users\shaid\Desktop\nusabyte\Erawan-QSys`. Queue system for massage operations (QPOS). Next.js 15 + NestJS + Prisma/PostgreSQL monorepo. Branch: `erawanwellness`. **PRODUCTION** server: `72.60.42.163` (NOT `72.62.254.65`), domain `qpos.erawanwellness.com`. V2 checkout at `/opt/erawanQPOS-v2` (ports 4001/5501), nginx on 443. PM2: `erawan-api-v2` (id 7) + `erawan-web-v2` (id 6). Features: multi-guest booking flow (guestIndex on BookingItem), per-item actions, POS with pre-loaded cart, Gantt chart (09:00-22:00 working hours), room status with red occupied indicators + countdown timers, booking sort (pending→cancelled priority), commission tracking, payment (cash/card/e-wallet/pending). V1 legacy at `/opt/erawanQPOS` (ports 4000/5500). v2.1.0 UX overhaul (multi-guest booking, Gantt 09:00–22:00, red room-status, booking sort fix) shipped to prod 2026-07-13. All user passwords: `erawan2026`. See `memory/2026-07-13.md` for latest session log.
+- **Serambi Tiffin** — `C:\Users\shaid\Desktop\nusabyte\serambi tiffin - web`. React 19 + Vite frontend, Express/TypeScript backend. Auth hardening applied 2026-05-07.
+- **SkillPro** — `C:\Users\shaid\Desktop\nusabyte\SkillPro`. Domain `skillpro.my`. Malaysian freelancer/professional identity platform (v0-bootstrapped). Next.js 16 (App Router, port 4050) + React 19 + Tailwind 4 + shadcn + PostgreSQL (`@vercel/postgres` + `pg`) + NextAuth v5 (beta) + Drizzle-less raw SQL migrations in `db/migrations/` + Vitest. Repo: `github.com/nusabyte-my/SkillPro-WEB` (origin/main clean). Active phases: VPS deployment to 72.62.254.65, escrow + KYC modules already scaffolded under `lib/actions` and `lib/repositories`. See `REFACTOR_PLAN.md` and `DEPLOYMENT_GROWTH_PLAN.md`. Brand: green `#22C55E` + blue `#2563EB` + navy `#0F172A`.
+- **Aether Energy** — `C:\Users\shaid\Desktop\Aether-Energy\Aether-energy-web`. AI-powered no-code oil trading platform for institutional traders. React 19 + Vite 7 + Tailwind CSS 4 + Express/TypeScript. pnpm monorepo (client/server/shared). Radix UI, framer-motion, recharts, wouter, zod. Design: "Elemental Precision" — dark slate with amber/gold accents. Registered 2026-06-15.
+- **KenariCekal_Workforce** — `C:\Users\shaid\Desktop\nusabyte\KenariCekal_Workforce`. WorkforceOS — enterprise workforce attendance for Malaysian manpower agency (~200 staff, 24/7, two shifts/day, multiple sites). Phone-only GPS geofence (BLE/NFC/WiFi intentionally removed — do not reintroduce). NestJS 10 + TypeORM + PostgreSQL + Redis (backend :3000) / Vanilla JS PWA (served from NestJS, face enrollment + selfie liveness) / Next.js 16.2.9 + AntD 6 + Zustand + Leaflet (dashboard :5580). Phase 1 GPS MVP complete; Phase 2 pilot hardening not started. Build: backend typecheck clean, backend lint broken (ESLint 9 vs legacy .eslintrc.js), dashboard has 34 tsc errors. See `IMPROVEMENT_PLAN.md` for roadmap. Captured 2026-07-06.
+
 ## Session Notes
 
 - Daily session records live in `memory/YYYY-MM-DD.md`.
+- Dream consolidations live in `memory/.dream-YYYY-MM-DD.md`.
 
 ## Durable Decisions
 
