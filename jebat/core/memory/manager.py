@@ -136,16 +136,9 @@ class MemoryManager:
         limit: int = 10,
     ) -> List[Memory]:
         """
-        Search memories using both legacy substring and enhanced similarity.
+        Search memories using legacy substring search.
 
-        Args:
-            query: Search query
-            user_id: User identifier
-            layer: Optional layer filter
-            limit: Max results
-
-        Returns:
-            List of matching memories
+        For async context with enhanced memory, use `asearch()` instead.
         """
         results = []
         layers_to_search = [layer] if layer else list(MemoryLayer)
@@ -160,36 +153,43 @@ class MemoryManager:
                     if len(results) >= limit:
                         return results
 
+        return results
+
+    async def asearch(
+        self,
+        query: str,
+        user_id: str,
+        layer: Optional[MemoryLayer] = None,
+        limit: int = 10,
+    ) -> List[Memory]:
+        """
+        Async search using both legacy substring and enhanced memory similarity.
+        """
+        # Start with legacy search
+        results = self.search(query, user_id, layer, limit)
+
         # If few results, try enhanced memory system
         if len(results) < limit:
             enhanced = self._get_enhanced_memory()
             if enhanced:
                 try:
-                    import asyncio
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        # Can't await in sync context — skip enhanced
-                        pass
-                    else:
-                        traces = loop.run_until_complete(
-                            enhanced.retrieve(query, limit=limit - len(results))
+                    traces = await enhanced.retrieve(query, limit=limit - len(results))
+                    for trace in traces:
+                        # Convert trace to legacy Memory format
+                        mem = Memory(
+                            memory_id=trace.trace_id,
+                            content=trace.content,
+                            layer=MemoryLayer.M2_SEMANTIC,
+                            metadata=MemoryMetadata(user_id=user_id),
+                            heat=HeatScore(
+                                visit_count=trace.access_count,
+                                interaction_depth=trace.importance,
+                            ),
+                            created_at=trace.created_at,
                         )
-                        for trace in traces:
-                            # Convert trace to legacy Memory format
-                            mem = Memory(
-                                memory_id=trace.trace_id,
-                                content=trace.content,
-                                layer=MemoryLayer.M2_SEMANTIC,
-                                metadata=MemoryMetadata(user_id=user_id),
-                                heat=HeatScore(
-                                    visit_count=trace.access_count,
-                                    interaction_depth=trace.importance,
-                                ),
-                                created_at=trace.created_at,
-                            )
-                            results.append(mem)
-                            if len(results) >= limit:
-                                break
+                        results.append(mem)
+                        if len(results) >= limit:
+                            break
                 except Exception:
                     pass
 

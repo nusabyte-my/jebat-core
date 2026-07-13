@@ -434,6 +434,85 @@ def _summarize_evicted_context(messages: list[dict[str, str]], max_chars: int = 
     return summary
 
 
+def _adaptive_compact(
+    messages: list[dict[str, str]],
+    max_tokens: int = DEFAULT_MAX_CONTEXT_TOKENS,
+    recalled_memory_contents: list[str] | None = None,
+) -> list[dict[str, str]]:
+    """Importance-aware context compaction.
+
+    Scores each message by importance, keeps the most valuable messages
+    within the token budget, then re-sorts chronologically.
+
+    Importance factors:
+      - System messages: highest priority (never dropped)
+      - Messages with tool calls (Action:/Observation:): high priority
+      - Messages referenced in recalled memories: boosted
+      - Recent messages: higher priority than older ones
+      - User messages with questions: higher priority than statements
+    """
+    if not messages:
+        return []
+
+    def msg_tokens(msg: dict[str, str]) -> int:
+        return len(msg.get("content", "")) // 4 + 1
+
+    total = sum(msg_tokens(m) for m in messages)
+    if total <= max_tokens:
+        return messages
+
+    # Build a set of memory-referenced content for fast lookup
+    memory_keywords: set[str] = set()
+    if recalled_memory_contents:
+        for mem in recalled_memory_contents:
+            # Extract key phrases (first 50 chars of each memory)
+            if mem:
+                memory_keywords.add(mem[:50].lower())
+
+    scored: list[tuple[float, int, dict[str, str]]] = []
+    for idx, msg in enumerate(messages):
+        content = msg.get("content", "")
+        role = msg.get("role", "unknown")
+        importance = 0.5  # base
+
+        # System messages are critical
+        if role == "system":
+            importance = 1.0
+        # Tool call results are important for context
+        elif "Action:" in content or "Observation:" in content:
+            importance = 0.8
+        # Final answers are important
+        elif "Final Answer:" in content:
+            importance = 0.9
+        # User questions are important
+        elif role == "user" and "?" in content:
+            importance = 0.7
+        # Recency boost: newer messages score higher
+        recency = idx / max(len(messages), 1)
+        importance += recency * 0.2
+
+        # Memory reference boost
+        content_lower = content[:50].lower()
+        if any(kw in content_lower for kw in memory_keywords):
+            importance += 0.15
+
+        scored.append((importance, idx, msg))
+
+    # Sort by importance descending, greedily pick messages within budget
+    scored.sort(key=lambda x: x[0], reverse=True)
+    selected: list[tuple[int, dict[str, str]]] = []
+    remaining = max_tokens
+    for importance, idx, msg in scored:
+        t = msg_tokens(msg)
+        if t <= remaining:
+            selected.append((idx, msg))
+            remaining -= t
+
+    # Re-sort chronologically
+    selected.sort(key=lambda x: x[0])
+    return [msg for _, msg in selected]
+
+
 # ── Working Memory Buffer ─────────────────────────────────────────────────
 
 @dataclass
@@ -531,20 +610,23 @@ async def _encode_run_memories(
 ) -> None:
     """Encode key outcomes from an agent run as episodic memories.
 
-    Stores: the user intent, final outcome, and any significant tool results.
-    Token-efficient: only encodes meaningful content, skips trivial calls.
+    Extracts:
+      - User intent + agent outcome (episodic)
+      - Key decisions made (semantic)
+      - Files created/modified (procedural)
+      - Errors encountered (episodic, high importance)
+      - Significant tool results (procedural)
     """
     try:
         from jebat.features.memory import EnhancedMemorySystem, MemoryType
         memory = EnhancedMemorySystem()
 
-        # Encode user intent + agent outcome
-        outcome_text = f"User asked: {user_message[:200]}. Agent responded: {final_response[:300]}"
         tags = {"agent_run"}
         if session_id:
             tags.add(f"session:{session_id}")
 
-        # Count tool usage for tagging
+        # ── 1. User intent + final outcome ─────────────────────────
+        outcome_text = f"User asked: {user_message[:200]}. Agent responded: {final_response[:300]}"
         tool_names = [s.tool_name for s in tool_steps if not s.error]
         if tool_names:
             tags.update(set(tool_names[:3]))
@@ -557,7 +639,52 @@ async def _encode_run_memories(
             context={"session_id": session_id or "", "tool_count": len(tool_steps)},
         )
 
-        # Encode significant tool results (skip trivial reads)
+        # ── 2. Extract decisions from LLM responses ────────────────
+        for step in tool_steps:
+            if not step.error and step.tool_name in ("file_patch", "file_write", "terminal"):
+                result_str = str(step.result) if step.result else ""
+                # Look for decision patterns
+                if any(kw in result_str.lower() for kw in ("decided", "chose", "selected", "implemented", "added")):
+                    await memory.encode(
+                        content=f"Decision: {result_str[:300]}",
+                        memory_type=MemoryType.SEMANTIC,
+                        tags={"decision", step.tool_name},
+                        importance=0.7,
+                        context={"session_id": session_id or ""},
+                    )
+
+        # ── 3. Track files created/modified ────────────────────────
+        files_modified: list[str] = []
+        for step in tool_steps:
+            if step.tool_name in ("file_write", "file_patch") and not step.error:
+                result_str = str(step.result) if step.result else ""
+                # Extract file paths from result
+                import re
+                path_matches = re.findall(r'[/\w.-]+\.\w+', result_str)
+                files_modified.extend(path_matches[:3])
+
+        if files_modified:
+            await memory.encode(
+                content=f"Files modified in session: {', '.join(set(files_modified)[:5])}",
+                memory_type=MemoryType.PROCEDURAL,
+                tags={"files_modified", "session_summary"},
+                importance=0.6,
+                context={"session_id": session_id or "", "files": files_modified[:10]},
+            )
+
+        # ── 4. Encode errors (high importance for learning) ────────
+        errors = [s for s in tool_steps if s.error]
+        if errors:
+            error_summary = "; ".join(f"{s.tool_name}: {s.error[:80]}" for s in errors[:3])
+            await memory.encode(
+                content=f"Errors encountered: {error_summary}",
+                memory_type=MemoryType.EPISODIC,
+                tags={"error", "learning_opportunity"},
+                importance=0.8,  # Errors are important to remember
+                context={"session_id": session_id or "", "error_count": len(errors)},
+            )
+
+        # ── 5. Significant tool results ────────────────────────────
         significant_tools = {"file_write", "file_patch", "git_commit", "terminal", "delegate_task"}
         for step in tool_steps:
             if step.tool_name in significant_tools and not step.error:
@@ -710,6 +837,9 @@ class AgentLoop:
         # Working memory buffer
         self._working_memory = WorkingMemory()
 
+        # Cost tracker (lazy init)
+        self._cost_tracker = None
+
         # Lazy tool module import flag
         self._tools_imported = False
 
@@ -719,6 +849,16 @@ class AgentLoop:
             from jebat.features.session import SessionManager
             self._session_manager = SessionManager()
         return self._session_manager
+
+    def _get_cost_tracker(self):
+        """Lazily initialise the CostTracker for budget enforcement."""
+        if self._cost_tracker is None:
+            try:
+                from jebat.features.cost_tracking.cost_tracking import record_usage
+                self._cost_tracker = record_usage
+            except Exception:
+                pass
+        return self._cost_tracker
 
     def _ensure_tools_imported(self) -> None:
         """Lazily import tool feature modules so they register in TOOL_REGISTRY.
@@ -795,25 +935,25 @@ class AgentLoop:
         if project_context:
             base_system_prompt = project_context + "\n\n" + base_system_prompt
 
-        # Inject wiki RAG context (relevant wiki pages via FTS5 keyword search)
+        # Gather wiki + memory context for ContextManager
+        wiki_pages: list[str] = []
+        memory_entries: list[str] = []
+
         try:
             from jebat.features.wiki.wiki_rag import inject_wiki_rag
             wiki_context = inject_wiki_rag(user_message, max_pages=3)
             if wiki_context:
-                base_system_prompt = wiki_context + "\n" + base_system_prompt
+                wiki_pages.append(wiki_context)
         except Exception:
-            pass  # Wiki not available — skip gracefully
+            pass
 
-        # Inject relevant memories from EnhancedMemorySystem
         memory_context = await _recall_memories_for_query(user_message, limit=5)
         if memory_context:
-            memory_block = "\n".join(f"[Memory] {m}" for m in memory_context)
-            base_system_prompt += "\n\n" + memory_block
+            memory_entries = memory_context
 
-        # Inject cross-session context (past conversations)
         cross_session = _load_cross_session_context(user_message)
         if cross_session:
-            base_system_prompt += f"\n\n{cross_session}"
+            memory_entries.append(cross_session)
 
         self._ensure_tools_imported()
         # Local/small models get a brief tool listing to save context space
@@ -822,44 +962,66 @@ class AgentLoop:
         tool_appendix = _build_tool_system_prompt_appendix(max_tools=max_tools)
         full_system_prompt = base_system_prompt + tool_appendix
 
-        # Working prompt — starts with user message, gets augmented with observations
-        current_prompt = user_message
+        # ── ContextManager: assemble messages respecting token budget ──
+        from jebat.features.session.context import ContextManager
+        ctx = ContextManager(max_tokens=self.max_context_tokens)
         working_history = list(conversation_history or [])
 
         # ── Session persistence ──────────────────────────────────────
         sm = self._get_session_manager()
         if not self.session_id:
-            # Auto-create a new session; title from the first few words
             title = user_message.strip()[:80]
             if len(user_message) > 80:
                 title += "..."
             self.session_id = sm.create_session(title=title)
         else:
-            # Resume existing session — load its history and prepend
             existing = sm.load_history(self.session_id, limit=50)
             for msg in existing:
                 working_history.append({
                     "role": msg.role,
                     "content": msg.content,
                 })
-        # Save user message to DB
+            # Load persisted working memory for this session
+            wm_state = sm.load_working_memory(self.session_id)
+            if wm_state:
+                for g in wm_state.get("goals", []):
+                    self._working_memory.add_goal(g)
+                for f in wm_state.get("facts", []):
+                    self._working_memory.add_fact(f)
+                for c in wm_state.get("constraints", []):
+                    self._working_memory.add_constraint(c)
         sm.add_message(self.session_id, "user", user_message)
+
+        # Use ContextManager to build token-aware messages list
+        messages = ctx.build_messages(
+            system_prompt=full_system_prompt,
+            history=working_history,
+            wiki_pages=wiki_pages if wiki_pages else None,
+            memory_entries=memory_entries if memory_entries else None,
+        )
+        # Extract the system prompt (first message) and rebuild history
+        system_msg = messages[0]["content"] if messages else full_system_prompt
+        # The rest are wiki/memory + conversation history
+        history_from_ctx = [m for m in messages[1:] if m["role"] != "system"]
 
         while iterations < self.max_iterations:
             iterations += 1
 
-            # ── Context compaction: trim conversation history ─────────
-            if len(working_history) > 10:
-                working_history = _compact_conversation_history(
-                    working_history,
-                    max_tokens=self.max_context_tokens,
-                )
-
             # ── Inject working memory into system prompt ──────────────
             wm_section = self._working_memory.to_prompt_section()
-            prompt_with_wm = full_system_prompt
+            prompt_with_wm = system_msg
             if wm_section:
                 prompt_with_wm += f"\n\n{wm_section}"
+
+            # Adaptive compaction: importance-aware context trimming
+            current_prompt = history_from_ctx[-1]["content"] if history_from_ctx else user_message
+            history_for_llm = history_from_ctx[:-1] if len(history_from_ctx) > 1 else []
+            if history_for_llm:
+                history_for_llm = _adaptive_compact(
+                    history_for_llm,
+                    max_tokens=int(self.max_context_tokens * 0.5),
+                    recalled_memory_contents=memory_context if memory_context else None,
+                )
 
             # ── Call LLM with retry on transient errors ───────────────
             try:
@@ -867,7 +1029,7 @@ class AgentLoop:
                     lambda: generate_chat_reply(
                         prompt=current_prompt,
                         mode=mode,
-                        conversation_messages=working_history,
+                        conversation_messages=history_for_llm,
                         provider_override=self.config.provider,
                         model_override=self.config.model,
                         temperature_override=self.config.temperature,
@@ -919,6 +1081,21 @@ class AgentLoop:
                 total_tokens["completion_tokens"] += metadata.usage.get("completion_tokens", 0)
                 total_tokens["total_tokens"] += metadata.usage.get("total_tokens", 0)
 
+                # Track cost per iteration
+                cost_fn = self._get_cost_tracker()
+                if cost_fn:
+                    try:
+                        cost_fn(
+                            provider=used_provider,
+                            model=self.config.model or "unknown",
+                            input_tokens=metadata.usage.get("prompt_tokens", 0),
+                            output_tokens=metadata.usage.get("completion_tokens", 0),
+                            operation="agent",
+                            session_id=self.session_id or "unknown",
+                        )
+                    except Exception:
+                        pass
+
             # Update working memory from LLM output
             self._working_memory.update_from_llm(response_text)
 
@@ -936,6 +1113,14 @@ class AgentLoop:
 
                 # Persist final response
                 sm.add_message(self.session_id, "assistant", final)
+
+                # Save working memory state for this session
+                sm.save_working_memory(
+                    self.session_id,
+                    goals=self._working_memory.goals,
+                    facts=self._working_memory.facts,
+                    constraints=self._working_memory.constraints,
+                )
 
                 # Encode memories from this run (best-effort, async)
                 try:
