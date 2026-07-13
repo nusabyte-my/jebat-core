@@ -1,7 +1,7 @@
 {
   "name": "@nusabyte/jebat",
-  "version": "7.5.0",
-  "description": "JEBAT v7.5 — Sovereign AI Platform & Agent Workstation. Platform Suite (Sahabat, Keris, Pandai, Perisai), Stealth-Dark WebUI, 25 enterprise features, 17 LLM providers with key/env/store auth, MCP, pentest engine, 5-layer memory, multi-agent swarms. Runs via npx/bunx with auto bootstrap.",
+  "version": "8.2.0",
+  "description": "JEBAT v8.2 — Sovereign Agent Operating System. 5 integrated products, 6-type memory with Ghost DB vector search, adaptive context windowing, working memory persistence, 17 LLM providers, 47 MCP tools, 6 Grafana dashboards. Air-gapped, MIT licensed.",
   "type": "module",
   "bin": {
     "jebat": "./bin/jebat.js"

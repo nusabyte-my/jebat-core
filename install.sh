@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────
-JEBAT_VERSION="7.5.0"
+JEBAT_VERSION="8.2.0"
 REPO_URL="https://github.com/nusabyte-my/jebat-core.git"
 INSTALL_DIR="${JEBAT_HOME:-$HOME/.local/jebat}"
 BIN_DIR="$HOME/.local/bin"
@@ -56,13 +56,13 @@ done
 
 # ── banner ─────────────────────────────────────────────────────────────
 echo
-c_banner "🗡️  JEBAT Core — Sovereign AI Workstation  v$JEBAT_VERSION"
+c_banner "🗡️  JEBAT Core — Sovereign Agent OS  v$JEBAT_VERSION"
 c_banner "    installing for: $(whoami)@$(uname -s) $(uname -m)"
 echo
 c_step "selected components:"
-[ "$DO_CLI" -eq 1 ]        && c_comp "CLI            (jebat repl / chat / code / agent)"
-[ "$DO_DESKTOP" -eq 1 ]    && c_comp "Desktop        (UI in jebat-dev → jebat desktop; snippet prepped)"
-[ "$DO_MCP" -eq 1 ]        && c_comp "MCP surface     (IDE snippet prepped; server in jebat-dev)"
+[ "$DO_CLI" -eq 1 ]        && c_comp "CLI            (jebat repl / chat / code / agent / think)"
+[ "$DO_DESKTOP" -eq 1 ]    && c_comp "Desktop        (Stealth-Dark WebUI with full Agent OS)"
+[ "$DO_MCP" -eq 1 ]        && c_comp "MCP surface    (47 tools over stdio/HTTP/streamable-http on :8206)"
 [ "$DO_INFERENCE" -eq 1 ]  && c_comp "Inference stack (Ollama + llama.cpp + router + OpenWebUI)"
 echo
 
@@ -189,14 +189,20 @@ if [ "$DO_MCP" -eq 1 ]; then
   "mcpServers": {
     "jebat": {
       "command": "$PYTHON_BIN",
-      "args": ["$BIN_DIR/jebat-mcp"]
+      "args": ["-m", "jebat.mcp.server"],
+      "env": {"JEBAT_MCP_TRANSPORT": "stdio"}
+    },
+    "jebat-http": {
+      "url": "http://127.0.0.1:8206/mcp"
     }
   }
 }
 JSON
   c_ok "IDE snippet: $INSTALL_DIR/mcp.ide.json"
   c_ok "MCP server exposes 47 tools over stdio/HTTP/streamable-http"
-  c_ok "generate IDE configs: jebat-mcp --print-ide-config"
+  c_ok "HTTP endpoint: http://127.0.0.1:8206/mcp"
+  c_ok "generate IDE configs: jebat mcp --print-config"
+  c_ok "start MCP server: jebat mcp serve --port 8206"
 fi
 
 if [ "$DO_DESKTOP" -eq 1 ]; then
@@ -222,16 +228,38 @@ fi
 
 # ── done ───────────────────────────────────────────────────────────────
 echo
-c_banner "✅ JEBAT Core installed."
+c_banner "✅ JEBAT Core v$JEBAT_VERSION installed."
+echo
+c_step "what's installed:"
+echo "    ✓ Agent Loop with adaptive context windowing"
+echo "    ✓ 6-type memory system with Ghost DB vector search"
+echo "    ✓ Working memory persistence across sessions"
+echo "    ✓ Cost tracking per LLM iteration"
+echo "    ✓ Ultra-Loop (perception/cognition/memory/action/learning)"
+echo "    ✓ Self-learning with UCB1 strategy selection"
+echo "    ✓ 17 LLM providers with auto-failover"
+echo "    ✓ 47 MCP tools (stdio/HTTP/streamable-http)"
+echo "    ✓ 6 Grafana dashboards (context budget, LLM health, etc.)"
 echo
 c_step "verify:"
-echo "    jebat --help              # core commands: repl / chat / code / agent"
-echo "    jebat repl                # starts with default provider: jebat.online"
-echo "    designmd --version        # companion registry tool"
-[ "$DO_MCP" -eq 1 ]      && echo "    jebat mcp serve          # (full workspace) MCP server; snippet at $INSTALL_DIR/mcp.ide.json"
-[ "$DO_DESKTOP" -eq 1 ]  && echo "    jebat desktop            # (full workspace) launch Desktop UI"
-[ "$DO_INFERENCE" -eq 1 ]&& echo "    infra/inference/start.sh  # (full workspace) boot local LLMs"
+echo "    jebat --help              # core commands: repl / chat / code / agent / think"
+echo "    jebat repl                # interactive REPL with memory persistence"
+echo "    jebat chat 'hello'        # one-shot chat"
+echo "    jebat agent 'task'        # run agent with tool execution"
+echo "    jebat think --mode deep   # Ultra-Think with 7 reasoning modes"
+echo "    jebat mcp serve           # start MCP server (stdio)"
+echo "    jebat mcp serve --port 8206  # start MCP server (HTTP)"
+[ "$DO_INFERENCE" -eq 1 ]&& echo "    infra/inference/start.sh  # boot local LLMs (Ollama + llama.cpp)"
+echo
+c_step "IDE integration:"
+echo "    VS Code / Cursor:  Add MCP config from $INSTALL_DIR/mcp.ide.json"
+echo "    Claude Desktop:    Copy mcp.ide.json to ~/Library/Application Support/Claude/"
+echo "    Zed / Windsurf:    Add MCP server in settings"
 echo
 c_step "ensure PATH includes ~/.local/bin:"
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo '    export PATH="$HOME/.local/bin:$PATH"  # add to ~/.bashrc / ~/.zshrc'; ;; esac
+echo
+c_step "documentation:"
+echo "    https://jebat.online/docs"
+echo "    https://github.com/nusabyte-my/jebat-core"
 echo

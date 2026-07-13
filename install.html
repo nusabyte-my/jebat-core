@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install JEBAT — Sovereign Agent OS</title>
+    <meta name="description" content="Install JEBAT Agent OS in one command. CLI, MCP server, IDE integration, and local inference stack.">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --canvas: #030303;
+            --surface: #08080c;
+            --card: #0a0a10;
+            --border: #16161e;
+            --border-bright: #1e1e2a;
+            --cyan: #00f0ff;
+            --cyan-dim: rgba(0,240,255,0.06);
+            --cyan-glow: rgba(0,240,255,0.2);
+            --purple: #8b5cf6;
+            --purple-dim: rgba(139,92,246,0.06);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.08);
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --text: #f0f0f0;
+            --text-body: #a8a8b0;
+            --text-dim: rgba(168,168,176,0.45);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--canvas); color: var(--text); font-family: var(--font-body); line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+        /* Hero */
+        .hero { padding: 120px 0 60px; text-align: center; border-bottom: 1px solid var(--border); }
+        .hero-badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--green); background: var(--green-dim); border: 1px solid rgba(34,197,94,0.2); padding: 5px 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .hero h1 { font-family: var(--font-display); font-size: clamp(36px, 5vw, 56px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 16px; }
+        .hero p { color: var(--text-body); font-size: 18px; max-width: 600px; margin: 0 auto 32px; }
+        .hero-version { font-family: var(--font-mono); color: var(--cyan); }
+
+        /* Install Command */
+        .install-box { background: var(--card); border: 1px solid var(--border-bright); border-radius: 8px; padding: 24px 28px; max-width: 700px; margin: 0 auto 20px; position: relative; }
+        .install-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 10px; }
+        .install-cmd { font-family: var(--font-mono); font-size: 15px; color: var(--cyan); word-break: break-all; }
+        .install-cmd .comment { color: var(--text-dim); }
+        .copy-btn { position: absolute; top: 16px; right: 16px; background: var(--border); border: 1px solid var(--border-bright); color: var(--text-body); padding: 6px 12px; font-size: 12px; cursor: pointer; border-radius: 4px; font-family: var(--font-mono); }
+        .copy-btn:hover { background: var(--border-bright); color: var(--text); }
+
+        /* Section */
+        .section { padding: 60px 0; border-bottom: 1px solid var(--border); }
+        .section-title { font-family: var(--font-display); font-size: 28px; font-weight: 600; margin-bottom: 12px; }
+        .section-desc { color: var(--text-body); margin-bottom: 32px; }
+
+        /* Cards Grid */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 24px; border-radius: 6px; transition: border-color 0.2s; }
+        .card:hover { border-color: var(--border-bright); }
+        .card-icon { font-size: 24px; margin-bottom: 12px; }
+        .card h3 { font-family: var(--font-display); font-size: 16px; margin-bottom: 8px; }
+        .card p { color: var(--text-body); font-size: 14px; line-height: 1.5; }
+
+        /* Code Block */
+        .code-block { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+        .code-block pre { font-family: var(--font-mono); font-size: 13px; line-height: 1.7; }
+        .code-block .comment { color: var(--text-dim); }
+        .code-block .cmd { color: var(--cyan); }
+        .code-block .flag { color: var(--purple); }
+        .code-block .string { color: var(--green); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+
+        /* Badge */
+        .badge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-green { color: var(--green); background: var(--green-dim); border: 1px solid rgba(34,197,94,0.2); }
+        .badge-cyan { color: var(--cyan); background: var(--cyan-dim); border: 1px solid rgba(0,240,255,0.2); }
+        .badge-purple { color: var(--purple); background: var(--purple-dim); border: 1px solid rgba(139,92,246,0.2); }
+        .badge-amber { color: var(--amber); background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+
+        /* Feature List */
+        .feature-list { list-style: none; }
+        .feature-list li { padding: 8px 0; display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-body); }
+        .feature-list li::before { content: '✓'; color: var(--green); font-weight: 600; flex-shrink: 0; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+        .tab { padding: 12px 20px; font-size: 14px; font-weight: 500; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Footer */
+        .footer { padding: 40px 0; text-align: center; color: var(--text-dim); font-size: 13px; }
+        .footer a { color: var(--cyan); text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .hero { padding: 80px 0 40px; }
+            .install-box { padding: 16px; }
+            .install-cmd { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge">v8.2.0 — Now Available</div>
+        <h1>Install <span style="color:var(--cyan)">JEBAT</span></h1>
+        <p>Sovereign Agent Operating System. One command. Three surfaces. Your data never leaves your network.</p>
+
+        <div class="install-box">
+            <div class="install-label">One-line install</div>
+            <div class="install-cmd">
+                <span class="comment"># Install JEBAT Agent OS</span><br>
+                curl -fsSL https://jebat.online/install.sh | bash
+            </div>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('curl -fsSL https://jebat.online/install.sh | bash')">Copy</button>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+            <span class="badge badge-green">MIT Licensed</span>
+            <span class="badge badge-cyan">Air-Gapped</span>
+            <span class="badge badge-purple">47 MCP Tools</span>
+            <span class="badge badge-amber">17 LLM Providers</span>
+        </div>
+    </div>
+</section>
+
+<!-- What You Get -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">What You Get</h2>
+        <p class="section-desc">Everything installed in one command. No Docker required. No cloud dependencies.</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">🗡️</div>
+                <h3>JEBAT CLI</h3>
+                <p>Interactive REPL, one-shot chat, code generation, agent execution, Ultra-Think with 7 reasoning modes.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔌</div>
+                <h3>MCP Server</h3>
+                <p>47 tools over stdio, HTTP (port 8206), and Streamable HTTP. Works with VS Code, Cursor, Zed, Windsurf, JetBrains.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🧠</div>
+                <h3>Memory System</h3>
+                <p>6-type memory with Ebbinghaus forgetting curves, Ghost DB vector search, working memory persistence.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔄</div>
+                <h3>Ultra-Loop</h3>
+                <p>Autonomous agent loop: perception → cognition → memory → action → learning. Self-improves over time.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">💰</div>
+                <h3>Cost Tracking</h3>
+                <p>Per-iteration token cost tracking with provider-level pricing. Budget enforcement built-in.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <h3>6 Grafana Dashboards</h3>
+                <p>Context budget, LLM health, agent orchestration, memory layers, MCP bus, system overview.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Install Profiles -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Install Profiles</h2>
+        <p class="section-desc">Choose what to install. All profiles include the core CLI.</p>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('default')">Default</div>
+            <div class="tab" onclick="showTab('mcp')">MCP Server</div>
+            <div class="tab" onclick="showTab('all')">Everything</div>
+            <div class="tab" onclick="showTab('minimal')">Minimal</div>
+        </div>
+
+        <div id="tab-default" class="tab-content active">
+            <div class="code-block">
+                <pre><span class="comment"># Default install — CLI + inference stack</span>
+<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash</span></pre>
+            </div>
+            <ul class="feature-list">
+                <li>JEBAT CLI (repl, chat, code, agent, think)</li>
+                <li>17 LLM providers with auto-failover</li>
+                <li>Local inference stack (Ollama + llama.cpp)</li>
+                <li>6-type memory system</li>
+                <li>47 MCP tools (stdio mode)</li>
+            </ul>
+        </div>
+
+        <div id="tab-mcp" class="tab-content">
+            <div class="code-block">
+                <pre><span class="comment"># CLI + MCP server for IDE integration</span>
+<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash -s -- <span class="flag">--mcp</span></span></pre>
+            </div>
+            <ul class="feature-list">
+                <li>Everything in default</li>
+                <li>MCP server with HTTP endpoint on port 8206</li>
+                <li>IDE config snippets (VS Code, Cursor, Zed, Windsurf)</li>
+                <li>Streamable HTTP transport</li>
+            </ul>
+        </div>
+
+        <div id="tab-all" class="tab-content">
+            <div class="code-block">
+                <pre><span class="comment"># Full install — CLI + MCP + Desktop + inference</span>
+<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash -s -- <span class="flag">--all</span></span></pre>
+            </div>
+            <ul class="feature-list">
+                <li>Everything in MCP profile</li>
+                <li>Stealth-Dark WebUI (Desktop)</li>
+                <li>Full inference stack</li>
+                <li>All 6 Grafana dashboards</li>
+            </ul>
+        </div>
+
+        <div id="tab-minimal" class="tab-content">
+            <div class="code-block">
+                <pre><span class="comment"># CLI only — no inference stack</span>
+<span class="cmd">curl -fsSL https://jebat.online/install.sh | bash -s -- <span class="flag">--cli</span> <span class="flag">--no-inference</span></span></pre>
+            </div>
+            <ul class="feature-list">
+                <li>JEBAT CLI only</li>
+                <li>Use your own LLM provider (OpenAI, Anthropic, etc.)</li>
+                <li>No local models downloaded</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- npm Install -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">npm / bunx</h2>
+        <p class="section-desc">If you prefer Node.js package managers. Auto-bootstraps Python on first run.</p>
+
+        <div class="code-block">
+            <pre><span class="comment"># npx (auto-installs Python core)</span>
+<span class="cmd">npx @nusabyte/jebat repl</span>
+
+<span class="comment"># bunx</span>
+<span class="cmd">bunx @nusabyte/jebat repl</span>
+
+<span class="comment"># Or install globally</span>
+<span class="cmd">npm install -g @nusabyte/jebat</span>
+<span class="cmd">jebat repl</span></pre>
+        </div>
+    </div>
+</section>
+
+<!-- Requirements -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Requirements</h2>
+        <p class="section-desc">Minimal dependencies. Runs on almost anything.</p>
+
+        <table>
+            <thead>
+                <tr><th>Requirement</th><th>Minimum</th><th>Recommended</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Python</td><td>3.10+</td><td>3.12</td></tr>
+                <tr><td>Node.js (for npx)</td><td>18+</td><td>20+</td></tr>
+                <tr><td>RAM</td><td>2 GB</td><td>8 GB</td></tr>
+                <tr><td>Disk</td><td>500 MB</td><td>2 GB</td></tr>
+                <tr><td>OS</td><td colspan="2">Linux, macOS, Windows (WSL2)</td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:32px;margin-bottom:16px;">Optional Dependencies</h3>
+        <table>
+            <thead>
+                <tr><th>Tool</th><th>Purpose</th><th>Install</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ollama</td><td>Local LLM inference</td><td><code>curl -fsSL https://ollama.com/install.sh | sh</code></td></tr>
+                <tr><td>Docker</td><td>Container deployment</td><td><code>apt install docker.io docker-compose</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- IDE Integration -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">IDE Integration</h2>
+        <p class="section-desc">Connect JEBAT to your favorite IDE via MCP.</p>
+
+        <div class="code-block">
+            <pre><span class="comment"># Generate IDE configs after install</span>
+<span class="cmd">jebat mcp --print-config</span>
+
+<span class="comment"># Start MCP server (HTTP mode)</span>
+<span class="cmd">jebat mcp serve --port 8206</span>
+
+<span class="comment"># Start MCP server (stdio mode — for IDE integration)</span>
+<span class="cmd">jebat mcp serve</span></pre>
+        </div>
+
+        <h3 style="margin-top:32px;margin-bottom:16px;">VS Code / Cursor</h3>
+        <div class="code-block">
+            <pre><span class="comment">// .vscode/settings.json or Cursor MCP settings</span>
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"jebat"</span>: {
+      <span class="string">"command"</span>: <span class="string">"jebat"</span>,
+      <span class="string">"args"</span>: [<span class="string">"mcp"</span>, <span class="string">"serve"</span>]
+    }
+  }
+}</pre>
+        </div>
+
+        <h3 style="margin-top:32px;margin-bottom:16px;">Claude Desktop</h3>
+        <div class="code-block">
+            <pre><span class="comment"># macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</span>
+<span class="comment"># Windows: %APPDATA%/Claude/claude_desktop_config.json</span>
+{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"jebat"</span>: {
+      <span class="string">"command"</span>: <span class="string">"jebat"</span>,
+      <span class="string">"args"</span>: [<span class="string">"mcp"</span>, <span class="string">"serve"</span>]
+    }
+  }
+}</pre>
+        </div>
+    </div>
+</section>
+
+<!-- Skills & Tools -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Skills & Tools</h2>
+        <p class="section-desc">47 MCP tools across 12 categories. Everything exposed via MCP protocol.</p>
+
+        <table>
+            <thead>
+                <tr><th>Category</th><th>Tools</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Code</td><td><span class="badge badge-cyan">6</span></td><td>read, write, patch, search, generate, review</td></tr>
+                <tr><td>Terminal</td><td><span class="badge badge-cyan">3</span></td><td>exec, output, background</td></tr>
+                <tr><td>File Ops</td><td><span class="badge badge-cyan">5</span></td><td>read, write, patch, search, list</td></tr>
+                <tr><td>Memory</td><td><span class="badge badge-cyan">4</span></td><td>store, recall, search, stats</td></tr>
+                <tr><td>Git</td><td><span class="badge badge-cyan">4</span></td><td>status, diff, commit, log</td></tr>
+                <tr><td>Search</td><td><span class="badge badge-cyan">3</span></td><td>web, docs, codebase</td></tr>
+                <tr><td>Browser</td><td><span class="badge badge-cyan">3</span></td><td>navigate, screenshot, extract</td></tr>
+                <tr><td>Security</td><td><span class="badge badge-cyan">4</span></td><td>scan, audit, pentest, report</td></tr>
+                <tr><td>Agent</td><td><span class="badge badge-cyan">5</span></td><td>delegate, swarm, branch, think, plan</td></tr>
+                <tr><td>Session</td><td><span class="badge badge-cyan">3</span></td><td>history, search, export</td></tr>
+                <tr><td>Config</td><td><span class="badge badge-cyan">4</span></td><td>show, set, providers, models</td></tr>
+                <tr><td>System</td><td><span class="badge badge-cyan">3</span></td><td>status, health, version</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Repository -->
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Repository</h2>
+        <p class="section-desc">Open source. MIT licensed. Self-hosted. Air-gapped.</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">📦</div>
+                <h3>GitHub</h3>
+                <p><a href="https://github.com/nusabyte-my/jebat-core" style="color:var(--cyan)">github.com/nusabyte-my/jebat-core</a></p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🌐</div>
+                <h3>Website</h3>
+                <p><a href="https://jebat.online" style="color:var(--cyan)">jebat.online</a></p>
+            </div>
+            <div class="card">
+                <div class="card-icon">📄</div>
+                <h3>npm</h3>
+                <p><a href="https://www.npmjs.com/package/@nusabyte/jebat" style="color:var(--cyan)">npmjs.com/package/@nusabyte/jebat</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <p>JEBAT — Your AI. Your Infrastructure. Your Rules.</p>
+        <p style="margin-top:8px;"><a href="https://jebat.online">jebat.online</a> · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="https://jebat.online/docs">Docs</a></p>
+    </div>
+</footer>
+
+<script>
+function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+
+</body>
+</html>
