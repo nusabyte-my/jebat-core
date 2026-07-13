@@ -1,6 +1,6 @@
 # ==================== JEBAT Database — TimescaleDB + pgvector ====================
 # Extends the official TimescaleDB image with the pgvector extension
-# required for 5-layer memory vector similarity search.
+# required for 6-type memory vector similarity search.
 
 FROM timescale/timescaledb-ha:pg16
 

@@ -46,7 +46,7 @@ except:
     font_body = ImageFont.load_default()
     font_mono = ImageFont.load_default()
 
-draw.text((100, 110), "JEBAT v7.5", fill=(0, 240, 255), font=font_title)
+draw.text((100, 110), "JEBAT v8.2", fill=(0, 240, 255), font=font_title)
 draw.text((100, 190), "Sovereign AI Platform", fill=(200, 200, 200), font=font_body)
 
 # Product list

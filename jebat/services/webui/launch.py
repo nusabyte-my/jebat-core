@@ -224,7 +224,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "jebat-webui",
-        "version": "6.1.0",
+        "version": "8.2.0",
         "timestamp": time.time(),
         "features": ["rate-limiting", "cors", "csp", "error-pages", "audit-trail", "request-id"],
     }

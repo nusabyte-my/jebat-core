@@ -1,4 +1,4 @@
-# ==================== JEBAT v6.1 — Production Override ====================
+# ==================== JEBAT v8.2 — Production Override ====================
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
 # Adds resource limits, logging, and hardening for production deployments.

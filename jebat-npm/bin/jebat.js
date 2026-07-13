@@ -93,7 +93,7 @@ async function main() {
   
   // Handle special flags
   if (args.includes('--help') || args.includes('-h') || args.includes('help')) {
-    console.log(`JEBAT v7.5.0 — Sovereign AI Platform & Agent Workstation
+    console.log(`JEBAT v8.2.0 — Sovereign Agent OS & Agent Workstation
     
 Usage: npx jebat [command] [options]
 
@@ -131,7 +131,7 @@ Remote Ollama:
   }
   
   if (args.includes('--version') || args.includes('-v')) {
-    console.log('JEBAT 7.5.0 (npm wrapper)');
+    console.log('JEBAT 8.2.0 (npm wrapper)');
     return;
   }
   

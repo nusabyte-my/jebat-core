@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-JEBAT CLI v6.1 — Command Line Interface
+JEBAT CLI v8.2 — Command Line Interface
 
 41 subcommands: status, init, loop, think, memory, config,
 llm-providers, llm-config, llm-auth, llm-best-provider, auth, doctor,
@@ -480,7 +480,7 @@ class JEBATCLI:
                 "memory_integration": "enabled",
             },
             "memory": {
-                "layers": "5 (M0-M4)",
+                "layers": "6 (Working, Episodic, Semantic, Procedural, Relational, Vector)",
                 "consolidation": "automatic",
             },
         }
@@ -851,7 +851,7 @@ class JEBATCLI:
 async def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="JEBAT v6.1 — 41-CLI AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nCode: code (Hermes-style coding agent with multi-agent orchestration)\nOps: file, exec, wiki, agent, search, tools, mcp\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
+        description="JEBAT v8.2 — 47-Tool AI Agent\n\nCore: status, init, loop, think, memory, config, doctor, mode-guide, skills\nChat: chat, chat-project, chat-repl\nCode: code (Hermes-style coding agent with multi-agent orchestration)\nOps: file, exec, wiki, agent, search, tools, mcp\nSocial: social (send/search/timeline), tts\nOrchestration: delegate, cron, safety, session\nPersonal: todo (add/list/remove/update/clear)\nSecurity: auth (keyring/env/enc), sandbox, undo\nDev: git (status/diff/log/commit/blame/stash), plugins\nInfo: llm-providers, llm-config, llm-auth, llm-best-provider, free-models, cost, telemetry",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

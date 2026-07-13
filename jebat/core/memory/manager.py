@@ -1,7 +1,7 @@
 """
 JEBAT Memory Manager
 
-Central controller for 5-layer memory system with:
+Central controller for 6-type memory system (Working, Episodic, Semantic, Procedural, Relational, Vector) with:
 - Automatic consolidation
 - Heat-based importance scoring
 - Cross-layer search
@@ -32,7 +32,7 @@ class MemoryManager:
     """
     Central memory management system.
 
-    Manages 5-layer memory with automatic consolidation,
+    Manages 6-type memory with automatic consolidation,
     heat scoring, and intelligent retrieval.
 
     Delegates to EnhancedMemorySystem when available for:

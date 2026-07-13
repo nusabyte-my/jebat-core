@@ -337,7 +337,7 @@ def _show_splash(project_info: dict[str, Any], capture_results: dict[str, list[s
         # Minimal header — no box-drawing, just a clean one-liner
         header = Text()
         header.append("  ◈ JEBAT ", style="bold white")
-        header.append("v6.1", style="dim")
+        header.append("v8.2", style="dim")
         header.append("  —  coding agent", style="dim")
         console.print(header)
 
@@ -366,7 +366,7 @@ def _show_splash(project_info: dict[str, Any], capture_results: dict[str, list[s
 
         console.print()
     else:
-        print(f"\n  ◈ JEBAT v6.1 — coding agent")
+        print(f"\n  ◈ JEBAT v8.2 — coding agent")
         print(f"  {project_info['name']} · {', '.join(project_info['stack']) if project_info['stack'] else 'generic'}")
         print()
 

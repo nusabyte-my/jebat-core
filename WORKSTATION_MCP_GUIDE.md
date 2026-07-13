@@ -1,6 +1,6 @@
-# 🗡️ JEBAT v6.1 — Workstation Integration & MCP Server Guide
+# 🗡️ JEBAT v8.2 — Workstation Integration & MCP Server Guide
 
-Welcome to the official integration guide for **JEBAT v6.1**. This document details how to inject JEBAT's cognitive reasoning, multi-agent swarms, security testing suite, and memory context directly into your developer workstation (Cursor, VS Code, Zed, Windsurf, JetBrains), run it as a standard Model Context Protocol (MCP) server, and utilize all 13 core capabilities.
+Welcome to the official integration guide for **JEBAT v8.2**. This document details how to inject JEBAT's cognitive reasoning, multi-agent swarms, security testing suite, and memory context directly into your developer workstation (Cursor, VS Code, Zed, Windsurf, JetBrains), run it as a standard Model Context Protocol (MCP) server, and utilize all 47 tools across our 6-type memory architecture.
 
 ---
 

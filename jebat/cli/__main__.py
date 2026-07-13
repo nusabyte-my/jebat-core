@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the main argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="jebat",
-        description="JEBAT v6.1 — Repo-aware AI Agent Framework",
+        description="JEBAT v8.2 — Repo-aware AI Agent Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Core: status, init, loop, think, memory, config, doctor, mode-guide, skills

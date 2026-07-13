@@ -1,16 +1,16 @@
-# JEBAT v7.5 — Sovereign AI Platform & Agent Workstation
+# JEBAT v8.2 — Sovereign Agent OS & Agent Workstation
 
-![Version](https://img.shields.io/badge/version-v7.5.0--stable-10b981?style=flat-square)
+![Version](https://img.shields.io/badge/version-v8.2.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-145%2F145--passing-10b981?style=flat-square)
-![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-7%2F7--passing-10b981?style=flat-square)
+![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.0-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![WebUI](https://img.shields.io/badge/WebUI-Stealth--Dark-030303?style=flat-square&labelColor=030303)
 
 > **Sovereign execution, private memory, and audited intelligence.**
 
-JEBAT is an enterprise-grade self-hosted AI platform and agent workstation. It provides governed local LLM inference, secure cognitive routing, multi-agent swarm orchestration, MCP server integration, an embedded threat reconnaissance toolkit, and a full web interface. Run fully air-gapped on your private network with zero data leakage.
+JEBAT is an enterprise-grade self-hosted AI platform and agent workstation. It provides governed local LLM inference across 17 providers, multi-agent swarm orchestration with 47 MCP tools, 6-type eternal memory with Ghost DB vector search, adaptive context windowing, Catalyst observability with 6 Grafana dashboards, and a full web interface. Run fully air-gapped on your private network with zero data leakage.
 
 Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and unforgettable.
 
@@ -337,7 +337,7 @@ POST /webui/api/runtime         Runtime control
 | Command | Description |
 |---------|-------------|
 | `jebat config show\|set\|reset\|edit` | Configuration management |
-| `jebat memory store\|search\|stats` | 5-layer eternal memory |
+| `jebat memory store\|search\|stats` | 6-type eternal memory with Ghost DB vector search |
 | `jebat llm providers\|config\|auth` | LLM provider management |
 | `jebat llm best-provider` | Auto-detect best available provider |
 
@@ -376,7 +376,7 @@ POST /webui/api/runtime         Runtime control
 
 ## MCP Server Integration
 
-JEBAT ships with a native **Model Context Protocol (MCP) server** that exposes 8 tools to any MCP-compatible IDE or client.
+JEBAT ships with a native **Model Context Protocol (MCP) server** that exposes 47 tools to any MCP-compatible IDE or client (stdio, SSE, and Streamable HTTP).
 
 ### Running JEBAT as an MCP Server
 
@@ -391,18 +391,20 @@ python -m jebat.mcp.server --mode http --port 8787
 npx @nusabyte/jebat mcp server
 ```
 
-### MCP Server Tools
+### MCP Server Tools (47)
 
-| Tool | Description |
-|------|-------------|
-| `code.read` | Read and analyze code files |
-| `code.write` | Create or modify code files |
-| `code.generate` | Generate code from description |
-| `code.review` | Review code for issues and best practices |
-| `project.scaffold` | Create a new project from template |
-| `git.operation` | Perform Git operations (init, add, commit, status, log) |
-| `test.run` | Run tests (auto, pytest, jest, unittest) |
-| `debug.analyze` | Analyze errors and debug issues |
+JEBAT exposes **47 MCP tools** across six categories, available over stdio, SSE, and Streamable HTTP (`https://mcp.jebat.online`):
+
+| Category | Tools |
+|----------|-------|
+| **File** (7) | `file_read`, `file_write`, `file_patch`, `file_search`, `file_undo`, `file_tree` |
+| **Terminal** (8) | `terminal`, `terminal_bg`, `process_list`, `process_log`, `process_kill`, `process_write` |
+| **Browser** (9) | `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_scroll`, `browser_back`, `browser_vision`, `browser_console`, `browser_get_images` |
+| **Vision / Search** (4) | `vision_analyze`, `image_generate`, `search_web`, `web_extract` |
+| **Auth / Cron** (13) | `auth_*`, `cron_*` (create, list, pause, resume, remove, update, run) |
+| **Wiki** (10) | `wiki_*` (create, read, edit, delete, list, search, auto_save, suggest, consolidate, stats) |
+
+Connect any MCP client to `https://mcp.jebat.online/mcp` or run locally via `jebat mcp serve`.
 
 ### IDE Configuration
 
@@ -566,11 +568,11 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v7.5 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v8.2 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
 | **LLM Provider Routing** | **17 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
-| **MCP Server** | **Native (8 tools + skills)** | None | Basic API | Local API |
+| **MCP Server** | **Native (47 tools, 3 transports)** | None | Basic API | Local API |
 | **Cognitive Profiles** | **7 Thinking Modes (Ultra-Think)** | Standard Chat | Standard Chat | Standard Chat |
 | **Security Auditing** | **Autonomous Pentest Suite** | Blocked | None | None |
 | **Access Control (RBAC)** | **3-Tier Command Classification** | Muted Policy | Basic Auth | None |
@@ -630,7 +632,7 @@ jebat doctor
 ```
 jebat-core/
   ├── jebat/                  # Active runtime modules
-  │   ├── cli/                # Entrypoints (jebat_cli.py v7.5)
+  │   ├── cli/                # Entrypoints (jebat_cli.py v8.2)
   │   ├── core/               # Cognitive loops (agent_loop, orchestrator, delegation)
   │   ├── mcp/                # MCP server + skill registry + adapter
   │   ├── services/           # WebUI, MCP protocol, API gateway

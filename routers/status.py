@@ -23,7 +23,7 @@ async def system_status() -> Dict[str, Any]:
     providers = list_provider_auth_status()
     return {
         "service": "jebat-api",
-        "version": "6.1.0",
+        "version": "8.2.0",
         "status": "running",
         "uptime_s": round(time.time() - _START_TIME, 1),
         "llm": {

@@ -1,4 +1,4 @@
-"""5-layer eternal memory system endpoints."""
+"""6-type eternal memory system (Working, Episodic, Semantic, Procedural, Relational, Vector) with Ghost DB vector search endpoints."""
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# ==================== JEBAT v6.1 — Multi-Stage Docker Build ====================
+# ==================== JEBAT v8.2 — Multi-Stage Docker Build ====================
 # Stage 1: Builder — install deps, compile wheels
 # Stage 2: Runtime — slim image with only runtime deps
 # Stage 3: (optional) Can be extended with monitoring sidecars
@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.prod.txt
 FROM python:3.12-slim AS runtime
 
 LABEL maintainer="NusaByte <team@nusabyte.dev>" \
-      description="JEBAT v6.1 Sovereign AI Platform" \
-      version="6.1.0"
+      description="JEBAT v8.2 Sovereign Agent OS" \
+      version="8.2.0"
 
 # Runtime system deps
 RUN apt-get update && \

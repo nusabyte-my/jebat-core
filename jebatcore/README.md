@@ -62,13 +62,13 @@ await client.disconnect();
 // SSE transport (legacy HTTP)
 const http = new JebatMCPClient({
   transport: 'http',
-  url: 'http://jebat.nusabyte.my:8100/sse'
+  url: 'https://mcp.jebat.online/sse'
 });
 
 // Streamable HTTP (MCP 2025-03-26 spec)
 const streamable = new JebatMCPClient({
   transport: 'streamable-http',
-  url: 'http://jebat.nusabyte.my:8100/mcp'
+  url: 'https://mcp.jebat.online/mcp'
 });
 ```
 
@@ -114,9 +114,9 @@ Same pattern — use `npx jebatcore` or `jebat mcp serve --transport stdio`.
 
 | Feature | Description |
 |---------|-------------|
-| **MCP Server** | Exposes all JEBAT tools to IDEs via stdio/HTTP/streamable-http |
+| **MCP Server** | Exposes all 47 JEBAT tools to IDEs via stdio/HTTP/streamable-http |
 | **MCP Client** | Connect to JEBAT from Node.js using MCP SDK |
-| **Sampling** | IDEs can request LLM completions through JEBAT's 9Router proxy |
+| **Sampling** | IDEs can request LLM completions through JEBAT's 9Router free-proxy |
 | **Progress Tokens** | Real-time feedback during long-running tool calls |
 | **Auto Bootstrap** | Automatically installs Python JEBAT package if missing |
 | **3 Transports** | stdio (IDEs), SSE (legacy HTTP), Streamable HTTP (MCP 2025-03-26) |
@@ -126,7 +126,7 @@ Same pattern — use `npx jebatcore` or `jebat mcp serve --transport stdio`.
 ```
 IDE (VS Code/Cursor) → MCP SDK → jebatcore (npm) → JEBAT Python CLI
                                                     ↓
-                                              9Router (local LLM proxy)
+                                          9Router (free AI proxy)
                                                     ↓
                                             Free-tier LLMs (no API keys)
 ```

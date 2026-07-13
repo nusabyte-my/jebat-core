@@ -3,7 +3,7 @@
 # SQLAlchemy ORM models for all JEBAT database tables
 #
 # This module provides ORM models for:
-# - Memory System (5-layer architecture: M0-M4)
+# - Memory System (6-type architecture: Working, Episodic, Semantic, Procedural, Relational, Vector)
 # - Agent System (configurations, performance, tasks)
 # - Decision Engine (routing, priorities)
 # - Error Recovery System (circuit breakers, DLQ)

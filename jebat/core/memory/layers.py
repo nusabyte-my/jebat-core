@@ -1,7 +1,7 @@
 """
 JEBAT Memory Layers
 
-5-layer memory architecture inspired by human cognition.
+6-type memory architecture (Working, Episodic, Semantic, Procedural, Relational, Vector) inspired by human cognition.
 """
 
 from dataclasses import dataclass, field

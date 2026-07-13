@@ -1,4 +1,4 @@
-# 🗡️ JEBAT v7.5 — Sovereign AI Platform & Agent Workstation
+# 🗡️ JEBAT v8.2 — Sovereign Agent OS & Agent Workstation
 
 [![npm version](https://img.shields.io/npm/v/@nusabyte/jebat?style=flat-square&color=10b981)](https://www.npmjs.com/package/@nusabyte/jebat)
 [![npm downloads](https://img.shields.io/npm/dm/@nusabyte/jebat?style=flat-square&color=06b6d4)](https://www.npmjs.com/package/@nusabyte/jebat)
@@ -234,4 +234,4 @@ Built with ❤️ by **Shaidan Shaari (humm1ngb1rd)**.
 
 **Your AI. Your Data. Your Legacy.**
 
-🗡️ **JEBAT v6.1** — *Because warriors remember everything that matters.*
+🗡️ **JEBAT v8.2** — *Because warriors remember everything that matters.*

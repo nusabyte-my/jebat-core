@@ -136,7 +136,7 @@ footer a { color: var(--emerald); text-decoration: none; }
 <!-- NAV -->
 <nav>
 <div class="nav-inner">
-  <a href="/" class="logo">🗡️ JEBAT <span class="logo-tag">v6.1</span></a>
+  <a href="/" class="logo">🗡️ JEBAT <span class="logo-tag">v8.2</span></a>
   <button class="mobile-menu-btn" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
   <ul class="nav-links" id="navLinks">
     <li><a href="/">Home</a></li>
@@ -302,7 +302,7 @@ footer a { color: var(--emerald); text-decoration: none; }
 
 <h3>Environment Variables</h3>
 <pre><span class="comment"># Core settings</span>
-<span class="highlight">JEBAT_VERSION</span>=6.1.0
+<span class="highlight">JEBAT_VERSION</span>=8.2.0
 <span class="highlight">JEBAT_DEBUG</span>=false
 <span class="highlight">JEBAT_LOG_LEVEL</span>=INFO
 
@@ -657,7 +657,7 @@ API Server (72.62.254.65:8000)
 <!-- ═══════════════ GUIDE: MCP ═══════════════ -->
 <section id="guide-mcp">
 <h2>MCP Integration</h2>
-<p>JEBAT runs a native Model Context Protocol server exposing 13 core capabilities to any MCP-compatible IDE.</p>
+<p>JEBAT runs a native Model Context Protocol server exposing 47 MCP tools to any MCP-compatible IDE.</p>
 
 <h3>Supported IDEs</h3>
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 24px;">
@@ -689,7 +689,7 @@ API Server (72.62.254.65:8000)
     <tr><td>02</td><td><code>jebat_think</code></td><td>Ultra-Think reasoning</td></tr>
     <tr><td>03</td><td><code>jebat_delegate</code></td><td>Multi-agent swarm</td></tr>
     <tr><td>04</td><td><code>jebat_sandbox_exec</code></td><td>Docker sandbox</td></tr>
-    <tr><td>05</td><td><code>jebat_memory_recall</code></td><td>5-layer memory</td></tr>
+    <tr><td>05</td><td><code>jebat_memory_recall</code></td><td>6-type memory</td></tr>
     <tr><td>06</td><td><code>jebat_voice_listen</code></td><td>Voice I/O</td></tr>
     <tr><td>07</td><td><code>jebat_browser_navigate</code></td><td>Playwright browser</td></tr>
     <tr><td>08</td><td><code>jebat_pentest_scan</code></td><td>Pentest suite</td></tr>
@@ -761,7 +761,7 @@ API Server (72.62.254.65:8000)
     <tr><td><code>/api/chat</code></td><td>POST</td><td>Chat with provider failover</td></tr>
     <tr><td><code>/api/chat/stream</code></td><td>POST</td><td>SSE streaming chat</td></tr>
     <tr><td><code>/api/agents</code></td><td>POST</td><td>Execute agent tasks</td></tr>
-    <tr><td><code>/api/memory/*</code></td><td>GET/POST</td><td>5-layer memory CRUD</td></tr>
+    <tr><td><code>/api/memory/*</code></td><td>GET/POST</td><td>6-type memory CRUD</td></tr>
     <tr><td><code>/api/skills/*</code></td><td>GET/POST</td><td>Skill registry &amp; execution</td></tr>
     <tr><td><code>/api/ghost/*</code></td><td>GET/POST</td><td>Ghost database operations</td></tr>
     <tr><td><code>/api/catalyst/*</code></td><td>GET/POST</td><td>Catalyst observability</td></tr>
@@ -893,7 +893,7 @@ User Request → ContextManager (token budget assembly)
 <!-- FOOTER -->
 <footer>
 <div class="container">
-  <p>JEBAT v6.1.0 — Sovereign AI Platform · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="/">Home</a> · <a href="/swagger">API</a></p>
+  <p>JEBAT v8.2.0 — Sovereign Agent OS · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="/">Home</a> · <a href="/swagger">API</a></p>
 </div>
 </footer>
 

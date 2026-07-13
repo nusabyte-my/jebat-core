@@ -1,4 +1,4 @@
-version: 6.1.0
+version: 8.2.0
 data_dir: ~/.jebat
 config_file: ~/.jebat/jebat.yaml
 agent:

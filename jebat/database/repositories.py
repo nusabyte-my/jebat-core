@@ -4,7 +4,7 @@
 #
 # This module provides repository classes for:
 # - User management
-# - Memory System (5-layer architecture: M0-M4)
+# - Memory System (6-type architecture: Working, Episodic, Semantic, Procedural, Relational, Vector)
 # - Agent System (configurations, performance, tasks)
 # - Decision Engine (routing, priorities)
 # - Error Recovery System (circuit breakers, DLQ)

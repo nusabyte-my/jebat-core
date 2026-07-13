@@ -2,7 +2,7 @@
 """
 JEBAT — unified coding-agent CLI.
 One tool. All providers. Native tools. Plan + execute.
-v7.5 — gradient banner, rounded panels, auto-orchestrator, ghost mode, agent DB.
+v8.2 — gradient banner, rounded panels, auto-orchestrator, ghost mode, agent DB.
 """
 
 from __future__ import annotations

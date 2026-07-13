@@ -1,7 +1,7 @@
 """
 JEBAT Memory System
 
-5-layer eternal memory with heat-based importance scoring:
+6-type eternal memory (Working, Episodic, Semantic, Procedural, Relational, Vector) with heat-based importance scoring:
 - M0: Sensory (0-30s)
 - M1: Episodic (hours)
 - M2: Semantic (days-weeks)

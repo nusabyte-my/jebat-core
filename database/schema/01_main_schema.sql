@@ -3,7 +3,7 @@
 -- Database: PostgreSQL 15+ with TimescaleDB 2.12+ and pgvector extension
 --
 -- This schema supports all enhanced systems:
--- - Memory System (5-layer architecture: M0-M4)
+-- - Memory System (6-type architecture: Working, Episodic, Semantic, Procedural, Relational, Vector)
 -- - Agent System (configurations, performance, tasks)
 -- - Decision Engine (routing, priorities)
 -- - Error Recovery System (circuit breakers, DLQ)
@@ -48,7 +48,7 @@ CREATE TYPE connection_state AS ENUM ('CONNECTING', 'CONNECTED', 'DISCONNECTED',
 
 -- ==================== Core Tables ====================
 
--- Memory System Tables (5-layer architecture)
+-- Memory System Tables (6-type architecture)
 
 -- M0: Working Memory (Immediate access, very short retention)
 CREATE TABLE memory_m0 (

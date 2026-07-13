@@ -411,7 +411,7 @@ $$ LANGUAGE plpgsql;
 -- COMMENTS - Schema documentation
 -- ============================================================================
 
-COMMENT ON TABLE memories IS 'Core storage for all memory layers (M0-M4)';
+COMMENT ON TABLE memories IS 'Core storage for all memory layers (Working, Episodic, Semantic, Procedural, Relational, Vector)';
 COMMENT ON TABLE memory_heat IS 'Heat score components and tracking for memories';
 COMMENT ON TABLE memory_links IS 'Semantic relationships between memories';
 COMMENT ON TABLE memory_visits IS 'Detailed visit tracking for heat calculation';

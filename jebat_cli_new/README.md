@@ -1,4 +1,4 @@
-# JEBAT Unified Coding Agent CLI v6.1+
+# JEBAT Unified Coding Agent CLI v8.2+
 
 A unified, provider-first coding-agent CLI built on:
 - OpenClaude: provider discovery and controls

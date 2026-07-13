@@ -1,5 +1,5 @@
 """
-JEBAT v6.1 — Full API Entry Point
+JEBAT v8.2 — Full API Entry Point
 ====================================
 Docker entrypoint that exposes the complete JEBAT API surface.
 
@@ -7,7 +7,7 @@ Routers:
     /api/status      — System status, health, LLM config
     /api/chat         — LLM chat with provider failover
     /api/agents       — Agent orchestrator and task execution
-    /api/memory       — 5-layer eternal memory system
+    /api/memory       — 6-type eternal memory system with Ghost DB vector search
     /api/skills       — Skill registry and execution
     /api/think        — UltraThink deep reasoning engine
     /api/loop         — UltraLoop continuous processing
@@ -55,7 +55,7 @@ REDIS_ENABLED = os.getenv("JEBAT_REDIS_ENABLED", "false").lower() in ("true", "1
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown hooks."""
-    version = os.getenv("JEBAT_VERSION", "6.1.0")
+    version = os.getenv("JEBAT_VERSION", "8.2.0")
     host = os.getenv("JEBAT_API_HOST", "0.0.0.0")
     port = os.getenv("JEBAT_API_PORT", "8080")
     print(f"\n{'='*60}")
@@ -100,7 +100,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="JEBAT API",
-    version=os.getenv("JEBAT_VERSION", "6.1.0"),
+    version=os.getenv("JEBAT_VERSION", "8.2.0"),
     description="Sovereign AI Platform — Private LLM Inference, Agent Orchestration & Eternal Memory",
     lifespan=lifespan,
     docs_url="/swagger",
@@ -111,7 +111,7 @@ app = FastAPI(
         {"name": "status", "description": "System status, configuration, and diagnostics."},
         {"name": "chat", "description": "LLM chat with provider failover and streaming."},
         {"name": "agents", "description": "Agent orchestrator and task execution."},
-        {"name": "memory", "description": "5-layer eternal memory system (episodic, semantic, procedural, working, meta)."},
+        {"name": "memory", "description": "6-type eternal memory system (working, episodic, semantic, procedural, relational, vector) with Ghost DB vector search."},
         {"name": "skills", "description": "Skill registry, execution, and management."},
         {"name": "think", "description": "UltraThink deep reasoning engine."},
         {"name": "loop", "description": "UltraLoop continuous processing."},
@@ -202,7 +202,7 @@ async def root():
     """API root — quick liveness check."""
     return {
         "service": "jebat-api",
-        "version": os.getenv("JEBAT_VERSION", "6.1.0"),
+        "version": os.getenv("JEBAT_VERSION", "8.2.0"),
         "status": "running",
         "docs": "/docs",
         "swagger": "/swagger",
