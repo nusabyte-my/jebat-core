@@ -3,9 +3,9 @@
 # JEBAT Core installer — Hermes-style bootstrap.
 # One script, three surfaces: CLI, Desktop, MCP. No sudo required.
 #
-#   curl -fsSL https://jebat.online/install.sh | bash
-#   curl -fsSL https://jebat.online/install.sh | bash -s -- --desktop
-#   curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
+#   curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --desktop
+#   curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --mcp
 #
 # Profiles:
 #   (default)      install the JEBAT CLI only
