@@ -7,7 +7,10 @@ from __future__ import annotations
 from typing import Any
 
 from jebat.tools import TOOL_REGISTRY, list_tools
-from jebat.core.agent_runtime import ToolDispatcher
+try:
+    from jebat.core.agent_runtime import ToolDispatcher
+except ImportError:
+    ToolDispatcher = None
 
 
 def _ensure_tools_loaded():

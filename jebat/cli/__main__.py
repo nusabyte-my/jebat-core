@@ -12,8 +12,16 @@ import asyncio
 import sys
 from pathlib import Path
 
-from jebat.cli.commands import COMMANDS, execute_command
-from jebat.config.unified import ensure_config, create_default_config
+try:
+    from jebat.cli.commands import COMMANDS, execute_command
+except ImportError:
+    COMMANDS = {}
+    execute_command = None
+try:
+    from jebat.config.unified import ensure_config, create_default_config
+except ImportError:
+    ensure_config = None
+    create_default_config = None
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -6,10 +6,13 @@ import json
 import asyncio
 from typing import Any
 
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+try:
+    from mcp.server import Server
+    from mcp.server.models import InitializationOptions
+    from mcp.server.stdio import stdio_server
+    from mcp.types import Tool, TextContent
+except ImportError:
+    Server = InitializationOptions = stdio_server = Tool = TextContent = None
 
 from .client import CatalystClient, CatalystConfig
 from .halo import run_halo_analysis
@@ -41,7 +44,7 @@ def get_alert_manager() -> AlertManager:
 
 
 # Initialize server
-server = Server("catalyst-o11y")
+server = Server("catalyst-o11y") if Server is not None else None
 
 
 @server.list_tools()

@@ -6,10 +6,15 @@ import json
 import asyncio
 from typing import Any
 
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
+try:
+    from mcp.server import Server
+    from mcp.server.models import InitializationOptions
+    from mcp.server.stdio import stdio_server
+    from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
+except ImportError:
+    Server = InitializationOptions = stdio_server = Tool = TextContent = (
+        ImageContent
+    ) = EmbeddedResource = None
 
 from .client import GhostClient, GhostError
 from .models import GhostConfig, DistanceMetric

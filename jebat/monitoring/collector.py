@@ -6,12 +6,21 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
-from jebat.core.agents import AgentOrchestrator
+try:
+    from jebat.core.agents import AgentOrchestrator
+except ImportError:
+    AgentOrchestrator = None
 from jebat.core.memory.manager import MemoryManager
 from jebat.core.decision.engine import DecisionEngine
 from jebat.core.cache.smart_cache import SmartCache
-from jebat.core.config import JebatLLMConfig
-from jebat.core.llm.chat_runtime import generate_chat_reply
+try:
+    from jebat.core.config import JebatLLMConfig
+except ImportError:
+    JebatLLMConfig = None
+try:
+    from jebat.core.llm.chat_runtime import generate_chat_reply
+except ImportError:
+    generate_chat_reply = None
 from jebat.integrations.channels.channel_manager import ChannelManager
 from jebat.cortex.intelligent_skill import IntelligentSkill
 
