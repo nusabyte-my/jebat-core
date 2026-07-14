@@ -45,6 +45,26 @@ def test_cli_new_openai_compat_routes_to_openai():
     assert isinstance(_provider_factory(cfg), OpenAIProviderImpl)
 
 
+NEW_COMPAT_KINDS = {"fireworks", "perplexity", "deepinfra"}
+
+
+@pytest.mark.unit
+def test_cli_new_new_compat_providers_wired():
+    kinds = {k for k, *_ in jc.PROVIDER_KINDS}
+    assert NEW_COMPAT_KINDS <= kinds
+    for pid in NEW_COMPAT_KINDS:
+        assert pid in jc.MODEL_CATALOG and jc.MODEL_CATALOG[pid]
+
+
+@pytest.mark.unit
+def test_cli_new_factory_routes_new_compat_to_openai():
+    for kind in NEW_COMPAT_KINDS:
+        cfg = ProviderConfig(
+            id=kind, name=kind, api_base="http://localhost/v1", model="m", kind=kind
+        )
+        assert isinstance(_provider_factory(cfg), OpenAIProviderImpl)
+
+
 class _FakeURLResponse:
     def __init__(self, payload):
         self._payload = payload

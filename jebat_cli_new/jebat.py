@@ -20,6 +20,7 @@ from jebat_cli_new.providers import (
     AnthropicProviderImpl,
     GeminiProviderImpl,
     GitHubModelsProviderImpl,
+    OPENAI_COMPAT_KINDS,
 )
 from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 
@@ -92,6 +93,9 @@ PROVIDER_KINDS = [
     ("novita",          "Novita AI",       "https://api.novita.ai/v3/openai",            "deepseek-r1",            True, "Cheap R1/LLaMA access"),
     ("zai",             "Z.AI",            "https://api.z.ai/v1",                         "glm-4-plus",             True,  "Zhipu GLM models"),
     ("openai-compat",   "Custom (OpenAI-compatible)", "",                                  "",                       True,  "Any OpenAI-compatible endpoint"),
+    ("fireworks",       "Fireworks AI",    "https://api.fireworks.ai/inference/v1",        "accounts/fireworks/models/llama-v3p3-70b-instruct", True, "Fast open models, OpenAI-compatible"),
+    ("perplexity",      "Perplexity",      "https://api.perplexity.ai",                    "sonar",                  True,  "Online + Sonar models, OpenAI-compatible"),
+    ("deepinfra",       "DeepInfra",       "https://api.deepinfra.com/v1/openai",          "meta-llama/Meta-Llama-3.3-70B-Instruct", True, "Open-source model hosting, OpenAI-compatible"),
     ("opencode_go",     "OpenCode Go",     "",                                              "opencode-go/default",    True,  "OpenCode Go gateway (OpenAI-compatible)"),
     ("opencode_zen",    "OpenCode Zen",    "",                                              "opencode-zen/default",   True,  "OpenCode Zen gateway, SSO/OAuth (OpenAI-compatible)"),
     ("zenmux",          "ZenMux",          "",                                              "zenmux/default",         True,  "ZenMux token-multiplexing router (OpenAI-compatible)"),
@@ -195,6 +199,21 @@ MODEL_CATALOG = {
     ],
     "zai": [
         ("glm-4-plus",                 "GLM-4 Plus",         128000, 8192, 1, 3, ["code"]),
+    ],
+    "fireworks": [
+        ("accounts/fireworks/models/llama-v3p3-70b-instruct", "Llama 3.3 70B Instruct", 128000, 16384, 0.2, 0.2, ["code"]),
+        ("accounts/fireworks/models/mixtral-8x22b-instruct",  "Mixtral 8x22B Instruct", 64000, 16384, 0.24, 0.24, ["code"]),
+        ("accounts/fireworks/models/llama-v3p1-8b-instruct",  "Llama 3.1 8B Instruct",  128000, 8192, 0.1, 0.1, ["code", "cheap"]),
+    ],
+    "perplexity": [
+        ("sonar",                      "Sonar",              200000, 8192, 1, 1, ["code", "online"]),
+        ("sonar-pro",                  "Sonar Pro",          200000, 8192, 3, 3, ["code", "online", "best"]),
+        ("llama-3.1-sonar-large-128k-online", "Llama 3.1 Sonar Large 128K", 128000, 8192, 0.4, 0.4, ["code", "online"]),
+    ],
+    "deepinfra": [
+        ("meta-llama/Meta-Llama-3.3-70B-Instruct", "Meta Llama 3.3 70B", 128000, 8192, 0.1, 0.1, ["code", "cheap"]),
+        ("deepseek-ai/DeepSeek-V3",   "DeepSeek V3",        128000, 8192, 0.27, 1.1, ["code"]),
+        ("Qwen/Qwen2.5-72B-Instruct", "Qwen2.5 72B",        128000, 8192, 0.13, 0.13, ["code"]),
     ],
     # Placeholder catalogs — replaced by live /v1/models fetch in the full CLI;
     # edit here or rely on the `/provider add` free-text model entry.
@@ -2079,7 +2098,7 @@ class Agent:
                 provider_impl = GeminiProviderImpl(cfg)
             elif kind == "github":
                 provider_impl = GitHubModelsProviderImpl(cfg)
-            elif kind in CUSTOM_PROVIDER_IDS or kind == "openai-compat":
+            elif kind in CUSTOM_PROVIDER_IDS or kind in OPENAI_COMPAT_KINDS:
                 provider_impl = OpenAIProviderImpl(cfg)
             else:
                 provider_impl = OllamaProviderImpl(cfg)
@@ -2205,7 +2224,7 @@ class Agent:
                 provider_impl = OpenAIProviderImpl(cfg)
             elif kind == "anthropic":
                 provider_impl = AnthropicProviderImpl(cfg)
-            elif kind in CUSTOM_PROVIDER_IDS or kind == "openai-compat":
+            elif kind in CUSTOM_PROVIDER_IDS or kind in OPENAI_COMPAT_KINDS:
                 provider_impl = OpenAIProviderImpl(cfg)
             else:
                 provider_impl = OllamaProviderImpl(cfg)
