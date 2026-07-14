@@ -75,3 +75,40 @@ def test_fetch_live_models_handles_failure(monkeypatch):
 
     monkeypatch.setattr(ureq, "urlopen", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("nope")))
     assert jc._fetch_live_models("http://x/v1") == []
+
+
+class _FakeURLResponse2:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return self._payload
+
+
+@pytest.mark.unit
+def test_list_models_resolves_env_key(monkeypatch):
+    import urllib.request as ureq
+
+    captured = {}
+
+    def fake_urlopen(req, timeout=8):
+        captured["auth"] = req.get_header("Authorization")
+        return _FakeURLResponse2(b'{"data":[{"id":"m1"}]}')
+
+    monkeypatch.setattr(ureq, "urlopen", fake_urlopen)
+    monkeypatch.setenv("OPENCODE_GO_API_KEY", "secret-env")
+    cfg = {
+        "kind": "opencode_go",
+        "api_base": "http://x/v1",
+        "api_key": None,
+        "auth_method": "env",
+        "auth_ref": "OPENCODE_GO_API_KEY",
+    }
+    assert jc._list_models_for_provider(cfg) == ["m1"]
+    assert captured["auth"] == "Bearer secret-env"

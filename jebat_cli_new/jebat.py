@@ -7,13 +7,13 @@ v8.2 — gradient banner, rounded panels, auto-orchestrator, ghost mode, agent D
 
 from __future__ import annotations
 
-import argparse, collections, json, os, random, re, sqlite3, sys, textwrap, threading, time, urllib.request, urllib.error
+import argparse, collections, json, os, random, re, sqlite3, sys, textwrap, threading, time, types, urllib.request, urllib.error
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
-from jebat_cli_new.models import CompletionRequest, CompletionResponse
+from jebat_cli_new.models import CompletionRequest, CompletionResponse, resolve_api_key
 from jebat_cli_new.providers import (
     OllamaProviderImpl,
     OpenAIProviderImpl,
@@ -3599,9 +3599,8 @@ def _interactive_test_provider(registry):
                     n = len(data.get("models", []))
                     cprint(f"  {C.GREEN}✓{C.RESET} {C.BOLD}{pid}{C.RESET} — {n} models available")
             else:
-                headers = {}
-                if cfg.api_key:
-                    headers["Authorization"] = f"Bearer {cfg.api_key}"
+                key = resolve_api_key(cfg)
+                headers = {"Authorization": f"Bearer {key}"} if key else {}
                 req = urllib.request.Request(f"{cfg.api_base}/models", headers=headers)
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     cprint(f"  {C.GREEN}✓{C.RESET} {C.BOLD}{pid}{C.RESET} — reachable")
@@ -3620,7 +3619,13 @@ def _list_models_for_provider(provider_cfg):
     """List models from a provider — Ollama, OpenRouter, or OpenAI-compatible."""
     kind = provider_cfg.get("kind", "")
     api_base = provider_cfg.get("api_base", "")
-    api_key = provider_cfg.get("api_key", "")
+    # provider_cfg is a plain dict (from JSON); resolve key env/store-aware.
+    ns = types.SimpleNamespace(
+        api_key=provider_cfg.get("api_key"),
+        auth_method=provider_cfg.get("auth_method", "key") or "key",
+        auth_ref=provider_cfg.get("auth_ref"),
+    )
+    api_key = resolve_api_key(ns)
     models = []
     try:
         if kind == "ollama":
