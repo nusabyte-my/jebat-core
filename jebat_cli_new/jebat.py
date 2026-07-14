@@ -21,6 +21,7 @@ from jebat_cli_new.providers import (
     GeminiProviderImpl,
     GitHubModelsProviderImpl,
 )
+from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 
 
 VERSION = "7.5"
@@ -89,8 +90,13 @@ PROVIDER_KINDS = [
     ("cloudflare",      "Cloudflare AI",   "https://api.cloudflare.com/client/v4",        "@cf/meta/llama-3.3-70b-instruct-fp16", False, "Free Workers AI inference"),
     ("sambanova",       "SambaNova",       "https://api.sambanova.ai/v1",                "Meta-Llama-3.3-70B-Instruct", True, "Free tier, fast inference"),
     ("novita",          "Novita AI",       "https://api.novita.ai/v3/openai",            "deepseek-r1",            True, "Cheap R1/LLaMA access"),
-    ("zai",             "Z.AI",            "https://api.z.ai/v1",                         "glm-4-plus",             True, "Zhipu GLM models"),
-    ("openai-compat",   "Custom (OpenAI-compatible)", "",                                  "",                       True, "Any OpenAI-compatible endpoint"),
+    ("zai",             "Z.AI",            "https://api.z.ai/v1",                         "glm-4-plus",             True,  "Zhipu GLM models"),
+    ("openai-compat",   "Custom (OpenAI-compatible)", "",                                  "",                       True,  "Any OpenAI-compatible endpoint"),
+    ("opencode_go",     "OpenCode Go",     "",                                              "opencode-go/default",    True,  "OpenCode Go gateway (OpenAI-compatible)"),
+    ("opencode_zen",    "OpenCode Zen",    "",                                              "opencode-zen/default",   True,  "OpenCode Zen gateway, SSO/OAuth (OpenAI-compatible)"),
+    ("zenmux",          "ZenMux",          "",                                              "zenmux/default",         True,  "ZenMux token-multiplexing router (OpenAI-compatible)"),
+    ("tokerrouter",     "TokerRouter",     "",                                              "tokerrouter/default",    True,  "TokerRouter token-usage router (OpenAI-compatible)"),
+    ("agent_router",    "Agent Router",    "",                                              "agent-router/default",   True,  "Agent Router orchestration, SSO/OAuth (OpenAI-compatible)"),
 ]
 
 
@@ -189,6 +195,28 @@ MODEL_CATALOG = {
     ],
     "zai": [
         ("glm-4-plus",                 "GLM-4 Plus",         128000, 8192, 1, 3, ["code"]),
+    ],
+    # Placeholder catalogs — replaced by live /v1/models fetch in the full CLI;
+    # edit here or rely on the `/provider add` free-text model entry.
+    "opencode_go": [
+        ("opencode-go/default",        "OpenCode Go Default", 128000, 8192, 0, 0, ["code"]),
+        ("opencode-go/go-large",       "OpenCode Go Large",   128000, 8192, 0, 0, ["code"]),
+    ],
+    "opencode_zen": [
+        ("opencode-zen/default",       "OpenCode Zen Default", 128000, 8192, 0, 0, ["code"]),
+        ("opencode-zen/zen-pro",       "OpenCode Zen Pro",     128000, 8192, 0, 0, ["code"]),
+    ],
+    "zenmux": [
+        ("zenmux/default",             "ZenMux Default",      128000, 8192, 0, 0, ["code"]),
+        ("zenmux/mux-1",               "ZenMux 1",            128000, 8192, 0, 0, ["code"]),
+    ],
+    "tokerrouter": [
+        ("tokerrouter/default",        "TokerRouter Default", 128000, 8192, 0, 0, ["code"]),
+        ("tokerrouter/route-fast",     "TokerRouter Fast",    128000, 8192, 0, 0, ["code"]),
+    ],
+    "agent_router": [
+        ("agent-router/default",       "Agent Router Default", 128000, 8192, 0, 0, ["code"]),
+        ("agent-router/orchestrator",  "Agent Router Orchestrator", 128000, 8192, 0, 0, ["code"]),
     ],
 }
 
@@ -2025,6 +2053,8 @@ class Agent:
                 provider_impl = GeminiProviderImpl(cfg)
             elif kind == "github":
                 provider_impl = GitHubModelsProviderImpl(cfg)
+            elif kind in CUSTOM_PROVIDER_IDS or kind == "openai-compat":
+                provider_impl = OpenAIProviderImpl(cfg)
             else:
                 provider_impl = OllamaProviderImpl(cfg)
             resp = provider_impl.complete(req)
@@ -2149,6 +2179,8 @@ class Agent:
                 provider_impl = OpenAIProviderImpl(cfg)
             elif kind == "anthropic":
                 provider_impl = AnthropicProviderImpl(cfg)
+            elif kind in CUSTOM_PROVIDER_IDS or kind == "openai-compat":
+                provider_impl = OpenAIProviderImpl(cfg)
             else:
                 provider_impl = OllamaProviderImpl(cfg)
             resp = provider_impl.complete(req)

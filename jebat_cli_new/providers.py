@@ -26,6 +26,7 @@ from jebat_cli_new.provider_openai import OpenAIProviderImpl
 from jebat_cli_new.provider_anthropic import AnthropicProviderImpl
 from jebat_cli_new.provider_gemini import GeminiProviderImpl
 from jebat_cli_new.provider_github import GitHubModelsProviderImpl
+from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 
 
 def _ollama_reachable(host: str, timeout: float = 2.0) -> bool:
@@ -155,6 +156,8 @@ def _provider_factory(config: ProviderConfig, kind: Optional[str] = None):
         return GeminiProviderImpl(config)
     if kind == "github":
         return GitHubModelsProviderImpl(config)
+    if kind in CUSTOM_PROVIDER_IDS or kind == "openai-compat":
+        return OpenAIProviderImpl(config)
 
     class AnyProvider:
         def __init__(self, cfg: ProviderConfig):

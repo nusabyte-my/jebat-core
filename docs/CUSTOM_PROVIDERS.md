@@ -14,32 +14,41 @@ configure, authenticate, and use them. Custom providers are all **OpenAI-compati
 | `tokerrouter`   | `TOKERROUTER_API_KEY`    | `TOKERROUTER_BASE_URL`    | Token-usage router                     |
 | `agent_router`  | `AGENT_ROUTER_API_KEY`   | `AGENT_ROUTER_BASE_URL`   | Agent orchestration, supports SSO/OAuth|
 
-## Setup via CLI (recommended)
+## Setup via the shipped CLI (REPL — `jebat`)
 
-Run the first-run wizard and pick a custom provider:
+The `jebat` command is the `jebat_cli_new` REPL. Add a custom provider interactively:
+
+```
+jebat
+/provider add
+❯ Pick provider (number or name): opencode_go
+```
+
+The wizard follows an **OpenCode-style** flow:
+
+1. **Model** — pick from the curated (placeholder) catalog or type a model id.
+2. **API base** — the gateway endpoint, e.g. `https://go.opencode.example/v1` (required).
+3. **Model** — confirm or type a custom model name.
+4. **API key** — paste the key, or leave blank and choose an auth method:
+   - `key` — stored inline in `~/.jebat/jebat-cli-providers.json`
+   - `env` — read from an env var at runtime (default `{KIND}_API_KEY`, e.g. `OPENCODE_GO_API_KEY`)
+   - `store` — read from the JEBAT auth store (`/apikey`)
+   For gateways with SSO/OAuth, complete the sign-in out-of-band and paste the resulting
+   token as the API key (or store it under the env/store method).
+5. The provider is registered and made active; connectivity is testable with `/provider test`.
+
+## Setup via the legacy full CLI (`jebat init`)
+
+The full-featured `jebat/cli/jebat_cli.py` also supports custom providers:
 
 ```bash
 jebat init --provider opencode_go
 ```
 
-The wizard follows an **auth-first** flow (OpenCode style):
-
-1. **Base URL** — the gateway endpoint (e.g. `https://go.opencode.example/v1`).
-2. **Auth** — if the gateway supports SSO/OAuth, answer `y`, open the URL, and paste the
-   access token. The token is stored as the bearer credential.
-3. **API key** — paste the API key. If you already used OAuth, leave this blank to reuse the
-   token, or enter an additional key.
-4. **Model** — JEBAT fetches the live `/v1/models` catalog and lets you pick one. If the
-   gateway is unreachable it falls back to the placeholder catalog (see below) or free text.
-5. Credentials are written to `~/.jebat/secrets.env` and `provider`/`model` to
-   `~/.jebat/config.yaml`. Connectivity is probed automatically.
-
-Verify later with:
-
-```bash
-jebat auth test opencode_go
-jebat doctor --probe
-```
+It follows an **auth-first** flow: **(1)** Base URL → **(2)** optional SSO/OAuth token →
+**(3)** API key → **(4)** live `/v1/models` catalog selection. Credentials are written to
+`~/.jebat/secrets.env` and `provider`/`model` to `~/.jebat/config.yaml`. Verify with
+`jebat auth test opencode_go` and `jebat doctor --probe`.
 
 ## Setup via environment / WebUI
 
@@ -56,7 +65,9 @@ its `provider_auth.json` store, which `get_provider_secret` reads automatically.
 
 ## Using a custom provider for inference
 
-Once configured, set it as the active provider in `~/.jebat/config.yaml`:
+Once configured, the REPL makes the provider active automatically on `/provider add`
+(stored in `~/.jebat/jebat-cli-providers.json`). For the legacy `jebat init` CLI, set it as
+the active provider in `~/.jebat/config.yaml`:
 
 ```yaml
 model:
@@ -65,9 +76,9 @@ model:
   temperature: 0.2
 ```
 
-JEBAT's LLM router (`jebat/llm/providers.py` → `CustomOpenAIProvider`) will POST to
+Both CLIs route custom providers through an OpenAI-compatible client that POSTs to
 `{BASE_URL}/v1/chat/completions` with `Authorization: Bearer {API_KEY}`. Custom providers
-also work as entries in `fallback_providers`.
+also work as `fallback_providers`.
 
 ## Placeholder model catalog
 
