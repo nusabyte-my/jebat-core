@@ -19,6 +19,8 @@ from typing import Any
 
 from jebat.tools import register_tool
 
+from .custom_providers import CUSTOM_PROVIDERS, CUSTOM_PROVIDER_IDS, CustomProvider
+
 # ── Constants ────────────────────────────────────────────────────────────────
 
 SUPPORTED_PROVIDERS = [
@@ -32,6 +34,7 @@ SUPPORTED_PROVIDERS = [
     "mistral",
     "cohere",
     "custom",
+    *CUSTOM_PROVIDER_IDS,
 ]
 
 JEBAT_DIR = Path.home() / ".jebat"
@@ -39,6 +42,87 @@ SECRETS_ENV = JEBAT_DIR / "secrets.env"
 AUTH_ENC = JEBAT_DIR / "auth.enc"
 
 KEYRING_SERVICE = "jebat-cli"
+
+
+# ── Custom Providers ─────────────────────────────────────────────────────────
+
+def is_custom_provider(name: str) -> bool:
+    return str(name).strip().lower() in CUSTOM_PROVIDERS
+
+
+def get_custom_provider(name: str) -> CustomProvider | None:
+    return CUSTOM_PROVIDERS.get(str(name).strip().lower())
+
+
+def _resolve_custom_base_url(provider: CustomProvider) -> str:
+    return os.getenv(provider.base_url_env, provider.default_base_url).strip()
+
+
+def fetch_provider_models(
+    provider: str,
+    api_key: str | None = None,
+    base_url: str | None = None,
+) -> list[str]:
+    """Fetch the model catalog from a custom (OpenAI-compatible) gateway.
+
+    Returns a list of model ids. Returns an empty list on any failure so the
+    caller can fall back to a free-text prompt or the provider defaults.
+    """
+    cp = get_custom_provider(provider)
+    if cp is None:
+        return []
+    url = (base_url or _resolve_custom_base_url(cp)).rstrip("/")
+    if not url:
+        return []
+    path = cp.models_path if cp.models_path.startswith("/") else f"/{cp.models_path}"
+    full = f"{url}{path}"
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    try:
+        import requests
+
+        resp = requests.get(full, headers=headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        return []
+    if isinstance(data, dict) and isinstance(data.get("data"), list):
+        return [str(m["id"]) for m in data["data"] if isinstance(m, dict) and m.get("id")]
+    if isinstance(data, list):
+        return [str(m.get("id") or m) for m in data if m]
+    return []
+
+
+def select_provider_model(
+    provider: str,
+    api_key: str | None = None,
+    base_url: str | None = None,
+    current: str | None = None,
+) -> str:
+    """Interactively list and select a model for a custom provider.
+
+    Fetches the live catalog when reachable; otherwise falls back to the
+    provider's static defaults and finally to free-text input.
+    """
+    cp = get_custom_provider(provider)
+    models = fetch_provider_models(provider, api_key, base_url)
+    if not models and cp is not None:
+        models = list(cp.default_models)
+    if not models:
+        prompt = "Enter model id"
+        if current:
+            prompt += f" [{current}]"
+        prompt += ": "
+        return input(prompt).strip() or (current or "")
+    print("\nAvailable models:")
+    for i, m in enumerate(models, 1):
+        marker = " (current)" if m == current else ""
+        print(f"  {i:>3}) {m}{marker}")
+    choice = input(f"Select model [1]{' (' + current + ')' if current else ''}: ").strip()
+    if not choice:
+        return current or models[0]
+    if choice.isdigit() and 1 <= int(choice) <= len(models):
+        return models[int(choice) - 1]
+    return choice
 
 
 # ── Backend Detection ────────────────────────────────────────────────────────
@@ -527,6 +611,25 @@ async def auth_test(provider: str) -> dict[str, Any]:
             "provider": provider,
             "valid": False,
             "error": "No API_KEY found for this provider. Use auth_add first.",
+        }
+
+    if is_custom_provider(provider):
+        cp = get_custom_provider(provider)
+        base_url = _resolve_custom_base_url(cp)
+        models = fetch_provider_models(provider, api_key, base_url)
+        if models:
+            return {
+                "provider": provider,
+                "valid": True,
+                "models_available": len(models),
+                "message": f"{len(models)} models available from {base_url or 'default endpoint'}",
+                "masked_key": _mask(api_key),
+            }
+        return {
+            "provider": provider,
+            "valid": False,
+            "error": "Could not fetch model catalog (check base URL / API key).",
+            "masked_key": _mask(api_key),
         }
 
     result = await _test_provider_api(provider, api_key)

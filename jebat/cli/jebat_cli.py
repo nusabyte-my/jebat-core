@@ -31,6 +31,7 @@ import asyncio
 import json
 import uuid
 import sys
+import os
 import urllib.error
 import urllib.request
 import warnings
@@ -194,7 +195,15 @@ class JEBATCLI:
         5. Create ~/.jebat/config.yaml if missing
         6. Test connectivity (unless --no-probe)
         """
-        from jebat.features.auth.auth import SUPPORTED_PROVIDERS, _store_env, _read_env_file, _write_env_file
+        from jebat.features.auth.auth import (
+            SUPPORTED_PROVIDERS,
+            _store_env,
+            _read_env_file,
+            _write_env_file,
+            is_custom_provider,
+            get_custom_provider,
+            select_provider_model,
+        )
         from jebat.llm.auth import PROVIDER_ENV_MAP
 
         self.print("\n" + "=" * 54, "bold blue")
@@ -228,6 +237,11 @@ class JEBATCLI:
                         provider = "openai"
                         self.print(f"  Unrecognised — defaulting to: {provider}", "yellow")
                 self.print(f"  Selected: {provider}", "green")
+
+            # ── Custom provider flow (auth-first → key → model) ──
+            if is_custom_provider(provider):
+                await self._init_custom_provider(provider, force=force, no_probe=no_probe)
+                return
 
             # ── Step 2: API key ────────────────────────────────────
             env_vars = PROVIDER_ENV_MAP.get(provider, ())
@@ -325,6 +339,128 @@ class JEBATCLI:
 
         self.print("\n" + "=" * 54, "bold blue")
         self.print("  Setup complete! Try:  jebat agent 'hello!'", "bold green")
+        self.print("=" * 54 + "\n", "bold blue")
+
+    async def _init_custom_provider(self, provider: str, force: bool = False, no_probe: bool = False):
+        """First-run setup for a custom (non-standard) gateway.
+
+        OpenCode-style flow:
+          1. (Auth) Offer SSO/OAuth sign-in when the provider supports it; the
+             resulting token is stored as the bearer credential.
+          2. (Key)  Prompt for the API key (reuse the OAuth token if left blank).
+          3. (Model) Fetch the live model catalog and let the user pick one.
+          4. Persist base URL + key to secrets.env and provider/model to config.yaml.
+          5. Probe connectivity (unless --no-probe).
+        """
+        from jebat.features.auth.auth import (
+            _store_env,
+            _write_env_file,
+            get_custom_provider,
+            select_provider_model,
+        )
+        from jebat.llm.auth import _ensure_secrets_loaded
+
+        cp = get_custom_provider(provider)
+        if cp is None:
+            return
+
+        self.print("\n" + "=" * 54, "bold blue")
+        self.print(f"  Configure {cp.label}", "bold blue")
+        self.print("=" * 54, "bold blue")
+        self.print(f"  {cp.description}", "dim")
+
+        # ── Step 1: Base URL (needed for both auth + models) ──────
+        base_url = input(
+            f"  Base URL [{cp.default_base_url or 'required'}]: "
+        ).strip() or cp.default_base_url
+        if not base_url:
+            self.print("  Base URL is required for custom providers.", "red")
+            return
+
+        # ── Step 2: Auth (optional SSO/OAuth) ────────────────────
+        api_key = ""
+        use_oauth = input("  Use SSO/OAuth sign-in? (y/N): ").strip().lower() == "y"
+        if use_oauth:
+            auth_url = input(
+                f"  OAuth/SSO URL [{cp.default_auth_url or ''}]: "
+            ).strip() or cp.default_auth_url
+            if auth_url:
+                self.print(f"  Open to authorize, then paste the token:\n    {auth_url}", "cyan")
+            token = input("  Paste access token (or Enter to skip): ").strip()
+            if token:
+                api_key = token
+
+        # ── Step 3: API key ──────────────────────────────────────
+        if api_key:
+            extra = input("  API key (Enter to reuse OAuth token): ").strip()
+            if extra:
+                api_key = extra
+        else:
+            api_key = input("  API key: ").strip()
+
+        if not api_key:
+            self.print("  No credential provided — cannot continue.", "red")
+            return
+
+        # Make credentials visible to the model-fetch + probe steps
+        os.environ[cp.api_key_env] = api_key
+        os.environ[cp.base_url_env] = base_url
+
+        # ── Step 4: Model selection (live catalog) ───────────────
+        current = None
+        try:
+            current = self.config.get("model", {}).get("model")
+        except Exception:
+            current = None
+        model = select_provider_model(provider, api_key, base_url, current)
+
+        # ── Step 5: Persist ──────────────────────────────────────
+        _store_env(provider, "api_key", api_key)
+        _store_env(provider, "base_url", base_url)
+
+        config_path = Path.home() / ".jebat" / "config.yaml"
+        if not config_path.exists() or force:
+            config_content = (
+                f"# JEBAT configuration — auto-generated by `jebat init`\n"
+                f"model:\n"
+                f"  provider: {provider}\n"
+                f"  model: {model}\n"
+                f"  temperature: 0.2\n"
+                f"\nfeatures:\n"
+                f"  terminal:\n"
+                f"    enabled: true\n"
+                f"    timeout: 300\n"
+                f"    dangerous_commands: confirm\n"
+                f"  browser:\n"
+                f"    enabled: false\n"
+                f"  mcp:\n"
+                f"    enabled: true\n"
+            )
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.write_text(config_content, encoding="utf-8")
+            self.print(f"\n  Config written: {config_path}", "green")
+        else:
+            self.print(f"\n  Config exists: {config_path}  (use --force to overwrite)", "dim")
+
+        # ── Step 6: Connectivity test ────────────────────────────
+        if not no_probe:
+            self.print("\n  Fetching model catalog...", "bold")
+            _ensure_secrets_loaded()
+            try:
+                from jebat.features.auth.auth import fetch_provider_models
+
+                models = fetch_provider_models(provider, api_key, base_url)
+                if models:
+                    self.print(f"  Connected! {len(models)} models available.", "green")
+                else:
+                    self.print("  Connected to base URL but no models returned.", "yellow")
+                    self.print("  You can retry later with:  jebat doctor --probe", "dim")
+            except Exception as e:
+                self.print(f"  Catalog fetch failed: {e}", "red")
+                self.print("  You can retry later with:  jebat doctor --probe", "dim")
+
+        self.print("\n" + "=" * 54, "bold blue")
+        self.print(f"  {cp.label} configured (model={model}).", "bold green")
         self.print("=" * 54 + "\n", "bold blue")
 
     async def cmd_loop_start(self, cycles: int = 0):
