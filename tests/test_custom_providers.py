@@ -56,6 +56,13 @@ def test_custom_providers_registry_complete():
 
 
 @pytest.mark.unit
+def test_custom_providers_have_placeholder_models():
+    for cp in CUSTOM_PROVIDERS.values():
+        assert cp.default_models, f"{cp.id} should ship a placeholder model catalog"
+        assert all(isinstance(m, str) and m for m in cp.default_models)
+
+
+@pytest.mark.unit
 def test_supported_providers_includes_custom():
     assert all(is_custom_provider(p) for p in CUSTOM_PROVIDER_IDS)
     assert all(p in SUPPORTED_PROVIDERS for p in CUSTOM_PROVIDER_IDS)

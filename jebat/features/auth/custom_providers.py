@@ -10,6 +10,10 @@ class CustomProvider:
     Base URLs and OAuth URLs are intentionally left empty by default so the
     user supplies them at init time; they can also be pinned via the
     corresponding ``*_BASE_URL`` / ``*_AUTH_URL`` environment variables.
+
+    ``default_models`` is a PLACEHOLDER catalog shown only when the live
+    ``/v1/models`` fetch is unreachable. Replace these with real model ids, or
+    let the init wizard / webui pick from the live catalog.
     """
 
     id: str
@@ -35,7 +39,8 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         auth_url_env="OPENCODE_GO_AUTH_URL",
         default_auth_url="",
         models_path="/v1/models",
-        default_models=(),
+        # Placeholder catalog — override via live /v1/models fetch or edit here.
+        default_models=("opencode-go/default", "opencode-go/go-large"),
     ),
     "opencode_zen": CustomProvider(
         id="opencode_zen",
@@ -47,7 +52,8 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         auth_url_env="OPENCODE_ZEN_AUTH_URL",
         default_auth_url="",
         models_path="/v1/models",
-        default_models=(),
+        # Placeholder catalog — override via live /v1/models fetch or edit here.
+        default_models=("opencode-zen/default", "opencode-zen/zen-pro"),
     ),
     "zenmux": CustomProvider(
         id="zenmux",
@@ -59,7 +65,8 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         auth_url_env="ZENMUX_AUTH_URL",
         default_auth_url="",
         models_path="/v1/models",
-        default_models=(),
+        # Placeholder catalog — override via live /v1/models fetch or edit here.
+        default_models=("zenmux/default", "zenmux/mux-1"),
     ),
     "tokerrouter": CustomProvider(
         id="tokerrouter",
@@ -71,7 +78,8 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         auth_url_env="TOKERROUTER_AUTH_URL",
         default_auth_url="",
         models_path="/v1/models",
-        default_models=(),
+        # Placeholder catalog — override via live /v1/models fetch or edit here.
+        default_models=("tokerrouter/default", "tokerrouter/route-fast"),
     ),
     "agent_router": CustomProvider(
         id="agent_router",
@@ -83,7 +91,8 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         auth_url_env="AGENT_ROUTER_AUTH_URL",
         default_auth_url="",
         models_path="/v1/models",
-        default_models=(),
+        # Placeholder catalog — override via live /v1/models fetch or edit here.
+        default_models=("agent-router/default", "agent-router/orchestrator"),
     ),
 }
 
