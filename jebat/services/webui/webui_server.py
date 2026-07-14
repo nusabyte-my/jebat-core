@@ -184,7 +184,15 @@ def _provider_env_targets(provider: str) -> list[str]:
         "llamacpp": ["LLAMA_CPP_HOST"],
         "ollama": ["OLLAMA_HOST"],
     }
-    return mapping.get(provider, [])
+    targets = mapping.get(provider)
+    if targets is not None:
+        return targets
+    from jebat.features.auth.custom_providers import get_custom_provider
+
+    cp = get_custom_provider(provider)
+    if cp is not None:
+        return [cp.api_key_env, cp.base_url_env]
+    return []
 
 
 def _read_provider_auth_store() -> Dict[str, str]:
@@ -225,7 +233,7 @@ def _sanitize_workstation_state(name: str, state: Dict[str, Any]) -> Dict[str, A
 
 
 def _provider_model_catalog() -> dict[str, dict[str, Any]]:
-    return {
+    catalog: dict[str, dict[str, Any]] = {
         "openai": {
             "label": "OpenAI",
             "supports_custom": False,
@@ -284,6 +292,16 @@ def _provider_model_catalog() -> dict[str, dict[str, Any]]:
             "models": ["local-echo"],
         },
     }
+    from jebat.features.auth.custom_providers import CUSTOM_PROVIDERS
+
+    for pid, cp in CUSTOM_PROVIDERS.items():
+        if pid not in catalog:
+            catalog[pid] = {
+                "label": cp.label,
+                "supports_custom": True,
+                "models": list(cp.default_models),
+            }
+    return catalog
 
 
 def _default_model_for_provider(provider: str, configured_model: str) -> str:
@@ -495,6 +513,9 @@ async def update_provider_auth(payload: ProviderAuthRequest):
         if not value:
             raise HTTPException(status_code=400, detail="missing API key")
         store[targets[0]] = value
+        # Custom providers also need a base URL; persist it from `host` when present.
+        if len(targets) > 1 and payload.host:
+            store[targets[1]] = payload.host.strip()
     _write_provider_auth_store(store)
     return {
         "ok": True,
