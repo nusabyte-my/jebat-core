@@ -88,3 +88,11 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
 }
 
 CUSTOM_PROVIDER_IDS: tuple[str, ...] = tuple(CUSTOM_PROVIDERS)
+
+
+def is_custom_provider(name: str) -> bool:
+    return str(name).strip().lower() in CUSTOM_PROVIDERS
+
+
+def get_custom_provider(name: str) -> CustomProvider | None:
+    return CUSTOM_PROVIDERS.get(str(name).strip().lower())

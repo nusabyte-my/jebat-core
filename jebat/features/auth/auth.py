@@ -45,13 +45,10 @@ KEYRING_SERVICE = "jebat-cli"
 
 
 # ── Custom Providers ─────────────────────────────────────────────────────────
+# Helpers `is_custom_provider` / `get_custom_provider` live in custom_providers
+# (pure module, no import cycle) and are re-exported here for convenience.
 
-def is_custom_provider(name: str) -> bool:
-    return str(name).strip().lower() in CUSTOM_PROVIDERS
-
-
-def get_custom_provider(name: str) -> CustomProvider | None:
-    return CUSTOM_PROVIDERS.get(str(name).strip().lower())
+from .custom_providers import get_custom_provider, is_custom_provider  # noqa: E402,F401
 
 
 def _resolve_custom_base_url(provider: CustomProvider) -> str:

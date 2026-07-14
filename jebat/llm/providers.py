@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urljoin
 
-from .auth import get_provider_secret
+from .auth import _ensure_secrets_loaded, get_provider_secret
 from .config import JebatLLMConfig
 from .ninerouter_provider import NineRouterProvider, build_ninerouter_provider, NINEROUTER_DEFAULT_HOST
 from .token_usage import TokenUsage, usage_from_texts
+from jebat.features.auth.custom_providers import (
+    CUSTOM_PROVIDERS,
+    get_custom_provider,
+    is_custom_provider,
+)  # noqa: E402
 
 
 class LLMProvider(Protocol):
@@ -375,6 +381,72 @@ class OllamaProvider:
         )
 
 
+@dataclass(slots=True)
+class CustomOpenAIProvider:
+    """OpenAI-compatible gateway for custom providers (opencode go/zen, zenmux, tokerrouter, agent router).
+
+    The base URL is read from the provider's ``*_BASE_URL`` env (set via
+    ``jebat init``); the API key/bearer token from the provider's ``*_API_KEY`` env.
+    """
+
+    api_key: str
+    model: str
+    base_url: str
+    provider_id: str
+    temperature: float
+    max_tokens: int
+
+    async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
+        return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
+
+    async def generate_with_metadata(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> ProviderGeneration:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        import httpx
+
+        async with httpx.AsyncClient(timeout=180) as client:
+            response = await client.post(
+                urljoin(self.base_url.rstrip("/") + "/", "v1/chat/completions"),
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices", [])
+        text = ""
+        if choices:
+            message = choices[0].get("message", {})
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                text = content.strip()
+        if not text:
+            raise RuntimeError(f"{self.provider_id} response did not contain text output")
+        return ProviderGeneration(
+            text=text,
+            usage=usage_from_texts(
+                _input_for_usage(prompt, system_prompt),
+                text,
+                model=self.model,
+                provider=self.provider_id,
+                raw_usage=data.get("usage", {}),
+            ),
+        )
+
+
 def build_provider(config: JebatLLMConfig) -> LLMProvider:
     provider = config.provider.lower()
     if provider == "openai":
@@ -428,6 +500,24 @@ def build_provider(config: JebatLLMConfig) -> LLMProvider:
         return build_ninerouter_provider(config)
     if provider == "local":
         return LocalEchoProvider()
+    if is_custom_provider(provider):
+        cp = get_custom_provider(provider)
+        api_key = get_provider_secret(provider)
+        _ensure_secrets_loaded()
+        base_url = os.getenv(cp.base_url_env, cp.default_base_url).strip()
+        if not base_url:
+            raise ValueError(
+                f"{provider} requires {cp.base_url_env} "
+                f"(run `jebat init --provider {provider}` or set it in ~/.jebat/secrets.env)"
+            )
+        return CustomOpenAIProvider(
+            api_key=api_key,
+            model=config.model,
+            base_url=base_url,
+            provider_id=provider,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
     raise ValueError(f"unsupported provider: {config.provider}")
 
 
@@ -473,4 +563,12 @@ def list_supported_providers() -> list[dict[str, str]]:
         {"name": "ollama", "env": "OLLAMA_HOST", "notes": "Local Ollama daemon"},
         {"name": "ninerouter", "env": "NINEROUTER_HOST + NINEROUTER_API_KEY", "notes": "9Router FREE AI proxy (kr/oc/glm/mm/vtx models)"},
         {"name": "local", "env": "-", "notes": "Deterministic offline fallback"},
+        *[
+            {
+                "name": name,
+                "env": f"{cp.api_key_env} + {cp.base_url_env}",
+                "notes": f"{cp.label} — OpenAI-compatible custom gateway",
+            }
+            for name, cp in CUSTOM_PROVIDERS.items()
+        ],
     ]

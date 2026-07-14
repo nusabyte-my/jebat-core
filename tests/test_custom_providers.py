@@ -15,6 +15,9 @@ from jebat.features.auth.auth import (
     select_provider_model,
 )
 from jebat.features.auth.custom_providers import CUSTOM_PROVIDERS, CustomProvider
+from jebat.llm import providers as providers_mod
+from jebat.llm.config import JebatLLMConfig
+from jebat.llm.providers import CustomOpenAIProvider, build_provider
 
 
 class _FakeResponse:
@@ -121,3 +124,30 @@ def test_auth_test_custom_branch_failure(monkeypatch):
 
     out = asyncio.run(auth_mod.auth_test("zenmux"))
     assert out.get("valid") is False
+
+
+@pytest.mark.unit
+def test_build_custom_provider_routing(monkeypatch):
+    monkeypatch.setattr(providers_mod, "get_provider_secret", lambda provider: "secret-key")
+    monkeypatch.setenv("ZENMUX_BASE_URL", "http://zenmux.local")
+    cfg = JebatLLMConfig(provider="zenmux", model="m1", temperature=0.2, max_tokens=100)
+    provider = build_provider(cfg)
+    assert isinstance(provider, CustomOpenAIProvider)
+    assert provider.base_url == "http://zenmux.local"
+    assert provider.api_key == "secret-key"
+    assert provider.provider_id == "zenmux"
+
+
+@pytest.mark.unit
+def test_build_custom_provider_missing_base_url_raises(monkeypatch):
+    monkeypatch.setattr(providers_mod, "get_provider_secret", lambda provider: "secret-key")
+    monkeypatch.delenv("ZENMUX_BASE_URL", raising=False)
+    cfg = JebatLLMConfig(provider="zenmux", model="m1", temperature=0.2, max_tokens=100)
+    with pytest.raises(ValueError):
+        build_provider(cfg)
+
+
+@pytest.mark.unit
+def test_list_supported_providers_includes_custom():
+    names = {entry["name"] for entry in providers_mod.list_supported_providers()}
+    assert set(CUSTOM_PROVIDER_IDS) <= names
