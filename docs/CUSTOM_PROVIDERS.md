@@ -14,6 +14,13 @@ configure, authenticate, and use them. Custom providers are all **OpenAI-compati
 | `tokerrouter`   | `TOKERROUTER_API_KEY`    | `TOKERROUTER_BASE_URL`    | Token-usage router                     |
 | `agent_router`  | `AGENT_ROUTER_API_KEY`   | `AGENT_ROUTER_BASE_URL`   | Agent orchestration, supports SSO/OAuth|
 
+## Base URL convention
+
+The **base URL must include the OpenAI-compatible API prefix** (typically `/v1`), e.g.
+`https://go.opencode.example/v1`. JEBAT appends `/chat/completions` and `/models` to it, so
+do **not** include the trailing `/v1/models` or `/v1/chat/completions` — just the base
+ending in `/v1`.
+
 ## Setup via the shipped CLI (REPL — `jebat`)
 
 The `jebat` command is the `jebat_cli_new` REPL. Add a custom provider interactively:

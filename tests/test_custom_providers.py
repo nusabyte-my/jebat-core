@@ -80,7 +80,7 @@ def test_lookup_helpers():
 def test_fetch_provider_models_parses_openai_format(monkeypatch):
     fake = _FakeRequests({"data": [{"id": "m1"}, {"id": "m2"}]})
     monkeypatch.setitem(sys.modules, "requests", fake)
-    models = fetch_provider_models("zenmux", "k", "http://x")
+    models = fetch_provider_models("zenmux", "k", "http://x/v1")
     assert models == ["m1", "m2"]
     assert fake.last_url == "http://x/v1/models"
     assert fake.last_headers == {"Authorization": "Bearer k"}

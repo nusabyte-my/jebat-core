@@ -38,7 +38,7 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         default_base_url="",
         auth_url_env="OPENCODE_GO_AUTH_URL",
         default_auth_url="",
-        models_path="/v1/models",
+        models_path="/models",
         # Placeholder catalog — override via live /v1/models fetch or edit here.
         default_models=("opencode-go/default", "opencode-go/go-large"),
     ),
@@ -51,7 +51,7 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         default_base_url="",
         auth_url_env="OPENCODE_ZEN_AUTH_URL",
         default_auth_url="",
-        models_path="/v1/models",
+        models_path="/models",
         # Placeholder catalog — override via live /v1/models fetch or edit here.
         default_models=("opencode-zen/default", "opencode-zen/zen-pro"),
     ),
@@ -64,7 +64,7 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         default_base_url="",
         auth_url_env="ZENMUX_AUTH_URL",
         default_auth_url="",
-        models_path="/v1/models",
+        models_path="/models",
         # Placeholder catalog — override via live /v1/models fetch or edit here.
         default_models=("zenmux/default", "zenmux/mux-1"),
     ),
@@ -77,7 +77,7 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         default_base_url="",
         auth_url_env="TOKERROUTER_AUTH_URL",
         default_auth_url="",
-        models_path="/v1/models",
+        models_path="/models",
         # Placeholder catalog — override via live /v1/models fetch or edit here.
         default_models=("tokerrouter/default", "tokerrouter/route-fast"),
     ),
@@ -90,7 +90,7 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         default_base_url="",
         auth_url_env="AGENT_ROUTER_AUTH_URL",
         default_auth_url="",
-        models_path="/v1/models",
+        models_path="/models",
         # Placeholder catalog — override via live /v1/models fetch or edit here.
         default_models=("agent-router/default", "agent-router/orchestrator"),
     ),

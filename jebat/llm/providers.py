@@ -417,7 +417,7 @@ class CustomOpenAIProvider:
 
         async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
-                urljoin(self.base_url.rstrip("/") + "/", "v1/chat/completions"),
+                urljoin(self.base_url.rstrip("/") + "/", "chat/completions"),
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",

@@ -371,7 +371,7 @@ class JEBATCLI:
 
         # ── Step 1: Base URL (needed for both auth + models) ──────
         base_url = input(
-            f"  Base URL [{cp.default_base_url or 'required'}]: "
+            f"  Base URL (include /v1, e.g. https://host/v1) [{cp.default_base_url or 'required'}]: "
         ).strip() or cp.default_base_url
         if not base_url:
             self.print("  Base URL is required for custom providers.", "red")
