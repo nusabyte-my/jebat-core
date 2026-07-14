@@ -43,3 +43,35 @@ def test_cli_new_openai_compat_routes_to_openai():
         id="cc", name="Custom", api_base="http://localhost/v1", model="m", kind="openai-compat"
     )
     assert isinstance(_provider_factory(cfg), OpenAIProviderImpl)
+
+
+class _FakeURLResponse:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return self._payload
+
+
+@pytest.mark.unit
+def test_fetch_live_models_parses(monkeypatch):
+    import urllib.request as ureq
+
+    monkeypatch.setattr(
+        ureq, "urlopen", lambda req, timeout=8: _FakeURLResponse(b'{"data":[{"id":"a"},{"id":"b"}]}')
+    )
+    assert jc._fetch_live_models("http://x/v1") == ["a", "b"]
+
+
+@pytest.mark.unit
+def test_fetch_live_models_handles_failure(monkeypatch):
+    import urllib.request as ureq
+
+    monkeypatch.setattr(ureq, "urlopen", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("nope")))
+    assert jc._fetch_live_models("http://x/v1") == []

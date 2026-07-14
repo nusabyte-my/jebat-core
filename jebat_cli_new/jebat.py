@@ -226,6 +226,32 @@ def _get_models_for_provider(provider_kind):
     return MODEL_CATALOG.get(provider_kind, [])
 
 
+def _fetch_live_models(api_base, api_key=None):
+    """Best-effort live model catalog from an OpenAI-compatible /models endpoint.
+
+    Returns a list of model id strings, or an empty list on any failure so the
+    caller can fall back to the curated/placeholder catalog.
+    """
+    try:
+        import json
+        import urllib.request
+
+        url = f"{api_base.rstrip('/')}/models"
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read())
+        items = data.get("data", data) if isinstance(data, dict) else data
+        out = []
+        for it in items or []:
+            mid = it.get("id") if isinstance(it, dict) else it
+            if mid:
+                out.append(str(mid))
+        return out
+    except Exception:
+        return []
+
+
 def _format_model_row(idx, model, current_model=None):
     """Format a model row for display."""
     mid, name, ctx, max_out, in_cost, out_cost, caps = model
@@ -3444,6 +3470,20 @@ def _interactive_add_provider(registry, kind=None):
             if not api_base:
                 cprint(f"  {C.RED}API base is required.{C.RESET}")
                 return
+
+        # Live model catalog (OpenAI-compatible) — best-effort, key-less first.
+        # Falls back to the curated/placeholder catalog if the gateway requires
+        # auth for /models (the user can still type a model name manually).
+        if api_base and (kind in CUSTOM_PROVIDER_IDS or kind in ("openai-compat", "openai")):
+            live = _fetch_live_models(api_base)
+            if live:
+                models = [(m, m, 0, 0, 0, 0, ["code"]) for m in live]
+                cprint(f"\n  {C.NEON_PURPLE}{C.BOLD}Live models from gateway:{C.RESET}")
+                print(f"  {C.BORDER}{'─' * 100}{C.RESET}")
+                for i, m in enumerate(models):
+                    print(_format_model_row(i + 1, m, current_model))
+                print(f"  {C.BORDER}{'─' * 100}{C.RESET}")
+                cprint(f"  {C.DIM}Pick a model number, or type a custom model name{C.RESET}")
 
         # Model selection with catalog
         model_input = input(f"  {C.CYAN}Model{C.RESET} [{C.DIM}number or name{C.RESET}]: ").strip()
