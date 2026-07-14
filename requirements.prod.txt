@@ -21,6 +21,8 @@ websockets>=12.0
 pyyaml>=6.0.1
 python-dotenv>=1.0.0
 rich>=13.7.0
+pandas>=2.0.0
+streamlit>=1.32.0
 
 # Database (PostgreSQL for production)
 sqlalchemy[asyncio]>=2.0.0

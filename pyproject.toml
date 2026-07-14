@@ -25,6 +25,8 @@ dependencies = [
   "cryptography>=42.0.0",
   "email-validator>=2.1.0",
   "mcp>=1.0.0",
+  "pandas>=2.0.0",
+  "streamlit>=1.32.0",
 ]
 
 [project.optional-dependencies]
