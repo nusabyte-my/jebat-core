@@ -35,13 +35,17 @@ The wizard follows an **OpenCode-style** flow:
 
 1. **Model** — pick from the curated (placeholder) catalog or type a model id.
 2. **API base** — the gateway endpoint, e.g. `https://go.opencode.example/v1` (required).
-3. **Model** — confirm or type a custom model name.
+   After you enter it, JEBAT attempts a **live `/v1/models` fetch** and, if the gateway
+   responds, shows the real model list for selection (falls back to the placeholder catalog
+   if the gateway requires auth for `/models` — you can still type a model name).
+3. **Model** — pick from the live/placeholder list, or type a custom model name.
 4. **API key** — paste the key, or leave blank and choose an auth method:
    - `key` — stored inline in `~/.jebat/jebat-cli-providers.json`
    - `env` — read from an env var at runtime (default `{KIND}_API_KEY`, e.g. `OPENCODE_GO_API_KEY`)
    - `store` — read from the JEBAT auth store (`/apikey`)
    For gateways with SSO/OAuth, complete the sign-in out-of-band and paste the resulting
-   token as the API key (or store it under the env/store method).
+   token as the API key (or store it under the env/store method). The key is resolved at
+   request time, so `/provider test` and chat work even when no inline key is stored.
 5. The provider is registered and made active; connectivity is testable with `/provider test`.
 
 ## Setup via the legacy full CLI (`jebat init`)
@@ -92,7 +96,7 @@ also work as `fallback_providers`.
 Each custom provider ships with a small **placeholder** `default_models` list
 (`jebat/features/auth/custom_providers.py`). These are shown only when the live
 `/v1/models` fetch is unreachable. Replace them with real model ids, or rely on the live
-catalog from the init wizard / WebUI. Example:
+catalog from the init wizard, the REPL `/provider add`, or the WebUI. Example:
 
 ```python
 "opencode_go": CustomProvider(
