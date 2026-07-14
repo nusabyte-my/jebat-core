@@ -612,6 +612,14 @@ async def auth_test(provider: str) -> dict[str, Any]:
 
     if is_custom_provider(provider):
         cp = get_custom_provider(provider)
+        # Base URL for custom providers lives in ~/.jebat/secrets.env; make sure
+        # it is loaded into os.environ before resolving (cross-process safety).
+        try:
+            from jebat.llm.auth import _ensure_secrets_loaded
+
+            _ensure_secrets_loaded()
+        except Exception:
+            pass
         base_url = _resolve_custom_base_url(cp)
         models = fetch_provider_models(provider, api_key, base_url)
         if models:

@@ -134,6 +134,29 @@ def test_auth_test_custom_branch_failure(monkeypatch):
 
 
 @pytest.mark.unit
+def test_auth_test_custom_resolves_base_url_from_secrets(monkeypatch):
+    import os
+
+    monkeypatch.setattr(auth_mod, "_retrieve", lambda provider, key_type: "secret")
+    monkeypatch.setattr(auth_mod, "fetch_provider_models", lambda *a, **k: ["m1"])
+    monkeypatch.setattr(
+        "jebat.llm.auth._ensure_secrets_loaded", lambda: None, raising=False
+    )
+    real_getenv = os.getenv
+
+    def fake_getenv(key, default=None):
+        if key == "OPENCODE_GO_BASE_URL":
+            return "http://x/v1"
+        return real_getenv(key, default)
+
+    monkeypatch.setattr(os, "getenv", fake_getenv)
+    import asyncio
+
+    out = asyncio.run(auth_mod.auth_test("opencode_go"))
+    assert out.get("valid") is True
+
+
+@pytest.mark.unit
 def test_build_custom_provider_routing(monkeypatch):
     monkeypatch.setattr(providers_mod, "get_provider_secret", lambda provider: "secret-key")
     monkeypatch.setenv("ZENMUX_BASE_URL", "http://zenmux.local")
