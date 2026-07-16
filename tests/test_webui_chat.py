@@ -1,6 +1,7 @@
 """Focused WebUI chat route contract tests."""
 
 import pytest
+from fastapi import HTTPException
 
 from jebat.services.webui import webui_server as webui
 
@@ -20,16 +21,36 @@ async def test_webui_chat_returns_response_and_runtime_selection(monkeypatch):
     monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)
     monkeypatch.setattr("jebat.llm.generate_chat_reply", generate_chat_reply)
     monkeypatch.setattr(webui, "RUNTIME_OVERRIDES", {"provider": "llamacpp", "model": "jebat-qwen"})
+    monkeypatch.setattr(webui, "CHAT_CONVERSATIONS", {})
 
     result = await webui.chat(
         webui.ChatMessage(user_id="webui", message="Plan the release", thinking_mode="strategic")
     )
 
-    assert result == {
-        "success": True,
-        "response": "Release plan ready",
-        "provider": "llamacpp",
-        "model": "jebat-qwen",
-        "thinking_mode": "strategic",
-        "preset": "default",
-    }
+    assert result["success"] is True
+    assert result["response"] == "Release plan ready"
+    assert result["provider"] == "llamacpp"
+    assert result["model"] == "jebat-qwen"
+    assert result["thinking_mode"] == "strategic"
+    assert result["preset"] == "default"
+    assert result["conversation_id"] in webui.CHAT_CONVERSATIONS
+
+
+@pytest.mark.asyncio
+async def test_conversations_are_scoped_to_the_requesting_user(monkeypatch):
+    async def ensure_state():
+        return None
+
+    monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)
+    monkeypatch.setattr(webui, "_persist_conversations", lambda: None)
+    monkeypatch.setattr(webui, "CHAT_CONVERSATIONS", {})
+
+    created = await webui.create_conversation(
+        webui.ConversationCreateRequest(user_id="user-a", title="Release planning")
+    )
+    visible = await webui.list_conversations(user_id="user-a")
+
+    assert visible["conversations"] == [created]
+    with pytest.raises(HTTPException, match="conversation not found") as exc_info:
+        await webui.get_conversation(created["id"], user_id="user-b")
+    assert exc_info.value.status_code == 404

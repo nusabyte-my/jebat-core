@@ -1,6 +1,13 @@
 <!-- Chat — Universal Chat Interface -->
 <style>
-  .chat-layout-fs { display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2); }
+  .chat-layout-fs { display: flex; height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2); }
+  .chat-sidebar { width: 230px; flex: 0 0 230px; padding: var(--space-md); border-right: 1px solid var(--border); background: var(--bg-surface); overflow-y: auto; }
+  .chat-main { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+  .conversation-list { display: flex; flex-direction: column; gap: 4px; margin-top: var(--space-md); }
+  .conversation-item { appearance: none; width: 100%; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 8px; text-align: left; background: transparent; color: var(--text-secondary); cursor: pointer; }
+  .conversation-item:hover, .conversation-item.active { background: var(--bg-card); border-color: var(--border); color: var(--text-primary); }
+  .conversation-item span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .conversation-item small { color: var(--text-muted); font-size: var(--font-size-xs); }
   .chat-messages-fs { flex: 1; overflow-y: auto; padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-md); }
   .chat-input-fs { padding: var(--space-md) var(--space-lg); border-top: 1px solid var(--border); background: var(--bg-surface); }
   .chat-config-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-sm); flex-wrap: wrap; }
@@ -14,11 +21,17 @@
   .chat-msg.user { align-self: flex-end; background: var(--cyan); color: var(--bg-ink); border-bottom-right-radius: var(--radius-sm); }
   .chat-msg.assistant { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-bottom-left-radius: var(--radius-sm); color: var(--text-primary); }
   .chat-msg.system { align-self: center; background: var(--bg-elevated); color: var(--text-muted); font-size: var(--font-size-sm); border: 1px solid var(--border); }
+  @media (max-width: 720px) { .chat-sidebar { display: none; } }
 </style>
 
 <div class="chat-layout-fs">
-  <div class="chat-messages-fs" id="chat-log"></div>
-  <div class="chat-input-fs">
+  <aside class="chat-sidebar">
+    <button class="btn btn-primary" id="new-conversation" style="width:100%">New chat</button>
+    <div class="conversation-list" id="conversation-list"></div>
+  </aside>
+  <div class="chat-main">
+    <div class="chat-messages-fs" id="chat-log"></div>
+    <div class="chat-input-fs">
     <div class="chat-config-row">
       <select id="chat-provider" title="LLM Provider"></select>
       <select id="chat-model" title="Model"></select>
@@ -38,6 +51,7 @@
       <input class="input" id="chat-input" type="text" placeholder="Type a message..." autofocus style="flex:1" />
       <button class="btn btn-primary" id="chat-send">Send</button>
     </div>
+    </div>
   </div>
 </div>
 
@@ -49,6 +63,8 @@
   let activeProvider = null;
   let activeModel = null;
   let activePreset = 'default';
+  let activeConversationId = null;
+  const userId = 'webui';
 
   function addChatMsg(text, role) {
     const div = document.createElement('div');
@@ -56,6 +72,43 @@
     div.textContent = text;
     chatLog.appendChild(div);
     chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function resetChatLog(messages = []) {
+    chatLog.replaceChildren();
+    messages.forEach(message => addChatMsg(message.content, message.role));
+  }
+
+  async function loadConversations() {
+    const data = await API.get(`/conversations?user_id=${encodeURIComponent(userId)}`);
+    const list = document.getElementById('conversation-list');
+    list.replaceChildren();
+    data.conversations.forEach(conversation => {
+      const button = document.createElement('button');
+      button.className = `conversation-item${conversation.id === activeConversationId ? ' active' : ''}`;
+      const title = document.createElement('span');
+      title.textContent = conversation.title;
+      const count = document.createElement('small');
+      count.textContent = `${conversation.message_count} messages`;
+      button.append(title, count);
+      button.addEventListener('click', () => openConversation(conversation.id));
+      list.appendChild(button);
+    });
+  }
+
+  async function openConversation(conversationId) {
+    const conversation = await API.get(`/conversations/${conversationId}?user_id=${encodeURIComponent(userId)}`);
+    activeConversationId = conversation.id;
+    resetChatLog(conversation.messages);
+    await loadConversations();
+  }
+
+  async function newConversation() {
+    const conversation = await API.post('/conversations', { user_id: userId });
+    activeConversationId = conversation.id;
+    resetChatLog();
+    await loadConversations();
+    chatInput.focus();
   }
 
   async function sendChat() {
@@ -67,12 +120,15 @@
     chatSend.disabled = true;
     try {
       const data = await API.chat({
-        user_id: 'webui',
+        user_id: userId,
         message: text,
         thinking_mode: mode,
         preset: activePreset,
+        conversation_id: activeConversationId,
       });
+      activeConversationId = data.conversation_id || activeConversationId;
       addChatMsg(data.response || data.error || 'No response', 'assistant');
+      await loadConversations();
     } catch (e) {
       addChatMsg('Connection error — is the JEBAT API running?', 'system');
     } finally {
@@ -83,6 +139,7 @@
 
   chatSend.addEventListener('click', sendChat);
   chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+  document.getElementById('new-conversation').addEventListener('click', newConversation);
 
   // Mode selector
   document.querySelectorAll('.mode-chip').forEach(chip => {
@@ -96,6 +153,7 @@
   // Load config
   (async () => {
     try {
+      await loadConversations();
       if (typeof API !== 'undefined') {
         const rt = await API.runtime();
         const catalog = rt.providers?.catalog || {};

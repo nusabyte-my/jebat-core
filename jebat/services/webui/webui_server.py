@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import tempfile
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -43,6 +44,12 @@ class ChatMessage(BaseModel):
     message: str
     thinking_mode: Optional[str] = "deliberate"
     preset: Optional[str] = "default"
+    conversation_id: Optional[str] = None
+
+
+class ConversationCreateRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+    title: Optional[str] = Field(default=None, max_length=255)
 
 
 class ThinkRequest(BaseModel):
@@ -63,6 +70,7 @@ class ProviderAuthRequest(BaseModel):
 
 
 RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
+CHAT_CONVERSATIONS: Dict[str, Dict[str, Any]] = {}
 
 
 class ChannelConnectRequest(BaseModel):
@@ -353,6 +361,7 @@ async def _ensure_connection_state() -> None:
         CHANNEL_SECRETS.update(_read_json(_data_path("channel_secrets.json"), {}))
         WORKSTATION_CONNECTIONS.update(_read_json(_data_path("workstation_connections.json"), {}))
         RUNTIME_OVERRIDES.update(_read_json(_data_path("runtime_overrides.json"), {"provider": None, "model": None}))
+        CHAT_CONVERSATIONS.update(_read_json(_data_path("conversations.json"), {}))
         STATE_LOADED = True
         await _reactivate_saved_channels()
 
@@ -368,6 +377,45 @@ def _persist_workstation_state() -> None:
 
 def _persist_runtime_state() -> None:
     _write_json(_data_path("runtime_overrides.json"), RUNTIME_OVERRIDES)
+
+
+def _persist_conversations() -> None:
+    _write_json(_data_path("conversations.json"), CHAT_CONVERSATIONS)
+
+
+def _conversation_summary(conversation: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": conversation["id"],
+        "title": conversation["title"],
+        "created_at": conversation["created_at"],
+        "updated_at": conversation["updated_at"],
+        "message_count": len(conversation["messages"]),
+    }
+
+
+def _new_conversation(user_id: str, title: Optional[str] = None) -> Dict[str, Any]:
+    timestamp = _now_iso()
+    conversation = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "title": title or "New conversation",
+        "created_at": timestamp,
+        "updated_at": timestamp,
+        "messages": [],
+    }
+    CHAT_CONVERSATIONS[conversation["id"]] = conversation
+    return conversation
+
+
+def _conversation_prompt(conversation: Dict[str, Any]) -> str:
+    messages = conversation["messages"][-12:]
+    if len(messages) <= 1:
+        return messages[-1]["content"]
+
+    transcript = "\n".join(
+        f"{message['role'].title()}: {message['content']}" for message in messages
+    )
+    return f"Continue this conversation.\n\n{transcript}\nAssistant:"
 
 
 async def _reactivate_saved_channels() -> None:
@@ -897,6 +945,36 @@ async def check_workstation(payload: WorkstationActionRequest):
     }
 
 
+@webui_router.get("/webui/api/conversations")
+async def list_conversations(user_id: str = "webui"):
+    await _ensure_connection_state()
+    conversations = [
+        _conversation_summary(conversation)
+        for conversation in CHAT_CONVERSATIONS.values()
+        if conversation.get("user_id") == user_id
+    ]
+    conversations.sort(key=lambda conversation: conversation["updated_at"], reverse=True)
+    return {"conversations": conversations}
+
+
+@webui_router.post("/webui/api/conversations")
+async def create_conversation(payload: ConversationCreateRequest):
+    await _ensure_connection_state()
+    async with STATE_LOCK:
+        conversation = _new_conversation(payload.user_id, payload.title)
+        _persist_conversations()
+    return _conversation_summary(conversation)
+
+
+@webui_router.get("/webui/api/conversations/{conversation_id}")
+async def get_conversation(conversation_id: str, user_id: str = "webui"):
+    await _ensure_connection_state()
+    conversation = CHAT_CONVERSATIONS.get(conversation_id)
+    if conversation is None or conversation.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="conversation not found")
+    return {**_conversation_summary(conversation), "messages": conversation["messages"]}
+
+
 @webui_router.post("/webui/api/chat")
 async def chat(message: ChatMessage):
     """Process chat message with the configured LLM provider."""
@@ -904,17 +982,35 @@ async def chat(message: ChatMessage):
         from jebat.llm import generate_chat_reply
 
         await _ensure_connection_state()
+        async with STATE_LOCK:
+            conversation = CHAT_CONVERSATIONS.get(message.conversation_id or "")
+            if conversation is None:
+                conversation = _new_conversation(message.user_id, message.message[:80])
+            elif conversation.get("user_id") != message.user_id:
+                raise HTTPException(status_code=404, detail="conversation not found")
+
+            conversation["messages"].append({"role": "user", "content": message.message, "created_at": _now_iso()})
+            conversation["updated_at"] = _now_iso()
+            _persist_conversations()
+            prompt = _conversation_prompt(conversation)
+
         response, used_provider, config = await generate_chat_reply(
-            prompt=message.message,
+            prompt=prompt,
             mode=message.thinking_mode,
             preset=message.preset,
             provider_override=RUNTIME_OVERRIDES["provider"],
             model_override=RUNTIME_OVERRIDES["model"],
         )
 
+        async with STATE_LOCK:
+            conversation["messages"].append({"role": "assistant", "content": response, "created_at": _now_iso()})
+            conversation["updated_at"] = _now_iso()
+            _persist_conversations()
+
         return {
             "success": True,
             "response": response,
+            "conversation_id": conversation["id"],
             "provider": used_provider,
             "model": config.model,
             "thinking_mode": message.thinking_mode,
