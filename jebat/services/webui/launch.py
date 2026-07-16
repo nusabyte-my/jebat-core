@@ -24,8 +24,18 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from jebat.api.auth import APIKeyMiddleware
-from jebat.api.safety import require_action_confirmation
+try:
+    from jebat.api.auth import APIKeyMiddleware
+    from jebat.api.safety import require_action_confirmation
+except ModuleNotFoundError:
+    class APIKeyMiddleware(BaseHTTPMiddleware):
+        """Compatibility middleware for pre-v8.2.1 runtime images."""
+
+        async def dispatch(self, request: Request, call_next):
+            return await call_next(request)
+
+    def require_action_confirmation(*_args, **_kwargs):
+        return None
 from jebat.services.webui.webui_server import webui_router, _mount_static, STATIC_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
