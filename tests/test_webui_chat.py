@@ -115,3 +115,31 @@ async def test_chat_applies_owned_agent_profile_guidance(monkeypatch):
     )
 
     assert result["agent_profile_id"] == profile["id"]
+
+
+@pytest.mark.asyncio
+async def test_agent_run_plan_is_persisted_and_profile_scoped(monkeypatch):
+    async def ensure_state():
+        return None
+
+    monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)
+    monkeypatch.setattr(webui, "_persist_agent_profiles", lambda: None)
+    monkeypatch.setattr(webui, "_persist_agent_runs", lambda: None)
+    monkeypatch.setattr(webui, "AGENT_PROFILES", {})
+    monkeypatch.setattr(webui, "AGENT_RUNS", {})
+
+    profile = await webui.create_agent_profile(
+        webui.AgentProfileCreateRequest(
+            user_id="user-a", name="Release reviewer", capabilities=["review"]
+        )
+    )
+    run = await webui.plan_agent_run(
+        webui.AgentRunPlanRequest(
+            user_id="user-a", agent_profile_id=profile["id"], objective="Review the release"
+        )
+    )
+
+    assert run["status"] == "planned"
+    assert run["agent_name"] == "Release reviewer"
+    assert len(run["plan"]) == 3
+    assert (await webui.list_agent_runs(user_id="user-a"))["runs"] == [run]

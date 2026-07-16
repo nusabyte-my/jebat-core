@@ -31,6 +31,15 @@
       </form>
     </section>
     <section>
+      <div class="card" style="margin-bottom:var(--space-md)">
+        <div class="card-header"><div class="card-title">Plan a run</div></div>
+        <form class="agent-form" id="agent-run-plan-form">
+          <label>Profile <select class="input" id="agent-run-profile" required></select></label>
+          <label>Objective <textarea class="input" name="objective" required maxlength="4000" placeholder="Review the release before deployment."></textarea></label>
+          <button class="btn btn-secondary" type="submit">Generate plan</button>
+        </form>
+        <div class="text-sm text-muted" id="agent-run-plan-result" style="margin-top:var(--space-sm)"></div>
+      </div>
       <div class="card-header"><div class="card-title">Your profiles</div><span class="badge badge-cyan" id="agent-profile-count">0</span></div>
       <div class="agent-profile-list" id="agent-profile-list"></div>
     </section>
@@ -41,10 +50,25 @@
   const agentUserId = 'webui';
   const profileList = document.getElementById('agent-profile-list');
   const profileCount = document.getElementById('agent-profile-count');
+  const runProfile = document.getElementById('agent-run-profile');
 
   function renderProfiles(profiles) {
     profileList.replaceChildren();
+    runProfile.replaceChildren();
     profileCount.textContent = profiles.length;
+    if (!profiles.length) {
+      const option = document.createElement('option');
+      option.textContent = 'Create a profile first';
+      option.disabled = true;
+      option.selected = true;
+      runProfile.appendChild(option);
+    }
+    profiles.forEach(profile => {
+      const option = document.createElement('option');
+      option.value = profile.id;
+      option.textContent = profile.name;
+      runProfile.appendChild(option);
+    });
     if (!profiles.length) {
       profileList.textContent = 'No profiles yet. Create a focused specialist for a repeatable workflow.';
       return;
@@ -96,6 +120,30 @@
       });
       event.currentTarget.reset();
       await loadProfiles();
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  document.getElementById('agent-run-plan-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const result = document.getElementById('agent-run-plan-result');
+    const submit = event.currentTarget.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      const run = await API.post('/agent-runs/plan', {
+        user_id: agentUserId,
+        agent_profile_id: runProfile.value,
+        objective: new FormData(event.currentTarget).get('objective'),
+      });
+      result.replaceChildren();
+      const heading = document.createElement('strong');
+      heading.textContent = `${run.agent_name}: ${run.status}`;
+      const steps = document.createElement('ol');
+      run.plan.forEach(step => { const item = document.createElement('li'); item.textContent = step; steps.appendChild(item); });
+      result.append(heading, steps);
+    } catch (_) {
+      result.textContent = 'Unable to generate an agent plan.';
     } finally {
       submit.disabled = false;
     }

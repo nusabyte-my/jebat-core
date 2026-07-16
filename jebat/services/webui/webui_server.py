@@ -65,6 +65,13 @@ class AgentProfileCreateRequest(BaseModel):
     system_prompt: str = Field(default="", max_length=4000)
 
 
+class AgentRunPlanRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+    agent_profile_id: str = Field(min_length=1)
+    objective: str = Field(min_length=1, max_length=4000)
+    conversation_id: Optional[str] = None
+
+
 class ThinkRequest(BaseModel):
     problem: str
     mode: str = "deliberate"
@@ -85,6 +92,7 @@ class ProviderAuthRequest(BaseModel):
 RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
 CHAT_CONVERSATIONS: Dict[str, Dict[str, Any]] = {}
 AGENT_PROFILES: Dict[str, Dict[str, Any]] = {}
+AGENT_RUNS: Dict[str, Dict[str, Any]] = {}
 
 
 class ChannelConnectRequest(BaseModel):
@@ -377,6 +385,7 @@ async def _ensure_connection_state() -> None:
         RUNTIME_OVERRIDES.update(_read_json(_data_path("runtime_overrides.json"), {"provider": None, "model": None}))
         CHAT_CONVERSATIONS.update(_read_json(_data_path("conversations.json"), {}))
         AGENT_PROFILES.update(_read_json(_data_path("agent_profiles.json"), {}))
+        AGENT_RUNS.update(_read_json(_data_path("agent_runs.json"), {}))
         STATE_LOADED = True
         await _reactivate_saved_channels()
 
@@ -402,12 +411,26 @@ def _persist_agent_profiles() -> None:
     _write_json(_data_path("agent_profiles.json"), AGENT_PROFILES)
 
 
+def _persist_agent_runs() -> None:
+    _write_json(_data_path("agent_runs.json"), AGENT_RUNS)
+
+
 def _agent_profile_summary(profile: Dict[str, Any]) -> Dict[str, Any]:
     return {
         key: profile[key]
         for key in (
             "id", "name", "description", "agent_type", "personality", "capabilities",
             "provider", "model", "created_at", "updated_at",
+        )
+    }
+
+
+def _agent_run_summary(run: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        key: run[key]
+        for key in (
+            "id", "agent_profile_id", "agent_name", "conversation_id", "objective",
+            "status", "plan", "created_at", "updated_at",
         )
     }
 
@@ -1160,6 +1183,54 @@ async def create_agent_profile(payload: AgentProfileCreateRequest):
         AGENT_PROFILES[profile["id"]] = profile
         _persist_agent_profiles()
     return _agent_profile_summary(profile)
+
+
+@webui_router.get("/webui/api/agent-runs")
+async def list_agent_runs(user_id: str = "webui"):
+    await _ensure_connection_state()
+    runs = [
+        _agent_run_summary(run)
+        for run in AGENT_RUNS.values()
+        if run.get("user_id") == user_id
+    ]
+    runs.sort(key=lambda run: run["updated_at"], reverse=True)
+    return {"runs": runs}
+
+
+@webui_router.post("/webui/api/agent-runs/plan")
+async def plan_agent_run(payload: AgentRunPlanRequest):
+    await _ensure_connection_state()
+    async with STATE_LOCK:
+        profile = AGENT_PROFILES.get(payload.agent_profile_id)
+        if profile is None or profile.get("user_id") != payload.user_id:
+            raise HTTPException(status_code=404, detail="agent profile not found")
+
+        if payload.conversation_id:
+            conversation = CHAT_CONVERSATIONS.get(payload.conversation_id)
+            if conversation is None or conversation.get("user_id") != payload.user_id:
+                raise HTTPException(status_code=404, detail="conversation not found")
+
+        timestamp = _now_iso()
+        capabilities = profile.get("capabilities") or [profile["agent_type"]]
+        run = {
+            "id": str(uuid.uuid4()),
+            "user_id": payload.user_id,
+            "agent_profile_id": profile["id"],
+            "agent_name": profile["name"],
+            "conversation_id": payload.conversation_id,
+            "objective": payload.objective.strip(),
+            "status": "planned",
+            "plan": [
+                f"Review the objective and profile boundaries for {profile['name']}.",
+                f"Use declared capabilities: {', '.join(capabilities)}.",
+                "Produce a reviewable result before any external action.",
+            ],
+            "created_at": timestamp,
+            "updated_at": timestamp,
+        }
+        AGENT_RUNS[run["id"]] = run
+        _persist_agent_runs()
+    return _agent_run_summary(run)
 
 
 @webui_router.get("/webui/api/agents/status")
