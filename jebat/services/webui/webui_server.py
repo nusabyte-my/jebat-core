@@ -52,6 +52,18 @@ class ConversationCreateRequest(BaseModel):
     title: Optional[str] = Field(default=None, max_length=255)
 
 
+class AgentProfileCreateRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+    name: str = Field(min_length=1, max_length=100)
+    description: str = Field(default="", max_length=500)
+    agent_type: str = Field(default="conversational", max_length=50)
+    personality: str = Field(default="professional", max_length=50)
+    capabilities: List[str] = Field(default_factory=list, max_length=20)
+    provider: Optional[str] = Field(default=None, max_length=100)
+    model: Optional[str] = Field(default=None, max_length=255)
+    system_prompt: str = Field(default="", max_length=4000)
+
+
 class ThinkRequest(BaseModel):
     problem: str
     mode: str = "deliberate"
@@ -71,6 +83,7 @@ class ProviderAuthRequest(BaseModel):
 
 RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
 CHAT_CONVERSATIONS: Dict[str, Dict[str, Any]] = {}
+AGENT_PROFILES: Dict[str, Dict[str, Any]] = {}
 
 
 class ChannelConnectRequest(BaseModel):
@@ -362,6 +375,7 @@ async def _ensure_connection_state() -> None:
         WORKSTATION_CONNECTIONS.update(_read_json(_data_path("workstation_connections.json"), {}))
         RUNTIME_OVERRIDES.update(_read_json(_data_path("runtime_overrides.json"), {"provider": None, "model": None}))
         CHAT_CONVERSATIONS.update(_read_json(_data_path("conversations.json"), {}))
+        AGENT_PROFILES.update(_read_json(_data_path("agent_profiles.json"), {}))
         STATE_LOADED = True
         await _reactivate_saved_channels()
 
@@ -381,6 +395,20 @@ def _persist_runtime_state() -> None:
 
 def _persist_conversations() -> None:
     _write_json(_data_path("conversations.json"), CHAT_CONVERSATIONS)
+
+
+def _persist_agent_profiles() -> None:
+    _write_json(_data_path("agent_profiles.json"), AGENT_PROFILES)
+
+
+def _agent_profile_summary(profile: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        key: profile[key]
+        for key in (
+            "id", "name", "description", "agent_type", "personality", "capabilities",
+            "provider", "model", "created_at", "updated_at",
+        )
+    }
 
 
 def _conversation_summary(conversation: Dict[str, Any]) -> Dict[str, Any]:
@@ -1080,6 +1108,42 @@ async def get_memory_stats():
 
 
 # ── Agents status ──
+@webui_router.get("/webui/api/agents/profiles")
+async def list_agent_profiles(user_id: str = "webui"):
+    await _ensure_connection_state()
+    profiles = [
+        _agent_profile_summary(profile)
+        for profile in AGENT_PROFILES.values()
+        if profile.get("user_id") == user_id
+    ]
+    profiles.sort(key=lambda profile: profile["updated_at"], reverse=True)
+    return {"profiles": profiles}
+
+
+@webui_router.post("/webui/api/agents/profiles")
+async def create_agent_profile(payload: AgentProfileCreateRequest):
+    await _ensure_connection_state()
+    timestamp = _now_iso()
+    async with STATE_LOCK:
+        profile = {
+            "id": str(uuid.uuid4()),
+            "user_id": payload.user_id,
+            "name": payload.name.strip(),
+            "description": payload.description.strip(),
+            "agent_type": payload.agent_type.strip().lower(),
+            "personality": payload.personality.strip().lower(),
+            "capabilities": [item.strip() for item in payload.capabilities if item.strip()],
+            "provider": payload.provider.strip().lower() if payload.provider else None,
+            "model": payload.model.strip() if payload.model else None,
+            "system_prompt": payload.system_prompt.strip(),
+            "created_at": timestamp,
+            "updated_at": timestamp,
+        }
+        AGENT_PROFILES[profile["id"]] = profile
+        _persist_agent_profiles()
+    return _agent_profile_summary(profile)
+
+
 @webui_router.get("/webui/api/agents/status")
 async def agents_status():
     """Return agent force status including orchestration info."""

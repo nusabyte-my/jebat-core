@@ -54,3 +54,30 @@ async def test_conversations_are_scoped_to_the_requesting_user(monkeypatch):
     with pytest.raises(HTTPException, match="conversation not found") as exc_info:
         await webui.get_conversation(created["id"], user_id="user-b")
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_agent_profiles_are_persisted_and_scoped(monkeypatch):
+    async def ensure_state():
+        return None
+
+    monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)
+    monkeypatch.setattr(webui, "_persist_agent_profiles", lambda: None)
+    monkeypatch.setattr(webui, "AGENT_PROFILES", {})
+
+    created = await webui.create_agent_profile(
+        webui.AgentProfileCreateRequest(
+            user_id="user-a",
+            name="Release reviewer",
+            description="Checks release readiness.",
+            agent_type="analytical",
+            capabilities=["review", "release"],
+            provider="llamacpp",
+            model="jebat-qwen",
+        )
+    )
+
+    assert created["name"] == "Release reviewer"
+    assert created["capabilities"] == ["review", "release"]
+    assert (await webui.list_agent_profiles(user_id="user-a"))["profiles"] == [created]
+    assert (await webui.list_agent_profiles(user_id="user-b"))["profiles"] == []

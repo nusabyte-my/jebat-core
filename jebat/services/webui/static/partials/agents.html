@@ -1,33 +1,105 @@
 <!-- Agents -->
-<div>
-  <h2 style="margin-bottom:var(--space-lg)">🤝 Agents</h2>
-  <p class="text-muted mb-lg">Multi-agent orchestration — delegate tasks to specialized workers.</p>
+<style>
+  .agent-workspace { display:grid; grid-template-columns:minmax(280px, .8fr) minmax(0, 1.2fr); gap:var(--space-lg); }
+  .agent-form { display:grid; gap:var(--space-sm); }
+  .agent-form label { color:var(--text-muted); font-size:var(--font-size-xs); }
+  .agent-form textarea { min-height:88px; resize:vertical; }
+  .agent-profile-list { display:grid; gap:var(--space-sm); }
+  .agent-profile { padding:var(--space-md); border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-card); }
+  .agent-profile-header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-sm); }
+  .agent-profile-meta { display:flex; gap:6px; flex-wrap:wrap; margin-top:var(--space-sm); }
+  .agent-profile-meta span { color:var(--text-muted); font-size:var(--font-size-xs); border:1px solid var(--border); border-radius:var(--radius-pill); padding:2px 7px; }
+  @media (max-width:800px) { .agent-workspace { grid-template-columns:1fr; } }
+</style>
 
-  <div class="grid grid-3">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Active Agents</div>
-        <span class="badge badge-cyan">0</span>
-      </div>
-      <p class="text-sm text-muted">No agents currently running.</p>
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Completed Tasks</div>
-        <span class="badge badge-green">0</span>
-      </div>
-      <p class="text-sm text-muted">No tasks completed yet.</p>
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Agent Config</div>
-      </div>
-      <div class="terminal" style="font-size:var(--font-size-xs)">
-        <div><span class="prompt">$</span> jebat agents status</div>
-        <div class="output">  Max concurrent: 3</div>
-        <div class="output">  Max depth: 1</div>
-        <div class="output">  Orchestrator: enabled</div>
-      </div>
-    </div>
+<div>
+  <div class="page-header">
+    <div><h2>Agents</h2><p class="text-muted">Create reusable specialist profiles. Profiles do not execute work until assigned to a governed run.</p></div>
+  </div>
+  <div class="agent-workspace">
+    <section class="card">
+      <div class="card-header"><div class="card-title">Create agent</div></div>
+      <form class="agent-form" id="agent-profile-form">
+        <label>Name <input class="input" name="name" required maxlength="100" placeholder="Release reviewer" /></label>
+        <label>Purpose <input class="input" name="description" maxlength="500" placeholder="Checks release readiness" /></label>
+        <label>Role
+          <select class="input" name="agent_type"><option value="conversational">Conversational</option><option value="analytical">Analytical</option><option value="creative">Creative</option><option value="researcher">Researcher</option><option value="task_executor">Task executor</option></select>
+        </label>
+        <label>Capabilities <input class="input" name="capabilities" placeholder="review, release, security" /></label>
+        <label>System guidance <textarea class="input" name="system_prompt" maxlength="4000" placeholder="State boundaries, expected output, and escalation rules."></textarea></label>
+        <button class="btn btn-primary" type="submit">Create profile</button>
+      </form>
+    </section>
+    <section>
+      <div class="card-header"><div class="card-title">Your profiles</div><span class="badge badge-cyan" id="agent-profile-count">0</span></div>
+      <div class="agent-profile-list" id="agent-profile-list"></div>
+    </section>
   </div>
 </div>
+
+<script>
+  const agentUserId = 'webui';
+  const profileList = document.getElementById('agent-profile-list');
+  const profileCount = document.getElementById('agent-profile-count');
+
+  function renderProfiles(profiles) {
+    profileList.replaceChildren();
+    profileCount.textContent = profiles.length;
+    if (!profiles.length) {
+      profileList.textContent = 'No profiles yet. Create a focused specialist for a repeatable workflow.';
+      return;
+    }
+    profiles.forEach(profile => {
+      const card = document.createElement('article');
+      card.className = 'agent-profile';
+      const header = document.createElement('div');
+      header.className = 'agent-profile-header';
+      const name = document.createElement('strong');
+      name.textContent = profile.name;
+      const type = document.createElement('span');
+      type.className = 'badge badge-cyan';
+      type.textContent = profile.agent_type;
+      header.append(name, type);
+      const description = document.createElement('p');
+      description.className = 'text-muted text-sm';
+      description.textContent = profile.description || 'No description provided.';
+      const meta = document.createElement('div');
+      meta.className = 'agent-profile-meta';
+      [profile.personality, ...(profile.capabilities || [])].forEach(value => {
+        const item = document.createElement('span');
+        item.textContent = value;
+        meta.appendChild(item);
+      });
+      card.append(header, description, meta);
+      profileList.appendChild(card);
+    });
+  }
+
+  async function loadProfiles() {
+    const data = await API.get(`/agents/profiles?user_id=${encodeURIComponent(agentUserId)}`);
+    renderProfiles(data.profiles);
+  }
+
+  document.getElementById('agent-profile-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const submit = event.currentTarget.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await API.post('/agents/profiles', {
+        user_id: agentUserId,
+        name: form.get('name'),
+        description: form.get('description'),
+        agent_type: form.get('agent_type'),
+        capabilities: String(form.get('capabilities') || '').split(',').map(value => value.trim()).filter(Boolean),
+        system_prompt: form.get('system_prompt'),
+      });
+      event.currentTarget.reset();
+      await loadProfiles();
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  loadProfiles().catch(() => { profileList.textContent = 'Unable to load agent profiles.'; });
+</script>
