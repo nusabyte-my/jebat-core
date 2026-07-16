@@ -1,5 +1,5 @@
-const CACHE_NAME = 'jebat-v1';
-const PRECACHE = ['/webui/', '/webui/static/css/stealth.css', '/favicon.svg'];
+const CACHE_NAME = 'jebat-v8.2.1';
+const PRECACHE = ['/webui/static/css/stealth.css', '/favicon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(PRECACHE)));
@@ -13,17 +13,18 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  // Network-first for API, cache-first for static
-  if (e.request.url.includes('/api/') || e.request.url.includes('/health')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-  } else {
-    e.respondWith(
-      caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
-        const clone = resp.clone();
-        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        return resp;
-      }))
-    );
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  const dynamic = url.pathname === '/webui/' || url.pathname.startsWith('/webui/partials/') || url.pathname.includes('/api/') || url.pathname === '/health';
+  if (dynamic) {
+    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    return;
   }
+  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    if (response.ok && url.pathname.startsWith('/webui/static/')) {
+      caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+    }
+    return response;
+  })));
 });

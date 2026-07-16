@@ -3,15 +3,34 @@
  */
 const API = {
   base: '/webui/api',
+  timeout: 15000,
 
   async fetch(path, opts = {}) {
     const url = `${this.base}${path}`;
-    const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...opts.headers },
-      ...opts
-    });
-    if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-    return res.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeout);
+    const headers = { ...opts.headers };
+    if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+
+    try {
+      const res = await fetch(url, { ...opts, headers, signal: controller.signal });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const error = new Error(payload.detail || payload.error || `Request failed (${res.status})`);
+        error.status = res.status;
+        throw error;
+      }
+      return payload;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        const timeoutError = new Error('Request timed out. Check the JEBAT connection and try again.');
+        timeoutError.status = 408;
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   },
 
   get(path) { return this.fetch(path); },

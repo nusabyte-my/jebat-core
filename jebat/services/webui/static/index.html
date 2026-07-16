@@ -567,7 +567,6 @@
     // ═══════════════════════════════════════════════════
     // 7. SHELL ROUTER
     // ═══════════════════════════════════════════════════
-    const partialCache = {};
     const PAGE_TITLES = {
       dashboard: 'Mission Control', chat: 'Chat', control: 'Control Center',
       hermes: 'Hermes — Agent Workspace', openclaw: 'OpenClaw — Integration Hub',
@@ -576,13 +575,12 @@
       skills: 'Skills', agents: 'Agents', channels: 'Channels', setup: 'Setup',
     };
 
+    let navigationSequence = 0;
     async function loadPartial(name) {
-      if (partialCache[name]) return partialCache[name];
       try {
-        const res = await fetch(`/webui/partials/${name}?r=${Date.now()}`);
+        const res = await fetch(`/webui/partials/${name}`, { cache: 'no-cache' });
         if (!res.ok) return null;
-        partialCache[name] = await res.text();
-        return partialCache[name];
+        return await res.text();
       } catch { return null; }
     }
 
@@ -594,11 +592,14 @@
     }
 
     async function navigate(name) {
+      if (!PAGE_TITLES[name]) name = 'dashboard';
+      const sequence = ++navigationSequence;
       const main = document.getElementById('app-shell');
       const title = document.getElementById('page-title');
       const breadcrumb = document.getElementById('page-breadcrumb');
       const bottomPage = document.getElementById('bottom-page');
       if (!main) return;
+      showProgress();
 
       document.querySelectorAll('.sidebar-link').forEach(lnk => lnk.classList.toggle('active', lnk.dataset.page === name));
       title.textContent = PAGE_TITLES[name] || name;
@@ -608,11 +609,16 @@
 
       main.innerHTML = '<div style="padding:48px"><div class="skeleton" style="height:200px;margin-bottom:16px"></div><div class="skeleton" style="height:120px"></div></div>';
       const partial = await loadPartial(name);
+      if (sequence !== navigationSequence) return;
       if (!partial) {
         main.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚧</div><div class="empty-state-title">Coming Soon</div><div class="empty-state-desc">This page is under development.</div></div>';
+        hideProgress();
         return;
       }
       removeScripts(main); main.innerHTML = partial; runScripts(main);
+      if (sidebar.classList.contains('open')) toggleSidebar();
+      if (breadcrumb) breadcrumb.innerHTML = `<span data-page="dashboard" style="cursor:pointer">jebat</span> / <span data-page="${name}">${name}</span>`;
+      hideProgress();
       logActivity('NAV', `→ ${name}`);
     }
     window.navigate = navigate;
@@ -665,14 +671,6 @@
         if (span) { navigate(span.dataset.page); history.pushState(null, '', '#' + span.dataset.page); }
       });
     }
-    // Update breadcrumb to clickable spans on navigate
-    const origNavigate = navigate;
-    window.navigate = async function(name) {
-      showProgress();
-      await origNavigate(name);
-      hideProgress();
-      if (breadcrumb) breadcrumb.innerHTML = `<span data-page="dashboard" style="cursor:pointer">jebat</span> / <span data-page="${name}">${name}</span>`;
-    };
 
     // ═══════════════════════════════════════════════════
     // 11. CONFIRMATION DIALOG

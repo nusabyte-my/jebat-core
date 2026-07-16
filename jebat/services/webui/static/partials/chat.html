@@ -49,7 +49,7 @@
       <span class="mode-chip" data-mode="critical">Critical</span>
     </div>
     <div class="chat-input-row" style="display:flex;gap:var(--space-sm)">
-      <input class="input" id="chat-input" type="text" placeholder="Type a message..." autofocus style="flex:1" />
+       <textarea class="input" id="chat-input" rows="1" placeholder="Message JEBAT..." autofocus style="flex:1;min-height:42px;max-height:160px;resize:vertical"></textarea>
       <button class="btn btn-primary" id="chat-send">Send</button>
     </div>
     </div>
@@ -141,7 +141,9 @@
   }
 
   chatSend.addEventListener('click', sendChat);
-  chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  });
   document.getElementById('new-conversation').addEventListener('click', newConversation);
 
   // Mode selector
