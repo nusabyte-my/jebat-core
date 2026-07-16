@@ -35,6 +35,7 @@
     <div class="chat-config-row">
       <select id="chat-provider" title="LLM Provider"></select>
       <select id="chat-model" title="Model"></select>
+      <select id="chat-agent" title="Agent profile"><option value="">General assistant</option></select>
       <select id="chat-preset" title="Chat Preset">
         <option value="default">Default</option>
       </select>
@@ -64,6 +65,7 @@
   let activeModel = null;
   let activePreset = 'default';
   let activeConversationId = null;
+  let activeAgentProfileId = null;
   const userId = 'webui';
 
   function addChatMsg(text, role) {
@@ -125,6 +127,7 @@
         thinking_mode: mode,
         preset: activePreset,
         conversation_id: activeConversationId,
+        agent_profile_id: activeAgentProfileId,
       });
       activeConversationId = data.conversation_id || activeConversationId;
       addChatMsg(data.response || data.error || 'No response', 'assistant');
@@ -159,6 +162,7 @@
         const catalog = rt.providers?.catalog || {};
         const provSel = document.getElementById('chat-provider');
         const modelSel = document.getElementById('chat-model');
+        const agentSel = document.getElementById('chat-agent');
         const presetSel = document.getElementById('chat-preset');
         const configured = new Set((rt.providers?.available || [])
           .filter(item => item.configured)
@@ -201,6 +205,15 @@
           presetSel.appendChild(opt);
         }
         activePreset = presetSel.value;
+
+        const profiles = await API.get(`/agents/profiles?user_id=${encodeURIComponent(userId)}`);
+        profiles.profiles.forEach(profile => {
+          const opt = document.createElement('option');
+          opt.value = profile.id;
+          opt.textContent = profile.name;
+          agentSel.appendChild(opt);
+        });
+        agentSel.addEventListener('change', () => { activeAgentProfileId = agentSel.value || null; });
 
         provSel.addEventListener('change', async () => {
           activeProvider = provSel.value;

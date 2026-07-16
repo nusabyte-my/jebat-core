@@ -45,6 +45,7 @@ class ChatMessage(BaseModel):
     thinking_mode: Optional[str] = "deliberate"
     preset: Optional[str] = "default"
     conversation_id: Optional[str] = None
+    agent_profile_id: Optional[str] = None
 
 
 class ConversationCreateRequest(BaseModel):
@@ -435,15 +436,22 @@ def _new_conversation(user_id: str, title: Optional[str] = None) -> Dict[str, An
     return conversation
 
 
-def _conversation_prompt(conversation: Dict[str, Any]) -> str:
+def _conversation_prompt(conversation: Dict[str, Any], profile: Optional[Dict[str, Any]] = None) -> str:
     messages = conversation["messages"][-12:]
     if len(messages) <= 1:
-        return messages[-1]["content"]
+        prompt = messages[-1]["content"]
+    else:
+        transcript = "\n".join(
+            f"{message['role'].title()}: {message['content']}" for message in messages
+        )
+        prompt = f"Continue this conversation.\n\n{transcript}\nAssistant:"
 
-    transcript = "\n".join(
-        f"{message['role'].title()}: {message['content']}" for message in messages
-    )
-    return f"Continue this conversation.\n\n{transcript}\nAssistant:"
+    if profile is None:
+        return prompt
+
+    guidance = profile.get("system_prompt") or profile.get("description")
+    identity = f"You are {profile['name']}, a {profile['agent_type']} agent."
+    return f"{identity}\n{guidance}\n\n{prompt}" if guidance else f"{identity}\n\n{prompt}"
 
 
 async def _reactivate_saved_channels() -> None:
@@ -1017,10 +1025,19 @@ async def chat(message: ChatMessage):
             elif conversation.get("user_id") != message.user_id:
                 raise HTTPException(status_code=404, detail="conversation not found")
 
+            profile = None
+            if message.agent_profile_id:
+                profile = AGENT_PROFILES.get(message.agent_profile_id)
+                if profile is None or profile.get("user_id") != message.user_id:
+                    raise HTTPException(status_code=404, detail="agent profile not found")
+                conversation["agent_profile_id"] = profile["id"]
+            elif conversation.get("agent_profile_id"):
+                profile = AGENT_PROFILES.get(conversation["agent_profile_id"])
+
             conversation["messages"].append({"role": "user", "content": message.message, "created_at": _now_iso()})
             conversation["updated_at"] = _now_iso()
             _persist_conversations()
-            prompt = _conversation_prompt(conversation)
+            prompt = _conversation_prompt(conversation, profile)
 
         response, used_provider, config = await generate_chat_reply(
             prompt=prompt,
@@ -1039,6 +1056,7 @@ async def chat(message: ChatMessage):
             "success": True,
             "response": response,
             "conversation_id": conversation["id"],
+            "agent_profile_id": profile["id"] if profile else None,
             "provider": used_provider,
             "model": config.model,
             "thinking_mode": message.thinking_mode,

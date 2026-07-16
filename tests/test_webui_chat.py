@@ -81,3 +81,37 @@ async def test_agent_profiles_are_persisted_and_scoped(monkeypatch):
     assert created["capabilities"] == ["review", "release"]
     assert (await webui.list_agent_profiles(user_id="user-a"))["profiles"] == [created]
     assert (await webui.list_agent_profiles(user_id="user-b"))["profiles"] == []
+
+
+@pytest.mark.asyncio
+async def test_chat_applies_owned_agent_profile_guidance(monkeypatch):
+    async def ensure_state():
+        return None
+
+    async def generate_chat_reply(**kwargs):
+        assert "You are Release reviewer, a analytical agent." in kwargs["prompt"]
+        assert "Highlight deployment risks." in kwargs["prompt"]
+        return "Review complete", "llamacpp", type("Config", (), {"model": "jebat-qwen"})()
+
+    monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)
+    monkeypatch.setattr(webui, "_persist_conversations", lambda: None)
+    monkeypatch.setattr(webui, "_persist_agent_profiles", lambda: None)
+    monkeypatch.setattr(webui, "CHAT_CONVERSATIONS", {})
+    monkeypatch.setattr(webui, "AGENT_PROFILES", {})
+    monkeypatch.setattr("jebat.llm.generate_chat_reply", generate_chat_reply)
+
+    profile = await webui.create_agent_profile(
+        webui.AgentProfileCreateRequest(
+            user_id="user-a",
+            name="Release reviewer",
+            agent_type="analytical",
+            system_prompt="Highlight deployment risks.",
+        )
+    )
+    result = await webui.chat(
+        webui.ChatMessage(
+            user_id="user-a", message="Review this release", agent_profile_id=profile["id"]
+        )
+    )
+
+    assert result["agent_profile_id"] == profile["id"]
