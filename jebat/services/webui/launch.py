@@ -153,7 +153,7 @@ ERROR_PAGE = """<!DOCTYPE html>
 app = FastAPI(
     title="JEBAT WebUI",
     description="Sovereign AI Platform — Enterprise Web Interface",
-    version="7.0.0",
+    version="8.2.1",
 )
 
 # CORS — tightened for production
@@ -227,7 +227,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "jebat-webui",
-        "version": "8.2.0",
+        "version": "8.2.1",
         "timestamp": time.time(),
         "features": ["rate-limiting", "cors", "csp", "error-pages", "audit-trail", "request-id"],
     }

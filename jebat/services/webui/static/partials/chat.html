@@ -64,21 +64,20 @@
     chatInput.value = '';
     addChatMsg(text, 'user');
 
+    chatSend.disabled = true;
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: 'webui',
-          message: text,
-          thinking_mode: mode,
-          preset: activePreset,
-        }),
+      const data = await API.chat({
+        user_id: 'webui',
+        message: text,
+        thinking_mode: mode,
+        preset: activePreset,
       });
-      const data = await res.json();
-      addChatMsg(data.reply || data.error || 'No response', 'assistant');
+      addChatMsg(data.response || data.error || 'No response', 'assistant');
     } catch (e) {
       addChatMsg('Connection error — is the JEBAT API running?', 'system');
+    } finally {
+      chatSend.disabled = false;
+      chatInput.focus();
     }
   }
 
@@ -101,13 +100,61 @@
         const rt = await API.runtime();
         const catalog = rt.providers?.catalog || {};
         const provSel = document.getElementById('chat-provider');
+        const modelSel = document.getElementById('chat-model');
+        const presetSel = document.getElementById('chat-preset');
+        const configured = new Set((rt.providers?.available || [])
+          .filter(item => item.configured)
+          .map(item => item.provider));
+
         for (const [name, info] of Object.entries(catalog)) {
           const opt = document.createElement('option');
           opt.value = name;
-          opt.textContent = name;
-          if (name === rt.provider) opt.selected = true;
+          opt.textContent = info.label || name;
+          opt.disabled = configured.size > 0 && !configured.has(name);
+          if (name === rt.provider?.effective) opt.selected = true;
           provSel.appendChild(opt);
         }
+
+        const setModels = provider => {
+          const models = catalog[provider]?.models || [];
+          modelSel.replaceChildren();
+          for (const model of models) {
+            const opt = document.createElement('option');
+            opt.value = model;
+            opt.textContent = model;
+            if (model === activeModel) opt.selected = true;
+            modelSel.appendChild(opt);
+          }
+          activeModel = modelSel.value || null;
+        };
+
+        activeProvider = rt.provider?.effective || provSel.value;
+        activeModel = rt.provider?.model || null;
+        provSel.value = activeProvider;
+        setModels(activeProvider);
+
+        for (const preset of rt.provider?.presets || []) {
+          const name = typeof preset === 'string' ? preset : preset.name;
+          if (!name) continue;
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          if (name === rt.provider?.default_preset) opt.selected = true;
+          presetSel.appendChild(opt);
+        }
+        activePreset = presetSel.value;
+
+        provSel.addEventListener('change', async () => {
+          activeProvider = provSel.value;
+          activeModel = null;
+          setModels(activeProvider);
+          await API.setRuntime({ provider: activeProvider, model: activeModel });
+        });
+        modelSel.addEventListener('change', async () => {
+          activeModel = modelSel.value || null;
+          await API.setRuntime({ provider: activeProvider, model: activeModel });
+        });
+        presetSel.addEventListener('change', () => { activePreset = presetSel.value; });
       }
     } catch {}
   })();

@@ -21,6 +21,7 @@ const API = {
   status()     { return this.get('/status'); },
   runtime()    { return this.get('/runtime'); },
   setRuntime(data) { return this.post('/runtime', data); },
+  chat(data) { return this.post('/chat', data); },
   channels()   { return this.get('/channels/connect'); },
   connectChannel(data) { return this.post('/channels/connect', data); },
   workstations() { return this.get('/workstations/connect'); },
