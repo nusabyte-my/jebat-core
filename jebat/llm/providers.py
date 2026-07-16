@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, AsyncIterator, Protocol
 from urllib.parse import urljoin
 
 from .auth import _ensure_secrets_loaded, get_provider_secret
 from .config import JebatLLMConfig
 from .ninerouter_provider import NineRouterProvider, build_ninerouter_provider, NINEROUTER_DEFAULT_HOST
-from .token_usage import TokenUsage, usage_from_texts
+from .token_usage import TokenUsage, budget_input, usage_from_texts
 from jebat.features.auth.custom_providers import (
     CUSTOM_PROVIDERS,
     get_custom_provider,
@@ -538,6 +538,7 @@ async def generate_with_failover(
             top_p=config.top_p,
             top_k=config.top_k,
             max_tokens=config.max_tokens,
+            context_window=config.context_window,
             ollama_host=config.ollama_host,
             llamacpp_host=config.llamacpp_host,
             fallback_providers=(),
@@ -545,12 +546,41 @@ async def generate_with_failover(
         )
         try:
             provider = build_provider(candidate)
+            bounded = budget_input(
+                prompt,
+                system_prompt,
+                context_window=candidate.context_window,
+                max_output_tokens=candidate.max_tokens,
+                model=candidate.model,
+                provider=provider_name,
+            )
             if return_metadata and hasattr(provider, "generate_with_metadata"):
-                return await provider.generate_with_metadata(prompt=prompt, system_prompt=system_prompt), provider_name
-            return await provider.generate(prompt=prompt, system_prompt=system_prompt), provider_name
+                return await provider.generate_with_metadata(
+                    prompt=bounded.prompt, system_prompt=bounded.system_prompt
+                ), provider_name
+            return await provider.generate(prompt=bounded.prompt, system_prompt=bounded.system_prompt), provider_name
         except Exception as exc:
             errors.append(f"{provider_name}: {exc}")
     raise RuntimeError("all providers failed: " + "; ".join(errors))
+
+
+async def generate_stream_with_failover(
+    config: JebatLLMConfig,
+    prompt: str,
+    system_prompt: str | None = None,
+) -> AsyncIterator[dict[str, Any]]:
+    """Expose the SSE contract when a provider only supports full responses."""
+    response, provider = await generate_with_failover(
+        config=config,
+        prompt=prompt,
+        system_prompt=system_prompt,
+        return_metadata=True,
+    )
+    assert isinstance(response, ProviderGeneration)
+    yield {"type": "metadata", "provider": provider, "model": config.model}
+    if response.text:
+        yield {"type": "token", "text": response.text}
+    yield {"type": "done", "provider": provider, "usage": response.usage.to_dict()}
 
 
 def list_supported_providers() -> list[dict[str, str]]:

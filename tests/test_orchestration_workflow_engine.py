@@ -127,6 +127,35 @@ def test_task_timeout_raises():
     assert t.status == TaskStatus.FAILED
 
 
+def test_missing_dependency_fails_workflow():
+    eng = WorkflowEngine()
+    wf = eng.create_workflow("missing-dependency")
+    task = eng.add_task(wf.id, "a", "A", lambda: "never", dependencies=["missing"])
+
+    result = asyncio.run(eng.execute_workflow(wf.id))
+
+    assert result["status"] == "failed"
+    assert task.status == TaskStatus.FAILED
+    assert "Unresolvable" in task.error
+
+
+def test_sync_task_timeout_fails_workflow_without_blocking_loop():
+    eng = WorkflowEngine()
+    wf = eng.create_workflow("sync-timeout")
+
+    def slow():
+        import time
+        time.sleep(0.2)
+
+    task = eng.add_task(wf.id, "slow", "Slow", slow)
+    task.timeout = 0
+
+    result = asyncio.run(eng.execute_workflow(wf.id))
+
+    assert result["status"] == "failed"
+    assert task.status == TaskStatus.FAILED
+
+
 def test_get_workflow_status_and_visualize():
     eng = WorkflowEngine()
     wf = eng.create_workflow("viz")

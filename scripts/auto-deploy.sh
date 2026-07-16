@@ -47,8 +47,8 @@ fi
 
 # ── 3. Copy landing page ────────────────────────────────────────
 echo "[3/5] Deploying landing page..."
-if [ -f landing.html ]; then
-    cp landing.html "$WEB_DIR/index.html"
+if [ -f index.html ]; then
+    cp index.html "$WEB_DIR/index.html"
     chown www-data:www-data "$WEB_DIR/index.html" 2>/dev/null || true
     echo "  landing page updated"
 fi

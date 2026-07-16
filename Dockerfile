@@ -47,14 +47,14 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 # Copy application source
-COPY __init__.py .
-COPY pyproject.toml .
-COPY config/config_manager.py ./config/
+COPY __init__.py pyproject.toml main.py requirements.prod.txt ./
+COPY jebat/ ./jebat/
+COPY routers/ ./routers/
+COPY config/ ./config/
 COPY database/schema/ ./database/schema/
 COPY database/init/ ./database/init/
 COPY scripts/*.py ./scripts/
 COPY index.html ./
-COPY requirements.prod.txt main.py ./
 
 # Create data directories
 RUN mkdir -p /app/data /app/logs /app/.jebat && \

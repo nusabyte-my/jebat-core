@@ -135,6 +135,14 @@ class MemoryManager:
             Memory ID
         """
         # Legacy storage
+        normalized = " ".join(content.lower().split())
+        for existing in self.memories[layer]:
+            if (
+                existing.metadata.user_id == user_id
+                and " ".join(existing.content.lower().split()) == normalized
+            ):
+                return existing.memory_id
+
         memory = Memory(
             memory_id=f"mem_{datetime.now(timezone.utc).timestamp()}",
             content=content,
@@ -218,6 +226,8 @@ class MemoryManager:
                     traces = await enhanced.retrieve(query, limit=limit - len(results))
                     seen = {m.content for m in results}
                     for trace in traces:
+                        if trace.context.get("user_id") != user_id:
+                            continue
                         if trace.content in seen:
                             continue
                         # Convert trace to legacy Memory format
@@ -225,7 +235,11 @@ class MemoryManager:
                             memory_id=trace.trace_id,
                             content=trace.content,
                             layer=MemoryLayer.M2_SEMANTIC,
-                            metadata=MemoryMetadata(user_id=user_id),
+                            metadata=MemoryMetadata(
+                                user_id=user_id,
+                                source=trace.context.get("source"),
+                                context={"trace_id": trace.trace_id},
+                            ),
                             heat=HeatScore(
                                 visit_count=trace.access_count,
                                 interaction_depth=trace.importance,

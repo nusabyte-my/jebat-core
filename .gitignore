@@ -180,6 +180,9 @@ jebat-core/
 # Ignore ALL .md by default
 *.md
 
+# Keep JEBAT skill entrypoints under version control.
+!jebat-tokguru/skills/**/SKILL.md
+
 # But keep core system files (root only)
 !/README.md
 !/AGENTS.md

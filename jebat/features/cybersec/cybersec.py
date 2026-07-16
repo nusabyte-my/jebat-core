@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from jebat.features.security.outbound import get_validated, validate_outbound_host, validate_outbound_url
 
 # ── Safety Tiers ──────────────────────────────────────────────────────────
 
@@ -227,6 +228,7 @@ async def nmap_scan(
     Safety: CONFIRM (active network scanning)
     Requires: nmap installed on system
     """
+    validate_outbound_host(target)
     # Build nmap command
     cmd = ["nmap"]
     
@@ -289,6 +291,7 @@ async def dns_lookup(domain: str, record_type: str = "A") -> list[dict[str, str]
     
     Safety: AUTO (read-only DNS query)
     """
+    validate_outbound_host(domain)
     # Use dig or nslookup
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -343,6 +346,7 @@ async def subdomain_discovery(domain: str) -> list[str]:
     
     Safety: AUTO (read-only public API)
     """
+    validate_outbound_host(domain)
     url = f"https://crt.sh/?q=%.{domain}&output=json"
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(url)
@@ -387,8 +391,9 @@ async def http_header_audit(url: str) -> HeaderAudit:
     
     Safety: AUTO (read-only HTTP GET)
     """
-    async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-        response = await client.get(url)
+    validate_outbound_url(url)
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await get_validated(client, url)
     
     headers = dict(response.headers)
     score = 20  # Base score for HTTPS
@@ -438,6 +443,7 @@ async def ssl_check(domain: str, port: int = 443) -> SSLCheck:
     
     Safety: AUTO (read-only TLS handshake)
     """
+    validate_outbound_host(domain)
     try:
         proc = await asyncio.create_subprocess_exec(
             "openssl", "s_client", "-connect", f"{domain}:{port}",

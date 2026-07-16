@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter
@@ -10,7 +11,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from jebat.llm.config import load_llm_config
-from jebat.llm.providers import generate_with_failover, generate_stream_with_failover
+from jebat.llm.providers import ProviderGeneration, generate_with_failover, generate_stream_with_failover
+from jebat.llm.token_usage import usage_from_texts
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -36,21 +38,38 @@ async def chat(req: ChatRequest) -> ChatResponse:
     """Send a message and receive a complete LLM response with automatic provider failover."""
     config = load_llm_config()
     if req.temperature is not None:
-        config.temperature = req.temperature
+        config = replace(config, temperature=req.temperature)
     if req.max_tokens is not None:
-        config.max_tokens = req.max_tokens
+        config = replace(config, max_tokens=req.max_tokens)
 
     response, provider = await generate_with_failover(
         config,
         prompt=req.message,
         system_prompt=req.system_prompt,
+        return_metadata=True,
     )
+    if isinstance(response, ProviderGeneration):
+        text = response.text
+        usage = response.usage.to_dict()
+    else:
+        text = str(response)
+        usage = usage_from_texts(
+            f"{req.system_prompt}\n{req.message}",
+            text,
+            model=config.model,
+            provider=provider,
+        ).to_dict()
 
     return ChatResponse(
-        response=response,
+        response=text,
         provider=provider,
         session_id=req.session_id,
-        usage={"provider": provider, "model": config.model},
+        usage={
+            **usage,
+            "provider": provider,
+            "model": config.model,
+            "input_token_budget": max(0, config.context_window - config.max_tokens),
+        },
     )
 
 
@@ -71,9 +90,9 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
     """
     config = load_llm_config()
     if req.temperature is not None:
-        config.temperature = req.temperature
+        config = replace(config, temperature=req.temperature)
     if req.max_tokens is not None:
-        config.max_tokens = req.max_tokens
+        config = replace(config, max_tokens=req.max_tokens)
 
     async def event_generator():
         try:
@@ -87,16 +106,6 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
             yield _sse_format({"type": "error", "message": str(exc)})
         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-            "Content-Type": "text/event-stream",
-        },
-    )
 
     return StreamingResponse(
         event_generator(),

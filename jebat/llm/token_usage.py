@@ -18,6 +18,15 @@ class TokenUsage:
         return asdict(self)
 
 
+@dataclass(slots=True)
+class BudgetedInput:
+    prompt: str
+    system_prompt: str
+    input_budget: int
+    input_tokens: int
+    truncated: bool
+
+
 def usage_from_texts(
     prompt: str,
     completion: str,
@@ -61,6 +70,86 @@ def estimate_tokens(text: str, *, model: str = "", provider: str = "") -> int:
     pieces = re.findall(r"\w+|[^\w\s]", stripped, re.UNICODE)
     heuristic = max(len(stripped) // 4, int(len(pieces) * 0.75))
     return max(1, heuristic)
+
+
+def input_token_budget(context_window: int, max_output_tokens: int) -> int:
+    """Return the input capacity after reserving the requested completion."""
+    return max(0, int(context_window) - max(0, int(max_output_tokens)))
+
+
+def budget_input(
+    prompt: str,
+    system_prompt: str | None = None,
+    *,
+    context_window: int,
+    max_output_tokens: int,
+    model: str = "",
+    provider: str = "",
+) -> BudgetedInput:
+    """Fit an LLM request into its context window, keeping system instructions first."""
+    budget = input_token_budget(context_window, max_output_tokens)
+    system = system_prompt or ""
+    original_input = _join_input(system, prompt)
+    if estimate_tokens(original_input, model=model, provider=provider) <= budget:
+        return BudgetedInput(prompt, system, budget, estimate_tokens(original_input, model=model, provider=provider), False)
+
+    system = truncate_to_token_budget(system, budget, model=model, provider=provider)
+    remaining = max(0, budget - estimate_tokens(system, model=model, provider=provider))
+    prompt = truncate_to_token_budget(prompt, remaining, model=model, provider=provider)
+    # Separators can consume tokens, so make a final prompt-only pass against the complete input.
+    total = estimate_tokens(_join_input(system, prompt), model=model, provider=provider)
+    if total > budget:
+        prompt = truncate_to_token_budget(prompt, max(0, remaining - (total - budget)), model=model, provider=provider)
+        total = estimate_tokens(_join_input(system, prompt), model=model, provider=provider)
+    return BudgetedInput(prompt, system, budget, total, True)
+
+
+def truncate_to_token_budget(text: str, budget: int, *, model: str = "", provider: str = "") -> str:
+    """Truncate text by tokenizer estimate, preserving the beginning and latest context."""
+    if budget <= 0:
+        return ""
+    if estimate_tokens(text, model=model, provider=provider) <= budget:
+        return text
+
+    marker = "\n[...truncated for token budget...]\n"
+    marker_tokens = estimate_tokens(marker, model=model, provider=provider)
+    if budget <= marker_tokens:
+        return ""
+    available = budget - marker_tokens
+    left = available * 2 // 3
+    right = available - left
+    start = _prefix_for_budget(text, left, model=model, provider=provider)
+    end = _suffix_for_budget(text, right, model=model, provider=provider)
+    result = start.rstrip() + marker + end.lstrip()
+    while result and estimate_tokens(result, model=model, provider=provider) > budget:
+        result = result[:-1]
+    return result
+
+
+def _join_input(system_prompt: str, prompt: str) -> str:
+    return "\n\n".join(part for part in (system_prompt, prompt) if part)
+
+
+def _prefix_for_budget(text: str, budget: int, *, model: str, provider: str) -> str:
+    low, high = 0, len(text)
+    while low < high:
+        middle = (low + high + 1) // 2
+        if estimate_tokens(text[:middle], model=model, provider=provider) <= budget:
+            low = middle
+        else:
+            high = middle - 1
+    return text[:low]
+
+
+def _suffix_for_budget(text: str, budget: int, *, model: str, provider: str) -> str:
+    low, high = 0, len(text)
+    while low < high:
+        middle = (low + high + 1) // 2
+        if estimate_tokens(text[len(text) - middle :], model=model, provider=provider) <= budget:
+            low = middle
+        else:
+            high = middle - 1
+    return text[len(text) - low :]
 
 
 def _normalize_provider_usage(raw_usage: Any) -> dict[str, Any]:

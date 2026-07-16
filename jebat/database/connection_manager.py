@@ -12,11 +12,13 @@
 
 import asyncio
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, Optional
+from urllib.parse import urlparse
 
 import asyncpg
 from asyncpg import Connection, Pool
@@ -128,6 +130,7 @@ class DatabaseConnectionManager:
         # Connection pools
         self.postgres_pool: Optional[Pool] = None
         self.redis_pool: Optional[RedisPool] = None
+        self._client: Optional[Redis] = None
         self.qdrant_client: Optional[Any] = None
 
         # Health monitoring
@@ -257,9 +260,8 @@ class DatabaseConnectionManager:
             )
 
             # Test connection
-            redis = Redis(connection_pool=self.redis_pool)
-            await redis.ping()
-            await redis.close()
+            self._client = Redis(connection_pool=self.redis_pool)
+            await self._client.ping()
 
             logger.info(
                 f"Redis pool created with {self.config.pool_size + self.config.max_overflow} connections"
@@ -463,6 +465,12 @@ class DatabaseConnectionManager:
 
         return health_result
 
+    async def health(self) -> Dict[str, Any]:
+        """Return the compact health shape consumed by API readiness checks."""
+        result = await self.health_check()
+        result["status"] = "connected" if result["is_healthy"] else "disconnected"
+        return result
+
     async def reconnect(self) -> bool:
         """
         Attempt to reconnect to database with full connection reset.
@@ -503,6 +511,9 @@ class DatabaseConnectionManager:
             self.postgres_pool = None
 
         if self.redis_pool:
+            if self._client:
+                await self._client.aclose()
+                self._client = None
             await self.redis_pool.disconnect()
             self.redis_pool = None
 
@@ -787,6 +798,56 @@ async def create_connection_manager(
     await manager.connect()
 
     return manager
+
+
+_db_manager: Optional[DatabaseConnectionManager] = None
+_redis_manager: Optional[DatabaseConnectionManager] = None
+
+
+def _connection_config(db_type: DatabaseType) -> ConnectionConfig:
+    if db_type is DatabaseType.POSTGRESQL:
+        parsed = urlparse(os.getenv("DATABASE_URL", "postgresql://jebat:jebat@localhost:5432/jebat_db"))
+        return ConnectionConfig(
+            db_type=db_type,
+            host=parsed.hostname or "localhost",
+            port=parsed.port or 5432,
+            database=parsed.path.lstrip("/") or "jebat_db",
+            username=parsed.username,
+            password=parsed.password,
+        )
+
+    parsed = urlparse(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+    return ConnectionConfig(
+        db_type=db_type,
+        host=parsed.hostname or "localhost",
+        port=parsed.port or 6379,
+        database="redis",
+        password=parsed.password,
+        redis_db=int(parsed.path.lstrip("/") or 0),
+    )
+
+
+def get_db_manager() -> DatabaseConnectionManager:
+    """Return the process-wide PostgreSQL manager."""
+    global _db_manager
+    if _db_manager is None:
+        _db_manager = DatabaseConnectionManager(_connection_config(DatabaseType.POSTGRESQL))
+    return _db_manager
+
+
+def get_redis_manager() -> DatabaseConnectionManager:
+    """Return the process-wide Redis manager."""
+    global _redis_manager
+    if _redis_manager is None:
+        _redis_manager = DatabaseConnectionManager(_connection_config(DatabaseType.REDIS))
+    return _redis_manager
+
+
+async def close_all() -> None:
+    """Close process-wide database connections during application shutdown."""
+    for manager in (_db_manager, _redis_manager):
+        if manager:
+            await manager.disconnect()
 
 
 # ==================== Example Usage ====================

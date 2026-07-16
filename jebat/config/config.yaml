@@ -6,6 +6,7 @@ llm:
   llamacpp_host: http://72.62.255.206:8080
   temperature: 0.2
   max_tokens: 8192
+  context_window: 16384
   fallback_providers:
     - llamacpp
     - local

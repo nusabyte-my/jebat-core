@@ -189,6 +189,33 @@ nav.scrolled { border-bottom-color: var(--border-mid); }
 .btn-ghost:hover { color: var(--text); border-color: var(--border-mid); }
 .btn-sm { padding: 8px 18px; font-size: 11px; }
 
+/* ─── PRODUCT PATH ─── */
+.path-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); }
+.path-card { background: var(--void); padding: 28px; position: relative; }
+.path-card.featured { background: linear-gradient(135deg, rgba(168,85,247,0.10), var(--void) 58%); }
+.path-step { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--cyan); letter-spacing: 1.2px; margin-bottom: 18px; }
+.path-card h3 { font-size: 19px; letter-spacing: -0.025em; margin-bottom: 8px; }
+.path-card p { color: var(--text-muted); font-size: 13px; line-height: 1.65; margin-bottom: 20px; }
+.path-link { color: var(--emerald); font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-decoration: none; letter-spacing: 0.5px; }
+.path-link:hover { color: var(--emerald-bright); }
+
+/* ─── SAHABAT ─── */
+.sahabat-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); }
+.sahabat-copy, .sahabat-preview { padding: 40px; background: var(--void); }
+.sahabat-preview { background: var(--graphite); }
+.sahabat-label { display: inline-flex; gap: 7px; align-items: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.4px; color: var(--purple); margin-bottom: 16px; }
+.sahabat-copy h2 { font-size: clamp(28px, 3.5vw, 42px); line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 16px; }
+.sahabat-copy > p { color: var(--text-muted); font-size: 15px; line-height: 1.7; margin-bottom: 24px; }
+.outcome-list { list-style: none; display: grid; gap: 1px; background: var(--border-dim); border: 1px solid var(--border-dim); margin-bottom: 28px; }
+.outcome-list li { padding: 12px 14px; background: var(--graphite); color: var(--text-muted); font-size: 13px; display: flex; gap: 10px; align-items: baseline; }
+.outcome-list i { color: var(--emerald); font-size: 11px; }
+.sahabat-terminal { border: 1px solid var(--border-mid); background: var(--void); font-family: var(--font-mono); font-size: 12px; line-height: 1.75; }
+.sahabat-terminal-head { display: flex; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid var(--border-dim); color: var(--text-dim); font-size: 10px; }
+.sahabat-terminal-body { padding: 18px; color: var(--text-muted); }
+.sahabat-terminal-body p + p { margin-top: 13px; }
+.sahabat-prompt { color: var(--emerald); }
+.sahabat-response { padding-left: 14px; border-left: 1px solid var(--border-bright); color: var(--text); }
+
 /* ─── CONSOLE ─── */
 .console { max-width: 900px; margin: 0 auto; background: var(--void); border: 1px solid var(--border-mid); overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.9); text-align: left; position: relative; }
 .console::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--emerald-glow), transparent); }
@@ -429,7 +456,7 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
   .stack-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media(max-width: 900px) {
-  .arch-grid, .panel-grid, .subcmd-grid, .tier-grid, .steps-grid { grid-template-columns: 1fr; }
+  .arch-grid, .panel-grid, .subcmd-grid, .tier-grid, .steps-grid, .sahabat-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .counter-bar { grid-template-columns: repeat(2, 1fr); }
   .mcp-capabilities { grid-template-columns: 1fr; }
@@ -439,7 +466,7 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
   .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: rgba(3,3,3,0.98); border-bottom: 1px solid var(--border-dim); flex-direction: column; padding: 1.5rem; gap: 1rem; }
   .nav-links.open { display: flex; }
   .hero { padding: 110px 0 60px; }
-  .hero h1 { font-size: 32px; }
+  .hero h1 { font-size: 34px; }
   .wizard-row { grid-template-columns: 1fr; }
   .product-grid { grid-template-columns: repeat(2, 1fr); }
   .roadmap-grid { grid-template-columns: 1fr; }
@@ -447,6 +474,32 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
   .footer-grid { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
   .mcp-ide-grid { grid-template-columns: repeat(3, 1fr); }
+  .container, .nav-inner { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .logo-tag { display: none; }
+  .nav-links { align-items: stretch; }
+  .nav-links a, .dropdown-trigger { font-size: 14px; padding: 4px 0; }
+  .dropdown-content { display: block; position: static; transform: none; margin: 6px 0 0; min-width: 0; opacity: 1; visibility: visible; box-shadow: none; }
+  .dropdown-content::before { display: none; }
+  .dropdown-content a { padding: 9px 12px; }
+  .status-badge { order: 2; }
+  .nav-cta { display: block; text-align: center; }
+  .hero { text-align: left; }
+  .hero-eyebrow { margin-bottom: 18px; }
+  .hero p { margin: 0 0 26px; font-size: 15px; }
+  .hero-actions { justify-content: stretch; gap: 8px; }
+  .hero-actions .btn { justify-content: center; flex: 1 1 100%; }
+  .hero-actions .btn-ghost { display: none; }
+  .hero-meta { justify-content: flex-start; gap: 9px 14px; margin-bottom: 30px; }
+  .hero-meta .hero-badge:nth-child(n+5) { display: none; }
+  .console { margin: 0 -1.25rem; border-left: 0; border-right: 0; }
+  .console-body { height: 220px; padding: 16px 1.25rem; font-size: 10px; }
+  .section, .preview-section, .chat-section { padding: 58px 0; }
+  .section-header { margin-bottom: 30px; }
+  .section-header h2 { font-size: 29px; margin-bottom: 10px; }
+  .path-grid { grid-template-columns: 1fr; }
+  .path-card { padding: 22px; }
+  .sahabat-copy, .sahabat-preview { padding: 25px 20px; }
+  .sahabat-terminal { font-size: 11px; }
 }
 </style>
 
@@ -486,7 +539,7 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
       <a href="#products"><strong>JEBAT Core (Hang Jebat)</strong>Sovereign inference router &amp; memory swarm</a>
       <a href="#products"><strong>Sentinel Security (Keris)</strong>Autonomous pentest orchestration</a>
       <a href="#products"><strong>Developer Suite (Pandai)</strong>MCP-native sandboxed code workspace</a>
-      <a href="#products"><strong>Companion (Sahabat)</strong>Conversational AI for daily ops</a>
+      <a href="#sahabat"><strong>Companion (Sahabat)</strong>Daily briefings, tasks, and meeting follow-through</a>
     </div>
   </li>
   <li class="dropdown">
@@ -499,8 +552,8 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
       <a href="#q4"><strong>Q4 2026 Preview</strong>SDK, APIs &amp; Enterprise features</a>
     </div>
   </li>
+  <li><a href="#path">Choose a path</a></li>
   <li><a href="#onboarding">Quickstart</a></li>
-  <li><a href="#compare">Compare</a></li>
   <li><a href="#roadmap">Roadmap</a></li>
   <li class="status-badge"><span class="pulse-dot"></span> Systems Operational</li>
   <li><a href="/webui/" class="nav-cta" aria-label="Launch Console">CONNECT CONSOLE</a></li>
@@ -512,11 +565,11 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
 <section class="hero">
 <div class="container">
   <div class="hero-eyebrow"><span class="pulse-dot"></span> Sovereign Enterprise Infrastructure v8.2</div>
-  <h1>Private Models. Private Memory.<br><span class="emerald">Audited Execution.</span></h1>
-  <p>An enterprise-grade, self-hosted AI agent operating system. Route private LLM inference across 17 providers, orchestrate multi-agent swarms with 47 MCP tools, maintain 6-type eternal memory with Ghost DB vector search, and run autonomous threat reconnaissance — fully air-gap compatible with zero telemetry.</p>
+  <h1>Private AI that moves work<br><span class="emerald">from conversation to action.</span></h1>
+  <p>Start with Sahabat for daily briefings, tasks, and meeting follow-through. Scale into JEBAT Core when you need private inference routing, MCP tools, and governed agent workflows on infrastructure you control.</p>
   <div class="hero-actions">
-    <a href="/webui/" class="btn btn-emerald">DEPLOY CLUSTER</a>
-    <a href="#onboarding" class="btn btn-outline">6-STEP QUICKSTART</a>
+    <a href="/webui/#sahabat" class="btn btn-emerald">OPEN SAHABAT</a>
+    <a href="#path" class="btn btn-outline">CHOOSE YOUR PATH</a>
     <a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-ghost" target="_blank">GitHub ↗</a>
   </div>
   <div class="hero-meta">
@@ -541,6 +594,70 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
     </div>
     <div class="console-body" id="consoleOutput"></div>
   </div>
+</div>
+</section>
+
+<!-- PRODUCT PATH -->
+<section class="section section-dark" id="path">
+<div class="container">
+<div class="section-header">
+  <span class="section-eyebrow">Start Here</span>
+  <h2>Choose the work you need to move.</h2>
+  <p>JEBAT is a product family, not one oversized promise. Begin with the workflow in front of you, then add technical capability when your operation requires it.</p>
+</div>
+<div class="path-grid">
+  <article class="path-card featured">
+    <span class="path-step">01 / DAILY OPERATIONS</span>
+    <h3>Sahabat Companion</h3>
+    <p>Turn a conversation into a daily briefing, a task list, a plan, or meeting follow-through from the WebUI.</p>
+    <a href="/webui/#sahabat" class="path-link">OPEN SAHABAT &rarr;</a>
+  </article>
+  <article class="path-card">
+    <span class="path-step">02 / BUILD &amp; AUTOMATE</span>
+    <h3>Core + Developer Suite</h3>
+    <p>Connect private models and MCP tools to an IDE or terminal workflow for implementation, review, and automation.</p>
+    <a href="#mcp" class="path-link">EXPLORE MCP WORKSTATION &rarr;</a>
+  </article>
+  <article class="path-card">
+    <span class="path-step">03 / OPERATE &amp; GOVERN</span>
+    <h3>Self-Hosted Core</h3>
+    <p>Run inference, memory, and execution controls on infrastructure your team operates and can audit.</p>
+    <a href="#onboarding" class="path-link">VIEW SELF-HOSTED QUICKSTART &rarr;</a>
+  </article>
+</div>
+</div>
+</section>
+
+<!-- SAHABAT CONVERSION -->
+<section class="section" id="sahabat">
+<div class="container">
+<div class="sahabat-grid">
+  <div class="sahabat-copy">
+    <div class="sahabat-label"><i class="fa-solid fa-comments"></i> SAHABAT / COMPANION WORKSPACE</div>
+    <h2>Leave every conversation with a clearer next move.</h2>
+    <p>Sahabat is the practical entry point to JEBAT: a focused companion workspace for turning your working context into useful follow-through, without starting in a technical control plane.</p>
+    <ul class="outcome-list">
+      <li><i class="fa-solid fa-check"></i>Start the day with a briefing built around the work in front of you.</li>
+      <li><i class="fa-solid fa-check"></i>Turn discussion into a concrete list of pending tasks and a day plan.</li>
+      <li><i class="fa-solid fa-check"></i>Bring a meeting transcript into the workspace and shape the follow-up.</li>
+    </ul>
+    <div class="hero-actions" style="justify-content:flex-start;margin-bottom:0;">
+      <a href="/webui/#sahabat" class="btn btn-emerald">OPEN SAHABAT WORKSPACE</a>
+      <a href="#products" class="btn btn-outline">SEE THE PLATFORM</a>
+    </div>
+  </div>
+  <div class="sahabat-preview" aria-label="Example Sahabat daily briefing">
+    <div class="sahabat-terminal">
+      <div class="sahabat-terminal-head"><span>SAHABAT / DAILY BRIEFING</span><span class="emerald">READY</span></div>
+      <div class="sahabat-terminal-body">
+        <p><span class="sahabat-prompt">you&gt;</span> Help me plan today from my open tasks.</p>
+        <p class="sahabat-response"><span class="cyan">01 / PRIORITY</span><br>Prepare the release review before the afternoon handoff.</p>
+        <p class="sahabat-response"><span class="cyan">02 / FOLLOW-THROUGH</span><br>Capture meeting decisions, assign owners, and schedule the next check-in.</p>
+        <p class="sahabat-response"><span class="cyan">03 / NEXT ACTION</span><br>Start with the task list, then turn the notes into a short update.</p>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 </section>
 
@@ -657,8 +774,8 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
 <div class="container">
 <div class="section-header">
   <span class="section-eyebrow">Product Family</span>
-  <h2>The JEBAT Platform Suite</h2>
-  <p>Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Each named after Malay heritage — rooted in the legend of Hang Jebat.</p>
+  <h2>One product family, clear roles.</h2>
+  <p>Choose Sahabat for day-to-day follow-through, Core for private AI operations, Pandai for developer workflows, and the planned products when their capabilities fit your environment.</p>
 </div>
 <div class="product-grid">
   <div class="product-card active-product">
@@ -686,8 +803,8 @@ footer { padding: 64px 0 40px; border-top: 1px solid var(--border-dim); backgrou
     <div class="product-icon"><i class="fa-solid fa-comments pi-companion"></i></div>
     <div class="product-name">Companion</div>
     <div class="product-codename">Sahabat</div>
-    <div class="product-desc">Conversational AI for daily operations, meeting summaries &amp; task management</div>
-    <span class="product-status status-planned"><i class="fa-regular fa-circle" style="font-size:8px"></i> Planned</span>
+    <div class="product-desc">Companion workspace for daily briefings, task follow-through, planning, and meeting notes</div>
+    <a href="#sahabat" class="product-status status-active" style="text-decoration:none"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:8px"></i> Explore Sahabat</a>
   </div>
   <div class="product-card">
     <div class="product-icon"><i class="fa-solid fa-diagram-project pi-nexus"></i></div>

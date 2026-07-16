@@ -24,7 +24,7 @@ from .project_context import ProjectContext, build_project_context
 from .providers import ProviderGeneration, build_provider, generate_with_failover, list_supported_providers
 from .ninerouter_provider import NineRouterProvider, build_ninerouter_provider, print_ninerouter_setup, list_free_models, FREE_MODELS
 from .skills import build_skill_prompt, build_skill_registry, default_skills_path, select_relevant_skills
-from .token_usage import TokenUsage, estimate_tokens, usage_from_texts
+from .token_usage import BudgetedInput, TokenUsage, budget_input, estimate_tokens, input_token_budget, usage_from_texts
 
 __all__ = [
     "ProviderAuthStatus",
@@ -52,7 +52,10 @@ __all__ = [
     "generate_with_failover",
     "list_supported_providers",
     "TokenUsage",
+    "BudgetedInput",
+    "budget_input",
     "estimate_tokens",
+    "input_token_budget",
     "usage_from_texts",
     "build_skill_registry",
     "default_skills_path",

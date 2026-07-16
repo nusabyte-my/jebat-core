@@ -34,7 +34,7 @@ async def system_status() -> Dict[str, Any]:
             "max_tokens": config.max_tokens,
         },
         "providers": [
-            {"name": p.provider, "configured": p.configured, "key_env_var": p.key_env_var}
+            {"name": p.provider, "configured": p.configured, "key_env_vars": list(p.env_vars)}
             for p in providers
         ],
     }
@@ -48,7 +48,7 @@ async def get_providers() -> Dict[str, Any]:
     auth_set = {a.provider: a.configured for a in auth}
     return {
         "providers": [
-            {"name": s["name"], "description": s["description"], "configured": auth_set.get(s["name"], False)}
+            {"name": s["name"], "description": s["notes"], "configured": auth_set.get(s["name"], False)}
             for s in supported
         ],
     }

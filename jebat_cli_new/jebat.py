@@ -2326,25 +2326,27 @@ class Agent:
 # ═══════════════════════════════════════════════════════════════════
 
 class SkillManager:
-    _BUNDLED_DIR = Path(__file__).parent.parent / "skills"
+    _WORKSPACE_DIR = Path(__file__).parent.parent
 
     def __init__(self):
         self.skills_dir = Path.home() / ".jebat" / "skills"
         self.skills_dir.mkdir(parents=True, exist_ok=True)
 
+    def _bundled_skills(self):
+        for directory in (
+            self._WORKSPACE_DIR / "skills",
+            self._WORKSPACE_DIR / "jebat-tokguru" / "skills",
+        ):
+            if directory.exists():
+                yield from sorted(directory.rglob("SKILL.md"))
+
     def _find_skill(self, name):
         user_path = self.skills_dir / f"{name}.md"
         if user_path.exists():
             return user_path, "installed"
-        bundled = self._BUNDLED_DIR / name / "SKILL.md"
-        if bundled.exists():
-            return bundled, "bundled"
-        if self._BUNDLED_DIR.exists():
-            for d in self._BUNDLED_DIR.iterdir():
-                if d.is_dir() and d.name.lower() == name.lower():
-                    sm = d / "SKILL.md"
-                    if sm.exists():
-                        return sm, "bundled"
+        for skill_path in self._bundled_skills():
+            if skill_path.parent.name.lower() == name.lower():
+                return skill_path, "bundled"
         return None, None
 
     def list_skills(self):
@@ -2353,13 +2355,11 @@ class SkillManager:
         for f in self.skills_dir.glob("*.md"):
             skills.append((f.stem, "installed"))
             seen.add(f.stem.lower())
-        if self._BUNDLED_DIR.exists():
-            for d in sorted(self._BUNDLED_DIR.iterdir()):
-                if d.is_dir() and not d.name.startswith("_"):
-                    sm = d / "SKILL.md"
-                    if sm.exists() and d.name.lower() not in seen:
-                        skills.append((d.name, "bundled"))
-                        seen.add(d.name.lower())
+        for skill_path in self._bundled_skills():
+            name = skill_path.parent.name
+            if not name.startswith("_") and name.lower() not in seen:
+                skills.append((name, "bundled"))
+                seen.add(name.lower())
         return skills
 
     def get_skill(self, name):

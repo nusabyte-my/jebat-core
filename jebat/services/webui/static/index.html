@@ -262,6 +262,18 @@
         </a>
       </div>
 
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Agent Modes</div>
+        <a class="sidebar-link" data-page="hermes" href="#hermes">
+          <span class="sidebar-link-icon">⚔️</span> Hermes Workspace
+          <span class="sidebar-link-badge">RUN</span>
+        </a>
+        <a class="sidebar-link" data-page="openclaw" href="#openclaw">
+          <span class="sidebar-link-icon">🦞</span> OpenClaw Hub
+          <span class="sidebar-link-badge">LINK</span>
+        </a>
+      </div>
+
       <!-- Products -->
       <div class="sidebar-section">
         <div class="sidebar-section-label">Products</div>
@@ -393,7 +405,9 @@
     const SEARCH_ITEMS = [
       { icon: '📊', name: 'Dashboard', desc: 'Platform overview', page: 'dashboard', badge: 'Platform' },
       { icon: '💬', name: 'Chat', desc: 'Universal LLM chat', page: 'chat', badge: 'Platform' },
-      { icon: '⚙️', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
+       { icon: '⚙️', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
+       { icon: '⚔️', name: 'Hermes Workspace', desc: 'Plans, tools, execution, and agent runs', page: 'hermes', badge: 'Agent' },
+       { icon: '🦞', name: 'OpenClaw Hub', desc: 'Gateway, channels, MCP, and skill bridge', page: 'openclaw', badge: 'Integration' },
       { icon: '🤖', name: 'Sahabat', desc: 'Conversational AI companion', page: 'sahabat', badge: 'v1.0' },
       { icon: '🛡️', name: 'Keris', desc: 'Sentinel Security — pentest', page: 'keris', badge: 'v1.0' },
       { icon: '💻', name: 'Pandai', desc: 'Developer Suite', page: 'pandai', badge: 'v1.0' },
@@ -463,7 +477,7 @@
 
     // G+{key} navigation
     let gPending = false;
-    const G_MAP = { d: 'dashboard', c: 'chat', s: 'sahabat', k: 'keris', p: 'perisai', a: 'agents', n: 'channels', t: 'setup' };
+    const G_MAP = { d: 'dashboard', c: 'chat', h: 'hermes', o: 'openclaw', s: 'sahabat', k: 'keris', p: 'perisai', a: 'agents', n: 'channels', t: 'setup' };
 
     document.addEventListener('keydown', e => {
       // Skip if typing in input
@@ -555,7 +569,8 @@
     // ═══════════════════════════════════════════════════
     const partialCache = {};
     const PAGE_TITLES = {
-      dashboard: 'Dashboard', chat: 'Chat', control: 'Control Center',
+      dashboard: 'Mission Control', chat: 'Chat', control: 'Control Center',
+      hermes: 'Hermes — Agent Workspace', openclaw: 'OpenClaw — Integration Hub',
       sahabat: 'Sahabat — Companion', keris: 'Keris — Sentinel Security',
       pandai: 'Pandai — Developer Suite', perisai: 'Perisai — Nexus',
       skills: 'Skills', agents: 'Agents', channels: 'Channels', setup: 'Setup',

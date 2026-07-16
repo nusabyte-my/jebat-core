@@ -1,133 +1,127 @@
-<!-- Sahabat — Companion Chat -->
+<!-- Sahabat -- Companion workspace -->
 <style>
-  .sahabat-layout { display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2); }
+  .sahabat-layout { display: grid; grid-template-rows: auto auto 1fr auto; height: calc(100vh - var(--topbar-height) - var(--space-lg) * 2); min-height: 560px; }
   .sahabat-header { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); border-bottom: 1px solid var(--border); }
   .sahabat-header-icon { font-size: 32px; }
   .sahabat-header-info h3 { margin: 0; font-size: var(--font-size-lg); }
   .sahabat-header-info p { margin: 0; font-size: var(--font-size-sm); color: var(--text-muted); }
   .sahabat-tabs { display: flex; gap: 2px; padding: 0 var(--space-md); border-bottom: 1px solid var(--border); }
-  .sahabat-tab { padding: var(--space-sm) var(--space-md); font-size: var(--font-size-sm); color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all var(--transition-fast); }
-  .sahabat-tab:hover { color: var(--text-primary); }
+  .sahabat-tab { padding: var(--space-sm) var(--space-md); font: inherit; font-size: var(--font-size-sm); color: var(--text-muted); cursor: pointer; border: 0; border-bottom: 2px solid transparent; background: transparent; }
+  .sahabat-tab:hover, .sahabat-tab:focus-visible { color: var(--text-primary); }
   .sahabat-tab.active { color: var(--green); border-bottom-color: var(--green); }
-  .sahabat-messages { flex: 1; overflow-y: auto; padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-md); }
-  .sahabat-msg { max-width: 75%; padding: var(--space-md); border-radius: var(--radius-lg); font-size: var(--font-size-base); line-height: 1.6; }
+  .sahabat-panel { overflow-y: auto; padding: var(--space-lg); }
+  .sahabat-messages { display: flex; flex-direction: column; gap: var(--space-md); }
+  .sahabat-msg { max-width: 75%; padding: var(--space-md); border-radius: var(--radius-lg); font-size: var(--font-size-base); line-height: 1.6; white-space: pre-wrap; }
   .sahabat-msg.user { align-self: flex-end; background: var(--green); color: var(--bg-ink); border-bottom-right-radius: var(--radius-sm); }
   .sahabat-msg.assistant { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-bottom-left-radius: var(--radius-sm); }
-  .sahabat-msg .msg-meta { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--space-xs); }
+  .sahabat-msg.pending { opacity: .7; font-style: italic; }
   .sahabat-input { padding: var(--space-md); border-top: 1px solid var(--border); background: var(--bg-surface); }
-  .sahabat-input-row { display: flex; gap: var(--space-sm); }
-  .sahabat-input-row .input { flex: 1; }
+  .sahabat-input-row, .sahabat-form-row { display: flex; gap: var(--space-sm); }
+  .sahabat-input-row .input, .sahabat-form-row .input { flex: 1; }
   .sahabat-welcome { text-align: center; padding: var(--space-3xl, 80px) var(--space-lg); }
   .sahabat-welcome-icon { width: 120px; height: 120px; margin: 0 auto var(--space-md); }
   .sahabat-welcome h2 { color: var(--text-bright); margin-bottom: var(--space-sm); }
   .sahabat-welcome p { color: var(--text-muted); max-width: 500px; margin: 0 auto; }
   .sahabat-quick-actions { display: flex; gap: var(--space-sm); justify-content: center; margin-top: var(--space-lg); flex-wrap: wrap; }
-  .sahabat-quick-btn { padding: var(--space-sm) var(--space-md); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--text-secondary); cursor: pointer; font-size: var(--font-size-sm); transition: all var(--transition-fast); }
-  .sahabat-quick-btn:hover { border-color: var(--green); color: var(--green); }
+  .sahabat-quick-btn { padding: var(--space-sm) var(--space-md); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--text-secondary); cursor: pointer; font-size: var(--font-size-sm); }
+  .sahabat-quick-btn:hover, .sahabat-quick-btn:focus-visible { border-color: var(--green); color: var(--green); }
+  .sahabat-status { font: 11px var(--font-mono); color: var(--text-muted); padding: 0 var(--space-md) var(--space-sm); }
+  .sahabat-workflow { max-width: 860px; margin: 0 auto; }
+  .sahabat-workflow h2 { margin-top: 0; }
+  .sahabat-workflow p { color: var(--text-muted); }
+  .sahabat-output, .sahabat-task-list { margin-top: var(--space-md); }
+  .sahabat-output { white-space: pre-wrap; line-height: 1.6; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border); }
+  .sahabat-task { display: flex; align-items: flex-start; gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: 1px solid var(--border); }
+  .sahabat-task:last-child { border-bottom: 0; }
+  .sahabat-task-title { flex: 1; }
+  .sahabat-task-meta { display: block; color: var(--text-muted); font-size: var(--font-size-xs); margin-top: 2px; }
+  .sahabat-meeting-input { min-height: 180px; width: 100%; resize: vertical; }
+  .sahabat-empty { color: var(--text-muted); padding: var(--space-lg) 0; }
+  @media (max-width: 640px) { .sahabat-layout { height: calc(100vh - var(--topbar-height) - var(--space-md)); } .sahabat-header { align-items: flex-start; } .sahabat-tabs { overflow-x: auto; } .sahabat-tab { white-space: nowrap; padding: var(--space-sm); } .sahabat-msg { max-width: 92%; } .sahabat-form-row { flex-wrap: wrap; } }
 </style>
 
 <div class="sahabat-layout">
   <div class="sahabat-header">
     <div class="sahabat-header-icon">🤖</div>
-    <div class="sahabat-header-info">
-      <h3>Sahabat</h3>
-      <p>Conversational AI for daily ops — briefings, tasks, meetings</p>
-    </div>
+    <div class="sahabat-header-info"><h3>Sahabat</h3><p>Conversational AI for daily ops -- briefings, tasks, meetings</p></div>
     <span class="badge badge-green" style="margin-left:auto">v1.0</span>
   </div>
-  <div class="sahabat-tabs">
-    <div class="sahabat-tab active" data-tab="chat">💬 Chat</div>
-    <div class="sahabat-tab" data-tab="briefing">📋 Briefing</div>
-    <div class="sahabat-tab" data-tab="tasks">✅ Tasks</div>
-    <div class="sahabat-tab" data-tab="meeting">📝 Meeting</div>
+  <div class="sahabat-tabs" role="tablist" aria-label="Sahabat workspace">
+    <button class="sahabat-tab active" id="sahabat-chat-tab" role="tab" aria-selected="true" aria-controls="sahabat-chat-panel" data-tab="chat">💬 Chat</button>
+    <button class="sahabat-tab" id="sahabat-briefing-tab" role="tab" aria-selected="false" aria-controls="sahabat-briefing-panel" data-tab="briefing" tabindex="-1">📋 Briefing</button>
+    <button class="sahabat-tab" id="sahabat-tasks-tab" role="tab" aria-selected="false" aria-controls="sahabat-tasks-panel" data-tab="tasks" tabindex="-1">✅ Tasks</button>
+    <button class="sahabat-tab" id="sahabat-meeting-tab" role="tab" aria-selected="false" aria-controls="sahabat-meeting-panel" data-tab="meeting" tabindex="-1">📝 Meeting</button>
   </div>
-  <div class="sahabat-messages" id="sahabat-messages">
+  <section class="sahabat-panel sahabat-messages" id="sahabat-chat-panel" role="tabpanel" aria-labelledby="sahabat-chat-tab">
     <div class="sahabat-welcome">
-      <svg class="sahabat-welcome-icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="60" cy="60" r="58" stroke="#22c55e" stroke-width="1" opacity="0.3"/>
-        <circle cx="60" cy="60" r="40" stroke="#22c55e" stroke-width="0.5" opacity="0.2"/>
-        <text x="60" y="72" text-anchor="middle" font-size="48">🤖</text>
-      </svg>
-      <h2>Hey, I'm Sahabat</h2>
-      <p>Your AI companion for daily operations. Ask me anything — from daily briefings to meeting summaries to task management.</p>
-      <div style="margin-top:16px">
-        <div class="drop-zone" id="sahabat-drop" style="max-width:400px;margin:0 auto">
-          <div class="drop-zone-icon">📄</div>
-          <div>Drag & drop a file here (meeting transcript, notes, etc.)</div>
-        </div>
-      </div>
-      <div class="sahabat-quick-actions">
-        <button class="sahabat-quick-btn" onclick="sendQuick('Give me my daily briefing')">📋 Daily Briefing</button>
-        <button class="sahabat-quick-btn" onclick="sendQuick('Show my pending tasks')">✅ Pending Tasks</button>
-        <button class="sahabat-quick-btn" onclick="sendQuick('Help me plan my day')">🗓️ Plan My Day</button>
-        <button class="sahabat-quick-btn" onclick="sendQuick('What have you been up to?')">💬 Catch Up</button>
-      </div>
+      <svg class="sahabat-welcome-icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" stroke="#22c55e" stroke-width="1" opacity="0.3"/><circle cx="60" cy="60" r="40" stroke="#22c55e" stroke-width="0.5" opacity="0.2"/><text x="60" y="72" text-anchor="middle" font-size="48">🤖</text></svg>
+      <h2>Hey, I'm Sahabat</h2><p>Your AI companion for daily operations. Ask about your day, meetings, or task priorities.</p>
+      <div class="sahabat-quick-actions"><button class="sahabat-quick-btn" data-quick="Give me my daily briefing">📋 Daily Briefing</button><button class="sahabat-quick-btn" data-quick="Show my pending tasks">✅ Pending Tasks</button><button class="sahabat-quick-btn" data-quick="Help me plan my day">🗓️ Plan My Day</button></div>
     </div>
-  </div>
-  <div class="sahabat-input">
-    <div class="sahabat-input-row">
-      <input class="input" id="sahabat-input" type="text" placeholder="Talk to Sahabat..." autofocus />
-      <button class="btn btn-primary" id="sahabat-send">Send</button>
-    </div>
-  </div>
+  </section>
+  <section class="sahabat-panel" id="sahabat-briefing-panel" role="tabpanel" aria-labelledby="sahabat-briefing-tab" hidden>
+    <div class="sahabat-workflow"><h2>Daily Briefing</h2><p>Generate a focused daily briefing from your current Sahabat tasks and conversation context.</p><form id="sahabat-briefing-form" class="sahabat-form-row"><input class="input" id="sahabat-briefing-context" type="text" placeholder="Optional context for today"><button class="btn btn-primary">Generate briefing</button></form><div id="sahabat-briefing-output" class="sahabat-output" hidden></div></div>
+  </section>
+  <section class="sahabat-panel" id="sahabat-tasks-panel" role="tabpanel" aria-labelledby="sahabat-tasks-tab" hidden>
+    <div class="sahabat-workflow"><h2>Tasks</h2><p>Create and complete tasks stored by Sahabat.</p><form id="sahabat-task-form" class="sahabat-form-row"><input class="input" id="sahabat-task-title" type="text" maxlength="500" required placeholder="Add a task"><select class="input" id="sahabat-task-priority" aria-label="Task priority"><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select><button class="btn btn-primary">Add task</button></form><div id="sahabat-task-list" class="sahabat-task-list" aria-live="polite"></div></div>
+  </section>
+  <section class="sahabat-panel" id="sahabat-meeting-panel" role="tabpanel" aria-labelledby="sahabat-meeting-tab" hidden>
+    <div class="sahabat-workflow"><h2>Meeting Summary</h2><p>Turn a transcript into decisions, action items, and an optional follow-up email.</p><form id="sahabat-meeting-form"><label for="sahabat-meeting-title">Meeting title</label><input class="input" id="sahabat-meeting-title" type="text" placeholder="Optional title"><label for="sahabat-meeting-transcript">Transcript</label><textarea class="input sahabat-meeting-input" id="sahabat-meeting-transcript" required placeholder="Paste the meeting transcript"></textarea><label><input id="sahabat-meeting-followup" type="checkbox"> Generate follow-up email</label><button class="btn btn-primary" style="margin-top:var(--space-md)">Summarize meeting</button></form><div id="sahabat-meeting-output" class="sahabat-output" hidden></div></div>
+  </section>
+  <div class="sahabat-input"><div class="sahabat-status" id="sahabat-status" aria-live="polite">READY · companion workspace</div><div class="sahabat-input-row"><input class="input" id="sahabat-input" type="text" placeholder="Talk to Sahabat..." autofocus><button class="btn btn-primary" id="sahabat-send">Send</button></div></div>
 </div>
 
 <script>
-  const messages = document.getElementById('sahabat-messages');
-  const input = document.getElementById('sahabat-input');
-  const sendBtn = document.getElementById('sahabat-send');
+  const sahabatMessages = document.getElementById('sahabat-chat-panel');
+  const sahabatInput = document.getElementById('sahabat-input');
+  const sahabatSend = document.getElementById('sahabat-send');
+  const sahabatStatus = document.getElementById('sahabat-status');
+  const sahabatTabs = [...document.querySelectorAll('.sahabat-tab')];
 
-  function addMessage(text, role) {
-    const welcome = messages.querySelector('.sahabat-welcome');
-    if (welcome) welcome.remove();
-    const div = document.createElement('div');
-    div.className = `sahabat-msg ${role}`;
-    div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
+  function sahabatSetStatus(message) { sahabatStatus.textContent = message; }
+  function sahabatOutput(id, text) { const output = document.getElementById(id); output.textContent = text; output.hidden = false; }
+  async function sahabatRequest(url, options = {}) {
+    const response = await fetch(url, options);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || data.error || 'Request failed');
+    return data;
   }
-
-  function sendQuick(text) { input.value = text; sendMessage(); }
-
-  async function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    addMessage(text, 'user');
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: 'webui', message: text, preset: 'default' }),
-      });
-      const data = await res.json();
-      addMessage(data.reply || data.error || 'No response', 'assistant');
-    } catch { addMessage('Connection error — is the JEBAT API running?', 'assistant'); }
+  function sahabatMessage(text, role, pending = false) {
+    sahabatMessages.querySelector('.sahabat-welcome')?.remove();
+    const message = document.createElement('div');
+    message.className = `sahabat-msg ${role}${pending ? ' pending' : ''}`;
+    message.textContent = text;
+    sahabatMessages.appendChild(message);
+    sahabatMessages.scrollTop = sahabatMessages.scrollHeight;
+    return message;
   }
-
-  sendBtn.addEventListener('click', sendMessage);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
-
-  // Drag & drop
-  const dropZone = document.getElementById('sahabat-drop');
-  if (dropZone) {
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      handleFileDrop(e, (name, text) => {
-        const preview = text.length > 500 ? text.substring(0, 500) + '...' : text;
-        addMessage(`[Uploaded: ${name}]\n\n${preview}`, 'system');
-      });
+  function sahabatActivate(tab) {
+    sahabatTabs.forEach(item => {
+      const selected = item === tab;
+      item.classList.toggle('active', selected); item.setAttribute('aria-selected', String(selected)); item.tabIndex = selected ? 0 : -1;
+      document.getElementById(`sahabat-${item.dataset.tab}-panel`).hidden = !selected;
     });
+    sahabatSetStatus(`${tab.dataset.tab.toUpperCase()} · companion workspace`);
+    if (tab.dataset.tab === 'tasks') sahabatLoadTasks();
   }
-
-  // Tab switching
-  document.querySelectorAll('.sahabat-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.sahabat-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-    });
-  });
+  async function sahabatSendMessage() {
+    const text = sahabatInput.value.trim(); if (!text) return;
+    sahabatInput.value = ''; sahabatMessage(text, 'user'); sahabatSend.disabled = true;
+    sahabatSetStatus('THINKING · Sahabat is preparing a response'); const pending = sahabatMessage('Working...', 'assistant', true);
+    try { const data = await sahabatRequest('/webui/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, preset: 'default', thinking_mode: 'deliberate' }) }); pending.remove(); sahabatMessage(data.response || data.error || 'No response', 'assistant'); sahabatSetStatus(data.provider ? `READY · ${data.provider}` : 'READY'); }
+    catch (error) { pending.remove(); sahabatMessage(`Connection error: ${error.message}`, 'assistant'); sahabatSetStatus('OFFLINE · retry when the service is available'); }
+    finally { sahabatSend.disabled = false; sahabatInput.focus(); }
+  }
+  async function sahabatLoadTasks() {
+    const list = document.getElementById('sahabat-task-list'); list.textContent = 'Loading tasks...';
+    try { const data = await sahabatRequest('/webui/api/sahabat/tasks?status=pending'); list.replaceChildren(); if (!data.tasks.length) { list.textContent = 'No pending tasks.'; list.className = 'sahabat-task-list sahabat-empty'; return; } list.className = 'sahabat-task-list'; data.tasks.forEach(task => { const row = document.createElement('div'); row.className = 'sahabat-task'; const complete = document.createElement('button'); complete.className = 'btn'; complete.textContent = 'Complete'; complete.dataset.taskId = task.task_id; const detail = document.createElement('div'); detail.className = 'sahabat-task-title'; detail.textContent = task.title; const meta = document.createElement('span'); meta.className = 'sahabat-task-meta'; meta.textContent = `${task.priority} · ${task.category}${task.due_date ? ` · due ${task.due_date}` : ''}`; detail.appendChild(meta); row.append(complete, detail); list.appendChild(row); }); }
+    catch (error) { list.textContent = `Could not load tasks: ${error.message}`; }
+  }
+  sahabatTabs.forEach((tab, index) => { tab.addEventListener('click', () => sahabatActivate(tab)); tab.addEventListener('keydown', event => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? sahabatTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + sahabatTabs.length) % sahabatTabs.length; sahabatTabs[next].focus(); sahabatActivate(sahabatTabs[next]); }); });
+  document.querySelectorAll('[data-quick]').forEach(button => button.addEventListener('click', () => { sahabatInput.value = button.dataset.quick; sahabatSendMessage(); }));
+  sahabatSend.addEventListener('click', sahabatSendMessage); sahabatInput.addEventListener('keydown', event => { if (event.key === 'Enter') sahabatSendMessage(); });
+  document.getElementById('sahabat-briefing-form').addEventListener('submit', async event => { event.preventDefault(); sahabatSetStatus('BRIEFING · generating'); try { const data = await sahabatRequest('/webui/api/sahabat/briefing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ extra_context: document.getElementById('sahabat-briefing-context').value.trim() || null }) }); sahabatOutput('sahabat-briefing-output', data.briefing); sahabatSetStatus(`READY · ${data.provider}`); } catch (error) { sahabatOutput('sahabat-briefing-output', `Could not generate briefing: ${error.message}`); } });
+  document.getElementById('sahabat-task-form').addEventListener('submit', async event => { event.preventDefault(); const title = document.getElementById('sahabat-task-title'); try { await sahabatRequest('/webui/api/sahabat/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: title.value.trim(), priority: document.getElementById('sahabat-task-priority').value }) }); title.value = ''; sahabatLoadTasks(); sahabatSetStatus('TASKS · task added'); } catch (error) { sahabatSetStatus(`TASKS · ${error.message}`); } });
+  document.getElementById('sahabat-task-list').addEventListener('click', async event => { const taskId = event.target.dataset.taskId; if (!taskId) return; event.target.disabled = true; try { await sahabatRequest(`/webui/api/sahabat/tasks/${encodeURIComponent(taskId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'completed' }) }); sahabatLoadTasks(); sahabatSetStatus('TASKS · task completed'); } catch (error) { sahabatSetStatus(`TASKS · ${error.message}`); event.target.disabled = false; } });
+  document.getElementById('sahabat-meeting-form').addEventListener('submit', async event => { event.preventDefault(); sahabatSetStatus('MEETING · summarizing'); try { const data = await sahabatRequest('/webui/api/sahabat/meeting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: document.getElementById('sahabat-meeting-title').value.trim() || null, transcript: document.getElementById('sahabat-meeting-transcript').value.trim(), generate_followup: document.getElementById('sahabat-meeting-followup').checked }) }); let output = data.summary; if (data.action_items.length) output += `\n\nAction items:\n${data.action_items.map(item => `- ${item.task} (${item.assignee || 'unassigned'})`).join('\n')}`; if (data.followup_email) output += `\n\nFollow-up email:\n${data.followup_email}`; sahabatOutput('sahabat-meeting-output', output); sahabatSetStatus(`READY · ${data.provider}`); } catch (error) { sahabatOutput('sahabat-meeting-output', `Could not summarize meeting: ${error.message}`); } });
 </script>

@@ -7,20 +7,11 @@ from typing import Any, Dict
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from jebat.skills.base_skill import SkillRegistry
-from jebat.skills.built_in_skills import (
-    DataAnalyzeSkill,
-    MemoryRememberSkill,
-    TaskExecuteSkill,
-    WebSearchSkill,
-)
+from jebat.skills.base_skill import get_global_registry
 
 router = APIRouter(prefix="/api/skills", tags=["skills"])
 
-# Populate registry with built-in skills
-_registry = SkillRegistry()
-for cls in [WebSearchSkill, DataAnalyzeSkill, TaskExecuteSkill, MemoryRememberSkill]:
-    _registry.register_skill(cls)
+_registry = get_global_registry()
 
 
 class SkillExecuteRequest(BaseModel):
@@ -50,7 +41,7 @@ async def skill_detail(skill_name: str) -> Dict[str, Any]:
 @router.post("/execute")
 async def execute_skill(req: SkillExecuteRequest) -> Dict[str, Any]:
     """Execute a registered skill by name."""
-    skill = _registry.get_skill(req.skill_name)
+    skill = await _registry.get_skill_instance(req.skill_name)
     if not skill:
         return {"success": False, "error": f"Skill '{req.skill_name}' not found"}
     result = await skill.execute(**req.parameters)

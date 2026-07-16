@@ -116,3 +116,27 @@ async def test_manager_two_way_bridge(tmp_path, monkeypatch):
 
     combined = legacy + enhanced
     assert any("database" in m.content.lower() for m in combined)
+
+
+@pytest.mark.asyncio
+async def test_encode_is_durable_and_deduplicated(tmp_path):
+    system = EnhancedMemorySystem(storage_path=tmp_path)
+    first = await system.encode(
+        "Remember the durable database migration plan",
+        context={"user_id": "u1"},
+    )
+    duplicate = await system.encode(
+        "  remember the durable database migration plan  ",
+        context={"user_id": "u1"},
+    )
+    await system.encode(
+        "Remember the durable database migration plan",
+        context={"user_id": "u2"},
+    )
+
+    assert duplicate.trace_id == first.trace_id
+    assert len(system.traces) == 2
+
+    reloaded = EnhancedMemorySystem(storage_path=tmp_path)
+    assert len(reloaded.traces) == 2
+    assert first.trace_id in reloaded.traces

@@ -97,4 +97,8 @@ markers = [
     "unit: fast tests with no external dependencies",
     "integration: tests requiring external services (DB, network)",
     "inference: tests requiring an LLM provider",
+    "api: API endpoint tests",
+    "auth: authentication tests",
+    "logging: request logging tests",
+    "chat: chat endpoint tests",
 ]

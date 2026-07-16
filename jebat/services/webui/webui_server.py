@@ -23,7 +23,7 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -81,6 +81,35 @@ class WorkstationConnectRequest(BaseModel):
 
 class WorkstationActionRequest(BaseModel):
     workstation: str
+
+
+class SahabatBriefingRequest(BaseModel):
+    timezone: str = "Asia/Kuala_Lumpur"
+    extra_context: Optional[str] = None
+
+
+class SahabatTaskCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+    description: str = ""
+    priority: str = "medium"
+    category: str = "general"
+    due_date: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
+
+class SahabatTaskUpdateRequest(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    category: Optional[str] = None
+    due_date: Optional[str] = None
+
+
+class SahabatMeetingRequest(BaseModel):
+    transcript: str = Field(min_length=1)
+    title: Optional[str] = None
+    generate_followup: bool = False
 
 
 CHANNEL_CONNECTIONS: Dict[str, Dict[str, Any]] = {}
@@ -454,6 +483,168 @@ async def get_status():
 async def get_console_meta():
     """Return UI metadata grounded in repo assets."""
     return _console_meta()
+
+
+@webui_router.get("/webui/api/integrations/overview")
+async def integrations_overview():
+    """Return a secret-free operational summary for the integration console."""
+    await _ensure_connection_state()
+    meta = _console_meta()
+    gateway = meta["jebat-gateway"]
+    template = _gateway_template()
+    mcp_config = template.get("mcpServers") or template.get("mcp_servers") or {}
+    if not mcp_config and isinstance(template.get("mcp"), dict):
+        mcp_config = template["mcp"].get("servers") or {}
+    mcp_count = len(mcp_config) if isinstance(mcp_config, (dict, list)) else 0
+
+    channel_items = [
+        _sanitize_channel_state(name, state)
+        for name, state in sorted(CHANNEL_CONNECTIONS.items())
+    ]
+    channel_statuses = sorted({item["status"] for item in channel_items})
+    integration_items = meta["integrations"]
+    integration_statuses = sorted({item["state"] for item in integration_items})
+
+    try:
+        from jebat.features.security import read_audit_log
+
+        audit_entries = read_audit_log(limit=50)
+        audit_summary = {
+            "status": "available",
+            "recent_count": len(audit_entries),
+            "approved_count": sum(entry.get("approved") is True for entry in audit_entries),
+            "latest_at": audit_entries[-1].get("ts") if audit_entries else None,
+        }
+    except Exception:
+        logger.exception("Unable to read integration audit summary")
+        audit_summary = {
+            "status": "unavailable",
+            "recent_count": 0,
+            "approved_count": 0,
+            "latest_at": None,
+        }
+
+    return {
+        "timestamp": _now_iso(),
+        "gateway": {
+            "status": "configured" if gateway["gateway_port"] is not None else "unavailable",
+            "port": gateway["gateway_port"],
+            "agent_count": len(gateway["agent_names"]),
+            "channel_count": len(gateway["channel_names"]),
+        },
+        "integrations": {
+            "status": "available" if integration_items else "unavailable",
+            "count": len(integration_items),
+            "statuses": integration_statuses,
+        },
+        "channels": {
+            "status": "active" if any(item["active"] for item in channel_items) else "idle",
+            "available_count": len(meta["channels"]),
+            "configured_count": len(channel_items),
+            "active_count": sum(item["active"] for item in channel_items),
+            "statuses": channel_statuses,
+            "items": channel_items,
+        },
+        "mcp": {
+            "status": "configured" if mcp_count else "unconfigured",
+            "server_count": mcp_count,
+        },
+        "skills": {
+            "status": "available" if meta["skills"]["count"] else "unavailable",
+            "count": meta["skills"]["count"],
+            "featured_count": len(meta["skills"]["top"]),
+        },
+        # WorkflowEngine instances are process-local; this endpoint does not invent runtime activity.
+        "workflow": {"status": "available", "tracked_workflows": 0, "tracked_executions": 0},
+        "audit": audit_summary,
+    }
+
+
+@webui_router.post("/webui/api/sahabat/briefing")
+async def sahabat_briefing(payload: SahabatBriefingRequest):
+    """Generate a daily briefing through the Sahabat companion service."""
+    from jebat.features.companion.briefing import DailyBriefing
+
+    briefing = await DailyBriefing().generate(
+        timezone_str=payload.timezone,
+        extra_context=payload.extra_context,
+    )
+    return {
+        "success": True,
+        "briefing": briefing.content,
+        "date": briefing.date,
+        "task_count": briefing.task_count,
+        "recent_topics": briefing.recent_topics,
+        "generated_at": briefing.generated_at,
+        "provider": briefing.provider,
+    }
+
+
+@webui_router.get("/webui/api/sahabat/tasks")
+async def sahabat_tasks(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    category: Optional[str] = None,
+    limit: int = 50,
+):
+    """List tasks from the Sahabat task manager."""
+    from jebat.features.companion.tasks import TaskManager
+
+    if limit < 1 or limit > 100:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 100")
+    tasks = TaskManager().list_tasks(
+        status=status,
+        priority=priority,
+        category=category,
+        limit=limit,
+    )
+    return {"success": True, "tasks": [_sahabat_task_payload(task) for task in tasks]}
+
+
+@webui_router.post("/webui/api/sahabat/tasks")
+async def create_sahabat_task(payload: SahabatTaskCreateRequest):
+    """Create a task through the Sahabat task manager."""
+    from jebat.features.companion.tasks import TaskManager
+
+    _validate_sahabat_task_values(priority=payload.priority)
+    task = TaskManager().add_task(**payload.model_dump())
+    return {"success": True, "task": _sahabat_task_payload(task)}
+
+
+@webui_router.patch("/webui/api/sahabat/tasks/{task_id}")
+async def update_sahabat_task(task_id: str, payload: SahabatTaskUpdateRequest):
+    """Update a Sahabat task, including marking it complete."""
+    from jebat.features.companion.tasks import TaskManager
+
+    _validate_sahabat_task_values(status=payload.status, priority=payload.priority)
+    task = TaskManager().update_task(task_id, **payload.model_dump(exclude_unset=True))
+    if task is None:
+        raise HTTPException(status_code=404, detail=f"task not found: {task_id}")
+    return {"success": True, "task": _sahabat_task_payload(task)}
+
+
+@webui_router.post("/webui/api/sahabat/meeting")
+async def sahabat_meeting(payload: SahabatMeetingRequest):
+    """Summarize a meeting transcript through the Sahabat companion service."""
+    from jebat.features.companion.meeting import MeetingSummarizer
+
+    meeting = await MeetingSummarizer().summarize(
+        transcript=payload.transcript,
+        title=payload.title,
+        generate_followup=payload.generate_followup,
+    )
+    return {
+        "success": True,
+        "meeting_id": meeting.meeting_id,
+        "title": meeting.title,
+        "summary": meeting.summary,
+        "action_items": meeting.action_items,
+        "decisions": meeting.decisions,
+        "participants": meeting.participants,
+        "created_at": meeting.created_at,
+        "provider": meeting.provider,
+        "followup_email": meeting.metadata.get("followup_email"),
+    }
 
 
 @webui_router.get("/webui/api/runtime")
@@ -1007,9 +1198,32 @@ def _mount_static(app: FastAPI) -> None:
 # ==================== Utility Functions ====================
 
 
+def _validate_sahabat_task_values(
+    status: Optional[str] = None, priority: Optional[str] = None
+) -> None:
+    if status is not None and status not in {"pending", "in_progress", "completed", "cancelled"}:
+        raise HTTPException(status_code=400, detail=f"invalid task status: {status}")
+    if priority is not None and priority not in {"low", "medium", "high", "urgent"}:
+        raise HTTPException(status_code=400, detail=f"invalid task priority: {priority}")
+
+
+def _sahabat_task_payload(task: Any) -> dict[str, Any]:
+    return {
+        "task_id": task.task_id,
+        "title": task.title,
+        "description": task.description,
+        "status": task.status,
+        "priority": task.priority,
+        "category": task.category,
+        "due_date": task.due_date,
+        "created_at": task.created_at,
+        "completed_at": task.completed_at,
+        "tags": task.tags,
+    }
+
+
 def _console_meta() -> dict[str, Any]:
-    openclaw_template = REPO_ROOT / "integrations" / "jebat-gateway" / "openclaw.template.json"
-    jebat_gateway_data = json.loads(openclaw_template.read_text()) if openclaw_template.exists() else {}
+    jebat_gateway_data = _gateway_template()
 
     channel_dir = REPO_ROOT / "jebat" / "integrations" / "channels"
     available_channels = sorted(
@@ -1108,6 +1322,19 @@ def _console_meta() -> dict[str, Any]:
             ]
         },
     }
+
+
+def _gateway_template() -> dict[str, Any]:
+    """Load the optional gateway template without allowing bad local config to break status APIs."""
+    path = REPO_ROOT / "integrations" / "jebat-gateway" / "openclaw.template.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        logger.warning("Unable to load gateway template: %s", path)
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def _runtime_state() -> dict[str, Any]:

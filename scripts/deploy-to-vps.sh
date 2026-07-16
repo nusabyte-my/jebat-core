@@ -14,7 +14,10 @@ PUBLIC_WEB_DIR="/var/www/jebat.online"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 AUTH_HELPER="$LOCAL_DIR/scripts/vps_auth_helper.py"
 
-SSH_OPTS="-i $VPS_KEY -o StrictHostKeyChecking=no"
+SSH_OPTS="-o StrictHostKeyChecking=no"
+if [ -f "$VPS_KEY" ]; then
+  SSH_OPTS="-i $VPS_KEY $SSH_OPTS"
+fi
 
 echo "⚔️  JEBAT VPS Deployer (.206 Mainframe)"
 echo "====================================="
@@ -60,18 +63,13 @@ run_auth "rsync -avz --delete \
 
 echo "✅ Code synced to $VPS_CODE_DIR"
 
-# Step 3: Build frontend on VPS
-echo "🔨 Building frontend on VPS..."
-run_auth "ssh $SSH_OPTS $VPS_HOST \"cd $VPS_CODE_DIR/apps/web && npm install && npx next build\""
-
-# Step 4: Deploy frontend build to web directory
-echo "🚀 Deploying frontend to web directory..."
-run_auth "ssh $SSH_OPTS $VPS_HOST \"rm -rf $VPS_WEB_DIR/_next $VPS_WEB_DIR/dashboard $VPS_WEB_DIR/demo $VPS_WEB_DIR/docs $VPS_WEB_DIR/onboarding $VPS_WEB_DIR/setup $VPS_WEB_DIR/integration $VPS_WEB_DIR/gelanggang $VPS_WEB_DIR/guides $VPS_WEB_DIR/index.html $VPS_WEB_DIR/*.svg $VPS_WEB_DIR/*.ico $VPS_WEB_DIR/*.txt $VPS_WEB_DIR/__next* $VPS_WEB_DIR/404 $VPS_WEB_DIR/404.html $VPS_WEB_DIR/_not-found 2>/dev/null\""
-run_auth "ssh $SSH_OPTS $VPS_HOST \"cp -r $VPS_CODE_DIR/apps/web/out/* $VPS_WEB_DIR/ && cp $VPS_CODE_DIR/landing.html $VPS_WEB_DIR/index.html && chown -R www-data:www-data $VPS_WEB_DIR/\""
+# Step 3: Publish the current static landing page.
+echo "🚀 Deploying landing page to web directory..."
+run_auth "ssh $SSH_OPTS $VPS_HOST \"cp $VPS_CODE_DIR/index.html $VPS_WEB_DIR/index.html && chown www-data:www-data $VPS_WEB_DIR/index.html\""
 
 # The public Cloudflare-facing node serves the landing root from .65.
 echo "🌐 Publishing landing page to public web root..."
-run_auth "scp -o StrictHostKeyChecking=no \"$LOCAL_DIR/landing.html\" $PUBLIC_VPS_HOST:$PUBLIC_WEB_DIR/index.html"
+run_auth "scp -o StrictHostKeyChecking=no \"$LOCAL_DIR/index.html\" $PUBLIC_VPS_HOST:$PUBLIC_WEB_DIR/index.html"
 run_auth "ssh -o StrictHostKeyChecking=no $PUBLIC_VPS_HOST \"chown www-data:www-data $PUBLIC_WEB_DIR/index.html\""
 
 # Step 5: Install dependencies and Restart backend API

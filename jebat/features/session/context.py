@@ -12,14 +12,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from jebat.llm.token_usage import estimate_tokens
+
 
 # ── Rough Token Counter ──────────────────────────────────────────────────
 
 def count_tokens(text: str) -> int:
-    """Rough token count (~4 chars per token for most languages)."""
-    if not text:
-        return 0
-    return len(text) // 4 + 1
+    """Count tokens with the configured tokenizer or a conservative fallback."""
+    return estimate_tokens(text)
 
 
 def compress_text(text: str, target_tokens: int) -> str:
@@ -92,13 +92,14 @@ class ContextManager:
         if history:
             for msg in reversed(history):
                 msg_tokens = count_tokens(msg.get("content", ""))
-                if tokens_used + msg_tokens > remaining:
+                if msg_tokens > remaining:
                     # Compress this message to fit remaining budget
-                    compressed = self._compress_message(msg, remaining - tokens_used)
+                    compressed = self._compress_message(msg, remaining)
                     messages.insert(-len(wiki_pages or []) - len((memory_entries or [])[:5]) - 1, compressed)
                     break
                 messages.append(msg)
                 tokens_used += msg_tokens
+                remaining -= msg_tokens
 
         return messages
 

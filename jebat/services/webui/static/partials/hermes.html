@@ -1,0 +1,127 @@
+<!-- Hermes Command Center -->
+<style>
+  .hermes-command { max-width: 1440px; margin: 0 auto; }
+  .hermes-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .hermes-kicker { color: var(--cyan); font: 600 var(--font-size-xs) var(--font-mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: var(--space-xs); }
+  .hermes-command h2 { margin-bottom: var(--space-xs); }
+  .hermes-command-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .85fr); gap: var(--space-md); }
+  .hermes-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+  .hermes-panel-title { color: var(--text-muted); font: 600 var(--font-size-xs) var(--font-mono); letter-spacing: .1em; text-transform: uppercase; margin-bottom: var(--space-md); }
+  .hermes-plan { min-height: 260px; white-space: pre-wrap; color: var(--text-primary); }
+  .hermes-composer { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+  .hermes-composer .input { flex: 1; }
+  .hermes-activity { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .hermes-activity-row, .hermes-status-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid var(--border); font-size: var(--font-size-sm); }
+  .hermes-activity-row:last-child, .hermes-status-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .hermes-status-row span:last-child { font-family: var(--font-mono); color: var(--text-secondary); text-align: right; overflow-wrap: anywhere; }
+  .hermes-tools { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+  .hermes-tools .badge { padding: 4px 8px; }
+  @media (max-width: 900px) { .hermes-command-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .hermes-header, .hermes-composer { flex-direction: column; } .hermes-composer .btn { width: 100%; justify-content: center; } .hermes-status-grid { grid-template-columns: 1fr; } }
+</style>
+
+<section class="hermes-command" aria-labelledby="hermes-title">
+  <header class="hermes-header">
+    <div>
+      <div class="hermes-kicker">Agent Operations</div>
+      <h2 id="hermes-title">Hermes Command Center</h2>
+      <p class="text-muted">Plan, execute, and inspect the active workspace from one operator console.</p>
+    </div>
+    <span class="badge badge-green"><span class="status-dot online"></span> Ready</span>
+  </header>
+
+  <div class="hermes-command-grid">
+    <div class="card glow-cyan">
+      <div class="hermes-panel-title">Mission Planner</div>
+      <div class="terminal hermes-plan" id="hermes-plan" aria-live="polite"><span class="prompt">hermes&gt;</span> Awaiting operator objective.
+
+Submit a task to generate an execution brief.</div>
+      <form class="hermes-composer" id="hermes-form">
+        <input class="input" id="hermes-objective" type="text" placeholder="Describe the objective or next action..." autocomplete="off" />
+        <button class="btn btn-primary" id="hermes-submit" type="submit">Run Plan</button>
+      </form>
+    </div>
+
+    <aside class="hermes-activity" aria-label="Hermes execution status">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Execution</div><span class="badge badge-muted" id="hermes-execution-badge">Idle</span></div>
+        <div class="hermes-activity">
+          <div class="hermes-activity-row"><span class="text-muted">Current run</span><span class="font-mono" id="hermes-current-run">None</span></div>
+          <div class="hermes-activity-row"><span class="text-muted">Thinking mode</span><span class="font-mono">deliberate</span></div>
+          <div class="hermes-activity-row"><span class="text-muted">Last response</span><span class="font-mono" id="hermes-last-response">--</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Available Tools</div><span class="badge badge-cyan">armed</span></div>
+        <div class="hermes-tools" id="hermes-tools">
+          <span class="badge badge-muted">workspace</span><span class="badge badge-muted">search</span><span class="badge badge-muted">webfetch</span><span class="badge badge-muted">test</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="hermes-status-grid mt-md">
+    <div class="card">
+      <div class="hermes-panel-title">Plan Status</div>
+      <div class="hermes-status-row"><span class="text-muted">State</span><span id="hermes-plan-state">Awaiting objective</span></div>
+      <div class="hermes-status-row"><span class="text-muted">Provider</span><span id="hermes-provider">--</span></div>
+      <div class="hermes-status-row"><span class="text-muted">Model</span><span id="hermes-model">--</span></div>
+    </div>
+    <div class="card">
+      <div class="hermes-panel-title">Workspace Status</div>
+      <div class="hermes-status-row"><span class="text-muted">Surface</span><span>WebUI</span></div>
+      <div class="hermes-status-row"><span class="text-muted">Session</span><span id="hermes-session">webui</span></div>
+      <div class="hermes-status-row"><span class="text-muted">Transport</span><span id="hermes-transport">API ready</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (() => {
+    const $ = id => document.getElementById(id);
+    const plan = $('hermes-plan');
+    const form = $('hermes-form');
+    const input = $('hermes-objective');
+    const submit = $('hermes-submit');
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const objective = input.value.trim();
+      if (!objective) { input.focus(); return; }
+
+      input.value = '';
+      submit.disabled = true;
+      $('hermes-execution-badge').className = 'badge badge-amber';
+      $('hermes-execution-badge').textContent = 'Running';
+      $('hermes-current-run').textContent = objective.length > 32 ? objective.slice(0, 32) + '...' : objective;
+      $('hermes-plan-state').textContent = 'Generating execution brief';
+      plan.textContent = 'hermes> Planning: ' + objective + '\n\nDispatching to the JEBAT chat runtime...';
+
+      try {
+        const response = await fetch('/webui/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: 'webui-hermes', message: objective, thinking_mode: 'deliberate', preset: 'default' }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Chat request failed');
+
+        plan.textContent = 'hermes> Execution brief\n\n' + (data.response || 'No execution brief returned.');
+        $('hermes-provider').textContent = data.provider || '--';
+        $('hermes-model').textContent = data.model || '--';
+        $('hermes-plan-state').textContent = 'Brief ready';
+        $('hermes-last-response').textContent = new Date().toLocaleTimeString();
+        $('hermes-execution-badge').className = 'badge badge-green';
+        $('hermes-execution-badge').textContent = 'Complete';
+      } catch (error) {
+        plan.textContent = 'hermes> Execution unavailable\n\n' + error.message;
+        $('hermes-plan-state').textContent = 'Request failed';
+        $('hermes-transport').textContent = 'API unavailable';
+        $('hermes-execution-badge').className = 'badge badge-red';
+        $('hermes-execution-badge').textContent = 'Failed';
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  })();
+</script>

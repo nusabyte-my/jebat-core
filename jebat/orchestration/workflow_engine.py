@@ -218,6 +218,11 @@ class WorkflowEngine:
                 pending = set(workflow.tasks.keys()) - completed_tasks - failed_tasks
                 if pending:
                     logger.error(f"Deadlock detected: {pending}")
+                    for task_id in pending:
+                        task = workflow.tasks[task_id]
+                        task.status = TaskStatus.FAILED
+                        task.error = "Unresolvable or cyclic task dependencies"
+                        failed_tasks.add(task_id)
                     break
 
             # Execute ready tasks in parallel
@@ -307,13 +312,16 @@ class WorkflowEngine:
 
         # Execute with timeout
         try:
-            if asyncio.iscoroutinefunction(task.func):
+            if inspect.iscoroutinefunction(task.func):
                 result = await asyncio.wait_for(
                     task.func(**task.kwargs),
                     timeout=task.timeout,
                 )
             else:
-                result = task.func(**task.kwargs)
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(task.func, **task.kwargs),
+                    timeout=task.timeout,
+                )
 
             # Store in context for dependent tasks
             context[task.id] = result

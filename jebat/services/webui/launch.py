@@ -18,12 +18,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from jebat.api.auth import APIKeyMiddleware
+from jebat.api.safety import require_action_confirmation
 from jebat.services.webui.webui_server import webui_router, _mount_static, STATIC_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -176,6 +178,7 @@ app.add_middleware(RequestIDMiddleware)
 app.add_middleware(AuditMiddleware)
 
 # Include WebUI router
+app.add_middleware(APIKeyMiddleware)
 app.include_router(webui_router)
 _mount_static(app)
 
@@ -286,16 +289,16 @@ async def keris_history():
 async def keris_scan(request: Request):
     """Trigger a Keris scan. Body: {target, profile}."""
     try:
+        require_action_confirmation(request.headers.get("X-JEBAT-Action-Confirm"), "keris-scan")
         body = await request.json()
         target = body.get("target", "")
         profile = body.get("profile", "quick")
         if not target:
             return JSONResponse(status_code=400, content={"error": "target required"})
         from jebat.features.sentinel.keris import KerisSentinel
-        import asyncio
         sentinel = KerisSentinel()
-        result, _ = asyncio.run(sentinel.scan(target, profile=profile, use_orchestrator=True))
-        briefing, provider = asyncio.run(sentinel.analyze(result))
+        result, _ = await sentinel.scan(target, profile=profile, use_orchestrator=True)
+        briefing, provider = await sentinel.analyze(result)
         return {
             "severity": result.severity,
             "score": result.score,
@@ -305,6 +308,8 @@ async def keris_scan(request: Request):
             "briefing": sentinel.format_briefing(briefing),
             "provider": provider,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -327,16 +332,18 @@ async def nexus_channels():
 async def nexus_send(request: Request):
     """Send a message via Nexus. Body: {channel_id, content}."""
     try:
+        require_action_confirmation(request.headers.get("X-JEBAT-Action-Confirm"), "nexus-send")
         body = await request.json()
         channel_id = body.get("channel_id", "")
         content = body.get("content", "")
         if not channel_id or not content:
             return JSONResponse(status_code=400, content={"error": "channel_id and content required"})
         from jebat.features.nexus.perisai import PerisaiNexus
-        import asyncio
         nexus = PerisaiNexus()
-        result = asyncio.run(nexus.send(channel_id, content))
+        result = await nexus.send(channel_id, content)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -345,15 +352,17 @@ async def nexus_send(request: Request):
 async def nexus_broadcast(request: Request):
     """Broadcast to all channels. Body: {content}."""
     try:
+        require_action_confirmation(request.headers.get("X-JEBAT-Action-Confirm"), "nexus-broadcast")
         body = await request.json()
         content = body.get("content", "")
         if not content:
             return JSONResponse(status_code=400, content={"error": "content required"})
         from jebat.features.nexus.perisai import PerisaiNexus
-        import asyncio
         nexus = PerisaiNexus()
-        results = asyncio.run(nexus.broadcast(content))
+        results = await nexus.broadcast(content)
         return {"results": results}
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -396,7 +405,7 @@ async def rate_limited(request: Request, exc):
 
 def main():
     parser = argparse.ArgumentParser(description="JEBAT WebUI Server")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8787, help="Port to bind to")
     args = parser.parse_args()
 

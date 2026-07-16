@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from jebat.core.memory.layers import MemoryLayer
+from jebat.core.memory.layers import MemoryLayer, MemoryMetadata
 from jebat.core.memory.manager import MemoryManager
 
 router = APIRouter(prefix="/api/memory", tags=["memory"])
@@ -40,11 +40,17 @@ async def store_memory(req: MemoryStoreRequest) -> Dict[str, Any]:
     """Store a memory entry in the specified layer."""
     layer_map = {l.value: l for l in MemoryLayer}
     layer = layer_map.get(req.layer, MemoryLayer.M1_EPISODIC)
+    metadata = MemoryMetadata(
+        user_id=req.user_id,
+        source=req.metadata.get("source"),
+        tags=req.metadata.get("tags", []),
+        context=req.metadata,
+    )
     memory_id = await _manager.store(
         content=req.content,
         layer=layer,
         user_id=req.user_id,
-        metadata=req.metadata,
+        metadata=metadata,
     )
     return {"memory_id": memory_id, "layer": layer.value, "user_id": req.user_id}
 
@@ -56,31 +62,39 @@ async def retrieve_memories(req: MemoryRetrieveRequest) -> Dict[str, Any]:
     if req.layer:
         layer_map = {l.value: l for l in MemoryLayer}
         layer = layer_map.get(req.layer)
-    memories = await _manager.retrieve(
+    memories = await _manager.asearch(
         query=req.query, layer=layer, user_id=req.user_id, limit=req.limit
     )
-    return {"memories": memories, "total": len(memories)}
+    return {"memories": [memory.to_dict() for memory in memories], "total": len(memories)}
 
 
 @router.post("/search")
 async def search_memories(req: MemorySearchRequest) -> Dict[str, Any]:
     """Full-text search across all memory layers."""
-    results = await _manager.search_memories(
+    results = await _manager.asearch(
         query=req.query, user_id=req.user_id, limit=req.limit
     )
-    return {"results": results, "total": len(results)}
+    return {"results": [memory.to_dict() for memory in results], "total": len(results)}
 
 
 @router.get("/profile/{user_id}")
 async def user_profile(user_id: str) -> Dict[str, Any]:
     """Get a user's memory profile."""
-    return await _manager.get_user_profile(user_id)
+    memories = _manager.search(query="", user_id=user_id, limit=100)
+    return {
+        "user_id": user_id,
+        "memory_count": len(memories),
+        "by_layer": {
+            layer.value: len([memory for memory in memories if memory.layer is layer])
+            for layer in MemoryLayer
+        },
+    }
 
 
 @router.get("/stats")
 async def memory_stats() -> Dict[str, Any]:
     """Memory layer statistics (entry counts per layer)."""
-    return _manager.get_memory_stats()
+    return _manager.get_stats()
 
 
 @router.get("/layers")

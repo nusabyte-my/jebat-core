@@ -23,9 +23,10 @@ import os
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from jebat.api.auth import APIKeyMiddleware
 from jebat.api.logging import RequestLoggingMiddleware, clear_all_logs, export_logs, get_request_stats, get_recent_logs
@@ -47,6 +48,15 @@ from routers.analytics import router as analytics_router
 from routers.think import router as think_router
 
 _START_TIME = time.time()
+_MAX_API_BODY_BYTES = int(os.getenv("JEBAT_MAX_API_BODY_BYTES", str(1_048_576)))
+
+
+class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        length = request.headers.get("content-length")
+        if request.url.path.startswith("/api/") and length and length.isdigit() and int(length) > _MAX_API_BODY_BYTES:
+            return JSONResponse(status_code=413, content={"error": "request_too_large"})
+        return await call_next(request)
 
 # Feature flags — disable DB/Redis if env vars aren't set
 DATABASE_ENABLED = os.getenv("JEBAT_DATABASE_ENABLED", "false").lower() in ("true", "1", "yes")
@@ -142,10 +152,10 @@ app = FastAPI(
     ],
 )
 
-# CORS — allow all origins in dev, lock down in production
+# CORS defaults to the local WebUI; production deployments must explicitly list trusted origins.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("JEBAT_CORS_ORIGINS", "*").split(","),
+    allow_origins=os.getenv("JEBAT_CORS_ORIGINS", "http://localhost:8787").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -154,6 +164,7 @@ app.add_middleware(
 # API Key authentication — protects /api/* routes
 # Set JEBAT_API_KEY env var to enable; unset = dev mode (all open)
 app.add_middleware(APIKeyMiddleware)
+app.add_middleware(RequestBodyLimitMiddleware)
 
 # Request logging — records method, path, status, latency, IP for /api/* routes to Redis
 app.add_middleware(RequestLoggingMiddleware)

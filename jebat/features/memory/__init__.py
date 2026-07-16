@@ -13,8 +13,12 @@ Features:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
+import logging
+import os
 import random
+import tempfile
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
@@ -25,6 +29,9 @@ from collections import defaultdict
 from collections import deque
 
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryType(Enum):
@@ -220,6 +227,7 @@ class EnhancedMemorySystem:
         self.traces: Dict[str, MemoryTrace] = {}
         self.traces_by_type: Dict[MemoryType, Set[str]] = defaultdict(set)
         self.traces_by_tag: Dict[str, Set[str]] = defaultdict(set)
+        self._trace_fingerprints: Dict[str, str] = {}
         
         # Working memory (short-term, limited capacity)
         self.working_memory: deque = deque(maxlen=7)  # Miller's 7±2
@@ -241,6 +249,8 @@ class EnhancedMemorySystem:
         
         # Generalization
         self.generalizations: Dict[str, Dict] = {}
+        self.concept_weights: Dict[str, float] = defaultdict(float)
+        self.concept_graph: Dict[str, Set[str]] = defaultdict(set)
         
         # Forgetting
         self.forgetting_curve_enabled = True
@@ -284,10 +294,19 @@ class EnhancedMemorySystem:
         source_trace_id: Optional[str] = None,
     ) -> MemoryTrace:
         """Encode a new memory trace"""
+        context = context or {}
+        fingerprint = self._trace_fingerprint(memory_type, content, context)
+        existing_id = self._trace_fingerprints.get(fingerprint)
+        if existing_id and (existing := self.traces.get(existing_id)):
+            # Exact re-encodes reinforce the existing trace instead of growing it.
+            existing.reinforce(0.05)
+            self._save()
+            return existing
+
         trace = MemoryTrace(
             memory_type=memory_type,
             content=content,
-            context=context or {},
+            context=context,
             tags=tags_set or tags or set(),
             importance=importance,
             emotional_valence=emotional_valence,
@@ -316,6 +335,7 @@ class EnhancedMemorySystem:
 
         # Auto-link to active memories
         await self._auto_associate(trace)
+        self._save()
 
         return trace
 
@@ -420,6 +440,9 @@ class EnhancedMemorySystem:
         # Update access stats
         for trace in results:
             trace.reinforce(0.05)
+
+        if results:
+            self._save()
 
         return results[:query.max_results]
 
@@ -568,6 +591,7 @@ class EnhancedMemorySystem:
 
         # Remove extremely weak memories
         self._prune_weak_memories()
+        self._save()
 
     # ── Working Memory ──────────────────────────────────────────────
 
@@ -723,6 +747,9 @@ class EnhancedMemorySystem:
 
     def _store_trace(self, trace: MemoryTrace):
         self.traces[trace.trace_id] = trace
+        self._trace_fingerprints[
+            self._trace_fingerprint(trace.memory_type, trace.content, trace.context)
+        ] = trace.trace_id
         self.traces_by_type[trace.memory_type].add(trace.trace_id)
         for tag in trace.tags:
             self.traces_by_tag[tag].add(trace.trace_id)
@@ -733,8 +760,31 @@ class EnhancedMemorySystem:
             self.traces_by_type[trace.memory_type].discard(trace_id)
             for tag in trace.tags:
                 self.traces_by_tag[tag].discard(trace_id)
+            fingerprint = self._trace_fingerprint(
+                trace.memory_type, trace.content, trace.context
+            )
+            if self._trace_fingerprints.get(fingerprint) == trace_id:
+                self._trace_fingerprints.pop(fingerprint, None)
             del self.traces[trace_id]
             self.activation.pop(trace_id, None)
+
+    @staticmethod
+    def _trace_fingerprint(
+        memory_type: MemoryType, content: str, context: Dict[str, Any]
+    ) -> str:
+        """Return a stable identity for exact traces within their user context."""
+        normalized_content = " ".join(content.split()).casefold()
+        identity_context = {
+            "user_id": context.get("user_id"),
+            "session_id": context.get("session_id"),
+        }
+        payload = json.dumps(
+            [memory_type.value, normalized_content, identity_context],
+            sort_keys=True,
+            default=str,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     async def _auto_associate(self, trace: MemoryTrace):
         """Automatically associate with similar active memories"""
@@ -785,7 +835,8 @@ class EnhancedMemorySystem:
     # ── Persistence ─────────────────────────────────────────────────
 
     def _save(self):
-        """Save memory to disk"""
+        """Atomically save memory state so an interrupted write keeps the prior state."""
+        temporary_name = None
         try:
             data = {
                 "traces": {k: v.to_dict() for k, v in self.traces.items()},
@@ -794,10 +845,21 @@ class EnhancedMemorySystem:
                 "concept_weights": dict(self.concept_weights),
                 "concept_graph": {k: list(v) for k, v in self.concept_graph.items()},
             }
-            with open(self.traces_file, "w") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=self.storage_path, delete=False
+            ) as f:
+                temporary_name = f.name
                 json.dump(data, f, default=str, indent=2)
-        except Exception as e:
-            print(f"Memory save error: {e}")
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporary_name, self.traces_file)
+        except (OSError, TypeError, ValueError) as exc:
+            logger.warning("Unable to persist enhanced memory state: %s", exc)
+            if temporary_name:
+                try:
+                    os.unlink(temporary_name)
+                except OSError:
+                    pass
 
     def _load(self):
         try:
@@ -815,6 +877,11 @@ class EnhancedMemorySystem:
                     td["memory_type"] = MemoryType(td["memory_type"])
                     trace = MemoryTrace(**td)
                     self.traces[tid] = trace
+                    self._trace_fingerprints[
+                        self._trace_fingerprint(
+                            trace.memory_type, trace.content, trace.context
+                        )
+                    ] = tid
                     self.traces_by_type[trace.memory_type].add(tid)
                     for tag in trace.tags:
                         self.traces_by_tag[tag].add(tid)
@@ -823,8 +890,8 @@ class EnhancedMemorySystem:
                 self.generalizations = data.get("generalizations", {})
                 self.concept_weights = defaultdict(float, data.get("concept_weights", {}))
                 self.concept_graph = defaultdict(set, {k: set(v) for k, v in data.get("concept_graph", {}).items()})
-        except Exception as e:
-            print(f"Memory load error: {e}")
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            logger.warning("Unable to load enhanced memory state: %s", exc)
 
     # ── Convenience Methods ────────────────────────────────────────
 

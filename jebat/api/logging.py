@@ -19,6 +19,7 @@ Redis keys:
 from __future__ import annotations
 
 import csv
+import inspect
 import io
 import json
 import logging
@@ -97,28 +98,37 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             })
 
             pipe = client.pipeline()
+            if inspect.isawaitable(pipe):
+                pipe = await pipe
+
+            async def queue(command, *args):
+                result = command(*args)
+                if inspect.isawaitable(result):
+                    await result
 
             # 1. Push to recent list (capped at _MAX_RECENT)
-            pipe.lpush(f"{_REDIS_KEY_PREFIX}recent", entry)
-            pipe.ltrim(f"{_REDIS_KEY_PREFIX}recent", 0, _MAX_RECENT - 1)
+            await queue(pipe.lpush, f"{_REDIS_KEY_PREFIX}recent", entry)
+            await queue(pipe.ltrim, f"{_REDIS_KEY_PREFIX}recent", 0, _MAX_RECENT - 1)
 
             # 2. Increment total counter
-            pipe.incr(f"{_REDIS_KEY_PREFIX}total")
+            await queue(pipe.incr, f"{_REDIS_KEY_PREFIX}total")
 
             # 3. Increment status code counter
-            pipe.incr(f"{_REDIS_KEY_PREFIX}status:{status_code}")
+            await queue(pipe.incr, f"{_REDIS_KEY_PREFIX}status:{status_code}")
 
             # 4. Increment path counter
-            pipe.hincrby(f"{_REDIS_KEY_PREFIX}count", path, 1)
+            await queue(pipe.hincrby, f"{_REDIS_KEY_PREFIX}count", path, 1)
 
             # 5. Accumulate latency
-            pipe.incrbyfloat(f"{_REDIS_KEY_PREFIX}latency_sum", latency_ms)
+            await queue(pipe.incrbyfloat, f"{_REDIS_KEY_PREFIX}latency_sum", latency_ms)
 
             # 6. Increment error counter if 4xx or 5xx
             if status_code >= 400:
-                pipe.incr(f"{_REDIS_KEY_PREFIX}errors")
+                await queue(pipe.incr, f"{_REDIS_KEY_PREFIX}errors")
 
-            await pipe.execute()
+            result = pipe.execute()
+            if inspect.isawaitable(result):
+                await result
         except Exception as exc:
             # Never let logging failures affect the request
             logger.debug("Request logging failed: %s", exc)

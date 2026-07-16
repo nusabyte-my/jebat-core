@@ -1,0 +1,81 @@
+<!-- OpenClaw Integration Command Center -->
+<style>
+  .openclaw-command { max-width: 1440px; margin: 0 auto; }
+  .openclaw-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .openclaw-kicker { color: var(--purple); font: 600 var(--font-size-xs) var(--font-mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: var(--space-xs); }
+  .openclaw-command h2 { margin-bottom: var(--space-xs); }
+  .openclaw-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+  .openclaw-card { min-height: 210px; }
+  .openclaw-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); }
+  .openclaw-card-header h3 { font-size: var(--font-size-lg); }
+  .openclaw-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .openclaw-list-item { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: 1px solid var(--border); font-size: var(--font-size-sm); }
+  .openclaw-list-item:last-child { border-bottom: 0; }
+  .openclaw-list-item code { color: var(--text-secondary); overflow-wrap: anywhere; text-align: right; }
+  .openclaw-summary { font-family: var(--font-mono); font-size: var(--font-size-sm); color: var(--text-secondary); white-space: pre-wrap; }
+  .openclaw-refresh { min-width: 106px; justify-content: center; }
+  @media (max-width: 768px) { .openclaw-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 500px) { .openclaw-header { flex-direction: column; } .openclaw-refresh { width: 100%; } }
+</style>
+
+<section class="openclaw-command" aria-labelledby="openclaw-title">
+  <header class="openclaw-header">
+    <div>
+      <div class="openclaw-kicker">Integration Mesh</div>
+      <h2 id="openclaw-title">OpenClaw Command Center</h2>
+      <p class="text-muted">Live topology for the gateway, channels, skills, and MCP integration surface.</p>
+    </div>
+    <button class="btn btn-purple openclaw-refresh" id="openclaw-refresh" type="button">Refresh</button>
+  </header>
+
+  <div class="openclaw-grid" id="openclaw-grid" aria-live="polite">
+    <article class="card openclaw-card"><div class="openclaw-card-header"><h3>Gateway</h3><span class="badge badge-muted">Loading</span></div><div class="spinner"></div></article>
+    <article class="card openclaw-card"><div class="openclaw-card-header"><h3>Channels</h3><span class="badge badge-muted">Loading</span></div><div class="spinner"></div></article>
+    <article class="card openclaw-card"><div class="openclaw-card-header"><h3>Skills</h3><span class="badge badge-muted">Loading</span></div><div class="spinner"></div></article>
+    <article class="card openclaw-card"><div class="openclaw-card-header"><h3>MCP Integrations</h3><span class="badge badge-muted">Loading</span></div><div class="spinner"></div></article>
+  </div>
+</section>
+
+<script>
+  (() => {
+    const grid = document.getElementById('openclaw-grid');
+    const refresh = document.getElementById('openclaw-refresh');
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+    const list = (items, fallback) => items.length ? '<div class="openclaw-list">' + items.map(item => '<div class="openclaw-list-item"><span>' + escapeHtml(item.label) + '</span><code>' + escapeHtml(item.value) + '</code></div>').join('') + '</div>' : '<p class="text-sm text-muted">' + fallback + '</p>';
+    const card = (title, status, content) => '<article class="card openclaw-card"><div class="openclaw-card-header"><h3>' + title + '</h3><span class="badge ' + status.className + '">' + escapeHtml(status.label) + '</span></div>' + content + '</article>';
+    const namedItems = (value, detail) => (Array.isArray(value) ? value : []).map(item => typeof item === 'string' ? { label: item, value: detail || 'available' } : { label: item.name || item.id || 'Unnamed', value: item.state || item.path || item.status || detail || 'available' });
+
+    async function loadOverview() {
+      refresh.disabled = true;
+      refresh.textContent = 'Refreshing';
+      try {
+        const response = await fetch('/webui/api/integrations/overview');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Overview request failed');
+
+        const gateway = data.gateway || data['jebat-gateway'] || {};
+        const channels = namedItems(data.channels || gateway.channels, 'configured');
+        const skills = data.skills || {};
+        const skillItems = namedItems(skills.top || data.skill_list || [], 'ready');
+        const integrations = namedItems(data.integrations || data.mcp || data.mcp_integrations, 'available');
+        const port = gateway.gateway_port || gateway.port || '--';
+        const model = gateway.primary_model || gateway.model || '--';
+        const fallbackCount = (gateway.fallback_models || []).length;
+
+        grid.innerHTML =
+          card('Gateway', { className: port === '--' ? 'badge-amber' : 'badge-green', label: port === '--' ? 'Unknown' : 'Online' }, list([{ label: 'Port', value: port }, { label: 'Primary model', value: model }, { label: 'Fallback models', value: fallbackCount || 'none' }], 'No gateway metadata returned.')) +
+          card('Channels', { className: channels.length ? 'badge-green' : 'badge-muted', label: channels.length + ' detected' }, list(channels, 'No channels are configured.')) +
+          card('Skills', { className: skills.count ? 'badge-cyan' : 'badge-muted', label: (skills.count || skillItems.length || 0) + ' available' }, list(skillItems, 'No skills were reported.')) +
+          card('MCP Integrations', { className: integrations.length ? 'badge-purple' : 'badge-muted', label: integrations.length + ' listed' }, list(integrations, 'No MCP integrations were reported.'));
+      } catch (error) {
+        grid.innerHTML = '<article class="card" style="grid-column:1/-1"><div class="card-title text-red">Integration overview unavailable</div><p class="text-sm text-muted mt-sm">' + escapeHtml(error.message) + '</p></article>';
+      } finally {
+        refresh.disabled = false;
+        refresh.textContent = 'Refresh';
+      }
+    }
+
+    refresh.addEventListener('click', loadOverview);
+    loadOverview();
+  })();
+</script>

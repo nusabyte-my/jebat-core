@@ -125,9 +125,11 @@ class Memory:
             "layer": self.layer.value,
             "metadata": {
                 "user_id": self.metadata.user_id,
+                "source": self.metadata.source,
                 "tags": self.metadata.tags,
                 "modality": self.metadata.modality.value,
             },
             "heat": self.heat.calculate(),
             "created_at": self.created_at.isoformat(),
+            "citation": f"memory:{self.memory_id}",
         }
