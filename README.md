@@ -4,7 +4,7 @@
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-7%2F7--passing-10b981?style=flat-square)
-![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.1-10b981?style=flat-square)
+![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.2-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![WebUI](https://img.shields.io/badge/WebUI-Stealth--Dark-030303?style=flat-square&labelColor=030303)
 

@@ -1,7 +1,7 @@
 {
   "name": "@nusabyte/jebat",
-  "version": "8.2.1",
-  "description": "JEBAT v8.2.1 npm launcher for the sovereign AI workstation. Bootstraps the JEBAT CLI from the official repository.",
+  "version": "8.2.2",
+  "description": "JEBAT v8.2.2 npm launcher for the sovereign AI workstation. Bootstraps the JEBAT CLI from the official repository.",
   "type": "module",
   "bin": {
     "jebat": "./bin/jebat.js"

@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PACKAGE_NAME = 'jebat';
-const JEBAT_VERSION = '8.2.0';
+const JEBAT_VERSION = '8.2.2';
 
 // Canonical bootstrap script. The raw GitHub URL ALWAYS serves the script as
 // plaintext, so it is the reliable default for both humans and agents.
