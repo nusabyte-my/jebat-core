@@ -66,7 +66,7 @@ REDIS_ENABLED = os.getenv("JEBAT_REDIS_ENABLED", "false").lower() in ("true", "1
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown hooks."""
-    version = os.getenv("JEBAT_VERSION", "8.2.0")
+    version = os.getenv("JEBAT_VERSION", "8.2.1")
     host = os.getenv("JEBAT_API_HOST", "0.0.0.0")
     port = os.getenv("JEBAT_API_PORT", "8080")
     print(f"\n{'='*60}")
@@ -111,7 +111,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="JEBAT API",
-    version=os.getenv("JEBAT_VERSION", "8.2.0"),
+    version=os.getenv("JEBAT_VERSION", "8.2.1"),
     description="Sovereign AI Platform — Private LLM Inference, Agent Orchestration & Eternal Memory",
     lifespan=lifespan,
     docs_url="/swagger",
@@ -215,7 +215,7 @@ async def root():
     """API root — quick liveness check."""
     return {
         "service": "jebat-api",
-        "version": os.getenv("JEBAT_VERSION", "8.2.0"),
+        "version": os.getenv("JEBAT_VERSION", "8.2.1"),
         "status": "running",
         "docs": "/docs",
         "swagger": "/swagger",

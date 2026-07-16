@@ -463,7 +463,7 @@ class JEBATMCPServer:
         return web.json_response({
             "status": "ok",
             "server": "jebat-mcp",
-            "version": "8.2.0",
+            "version": "8.2.1",
             "transport": "http",
             "tools_count": 47,
         })
@@ -473,7 +473,7 @@ class JEBATMCPServer:
         from aiohttp import web
         return web.json_response({
             "name": "JEBAT MCP Server",
-            "version": "8.2.0",
+            "version": "8.2.1",
             "description": "Sovereign Agent OS — MCP Protocol Server",
             "endpoints": {
                 "POST /mcp": "JSON-RPC endpoint for MCP protocol",
