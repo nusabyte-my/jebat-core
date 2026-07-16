@@ -236,7 +236,7 @@ jebat search --help  → query, engine, limit options
 
 ### Key Additions
 - **9Router**: Free Claude, Gemini, GLM, MiniMax via localhost:20128 proxy. CLI: `jebat free-models`
-- **MCP Server**: JEBAT as tool server for IDEs. CLI: `jebat mcp serve` / `jebat mcp ide-config`
+- **MCP Server**: JEBAT as a workspace tool server for IDEs. Entry point: `python ./jebat-mcp --transport stdio`.
 - **CyberSec**: humm1ngb1rd's differentiation — CVE, Shodan, nmap, DNS, SSL, headers, passwords
 - **Skills**: Self-improving — gather from URLs/repos, generate from descriptions via LLM
 

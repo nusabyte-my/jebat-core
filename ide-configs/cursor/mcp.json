@@ -1,13 +1,9 @@
 {
   "mcpServers": {
     "jebat": {
-      "command": "npx",
+      "command": "python3",
       "args": [
-        "@nusabyte/jebat",
-        "mcp",
-        "serve",
-        "--transport",
-        "stdio"
+        "${workspaceFolder}/jebat-mcp"
       ],
       "env": {}
     }

@@ -1,4 +1,4 @@
-# 🗡️ JEBAT v8.2 — Sovereign Agent OS & Agent Workstation
+# JEBAT v8.2.1 — Sovereign Agent OS & Agent Workstation
 
 [![npm version](https://img.shields.io/npm/v/@nusabyte/jebat?style=flat-square&color=10b981)](https://www.npmjs.com/package/@nusabyte/jebat)
 [![npm downloads](https://img.shields.io/npm/dm/@nusabyte/jebat?style=flat-square&color=06b6d4)](https://www.npmjs.com/package/@nusabyte/jebat)
@@ -18,7 +18,7 @@ Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and 
 ### Zero-Config Installation (npx / bunx)
 
 ```bash
-# Run immediately — auto-installs Python package on first run
+# Run immediately — bootstraps the JEBAT CLI on first run
 npx @nusabyte/jebat repl
 
 # Or with bun
@@ -47,9 +47,9 @@ npx @nusabyte/jebat agent "Audit all API endpoints in src/services"
 ```bash
 npx @nusabyte/jebat repl
 ```
-- Automatically installs Python package via pip on first run
-- Always runs latest version
-- No global pollution
+- Bootstraps the supported JEBAT CLI on first run
+- Requires Node.js 18+, Python 3.11+, and pip
+- Does not use the unrelated `jebat` package on PyPI
 
 ### Method 2: Global Install
 ```bash
@@ -84,7 +84,7 @@ jebat repl
 | `jebat agent "task"` | Run one-shot agent with tool-calling |
 | `jebat config show\|set\|reset\|edit` | Full configuration management |
 | `jebat file read\|write\|patch\|search\|undo\|tree` | Safe file ops with backups |
-| `jebat tools list\|inspect` | Inspect all 89 registered tools |
+| `jebat tools list\|inspect` | Inspect registered tools |
 | `jebat memory store\|search\|stats` | 5-layer eternal memory |
 | `jebat status` | System health & provider status |
 | `jebat --version` | Show version |
@@ -143,7 +143,7 @@ npx @nusabyte/jebat config edit
 │  • Ultra-Think (7 reasoning modes)                           │
 │  • Ultra-Loop (autonomous agent)                             │
 │  • 5-Layer Memory (M0→M4 with heat scoring)                  │
-│  • 89 Tools (file, git, browser, web, vision, sandbox...)    │
+│  • Registered tools and workspace integrations               │
 │  • MCP Client + Server                                       │
 │  • Multi-Agent Swarms (Tukang/Hulubalang/Pawang)             │
 └─────────────────────────────────────────────────────────────┘
@@ -164,14 +164,14 @@ npx @nusabyte/jebat config edit
 
 ## 🤝 MCP Integration
 
-```bash
-# Connect to MCP servers
-npx @nusabyte/jebat mcp connect --stdio "python -m my_server"
-npx @nusabyte/jebat mcp connect --http http://localhost:8080/mcp
+The npm launcher starts the JEBAT CLI. MCP server hosting requires a full JEBAT workspace checkout and the `jebat-mcp` entry point; see the [MCP guide](https://github.com/nusabyte-my/jebat-core/blob/main/MCP.md). Do not rely on an unauthenticated shared public MCP endpoint.
 
-# List & call
-npx @nusabyte/jebat mcp list
-npx @nusabyte/jebat mcp call server tool '{"param": "value"}'
+```bash
+# From a full workspace checkout
+python ./jebat-mcp --transport stdio
+
+# Or self-host HTTP behind an authenticated reverse proxy
+python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 ```
 
 ---
@@ -236,4 +236,4 @@ Built with ❤️ by **Shaidan Shaari (humm1ngb1rd)**.
 
 **Your AI. Your Data. Your Legacy.**
 
-🗡️ **JEBAT v8.2** — *Because warriors remember everything that matters.*
+🗡️ **JEBAT v8.2.1** — *Because warriors remember everything that matters.*

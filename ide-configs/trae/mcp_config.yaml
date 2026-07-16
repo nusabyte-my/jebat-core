@@ -1,9 +1,6 @@
 name: JEBAT
 type: stdio
-command: jebat
+command: python3
 args:
-  - mcp
-  - serve
-  - --transport
-  - stdio
+  - ${workspaceFolder}/jebat-mcp
 env: {}

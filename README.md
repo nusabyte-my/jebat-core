@@ -1,18 +1,31 @@
-# JEBAT v8.2 — Sovereign Agent OS & Agent Workstation
+# JEBAT v8.2.1 — Sovereign Agent OS & Agent Workstation
 
-![Version](https://img.shields.io/badge/version-v8.2.0--stable-10b981?style=flat-square)
+![Version](https://img.shields.io/badge/version-v8.2.1--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-7%2F7--passing-10b981?style=flat-square)
-![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.0-10b981?style=flat-square)
+![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.1-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![WebUI](https://img.shields.io/badge/WebUI-Stealth--Dark-030303?style=flat-square&labelColor=030303)
 
 > **Sovereign execution, private memory, and audited intelligence.**
 
-JEBAT is an enterprise-grade self-hosted AI platform and agent workstation. It provides governed local LLM inference across 17 providers, multi-agent swarm orchestration with 47 MCP tools, 6-type eternal memory with Ghost DB vector search, adaptive context windowing, Catalyst observability with 6 Grafana dashboards, and a full web interface. Run fully air-gapped on your private network with zero data leakage.
+JEBAT is an enterprise-grade self-hosted AI platform and agent workstation. It provides governed local LLM inference, multi-agent orchestration, persistent memory, adaptive context windowing, observability, an MCP workspace server, and a full web interface. Run fully air-gapped on your private network with zero data leakage.
 
 Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and unforgettable.
+
+## Public Service
+
+The public JEBAT service is available at [`jebat.online`](https://jebat.online).
+
+| Surface | URL |
+|---------|-----|
+| API status | [`/api/status`](https://jebat.online/api/status) |
+| Swagger UI | [`/swagger`](https://jebat.online/swagger) |
+| OpenAPI document | [`/openapi.json`](https://jebat.online/openapi.json) |
+| WebUI | [`/webui/`](https://jebat.online/webui/) |
+
+The public API and WebUI are production services. Configure provider credentials in your own deployment before sending requests that require model inference.
 
 ---
 
@@ -125,18 +138,9 @@ jebat --help                                 # full command list
 designmd search "dark fintech" --limit 3     # browse the registry
 designmd tags                                # list tags
 
-# MCP — wire into any IDE (full workspace)
-# IDE config written to ~/.local/jebat/mcp.ide.json:
-# { "mcpServers": {
-#     "jebat":        { "command": "python3", "args": ["-m","jebat.mcp.server"], "env": { "JEBAT_MCP_TRANSPORT": "stdio" } },
-#     "jebat-online": { "url": "https://mcp.jebat.online/mcp" }
-# } }
-#
-# Zero-install: point your IDE at the public Streamable-HTTP endpoint — no
-# local install required. Works with Cursor, Claude, VS Code, Zed:
-#   https://mcp.jebat.online/mcp
-# Generate a paste-ready config for your client:
-#   install.sh --print-mcp-config=cursor   (cursor | vscode | claude | zed)
+# MCP — run from a full workspace checkout
+# python ./jebat-mcp --transport stdio
+# See MCP.md for IDE configuration and self-hosted HTTP deployment.
 
 
 # Desktop — native workstation UI (full workspace)
@@ -394,35 +398,32 @@ POST /webui/api/runtime         Runtime control
 
 ## MCP Server Integration
 
-JEBAT ships with a native **Model Context Protocol (MCP) server** that exposes 47 tools to any MCP-compatible IDE or client (stdio, SSE, and Streamable HTTP).
+JEBAT includes a native MCP server for a full workspace checkout. Use the standalone `jebat-mcp` entry point for local IDE connections. The available tool set is determined by the installed runtime and its enabled integrations; do not expose it publicly without access controls.
 
 ### Running JEBAT as an MCP Server
 
 ```bash
-# Stdio mode (for IDE integration)
-python -m jebat.mcp.server
+# Stdio mode (recommended for a local IDE)
+python ./jebat-mcp --transport stdio
 
-# HTTP mode
-python -m jebat.mcp.server --mode http --port 8787
-
-# Via npx
-npx @nusabyte/jebat mcp server
+# Self-hosted HTTP mode (bind to loopback and put authentication in front of it)
+python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 ```
 
-### MCP Server Tools (47)
+### MCP Tools
 
-JEBAT exposes **47 MCP tools** across six categories, available over stdio, SSE, and Streamable HTTP (`https://mcp.jebat.online`):
+JEBAT exposes registered file, terminal, browser, search, scheduling, memory, and integration tools over MCP. Tool availability depends on the installed workspace and enabled integrations.
 
 | Category | Tools |
 |----------|-------|
-| **File** (7) | `file_read`, `file_write`, `file_patch`, `file_search`, `file_undo`, `file_tree` |
-| **Terminal** (8) | `terminal`, `terminal_bg`, `process_list`, `process_log`, `process_kill`, `process_write` |
-| **Browser** (9) | `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_scroll`, `browser_back`, `browser_vision`, `browser_console`, `browser_get_images` |
-| **Vision / Search** (4) | `vision_analyze`, `image_generate`, `search_web`, `web_extract` |
-| **Auth / Cron** (13) | `auth_*`, `cron_*` (create, list, pause, resume, remove, update, run) |
-| **Wiki** (10) | `wiki_*` (create, read, edit, delete, list, search, auto_save, suggest, consolidate, stats) |
+| **File** | `file_read`, `file_write`, `file_patch`, `file_search`, `file_undo`, `file_tree` |
+| **Terminal** | `terminal`, `terminal_bg`, `process_list`, `process_log`, `process_kill`, `process_write` |
+| **Browser** | `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_scroll`, `browser_back`, `browser_vision`, `browser_console`, `browser_get_images` |
+| **Vision / Search** | `vision_analyze`, `image_generate`, `search_web`, `web_extract` |
+| **Auth / Cron** | `auth_*`, `cron_*` (create, list, pause, resume, remove, update, run) |
+| **Wiki** | `wiki_*` (create, read, edit, delete, list, search, auto_save, suggest, consolidate, stats) |
 
-Connect any MCP client to `https://mcp.jebat.online/mcp` or run locally via `jebat mcp serve`.
+For a remote installation, deploy the MCP service with `infra/vps/vps/docker-compose.mcp.yml` and an authenticated reverse proxy based on `infra/vps/vps/nginx.jebat.mcp.conf`. The repository does not promise a shared public MCP endpoint.
 
 ### IDE Configuration
 
@@ -434,8 +435,8 @@ Add to your MCP config (`.cursor/mcp.json`, `.windsurf/mcp.json`):
 {
   "mcpServers": {
     "jebat": {
-      "command": "python",
-      "args": ["-m", "jebat.mcp.server"],
+      "command": "python3",
+      "args": ["/absolute/path/to/jebat-mcp"],
       "env": {}
     }
   }
@@ -448,8 +449,8 @@ Add to your MCP config (`.cursor/mcp.json`, `.windsurf/mcp.json`):
 {
   "mcpServers": {
     "jebat": {
-      "command": "npx",
-      "args": ["@nusabyte/jebat", "mcp", "server"]
+      "command": "python3",
+      "args": ["/absolute/path/to/jebat-mcp"]
     }
   }
 }
@@ -459,24 +460,18 @@ Add to your MCP config (`.cursor/mcp.json`, `.windsurf/mcp.json`):
 
 Settings > Tools > MCP > Add Server:
 ```
-Command: python -m jebat.mcp.server
+Command: python3 /absolute/path/to/jebat-mcp
 Mode: stdio
 ```
 
 ### Connecting to External MCP Servers
 
 ```bash
-# Connect via stdio
-jebat mcp connect --stdio "python -m my_server"
+# Start a local MCP server for your IDE
+python ./jebat-mcp --transport stdio
 
-# Connect via HTTP
-jebat mcp connect --http http://localhost:8080/mcp
-
-# List connected servers
-jebat mcp list
-
-# Call a tool on a connected server
-jebat mcp call server tool '{"param": "value"}'
+# Start a loopback HTTP service behind your own authenticated proxy
+python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 ```
 
 ---
@@ -586,11 +581,11 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v8.2 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v8.2.1 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
 | **LLM Provider Routing** | **17 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
-| **MCP Server** | **Native (47 tools, 3 transports)** | None | Basic API | Local API |
+| **MCP Server** | **Native workspace server** | None | Basic API | Local API |
 | **Cognitive Profiles** | **7 Thinking Modes (Ultra-Think)** | Standard Chat | Standard Chat | Standard Chat |
 | **Security Auditing** | **Autonomous Pentest Suite** | Blocked | None | None |
 | **Access Control (RBAC)** | **3-Tier Command Classification** | Muted Policy | Basic Auth | None |
@@ -650,7 +645,7 @@ jebat doctor
 ```
 jebat-core/
   ├── jebat/                  # Active runtime modules
-  │   ├── cli/                # Entrypoints (jebat_cli.py v8.2)
+   │   ├── cli/                # Entrypoints
   │   ├── core/               # Cognitive loops (agent_loop, orchestrator, delegation)
   │   ├── mcp/                # MCP server + skill registry + adapter
   │   ├── services/           # WebUI, MCP protocol, API gateway
@@ -700,12 +695,11 @@ To safeguard target servers, JEBAT categorizes all tool execution into permissio
 
 ## Documentation
 
-- [Quick Reference](QUICK_REFERENCE.md) — One-page cheat sheet
-- [Architecture](ARCHITECTURE.md) — Technical deep dive
-- [System Report](SYSTEM_REPORT_COMPLETE.md) — Full system report
-- [CLI Agent Status](CLI_AGENT_STATUS.md) — Gap analysis & implementation status
-- [Deployment](DEPLOYMENT.md) — Deployment guide
-- [Roadmap](ROADMAP.md) — Future plans
+- [MCP integration](MCP.md) — Local IDE setup and self-hosted transport
+- [Workstation MCP guide](WORKSTATION_MCP_GUIDE.md) — IDE integration guide
+- [llama.cpp VPS deployment](docs/LLAMACPP_VPS_DEPLOYMENT.md) — Inference runbook
+- [Production Compose](infra/vps/vps/docker-compose.prod.yml) — Public API and WebUI stack
+- [Production Nginx vhost](infra/vps/vps/nginx.jebat.online.conf) — Public routing
 
 ---
 

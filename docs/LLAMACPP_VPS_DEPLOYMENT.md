@@ -2,6 +2,12 @@
 
 This runbook makes `llama.cpp` the primary local chat backend for JEBAT.
 
+## Current Public Topology
+
+The live public service uses a two-node path: `jebat.online` terminates public traffic on `72.62.254.65`, while the JEBAT API, WebUI, and `llama.cpp` runtime operate on `72.62.255.206`. The public node reaches the private API and WebUI through the persistent upstream tunnel. The API uses `LLAMA_CPP_HOST=http://host.docker.internal:8081` inside the production container.
+
+Do not expose the model port publicly. Restrict it to the API host or a private network path.
+
 ## What This Changes
 
 - JEBAT shared LLM config gains a `llamacpp` provider backed by a `llama-server` OpenAI-compatible endpoint.
@@ -112,12 +118,12 @@ GPU example:
 
 ## JEBAT Runtime Configuration
 
-Set these on the VPS:
+Set these in the API service environment:
 
 ```bash
 export JEBAT_LLM_PROVIDER=llamacpp
 export JEBAT_LLM_MODEL=my-model-q4_k_m.gguf
-export LLAMA_CPP_HOST=http://127.0.0.1:8080
+export LLAMA_CPP_HOST=http://host.docker.internal:8081
 export JEBAT_LLM_FALLBACKS=ollama,local
 ```
 
@@ -127,7 +133,7 @@ Or update `jebat/config/config.yaml`:
 llm:
   provider: llamacpp
   model: my-model-q4_k_m.gguf
-  llamacpp_host: "http://127.0.0.1:8080"
+  llamacpp_host: "http://host.docker.internal:8081"
   fallback_providers:
     - ollama
     - local

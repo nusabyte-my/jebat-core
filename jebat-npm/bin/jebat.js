@@ -158,9 +158,10 @@ Installation:
   Requires: Python 3.11+ and pip. No sudo required.
   For AI agents / CI, the installer is fully non-interactive (--yes --quiet).
 
-Zero-install MCP (no local install needed):
-  Connect your IDE (Cursor / Claude / VS Code / Zed) to:
-    https://mcp.jebat.online/mcp   (Streamable HTTP, 47 tools)
+MCP:
+  The npm launcher does not host an MCP server. From a full workspace checkout:
+    python ./jebat-mcp --transport stdio
+  See https://github.com/nusabyte-my/jebat-core/blob/main/MCP.md
 `);
 }
 
