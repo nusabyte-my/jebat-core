@@ -51,7 +51,8 @@ run_auth "rsync -avz --delete \
   --exclude='out' \
   --exclude='__pycache__' \
   --exclude='*.pyc' \
-  --exclude='.env' \
+  --exclude='.env*' \
+  --exclude='.jebat' \
   --exclude='.claude' \
   --exclude='.gemini' \
   --exclude='*.egg-info' \
