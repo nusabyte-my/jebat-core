@@ -179,8 +179,8 @@ app.add_middleware(AuditMiddleware)
 
 # Include WebUI router
 app.add_middleware(APIKeyMiddleware)
-app.include_router(webui_router)
 _mount_static(app)
+app.include_router(webui_router)
 
 
 @app.get("/favicon.ico")

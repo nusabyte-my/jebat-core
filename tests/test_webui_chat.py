@@ -1,9 +1,18 @@
 """Focused WebUI chat route contract tests."""
 
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
 
 from jebat.services.webui import webui_server as webui
+
+
+def test_webui_static_routes_are_registered():
+    app = FastAPI()
+    webui._mount_static(app)
+    app.include_router(webui.webui_router)
+
+    paths = [getattr(route, "path", "") for route in app.routes]
+    assert "/webui/static/js" in paths
 
 
 @pytest.mark.asyncio
