@@ -53,6 +53,9 @@ run_auth "rsync -avz --delete \
   --exclude='*.pyc' \
   --exclude='.env*' \
   --exclude='.jebat' \
+  --exclude='training/output' \
+  --exclude='training/*.gguf' \
+  --exclude='jebat-npm/*.tgz' \
   --exclude='.claude' \
   --exclude='.gemini' \
   --exclude='*.egg-info' \
