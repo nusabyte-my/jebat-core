@@ -69,9 +69,9 @@
     try {
       if (typeof API !== 'undefined') {
         const rt = await API.runtime();
-        document.getElementById('ctrl-provider').textContent = rt.provider || '—';
-        document.getElementById('ctrl-model').textContent = rt.model || '—';
-        document.getElementById('ctrl-profile').textContent = rt.profile || 'default';
+        document.getElementById('ctrl-provider').textContent = rt.provider?.effective || '—';
+        document.getElementById('ctrl-model').textContent = rt.provider?.model || '—';
+        document.getElementById('ctrl-profile').textContent = rt.provider?.override?.provider || 'default';
 
         const catalog = rt.providers?.catalog || {};
         const sel = document.getElementById('ctrl-auth-provider');
@@ -86,4 +86,17 @@
     } catch {}
   });
   document.getElementById('ctrl-refresh')?.click();
+  document.getElementById('ctrl-auth-save')?.addEventListener('click', async () => {
+    const provider = document.getElementById('ctrl-auth-provider').value;
+    const secret = document.getElementById('ctrl-auth-secret').value.trim();
+    if (!provider || !secret) { window.toast?.('Select a provider and enter its credential.', 'warning'); return; }
+    try {
+      await API.providerAuth({ provider, secret });
+      document.getElementById('ctrl-auth-secret').value = '';
+      window.toast?.(`${provider} credential saved.`, 'success');
+      document.getElementById('ctrl-refresh')?.click();
+    } catch (error) {
+      window.toast?.(error.message || 'Unable to save provider credential.', 'error');
+    }
+  });
 </script>

@@ -152,3 +152,25 @@ async def test_agent_run_plan_is_persisted_and_profile_scoped(monkeypatch):
     assert run["agent_name"] == "Release reviewer"
     assert len(run["plan"]) == 3
     assert (await webui.list_agent_runs(user_id="user-a"))["runs"] == [run]
+
+
+@pytest.mark.asyncio
+async def test_safe_webui_workflow_smoke(monkeypatch):
+    async def ensure_state():
+        return None
+
+    monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)
+    monkeypatch.setattr(
+        webui,
+        "CHANNEL_CONNECTIONS",
+        {"telegram": {"status": "incomplete", "required": ["bot_token"], "missing": ["bot_token"]}},
+    )
+
+    status = await webui.get_status()
+    channels = await webui.get_channel_connections()
+    agent_status = await webui.agents_status()
+
+    assert status["status"] == "healthy"
+    assert {item["id"] for item in channels["available"]} >= {"telegram", "discord", "slack", "whatsapp"}
+    assert channels["connections"]["telegram"]["missing"] == ["bot_token"]
+    assert agent_status["auto_dispatch"] is True
