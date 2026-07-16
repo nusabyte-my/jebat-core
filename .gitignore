@@ -129,6 +129,7 @@ config
 # Docker
 docker-compose.override.yml
 docker-compose.prod.yml
+!infra/vps/vps/docker-compose.prod.yml
 docker-compose.local.yml
 .docker/
 .dockerignore
