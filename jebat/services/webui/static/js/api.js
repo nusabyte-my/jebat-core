@@ -51,72 +51,23 @@ const API = {
   consoleMeta() { return this.get('/console-meta'); }
 };
 
-/* ── SPA Router ──
- * Client-side navigation via hash fragments.
- * Pages are partials loaded into <main id="app-shell">.
- * URL pattern: /webui/#dashboard, /webui/#chat, etc.
- */
-const Router = {
-  current: null,
-  pages: {},
-
-  register(name, initFn) { this.pages[name] = initFn; },
-
-  navigate(nameOrPath) {
-    const name = nameOrPath.replace('#', '');
-    if (!this.pages[name]) { console.warn('No page:', name); return; }
-    const main = document.getElementById('app-shell');
-    if (!main) return;
-    main.innerHTML = '';
-    this.current = name;
-    this.pages[name](main);
-    // Update nav active
-    document.querySelectorAll('.nav-link').forEach(lnk => {
-      lnk.classList.toggle('active', lnk.dataset.page === name);
-    });
-    // Update hash
-    window.location.hash = name;
-  },
-
-  init(defaultPage) {
-    window.addEventListener('hashchange', () => {
-      this.navigate(window.location.hash || defaultPage);
-    });
-    // Load initial
-    const hash = window.location.hash || defaultPage;
-    if (hash) this.navigate(hash);
-  },
-
-  // Override nav link clicks
-  bindNav() {
-    document.addEventListener('click', e => {
-      const link = e.target.closest('[data-page]');
-      if (!link) return;
-      e.preventDefault();
-      this.navigate(link.dataset.page);
-    });
-  }
-};
-
-/* ── Shell layout ──
- * app-shell.html is the persistent chrome: nav + <main id="app-shell">
- * Every page partial is injected into <main id="app-shell">.
- */
-/* ── Status strip updater ── */
-async function updateStatusStrip() {
+async function updateConnectionStatus() {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  if (!dot || !text) return;
   try {
     const data = await API.status();
-    const strip = document.getElementById('status-strip');
-    if (!strip) return;
-    const comps = data.components || {};
-    strip.innerHTML = Object.entries(comps).map(([k, v]) =>
-      `<span class="status-item"><span class="status-dot ok"></span>${k}</span>`
-    ).join('');
-  } catch (_) {}
+    const componentCount = Object.keys(data.components || {}).length;
+    dot.className = 'topbar-status-dot';
+    text.textContent = `${componentCount} systems ready`;
+  } catch (_) {
+    dot.className = 'topbar-status-dot error';
+    text.textContent = 'Reconnecting';
+  }
 }
 
-// Poll status every 5s
-setInterval(updateStatusStrip, 5000);
+updateConnectionStatus();
+setInterval(updateConnectionStatus, 15000);
 
 // ── Dark mode toggle (optional) ──
 (function() {
