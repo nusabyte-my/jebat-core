@@ -241,6 +241,8 @@ class EnhancedMemorySystem:
         
         # Generalization
         self.generalizations: Dict[str, Dict] = {}
+        self.concept_weights: Dict[str, float] = defaultdict(float)
+        self.concept_graph: Dict[str, set] = defaultdict(set)
         
         # Forgetting
         self.forgetting_curve_enabled = True
@@ -1082,6 +1084,20 @@ def create_procedural_memory() -> ProceduralMemory:
     return ProceduralMemory()
 
 
+# autoMimpi + SelfLearn
+from .automimpi import (
+    AutoMimpi,
+    SelfLearn,
+    DreamReport,
+    DreamSuggestion,
+    LearningProfile,
+    SuggestionType,
+    SuggestionUrgency,
+    create_automimpi,
+    create_selflearn,
+)
+
+
 # Export
 __all__ = [
     "MemoryType",
@@ -1099,4 +1115,14 @@ __all__ = [
     "create_working_memory",
     "create_semantic_memory",
     "create_procedural_memory",
+    # autoMimpi + SelfLearn
+    "AutoMimpi",
+    "SelfLearn",
+    "DreamReport",
+    "DreamSuggestion",
+    "LearningProfile",
+    "SuggestionType",
+    "SuggestionUrgency",
+    "create_automimpi",
+    "create_selflearn",
 ]
