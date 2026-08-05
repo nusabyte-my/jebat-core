@@ -26,6 +26,7 @@ from jebat_cli_new.provider_openai import OpenAIProviderImpl
 from jebat_cli_new.provider_anthropic import AnthropicProviderImpl
 from jebat_cli_new.provider_gemini import GeminiProviderImpl
 from jebat_cli_new.provider_github import GitHubModelsProviderImpl
+from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 
 
 def _ollama_reachable(host: str, timeout: float = 2.0) -> bool:
@@ -133,6 +134,16 @@ def _default_api_base(kind: str) -> str:
     }.get(kind, "")
 
 
+# Kinds that speak the OpenAI Chat Completions protocol and route to OpenAIProviderImpl.
+# (Custom providers + `openai-compat` are handled separately via CUSTOM_PROVIDER_IDS.)
+OPENAI_COMPAT_KINDS = {
+    "openai-compat",
+    "fireworks",
+    "perplexity",
+    "deepinfra",
+}
+
+
 def _default_model(kind: str) -> str:
     return {
         "ollama": "qwen2.5-coder:7b",
@@ -155,6 +166,8 @@ def _provider_factory(config: ProviderConfig, kind: Optional[str] = None):
         return GeminiProviderImpl(config)
     if kind == "github":
         return GitHubModelsProviderImpl(config)
+    if kind in CUSTOM_PROVIDER_IDS or kind in OPENAI_COMPAT_KINDS:
+        return OpenAIProviderImpl(config)
 
     class AnyProvider:
         def __init__(self, cfg: ProviderConfig):

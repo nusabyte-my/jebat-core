@@ -5,6 +5,10 @@ import tempfile
 
 from jebat.session.session_manager import SessionManager
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_session_manager_can_create_and_load_session() -> None:
     """Test that the session manager can create sessions, add messages, and load history."""

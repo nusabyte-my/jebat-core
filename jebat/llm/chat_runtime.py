@@ -6,6 +6,7 @@ from dataclasses import replace
 from .config import JebatLLMConfig, load_llm_config
 from .conversation import PreparedPrompt, prepare_chat_prompt
 from .providers import ProviderGeneration, generate_with_failover
+from .token_usage import input_token_budget
 
 
 CHAT_PRESETS: dict[str, dict[str, object]] = {
@@ -162,18 +163,20 @@ async def generate_chat_reply(
         temperature=temperature_override,
         max_tokens=max_tokens_override,
     )
+    # Use custom system prompt if provided, otherwise build default
+    if system_prompt_override:
+        system_prompt = system_prompt_override
+    else:
+        system_prompt = build_chat_system_prompt(mode, preset=preset)
     prepared: PreparedPrompt = prepare_chat_prompt(
         prompt,
         mode=mode,
         model=config.model,
         provider=config.provider,
         conversation_messages=conversation_messages,
+        input_token_budget=input_token_budget(config.context_window, config.max_tokens),
+        system_prompt=system_prompt,
     )
-    # Use custom system prompt if provided, otherwise build default
-    if system_prompt_override:
-        system_prompt = system_prompt_override
-    else:
-        system_prompt = build_chat_system_prompt(mode, preset=preset)
     response, used_provider = await generate_with_failover(
         config=config,
         prompt=prepared.prompt,

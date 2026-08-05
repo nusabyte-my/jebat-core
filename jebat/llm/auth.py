@@ -89,6 +89,11 @@ PROVIDER_ENV_MAP = {
     "custom": ("JEBAT_CUSTOM_API_URL", "JEBAT_CUSTOM_API_KEY"),
     "tokenrouter": ("TOKENROUTER_API_KEY",),
     "local": (),
+    "opencode_go": ("OPENCODE_GO_API_KEY",),
+    "opencode_zen": ("OPENCODE_ZEN_API_KEY",),
+    "zenmux": ("ZENMUX_API_KEY",),
+    "tokerrouter": ("TOKERROUTER_API_KEY",),
+    "agent_router": ("AGENT_ROUTER_API_KEY",),
 }
 
 PROVIDER_PRIORITY = (
@@ -101,6 +106,11 @@ PROVIDER_PRIORITY = (
     "custom",
     "ollama",
     "local",
+    "opencode_go",
+    "opencode_zen",
+    "zenmux",
+    "tokerrouter",
+    "agent_router",
 )
 
 

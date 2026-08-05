@@ -39,6 +39,21 @@
 
 ---
 
+## Q3/Q4 2026 Build (2026-07-14)
+
+The following roadmap items were completed and wired into the running system:
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Sentinel Security alpha | ✅ WIRED | `SecurityAnalyzeSkill` registered in the global skill registry via `@skill`; activates with the `security` extra (numpy + scikit-learn) |
+| Pentest suite (Q4) | ✅ DONE | `routers/pentest.py` now runs real scans via `PentestEngine`/`KerisSentinel`; 7 pentest tools registered (`pentest_scan`, `pentest_port_scan`, `pentest_subdomain_enum`, `pentest_dns_recon`, `pentest_header_check`, `pentest_ssl_check`, `pentest_cve_search`) and wired into the agent loop + MCP tool set |
+| WhatsApp channel (Q4) | ✅ DONE | `WhatsAppChannel` bridges inbound webhooks → `ultra_loop`; webhook route added to `webui_server.py`; `channels` extra added (discord.py) |
+| Discord channel (Q4) | ✅ DONE | `DiscordChannel` gateway + slash commands bridged to `ultra_loop`; guarded `discord` import |
+| Analytics dashboard (Q4) | ✅ DONE | `routers/analytics.py` exposes `/api/v1/analytics/{overview,agents,memory,models,errors,events}` backed by real DB repositories |
+| Structured ELK logging (Q4) | ✅ DONE | `ElasticsearchHandler`/`ElasticsearchExporter` added mirroring `LokiHandler`; dispatched in `CatalystConfig`; gated off by default (no ES URL) |
+
+---
+
 ## Build Priority — Next Sprint
 
 ### P0: Critical Path — ✅ COMPLETED

@@ -728,7 +728,23 @@ tr:hover td { background: var(--bg-hover); }
     grid-template-columns: 1fr;
     grid-template-areas: "topbar" "main";
   }
-  .sidebar { display: none; }
+  .sidebar {
+    display: flex;
+    position: fixed;
+    z-index: 300;
+    left: 0;
+    top: 0;
+    width: min(86vw, 320px);
+    transform: translateX(-105%);
+    transition: transform var(--transition-base);
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop.open { display: block; position: fixed; inset: 0; z-index: 250; background: rgba(0,0,0,.58); }
+  .topbar-breadcrumb, .bottom-bar { display: none; }
+  .topbar { padding: 0 var(--space-md); }
+  .topbar-right { gap: var(--space-sm); }
+  .topbar-right .btn:nth-child(2), .topbar-right .btn:nth-child(3), .i18n-toggle { display: none; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 }
 

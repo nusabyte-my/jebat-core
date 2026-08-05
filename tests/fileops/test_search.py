@@ -5,6 +5,10 @@ import tempfile
 
 from jebat.fileops.search import search_files
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_search_content_finds_match() -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:

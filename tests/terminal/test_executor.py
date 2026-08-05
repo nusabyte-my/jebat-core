@@ -5,6 +5,8 @@ import pytest
 
 from jebat.terminal.executor import TerminalExecutor
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.asyncio
 async def test_run_simple_command() -> None:

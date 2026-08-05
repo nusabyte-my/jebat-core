@@ -5,6 +5,10 @@ import tempfile
 
 from jebat.repl.repl_session import ReplSession
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_repl_session_can_store_and_load() -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:

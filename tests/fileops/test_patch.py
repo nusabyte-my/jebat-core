@@ -5,6 +5,10 @@ import tempfile
 
 from jebat.fileops.patch import patch_file
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_patch_single_replacement() -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:

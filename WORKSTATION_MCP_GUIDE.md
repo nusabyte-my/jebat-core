@@ -1,6 +1,8 @@
-# 🗡️ JEBAT v8.2 — Workstation Integration & MCP Server Guide
+# JEBAT v8.2.1 — Workstation Integration & MCP Server Guide
 
-Welcome to the official integration guide for **JEBAT v8.2**. This document details how to inject JEBAT's cognitive reasoning, multi-agent swarms, security testing suite, and memory context directly into your developer workstation (Cursor, VS Code, Zed, Windsurf, JetBrains), run it as a standard Model Context Protocol (MCP) server, and utilize all 47 tools across our 6-type memory architecture.
+This guide covers local IDE integration from a full JEBAT workspace checkout. Start the supported MCP entry point with `python ./jebat-mcp --transport stdio`. The exact tool set comes from the enabled workspace integrations; do not rely on historical tool counts in older material.
+
+The npm launcher starts the JEBAT CLI but does not host MCP. Remote MCP is a self-hosted deployment concern and must sit behind authentication.
 
 ---
 
@@ -15,7 +17,7 @@ Welcome to the official integration guide for **JEBAT v8.2**. This document deta
    - [CLI Configurations Command](#cli-configurations-command)
    - [Transport Modes](#transport-modes)
 3. [The 13 Core Capabilities Guide](#3-the-13-core-capabilities-guide)
-   - [1. CLI Agent (46 Subcommands, 89 Tools)](#1-cli-agent-46-subcommands-89-tools)
+   - [1. CLI Agent and Registered Tools](#1-cli-agent-and-registered-tools)
    - [2. ReAct Loop (Think→Act→Observe)](#2-react-loop-thinkactobserve)
    - [3. Ultra-Think (7 Reasoning Modes)](#3-ultra-think-7-reasoning-modes)
    - [4. Ultra-Loop (Autonomous Cycles)](#4-ultra-loop-autonomous-cycles)
@@ -34,27 +36,27 @@ Welcome to the official integration guide for **JEBAT v8.2**. This document deta
 ## 1. Workstation Injection & IDE Integration
 
 You can integrate JEBAT into your workstation in two ways:
-1. **As an OpenAI-Compatible API Endpoint**: IDE sends prompt queries to JEBAT's local API server.
-2. **As an MCP Server Subprocess**: IDE spawns JEBAT CLI as an MCP subprocess, directly consuming its 89 tools.
+1. **As an API client**: use your own JEBAT API deployment and credentials.
+2. **As an MCP subprocess**: let the IDE start `python ./jebat-mcp --transport stdio` from a local workspace checkout.
 
 ### Cursor IDE
 
 #### Option A: Local Stdio MCP Server (Recommended)
-Exposes all 89 JEBAT tools (files, git, browser, sandbox, search) directly to Cursor's Composer or Chat.
+Exposes the tools enabled in your local JEBAT workspace to Cursor's Composer or Chat.
 1. Open Cursor Settings -> **Features** -> **MCP**.
 2. Click **+ Add New MCP Server**.
 3. Configure:
    - **Name**: `jebat`
    - **Type**: `command`
-   - **Command**: `jebat mcp serve --transport stdio`
+    - **Command**: `python3 /absolute/path/to/jebat-mcp`
 
 Alternatively, write this JSON to `.cursor/mcp.json` or `%USERPROFILE%\.cursor\mcp.json`:
 ```json
 {
   "mcpServers": {
     "jebat": {
-      "command": "jebat",
-      "args": ["mcp", "serve", "--transport", "stdio"]
+      "command": "python3",
+      "args": ["/absolute/path/to/jebat-mcp"]
     }
   }
 }
@@ -63,9 +65,9 @@ Alternatively, write this JSON to `.cursor/mcp.json` or `%USERPROFILE%\.cursor\m
 #### Option B: OpenAI-Compatible Provider
 1. Open Cursor Settings -> **Models**.
 2. Under **OpenAI API Key**, override the base URL:
-   - **Base URL**: `http://localhost:8000/api/v1`
-   - **API Key**: `jebat-local-key`
-3. Add custom models: `jebat-pro`, `jebat-fast`, `jebat-deep`.
+    - **Base URL**: your deployment's documented OpenAI-compatible endpoint
+    - **API Key**: a credential issued by that deployment
+3. Use only models advertised by that provider.
 
 ---
 
@@ -78,8 +80,8 @@ If you are using extension wrappers like Cline or Roo Code to build agentic codi
 {
   "mcpServers": {
     "jebat": {
-      "command": "jebat",
-      "args": ["mcp", "serve", "--transport", "stdio"],
+      "command": "python3",
+      "args": ["/absolute/path/to/jebat-mcp"],
       "disabled": false
     }
   }
@@ -128,8 +130,8 @@ Windsurf uses standard MCP server declarations.
 {
   "mcpServers": {
     "jebat": {
-      "command": "jebat",
-      "args": ["mcp", "serve", "--transport", "stdio"]
+      "command": "python3",
+      "args": ["/absolute/path/to/jebat-mcp"]
     }
   }
 }
@@ -144,8 +146,8 @@ For PyCharm, WebStorm, or IntelliJ using the JetBrains AI Assistant:
 2. Click **+ Add Server** and select **Stdio Command**.
 3. Input:
    - **Name**: `jebat`
-   - **Command / Executable**: `jebat`
-   - **Arguments**: `mcp serve --transport stdio`
+    - **Command / Executable**: `python3`
+    - **Arguments**: `/absolute/path/to/jebat-mcp`
 
 ---
 
@@ -153,9 +155,9 @@ For PyCharm, WebStorm, or IntelliJ using the JetBrains AI Assistant:
 
 ### CLI Configurations Command
 
-JEBAT makes finding setup configurations easy. From your terminal, execute:
+JEBAT ships IDE templates under `ide-configs/`. From the workspace root, start the server with:
 ```bash
-jebat mcp ide-config
+python ./jebat-mcp --print-ide-config
 ```
 This dumps clean, pre-formatted JSON structures for Cursor, VS Code, Zed, Windsurf, and JetBrains.
 
@@ -164,28 +166,25 @@ This dumps clean, pre-formatted JSON structures for Cursor, VS Code, Zed, Windsu
 #### 1. Stdio (JSON-RPC 2.0 over Standard Input/Output)
 Ideal for local IDE subprocess launches.
 ```bash
-jebat mcp serve --transport stdio
+python ./jebat-mcp --transport stdio
 ```
 
 #### 2. HTTP Server (SSE Transport)
 Ideal for remote developer environments or sharing a single server across a workspace.
 ```bash
-jebat mcp serve --transport http --host 127.0.0.1 --port 8099
+python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 ```
 
-#### 3. Streamable HTTP (MCP 2025-03-26 Spec)
-Optimized transport complying with the latest specification version.
-```bash
-jebat mcp serve --transport streamable-http --port 8099
-```
+#### 3. Remote deployment
+Use `infra/vps/vps/docker-compose.mcp.yml` and `infra/vps/vps/nginx.jebat.mcp.conf` as deployment references. Keep the service private or put it behind authentication before accepting remote clients.
 
 ---
 
 ## 3. The 13 Core Capabilities Guide
 
-### 1. CLI Agent (46 Subcommands, 89 Tools)
+### 1. CLI Agent and Registered Tools
 
-JEBAT runs as a command-line agent wrapping 89 granular OS tools safely behind command verification tiers.
+JEBAT runs as a command-line agent with registered workspace tools protected by command verification tiers.
 - **Inspect System Health**: `jebat status`
 - **Diagnose Problems**: `jebat doctor`
 - **Inspect Registered Tools**: `jebat tools list`
@@ -202,7 +201,7 @@ To protect host filesystems, tools are classified into three safety domains:
 
 The core cognitive engine uses a Reasoning-and-Acting (ReAct) cycle. For every request, JEBAT:
 1. **Thinks**: Explores the problem and designs a solution path.
-2. **Acts**: Calls one of the 89 registered tools.
+2. **Acts**: Calls an enabled registered tool.
 3. **Observes**: Analyzes tool execution stdout/stderr and decides on follow-ups.
 
 Responses are streamed **token-by-token** with active status indicators showing live tool selections.

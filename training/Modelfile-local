@@ -1,0 +1,4 @@
+FROM ./jebat-coder-3b.gguf
+
+PARAMETER temperature 0.7
+PARAMETER num_ctx 4096

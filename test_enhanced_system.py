@@ -171,7 +171,7 @@ class EnhancedSystemTester:
             details.append("✓ ErrorRecoverySystem imports")
 
             try:
-                from jebat.mcp.protocol_server import MCPProtocolServer
+                from jebat.mcp_registry.server import JEBATMCPServer as MCPProtocolServer
             except ImportError:
                 from mcp.protocol_server import MCPProtocolServer
 

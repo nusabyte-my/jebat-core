@@ -1,14 +1,13 @@
-# JEBATCore — npm MCP Adapter Package
+# JEBATCore — npm MCP Client Adapter
 
-> Node.js MCP client adapter for JEBAT CLI Agent. Bootstraps Python + connects IDEs via MCP.
+> Node.js MCP client adapter for JEBAT. Use `@nusabyte/jebat` for the supported CLI launcher; use a full workspace checkout and `python ./jebat-mcp` when hosting MCP for an IDE.
 
 ## Install
 
 ```bash
 npm install jebatcore
-# or run directly:
-npx jebat chat "Hello world"
-npx jebat mcp serve --transport stdio
+# Supported CLI launcher:
+npx @nusabyte/jebat chat "Hello world"
 ```
 
 ## Quick Start
@@ -19,11 +18,11 @@ npx jebat mcp serve --transport stdio
 # Chat with JEBAT (auto-bootstraps Python if needed)
 npx jebat chat "Explain quantum computing"
 
-# Start MCP server for IDE integration
-npx jebat mcp serve --transport stdio
+# Host MCP from a full workspace checkout
+python ./jebat-mcp --transport stdio
 
-# Start MCP server with Streamable HTTP (MCP 2025-03-26)
-npx jebat mcp serve --transport streamable-http --port 8100
+# Self-host HTTP behind an authenticated reverse proxy
+python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 
 # Git operations
 npx jebat git status
@@ -56,19 +55,13 @@ const response = await client.createMessage([
 await client.disconnect();
 ```
 
-### 3. HTTP/Streamable HTTP (Remote IDE)
+### 3. Self-Hosted HTTP (Remote IDE)
 
 ```javascript
-// SSE transport (legacy HTTP)
+// HTTP transport from an authenticated deployment you operate
 const http = new JebatMCPClient({
   transport: 'http',
-  url: 'https://mcp.jebat.online/sse'
-});
-
-// Streamable HTTP (MCP 2025-03-26 spec)
-const streamable = new JebatMCPClient({
-  transport: 'streamable-http',
-  url: 'https://mcp.jebat.online/mcp'
+  url: 'https://your-mcp-host.example/mcp'
 });
 ```
 
@@ -87,8 +80,8 @@ const info = bootstrap(); // { python: 'python3', installed: true, version: '0.1
   "mcp": {
     "servers": {
       "jebat": {
-        "command": "jebat",
-        "args": ["mcp", "serve", "--transport", "stdio"]
+        "command": "python3",
+        "args": ["/absolute/path/to/jebat-mcp"]
       }
     }
   }
@@ -100,26 +93,26 @@ const info = bootstrap(); // { python: 'python3', installed: true, version: '0.1
 {
   "mcpServers": {
     "jebat": {
-      "command": "npx",
-      "args": ["-y", "jebatcore"]
+      "command": "python3",
+      "args": ["/absolute/path/to/jebat-mcp"]
     }
   }
 }
 ```
 
 ### Windsurf / JetBrains
-Same pattern — use `npx jebatcore` or `jebat mcp serve --transport stdio`.
+Use `python3 /absolute/path/to/jebat-mcp` for a local stdio server.
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
-| **MCP Server** | Exposes all 47 JEBAT tools to IDEs via stdio/HTTP/streamable-http |
+| **MCP Server** | Hosted by a full JEBAT workspace through `jebat-mcp` |
 | **MCP Client** | Connect to JEBAT from Node.js using MCP SDK |
 | **Sampling** | IDEs can request LLM completions through JEBAT's 9Router free-proxy |
 | **Progress Tokens** | Real-time feedback during long-running tool calls |
 | **Auto Bootstrap** | Automatically installs Python JEBAT package if missing |
-| **3 Transports** | stdio (IDEs), SSE (legacy HTTP), Streamable HTTP (MCP 2025-03-26) |
+| **Transports** | stdio for local IDEs and self-hosted HTTP for controlled remote access |
 
 ## Architecture
 

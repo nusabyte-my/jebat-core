@@ -5,6 +5,10 @@ import tempfile
 
 from jebat.fileops.read import read_file
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_file_read_returns_lines_with_numbers() -> None:
     with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".txt") as tf:

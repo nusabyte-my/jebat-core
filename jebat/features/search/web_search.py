@@ -17,6 +17,8 @@ import httpx
 
 from jebat.tools import register_tool
 from jebat.config import load_config
+from jebat.features.security.outbound import OutboundURLBlocked, get_validated
+from jebat.features.security.trust_boundary import mark_untrusted_content
 
 # ── Constants ─────────────────────────────────────────────────────────────
 
@@ -469,8 +471,8 @@ async def web_extract(url: str, max_chars: int = 100_000) -> dict[str, Any]:
         "Accept-Language": "en-US,en;q=0.5",
     }
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
-            resp = await client.get(url, headers=headers)
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+            resp = await get_validated(client, url, headers=headers)
             resp.raise_for_status()
             html_text = resp.text
 
@@ -490,10 +492,12 @@ async def web_extract(url: str, max_chars: int = 100_000) -> dict[str, Any]:
         return {
             "url": url,
             "title": title,
-            "content": content,
+            "content": mark_untrusted_content(content, source=str(resp.url)),
             "char_count": char_count,
             "truncated": truncated,
         }
+    except OutboundURLBlocked as exc:
+        return {"error": f"Blocked unsafe URL: {exc}", "url": url}
     except httpx.TimeoutException:
         return {"error": f"Timeout fetching {url}", "url": url}
     except httpx.HTTPStatusError as exc:

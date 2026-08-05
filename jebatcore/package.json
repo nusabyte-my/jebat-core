@@ -1,7 +1,7 @@
 {
   "name": "jebatcore",
   "version": "0.1.0",
-  "description": "JEBAT CLI Agent — MCP client adapter + Python bootstrap. Use npx jebat to run.",
+  "description": "JEBATCore MCP client adapter and Python workspace bootstrap.",
   "main": "src/index.js",
   "bin": {
     "jebat": "src/cli.js",
@@ -28,9 +28,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/humm1ngb1rd/jebat-core"
+    "url": "https://github.com/nusabyte-my/jebat-core.git"
   },
-  "homepage": "https://jebat.nusabyte.my",
+  "homepage": "https://jebat.online",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0"
   },

@@ -65,6 +65,9 @@ logs/
 log/
 *.log.*
 
+# Local WebUI runtime state
+.webui_state/
+
 # Database
 *.db
 *.sqlite
@@ -126,6 +129,7 @@ config
 # Docker
 docker-compose.override.yml
 docker-compose.prod.yml
+!infra/vps/vps/docker-compose.prod.yml
 docker-compose.local.yml
 .docker/
 .dockerignore
@@ -179,6 +183,9 @@ jebat-core/
 
 # Ignore ALL .md by default
 *.md
+
+# Keep JEBAT skill entrypoints under version control.
+!jebat-tokguru/skills/**/SKILL.md
 
 # But keep core system files (root only)
 !/README.md

@@ -16,6 +16,7 @@ class JebatLLMConfig:
     top_p: float = 0.95
     top_k: int = 64
     max_tokens: int = 1200
+    context_window: int = 16384
     ollama_host: str = "http://127.0.0.1:11434"
     ollama_keep_alive: str = ""  # e.g. "5m", "1h", "0" (0 unloads immediately); empty = server default
     llamacpp_host: str = "http://127.0.0.1:8080"
@@ -35,6 +36,7 @@ def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
     top_p = float(os.getenv("JEBAT_LLM_TOP_P", raw.get("top_p", 0.95)))
     top_k = int(os.getenv("JEBAT_LLM_TOP_K", raw.get("top_k", 64)))
     max_tokens = int(os.getenv("JEBAT_LLM_MAX_TOKENS", raw.get("max_tokens", 1200)))
+    context_window = int(os.getenv("JEBAT_LLM_CONTEXT_WINDOW", raw.get("context_window", 16384)))
     ollama_host = os.getenv("OLLAMA_HOST", raw.get("ollama_host", "http://127.0.0.1:11434"))
     llamacpp_host = os.getenv("LLAMA_CPP_HOST", raw.get("llamacpp_host", "http://127.0.0.1:8080"))
     ollama_keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", raw.get("ollama_keep_alive", ""))
@@ -52,6 +54,7 @@ def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
         top_p=top_p,
         top_k=top_k,
         max_tokens=max_tokens,
+        context_window=context_window,
         ollama_host=str(ollama_host).strip(),
         llamacpp_host=str(llamacpp_host).strip(),
         ollama_keep_alive=str(ollama_keep_alive).strip(),

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .token_usage import estimate_tokens
+from .token_usage import budget_input, estimate_tokens
 
 
 @dataclass(slots=True)
@@ -22,6 +22,8 @@ def prepare_chat_prompt(
     model: str = "",
     provider: str = "",
     conversation_messages: list[dict[str, str]] | None = None,
+    input_token_budget: int | None = None,
+    system_prompt: str | None = None,
 ) -> PreparedPrompt:
     profile = select_prompt_profile(prompt, mode=mode)
     messages = [dict(item) for item in (conversation_messages or []) if isinstance(item, dict)]
@@ -30,13 +32,16 @@ def prepare_chat_prompt(
 
     if not messages:
         wrapped_prompt = _wrap_prompt(prompt, profile=profile)
+        bounded = _budget_prompt(wrapped_prompt, input_token_budget, system_prompt, model, provider)
         return PreparedPrompt(
-            prompt=wrapped_prompt,
+            prompt=bounded.prompt,
             profile=profile,
             metadata={
                 "history_summary_turns": 0,
                 "recent_turns": 0,
-                "estimated_prompt_tokens": estimate_tokens(wrapped_prompt, model=model, provider=provider),
+                "estimated_prompt_tokens": bounded.input_tokens,
+                "input_token_budget": input_token_budget,
+                "prompt_truncated": bounded.truncated,
             },
         )
 
@@ -58,8 +63,9 @@ def prepare_chat_prompt(
     else:
         final_prompt = prompt
 
+    bounded = _budget_prompt(final_prompt, input_token_budget, system_prompt, model, provider)
     return PreparedPrompt(
-        prompt=final_prompt,
+        prompt=bounded.prompt,
         profile=profile,
         summary=summary,
         recent_turns=[
@@ -73,8 +79,30 @@ def prepare_chat_prompt(
         metadata={
             "history_summary_turns": len(older_turns),
             "recent_turns": len(recent_turns),
-            "estimated_prompt_tokens": estimate_tokens(final_prompt, model=model, provider=provider),
+            "estimated_prompt_tokens": bounded.input_tokens,
+            "input_token_budget": input_token_budget,
+            "prompt_truncated": bounded.truncated,
         },
+    )
+
+
+def _budget_prompt(
+    prompt: str,
+    input_budget: int | None,
+    system_prompt: str | None,
+    model: str,
+    provider: str,
+):
+    if input_budget is None:
+        tokens = estimate_tokens(prompt, model=model, provider=provider)
+        return budget_input(prompt, "", context_window=max(1, tokens), max_output_tokens=0, model=model, provider=provider)
+    return budget_input(
+        prompt,
+        system_prompt,
+        context_window=input_budget,
+        max_output_tokens=0,
+        model=model,
+        provider=provider,
     )
 
 

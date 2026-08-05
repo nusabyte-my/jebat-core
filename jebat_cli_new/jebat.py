@@ -7,20 +7,22 @@ v8.2 — gradient banner, rounded panels, auto-orchestrator, ghost mode, agent D
 
 from __future__ import annotations
 
-import argparse, collections, json, os, random, re, sqlite3, sys, textwrap, threading, time, urllib.request, urllib.error
+import argparse, collections, json, os, random, re, sqlite3, sys, textwrap, threading, time, types, urllib.request, urllib.error
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
-from jebat_cli_new.models import CompletionRequest, CompletionResponse
+from jebat_cli_new.models import CompletionRequest, CompletionResponse, resolve_api_key
 from jebat_cli_new.providers import (
     OllamaProviderImpl,
     OpenAIProviderImpl,
     AnthropicProviderImpl,
     GeminiProviderImpl,
     GitHubModelsProviderImpl,
+    OPENAI_COMPAT_KINDS,
 )
+from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 
 
 VERSION = "7.5"
@@ -89,8 +91,16 @@ PROVIDER_KINDS = [
     ("cloudflare",      "Cloudflare AI",   "https://api.cloudflare.com/client/v4",        "@cf/meta/llama-3.3-70b-instruct-fp16", False, "Free Workers AI inference"),
     ("sambanova",       "SambaNova",       "https://api.sambanova.ai/v1",                "Meta-Llama-3.3-70B-Instruct", True, "Free tier, fast inference"),
     ("novita",          "Novita AI",       "https://api.novita.ai/v3/openai",            "deepseek-r1",            True, "Cheap R1/LLaMA access"),
-    ("zai",             "Z.AI",            "https://api.z.ai/v1",                         "glm-4-plus",             True, "Zhipu GLM models"),
-    ("openai-compat",   "Custom (OpenAI-compatible)", "",                                  "",                       True, "Any OpenAI-compatible endpoint"),
+    ("zai",             "Z.AI",            "https://api.z.ai/v1",                         "glm-4-plus",             True,  "Zhipu GLM models"),
+    ("openai-compat",   "Custom (OpenAI-compatible)", "",                                  "",                       True,  "Any OpenAI-compatible endpoint"),
+    ("fireworks",       "Fireworks AI",    "https://api.fireworks.ai/inference/v1",        "accounts/fireworks/models/llama-v3p3-70b-instruct", True, "Fast open models, OpenAI-compatible"),
+    ("perplexity",      "Perplexity",      "https://api.perplexity.ai",                    "sonar",                  True,  "Online + Sonar models, OpenAI-compatible"),
+    ("deepinfra",       "DeepInfra",       "https://api.deepinfra.com/v1/openai",          "meta-llama/Meta-Llama-3.3-70B-Instruct", True, "Open-source model hosting, OpenAI-compatible"),
+    ("opencode_go",     "OpenCode Go",     "",                                              "opencode-go/default",    True,  "OpenCode Go gateway (OpenAI-compatible)"),
+    ("opencode_zen",    "OpenCode Zen",    "",                                              "opencode-zen/default",   True,  "OpenCode Zen gateway, SSO/OAuth (OpenAI-compatible)"),
+    ("zenmux",          "ZenMux",          "",                                              "zenmux/default",         True,  "ZenMux token-multiplexing router (OpenAI-compatible)"),
+    ("tokerrouter",     "TokerRouter",     "",                                              "tokerrouter/default",    True,  "TokerRouter token-usage router (OpenAI-compatible)"),
+    ("agent_router",    "Agent Router",    "",                                              "agent-router/default",   True,  "Agent Router orchestration, SSO/OAuth (OpenAI-compatible)"),
 ]
 
 
@@ -190,12 +200,75 @@ MODEL_CATALOG = {
     "zai": [
         ("glm-4-plus",                 "GLM-4 Plus",         128000, 8192, 1, 3, ["code"]),
     ],
+    "fireworks": [
+        ("accounts/fireworks/models/llama-v3p3-70b-instruct", "Llama 3.3 70B Instruct", 128000, 16384, 0.2, 0.2, ["code"]),
+        ("accounts/fireworks/models/mixtral-8x22b-instruct",  "Mixtral 8x22B Instruct", 64000, 16384, 0.24, 0.24, ["code"]),
+        ("accounts/fireworks/models/llama-v3p1-8b-instruct",  "Llama 3.1 8B Instruct",  128000, 8192, 0.1, 0.1, ["code", "cheap"]),
+    ],
+    "perplexity": [
+        ("sonar",                      "Sonar",              200000, 8192, 1, 1, ["code", "online"]),
+        ("sonar-pro",                  "Sonar Pro",          200000, 8192, 3, 3, ["code", "online", "best"]),
+        ("llama-3.1-sonar-large-128k-online", "Llama 3.1 Sonar Large 128K", 128000, 8192, 0.4, 0.4, ["code", "online"]),
+    ],
+    "deepinfra": [
+        ("meta-llama/Meta-Llama-3.3-70B-Instruct", "Meta Llama 3.3 70B", 128000, 8192, 0.1, 0.1, ["code", "cheap"]),
+        ("deepseek-ai/DeepSeek-V3",   "DeepSeek V3",        128000, 8192, 0.27, 1.1, ["code"]),
+        ("Qwen/Qwen2.5-72B-Instruct", "Qwen2.5 72B",        128000, 8192, 0.13, 0.13, ["code"]),
+    ],
+    # Placeholder catalogs — replaced by live /v1/models fetch in the full CLI;
+    # edit here or rely on the `/provider add` free-text model entry.
+    "opencode_go": [
+        ("opencode-go/default",        "OpenCode Go Default", 128000, 8192, 0, 0, ["code"]),
+        ("opencode-go/go-large",       "OpenCode Go Large",   128000, 8192, 0, 0, ["code"]),
+    ],
+    "opencode_zen": [
+        ("opencode-zen/default",       "OpenCode Zen Default", 128000, 8192, 0, 0, ["code"]),
+        ("opencode-zen/zen-pro",       "OpenCode Zen Pro",     128000, 8192, 0, 0, ["code"]),
+    ],
+    "zenmux": [
+        ("zenmux/default",             "ZenMux Default",      128000, 8192, 0, 0, ["code"]),
+        ("zenmux/mux-1",               "ZenMux 1",            128000, 8192, 0, 0, ["code"]),
+    ],
+    "tokerrouter": [
+        ("tokerrouter/default",        "TokerRouter Default", 128000, 8192, 0, 0, ["code"]),
+        ("tokerrouter/route-fast",     "TokerRouter Fast",    128000, 8192, 0, 0, ["code"]),
+    ],
+    "agent_router": [
+        ("agent-router/default",       "Agent Router Default", 128000, 8192, 0, 0, ["code"]),
+        ("agent-router/orchestrator",  "Agent Router Orchestrator", 128000, 8192, 0, 0, ["code"]),
+    ],
 }
 
 
 def _get_models_for_provider(provider_kind):
     """Get curated model list for a provider kind."""
     return MODEL_CATALOG.get(provider_kind, [])
+
+
+def _fetch_live_models(api_base, api_key=None):
+    """Best-effort live model catalog from an OpenAI-compatible /models endpoint.
+
+    Returns a list of model id strings, or an empty list on any failure so the
+    caller can fall back to the curated/placeholder catalog.
+    """
+    try:
+        import json
+        import urllib.request
+
+        url = f"{api_base.rstrip('/')}/models"
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read())
+        items = data.get("data", data) if isinstance(data, dict) else data
+        out = []
+        for it in items or []:
+            mid = it.get("id") if isinstance(it, dict) else it
+            if mid:
+                out.append(str(mid))
+        return out
+    except Exception:
+        return []
 
 
 def _format_model_row(idx, model, current_model=None):
@@ -2025,6 +2098,8 @@ class Agent:
                 provider_impl = GeminiProviderImpl(cfg)
             elif kind == "github":
                 provider_impl = GitHubModelsProviderImpl(cfg)
+            elif kind in CUSTOM_PROVIDER_IDS or kind in OPENAI_COMPAT_KINDS:
+                provider_impl = OpenAIProviderImpl(cfg)
             else:
                 provider_impl = OllamaProviderImpl(cfg)
             resp = provider_impl.complete(req)
@@ -2149,6 +2224,8 @@ class Agent:
                 provider_impl = OpenAIProviderImpl(cfg)
             elif kind == "anthropic":
                 provider_impl = AnthropicProviderImpl(cfg)
+            elif kind in CUSTOM_PROVIDER_IDS or kind in OPENAI_COMPAT_KINDS:
+                provider_impl = OpenAIProviderImpl(cfg)
             else:
                 provider_impl = OllamaProviderImpl(cfg)
             resp = provider_impl.complete(req)
@@ -2249,25 +2326,27 @@ class Agent:
 # ═══════════════════════════════════════════════════════════════════
 
 class SkillManager:
-    _BUNDLED_DIR = Path(__file__).parent.parent / "skills"
+    _WORKSPACE_DIR = Path(__file__).parent.parent
 
     def __init__(self):
         self.skills_dir = Path.home() / ".jebat" / "skills"
         self.skills_dir.mkdir(parents=True, exist_ok=True)
 
+    def _bundled_skills(self):
+        for directory in (
+            self._WORKSPACE_DIR / "skills",
+            self._WORKSPACE_DIR / "jebat-tokguru" / "skills",
+        ):
+            if directory.exists():
+                yield from sorted(directory.rglob("SKILL.md"))
+
     def _find_skill(self, name):
         user_path = self.skills_dir / f"{name}.md"
         if user_path.exists():
             return user_path, "installed"
-        bundled = self._BUNDLED_DIR / name / "SKILL.md"
-        if bundled.exists():
-            return bundled, "bundled"
-        if self._BUNDLED_DIR.exists():
-            for d in self._BUNDLED_DIR.iterdir():
-                if d.is_dir() and d.name.lower() == name.lower():
-                    sm = d / "SKILL.md"
-                    if sm.exists():
-                        return sm, "bundled"
+        for skill_path in self._bundled_skills():
+            if skill_path.parent.name.lower() == name.lower():
+                return skill_path, "bundled"
         return None, None
 
     def list_skills(self):
@@ -2276,13 +2355,11 @@ class SkillManager:
         for f in self.skills_dir.glob("*.md"):
             skills.append((f.stem, "installed"))
             seen.add(f.stem.lower())
-        if self._BUNDLED_DIR.exists():
-            for d in sorted(self._BUNDLED_DIR.iterdir()):
-                if d.is_dir() and not d.name.startswith("_"):
-                    sm = d / "SKILL.md"
-                    if sm.exists() and d.name.lower() not in seen:
-                        skills.append((d.name, "bundled"))
-                        seen.add(d.name.lower())
+        for skill_path in self._bundled_skills():
+            name = skill_path.parent.name
+            if not name.startswith("_") and name.lower() not in seen:
+                skills.append((name, "bundled"))
+                seen.add(name.lower())
         return skills
 
     def get_skill(self, name):
@@ -3413,6 +3490,20 @@ def _interactive_add_provider(registry, kind=None):
                 cprint(f"  {C.RED}API base is required.{C.RESET}")
                 return
 
+        # Live model catalog (OpenAI-compatible) — best-effort, key-less first.
+        # Falls back to the curated/placeholder catalog if the gateway requires
+        # auth for /models (the user can still type a model name manually).
+        if api_base and (kind in CUSTOM_PROVIDER_IDS or kind in ("openai-compat", "openai")):
+            live = _fetch_live_models(api_base)
+            if live:
+                models = [(m, m, 0, 0, 0, 0, ["code"]) for m in live]
+                cprint(f"\n  {C.NEON_PURPLE}{C.BOLD}Live models from gateway:{C.RESET}")
+                print(f"  {C.BORDER}{'─' * 100}{C.RESET}")
+                for i, m in enumerate(models):
+                    print(_format_model_row(i + 1, m, current_model))
+                print(f"  {C.BORDER}{'─' * 100}{C.RESET}")
+                cprint(f"  {C.DIM}Pick a model number, or type a custom model name{C.RESET}")
+
         # Model selection with catalog
         model_input = input(f"  {C.CYAN}Model{C.RESET} [{C.DIM}number or name{C.RESET}]: ").strip()
         if model_input.isdigit() and models:
@@ -3527,9 +3618,8 @@ def _interactive_test_provider(registry):
                     n = len(data.get("models", []))
                     cprint(f"  {C.GREEN}✓{C.RESET} {C.BOLD}{pid}{C.RESET} — {n} models available")
             else:
-                headers = {}
-                if cfg.api_key:
-                    headers["Authorization"] = f"Bearer {cfg.api_key}"
+                key = resolve_api_key(cfg)
+                headers = {"Authorization": f"Bearer {key}"} if key else {}
                 req = urllib.request.Request(f"{cfg.api_base}/models", headers=headers)
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     cprint(f"  {C.GREEN}✓{C.RESET} {C.BOLD}{pid}{C.RESET} — reachable")
@@ -3548,7 +3638,13 @@ def _list_models_for_provider(provider_cfg):
     """List models from a provider — Ollama, OpenRouter, or OpenAI-compatible."""
     kind = provider_cfg.get("kind", "")
     api_base = provider_cfg.get("api_base", "")
-    api_key = provider_cfg.get("api_key", "")
+    # provider_cfg is a plain dict (from JSON); resolve key env/store-aware.
+    ns = types.SimpleNamespace(
+        api_key=provider_cfg.get("api_key"),
+        auth_method=provider_cfg.get("auth_method", "key") or "key",
+        auth_ref=provider_cfg.get("auth_ref"),
+    )
+    api_key = resolve_api_key(ns)
     models = []
     try:
         if kind == "ollama":

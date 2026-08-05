@@ -11,11 +11,27 @@ Advanced workflow orchestration for JEBAT:
 Part of Q3 2026 Roadmap
 """
 
-from .condition_engine import ConditionEngine
-from .dependency_resolver import DependencyResolver
-from .state_manager import StateManager
-from .task_scheduler import TaskScheduler
 from .workflow_engine import WorkflowEngine
+
+try:
+    from .condition_engine import ConditionEngine
+except ImportError:
+    ConditionEngine = None
+
+try:
+    from .dependency_resolver import DependencyResolver
+except ImportError:
+    DependencyResolver = None
+
+try:
+    from .state_manager import StateManager
+except ImportError:
+    StateManager = None
+
+try:
+    from .task_scheduler import TaskScheduler
+except ImportError:
+    TaskScheduler = None
 
 __all__ = [
     "WorkflowEngine",

@@ -1,29 +1,46 @@
 <!-- Channels -->
 <div>
-  <h2 style="margin-bottom:var(--space-lg)">📡 Channels</h2>
-  <p class="text-muted mb-lg">Hermes gateway connections — messaging platform integrations.</p>
-
-  <div class="grid grid-3" id="channels-grid">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Telegram</div>
-        <span class="badge badge-muted">Not configured</span>
-      </div>
-      <p class="text-sm text-muted">Connect via Hermes gateway config.</p>
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Discord</div>
-        <span class="badge badge-muted">Not configured</span>
-      </div>
-      <p class="text-sm text-muted">Connect via Hermes gateway config.</p>
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">CLI</div>
-        <span class="badge badge-green">Active</span>
-      </div>
-      <p class="text-sm text-muted">Terminal interface — always connected.</p>
-    </div>
+  <div class="page-header">
+    <div><h2>Channels</h2><p class="text-muted">Connection readiness for JEBAT messaging adapters. Configure credentials in Control Center before activating a channel.</p></div>
   </div>
+  <div class="grid grid-3" id="channels-grid"><div class="card text-muted">Loading channel readiness...</div></div>
 </div>
+
+<script>
+  const channelsGrid = document.getElementById('channels-grid');
+  const stateClass = state => state === 'active' ? 'badge-green' : state === 'error' ? 'badge-red' : state === 'configured' ? 'badge-amber' : 'badge-muted';
+
+  async function loadChannels() {
+    const data = await API.channels();
+    channelsGrid.replaceChildren();
+    (data.available || []).forEach(channel => {
+      const current = data.connections?.[channel.id] || {};
+      const card = document.createElement('article');
+      card.className = 'card';
+      const header = document.createElement('div');
+      header.className = 'card-header';
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = channel.label;
+      const badge = document.createElement('span');
+      const state = current.status || 'not configured';
+      badge.className = `badge ${stateClass(state)}`;
+      badge.textContent = state;
+      header.append(title, badge);
+      const detail = document.createElement('p');
+      detail.className = 'text-sm text-muted';
+      detail.textContent = current.last_error || channel.instructions;
+      const requirements = document.createElement('div');
+      requirements.className = 'agent-profile-meta';
+      (current.missing || channel.required || []).forEach(item => {
+        const tag = document.createElement('span');
+        tag.textContent = item;
+        requirements.appendChild(tag);
+      });
+      card.append(header, detail, requirements);
+      channelsGrid.appendChild(card);
+    });
+  }
+
+  loadChannels().catch(() => { channelsGrid.textContent = 'Unable to load channel readiness.'; });
+</script>

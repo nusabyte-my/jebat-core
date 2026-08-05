@@ -12,6 +12,7 @@ from typing import List, Optional, Sequence
 from jebat_cli_new.models import ProviderConfig, CompletionRequest, CompletionResponse
 from jebat_cli_new.providers import ProviderRegistry
 from jebat_cli_new.tools import TOOL_DEFINITIONS, execute_tool
+from jebat.llm.token_usage import budget_input, usage_from_texts
 
 
 @dataclass
@@ -129,8 +130,8 @@ def _extract_steps(text: str) -> List[str]:
 
 class AgentLoop:
     def __init__(self, registry: ProviderRegistry, default_provider: str = "ollama",
-                 model: str = "qwen2.5-coder:7b", yolo: bool = False,
-                 auto_commit: bool = False, style: str = "jebat"):
+                  model: str = "qwen2.5-coder:7b", yolo: bool = False,
+                 auto_commit: bool = False, style: str = "jebat", context_window: int = 16384):
         self.registry = registry
         self.default_provider = default_provider
         self.model = model
@@ -139,6 +140,7 @@ class AgentLoop:
         self.yolo = yolo
         self.auto_commit = auto_commit
         self.style = style  # "jebat" or "openmanus"
+        self.context_window = context_window
 
     def _render_history(self, limit: int = 8) -> str:
         return "\n".join(
@@ -146,24 +148,47 @@ class AgentLoop:
         )
 
     def _call_provider(self, prompt: str, provider: str, model: str,
-                       temperature: float = 0.2, max_tokens: int = 4096) -> CompletionResponse:
+                        temperature: float = 0.2, max_tokens: int = 4096) -> CompletionResponse:
         """Call the provider through the registry or fallback to ollama runner."""
+        bounded = budget_input(
+            prompt,
+            context_window=self.context_window,
+            max_output_tokens=max_tokens,
+            model=model,
+            provider=provider,
+        )
         impl = self.registry.get(provider)
         if impl:
-            req = CompletionRequest(provider=provider, model=model, prompt=prompt,
-                                   temperature=temperature, max_tokens=max_tokens)
+            req = CompletionRequest(provider=provider, model=model, prompt=bounded.prompt,
+                                    temperature=temperature, max_tokens=max_tokens)
             try:
-                return impl.complete(req)
+                response = impl.complete(req)
+                reported_tokens = getattr(response, "tokens_used", 0)
+                usage = usage_from_texts(
+                    bounded.prompt,
+                    response.text,
+                    model=model,
+                    provider=provider,
+                    raw_usage={"total_tokens": reported_tokens} if reported_tokens else None,
+                )
+                return CompletionResponse(
+                    text=response.text,
+                    model=response.model,
+                    provider=response.provider,
+                    tokens_used=usage.total_tokens,
+                    latency_ms=response.latency_ms,
+                )
             except Exception as exc:
                 return CompletionResponse(text=f"[JEBAT provider error: {exc}]",
                                         model=model, provider=provider)
         # Fallback to ollama runner directly
         try:
             from jebat_cli_new.runner import ollama_complete
-            text, latency_ms = ollama_complete(model=model, prompt=prompt,
-                                              temperature=temperature, max_tokens=max_tokens)
+            text, latency_ms = ollama_complete(model=model, prompt=bounded.prompt,
+                                               temperature=temperature, max_tokens=max_tokens)
+            usage = usage_from_texts(bounded.prompt, text, model=model, provider=provider)
             return CompletionResponse(text=text, model=model, provider=provider,
-                                    latency_ms=latency_ms)
+                                     tokens_used=usage.total_tokens, latency_ms=latency_ms)
         except Exception as exc:
             return CompletionResponse(text=f"[JEBAT provider error: {exc}]",
                                     model=model, provider=provider)
@@ -209,6 +234,9 @@ class AgentLoop:
             follow_up = f"{history}\n\nASSISTANT: {text}\n\n{observation}\n\nNow provide your final answer: FINAL_ANSWER: "
             resp2 = self._call_provider(follow_up, provider_name, model_name)
             text = resp2.text
+            total_tokens = resp.tokens_used + resp2.tokens_used
+        else:
+            total_tokens = resp.tokens_used
 
         if "FINAL_ANSWER:" in text:
             final_answer = text.split("FINAL_ANSWER:", 1)[1].strip()
@@ -223,7 +251,7 @@ class AgentLoop:
                 text=text or final_answer or "",
                 model=model_name,
                 provider=provider_name,
-                tokens_used=resp.tokens_used,
+                tokens_used=total_tokens,
                 latency_ms=resp.latency_ms,
             ),
             tool_actions=tool_actions,

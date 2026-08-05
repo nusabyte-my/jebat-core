@@ -71,6 +71,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._api_key = api_key or os.getenv("JEBAT_API_KEY", "")
         self._allow_query = os.getenv("JEBAT_API_KEY_ALLOW_QUERY", "false").lower() in ("true", "1", "yes")
+        environment = os.getenv("JEBAT_ENV", "development").lower()
+        if environment == "production" and not self._api_key:
+            raise RuntimeError("JEBAT_API_KEY must be set when JEBAT_ENV=production")
         if self._api_key:
             logger.info("API key authentication enabled for /api/* routes")
         else:

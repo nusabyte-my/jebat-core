@@ -9,6 +9,7 @@ DAG-based workflow execution:
 """
 
 import asyncio
+import inspect
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,15 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _func_accepts_kwargs(func: Callable) -> bool:
+    """Return True if a callable accepts arbitrary keyword arguments (**kwargs)."""
+    try:
+        sig = inspect.signature(func)
+    except (ValueError, TypeError):
+        return False
+    return any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
 
 
 class TaskStatus(Enum):
@@ -176,6 +186,8 @@ class WorkflowEngine:
         workflow = self.workflows[workflow_id]
         workflow.status = WorkflowStatus.RUNNING
 
+        context = context or {}
+
         execution_id = f"exec_{workflow_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
         self.executions[execution_id] = {
@@ -206,6 +218,11 @@ class WorkflowEngine:
                 pending = set(workflow.tasks.keys()) - completed_tasks - failed_tasks
                 if pending:
                     logger.error(f"Deadlock detected: {pending}")
+                    for task_id in pending:
+                        task = workflow.tasks[task_id]
+                        task.status = TaskStatus.FAILED
+                        task.error = "Unresolvable or cyclic task dependencies"
+                        failed_tasks.add(task_id)
                     break
 
             # Execute ready tasks in parallel
@@ -287,20 +304,24 @@ class WorkflowEngine:
         if not task.func:
             return None
 
-        # Resolve dependencies from context
-        for dep in task.dependencies:
-            if dep in context:
-                task.kwargs[f"_{dep}_result"] = context[dep]
+        # Resolve dependencies from context, only if the callable accepts kwargs
+        if _func_accepts_kwargs(task.func):
+            for dep in task.dependencies:
+                if dep in context:
+                    task.kwargs[f"_{dep}_result"] = context[dep]
 
         # Execute with timeout
         try:
-            if asyncio.iscoroutinefunction(task.func):
+            if inspect.iscoroutinefunction(task.func):
                 result = await asyncio.wait_for(
                     task.func(**task.kwargs),
                     timeout=task.timeout,
                 )
             else:
-                result = task.func(**task.kwargs)
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(task.func, **task.kwargs),
+                    timeout=task.timeout,
+                )
 
             # Store in context for dependent tasks
             context[task.id] = result

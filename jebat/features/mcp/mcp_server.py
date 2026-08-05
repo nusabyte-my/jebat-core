@@ -272,6 +272,7 @@ class MCPServer:
             ("cron", "jebat.features.cron"),
             ("wiki", "jebat.features.wiki"),
             ("image_gen", "jebat.features.image_gen"),
+            ("pentest", "jebat.features.pentest.pentest_tools"),
         ]
         _loaded = 0
         _failed = []

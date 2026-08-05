@@ -1,6 +1,8 @@
-# JEBAT MCP Integration
+# JEBAT v8.2.1 MCP Integration
 
-JEBAT can act as an MCP (Model Context Protocol) server, exposing its tools to IDEs like VS Code, Cursor, Windsurf, and JetBrains.
+JEBAT can act as a local Model Context Protocol (MCP) server from a full workspace checkout. It exposes the tools enabled in that checkout to VS Code, Cursor, Windsurf, JetBrains, and other compatible clients.
+
+The supported entry point is `python ./jebat-mcp`. The npm launcher is for the CLI and does not itself host MCP. Remote MCP deployments must be self-hosted and protected by authentication.
 
 ## Quick Setup
 
@@ -13,8 +15,8 @@ Add to `.vscode/mcp.json`:
   "mcp": {
     "servers": {
       "jebat": {
-        "command": "npx",
-        "args": ["@nusabyte/jebat", "mcp", "serve", "--transport", "stdio"]
+        "command": "python3",
+        "args": ["/absolute/path/to/jebat-mcp"]
       }
     }
   }
@@ -29,8 +31,8 @@ Add to `~/.cursor/mcp.json`:
 {
   "mcpServers": {
     "jebat": {
-      "command": "npx",
-      "args": ["@nusabyte/jebat", "mcp", "serve", "--transport", "stdio"],
+        "command": "python3",
+        "args": ["/absolute/path/to/jebat-mcp"],
       "env": {}
     }
   }
@@ -45,8 +47,8 @@ Add to `~/.windsurf/mcp.json`:
 {
   "mcpServers": {
     "jebat": {
-      "command": "npx",
-      "args": ["@nusabyte/jebat", "mcp", "serve", "--transport", "stdio"],
+        "command": "python3",
+        "args": ["/absolute/path/to/jebat-mcp"],
       "env": {}
     }
   }
@@ -61,8 +63,8 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "jebat": {
-      "command": "npx",
-      "args": ["@nusabyte/jebat", "mcp", "serve", "--transport", "stdio"]
+        "command": "python3",
+        "args": ["/absolute/path/to/jebat-mcp"]
     }
   }
 }
@@ -70,27 +72,26 @@ Add to `claude_desktop_config.json`:
 
 ## Available Tools
 
-When connected via MCP, JEBAT exposes these tools:
+When connected via MCP, JEBAT exposes the tools registered by the installed workspace. Common capability groups include:
 
 | Tool | Description |
 |------|-------------|
-| `jebat_code` | Execute code with tool calling |
-| `jebat_file` | Read, write, patch, search files |
-| `jebat_terminal` | Execute shell commands |
-| `jebat_memory` | Store and recall memory |
-| `jebat_search` | Search codebase |
+| File operations | Read, write, patch, search workspace files |
+| Terminal operations | Execute approved shell commands |
+| Memory and search | Store, recall, and search workspace context |
+| Enabled integrations | Browser, scheduling, and other configured capabilities |
 
 ## Transport Options
 
 ### stdio (default)
 ```bash
-jebat mcp serve --transport stdio
+python ./jebat-mcp --transport stdio
 ```
 Best for local IDE connections.
 
 ### HTTP (SSE)
 ```bash
-jebat mcp serve --transport http --port 8099
+python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 ```
 Best for remote connections or multi-user setups.
 
@@ -101,13 +102,13 @@ Best for remote connections or multi-user setups.
 | `JEBAT_PROVIDER` | Provider to use | ollama |
 | `JEBAT_MODEL` | Model name | qwen2.5-coder:7b |
 | `JEBAT_API_KEY` | API key for cloud providers | - |
-| `JEBAT_MCP_PORT` | HTTP port for remote access | 8099 |
+| `JEBAT_MCP_PORT` | Deployment-defined HTTP port | 8099 |
 
 ## Troubleshooting
 
 ### Connection refused
-1. Ensure JEBAT is installed: `npm install -g @nusabyte/jebat`
-2. Test MCP server: `echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | jebat mcp serve`
+1. Ensure the full JEBAT workspace and Python dependencies are installed.
+2. Test the local server: `python ./jebat-mcp --transport stdio`
 
 ### Tools not showing
 1. Check IDE MCP settings
@@ -115,5 +116,5 @@ Best for remote connections or multi-user setups.
 3. Check JEBAT logs: `~/.jebat/logs/mcp.log`
 
 ### Authentication errors
-1. Set API key: `jebat apikey <name>:<key>`
-2. Or export: `export JEBAT_API_KEY=your-key`
+1. Keep remote MCP behind an authenticated reverse proxy.
+2. Configure provider credentials only on the server that needs them.

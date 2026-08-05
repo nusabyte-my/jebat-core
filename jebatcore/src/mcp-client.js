@@ -3,7 +3,7 @@
  *
  * This is the bridge between IDE MCP clients (VS Code, Cursor, Windsurf, JetBrains)
  * and the JEBAT Python MCP server. It handles:
- * - stdio transport: spawns `jebat mcp serve` as subprocess
+ * - stdio transport: starts the workspace `jebat-mcp` entry point
  * - HTTP transport: connects to JEBAT MCP server over HTTP/SSE
  * - Streamable HTTP: connects to JEBAT MCP server using MCP 2025-03-26 spec
  *
@@ -23,16 +23,16 @@ class JebatMCPClient {
   /**
    * @param {Object} options
    * @param {string} options.transport - 'stdio' | 'http' | 'streamable-http'
-   * @param {string} options.command - Command to run for stdio (default: 'jebat')
-   * @param {string[]} options.args - Args for stdio command (default: ['mcp', 'serve'])
+   * @param {string} options.command - Command to run for stdio (default: 'python3')
+   * @param {string[]} options.args - Args for stdio command (default: ['./jebat-mcp'])
    * @param {string} options.url - URL for HTTP/streamable-http transport
    * @param {number} options.timeout - Request timeout in ms (default: 30000)
    * @param {string} options.env - Extra env vars for stdio subprocess
    */
   constructor(options = {}) {
     this.transportType = options.transport || "stdio";
-    this.command = options.command || "jebat";
-    this.args = options.args || ["mcp", "serve"];
+    this.command = options.command || "python3";
+    this.args = options.args || ["./jebat-mcp"];
     this.url = options.url || "http://127.0.0.1:8100/mcp";
     this.timeout = options.timeout || 30000;
     this.env = options.env || {};

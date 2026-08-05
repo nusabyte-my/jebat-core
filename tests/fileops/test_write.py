@@ -4,6 +4,10 @@ import os
 import tempfile
 
 from jebat.fileops.write import write_file, undo_write
+
+import pytest
+
+pytestmark = pytest.mark.unit
 from jebat.fileops.safety import BackupManager
 
 

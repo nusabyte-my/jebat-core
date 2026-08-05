@@ -43,15 +43,18 @@ RUN groupadd -r jebat && useradd -r -g jebat -d /app -s /sbin/nologin jebat
 
 WORKDIR /app
 
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 # Copy application source
-COPY __init__.py .
-COPY pyproject.toml .
-COPY config/config_manager.py ./config/
+COPY __init__.py pyproject.toml main.py requirements.prod.txt ./
+COPY jebat/ ./jebat/
+COPY routers/ ./routers/
+COPY config/ ./config/
 COPY database/schema/ ./database/schema/
 COPY database/init/ ./database/init/
 COPY scripts/*.py ./scripts/
 COPY index.html ./
-COPY requirements.prod.txt main.py ./
 
 # Create data directories
 RUN mkdir -p /app/data /app/logs /app/.jebat && \
@@ -60,9 +63,9 @@ RUN mkdir -p /app/data /app/logs /app/.jebat && \
 # Expose API, WebUI, MCP ports
 EXPOSE 8080 8787 18789
 
-# Health check — hits the API root endpoint
+# Health check — matches the production API port published by Compose.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 USER jebat
 
@@ -70,4 +73,7 @@ USER jebat
 ENTRYPOINT ["tini", "--"]
 
 # Default: run the API server. Override in docker-compose for workers.
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+
+# Production Compose overlays target this stage name.
+FROM runtime AS production

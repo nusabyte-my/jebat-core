@@ -7,7 +7,9 @@ A reliable web interface for JEBAT AI Assistant.
 import asyncio
 import json
 import logging
+import os
 import tempfile
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -21,8 +23,8 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from pydantic import BaseModel
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -42,6 +44,32 @@ class ChatMessage(BaseModel):
     message: str
     thinking_mode: Optional[str] = "deliberate"
     preset: Optional[str] = "default"
+    conversation_id: Optional[str] = None
+    agent_profile_id: Optional[str] = None
+
+
+class ConversationCreateRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+    title: Optional[str] = Field(default=None, max_length=255)
+
+
+class AgentProfileCreateRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+    name: str = Field(min_length=1, max_length=100)
+    description: str = Field(default="", max_length=500)
+    agent_type: str = Field(default="conversational", max_length=50)
+    personality: str = Field(default="professional", max_length=50)
+    capabilities: List[str] = Field(default_factory=list, max_length=20)
+    provider: Optional[str] = Field(default=None, max_length=100)
+    model: Optional[str] = Field(default=None, max_length=255)
+    system_prompt: str = Field(default="", max_length=4000)
+
+
+class AgentRunPlanRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=255)
+    agent_profile_id: str = Field(min_length=1)
+    objective: str = Field(min_length=1, max_length=4000)
+    conversation_id: Optional[str] = None
 
 
 class ThinkRequest(BaseModel):
@@ -62,6 +90,9 @@ class ProviderAuthRequest(BaseModel):
 
 
 RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
+CHAT_CONVERSATIONS: Dict[str, Dict[str, Any]] = {}
+AGENT_PROFILES: Dict[str, Dict[str, Any]] = {}
+AGENT_RUNS: Dict[str, Dict[str, Any]] = {}
 
 
 class ChannelConnectRequest(BaseModel):
@@ -80,6 +111,35 @@ class WorkstationConnectRequest(BaseModel):
 
 class WorkstationActionRequest(BaseModel):
     workstation: str
+
+
+class SahabatBriefingRequest(BaseModel):
+    timezone: str = "Asia/Kuala_Lumpur"
+    extra_context: Optional[str] = None
+
+
+class SahabatTaskCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+    description: str = ""
+    priority: str = "medium"
+    category: str = "general"
+    due_date: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
+
+class SahabatTaskUpdateRequest(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    category: Optional[str] = None
+    due_date: Optional[str] = None
+
+
+class SahabatMeetingRequest(BaseModel):
+    transcript: str = Field(min_length=1)
+    title: Optional[str] = None
+    generate_followup: bool = False
 
 
 CHANNEL_CONNECTIONS: Dict[str, Dict[str, Any]] = {}
@@ -121,6 +181,38 @@ def _data_path(filename: str) -> Path:
     return DATA_DIR / filename
 
 
+_ULTRA_LOOP_INSTANCE = None
+
+
+async def _get_ultra_loop():
+    """Lazily build a runtime Ultra-Loop bridge for channel adapters."""
+    global _ULTRA_LOOP_INSTANCE
+    if _ULTRA_LOOP_INSTANCE is not None:
+        return _ULTRA_LOOP_INSTANCE
+
+    from jebat.features.ultra_loop import create_ultra_loop
+
+    loop = create_ultra_loop(enable_db_persistence=False)
+    try:
+        from jebat.features.ultra_think import create_ultra_think
+
+        loop.ultra_think = await create_ultra_think(config={"max_thoughts": 20})
+    except Exception as exc:
+        logger.warning("Channel bridge: ultra_think unavailable: %s", exc)
+        loop.ultra_think = None
+
+    _ULTRA_LOOP_INSTANCE = loop
+    return loop
+
+
+def _whatsapp_verify_token() -> Optional[str]:
+    """Resolve the WhatsApp verify token from an active channel or env."""
+    channel = ACTIVE_CHANNELS.get("whatsapp")
+    if channel is not None and getattr(channel, "verify_token", None):
+        return channel.verify_token
+    return os.environ.get("WHATSAPP_VERIFY_TOKEN")
+
+
 def _ensure_data_dir() -> None:
     _data_path(".init")
 
@@ -151,7 +243,15 @@ def _provider_env_targets(provider: str) -> list[str]:
         "llamacpp": ["LLAMA_CPP_HOST"],
         "ollama": ["OLLAMA_HOST"],
     }
-    return mapping.get(provider, [])
+    targets = mapping.get(provider)
+    if targets is not None:
+        return targets
+    from jebat.features.auth.custom_providers import get_custom_provider
+
+    cp = get_custom_provider(provider)
+    if cp is not None:
+        return [cp.api_key_env, cp.base_url_env]
+    return []
 
 
 def _read_provider_auth_store() -> Dict[str, str]:
@@ -192,7 +292,7 @@ def _sanitize_workstation_state(name: str, state: Dict[str, Any]) -> Dict[str, A
 
 
 def _provider_model_catalog() -> dict[str, dict[str, Any]]:
-    return {
+    catalog: dict[str, dict[str, Any]] = {
         "openai": {
             "label": "OpenAI",
             "supports_custom": False,
@@ -251,6 +351,16 @@ def _provider_model_catalog() -> dict[str, dict[str, Any]]:
             "models": ["local-echo"],
         },
     }
+    from jebat.features.auth.custom_providers import CUSTOM_PROVIDERS
+
+    for pid, cp in CUSTOM_PROVIDERS.items():
+        if pid not in catalog:
+            catalog[pid] = {
+                "label": cp.label,
+                "supports_custom": True,
+                "models": list(cp.default_models),
+            }
+    return catalog
 
 
 def _default_model_for_provider(provider: str, configured_model: str) -> str:
@@ -273,6 +383,9 @@ async def _ensure_connection_state() -> None:
         CHANNEL_SECRETS.update(_read_json(_data_path("channel_secrets.json"), {}))
         WORKSTATION_CONNECTIONS.update(_read_json(_data_path("workstation_connections.json"), {}))
         RUNTIME_OVERRIDES.update(_read_json(_data_path("runtime_overrides.json"), {"provider": None, "model": None}))
+        CHAT_CONVERSATIONS.update(_read_json(_data_path("conversations.json"), {}))
+        AGENT_PROFILES.update(_read_json(_data_path("agent_profiles.json"), {}))
+        AGENT_RUNS.update(_read_json(_data_path("agent_runs.json"), {}))
         STATE_LOADED = True
         await _reactivate_saved_channels()
 
@@ -288,6 +401,80 @@ def _persist_workstation_state() -> None:
 
 def _persist_runtime_state() -> None:
     _write_json(_data_path("runtime_overrides.json"), RUNTIME_OVERRIDES)
+
+
+def _persist_conversations() -> None:
+    _write_json(_data_path("conversations.json"), CHAT_CONVERSATIONS)
+
+
+def _persist_agent_profiles() -> None:
+    _write_json(_data_path("agent_profiles.json"), AGENT_PROFILES)
+
+
+def _persist_agent_runs() -> None:
+    _write_json(_data_path("agent_runs.json"), AGENT_RUNS)
+
+
+def _agent_profile_summary(profile: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        key: profile[key]
+        for key in (
+            "id", "name", "description", "agent_type", "personality", "capabilities",
+            "provider", "model", "created_at", "updated_at",
+        )
+    }
+
+
+def _agent_run_summary(run: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        key: run[key]
+        for key in (
+            "id", "agent_profile_id", "agent_name", "conversation_id", "objective",
+            "status", "plan", "created_at", "updated_at",
+        )
+    }
+
+
+def _conversation_summary(conversation: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": conversation["id"],
+        "title": conversation["title"],
+        "created_at": conversation["created_at"],
+        "updated_at": conversation["updated_at"],
+        "message_count": len(conversation["messages"]),
+    }
+
+
+def _new_conversation(user_id: str, title: Optional[str] = None) -> Dict[str, Any]:
+    timestamp = _now_iso()
+    conversation = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "title": title or "New conversation",
+        "created_at": timestamp,
+        "updated_at": timestamp,
+        "messages": [],
+    }
+    CHAT_CONVERSATIONS[conversation["id"]] = conversation
+    return conversation
+
+
+def _conversation_prompt(conversation: Dict[str, Any], profile: Optional[Dict[str, Any]] = None) -> str:
+    messages = conversation["messages"][-12:]
+    if len(messages) <= 1:
+        prompt = messages[-1]["content"]
+    else:
+        transcript = "\n".join(
+            f"{message['role'].title()}: {message['content']}" for message in messages
+        )
+        prompt = f"Continue this conversation.\n\n{transcript}\nAssistant:"
+
+    if profile is None:
+        return prompt
+
+    guidance = profile.get("system_prompt") or profile.get("description")
+    identity = f"You are {profile['name']}, a {profile['agent_type']} agent."
+    return f"{identity}\n{guidance}\n\n{prompt}" if guidance else f"{identity}\n\n{prompt}"
 
 
 async def _reactivate_saved_channels() -> None:
@@ -306,21 +493,26 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
     state["last_error"] = None
 
     try:
+        loop = await _get_ultra_loop()
+
         if channel == "telegram":
             from jebat.integrations.channels.telegram import create_telegram_channel
 
-            instance = await create_telegram_channel(bot_token=config["bot_token"])
+            instance = await create_telegram_channel(
+                bot_token=config["bot_token"], ultra_loop=loop
+            )
             await instance.start()
             ACTIVE_CHANNELS[channel] = instance
             state["status"] = "active"
             state["active"] = True
         elif channel == "whatsapp":
-            from jebat.integrations.channels.whatsapp import WhatsAppChannel
+            from jebat.integrations.channels.whatsapp import create_whatsapp_channel
 
-            instance = WhatsAppChannel(
+            instance = await create_whatsapp_channel(
                 phone_number_id=config["phone_number_id"],
                 access_token=config["access_token"],
                 verify_token=config["verify_token"],
+                ultra_loop=loop,
             )
             await instance.start()
             ACTIVE_CHANNELS[channel] = instance
@@ -332,15 +524,19 @@ async def _activate_channel(channel: str, config: Dict[str, Any], persist: bool 
             instance = SlackChannel(
                 bot_token=config["bot_token"],
                 signing_secret=config["signing_secret"],
+                ultra_loop=loop,
             )
             await instance.start()
             ACTIVE_CHANNELS[channel] = instance
             state["status"] = "active"
             state["active"] = True
         elif channel == "discord":
-            from jebat.integrations.channels.discord import DiscordChannel
+            from jebat.integrations.channels.discord import create_discord_channel
 
-            instance = DiscordChannel(bot_token=config["bot_token"])
+            instance = await create_discord_channel(
+                bot_token=config["bot_token"],
+                ultra_loop=loop,
+            )
             task = asyncio.create_task(instance.start())
             CHANNEL_TASKS[channel] = task
             ACTIVE_CHANNELS[channel] = instance
@@ -394,6 +590,168 @@ async def get_status():
 async def get_console_meta():
     """Return UI metadata grounded in repo assets."""
     return _console_meta()
+
+
+@webui_router.get("/webui/api/integrations/overview")
+async def integrations_overview():
+    """Return a secret-free operational summary for the integration console."""
+    await _ensure_connection_state()
+    meta = _console_meta()
+    gateway = meta["jebat-gateway"]
+    template = _gateway_template()
+    mcp_config = template.get("mcpServers") or template.get("mcp_servers") or {}
+    if not mcp_config and isinstance(template.get("mcp"), dict):
+        mcp_config = template["mcp"].get("servers") or {}
+    mcp_count = len(mcp_config) if isinstance(mcp_config, (dict, list)) else 0
+
+    channel_items = [
+        _sanitize_channel_state(name, state)
+        for name, state in sorted(CHANNEL_CONNECTIONS.items())
+    ]
+    channel_statuses = sorted({item["status"] for item in channel_items})
+    integration_items = meta["integrations"]
+    integration_statuses = sorted({item["state"] for item in integration_items})
+
+    try:
+        from jebat.features.security import read_audit_log
+
+        audit_entries = read_audit_log(limit=50)
+        audit_summary = {
+            "status": "available",
+            "recent_count": len(audit_entries),
+            "approved_count": sum(entry.get("approved") is True for entry in audit_entries),
+            "latest_at": audit_entries[-1].get("ts") if audit_entries else None,
+        }
+    except Exception:
+        logger.exception("Unable to read integration audit summary")
+        audit_summary = {
+            "status": "unavailable",
+            "recent_count": 0,
+            "approved_count": 0,
+            "latest_at": None,
+        }
+
+    return {
+        "timestamp": _now_iso(),
+        "gateway": {
+            "status": "configured" if gateway["gateway_port"] is not None else "unavailable",
+            "port": gateway["gateway_port"],
+            "agent_count": len(gateway["agent_names"]),
+            "channel_count": len(gateway["channel_names"]),
+        },
+        "integrations": {
+            "status": "available" if integration_items else "unavailable",
+            "count": len(integration_items),
+            "statuses": integration_statuses,
+        },
+        "channels": {
+            "status": "active" if any(item["active"] for item in channel_items) else "idle",
+            "available_count": len(meta["channels"]),
+            "configured_count": len(channel_items),
+            "active_count": sum(item["active"] for item in channel_items),
+            "statuses": channel_statuses,
+            "items": channel_items,
+        },
+        "mcp": {
+            "status": "configured" if mcp_count else "unconfigured",
+            "server_count": mcp_count,
+        },
+        "skills": {
+            "status": "available" if meta["skills"]["count"] else "unavailable",
+            "count": meta["skills"]["count"],
+            "featured_count": len(meta["skills"]["top"]),
+        },
+        # WorkflowEngine instances are process-local; this endpoint does not invent runtime activity.
+        "workflow": {"status": "available", "tracked_workflows": 0, "tracked_executions": 0},
+        "audit": audit_summary,
+    }
+
+
+@webui_router.post("/webui/api/sahabat/briefing")
+async def sahabat_briefing(payload: SahabatBriefingRequest):
+    """Generate a daily briefing through the Sahabat companion service."""
+    from jebat.features.companion.briefing import DailyBriefing
+
+    briefing = await DailyBriefing().generate(
+        timezone_str=payload.timezone,
+        extra_context=payload.extra_context,
+    )
+    return {
+        "success": True,
+        "briefing": briefing.content,
+        "date": briefing.date,
+        "task_count": briefing.task_count,
+        "recent_topics": briefing.recent_topics,
+        "generated_at": briefing.generated_at,
+        "provider": briefing.provider,
+    }
+
+
+@webui_router.get("/webui/api/sahabat/tasks")
+async def sahabat_tasks(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    category: Optional[str] = None,
+    limit: int = 50,
+):
+    """List tasks from the Sahabat task manager."""
+    from jebat.features.companion.tasks import TaskManager
+
+    if limit < 1 or limit > 100:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 100")
+    tasks = TaskManager().list_tasks(
+        status=status,
+        priority=priority,
+        category=category,
+        limit=limit,
+    )
+    return {"success": True, "tasks": [_sahabat_task_payload(task) for task in tasks]}
+
+
+@webui_router.post("/webui/api/sahabat/tasks")
+async def create_sahabat_task(payload: SahabatTaskCreateRequest):
+    """Create a task through the Sahabat task manager."""
+    from jebat.features.companion.tasks import TaskManager
+
+    _validate_sahabat_task_values(priority=payload.priority)
+    task = TaskManager().add_task(**payload.model_dump())
+    return {"success": True, "task": _sahabat_task_payload(task)}
+
+
+@webui_router.patch("/webui/api/sahabat/tasks/{task_id}")
+async def update_sahabat_task(task_id: str, payload: SahabatTaskUpdateRequest):
+    """Update a Sahabat task, including marking it complete."""
+    from jebat.features.companion.tasks import TaskManager
+
+    _validate_sahabat_task_values(status=payload.status, priority=payload.priority)
+    task = TaskManager().update_task(task_id, **payload.model_dump(exclude_unset=True))
+    if task is None:
+        raise HTTPException(status_code=404, detail=f"task not found: {task_id}")
+    return {"success": True, "task": _sahabat_task_payload(task)}
+
+
+@webui_router.post("/webui/api/sahabat/meeting")
+async def sahabat_meeting(payload: SahabatMeetingRequest):
+    """Summarize a meeting transcript through the Sahabat companion service."""
+    from jebat.features.companion.meeting import MeetingSummarizer
+
+    meeting = await MeetingSummarizer().summarize(
+        transcript=payload.transcript,
+        title=payload.title,
+        generate_followup=payload.generate_followup,
+    )
+    return {
+        "success": True,
+        "meeting_id": meeting.meeting_id,
+        "title": meeting.title,
+        "summary": meeting.summary,
+        "action_items": meeting.action_items,
+        "decisions": meeting.decisions,
+        "participants": meeting.participants,
+        "created_at": meeting.created_at,
+        "provider": meeting.provider,
+        "followup_email": meeting.metadata.get("followup_email"),
+    }
 
 
 @webui_router.get("/webui/api/runtime")
@@ -453,6 +811,9 @@ async def update_provider_auth(payload: ProviderAuthRequest):
         if not value:
             raise HTTPException(status_code=400, detail="missing API key")
         store[targets[0]] = value
+        # Custom providers also need a base URL; persist it from `host` when present.
+        if len(targets) > 1 and payload.host:
+            store[targets[1]] = payload.host.strip()
     _write_provider_auth_store(store)
     return {
         "ok": True,
@@ -509,6 +870,53 @@ async def connect_channel(payload: ChannelConnectRequest):
         "connection": connection,
         "instructions": catalog[channel]["instructions"],
     }
+
+
+@webui_router.api_route(
+    "/webui/api/channels/whatsapp/webhook",
+    methods=["GET", "POST"],
+)
+async def whatsapp_webhook(request: Request):
+    """WhatsApp Business API webhook endpoint.
+
+    - GET/POST with hub.mode=subscribe performs the verification handshake
+      and echoes back hub.challenge.
+    - POST with an entry payload dispatches messages to the active
+      WhatsAppChannel.process_webhook.
+    """
+    await _ensure_connection_state()
+
+    if request.method == "GET":
+        params = dict(request.query_params)
+        if params.get("hub.mode") == "subscribe":
+            if params.get("hub.verify_token") == _whatsapp_verify_token():
+                return Response(
+                    content=str(params.get("hub.challenge", "")),
+                    media_type="text/plain",
+                )
+            return Response(content="Forbidden", status_code=403)
+        return Response(content="Bad Request", status_code=400)
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    if isinstance(data, dict) and data.get("hub.mode") == "subscribe":
+        if data.get("hub.verify_token") == _whatsapp_verify_token():
+            return Response(
+                content=str(data.get("hub.challenge", "")),
+                media_type="text/plain",
+            )
+        return Response(content="Forbidden", status_code=403)
+
+    channel = ACTIVE_CHANNELS.get("whatsapp")
+    if channel is not None and hasattr(channel, "process_webhook"):
+        result = await channel.process_webhook(data)
+        return JSONResponse(result)
+
+    logger.warning("WhatsApp webhook received but no active channel")
+    return JSONResponse({"status": "no_active_channel"}, status_code=200)
 
 
 @webui_router.get("/webui/api/workstations/connect")
@@ -596,6 +1004,36 @@ async def check_workstation(payload: WorkstationActionRequest):
     }
 
 
+@webui_router.get("/webui/api/conversations")
+async def list_conversations(user_id: str = "webui"):
+    await _ensure_connection_state()
+    conversations = [
+        _conversation_summary(conversation)
+        for conversation in CHAT_CONVERSATIONS.values()
+        if conversation.get("user_id") == user_id
+    ]
+    conversations.sort(key=lambda conversation: conversation["updated_at"], reverse=True)
+    return {"conversations": conversations}
+
+
+@webui_router.post("/webui/api/conversations")
+async def create_conversation(payload: ConversationCreateRequest):
+    await _ensure_connection_state()
+    async with STATE_LOCK:
+        conversation = _new_conversation(payload.user_id, payload.title)
+        _persist_conversations()
+    return _conversation_summary(conversation)
+
+
+@webui_router.get("/webui/api/conversations/{conversation_id}")
+async def get_conversation(conversation_id: str, user_id: str = "webui"):
+    await _ensure_connection_state()
+    conversation = CHAT_CONVERSATIONS.get(conversation_id)
+    if conversation is None or conversation.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="conversation not found")
+    return {**_conversation_summary(conversation), "messages": conversation["messages"]}
+
+
 @webui_router.post("/webui/api/chat")
 async def chat(message: ChatMessage):
     """Process chat message with the configured LLM provider."""
@@ -603,17 +1041,45 @@ async def chat(message: ChatMessage):
         from jebat.llm import generate_chat_reply
 
         await _ensure_connection_state()
+        async with STATE_LOCK:
+            conversation = CHAT_CONVERSATIONS.get(message.conversation_id or "")
+            if conversation is None:
+                conversation = _new_conversation(message.user_id, message.message[:80])
+            elif conversation.get("user_id") != message.user_id:
+                raise HTTPException(status_code=404, detail="conversation not found")
+
+            profile = None
+            if message.agent_profile_id:
+                profile = AGENT_PROFILES.get(message.agent_profile_id)
+                if profile is None or profile.get("user_id") != message.user_id:
+                    raise HTTPException(status_code=404, detail="agent profile not found")
+                conversation["agent_profile_id"] = profile["id"]
+            elif conversation.get("agent_profile_id"):
+                profile = AGENT_PROFILES.get(conversation["agent_profile_id"])
+
+            conversation["messages"].append({"role": "user", "content": message.message, "created_at": _now_iso()})
+            conversation["updated_at"] = _now_iso()
+            _persist_conversations()
+            prompt = _conversation_prompt(conversation, profile)
+
         response, used_provider, config = await generate_chat_reply(
-            prompt=message.message,
+            prompt=prompt,
             mode=message.thinking_mode,
             preset=message.preset,
             provider_override=RUNTIME_OVERRIDES["provider"],
             model_override=RUNTIME_OVERRIDES["model"],
         )
 
+        async with STATE_LOCK:
+            conversation["messages"].append({"role": "assistant", "content": response, "created_at": _now_iso()})
+            conversation["updated_at"] = _now_iso()
+            _persist_conversations()
+
         return {
             "success": True,
             "response": response,
+            "conversation_id": conversation["id"],
+            "agent_profile_id": profile["id"] if profile else None,
             "provider": used_provider,
             "model": config.model,
             "thinking_mode": message.thinking_mode,
@@ -683,6 +1149,90 @@ async def get_memory_stats():
 
 
 # ── Agents status ──
+@webui_router.get("/webui/api/agents/profiles")
+async def list_agent_profiles(user_id: str = "webui"):
+    await _ensure_connection_state()
+    profiles = [
+        _agent_profile_summary(profile)
+        for profile in AGENT_PROFILES.values()
+        if profile.get("user_id") == user_id
+    ]
+    profiles.sort(key=lambda profile: profile["updated_at"], reverse=True)
+    return {"profiles": profiles}
+
+
+@webui_router.post("/webui/api/agents/profiles")
+async def create_agent_profile(payload: AgentProfileCreateRequest):
+    await _ensure_connection_state()
+    timestamp = _now_iso()
+    async with STATE_LOCK:
+        profile = {
+            "id": str(uuid.uuid4()),
+            "user_id": payload.user_id,
+            "name": payload.name.strip(),
+            "description": payload.description.strip(),
+            "agent_type": payload.agent_type.strip().lower(),
+            "personality": payload.personality.strip().lower(),
+            "capabilities": [item.strip() for item in payload.capabilities if item.strip()],
+            "provider": payload.provider.strip().lower() if payload.provider else None,
+            "model": payload.model.strip() if payload.model else None,
+            "system_prompt": payload.system_prompt.strip(),
+            "created_at": timestamp,
+            "updated_at": timestamp,
+        }
+        AGENT_PROFILES[profile["id"]] = profile
+        _persist_agent_profiles()
+    return _agent_profile_summary(profile)
+
+
+@webui_router.get("/webui/api/agent-runs")
+async def list_agent_runs(user_id: str = "webui"):
+    await _ensure_connection_state()
+    runs = [
+        _agent_run_summary(run)
+        for run in AGENT_RUNS.values()
+        if run.get("user_id") == user_id
+    ]
+    runs.sort(key=lambda run: run["updated_at"], reverse=True)
+    return {"runs": runs}
+
+
+@webui_router.post("/webui/api/agent-runs/plan")
+async def plan_agent_run(payload: AgentRunPlanRequest):
+    await _ensure_connection_state()
+    async with STATE_LOCK:
+        profile = AGENT_PROFILES.get(payload.agent_profile_id)
+        if profile is None or profile.get("user_id") != payload.user_id:
+            raise HTTPException(status_code=404, detail="agent profile not found")
+
+        if payload.conversation_id:
+            conversation = CHAT_CONVERSATIONS.get(payload.conversation_id)
+            if conversation is None or conversation.get("user_id") != payload.user_id:
+                raise HTTPException(status_code=404, detail="conversation not found")
+
+        timestamp = _now_iso()
+        capabilities = profile.get("capabilities") or [profile["agent_type"]]
+        run = {
+            "id": str(uuid.uuid4()),
+            "user_id": payload.user_id,
+            "agent_profile_id": profile["id"],
+            "agent_name": profile["name"],
+            "conversation_id": payload.conversation_id,
+            "objective": payload.objective.strip(),
+            "status": "planned",
+            "plan": [
+                f"Review the objective and profile boundaries for {profile['name']}.",
+                f"Use declared capabilities: {', '.join(capabilities)}.",
+                "Produce a reviewable result before any external action.",
+            ],
+            "created_at": timestamp,
+            "updated_at": timestamp,
+        }
+        AGENT_RUNS[run["id"]] = run
+        _persist_agent_runs()
+    return _agent_run_summary(run)
+
+
 @webui_router.get("/webui/api/agents/status")
 async def agents_status():
     """Return agent force status including orchestration info."""
@@ -897,9 +1447,32 @@ def _mount_static(app: FastAPI) -> None:
 # ==================== Utility Functions ====================
 
 
+def _validate_sahabat_task_values(
+    status: Optional[str] = None, priority: Optional[str] = None
+) -> None:
+    if status is not None and status not in {"pending", "in_progress", "completed", "cancelled"}:
+        raise HTTPException(status_code=400, detail=f"invalid task status: {status}")
+    if priority is not None and priority not in {"low", "medium", "high", "urgent"}:
+        raise HTTPException(status_code=400, detail=f"invalid task priority: {priority}")
+
+
+def _sahabat_task_payload(task: Any) -> dict[str, Any]:
+    return {
+        "task_id": task.task_id,
+        "title": task.title,
+        "description": task.description,
+        "status": task.status,
+        "priority": task.priority,
+        "category": task.category,
+        "due_date": task.due_date,
+        "created_at": task.created_at,
+        "completed_at": task.completed_at,
+        "tags": task.tags,
+    }
+
+
 def _console_meta() -> dict[str, Any]:
-    openclaw_template = REPO_ROOT / "integrations" / "jebat-gateway" / "openclaw.template.json"
-    jebat_gateway_data = json.loads(openclaw_template.read_text()) if openclaw_template.exists() else {}
+    jebat_gateway_data = _gateway_template()
 
     channel_dir = REPO_ROOT / "jebat" / "integrations" / "channels"
     available_channels = sorted(
@@ -998,6 +1571,19 @@ def _console_meta() -> dict[str, Any]:
             ]
         },
     }
+
+
+def _gateway_template() -> dict[str, Any]:
+    """Load the optional gateway template without allowing bad local config to break status APIs."""
+    path = REPO_ROOT / "integrations" / "jebat-gateway" / "openclaw.template.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        logger.warning("Unable to load gateway template: %s", path)
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def _runtime_state() -> dict[str, Any]:
