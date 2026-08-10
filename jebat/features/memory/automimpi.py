@@ -220,6 +220,8 @@ class AutoMimpi:
         weak_areas = []
         strong_areas = []
         for tag, strengths in tag_strengths.items():
+            if _is_meta_tag(tag):
+                continue
             avg = sum(strengths) / len(strengths)
             if avg < 0.3 and len(strengths) >= 2:
                 weak_areas.append(tag)
@@ -229,6 +231,8 @@ class AutoMimpi:
         # Knowledge gaps — tags with few memories
         knowledge_gaps = []
         for tag, strengths in tag_strengths.items():
+            if _is_meta_tag(tag):
+                continue
             if len(strengths) < 3:
                 knowledge_gaps.append(tag)
 
@@ -387,6 +391,16 @@ class AutoMimpi:
 #  SelfLearn — Adaptive Learning Engine
 # ────────────────────────────────────────────────────────────
 
+def _is_meta_tag(tag: str) -> bool:
+    """Filter out metadata tags that shouldn't be treated as learning domains."""
+    return tag.startswith(("project:", "category:")) or tag in ("project",)
+
+
+def _learning_tags(trace) -> List[str]:
+    """Return only non-metadata tags for learning-domain analysis."""
+    return [t for t in trace.tags if not _is_meta_tag(t)]
+
+
 class SelfLearn:
     """
     JEBAT's adaptive learning engine.
@@ -417,7 +431,7 @@ class SelfLearn:
         """Assess skill levels by domain."""
         domains: Dict[str, List[float]] = {}
         for t in traces:
-            for tag in t.tags:
+            for tag in _learning_tags(t):
                 if tag not in domains:
                     domains[tag] = []
                 domains[tag].append(t.calculate_current_strength())

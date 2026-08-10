@@ -37,6 +37,32 @@ class MemoryType(Enum):
     PROSPECTIVE = "prospective" # Future intentions
 
 
+def coerce_memory_type(value: Union[str, MemoryType, None]) -> MemoryType:
+    """Normalize a memory type to its MemoryType enum.
+
+    Accepts the enum, a valid string name/value ("semantic",
+    "MemoryType.SEMANTIC", "SEMANTIC", "semantic"), or None (defaults to
+    EPISODIC). Raises ValueError for unknown strings — a silent fallback
+    would mis-classify memories.
+    """
+    if value is None or value == "":
+        return MemoryType.EPISODIC
+    if isinstance(value, MemoryType):
+        return value
+    if isinstance(value, str):
+        s = value.strip()
+        # "semantic" (value), "SEMANTIC" (name), "MemoryType.SEMANTIC" (repr)
+        if "." in s:
+            s = s.rsplit(".", 1)[-1]
+        for member in MemoryType:
+            if s.lower() in (member.name.lower(), member.value.lower()):
+                return member
+        raise ValueError(
+            f"Unknown memory type: {value!r}. Valid: {[m.value for m in MemoryType]}"
+        )
+    raise TypeError(f"memory_type must be MemoryType or str, got {type(value).__name__}")
+
+
 class MemoryPhase(Enum):
     """Memory processing phases"""
     ENCODING = "encoding"           # Initial learning
@@ -286,6 +312,11 @@ class EnhancedMemorySystem:
         source_trace_id: Optional[str] = None,
     ) -> MemoryTrace:
         """Encode a new memory trace"""
+        # Normalize string memory_type ("semantic" -> MemoryType.SEMANTIC).
+        # MemoryTrace.to_dict does `.value` on memory_type, so a raw string
+        # crashes serialization and (before the _save re-raise fix) silently
+        # discarded the whole store on save. Accept both, store the enum.
+        memory_type = coerce_memory_type(memory_type)
         trace = MemoryTrace(
             memory_type=memory_type,
             content=content,
@@ -785,7 +816,9 @@ class EnhancedMemorySystem:
     # ── Persistence ─────────────────────────────────────────────────
 
     def _save(self):
-        """Save memory to disk"""
+        """Save memory to disk. Failure is surfaced loudly — a silently
+        swallowed save exception previously lost traces with no trace of
+        the error (a corrupt trace made the whole write no-op)."""
         try:
             data = {
                 "traces": {k: v.to_dict() for k, v in self.traces.items()},
@@ -798,6 +831,7 @@ class EnhancedMemorySystem:
                 json.dump(data, f, default=str, indent=2)
         except Exception as e:
             print(f"Memory save error: {e}")
+            raise
 
     def _load(self):
         try:
@@ -812,7 +846,7 @@ class EnhancedMemorySystem:
                             td[key] = datetime.fromisoformat(td[key])
                     td["tags"] = set(td.get("tags", []))
                     td["linked_traces"] = set(td.get("linked_traces", []))
-                    td["memory_type"] = MemoryType(td["memory_type"])
+                    td["memory_type"] = coerce_memory_type(td.get("memory_type"))
                     trace = MemoryTrace(**td)
                     self.traces[tid] = trace
                     self.traces_by_type[trace.memory_type].add(tid)

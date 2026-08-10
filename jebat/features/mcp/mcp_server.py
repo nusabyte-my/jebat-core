@@ -273,6 +273,13 @@ class MCPServer:
             ("wiki", "jebat.features.wiki"),
             ("image_gen", "jebat.features.image_gen"),
             ("pentest", "jebat.features.pentest.pentest_tools"),
+            # Memory + learning (project memory, dream cycle, self-learning)
+            ("memory", "jebat.tools.memory_tools"),
+            ("automimpi", "jebat.tools.automimpi_tools"),
+            ("skills", "jebat.tools.skill_tools"),
+            ("todo", "jebat.tools.todo_tools"),
+            ("session", "jebat.tools.session_search_tools"),
+            ("execute_code", "jebat.tools.execute_code"),
         ]
         _loaded = 0
         _failed = []
