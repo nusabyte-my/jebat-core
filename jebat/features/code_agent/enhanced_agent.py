@@ -1103,9 +1103,14 @@ Follow the project conventions and ensure all acceptance criteria are met.
 
         if plan.evaluator_agent:
             # Use evaluator agent to pick best
+            # NOTE: the join is hoisted out of the f-string — Python 3.12
+            # forbids backslashes inside f-string expressions.
+            solutions_block = chr(10).join(
+                f"--- {name} ---\n{result}" for name, result in agent_results.items()
+            )
             eval_prompt = f"""Evaluate these {len(agent_results)} solutions and pick the best:
 
-{chr(10).join(f"--- {name} ---\n{result}" for name, result in agent_results.items())}
+{solutions_block}
 
 Pick the best based on: correctness, completeness, code quality, and adherence to requirements.
 Output only the name of the best solution."""
@@ -1147,12 +1152,17 @@ Output only the name of the best solution."""
         raw_results = await asyncio.gather(*tasks)
 
         # Evaluate
+        # NOTE: join hoisted out of the f-string — Python 3.12 forbids
+        # backslashes inside f-string expressions.
+        solutions_block = chr(10).join(
+            f"--- Agent {i + 1} ---\n{r}" for i, r in enumerate(raw_results)
+        )
         eval_prompt = f"""Evaluate these {len(plan.agents)} solutions to the same task:
 
 Task: {plan.agents[0].task}
 
 Solutions:
-{chr(10).join(f"--- Agent {i+1} ---\n{r}" for i, r in enumerate(raw_results))}
+{solutions_block}
 
 Pick the best and explain why. Output: BEST_AGENT=<index>"""
         
