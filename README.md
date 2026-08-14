@@ -422,6 +422,8 @@ JEBAT exposes registered file, terminal, browser, search, scheduling, memory, an
 | **Vision / Search** | `vision_analyze`, `image_generate`, `search_web`, `web_extract` |
 | **Auth / Cron** | `auth_*`, `cron_*` (create, list, pause, resume, remove, update, run) |
 | **Wiki** | `wiki_*` (create, read, edit, delete, list, search, auto_save, suggest, consolidate, stats) |
+| **Memory** | `memory_store`, `memory_search`, `memory_forget`, `memory_stats` |
+| **autoMimpi / SelfLearn** | `mimpi_dream`, `mimpi_status`, `selflearn_analyze`, `project_remember`, `project_recall`, `project_forget`, `adapt_environment` |
 
 For a remote installation, deploy the MCP service with `infra/vps/vps/docker-compose.mcp.yml` and an authenticated reverse proxy based on `infra/vps/vps/nginx.jebat.mcp.conf`. The repository does not promise a shared public MCP endpoint.
 
@@ -548,6 +550,57 @@ jebat companion meeting --file transcript.txt --title "Sprint Review"
 # Companion stats
 jebat companion stats
 ```
+
+---
+
+## autoMimpi & SelfLearn — Memory Dreams & Adaptive Learning
+
+JEBAT's cross-session learning loop. The **EnhancedMemorySystem** (6 memory types: working, episodic, semantic, procedural, emotional, prospective) persists traces to `~/.jebat/memory/traces.json`; **autoMimpi** consolidates them into patterns and recommendations during "dream" cycles; **SelfLearn** adapts JEBAT's behavior to the current project.
+
+### Dream Cycle (autoMimpi)
+
+"Mimpi" = dream in Malay. Run a full consolidation cycle to turn raw session activity into durable knowledge:
+
+- Strengthen important memories, prune weak ones (forgetting curve)
+- Extract patterns and generalizations from recurring themes
+- Rebuild the learning profile (skill level, weak/strong areas, knowledge gaps)
+- Emit up to 5 prioritized suggestions (streak risk, consolidation due, pattern emerging, etc.)
+- Return a Laksamana quote
+
+```bash
+# CLI — run dream consolidation + selflearn analysis
+python run_mimpi_dream.py
+
+# MCP — from any IDE
+mimpi_dream        # run a dream cycle (force optional)
+mimpi_status       # dream count, memory health, patterns
+```
+
+Dream state is tracked in `.jebat/dream_state.json`; a session-start check auto-flags when a dream is due.
+
+### SelfLearn — Project Adaptation
+
+JEBAT remembers durable facts about each project so a future session doesn't re-discover them:
+
+```bash
+# MCP tools
+project_remember   # store a fact: stack, command, convention, environment, gotcha, goal
+project_recall     # restore project context at session start
+project_forget     # remove a stored fact
+selflearn_analyze  # skill assessment, knowledge coverage, retention, recommendations
+adapt_environment  # combine project facts + learning recommendations into guidance
+```
+
+Memory is tagged per project (`project:<name>`), so one server serves many projects without cross-contamination. Facts are categorized `stack | command | convention | environment | gotcha | goal | other`; high-importance facts survive consolidation pruning. Never store secret values — only *where* a secret lives.
+
+### REPL
+
+| Command | Purpose |
+|---------|---------|
+| `/mimpi` | Trigger auto-dream |
+| `/memory` | List stored memory |
+| `/mem+` | Store key/value in memory |
+| `/recall` | Search memory by query |
 
 ---
 
