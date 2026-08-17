@@ -54,6 +54,11 @@ def coerce_memory_type(value: Union[str, MemoryType, None]) -> MemoryType:
         # "semantic" (value), "SEMANTIC" (name), "MemoryType.SEMANTIC" (repr)
         if "." in s:
             s = s.rsplit(".", 1)[-1]
+        # Legacy stores used "incident" as a pseudo-type (EvolvePlayBoost /
+        # Erawan incident traces). Map to EPISODIC — an incident is an event —
+        # so old traces load instead of being skipped-and-dropped on save.
+        if s.lower() == "incident":
+            return MemoryType.EPISODIC
         for member in MemoryType:
             if s.lower() in (member.name.lower(), member.value.lower()):
                 return member
@@ -818,8 +823,22 @@ class EnhancedMemorySystem:
     def _save(self):
         """Save memory to disk. Failure is surfaced loudly — a silently
         swallowed save exception previously lost traces with no trace of
-        the error (a corrupt trace made the whole write no-op)."""
+        the error (a corrupt trace made the whole write no-op).
+
+        DATA-LOSS GUARD (2026-08-17): if the on-disk store has traces but
+        the in-memory state is EMPTY (a failed _load decoding a non-empty
+        file), refuse to overwrite — a save here would clobber the store.
+        The previous cp1252-on-Windows load failure produced exactly this:
+        load printed an error, loaded 0 traces, and the next _save wiped
+        60+ traces. Always write UTF-8 (Windows default is cp1252)."""
         try:
+            if len(self.traces) == 0 and self.traces_file.exists() and self.traces_file.stat().st_size > 100:
+                print(
+                    f"Memory save ABORTED: {len(self.traces)} in-memory traces but "
+                    f"{self.traces_file} has {self.traces_file.stat().st_size}B on disk — "
+                    f"refusing to clobber the store. Restore from a .bak and fix _load."
+                )
+                return
             data = {
                 "traces": {k: v.to_dict() for k, v in self.traces.items()},
                 "patterns": self.extracted_patterns,
@@ -827,7 +846,7 @@ class EnhancedMemorySystem:
                 "concept_weights": dict(self.concept_weights),
                 "concept_graph": {k: list(v) for k, v in self.concept_graph.items()},
             }
-            with open(self.traces_file, "w") as f:
+            with open(self.traces_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, default=str, indent=2)
         except Exception as e:
             print(f"Memory save error: {e}")
@@ -836,7 +855,7 @@ class EnhancedMemorySystem:
     def _load(self):
         try:
             if self.traces_file.exists():
-                with open(self.traces_file) as f:
+                with open(self.traces_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 for tid, td in data.get("traces", {}).items():
@@ -847,6 +866,13 @@ class EnhancedMemorySystem:
                     td["tags"] = set(td.get("tags", []))
                     td["linked_traces"] = set(td.get("linked_traces", []))
                     td["memory_type"] = coerce_memory_type(td.get("memory_type"))
+                    # Schema evolution: drop keys the dataclass no longer
+                    # accepts (legacy traces carried extra fields like
+                    # "project"). An unexpected-kwarg error here skips the
+                    # trace, and the next _save then DROPS it from disk —
+                    # filter instead so old traces survive load+save cycles.
+                    known = set(MemoryTrace.__dataclass_fields__.keys())
+                    td = {k: v for k, v in td.items() if k in known}
                     trace = MemoryTrace(**td)
                     self.traces[tid] = trace
                     self.traces_by_type[trace.memory_type].add(tid)
