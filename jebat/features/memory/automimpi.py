@@ -20,10 +20,12 @@ Features:
 from __future__ import annotations
 
 import json
+import os
 import random
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from . import (
@@ -147,6 +149,63 @@ class AutoMimpi:
         self.dream_count = 0
         self.dream_history: List[DreamReport] = []
         self._max_history = 30
+        # Dream state persistence (2026-08-18): dream() previously updated
+        # last_dream_at/dream_count in memory ONLY — no writer existed for
+        # ~/.jebat/dream_state.json, so consecutive dreams looked "stuck"
+        # (two sessions assumed persistence that no code performed). The
+        # engine now owns the state file: loaded here, saved atomically at
+        # the end of every successful dream().
+        self.state_file: Path = Path.home() / ".jebat" / "dream_state.json"
+        self._load_state()
+
+    # ── Dream state persistence ─────────────────────────────────────
+
+    def _load_state(self) -> None:
+        """Restore dream counters from ~/.jebat/dream_state.json.
+
+        Tolerant of both live schemas seen on disk:
+        - engine schema: {"dream_count": int, "last_dream": iso, ...}
+        - workspace mirror schema: {"totalDreams": int, "lastDreamAt": iso, ...}
+        Missing/corrupt file starts at 0 — never raise on boot.
+        """
+        try:
+            if not self.state_file.exists():
+                return
+            raw = json.loads(self.state_file.read_text(encoding="utf-8"))
+            count = raw.get("dream_count", raw.get("totalDreams", 0))
+            last = raw.get("last_dream", raw.get("lastDreamAt"))
+            if isinstance(count, int) and count >= 0:
+                self.dream_count = count
+            if isinstance(last, str) and last:
+                try:
+                    self.last_dream_at = datetime.fromisoformat(last.replace("Z", "+00:00"))
+                except ValueError:
+                    pass
+        except Exception as e:
+            print(f"Dream state load error (starting fresh): {e}")
+
+    def _save_state(self, sessions_since_dream: int = 0) -> None:
+        """Atomically persist dream counters.
+
+        Same discipline as the 9f4a2c2 traces.json guard: write UTF-8 to a
+        temp file in the same directory, then os.replace for atomicity. A
+        failed save must never zero the file (corrupt-in-place) — on error
+        the old file stays untouched and we surface loudly.
+        """
+        try:
+            self.state_file.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "sessions_since_dream": sessions_since_dream,
+                "last_dream": self.last_dream_at.isoformat() if self.last_dream_at else None,
+                "dream_count": self.dream_count,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            tmp = self.state_file.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            os.replace(tmp, self.state_file)
+        except Exception as e:
+            print(f"Dream state save error: {e}")
+            raise
 
     async def dream(self, force: bool = False) -> DreamReport:
         """
@@ -188,6 +247,10 @@ class AutoMimpi:
         self.dream_history.append(report)
         if len(self.dream_history) > self._max_history:
             self.dream_history = self.dream_history[-self._max_history:]
+
+        # 6. Persist state — a dream that doesn't flush its counters never
+        # happened as far as session bootstrap is concerned (2026-08-18 fix).
+        self._save_state(sessions_since_dream=0)
 
         return report
 

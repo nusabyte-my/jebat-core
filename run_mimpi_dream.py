@@ -22,6 +22,22 @@ async def main():
     automimpi = create_automimpi(mem)
     report = await automimpi.dream(force=True)
 
+    # Mirror engine state (~/.jebat/dream_state.json, written by dream())
+    # to the workspace copy consumed by session bootstrap. Same atomic
+    # write discipline; failure to mirror is loud but non-fatal.
+    import json as _json
+    from pathlib import Path as _Path
+    try:
+        ws_state = _Path(__file__).resolve().parent / "memory" / ".dream-state.json"
+        ws_state.write_text(_json.dumps({
+            "lastDreamAt": automimpi.last_dream_at.isoformat() if automimpi.last_dream_at else None,
+            "lastScanAt": automimpi.last_dream_at.isoformat() if automimpi.last_dream_at else None,
+            "sessionsSinceDream": 0,
+            "totalDreams": automimpi.dream_count,
+        }, indent=2), encoding="utf-8")
+    except Exception as e:
+        print(f"[autoMimpi] WARNING: workspace dream-state mirror failed: {e}")
+
     print("\n=== DREAM REPORT ===")
     print(f"memories_processed:      {report.memories_processed}")
     print(f"patterns_extracted:      {report.patterns_extracted}")
