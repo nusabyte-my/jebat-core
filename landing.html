@@ -1,2015 +1,3551 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JEBAT — Sovereign Agent OS</title>
-    <meta name="description" content="Sovereign Agent Operating System. Five specialized AI products sharing a single persistent memory layer and MCP protocol bus. Air-gapped, MIT licensed.">
-    <meta property="og:title" content="JEBAT — Sovereign Agent OS">
-    <meta property="og:description" content="Your sovereign agent OS. Five products, one unified memory layer, zero telemetry. Self-hosted, air-gapped, MIT licensed.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://jebat.online">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="JEBAT — Sovereign Agent OS">
-    <meta name="twitter:description" content="Your sovereign agent OS. Five products, one unified memory layer, zero telemetry.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --canvas: #030303;
-            --surface: #08080c;
-            --card: #0a0a10;
-            --card-hover: #0e0e16;
-            --border: #16161e;
-            --border-bright: #1e1e2a;
-            --cyan: #00f0ff;
-            --cyan-dim: rgba(0,240,255,0.06);
-            --cyan-glow: rgba(0,240,255,0.2);
-            --purple: #8b5cf6;
-            --purple-dim: rgba(139,92,246,0.06);
-            --amber: #f59e0b;
-            --amber-dim: rgba(245,158,11,0.06);
-            --green: #22c55e;
-            --green-dim: rgba(34,197,94,0.06);
-            --red: #ef4444;
-            --text: #f0f0f0;
-            --text-body: #a8a8b0;
-            --text-dim: rgba(168,168,176,0.45);
-            --font-display: 'Space Grotesk', sans-serif;
-            --font-body: 'Inter', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            background: var(--canvas);
-            color: var(--text);
-            font-family: var(--font-body);
-            line-height: 1.5;
-            overflow-x: hidden;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 9999;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent, transparent 2px,
-                rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px
-            );
-        }
-
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
-
-        .mono {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .section-label {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: var(--cyan);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-label::before {
-            content: '';
-            width: 20px;
-            height: 1px;
-            background: var(--cyan);
-            opacity: 0.5;
-        }
-
-        h1, h2, h3 { font-family: var(--font-display); }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--cyan), var(--purple), var(--amber));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* ─── NAV ─── */
-        nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            height: 56px;
-            background: rgba(3,3,3,0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-        }
-
-        nav .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--text);
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 15px;
-        }
-
-        .logo-mark {
-            width: 32px;
-            height: 32px;
-            border: 1.5px solid var(--cyan);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            position: relative;
-            background: var(--cyan-dim);
-        }
-
-        .logo-mark::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border: 1px solid var(--cyan);
-            opacity: 0.15;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 4px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 12px;
-            font-family: var(--font-mono);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            padding: 6px 14px;
-            border: 1px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--text);
-            background: var(--surface);
-            border-color: var(--border);
-        }
-
-        .nav-links a.active {
-            color: var(--cyan);
-            border-color: var(--border);
-            background: var(--cyan-dim);
-        }
-
-        .nav-toggle {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-        }
-        .nav-toggle span {
-            display: block;
-            width: 22px;
-            height: 2px;
-            background: var(--text);
-            transition: all 0.2s;
-            border-radius: 2px;
-        }
-        .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-        .nav-toggle.open span:nth-child(2) { opacity: 0; }
-        .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-        @media (max-width: 768px) {
-            .nav-toggle { display: flex; }
-            .nav-links {
-                display: none;
-                position: fixed;
-                top: 56px; left: 0; right: 0;
-                background: rgba(3,3,3,0.96);
-                backdrop-filter: blur(20px);
-                border-bottom: 1px solid var(--border);
-                flex-direction: column;
-                padding: 16px 32px;
-                gap: 4px;
-            }
-            .nav-links.open { display: flex; }
-            .nav-links a { font-size: 13px; padding: 10px 14px; }
-        }
-
-        /* ─── BUTTONS ─── */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 28px;
-            font-family: var(--font-body);
-            font-size: 13px;
-            font-weight: 500;
-            text-decoration: none;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.25s;
-            letter-spacing: 0.3px;
-        }
-
-        .btn-cyan {
-            background: var(--cyan);
-            color: var(--canvas);
-            border-color: var(--cyan);
-        }
-
-        .btn-cyan:hover {
-            box-shadow: 0 0 24px var(--cyan-glow), 0 0 48px rgba(0,240,255,0.08);
-            transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-body);
-            border-color: var(--border-bright);
-        }
-
-        .btn-ghost:hover {
-            background: var(--surface);
-            border-color: var(--zinc-3);
-            color: var(--text);
-        }
-
-        /* ─── PILLS ─── */
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 10px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            border: 1px solid var(--border);
-        }
-
-        .pill-live { background: var(--green-dim); color: var(--green); border-color: rgba(34,197,94,0.2); }
-        .pill-beta { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0,240,255,0.2); }
-        .pill-planned { background: var(--purple-dim); color: var(--purple); border-color: rgba(139,92,246,0.2); }
-        .pill-soon { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,158,11,0.2); }
-
-        .pill-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-        }
-
-        .pill-live .pill-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
-        .pill-beta .pill-dot { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
-        .pill-planned .pill-dot { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
-        .pill-soon .pill-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
-
-        /* ─── HERO ─── */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            position: relative;
-            padding-top: 56px;
-            overflow: hidden;
-        }
-
-        .hero-bg {
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 30% 20%, rgba(0,240,255,0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.04) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 50%, rgba(245,158,11,0.02) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .hero-grid-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            opacity: 0.03;
-            background-image:
-                linear-gradient(var(--cyan) 1px, transparent 1px),
-                linear-gradient(90deg, var(--cyan) 1px, transparent 1px);
-            background-size: 80px 80px;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 32px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-        }
-
-        .hero-left { max-width: 580px; }
-
-        .hero-eyebrow {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--cyan);
-            margin-bottom: 28px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .eyebrow-pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--green);
-            box-shadow: 0 0 8px var(--green);
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.75); }
-        }
-
-        h1.hero-title {
-            font-family: var(--font-display);
-            font-size: clamp(36px, 5.5vw, 64px);
-            font-weight: 700;
-            line-height: 1.08;
-            letter-spacing: -1.5px;
-            margin-bottom: 24px;
-        }
-
-        .hero-sub {
-            font-size: 16px;
-            color: var(--text-body);
-            max-width: 480px;
-            line-height: 1.7;
-            margin-bottom: 40px;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 48px;
-        }
-
-        .hero-version-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .ver-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--text-body);
-            padding: 5px 12px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        .ver-badge .num { color: var(--cyan); font-weight: 600; }
-        .ver-badge .pass { color: var(--green); }
-
-        /* ─── HERO TERMINAL ─── */
-        .hero-terminal {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            overflow: hidden;
-        }
-
-        .terminal-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--border);
-            background: rgba(255,255,255,0.015);
-        }
-
-        .terminal-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .terminal-dot.red { background: #ef4444; }
-        .terminal-dot.yellow { background: #f59e0b; }
-        .terminal-dot.green { background: #22c55e; }
-
-        .terminal-title {
-            flex: 1;
-            text-align: center;
-            font-size: 10px;
-            color: var(--text-dim);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .terminal-body {
-            padding: 20px;
-            line-height: 2;
-            color: var(--text-body);
-        }
-
-        .terminal-body .prompt { color: var(--cyan); }
-        .terminal-body .cmd { color: var(--text); }
-        .terminal-body .dim { color: var(--text-dim); }
-        .terminal-body .ok { color: var(--green); }
-        .terminal-body .info { color: var(--purple); }
-        .terminal-body .warn { color: var(--amber); }
-
-        .terminal-cursor {
-            display: inline-block;
-            width: 7px;
-            height: 14px;
-            background: var(--cyan);
-            animation: blink 1s step-end infinite;
-            vertical-align: middle;
-            margin-left: 2px;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        /* ─── ARCH MARQUEE ─── */
-        .arch-bar {
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            background: var(--surface);
-            padding: 14px 0;
-            overflow: hidden;
-        }
-
-        .arch-marquee {
-            display: flex;
-            gap: 60px;
-            animation: marquee 50s linear infinite;
-            width: max-content;
-        }
-
-        @keyframes marquee {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-        }
-
-        .arch-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
-        }
-
-        .arch-item .pulse {
-            width: 5px;
-            height: 5px;
-            background: var(--cyan);
-            border-radius: 50%;
-            animation: pulse-anim 2s infinite;
-        }
-
-        @keyframes pulse-anim {
-            0% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 8px var(--cyan); }
-            100% { opacity: 0.3; transform: scale(0.8); }
-        }
-
-        /* ─── SECTIONS ─── */
-        .section { padding: 100px 0; }
-        .section-alt { background: var(--surface); }
-
-        /* ─── ARCHITECTURE LAYER DIAGRAM ─── */
-        .arch-layers {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-            margin-top: 48px;
-        }
-
-        .arch-layer {
-            display: grid;
-            grid-template-columns: 180px 1fr;
-            background: var(--canvas);
-            transition: background 0.2s;
-        }
-
-        .arch-layer:hover { background: var(--card-hover); }
-
-        .arch-layer-label {
-            padding: 20px 24px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--cyan);
-            border-right: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--surface);
-        }
-
-        .arch-layer-label .ldot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-
-        .arch-layer-content {
-            padding: 20px 28px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .arch-tag {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--text-body);
-            padding: 4px 12px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            transition: all 0.2s;
-        }
-
-        .arch-tag:hover {
-            border-color: var(--cyan);
-            color: var(--cyan);
-            background: var(--cyan-dim);
-        }
-
-        /* ─── PRODUCTS GRID ─── */
-        .products-section-header {
-            max-width: 600px;
-            margin-bottom: 56px;
-        }
-
-        .products-hero-card {
-            background: var(--canvas);
-            border: 1px solid var(--border);
-            border-bottom: none;
-            padding: 48px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 48px;
-            transition: all 0.3s;
-        }
-
-        .products-hero-card:hover {
-            background: var(--card-hover);
-            box-shadow: inset 0 0 0 1px var(--cyan);
-        }
-
-        .ph-left {}
-
-        .ph-icon {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            margin-bottom: 20px;
-        }
-
-        .ph-name {
-            font-family: var(--font-display);
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .ph-codename {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--cyan);
-            margin-bottom: 16px;
-        }
-
-        .ph-desc {
-            color: var(--text-body);
-            font-size: 14px;
-            line-height: 1.7;
-            margin-bottom: 24px;
-        }
-
-        .ph-features {
-            list-style: none;
-        }
-
-        .ph-features li {
-            font-size: 12px;
-            color: var(--text-body);
-            padding: 4px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .ph-features li::before {
-            content: '\203A';
-            color: var(--cyan);
-            font-weight: 600;
-        }
-
-        .ph-right {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .ph-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .ph-stat {
-            background: var(--canvas);
-            padding: 20px;
-            text-align: center;
-        }
-
-        .ph-stat-val {
-            font-family: var(--font-display);
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .ph-stat-label {
-            font-family: var(--font-mono);
-            font-size: 9px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        .products-sub-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-            border-top: none;
-        }
-
-        .product-card {
-            background: var(--canvas);
-            padding: 36px 32px;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s;
-            min-height: 280px;
-        }
-
-        .product-card:hover {
-            background: var(--card-hover);
-            box-shadow: inset 0 0 0 1px var(--cyan);
-            z-index: 1;
-        }
-
-        .product-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .product-icon {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        .product-name {
-            font-family: var(--font-display);
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .product-codename {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--cyan);
-            margin-bottom: 10px;
-        }
-
-        .product-desc {
-            color: var(--text-body);
-            font-size: 12px;
-            line-height: 1.65;
-            margin-bottom: 16px;
-            flex: 1;
-        }
-
-        .product-features {
-            list-style: none;
-            margin-bottom: auto;
-        }
-
-        .product-features li {
-            font-size: 11px;
-            color: var(--text-body);
-            padding: 3px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .product-features li::before {
-            content: '\203A';
-            color: var(--cyan);
-            font-weight: 600;
-        }
-
-        .product-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border);
-        }
-
-        .product-link {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--cyan);
-            text-decoration: none;
-            letter-spacing: 0.5px;
-            transition: opacity 0.2s;
-        }
-
-        .product-link:hover { opacity: 0.7; }
-
-        /* ─── CAPABILITIES GRID ─── */
-        .cap-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .cap-card {
-            background: var(--canvas);
-            padding: 36px 30px;
-            transition: background 0.25s;
-        }
-
-        .cap-card:hover { background: var(--card-hover); }
-
-        .cap-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--border);
-            margin-bottom: 18px;
-            font-size: 18px;
-        }
-
-        .cap-card h3 {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .cap-card p {
-            font-size: 12px;
-            color: var(--text-body);
-            line-height: 1.65;
-        }
-
-        .cap-meta {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--cyan);
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* ─── TIMELINE ─── */
-        .timeline {
-            position: relative;
-            padding-left: 52px;
-            margin-top: 48px;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 12px;
-            bottom: 12px;
-            width: 2px;
-            background: linear-gradient(180deg, var(--green), var(--cyan) 40%, var(--purple) 70%, var(--amber));
-            opacity: 0.3;
-        }
-
-        .timeline-item {
-            position: relative;
-            padding: 28px 32px;
-            border: 1px solid var(--border);
-            background: var(--canvas);
-            transition: all 0.25s;
-            margin-bottom: 2px;
-        }
-
-        .timeline-item:last-child { margin-bottom: 0; }
-
-        .timeline-item:hover {
-            background: var(--card-hover);
-            border-color: var(--border-bright);
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -40px;
-            top: 32px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            background: var(--canvas);
-            z-index: 1;
-        }
-
-        .timeline-item.shipped::before { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px var(--green); }
-        .timeline-item.active::before { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 14px var(--cyan); }
-        .timeline-item.upcoming::before { background: var(--zinc-3); border-color: var(--zinc-3); }
-
-        .tl-top {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .tl-badge {
-            font-family: var(--font-mono);
-            font-size: 9px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            padding: 2px 8px;
-        }
-
-        .tl-badge.shipped { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-        .tl-badge.active { background: rgba(0,240,255,0.08); color: var(--cyan); border: 1px solid rgba(0,240,255,0.2); }
-        .tl-badge.upcoming { background: rgba(255,255,255,0.03); color: var(--text-dim); border: 1px solid var(--border); }
-
-        .tl-label {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        .tl-title {
-            font-family: var(--font-display);
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-
-        .tl-desc {
-            font-size: 13px;
-            color: var(--text-body);
-            line-height: 1.65;
-        }
-
-        .tl-desc strong { color: var(--text); }
-
-        /* ─── STATS ROW ─── */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .stat-item {
-            background: var(--canvas);
-            padding: 36px 24px;
-            text-align: center;
-            transition: background 0.25s;
-        }
-
-        .stat-item:hover { background: var(--card-hover); }
-
-        .stat-val {
-            font-family: var(--font-display);
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .stat-label {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        /* ─── MCP SECTION ─── */
-        .mcp-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .mcp-card {
-            background: var(--canvas);
-            padding: 36px;
-        }
-
-        .mcp-card h3 {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .mcp-card pre {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 16px 20px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            line-height: 1.9;
-            color: var(--text-body);
-            overflow-x: auto;
-        }
-
-        .mcp-card pre .comment { color: var(--text-dim); }
-        .mcp-card pre .cmd { color: var(--cyan); }
-        .mcp-card pre .key { color: var(--purple); }
-        .mcp-card pre .str { color: var(--green); }
-
-        .mcp-ide-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-            margin-bottom: 32px;
-        }
-
-        .mcp-ide-item {
-            background: var(--canvas);
-            padding: 24px 16px;
-            text-align: center;
-            transition: all 0.25s;
-        }
-
-        .mcp-ide-item:hover { background: var(--card-hover); }
-
-        .mcp-ide-name {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .mcp-ide-icon { font-size: 26px; margin-bottom: 10px; }
-
-        /* ─── DOCS GRID ─── */
-        .docs-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .docs-card {
-            background: var(--canvas);
-            padding: 36px 30px;
-            transition: background 0.25s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-
-        .docs-card:hover { background: var(--card-hover); }
-
-        .docs-card-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-            font-size: 18px;
-        }
-
-        .docs-card h3 {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .docs-card p {
-            font-size: 12px;
-            color: var(--text-body);
-            line-height: 1.65;
-            margin-bottom: 12px;
-        }
-
-        .docs-card .docs-arrow {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--cyan);
-            letter-spacing: 0.5px;
-        }
-
-        /* ─── QUICKSTART ─── */
-        .quickstart-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2px;
-            background: var(--border);
-            border: 1px solid var(--border);
-        }
-
-        .quickstart-card {
-            background: var(--canvas);
-            padding: 36px;
-        }
-
-        .quickstart-card h3 {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .quickstart-card pre {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 16px 20px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            line-height: 1.9;
-            color: var(--text-body);
-            overflow-x: auto;
-        }
-
-        .quickstart-card pre .comment { color: var(--text-dim); }
-        .quickstart-card pre .cmd { color: var(--cyan); }
-
-        /* ─── CTA SECTION ─── */
-        .cta-section {
-            padding: 120px 0;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-bg {
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 50% 50%, rgba(0,240,255,0.06) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .cta-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-title {
-            font-family: var(--font-display);
-            font-size: clamp(28px, 4vw, 48px);
-            font-weight: 700;
-            letter-spacing: -1px;
-            margin-bottom: 20px;
-        }
-
-        .cta-sub {
-            font-size: 16px;
-            color: var(--text-body);
-            max-width: 500px;
-            margin: 0 auto 40px;
-            line-height: 1.7;
-        }
-
-        .cta-actions {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        /* ─── FOOTER ─── */
-        footer {
-            border-top: 1px solid var(--border);
-            padding: 60px 0 40px;
-            background: var(--canvas);
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr repeat(3, 1fr);
-            gap: 40px;
-            margin-bottom: 48px;
-        }
-
-        .footer-col h4 {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 20px;
-        }
-
-        .footer-col ul { list-style: none; }
-        .footer-col li { margin-bottom: 10px; }
-
-        .footer-col a {
-            color: var(--text-body);
-            text-decoration: none;
-            font-size: 13px;
-            transition: color 0.2s;
-        }
-
-        .footer-col a:hover { color: var(--cyan); }
-
-        .footer-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 32px;
-            border-top: 1px solid var(--border);
-        }
-
-        .footer-bottom p {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        .footer-links a {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover { color: var(--cyan); }
-
-        /* ─── RESPONSIVE ─── */
-        @media (max-width: 1024px) {
-            .hero-content { grid-template-columns: 1fr; gap: 48px; }
-            .hero-terminal { max-width: 560px; }
-            .cap-grid { grid-template-columns: repeat(2, 1fr); }
-            .stats-row { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        @media (max-width: 900px) {
-            .products-hero-card { grid-template-columns: 1fr; }
-            .mcp-grid { grid-template-columns: 1fr; }
-            .mcp-ide-grid { grid-template-columns: repeat(3, 1fr); }
-            .docs-grid { grid-template-columns: 1fr; }
-            .quickstart-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        @media (max-width: 640px) {
-            .hero-actions { flex-direction: column; }
-            .products-sub-grid { grid-template-columns: 1fr; }
-            .cap-grid { grid-template-columns: 1fr; }
-            .stats-row { grid-template-columns: 1fr 1fr; }
-            .mcp-ide-grid { grid-template-columns: repeat(2, 1fr); }
-            .footer-grid { grid-template-columns: 1fr; }
-            .timeline { padding-left: 36px; }
-            .timeline-item { padding: 24px; }
-            .timeline-item::before { left: -31px; width: 10px; height: 10px; }
-            .cta-actions { flex-direction: column; align-items: center; }
-        }
-
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--canvas); }
-        ::-webkit-scrollbar-thumb { background: var(--border-bright); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--zinc-4); }
-    </style>
-</head>
-<body>
-
-    <nav>
-        <div class="container">
-            <a href="#" class="logo">
-                <div class="logo-mark">🗡</div>
-                JEBAT
-            </a>
-            <button class="nav-toggle" aria-label="Toggle navigation" onclick="this.classList.toggle('open');document.querySelector('.nav-links').classList.toggle('open')">
-                <span></span><span></span><span></span>
-            </button>
-            <ul class="nav-links">
-                <li><a href="#architecture" class="active">Architecture</a></li>
-                <li><a href="#platform">Platform</a></li>
-                <li><a href="#capabilities">Capabilities</a></li>
-                <li><a href="#timeline">Timeline</a></li>
-                <li><a href="#mcp">MCP</a></li>
-                <li><a href="#quickstart">Quick Start</a></li>
-                <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank">GitHub</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-grid-overlay"></div>
-        <div class="hero-content">
-            <div class="hero-left">
-                <div class="hero-eyebrow">
-                    <span class="eyebrow-pulse"></span>
-                    Sovereign Agent OS
-                </div>
-                <h1 class="hero-title">
-                    Your <span class="gradient-text">Agent</span><br>Operating System
-                </h1>
-                <p class="hero-sub">
-                    Five specialized AI products. One persistent memory layer. A unified MCP protocol bus. Self-hosted, air-gapped, zero telemetry.
-                </p>
-                <div class="hero-actions">
-                    <a href="#quickstart" class="btn btn-cyan">Boot System →</a>
-                    <a href="#architecture" class="btn btn-ghost">View Architecture</a>
-                </div>
-                <div class="hero-version-row">
-                    <span class="ver-badge"><span class="num">v8.2</span> Stable</span>
-                    <span class="ver-badge"><span class="pass">✓</span> 7/7</span>
-                    <span class="ver-badge"><span class="pass">✓</span> 47 Tools</span>
-                    <span class="ver-badge"><span class="pass">✓</span> MIT</span>
-                </div>
-            </div>
-            <div class="hero-terminal">
-                <div class="terminal-bar">
-                    <div class="terminal-dot red"></div>
-                    <div class="terminal-dot yellow"></div>
-                    <div class="terminal-dot green"></div>
-                    <div class="terminal-title">jebat — agent os</div>
-                </div>
-                <div class="terminal-body" id="terminal-output">
-                    <div><span class="prompt">jebat@os</span> <span class="cmd">$ jebat boot</span></div>
-                    <div><span class="dim">[boot]</span> initializing sovereign agent os...</div>
-                    <div><span class="ok">✓</span> memory engine — <span class="dim">5 layers loaded</span></div>
-                    <div><span class="ok">✓</span> provider router — <span class="dim">17 backends online</span></div>
-                    <div><span class="ok">✓</span> mcp bus — <span class="dim">47 tools registered</span></div>
-                    <div><span class="ok">✓</span> agent swarm — <span class="dim">6 roles initialized</span></div>
-                    <div><span class="ok">✓</span> sentinel — <span class="dim">security layer armed</span></div>
-                    <div><span class="ok">✓</span> ghost db — <span class="dim">embedded vector store ready</span></div>
-                    <div><span class="ok">✓</span> catalyst — <span class="dim">observability stack online</span></div>
-                    <div><span class="ok">✓</span> rbac — <span class="dim">3-tier access control active</span></div>
-                    <div><span class="info">⬡</span> sdk — <span class="dim">python + typescript clients loaded</span></div>
-                    <div><span class="warn">◈</span> mimpi — <span class="dim">dream engine standby</span></div>
-                    <div><span class="dim">[boot]</span> <span class="ok">system ready</span> — all modules operational</div>
-                    <div><span class="prompt">jebat@os</span> <span class="terminal-cursor"></span></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div class="arch-bar">
-        <div class="arch-marquee">
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">17 PROVIDER ROUTER</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MCP PROTOCOL BUS</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">5-LAYER MEMORY</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ULTRA-THINK ENGINE</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-AGENT SWARM</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SENTINEL SECURITY</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">GHOST DB</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">CATALYST O11Y</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ENTERPRISE RBAC</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SDK PYTHON + TS</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MIMPI DREAM ENGINE</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SELF-LEARNING</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">17 PROVIDER ROUTER</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MCP PROTOCOL BUS</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">5-LAYER MEMORY</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ULTRA-THINK ENGINE</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MULTI-AGENT SWARM</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SENTINEL SECURITY</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">GHOST DB</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">CATALYST O11Y</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">ENTERPRISE RBAC</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SDK PYTHON + TS</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">MIMPI DREAM ENGINE</span></div>
-            <div class="arch-item"><div class="pulse"></div><span class="mono" style="color:var(--text-dim)">SELF-LEARNING</span></div>
-        </div>
-    </div>
-
-    <section class="section" id="architecture">
-        <div class="container">
-            <div class="section-label">System Architecture</div>
-            <h2 style="font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:16px;">
-                Six-layer <span class="gradient-text">sovereign stack</span>
-            </h2>
-            <p style="color:var(--text-body);font-size:15px;max-width:600px;line-height:1.7;">
-                Every component runs inside your network. No data leaves. No telemetry. No external dependencies required.
-            </p>
-
-            <div class="arch-layers">
-                <div class="arch-layer">
-                    <div class="arch-layer-label"><div class="ldot" style="background:var(--cyan)"></div> Layer 0 — Interface</div>
-                    <div class="arch-layer-content">
-                        <span class="arch-tag">WebUI Dashboard</span>
-                        <span class="arch-tag">CLI (npx/pip)</span>
-                        <span class="arch-tag">MCP Protocol</span>
-                        <span class="arch-tag">SDK (Python)</span>
-                        <span class="arch-tag">SDK (TypeScript)</span>
-                        <span class="arch-tag">REST API</span>
-                    </div>
-                </div>
-                <div class="arch-layer">
-                    <div class="arch-layer-label"><div class="ldot" style="background:var(--purple)"></div> Layer 1 — Agents</div>
-                    <div class="arch-layer-content">
-                        <span class="arch-tag">ReAct Engine</span>
-                        <span class="arch-tag">Ultra-Think</span>
-                        <span class="arch-tag">Multi-Agent Swarm</span>
-                        <span class="arch-tag">Branch Agents</span>
-                        <span class="arch-tag">Spec-Driven Dev</span>
-                        <span class="arch-tag">Skill Marketplace</span>
-                    </div>
-                </div>
-                <div class="arch-layer">
-                    <div class="arch-layer-label"><div class="ldot" style="background:var(--amber)"></div> Layer 2 — Products</div>
-                    <div class="arch-layer-content">
-                        <span class="arch-tag">Core (Inference)</span>
-                        <span class="arch-tag">Sentinel (Security)</span>
-                        <span class="arch-tag">DevSuite (Code)</span>
-                        <span class="arch-tag">Companion (Chat)</span>
-                        <span class="arch-tag">Nexus (Bots)</span>
-                    </div>
-                </div>
-                <div class="arch-layer">
-                    <div class="arch-layer-label"><div class="ldot" style="background:var(--green)"></div> Layer 3 — Cognition</div>
-                    <div class="arch-layer-content">
-                        <span class="arch-tag">Integrated Memory (6 Types)</span>
-                        <span class="arch-tag">Working Memory Buffer</span>
-                        <span class="arch-tag">Ghost DB (Vectors)</span>
-                        <span class="arch-tag">Mimpi (Dream)</span>
-                        <span class="arch-tag">Self-Learning</span>
-                        <span class="arch-tag">Cross-Session Context</span>
-                    </div>
-                </div>
-                <div class="arch-layer">
-                    <div class="arch-layer-label"><div class="ldot" style="background:var(--red)"></div> Layer 4 — Infrastructure</div>
-                    <div class="arch-layer-content">
-                        <span class="arch-tag">Provider Router (17)</span>
-                        <span class="arch-tag">MCP Bus (47 Tools)</span>
-                        <span class="arch-tag">Catalyst O11y</span>
-                        <span class="arch-tag">Enterprise RBAC</span>
-                        <span class="arch-tag">Cost Tracker</span>
-                    </div>
-                </div>
-                <div class="arch-layer">
-                    <div class="arch-layer-label"><div class="ldot" style="background:var(--text-dim)"></div> Layer 5 — Runtime</div>
-                    <div class="arch-layer-content">
-                        <span class="arch-tag">SQLite + sqlite-vec</span>
-                        <span class="arch-tag">Ollama Auto-Start</span>
-                        <span class="arch-tag">Docker Compose</span>
-                        <span class="arch-tag">Air-Gapped Deploy</span>
-                        <span class="arch-tag">Zero Telemetry</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-alt" id="platform">
-        <div class="container">
-            <div class="products-section-header">
-                <div class="section-label">Platform Suite</div>
-                <h2 style="font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:16px;">
-                    Five products.<br><span class="gradient-text">One memory.</span> Unified by protocol.
-                </h2>
-                <p style="color:var(--text-body);font-size:15px;line-height:1.7;">
-                    Every product shares the same memory engine and MCP bus. Install what you need. They all talk to each other.
-                </p>
-            </div>
-
-            <div class="products-hero-card">
-                <div class="ph-left">
-                    <div class="ph-icon">🗡</div>
-                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-                        <div class="ph-name">JEBAT Core</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v8.2</span>
-                    </div>
-                    <div class="ph-codename">Hang Jebat — Sovereign Inference Router</div>
-                    <p class="ph-desc">
-                        7 reasoning modes, 6-type memory with Ghost DB vector search, multi-agent swarm orchestration. Routes to 17 providers with automatic failover. The central nervous system of the platform.
-                    </p>
-                    <ul class="ph-features">
-                        <li>7 Thinking Modes — Fast, Deliberate, Deep, Strategic, Creative, Critical, Custom</li>
-                        <li>5-Layer Memory — M0 Sensory through M4 Procedural</li>
-                        <li>Multi-Agent Swarm — 6 specialized roles with delegation</li>
-                        <li>17-Provider LLM Router with health monitoring</li>
-                    </ul>
-                </div>
-                <div class="ph-right">
-                    <div class="ph-stats">
-                        <div class="ph-stat">
-                            <div class="ph-stat-val" style="color:var(--cyan)">7</div>
-                            <div class="ph-stat-label">Thinking Modes</div>
-                        </div>
-                        <div class="ph-stat">
-                            <div class="ph-stat-val" style="color:var(--purple)">5</div>
-                            <div class="ph-stat-label">Memory Layers</div>
-                        </div>
-                        <div class="ph-stat">
-                            <div class="ph-stat-val" style="color:var(--amber)">17</div>
-                            <div class="ph-stat-label">LLM Providers</div>
-                        </div>
-                        <div class="ph-stat">
-                            <div class="ph-stat-val" style="color:var(--green)">6</div>
-                            <div class="ph-stat-label">Agent Roles</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="products-sub-grid">
-                <div class="product-card">
-                    <div class="product-header">
-                        <div class="product-icon">⚔</div>
-                        <div style="display:flex;gap:6px;">
-                            <span class="pill pill-live"><span class="pill-dot"></span> Live v3.1</span>
-                            <span class="pill pill-beta">MCP Native</span>
-                        </div>
-                    </div>
-                    <div class="product-name">Sentinel</div>
-                    <div class="product-codename">Keris — Security Orchestrator</div>
-                    <p class="product-desc">Autonomous pentest orchestration. Scans networks, correlates CVEs, scores risks — all through the MCP tool bus.</p>
-                    <ul class="product-features">
-                        <li>Autonomous pentest with scan profiles</li>
-                        <li>Real-time CVE correlation & CVSS v3 scoring</li>
-                        <li>Quick, Standard, Full scan profiles</li>
-                        <li>Air-gapped — zero external egress</li>
-                    </ul>
-                    <div class="product-footer">
-                        <a href="#quickstart" class="product-link">Get Started →</a>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-header">
-                        <div class="product-icon">⌨</div>
-                        <div style="display:flex;gap:6px;">
-                            <span class="pill pill-live"><span class="pill-dot"></span> Live v2.2</span>
-                            <span class="pill pill-beta">IDE Ready</span>
-                        </div>
-                    </div>
-                    <div class="product-name">Developer Suite</div>
-                    <div class="product-codename">Pandai — MCP-Native Dev Environment</div>
-                    <p class="product-desc">Code generation, review, sandboxed execution — integrated with every major IDE via MCP.</p>
-                    <ul class="product-features">
-                        <li>MCP-native code gen, review & refactoring</li>
-                        <li>Sandboxed Python/JS/Go execution</li>
-                        <li>Cursor, VS Code, Zed, Windsurf, JetBrains</li>
-                        <li>Auto-detect workspace & IDE config</li>
-                    </ul>
-                    <div class="product-footer">
-                        <a href="#mcp" class="product-link">View MCP Setup →</a>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-header">
-                        <div class="product-icon">💬</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v2.1</span>
-                    </div>
-                    <div class="product-name">Companion</div>
-                    <div class="product-codename">Sahabat — Conversational AI</div>
-                    <p class="product-desc">Persistent memory, meeting intelligence, task tracking — always in sync with Core.</p>
-                    <ul class="product-features">
-                        <li>Persistent long-term memory</li>
-                        <li>Daily briefing & standup reports</li>
-                        <li>Meeting transcript summarization</li>
-                        <li>Team task management</li>
-                    </ul>
-                    <div class="product-footer">
-                        <a href="#quickstart" class="product-link">Get Started →</a>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-header">
-                        <div class="product-icon">🌐</div>
-                        <span class="pill pill-live"><span class="pill-dot"></span> Live v1.5</span>
-                    </div>
-                    <div class="product-name">Nexus</div>
-                    <div class="product-codename">Perisai — Bot Orchestrator</div>
-                    <p class="product-desc">One memory across Telegram, Discord, Slack, WhatsApp, Signal, and Matrix.</p>
-                    <ul class="product-features">
-                        <li>6 messaging platforms</li>
-                        <li>Unified bot orchestration</li>
-                        <li>Cross-channel memory persistence</li>
-                        <li>Health monitoring & broadcast</li>
-                    </ul>
-                    <div class="product-footer">
-                        <a href="#quickstart" class="product-link">Get Started →</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="capabilities">
-        <div class="container">
-            <div class="section-label">Core Capabilities</div>
-            <h2 style="font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:16px;">
-                Built-in <span class="gradient-text">intelligence</span> systems
-            </h2>
-            <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:56px;line-height:1.7;">
-                Beyond the five products, JEBAT ships with embedded subsystems that make it a true agent operating system.
-            </p>
-
-            <div class="cap-grid">
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--cyan);">👻</div>
-                    <div class="cap-meta">Embedded Vector DB</div>
-                    <h3>Ghost DB</h3>
-                    <p>SQLite + sqlite-vec with HNSW indexing. Vector search for semantic memory retrieval. Recursive, semantic, and code chunkers.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--purple);">📊</div>
-                    <div class="cap-meta">Observability Stack</div>
-                    <h3>Catalyst O11y</h3>
-                    <p>OTel-compatible distributed tracing, Prometheus metrics, Loki logging. 6 Grafana dashboards including Context Budget monitoring.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--amber);">🔐</div>
-                    <div class="cap-meta">Access Control</div>
-                    <h3>Enterprise RBAC</h3>
-                    <p>Hierarchical org/team/project roles. 10 resource types × actions. FastAPI routes with permission resolution engine.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--green);">🐍</div>
-                    <div class="cap-meta">Python + TypeScript</div>
-                    <h3>SDK</h3>
-                    <p>Sync/async Python clients with Pydantic. TypeScript with Zod validation, React hooks, testing mocks. Full API coverage.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--purple);">💤</div>
-                    <div class="cap-meta">Dream Engine</div>
-                    <h3>Mimpi</h3>
-                    <p>8 dream types with concept graph seeding. Induction → Exploration → Synthesis → Insight → Consolidation → Awakening phases.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--cyan);">🧠</div>
-                    <div class="cap-meta">Adaptive Intelligence</div>
-                    <h3>Self-Learning</h3>
-                    <p>MetaLearner with UCB1 strategy selection. Builtin strategies auto-registered. Performance tracking with forgetting curve.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--amber);">🌿</div>
-                    <div class="cap-meta">Memory Architecture</div>
-                    <h3>Integrated Memory</h3>
-                    <p>6 memory types with Ebbinghaus forgetting curves. Ghost DB vector search. Agent loop auto-encodes decisions, files, and errors.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--green);">⚡</div>
-                    <div class="cap-meta">Working Memory</div>
-                    <h3>Live Context Buffer</h3>
-                    <p>Goals, facts, and constraints persisted across agent loop invocations. No re-derivation needed on session resume.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--cyan);">🔗</div>
-                    <div class="cap-meta">Session Continuity</div>
-                    <h3>Cross-Session Context</h3>
-                    <p>Auto-loads relevant past sessions via FTS5 search. Prior decisions and context available without manual recall.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--green);">🔧</div>
-                    <div class="cap-meta">Enhanced Agent</div>
-                    <h3>Branch Agents</h3>
-                    <p>4 isolation strategies for parallel work. 5 orchestration modes. Spec-driven development with cost tracking per agent.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--red);">🛡</div>
-                    <div class="cap-meta">Security Layer</div>
-                    <h3>Sentinel</h3>
-                    <p>Autonomous security orchestrator. Network scanning, CVE correlation, CVSS scoring — air-gapped, zero egress.</p>
-                </div>
-                <div class="cap-card">
-                    <div class="cap-icon" style="border-color:var(--amber);">📦</div>
-                    <div class="cap-meta">Token Optimization</div>
-                    <h3>Adaptive Context</h3>
-                    <p>Importance-based compaction retains system prompts, tool calls, and memory-referenced content. 40% token savings vs naive approach.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="stats">
-        <div class="container">
-            <div class="stats-row">
-                <div class="stat-item">
-                    <div class="stat-val gradient-text">5</div>
-                    <div class="stat-label">AI Products</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-val" style="color:var(--cyan)">47</div>
-                    <div class="stat-label">MCP Tools</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-val" style="color:var(--purple)">17</div>
-                    <div class="stat-label">LLM Providers</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-val" style="color:var(--amber)">145</div>
-                    <div class="stat-label">Tests Passing</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-val" style="color:var(--green)">6</div>
-                    <div class="stat-label">IDE Integrations</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="timeline">
-        <div class="container">
-            <div class="section-label">Delivery Timeline</div>
-            <h2 style="font-size:clamp(28px,4vw,42px);font-weight:700;">
-                From concept to <span class="gradient-text">production</span>
-            </h2>
-            <div class="timeline">
-                <div class="timeline-item shipped">
-                    <div class="tl-top">
-                        <span class="tl-badge shipped">Shipped</span>
-                        <span class="tl-label">Q1 2026</span>
-                    </div>
-                    <div class="tl-title">Platform Suite Launch</div>
-                    <p class="tl-desc">All five products shipped with shared memory, MCP protocol bus, and full air-gap support. <strong>v6.0 initial release.</strong></p>
-                </div>
-                <div class="timeline-item shipped">
-                    <div class="tl-top">
-                        <span class="tl-badge shipped">Shipped</span>
-                        <span class="tl-label">Q2 2026</span>
-                    </div>
-                    <div class="tl-title">v7.0 Core + WebUI</div>
-                    <p class="tl-desc">Major Core upgrade with 7 thinking modes, 6-type memory with Ghost DB vector search, multi-agent swarm. WebUI dashboard. <strong>47 MCP tools.</strong></p>
-                </div>
-                <div class="timeline-item active">
-                    <div class="tl-top">
-                        <span class="tl-badge active">In Progress</span>
-                        <span class="tl-label">Now — Q3 2026</span>
-                    </div>
-                    <div class="tl-title">v8.2 Unified CLI + MCP</div>
-                    <p class="tl-desc">Unified CLI, Streamable HTTP MCP, NPM zero-install. Ghost DB, Catalyst O11y, SDK, Enterprise RBAC, Mimpi dream engine. <strong>Self-learning & branch agents.</strong></p>
-                </div>
-                <div class="timeline-item upcoming">
-                    <div class="tl-top">
-                        <span class="tl-badge upcoming">Upcoming</span>
-                        <span class="tl-label">Q4 2026</span>
-                    </div>
-                    <div class="tl-title">Production Hardening</div>
-                    <p class="tl-desc">Multi-node deployment, SSO integration, audit logging, advanced cost analytics, and enterprise support tiers.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-alt" id="mcp">
-        <div class="container">
-            <div class="section-label">MCP Protocol Bus</div>
-            <h2 style="font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:16px;">
-                47 tools. Any IDE. Zero config.
-            </h2>
-            <p style="color:var(--text-body);font-size:15px;max-width:600px;margin-bottom:48px;line-height:1.7;">
-                Wire any MCP-compatible IDE into your sovereign AI stack in seconds.
-            </p>
-
-            <div class="section-label">Supported IDEs</div>
-            <div class="mcp-ide-grid">
-                <div class="mcp-ide-item">
-                    <div class="mcp-ide-icon">🖥</div>
-                    <div class="mcp-ide-name">Cursor</div>
-                    <div class="mono" style="color:var(--green);font-size:9px;">.cursor/mcp.json</div>
-                </div>
-                <div class="mcp-ide-item">
-                    <div class="mcp-ide-icon">⎇</div>
-                    <div class="mcp-ide-name">VS Code</div>
-                    <div class="mono" style="color:var(--green);font-size:9px;">via Continue/Cline</div>
-                </div>
-                <div class="mcp-ide-item">
-                    <div class="mcp-ide-icon">⚡</div>
-                    <div class="mcp-ide-name">Zed</div>
-                    <div class="mono" style="color:var(--green);font-size:9px;">mcp.json config</div>
-                </div>
-                <div class="mcp-ide-item">
-                    <div class="mcp-ide-icon">🌊</div>
-                    <div class="mcp-ide-name">Windsurf</div>
-                    <div class="mono" style="color:var(--green);font-size:9px;">.windsurf/mcp.json</div>
-                </div>
-                <div class="mcp-ide-item">
-                    <div class="mcp-ide-icon">◈</div>
-                    <div class="mcp-ide-name">JetBrains</div>
-                    <div class="mono" style="color:var(--green);font-size:9px;">MCP Plugin</div>
-                </div>
-            </div>
-
-            <div class="mcp-grid">
-                <div class="mcp-card">
-                    <h3><span style="color:var(--cyan)">stdio</span> IDE Integration</h3>
-                    <pre><span class="comment"># Add to .cursor/mcp.json</span>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JEBAT — Sovereign AI Command Layer | Keep Command</title>
+<meta name="description" content="JEBAT is the sovereign AI command layer. Run any model, give agents persistent memory and tools, and govern their actions on infrastructure you control." />
+<meta name="keywords" content="JEBAT, Sovereign AI, Command Layer, AI Infrastructure, Private LLM, Multi-Agent Swarms, MCP Protocol, Persistent Memory, NusaByte, Air-Gapped AI, llama.cpp, Ghost DB, Hermes Studio" />
+<meta name="author" content="NusaByte — Enterprise AI Infrastructure" />
+<meta name="theme-color" content="#090B0E" />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+<link rel="canonical" href="https://jebat.online/" />
+<link rel="alternate" hreflang="x-default" href="https://jebat.online/" />
+<link rel="alternate" hreflang="en" href="https://jebat.online/" />
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="assets/favicon.png" />
+<link rel="apple-touch-icon" href="assets/jebat-app-icon.png" />
+
+<!-- Open Graph / Social Media Meta -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="JEBAT" />
+<meta property="og:title" content="JEBAT — Sovereign AI Command Layer | Keep Command" />
+<meta property="og:description" content="Run any model. Give agents memory and tools. Govern every action. Deploy JEBAT on infrastructure you control." />
+<meta property="og:url" content="https://jebat.online/" />
+<meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@nusabyte" />
+<meta name="twitter:title" content="JEBAT — Sovereign AI Command Layer" />
+<meta name="twitter:description" content="Run any model. Give agents memory and tools. Govern every action. Deploy JEBAT on infrastructure you control." />
+<meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
+
+<!-- Structured Data: SoftwareApplication + Organization + FAQPage -->
+<script type="application/ld+json">
 {
-  <span class="key">"mcpServers"</span>: {
-    <span class="key">"jebat"</span>: {
-      <span class="key">"command"</span>: <span class="str">"python"</span>,
-      <span class="key">"args"</span>: [<span class="str">"-m"</span>, <span class="str">"jebat.features.mcp.mcp_server"</span>]
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://jebat.online/#organization",
+      "name": "NusaByte",
+      "url": "https://nusabyte.my",
+      "logo": "https://jebat.online/assets/Jebat-Transparent.png",
+      "sameAs": [
+        "https://github.com/nusabyte-my/jebat-core"
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "JEBAT",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Linux, Windows, macOS",
+      "softwareVersion": "8.3.0",
+      "description": "Sovereign AI command layer for model orchestration, persistent memory, MCP tool integration, and enterprise governance.",
+      "url": "https://jebat.online",
+      "license": "https://opensource.org/licenses/MIT",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Multi-Model Routing (Local & Cloud Providers)",
+        "Ghost DB 6-Type Persistent Memory Engine",
+        "Model Context Protocol (MCP) Tool Integration",
+        "Zero-Telemetry Air-Gapped Deployment",
+        "Enterprise Governance & Policy Enforcement"
+      ],
+      "author": { "@id": "https://jebat.online/#organization" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is JEBAT?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "JEBAT is a sovereign AI command layer that decouples your application architecture from underlying LLM providers. It provides multi-model routing, persistent memory via Ghost DB, MCP tool integration, and enterprise policy governance on infrastructure you control."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can JEBAT be deployed fully air-gapped?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. JEBAT supports 100% air-gapped deployments with zero external internet connectivity. Local inference runs via llama.cpp or Ollama, vector search operates locally in Ghost DB, and telemetry is completely disabled."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the relationship between JEBAT and NusaByte?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "JEBAT core is open-source software under the MIT license maintained by NusaByte. NusaByte provides commercial architecture design, private cloud/on-premise deployment, custom tool integration, and 24/7 managed enterprise operations."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does JEBAT support Model Context Protocol (MCP)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, JEBAT features native MCP protocol integration, allowing AI agents to securely interact with over 78 custom tools, databases, APIs, and file systems."
+          }
+        }
+      ]
     }
+  ]
+}
+</script>
+
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+/* HERMES STUDIO COLOR GRADE SYSTEM */
+:root {
+  /* JEBAT Brand Lock: Malam / Besi / Tulang / Tembaga / Bara / Keluli / Pucuk */
+  --jebat-malam: #080A09;
+  --jebat-besi: #141816;
+  --jebat-tulang: #F0EADF;
+  --jebat-tembaga: #C97A40;
+  --jebat-bara: #D58A4A;
+  --jebat-keluli: #99A39E;
+  --jebat-pucuk: #2F6F55;
+  --jebat-border: rgba(240, 234, 223, 0.09);
+  --jebat-copper-soft: rgba(201, 122, 64, 0.14);
+  --jebat-copper-glow: rgba(201, 122, 64, 0.20);
+
+  --hermes-obsidian: var(--jebat-malam);
+  --hermes-dark: var(--jebat-besi);
+  --hermes-surface: #1A1F1C;
+  --hermes-surface-mid: #202723;
+  --hermes-surface-bright: #29322D;
+
+  --hermes-amber: var(--jebat-tembaga);
+  --hermes-gold: var(--jebat-bara);
+  --hermes-amber-bright: #E1A06F;
+  --hermes-copper: var(--jebat-tembaga);
+  --hermes-bara: var(--jebat-bara);
+
+  --hermes-text-main: var(--jebat-tulang);
+  --hermes-text-subtle: var(--jebat-keluli);
+  --hermes-text-muted: var(--jebat-keluli);
+
+  --hermes-pucuk: var(--jebat-pucuk);
+  --hermes-blue: var(--jebat-keluli);
+  --hermes-purple: var(--jebat-tembaga);
+
+  --border-subtle: var(--jebat-border);
+  --border-mid: rgba(201, 122, 64, 0.30);
+  --border-bright: rgba(201, 122, 64, 0.55);
+
+  --copper-soft: var(--jebat-copper-soft);
+  --copper-glow: var(--jebat-copper-glow);
+  --copper-glow-strong: rgba(201, 122, 64, 0.55);
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --max-width: 1240px;
+}
+
+/* Base Reset & Global Rules (Square UI elements per user preference) */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  border-radius: 0 !important; /* Enforced square geometry */
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--hermes-obsidian);
+}
+
+body {
+  background: var(--hermes-obsidian);
+  color: var(--hermes-text-main);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+section[id] {
+  scroll-margin-top: 90px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -4rem;
+  z-index: 2000;
+  padding: 0.75rem 1rem;
+  background: var(--hermes-amber);
+  color: var(--hermes-obsidian);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+.skip-link:focus { top: 1rem; }
+
+/* TOP TICKER MARQUEE EYEBROW */
+.top-ticker-bar {
+  background: #050608;
+  border-bottom: 1px solid var(--border-subtle);
+  height: 28px;
+  padding: 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--hermes-amber);
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+/* Typography Utilities */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--hermes-text-main);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.text-copper { color: var(--hermes-amber); }
+.text-bara { color: var(--hermes-gold); }
+.text-keluli { color: var(--hermes-text-subtle); }
+.text-pucuk { color: var(--hermes-pucuk); }
+.text-tulang { color: var(--hermes-text-main); }
+.text-blue { color: var(--hermes-blue); }
+
+.jawi-cipher {
+  font-family: serif;
+  font-size: 14px;
+  color: var(--hermes-amber);
+  letter-spacing: 1px;
+  opacity: 0.85;
+}
+
+.copper-gradient {
+  color: var(--hermes-amber); /* a11y fallback: visible if background-clip:text unsupported */
+  background: linear-gradient(135deg, var(--hermes-text-main) 20%, var(--hermes-amber) 75%, var(--hermes-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@supports not (background-clip: text) {
+  .copper-gradient { background: none; -webkit-text-fill-color: currentColor; }
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Buttons & Active Elements */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+/* a11y: global focus indication for keyboard (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid var(--hermes-amber);
+  outline-offset: 2px;
+}
+/* a11y: respect reduced-motion (WCAG 2.3.3 / 2.2.2) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
   }
-}</pre>
-                </div>
-                <div class="mcp-card">
-                    <h3><span style="color:var(--purple)">HTTP</span> Remote Access</h3>
-                    <pre><span class="comment"># Start HTTP transport</span>
-<span class="cmd">jebat mcp serve --transport http --port 8099</span>
+  html { scroll-behavior: auto; }
+}
 
-<span class="comment"># Streamable HTTP (MCP 2025-03-26)</span>
-<span class="cmd">jebat mcp serve --transport streamable-http --port 8100</span>
+.btn-copper {
+  background: var(--hermes-amber);
+  color: var(--hermes-obsidian);
+  border-color: var(--hermes-gold);
+  animation: buttonPulse 1.2s ease 0.8s 1;
+  font-weight: 700;
+}
 
-<span class="comment"># List available tools</span>
-<span class="cmd">jebat mcp serve --help</span></pre>
-                </div>
-                <div class="mcp-card">
-                    <h3><span style="color:var(--amber)">CLI</span> Quick Start</h3>
-                    <pre><span class="comment"># Start as stdio server (for IDE)</span>
-<span class="cmd">jebat mcp serve --transport stdio</span>
+.btn-copper:hover {
+  background: var(--hermes-amber-bright);
+  color: var(--hermes-obsidian);
+  box-shadow: 0 0 30px var(--copper-glow-strong);
+  animation: none;
+}
 
-<span class="comment"># Generate IDE config templates</span>
-<span class="cmd">jebat mcp serve --print-ide-config</span></pre>
-                </div>
-                <div class="mcp-card">
-                    <h3><span style="color:var(--green)">npx</span> Zero-Install</h3>
-                    <pre><span class="comment"># Via npx (no install required)</span>
-<span class="cmd">npx @nusabyte/jebat mcp serve</span>
+.btn-outline {
+  background: transparent;
+  color: var(--hermes-text-main);
+  border-color: var(--border-mid);
+}
 
-<span class="comment"># Connect external MCP server</span>
-<span class="cmd">jebat mcp connect --http http://host:8100/mcp</span></pre>
-                </div>
-            </div>
+.btn-outline:hover {
+  background: var(--hermes-surface);
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+}
 
-            <div style="margin-top:48px;">
-                <div class="section-label">47 MCP Tools</div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:16px;">
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_react_run</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_think</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_delegate</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_sandbox_exec</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_memory_recall</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_ghost_search</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_catalyst_trace</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_pentest_scan</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_file_write</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_wiki_search</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_cron_add</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_channel_send</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_safety_classify</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_mcp_connect</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">jebat_ultra_loop</div>
-                    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-body);padding:8px 12px;background:var(--surface);border:1px solid var(--border);">+32 more</div>
-                </div>
-            </div>
-        </div>
-    </section>
+.btn-ghost {
+  background: transparent;
+  color: var(--hermes-text-subtle);
+  border-color: var(--border-subtle);
+}
 
-    <section class="section" id="quickstart">
-        <div class="container">
-            <div class="section-label">Quick Start</div>
-            <h2 style="font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:48px;">
-                Boot in 30 seconds
-            </h2>
-            <div class="quickstart-grid">
-                <div class="quickstart-card">
-                    <h3><span style="color:var(--cyan)">npx</span> Zero Install</h3>
-                    <pre><span class="comment"># Interactive REPL</span>
-<span class="cmd">npx @nusabyte/jebat repl</span>
+.btn-ghost:hover {
+  color: var(--hermes-text-main);
+  border-color: var(--border-mid);
+}
 
-<span class="comment"># One-shot chat</span>
-<span class="cmd">npx @nusabyte/jebat chat "Explain memory consolidation"</span>
+@keyframes buttonPulse {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
+  50% { box-shadow: 0 0 20px 4px rgba(245, 158, 11, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
+}
 
-<span class="comment"># With bun</span>
-<span class="cmd">bunx @nusabyte/jebat repl</span></pre>
-                </div>
-                <div class="quickstart-card">
-                    <h3><span style="color:var(--purple)">bash</span> Bootstrap Install</h3>
-                    <pre><span class="comment"># One script — no sudo, lands in ~/.local</span>
-<span class="cmd">curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash</span>
-<span class="cmd">jebat repl</span>
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--hermes-pucuk);
+  display: inline-block;
+  animation: dotPulse 2s infinite;
+}
 
-<span class="comment"># Or via npm global (bootstraps on first run)</span>
-<span class="cmd">npm install -g @nusabyte/jebat</span>
-<span class="cmd">jebat repl</span>
+@keyframes dotPulse {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 8px var(--hermes-pucuk); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}
 
-<span class="comment"># NOTE: `pip install jebat` is an unrelated PyPI package — do NOT use it.</span></pre>
-                </div>
-                <div class="quickstart-card">
-                    <h3><span style="color:var(--amber)">MCP</span> IDE Integration</h3>
-                    <pre><span class="comment"># Zero-install: add to .cursor/mcp.json (no local install needed)</span>
-{
-  <span class="cmd">"mcpServers"</span>: {
-    <span class="cmd">"jebat-online"</span>: {
-      <span class="cmd">"url"</span>: <span class="cmd">"https://mcp.jebat.online/mcp"</span>
-    }
+/* HERO VERIFICATION BADGES */
+.hero-verify-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-subtle);
+}
+
+.hero-verify-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px; /* a11y: min 24px target */
+  min-height: 28px;
+}
+
+/* HERO INTERACTIVE CLI CONSOLE */
+.hero-cli-playground {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 16px;
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.hero-cli-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cli-chip {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--hermes-text-subtle);
+  padding: 8px 12px; /* a11y: min 24px target */
+  min-height: 30px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  transition: all 0.2s;
+}
+
+.cli-chip:hover {
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+}
+
+.hero-cli-box {
+  background: var(--hermes-surface-mid);
+  border: 1px solid var(--border-subtle);
+  padding: 12px 14px;
+  color: var(--hermes-text-main);
+  line-height: 1.6;
+  min-height: 52px;
+}
+
+/* NAVIGATION */
+nav {
+  position: fixed;
+  top: 28px; /* Fixed below the ticker */
+  width: 100%;
+  height: 68px;
+  background: rgba(8, 10, 9, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-mid);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+nav.scrolled {
+  background: rgba(9, 11, 14, 0.98);
+  border-bottom-color: var(--border-mid);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+.nav-inner {
+  max-width: var(--max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 2rem;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-logo-img {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+
+.nav-links {
+  display: flex;
+  justify-self: center;
+  gap: 2px;
+  list-style: none;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(20, 24, 22, 0.58);
+}
+
+.nav-links a {
+  color: var(--hermes-text-subtle);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  position: relative;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: var(--hermes-text-main);
+  background: rgba(201, 122, 64, 0.08);
+}
+
+.nav-links a:focus-visible,
+.cmd-palette-trigger:focus-visible,
+.nav-actions a:focus-visible,
+.mobile-toggle:focus-visible {
+  outline: 2px solid var(--hermes-amber-bright);
+  outline-offset: 3px;
+}
+
+.nav-links a[href="docs.html"] {
+  color: var(--hermes-text-main);
+  background: var(--copper-soft);
+}
+
+.nav-links a[href="docs.html"]::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  background: var(--hermes-amber);
+}
+
+/* ⌘K COMMAND PALETTE TRIGGER BUTTON */
+.cmd-palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  color: var(--hermes-text-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 7px 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cmd-palette-trigger:hover {
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-trigger {
+  background: var(--hermes-amber);
+  border: 1px solid var(--hermes-amber-bright);
+  padding: 9px 13px;
+  color: var(--hermes-obsidian);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-dropdown-trigger:focus-visible {
+  outline: 2px solid var(--hermes-amber-bright);
+  outline-offset: 4px;
+}
+
+.nav-dropdown-trigger:hover,
+.nav-dropdown-trigger[aria-expanded="true"] { background: var(--hermes-amber-bright); border-color: var(--hermes-text-main); color: var(--hermes-obsidian); }
+.nav-dropdown-trigger:active { transform: translateY(1px); }
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 14px;
+  width: 280px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 12px 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.25s ease;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+}
+
+.nav-dropdown:hover .nav-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.nav-dropdown-menu.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+.nav-dropdown-item {
+  display: block;
+  padding: 10px 18px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.nav-dropdown-item:hover {
+  background: var(--hermes-surface);
+  border-left-color: var(--hermes-amber);
+}
+
+.nav-dropdown-item strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--hermes-text-main);
+  margin-bottom: 2px;
+}
+
+.nav-dropdown-item span {
+  display: block;
+  font-size: 11px;
+  color: var(--hermes-text-subtle);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 10px;
+}
+
+.nav-actions > .btn-outline {
+  min-width: 34px;
+  justify-content: center;
+}
+
+.mobile-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--hermes-text-main);
+  padding: 8px 11px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* HERO SECTION WITH HTML5 NEURAL CANVAS BACKDROP */
+.hero {
+  padding: 160px 0 90px;
+  position: relative;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+#hero-neural-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.65;
+}
+
+.hero-glow-bg {
+  position: absolute;
+  top: 15%;
+  right: 15%;
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle at 55% 45%, rgba(245,158,11,0.18) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-jawi-watermark {
+  position: absolute;
+  top: 45%;
+  left: 3%;
+  transform: translateY(-50%);
+  font-family: serif;
+  font-size: 180px;
+  color: var(--hermes-amber);
+  opacity: 0.035;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-amber);
+  background: var(--copper-soft);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 6px 14px;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.hero h1 {
+  font-size: clamp(44px, 5.2vw, 72px);
+  line-height: 1.05;
+  margin-bottom: 24px;
+}
+
+.hero p.lead {
+  font-size: 1.125rem;
+  color: var(--hermes-text-subtle);
+  margin-bottom: 28px;
+  max-width: 540px;
+  line-height: 1.65;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.hero-github-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-subtle);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.hero-github-badge:hover {
+  color: var(--hermes-amber);
+}
+
+/* TOPOLOGY GRAPH VISUAL WITH SWARM SELECTOR */
+.hero-visual-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-swarm-selector {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.swarm-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 8px 12px; /* a11y: min 24px target */
+  min-height: 30px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  color: var(--hermes-text-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.swarm-chip.active, .swarm-chip:hover {
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+  background: var(--copper-soft);
+}
+
+.hero-mark-float {
+  width: min(320px, 85%);
+  filter: drop-shadow(0 20px 60px rgba(245, 158, 11, 0.35));
+  position: relative;
+  z-index: 2;
+  animation: floatLogo 6s ease-in-out infinite;
+  margin-bottom: 6px;
+}
+
+@keyframes floatLogo {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+.topology-card {
+  background: rgba(16, 19, 27, 0.95);
+  border: 1px solid var(--border-mid);
+  padding: 24px;
+  width: 100%;
+  max-width: 520px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
+  position: relative;
+}
+
+.topology-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.topology-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-amber);
+  letter-spacing: 1.5px;
+}
+
+.topology-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.topology-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+}
+
+.node {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--hermes-surface);
+  color: var(--hermes-text-subtle);
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.node:hover {
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+}
+
+.node.provider {
+  border-color: var(--border-mid);
+  color: var(--hermes-text-main);
+}
+
+.node.core {
+  background: var(--copper-soft);
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px 24px;
+  box-shadow: 0 0 24px var(--copper-glow);
+}
+
+.node.sovereign {
+  border-color: var(--hermes-pucuk);
+  color: var(--hermes-pucuk);
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.line-v {
+  width: 1px;
+  height: 16px;
+  background: var(--border-mid);
+  margin: 0 auto;
+  position: relative;
+}
+
+.line-v::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 3px;
+  height: 6px;
+  background: var(--hermes-amber);
+  animation: flowDown 2.2s infinite linear;
+}
+
+@keyframes flowDown {
+  0% { top: 0%; opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* PROOF STRIP */
+.proof-strip {
+  background: var(--hermes-dark);
+  border-y: 1px solid var(--border-subtle);
+  padding: 18px 0;
+}
+
+.proof-strip-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.proof-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-main);
+  letter-spacing: 1.8px;
+}
+
+.proof-item i {
+  color: var(--hermes-amber);
+}
+
+/* GENERAL SECTION STYLING */
+.section {
+  padding: 100px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-amber);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: clamp(30px, 3.5vw, 48px);
+  margin-bottom: 20px;
+  line-height: 1.15;
+}
+
+.section-desc {
+  font-size: 1.05rem;
+  color: var(--hermes-text-subtle);
+  max-width: 680px;
+  line-height: 1.65;
+  margin-bottom: 48px;
+}
+
+/* HERMES-STUDIO API DASHBOARD SECTION */
+.api-dashboard-container {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+.api-dash-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.api-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.api-metric-card {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 18px 20px;
+}
+
+.api-metric-card label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--hermes-text-subtle);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.api-metric-card val {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--hermes-text-main);
+}
+
+.api-tester-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.api-request-box, .api-response-box {
+  background: var(--hermes-surface-mid);
+  border: 1px solid var(--border-subtle);
+  padding: 20px;
+}
+
+.api-tester-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.api-endpoint-select {
+  width: 100%;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  color: var(--hermes-amber);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.api-payload-code {
+  background: var(--hermes-obsidian);
+  border: 1px solid var(--border-subtle);
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-subtle);
+  line-height: 1.6;
+  min-height: 160px;
+}
+
+/* IMMERSIVE ACTIVE MCP BUS SECTION */
+.mcp-servers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.mcp-server-card {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  padding: 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.mcp-server-card:hover, .mcp-server-card.active {
+  border-color: var(--hermes-amber);
+  transform: translateY(-4px);
+  box-shadow: 0 14px 40px rgba(245, 158, 11, 0.15);
+}
+
+.mcp-server-card.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--hermes-amber);
+}
+
+.mcp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mcp-server-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--hermes-text-main);
+}
+
+.mcp-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 3px 8px;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--hermes-pucuk);
+  border: 1px solid var(--hermes-pucuk);
+}
+
+.mcp-server-desc {
+  font-size: 13px;
+  color: var(--hermes-text-subtle);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.mcp-tools-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mcp-tool-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--hermes-text-subtle);
+}
+
+.mcp-execution-monitor {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 28px;
+}
+
+.mcp-monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+
+.mcp-rpc-stream {
+  background: var(--hermes-obsidian);
+  border: 1px solid var(--border-subtle);
+  padding: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--hermes-text-main);
+  line-height: 1.7;
+  min-height: 140px;
+}
+
+/* PROBLEM SECTION (01 / CONTROL) */
+.control-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-mid);
+  padding: 40px;
+}
+
+.control-copy-side h3 {
+  font-size: 1.75rem;
+  margin-bottom: 16px;
+}
+
+.control-copy-side p {
+  color: var(--hermes-text-subtle);
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+.control-statement-box {
+  border-left: 3px solid var(--hermes-amber);
+  padding-left: 18px;
+  margin-top: 24px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--hermes-text-main);
+}
+
+.interactive-switcher {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 24px;
+}
+
+.switcher-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--hermes-text-subtle);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.switcher-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.switcher-tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 8px 14px;
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--hermes-text-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.switcher-tab.active {
+  background: var(--copper-soft);
+  border-color: var(--hermes-amber);
+  color: var(--hermes-amber);
+}
+
+.switcher-display {
+  background: var(--hermes-surface-mid);
+  border: 1px solid var(--border-subtle);
+  padding: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.switcher-status {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 10px;
+  color: var(--hermes-text-subtle);
+}
+
+/* FOUR COMMANDS SECTION (02 / CORE) */
+.commands-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+/* AUDIENCE ORIENTATION */
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.audience-card {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  padding: 28px 24px;
+}
+
+.audience-card i {
+  color: var(--hermes-amber);
+  font-size: 1.2rem;
+  margin-bottom: 18px;
+}
+
+.audience-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.audience-card p {
+  color: var(--hermes-text-subtle);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.command-card {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  padding: 32px 24px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.command-card:hover {
+  border-color: var(--hermes-amber);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+}
+
+.command-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+.command-card:hover::before {
+  background: var(--hermes-amber);
+}
+
+.command-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--hermes-amber);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.command-title {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+.command-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-gold);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.command-desc {
+  font-size: 13px;
+  color: var(--hermes-text-subtle);
+  line-height: 1.65;
+}
+
+/* ARCHITECTURE SECTION (03 / ARCHITECTURE) */
+.arch-diagram-card {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 40px;
+}
+
+.arch-layer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.arch-layer {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.arch-layer:hover {
+  border-color: var(--hermes-amber);
+  background: var(--hermes-surface-mid);
+  transform: translateX(4px);
+}
+
+.arch-layer.core-highlight {
+  background: var(--copper-soft);
+  border-color: var(--hermes-amber);
+  box-shadow: 0 0 30px var(--copper-glow);
+}
+
+.arch-layer-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--hermes-text-main);
+}
+
+.arch-layer-sub {
+  font-size: 12px;
+  color: var(--hermes-text-subtle);
+}
+
+.arch-detail-drawer {
+  background: var(--hermes-surface-mid);
+  border: 1px solid var(--border-mid);
+  padding: 16px 24px;
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-main);
+  line-height: 1.7;
+}
+
+/* DEPLOYMENT SECTION (05 / DEPLOY) */
+.deploy-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.deploy-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 12px 20px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  color: var(--hermes-text-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 140px;
+  text-align: center;
+}
+
+.deploy-btn.active {
+  background: var(--hermes-amber);
+  color: var(--hermes-obsidian);
+  border-color: var(--hermes-gold);
+  font-weight: 700;
+}
+
+.deploy-status-panel {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.deploy-info h3 {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.deploy-info p {
+  color: var(--hermes-text-subtle);
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+.deploy-spec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.deploy-spec-item {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 12px 16px;
+}
+
+.deploy-spec-item label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--hermes-text-subtle);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+.deploy-spec-item val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--hermes-gold);
+  font-weight: 600;
+}
+
+/* TOKEN SAVINGS CALCULATOR */
+.savings-calculator-box {
+  margin-top: 32px;
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-mid);
+  padding: 28px;
+}
+
+.calculator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.calculator-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.calculator-slider-row input[type=range] {
+  flex: 1;
+  accent-color: var(--hermes-amber);
+  height: 6px;
+}
+
+.calculator-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  background: var(--hermes-dark);
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+}
+
+.calc-stat {
+  text-align: center;
+}
+
+.calc-stat label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--hermes-text-subtle);
+  margin-bottom: 4px;
+}
+
+.calc-stat val {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--hermes-text-main);
+}
+
+/* OPERATORS SECTION (06 / OPERATORS) */
+.operators-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.operator-card {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  padding: 28px 20px;
+  position: relative;
+}
+
+.operator-card h4 {
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+
+.operator-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--hermes-amber);
+  margin-bottom: 14px;
+  display: block;
+}
+
+.operator-desc {
+  font-size: 12px;
+  color: var(--hermes-text-subtle);
+  line-height: 1.6;
+}
+
+/* EXECUTION DEMO TERMINAL (07 / EXECUTION) */
+.terminal-card {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-mid);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+.terminal-header {
+  background: var(--hermes-dark);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background: #333;
+}
+
+.terminal-body {
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--hermes-text-main);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.step-line {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+}
+
+.step-prefix { color: var(--hermes-amber); }
+.step-text { color: var(--hermes-text-main); }
+.step-success { color: var(--hermes-pucuk); }
+
+/* DEVELOPER QUICKSTART (08 / DEVELOPERS) */
+.quickstart-box {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.code-block-wrapper {
+  position: relative;
+}
+
+.code-block {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--hermes-text-main);
+  line-height: 1.7;
+}
+
+.copy-code-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-mid);
+  color: var(--hermes-text-subtle);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.copy-code-btn:hover {
+  color: var(--hermes-amber);
+  border-color: var(--hermes-amber);
+}
+
+/* FAQ SECTION (09 / FAQ) */
+.faq-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: var(--hermes-dark);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.25s ease;
+}
+
+.faq-item:hover {
+  border-color: var(--border-mid);
+}
+
+.faq-question {
+  padding: 20px 24px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--hermes-text-main);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.faq-question i {
+  color: var(--hermes-amber);
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.faq-item.active .faq-question i {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  padding: 0 24px 20px;
+  font-size: 14px;
+  color: var(--hermes-text-subtle);
+  line-height: 1.7;
+  display: none;
+}
+
+.faq-item.active .faq-answer {
+  display: block;
+}
+
+/* ENTERPRISE / NUSABYTE BRIDGE (10 / ENTERPRISE) */
+.enterprise-card {
+  background: linear-gradient(135deg, var(--hermes-dark) 0%, var(--hermes-surface-mid) 100%);
+  border: 1px solid var(--border-bright);
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.enterprise-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.enterprise-capabilities {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.capability-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-main);
+}
+
+.capability-item i {
+  color: var(--hermes-amber);
+}
+
+/* MANIFESTO & FOOTER */
+.manifesto-section {
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, rgba(245,158,11,0.08) 0%, transparent 70%);
+}
+
+.watermark-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .watermark-bg {
+    width: min(500px, calc(100vw - 32px));
   }
 }
 
-<span class="comment"># Or run the local server (stdio):</span>
-<span class="cmd">python -m jebat.mcp.server</span></pre>
-                </div>
-                <div class="quickstart-card">
-                    <h3><span style="color:var(--green)">git</span> Source Build</h3>
-                    <pre><span class="comment"># Clone & install</span>
-<span class="cmd">git clone https://github.com/nusabyte-my/jebat-core.git</span>
-<span class="cmd">cd jebat-core</span>
-<span class="cmd">pip install -e .</span>
-<span class="cmd">jebat repl</span></pre>
-                </div>
-            </div>
+.manifesto-text {
+  font-size: 1.25rem;
+  color: var(--hermes-text-subtle);
+  max-width: 600px;
+  margin: 0 auto 32px;
+  line-height: 1.8;
+}
+
+.manifesto-tagline {
+  font-size: clamp(48px, 6vw, 84px);
+  margin-bottom: 40px;
+}
+
+footer {
+  background: var(--hermes-obsidian);
+  border-top: 1px solid var(--border-subtle);
+  padding: 60px 0 30px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr repeat(3, 1fr);
+  gap: 3rem;
+  margin-bottom: 48px;
+}
+
+.footer-brand p {
+  color: var(--hermes-text-subtle);
+  font-size: 13px;
+  margin-top: 14px;
+  max-width: 300px;
+}
+
+.footer-col h5 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-amber);
+  letter-spacing: 1.5px;
+  margin-bottom: 18px;
+}
+
+.footer-col ul {
+  list-style: none;
+}
+
+.footer-col ul li {
+  margin-bottom: 10px;
+}
+
+.footer-col ul li a {
+  color: var(--hermes-text-subtle);
+  font-size: 13px;
+  transition: color 0.2s ease;
+}
+
+.footer-col ul li a:hover {
+  color: var(--hermes-text-main);
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--hermes-text-subtle);
+}
+
+/* FLOATING TOAST NOTIFICATION */
+.toast-notification {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: var(--hermes-dark);
+  border: 1px solid var(--hermes-amber);
+  color: var(--hermes-text-main);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.toast-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ⌘K COMMAND PALETTE MODAL */
+.cmd-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(5, 6, 8, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 120px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.cmd-modal-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.cmd-modal-dialog {
+  background: var(--hermes-dark);
+  border: 1px solid var(--hermes-amber);
+  width: 100%;
+  max-width: 620px;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.9);
+}
+
+.cmd-modal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-mid);
+}
+
+.cmd-modal-input-row input {
+  background: transparent;
+  border: none;
+  color: var(--hermes-text-main);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+}
+
+.cmd-modal-list {
+  padding: 12px 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.cmd-modal-item {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--hermes-text-subtle);
+}
+
+.cmd-modal-item:hover {
+  background: var(--hermes-surface);
+  color: var(--hermes-amber);
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 1024px) {
+  .hero-grid, .control-demo-grid, .deploy-status-panel, .quickstart-box, .enterprise-grid, .api-tester-grid {
+    grid-template-columns: 1fr;
+  }
+  .commands-grid, .operators-grid, .mcp-servers-grid, .audience-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .api-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-links, .top-ticker-bar {
+    display: none;
+  }
+  .nav-dropdown { display: block; }
+  .nav-actions .cmd-palette-trigger,
+  .nav-actions > .btn-outline { display: none; }
+  nav { top: 0; }
+  .mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .commands-grid, .operators-grid, .mcp-servers-grid, .audience-grid, .calculator-stats-grid, .api-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .deploy-spec-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-bottom {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* Small-screen layout: preserve readable controls at 320px–480px. */
+@media (max-width: 480px) {
+  .container { padding-left: 1rem; padding-right: 1rem; }
+  .hero-grid { gap: 2rem; }
+  .hero-ctas { flex-direction: column; align-items: stretch; }
+  .hero-ctas .btn { justify-content: center; }
+  .hero-verify-row { gap: 8px; }
+  .hero-verify-badge { flex: 1 1 100%; }
+  .hero-cli-playground { padding: 10px; }
+  .hero-cli-chips { justify-content: flex-start; }
+  .cmd-modal-dialog { width: calc(100% - 2rem); max-height: calc(100vh - 2rem); overflow: hidden; }
+  .cmd-modal-input-row { padding: 12px; gap: 8px; }
+  .cmd-modal-input-row .mono { display: none; }
+  .cmd-modal-list { max-height: min(52vh, 320px); overflow-y: auto; }
+}
+</style>
+</head>
+
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- TOP TICKER MARQUEE EYEBROW -->
+<div class="top-ticker-bar" role="status" aria-label="JEBAT platform status">
+  <div class="ticker-content">
+   <div class="ticker-track">
+    <span><span class="pulse-dot"></span> SOVEREIGN AI CONTROL LAYER</span>
+    <span>•</span>
+    <span>17 MODEL PROVIDERS</span>
+    <span>•</span>
+    <span>78 MCP TOOLS READY</span>
+    <span>•</span>
+    <span>TOOLS: FILESYSTEM · BROWSER · MEMORY · GIT · SQL · SECURITY · WEB</span>
+    <span>•</span>
+    <span>AIR-GAPPED DEPLOYMENT</span>
+    <span>•</span>
+    <span>ZERO TELEMETRY</span>
+    <span>•</span>
+    <span>MIT LICENSE</span>
+    <span>•</span>
+    <span class="text-pucuk">JEBAT CORE v8.3</span>
+   </div>
+  </div>
+</div>
+
+<!-- FLOATING TOAST -->
+<div id="toast" class="toast-notification">
+  <i class="fa-solid fa-circle-check text-pucuk"></i>
+  <span id="toast-message">Command copied to clipboard</span>
+</div>
+
+<!-- ⌘K COMMAND PALETTE MODAL -->
+<div id="cmd-modal" class="cmd-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cmd-modal-title" onclick="closeCmdPalette(event)">
+  <div class="cmd-modal-dialog" onclick="event.stopPropagation()">
+    <div class="cmd-modal-input-row">
+      <i class="fa-solid fa-magnifying-glass text-copper"></i>
+      <span id="cmd-modal-title" class="sr-only">Command palette</span>
+      <input type="text" id="cmd-input" aria-label="Search commands and sections" placeholder="Type a command or jump to section... (e.g. status, mcp, deploy)" onkeyup="filterCmdList(this.value)" />
+      <span class="mono text-keluli">ESC to close</span>
+    </div>
+    <div class="cmd-modal-list" id="cmd-list">
+      <div class="cmd-modal-item" onclick="executeCmdNav('status')">
+        <span><i class="fa-solid fa-terminal text-copper"></i> Execute: <strong>jebat status</strong></span>
+        <span class="text-pucuk">RUN CLI</span>
+      </div>
+      <div class="cmd-modal-item" onclick="executeCmdNav('mcp')">
+        <span><i class="fa-solid fa-microchip text-copper"></i> Jump: <strong>04 / MCP BUS</strong></span>
+        <span>SECTION</span>
+      </div>
+      <div class="cmd-modal-item" onclick="executeCmdNav('api')">
+        <span><i class="fa-solid fa-gauge-high text-copper"></i> Jump: <strong>03 / Studio API Dashboard</strong></span>
+        <span>SECTION</span>
+      </div>
+      <div class="cmd-modal-item" onclick="executeCmdNav('deploy')">
+        <span><i class="fa-solid fa-server text-copper"></i> Jump: <strong>06 / Deploy Posture Selector</strong></span>
+        <span>SECTION</span>
+      </div>
+      <div class="cmd-modal-item" onclick="executeCmdNav('docker')">
+        <span><i class="fa-brands fa-docker text-copper"></i> Action: <strong>Copy Docker Compose Quickstart</strong></span>
+        <span class="text-bara">COPY</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="brand-lockup" aria-label="JEBAT Home">
+      <img src="assets/Jebat-Transparent.png" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 38px; width: auto; object-fit: contain;" />
+    </a>
+
+    <ul class="nav-links" id="primary-navigation">
+       <li><a href="#core">Platform</a></li>
+       <li><a href="#developers">Developers</a></li>
+       <li><a href="#enterprise">Enterprise</a></li>
+       <li><a href="#architecture">Security</a></li>
+       <li><a href="docs.html">Docs</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="cmd-palette-trigger" onclick="openCmdPalette()" title="Open Command Palette (Ctrl+K)" aria-label="Open command palette">
+        <i class="fa-solid fa-terminal text-copper"></i>
+        <span>⌘K</span>
+      </button>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" onclick="toggleDeployMenu(event)">
+          <span>DEPLOY JEBAT</span>
+          <i class="fa-solid fa-chevron-down" style="font-size: 9px;"></i>
+        </button>
+        <div class="nav-dropdown-menu">
+          <a href="#developers" class="nav-dropdown-item">
+            <strong>Self-Host (Developers)</strong>
+            <span>Quickstart & open source docs</span>
+          </a>
+          <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener" class="nav-dropdown-item">
+            <strong>Enterprise Deployment</strong>
+            <span>Architecture & ops via NusaByte</span>
+          </a>
         </div>
-    </section>
+      </div>
 
-    <section class="cta-section">
-        <div class="cta-bg"></div>
-        <div class="cta-content">
-            <h2 class="cta-title">Ready to go <span class="gradient-text">sovereign</span>?</h2>
-            <p class="cta-sub">No telemetry. No external dependencies. No data leaving your network. Your AI, your infrastructure, your rules.</p>
-            <div class="cta-actions">
-                <a href="#quickstart" class="btn btn-cyan">Boot the System →</a>
-                <a href="https://github.com/nusabyte-my/jebat-core" class="btn btn-ghost">View Source</a>
-            </div>
+      <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="btn btn-outline" style="padding: 8px 14px; font-size: 11px;" aria-label="GitHub Repository">
+        <i class="fa-brands fa-github"></i>
+      </a>
+
+      <button class="mobile-toggle" onclick="toggleMobileMenu()" aria-label="Toggle Navigation Menu" aria-expanded="false" aria-controls="primary-navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO SECTION (IMMERSIVE NEURAL CANVAS + MULTI-AGENT SWARM) -->
+<main id="main-content">
+<section class="hero">
+  <canvas id="hero-neural-canvas"></canvas>
+  <div class="hero-glow-bg"></div>
+  <div class="hero-jawi-watermark">جبت</div>
+
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="pulse-dot"></span>
+          <span>Sovereign AI Command Layer</span>
         </div>
-    </section>
 
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <div class="logo" style="margin-bottom:16px;">
-                        <div class="logo-mark" style="width:28px;height:28px;font-size:12px;">🗡</div>
-                        JEBAT
-                    </div>
-                    <p style="color:var(--text-dim);font-size:13px;max-width:240px;line-height:1.6;">
-                        Sovereign Agent Operating System. Five products. One memory. Unified by protocol.<br><br>
-                         <span class="mono" style="font-size:10px;">v8.2 · 7 Test Suites · MIT</span>
-                    </p>
-                </div>
-                <div class="footer-col">
-                    <h4>Products</h4>
-                    <ul>
-                        <li><a href="#platform">JEBAT Core v8.2</a></li>
-                        <li><a href="#platform">Sentinel Security</a></li>
-                        <li><a href="#platform">Developer Suite</a></li>
-                        <li><a href="#platform">Companion</a></li>
-                        <li><a href="#platform">Nexus</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="README.md">README v8.2</a></li>
-                        <li><a href="docs.html">Documentation</a></li>
-                        <li><a href="#mcp">MCP Reference</a></li>
-                        <li><a href="https://github.com/nusabyte-my/jebat-core">GitHub</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="https://github.com/nusabyte-my">NusaByte</a></li>
-                        <li><a href="docs.html#guide-security">Security</a></li>
-                        <li><a href="https://github.com/nusabyte-my/jebat-core/issues">Issues</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 NusaByte. MIT License. Built by Shaidan Shaari (humm1ngb1rd).</p>
-                <div class="footer-links">
-                    <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a>
-                    <a href="README.md">README</a>
-                    <a href="docs.html">Docs</a>
-                </div>
-            </div>
+        <h1>KEEP <span class="copper-gradient">COMMAND.</span></h1>
+
+           <p class="lead">
+            JEBAT gives your AI agents persistent memory, governed tools, and private deployment—without locking you to one model provider.
+         </p>
+
+        <div class="hero-verify-row">
+           <span class="hero-verify-badge"><i class="fa-solid fa-route text-copper"></i> MODEL-INDEPENDENT</span>
+           <span class="hero-verify-badge"><i class="fa-solid fa-plug text-copper"></i> MCP-NATIVE</span>
+           <span class="hero-verify-badge"><i class="fa-solid fa-brain text-copper"></i> PERSISTENT MEMORY</span>
+           <span class="hero-verify-badge"><i class="fa-solid fa-lock text-pucuk"></i> PRIVATE DEPLOYMENT</span>
         </div>
-    </footer>
 
-    <script>
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
+        <div class="hero-ctas">
+           <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener" class="btn btn-copper">
+             <span>Book a Private Deployment</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
 
-        const sections = document.querySelectorAll('.section[id]');
-        const navLinks = document.querySelectorAll('.nav-links a');
-        window.addEventListener('scroll', () => {
-            let current = '';
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop - 100;
-                if (pageYOffset >= sectionTop) {
-                    current = section.getAttribute('id');
-                }
-            });
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + current) {
-                    link.classList.add('active');
-                }
-            });
-        });
-    </script>
+           <a href="#architecture" class="btn btn-outline">
+             <span>See Architecture</span>
+             <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <div class="hero-install-pill">
+          <i class="fa-solid fa-terminal text-copper"></i>
+          <span class="cmd">jebat chat "Act as Jebat Agent"</span>
+          <button onclick="copyPillCommand(this)" title="Copy command" aria-label="Copy CLI Command"><i class="fa-regular fa-copy"></i></button>
+        </div>
+
+        <!-- HERO INTERACTIVE CLI CONSOLE WITH AUDIO TOGGLE -->
+        <div class="hero-cli-playground">
+          <div class="hero-cli-chips">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <span class="cli-chip" onclick="runHeroCLI('status')">jebat status</span>
+              <span class="cli-chip" onclick="runHeroCLI('pentest')">jebat agent "Pentest"</span>
+              <span class="cli-chip" onclick="runHeroCLI('memory')">jebat memory query</span>
+            </div>
+       <button onclick="toggleAudioFX(this)" class="cli-chip" style="color: var(--hermes-pucuk);" aria-label="Toggle terminal audio effects" aria-pressed="true">
+              <i class="fa-solid fa-volume-high"></i> Audio: ON
+            </button>
+          </div>
+          <div class="hero-cli-box" id="hero-cli-output">
+            > CLICK OR TYPE A COMMAND ABOVE TO EXECUTE LIVE CLI SIMULATION...
+          </div>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="hero-github-badge">
+            <i class="fa-brands fa-github"></i>
+             <span>View JEBAT on GitHub</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual-wrapper">
+        <!-- IMMERSIVE AGENT SWARM SELECTOR -->
+        <div class="hero-swarm-selector">
+          <span class="swarm-chip active" onclick="switchHeroSwarm('hulubalang', this)">🛡️ Hulubalang</span>
+          <span class="swarm-chip" onclick="switchHeroSwarm('pawang', this)">🔮 Pawang</span>
+          <span class="swarm-chip" onclick="switchHeroSwarm('tukang', this)">🛠️ Tukang</span>
+          <span class="swarm-chip" onclick="switchHeroSwarm('syahbandar', this)">🧭 Syahbandar</span>
+        </div>
+
+        <img src="assets/Jebat-Transparent.png" alt="JEBAT Brand Logo" class="hero-mark-float" />
+
+        <div class="topology-card">
+          <div class="topology-header">
+            <span class="topology-title"><i class="fa-solid fa-terminal text-copper"></i> TOPOLOGY // LIVE ROUTING</span>
+            <span class="mono text-pucuk"><span class="pulse-dot"></span> ACTIVE</span>
+          </div>
+          <div class="topology-flow">
+            <div class="topology-row">
+              <span class="node provider" onclick="highlightNode('OpenAI')">OpenAI</span>
+              <span class="node provider" onclick="highlightNode('Anthropic')">Anthropic</span>
+              <span class="node provider" onclick="highlightNode('Ollama')">Ollama</span>
+              <span class="node provider" onclick="highlightNode('Local')">Local</span>
+            </div>
+            <div class="line-v"></div>
+            <div class="topology-row">
+              <span class="node core" onclick="highlightNode('JEBAT CORE')"><i class="fa-solid fa-shield-halved"></i> JEBAT CORE RUNTIME</span>
+            </div>
+            <div class="line-v"></div>
+            <div class="topology-row">
+              <span class="node" onclick="highlightNode('Ghost DB')">Ghost DB (Memory)</span>
+              <span class="node" onclick="highlightNode('MCP Bus')">MCP Bus (Tools)</span>
+            </div>
+            <div class="line-v"></div>
+            <div class="topology-row">
+              <span class="node sovereign" onclick="highlightNode('Your Infrastructure')"><i class="fa-solid fa-server"></i> YOUR PRIVATE INFRASTRUCTURE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF STRIP -->
+<div class="proof-strip">
+  <div class="container">
+    <div class="proof-strip-inner">
+      <div class="proof-item">
+        <i class="fa-solid fa-cubes"></i>
+        <span>MULTI-MODEL PROVIDERS</span>
+      </div>
+      <div class="proof-item">
+        <i class="fa-solid fa-plug"></i>
+        <span>MCP NATIVE PROTOCOL</span>
+      </div>
+      <div class="proof-item">
+        <i class="fa-solid fa-brain"></i>
+        <span>PERSISTENT MEMORY</span>
+      </div>
+      <div class="proof-item">
+        <i class="fa-solid fa-lock"></i>
+        <span>PRIVATE DEPLOYMENT</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VISITOR ORIENTATION -->
+<section class="section audience-section" aria-labelledby="audience-title">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-compass text-copper"></i> AT A GLANCE</span>
+    <h2 class="section-title" id="audience-title">Built for teams that need control after the model call.</h2>
+    <p class="section-desc">
+      JEBAT is a fit when your agents need durable context, governed actions, or a deployment boundary your provider does not control.
+    </p>
+
+    <div class="audience-grid">
+      <article class="audience-card">
+        <i class="fa-solid fa-code" aria-hidden="true"></i>
+        <h3>Platform &amp; engineering teams</h3>
+        <p>Standardize model routing, tool calls, memory, and agent workflows without rewriting your application around one provider.</p>
+      </article>
+      <article class="audience-card">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <h3>Security &amp; compliance teams</h3>
+        <p>Keep policy enforcement, audit boundaries, and sensitive context close to the infrastructure you govern.</p>
+      </article>
+      <article class="audience-card">
+        <i class="fa-solid fa-building" aria-hidden="true"></i>
+        <h3>Enterprise operators</h3>
+        <p>Choose air-gapped, on-premise, private-cloud, or hybrid deployment based on your data and operating requirements.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- 01 / CONTROL SECTION -->
+<section id="control" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-sliders text-copper"></i> 01 / CONTROL</span>
+    <h2 class="section-title">The model should not own your architecture.</h2>
+    <p class="section-desc">
+      Providers change, pricing shifts, and API limits fluctuate. JEBAT decouples your application and AI agents from individual model providers so command stays with you.
+    </p>
+
+    <div class="control-demo-grid">
+      <div class="control-copy-side">
+        <h3>Models are replaceable.<br/>Command remains.</h3>
+        <p>
+          Whether you switch between Claude 3.5, GPT-4o, llama.cpp on local GPUs, or custom fine-tunes, JEBAT maintains unified routing, memory indexes, and tool governance.
+        </p>
+        <div class="control-statement-box">
+          "JEBAT separates your AI architecture from your AI provider."
+        </div>
+      </div>
+
+      <div class="interactive-switcher">
+        <div class="switcher-title">LIVE FAILOVER ROUTER DEMO</div>
+        <div class="switcher-tabs">
+          <button class="switcher-tab active" onclick="switchModel('local', this)">Local llama.cpp</button>
+          <button class="switcher-tab" onclick="switchModel('anthropic', this)">Anthropic Claude</button>
+          <button class="switcher-tab" onclick="switchModel('openai', this)">OpenAI GPT-4o</button>
+        </div>
+        <div class="switcher-display" id="model-output">
+          > ROUTE: local_vps_llamacpp (72.62.255.206:8081)<br/>
+          > LATENCY: 14ms | COST: $0.00 | TELEMETRY: DISABLED<br/>
+          > STATUS: 100% Air-Gapped Local Inference
+        </div>
+        <div class="switcher-status">
+          <span>FAILOVER: AUTO</span>
+          <span class="text-pucuk">COMMAND READY</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 / CORE SECTION -->
+<section id="core" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-cube text-copper"></i> 02 / CORE</span>
+    <h2 class="section-title">One layer. Four commands.</h2>
+    <p class="section-desc">
+      Built around four fundamental pillars designed for sovereign control and multi-agent execution.
+    </p>
+
+    <div class="commands-grid">
+      <div class="command-card">
+        <span class="command-num">COMMAND 01</span>
+        <h3 class="command-title">MODEL</h3>
+        <span class="command-subtitle">Choose intelligence.</span>
+        <p class="command-desc">
+          Route prompts dynamically across local and cloud providers with instant fallback and zero code changes.
+        </p>
+      </div>
+
+      <div class="command-card">
+        <span class="command-num">COMMAND 02</span>
+        <h3 class="command-title">REMEMBER</h3>
+        <span class="command-subtitle">Keep context.</span>
+        <p class="command-desc">
+          Ghost DB 6-type persistent memory layer gives agents long-term continuity across tasks and sessions.
+        </p>
+      </div>
+
+      <div class="command-card">
+        <span class="command-num">COMMAND 03</span>
+        <h3 class="command-title">ACT</h3>
+        <span class="command-subtitle">Connect tools.</span>
+        <p class="command-desc">
+          Execute real-world workflows using Model Context Protocol (MCP) servers and approved native tools.
+        </p>
+      </div>
+
+      <div class="command-card">
+        <span class="command-num">COMMAND 04</span>
+        <h3 class="command-title">GOVERN</h3>
+        <span class="command-subtitle">Control behaviour.</span>
+        <p class="command-desc">
+          Enforce strict permissions, policy gates, audit trails, and token budget limits across all agent actions.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 / STUDIO API DASHBOARD (HERMES STUDIO THEME) -->
+<section id="api-dashboard" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-gauge-high text-copper"></i> 03 / HERMES STUDIO API DASHBOARD</span>
+    <h2 class="section-title">Real-time Command & Telemetry Studio</h2>
+    <p class="section-desc">
+      Monitor live inference throughput, agent token budgets, provider failover latency, and API endpoints in a high-density Hermes-Studio environment.
+    </p>
+
+    <div class="api-dashboard-container">
+      <div class="api-dash-topbar">
+        <div>
+          <span class="mono text-copper"><i class="fa-solid fa-circle-notch fa-spin"></i> TELEMETRY ENGINE ONLINE</span>
+          <h3 style="font-size: 1.35rem; margin-top: 2px;">JEBAT API Control Plane</h3>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span class="mono text-pucuk"><span class="pulse-dot"></span> 142 TOKENS / SEC</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-key text-copper"></i> BEARER AUTH ACTIVE</span>
+        </div>
+      </div>
+
+      <div class="api-metrics-grid">
+        <div class="api-metric-card">
+          <label>ACTIVE ROUTE LATENCY</label>
+          <val class="text-pucuk">14ms</val>
+        </div>
+        <div class="api-metric-card">
+          <label>DAILY TOKEN THROUGHPUT</label>
+          <val class="text-copper">4.2M</val>
+        </div>
+        <div class="api-metric-card">
+          <label>GHOST DB EMBEDDINGS</label>
+          <val>24,190</val>
+        </div>
+        <div class="api-metric-card">
+          <label>AIRGAP SECURITY POSTURE</label>
+          <val class="text-pucuk">PASSED</val>
+        </div>
+      </div>
+
+      <div class="api-tester-grid">
+        <div class="api-request-box">
+          <div class="api-tester-header">
+            <span class="mono text-copper">API ENDPOINT TESTER</span>
+            <span class="mono text-keluli">HERMES RUNTIME v8.3</span>
+          </div>
+
+          <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">SELECT ENDPOINT:</label>
+          <select class="api-endpoint-select" id="api-endpoint-selector" onchange="updateApiPayload(this.value)">
+            <option value="chat">POST /v1/chat/completions (Multi-Model ReAct Router)</option>
+            <option value="models">GET /v1/models (Inference Engine Health)</option>
+            <option value="mcp">POST /v1/mcp/dispatch (Tool Execution Sub-Bus)</option>
+            <option value="memory">POST /v1/memory/query (Ghost DB Hybrid Vector Search)</option>
+          </select>
+
+          <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">REQUEST PAYLOAD (JSON):</label>
+          <div class="api-payload-code" id="api-request-payload">
+{
+  "model": "jebat-sovereign-local",
+  "messages": [
+    { "role": "system", "content": "Act as JEBAT Sovereign Core Agent" },
+    { "role": "user", "content": "Execute pentest scan on localhost" }
+  ],
+  "temperature": 0.2
+}
+          </div>
+
+          <button class="btn btn-copper" style="margin-top: 16px; width: 100%; justify-content: center;" onclick="sendStudioApiRequest()">
+            <i class="fa-solid fa-paper-plane"></i> Send Studio Request
+          </button>
+        </div>
+
+        <div class="api-response-box">
+          <div class="api-tester-header">
+            <span class="mono text-pucuk" id="api-res-status">STATUS: 200 OK (14ms)</span>
+            <span class="mono text-keluli">HEADERS: APPLICATION/JSON</span>
+          </div>
+
+          <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">RESPONSE BODY:</label>
+          <div class="api-payload-code" id="api-response-body">
+{
+  "id": "chatcmpl-jebat-94821",
+  "object": "chat.completion",
+  "created": 1772323200,
+  "model": "local_vps_llamacpp",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "[JEBAT Hulubalang Agent] Command executed. Localhost ports scanned: 80, 443, 8081 open. Zero vulnerabilities found. Airgap boundaries enforced."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 34,
+    "completion_tokens": 42,
+    "total_tokens": 76
+  }
+}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 / MCP BUS SECTION (MODEL CONTEXT PROTOCOL) -->
+<section id="mcp" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 04 / MCP BUS (MODEL CONTEXT PROTOCOL)</span>
+    <h2 class="section-title">Native Tool Execution Sub-Bus</h2>
+    <p class="section-desc">
+      JEBAT connects AI models to real-world infrastructure using open Model Context Protocol (MCP) servers. Explore active tools and test live JSON-RPC dispatches.
+    </p>
+
+    <div class="mcp-servers-grid">
+      <div class="mcp-server-card active" onclick="selectMcpServer('postgres', this)">
+        <div class="mcp-card-top">
+          <span class="mcp-server-name"><i class="fa-solid fa-database text-copper"></i> pgvector DB</span>
+          <span class="mcp-badge">ACTIVE</span>
+        </div>
+        <p class="mcp-server-desc">Ghost DB persistent vector search & hybrid semantic retrieval engine.</p>
+        <div class="mcp-tools-list">
+          <span class="mcp-tool-pill">pgvector.search</span>
+          <span class="mcp-tool-pill">ghost.store_memory</span>
+        </div>
+      </div>
+
+      <div class="mcp-server-card" onclick="selectMcpServer('filesystem', this)">
+        <div class="mcp-card-top">
+          <span class="mcp-server-name"><i class="fa-solid fa-folder-open text-copper"></i> Filesystem</span>
+          <span class="mcp-badge">ACTIVE</span>
+        </div>
+        <p class="mcp-server-desc">Sandboxed file reading, writing, diff patching, and workspace inspection.</p>
+        <div class="mcp-tools-list">
+          <span class="mcp-tool-pill">fs.read_file</span>
+          <span class="mcp-tool-pill">fs.replace_content</span>
+        </div>
+      </div>
+
+      <div class="mcp-server-card" onclick="selectMcpServer('git', this)">
+        <div class="mcp-card-top">
+          <span class="mcp-server-name"><i class="fa-brands fa-github text-copper"></i> GitHub & DevOps</span>
+          <span class="mcp-badge">ACTIVE</span>
+        </div>
+        <p class="mcp-server-desc">Automated PR creation, issue triage, and CI/CD workflow triggers.</p>
+        <div class="mcp-tools-list">
+          <span class="mcp-tool-pill">github.create_pr</span>
+          <span class="mcp-tool-pill">github.list_issues</span>
+        </div>
+      </div>
+
+      <div class="mcp-server-card" onclick="selectMcpServer('browser', this)">
+        <div class="mcp-card-top">
+          <span class="mcp-server-name"><i class="fa-solid fa-globe text-copper"></i> Playwright Web</span>
+          <span class="mcp-badge">ACTIVE</span>
+        </div>
+        <p class="mcp-server-desc">Autonomous browser navigation, DOM inspection, and screenshot capture.</p>
+        <div class="mcp-tools-list">
+          <span class="mcp-tool-pill">browser.navigate</span>
+          <span class="mcp-tool-pill">browser.screenshot</span>
+        </div>
+      </div>
+
+      <div class="mcp-server-card" onclick="selectMcpServer('security', this)">
+        <div class="mcp-card-top">
+          <span class="mcp-server-name"><i class="fa-solid fa-shield-halved text-copper"></i> Hulubalang Scan</span>
+          <span class="mcp-badge">ACTIVE</span>
+        </div>
+        <p class="mcp-server-desc">Automated pentesting, port auditing, and policy boundary verification.</p>
+        <div class="mcp-tools-list">
+          <span class="mcp-tool-pill">hulubalang.scan</span>
+          <span class="mcp-tool-pill">policy.check_gate</span>
+        </div>
+      </div>
+
+      <div class="mcp-server-card" onclick="selectMcpServer('webhooks', this)">
+        <div class="mcp-card-top">
+          <span class="mcp-server-name"><i class="fa-solid fa-bolt text-copper"></i> CRM & Webhooks</span>
+          <span class="mcp-badge">ACTIVE</span>
+        </div>
+        <p class="mcp-server-desc">Real-time enterprise webhooks, WhatsApp integrations, and CRM deal creation.</p>
+        <div class="mcp-tools-list">
+          <span class="mcp-tool-pill">crm.create_deal</span>
+          <span class="mcp-tool-pill">webhook.send</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mcp-execution-monitor">
+      <div class="mcp-monitor-header">
+        <div>
+          <span class="mono text-copper"><i class="fa-solid fa-terminal"></i> MCP JSON-RPC DISPATCH MONITOR</span>
+          <h4 id="mcp-active-title" style="margin-top: 4px; font-size: 1.25rem;">Server: mcp-server-postgres-vector</h4>
+        </div>
+        <button class="btn btn-outline" style="padding: 6px 14px; font-size: 10px;" onclick="triggerMcpExecution()">
+          <i class="fa-solid fa-play text-pucuk"></i> Dispatch MCP RPC
+        </button>
+      </div>
+
+      <div class="mcp-rpc-stream" id="mcp-rpc-output">
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "pgvector.similarity_search",
+    "arguments": { "query": "NusaByte sovereign AI architecture", "top_k": 3 }
+  },
+  "status": "EXECUTED",
+  "latency": "2ms",
+  "result": { "embeddings_matched": 3, "similarity_score": 0.96 }
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 / ARCHITECTURE SECTION -->
+<section id="architecture" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-layer-group text-copper"></i> 05 / ARCHITECTURE</span>
+    <h2 class="section-title">AI becomes infrastructure when it can act.</h2>
+    <p class="section-desc">
+      JEBAT operates as an execution highway between intelligence models, stateful memory, and downstream systems. Hover over any layer to inspect detailed sub-tiers.
+    </p>
+
+    <div class="arch-diagram-card">
+      <div class="arch-layer-stack">
+        <div class="arch-layer" onclick="showArchDetail('model')">
+          <span class="arch-layer-title"><i class="fa-solid fa-brain text-copper"></i> MODEL INFERENCE LAYER</span>
+          <span class="arch-layer-sub">OpenAI / Anthropic / Gemini / llama.cpp / Ollama</span>
+        </div>
+
+        <div class="arch-layer core-highlight" onclick="showArchDetail('core')">
+          <span class="arch-layer-title"><i class="fa-solid fa-shield-halved text-bara"></i> JEBAT CORE RUNTIME</span>
+          <span class="arch-layer-sub">State Router • Token Budgeting • Policy Enforcement</span>
+        </div>
+
+        <div class="arch-layer" onclick="showArchDetail('mcp')">
+          <span class="arch-layer-title"><i class="fa-solid fa-microchip text-copper"></i> EXECUTION SUB-BUS</span>
+          <span class="arch-layer-sub">Ghost DB (6-Type Memory) • MCP Tool Gateway • Security Audit</span>
+        </div>
+
+        <div class="arch-layer" onclick="showArchDetail('agents')">
+          <span class="arch-layer-title"><i class="fa-solid fa-robot text-pucuk"></i> SPECIALIZED AGENT SWARM</span>
+          <span class="arch-layer-sub">Tukang (Code) • Keris (Security) • Pawang (Research) • Syahbandar (Ops)</span>
+        </div>
+      </div>
+
+      <div class="arch-detail-drawer" id="arch-drawer">
+        <strong>LAYER DETAILS:</strong> Click or hover over any layer above to inspect specific subsystem capabilities.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 / DEPLOY SECTION -->
+<section id="deploy" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-server text-copper"></i> 06 / DEPLOY</span>
+    <h2 class="section-title">Deploy where your data belongs.</h2>
+    <p class="section-desc">
+      Choose the exact privacy posture required for your compliance and data security.
+    </p>
+
+    <div class="deploy-selector">
+      <button class="deploy-btn active" onclick="selectDeploy('airgap', this)">AIR-GAPPED</button>
+      <button class="deploy-btn" onclick="selectDeploy('onprem', this)">ON-PREMISE</button>
+      <button class="deploy-btn" onclick="selectDeploy('privatecloud', this)">PRIVATE CLOUD</button>
+      <button class="deploy-btn" onclick="selectDeploy('hybrid', this)">HYBRID</button>
+    </div>
+
+    <div class="deploy-status-panel">
+      <div class="deploy-info">
+        <h3 id="deploy-title">Air-Gapped Sovereign Deployment</h3>
+        <p id="deploy-desc">
+          Zero external internet connectivity. Inference runs on local GPUs via llama.cpp, vector search operates locally in Ghost DB, and telemetry is completely disabled.
+        </p>
+        <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener" class="btn btn-copper">Talk to NusaByte</a>
+      </div>
+
+      <div class="deploy-spec-grid">
+        <div class="deploy-spec-item">
+          <label>INTERNET</label>
+          <val id="spec-net" class="text-pucuk">DISCONNECTED</val>
+        </div>
+        <div class="deploy-spec-item">
+          <label>INFERENCE</label>
+          <val id="spec-inf">LOCAL GPU</val>
+        </div>
+        <div class="deploy-spec-item">
+          <label>MEMORY DB</label>
+          <val id="spec-mem">LOCAL PGVECTOR</val>
+        </div>
+        <div class="deploy-spec-item">
+          <label>TELEMETRY</label>
+          <val id="spec-tel" class="text-pucuk">DISABLED</val>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICKWIN: INTERACTIVE LOCAL VS CLOUD SAVINGS CALCULATOR -->
+    <div class="savings-calculator-box">
+      <div class="calculator-header">
+        <div>
+          <span class="mono text-copper"><i class="fa-solid fa-calculator"></i> LOCAL ROUTING ROI CALCULATOR</span>
+          <h4 style="margin-top: 4px; font-size: 1.25rem;">Estimate Cloud API Cost Savings with Local Inference</h4>
+        </div>
+        <span class="mono text-pucuk" id="token-val-display">10,000,000 TOKENS / MO</span>
+      </div>
+
+      <div class="calculator-slider-row">
+        <span class="mono text-keluli">1M</span>
+        <input type="range" id="token-slider" min="1" max="100" value="10" oninput="updateCalculator(this.value)" aria-label="Monthly Token Volume Slider" />
+        <span class="mono text-keluli">100M</span>
+      </div>
+
+      <div class="calculator-stats-grid">
+        <div class="calc-stat">
+          <label>ESTIMATED CLOUD COST</label>
+          <val id="cloud-cost">$150.00 / mo</val>
+        </div>
+        <div class="calc-stat">
+          <label>JEBAT LOCAL ROUTING COST</label>
+          <val id="local-cost" class="text-pucuk">$0.00 / mo</val>
+        </div>
+        <div class="calc-stat">
+          <label>ESTIMATED ANNUAL SAVINGS</label>
+          <val id="annual-savings" class="text-bara">$1,800.00</val>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 / OPERATORS (ECOSYSTEM) -->
+<section class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-network-wired text-copper"></i> 07 / OPERATORS</span>
+    <h2 class="section-title">Built on JEBAT Core.</h2>
+    <p class="section-desc">
+      Specialized operator environments powered by the JEBAT command runtime.
+    </p>
+
+    <div class="operators-grid">
+      <div class="operator-card">
+        <h4>PANDAI</h4>
+        <span class="operator-tag">DEVELOPER AGENT WORKSPACE</span>
+        <p class="operator-desc">Deep code analysis, multi-file refactoring, and agentic pair programming.</p>
+      </div>
+
+      <div class="operator-card">
+        <h4>KERIS</h4>
+        <span class="operator-tag">SECURITY ORCHESTRATION</span>
+        <p class="operator-desc">Autonomous pentesting, vulnerability scanning, and security hardening.</p>
+      </div>
+
+      <div class="operator-card">
+        <h4>SAHABAT</h4>
+        <span class="operator-tag">AI WORK ASSISTANT</span>
+        <p class="operator-desc">Executive work companion with persistent context and task memory.</p>
+      </div>
+
+      <div class="operator-card">
+        <h4>PERISAI</h4>
+        <span class="operator-tag">POLICY GATEWAY</span>
+        <p class="operator-desc">Enterprise communication gateway, content filtering, and policy enforcement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 / EXECUTION DEMO TERMINAL -->
+<section class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-code text-copper"></i> 08 / EXECUTION</span>
+    <h2 class="section-title">From conversation to action.</h2>
+    <p class="section-desc">
+      Watch JEBAT coordinate agents across memory, knowledge bases, and tools to execute complex real-world workflows.
+    </p>
+
+    <div class="terminal-card">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <span class="mono text-keluli">JEBAT AGENT EXECUTION STREAM</span>
+        <span class="mono text-pucuk">ONLINE</span>
+      </div>
+
+      <div class="terminal-body">
+        <div class="step-line">
+          <span class="step-prefix">[00:01]</span>
+          <span class="step-text">Trigger: Incoming Lead via WhatsApp Webhook</span>
+        </div>
+        <div class="step-line">
+          <span class="step-prefix">[00:02]</span>
+          <span class="step-text">Agent Routing: <span class="text-copper">JEBAT Core</span> → Sub-agent <span class="text-bara">Pawang (Research)</span></span>
+        </div>
+        <div class="step-line">
+          <span class="step-prefix">[00:03]</span>
+          <span class="step-text">Memory Search: Querying Ghost DB Vector Index (Top-K = 3)...</span>
+        </div>
+        <div class="step-line">
+          <span class="step-prefix">[00:04]</span>
+          <span class="step-success">✓ Context Found: Previous interactions with Enterprise Client (ID: 9482)</span>
+        </div>
+        <div class="step-line">
+          <span class="step-prefix">[00:05]</span>
+          <span class="step-text">Tool Dispatch: Executing MCP Server [crm-integrator.create_deal]</span>
+        </div>
+        <div class="step-line">
+          <span class="step-prefix">[00:06]</span>
+          <span class="step-success">✓ Action Complete: CRM Lead & Quotation Created. Notification sent to Sales.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 / DEVELOPERS SECTION -->
+<section id="developers" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-laptop-code text-copper"></i> 09 / DEVELOPERS</span>
+    <h2 class="section-title">First agent in minutes.</h2>
+    <p class="section-desc">
+      Start building with JEBAT locally in under 5 minutes using Docker or Python.
+    </p>
+
+    <div class="quickstart-box">
+      <div>
+        <h3>Quickstart Installation</h3>
+        <p style="color: var(--hermes-text-subtle); margin-bottom: 20px; font-size: 14px;">
+          Clone the repository, initialize environment variables, and launch the command loop.
+        </p>
+        <div style="display: flex; gap: 10px;">
+          <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="btn btn-copper">
+            <i class="fa-brands fa-github"></i> GitHub Repo
+          </a>
+          <a href="docs.html" class="btn btn-outline">Read Docs</a>
+        </div>
+      </div>
+
+      <div class="code-block-wrapper">
+        <button class="copy-code-btn" onclick="copyCode()" aria-label="Copy Code Block">Copy</button>
+        <div class="code-block" id="code-snippet">
+git clone https://github.com/nusabyte-my/jebat-core.git
+cd jebat-core
+cp .env.example .env
+docker compose up -d
+jebat chat "Act as Jebat Agent for this repo"
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 / FAQ ACCORDION SECTION -->
+<section id="faq" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-circle-question text-copper"></i> 10 / FAQ</span>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <p class="section-desc">
+      Common questions about JEBAT command layer architecture, privacy postures, and enterprise deployment options.
+    </p>
+
+    <div class="faq-grid">
+      <div class="faq-item active">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>What is JEBAT and how does it fit into my stack?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          JEBAT is a sovereign AI command layer that sits between your applications and LLM providers. It decouples your agentic logic from specific model providers, manages persistent long-term memory via Ghost DB, dispatches native tools via MCP, and enforces security policies.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Can JEBAT run 100% air-gapped on private hardware?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Yes. In an air-gapped deployment, JEBAT operates with zero external network connectivity. Inference runs on your local GPU cluster via llama.cpp or Ollama, vector search operates locally in pgvector, and external telemetry is completely disabled.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>What memory types does Ghost DB support?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Ghost DB provides 6 persistent memory modalities: Episodic (conversations), Vector (semantic embeddings), Working (active context window), Entity (knowledge graphs & relationships), Procedural (tool invocation patterns), and Semantic (curated knowledge bases).
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>How does NusaByte support enterprise deployments?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          NusaByte provides commercial deployment, integration, security hardening, custom MCP tool engineering, and 24/7 managed infrastructure operations for enterprise organizations adopting JEBAT. Visit <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener" class="text-copper">nusabyte.my/jebat</a> for details.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 / ENTERPRISE (NUSABYTE BRIDGE) -->
+<section id="enterprise" class="section">
+  <div class="container">
+    <div class="enterprise-card">
+      <div class="enterprise-grid">
+        <div>
+          <span class="section-label" style="color: var(--hermes-gold);">11 / ENTERPRISE</span>
+          <h2>Need JEBAT in production?</h2>
+          <p style="color: var(--hermes-text-subtle); margin: 16px 0 24px; line-height: 1.7;">
+            NusaByte architects, integrates, secures, deploys, and operates JEBAT inside your enterprise infrastructure.
+          </p>
+          <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener" class="btn btn-copper">
+            <span>Deploy with NusaByte</span>
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </div>
+
+        <div class="enterprise-capabilities">
+          <div class="capability-item">
+            <i class="fa-solid fa-check text-copper"></i>
+            <span>Architecture Design</span>
+          </div>
+          <div class="capability-item">
+            <i class="fa-solid fa-check text-copper"></i>
+            <span>Private Deployment</span>
+          </div>
+          <div class="capability-item">
+            <i class="fa-solid fa-check text-copper"></i>
+            <span>Custom MCP Tools</span>
+          </div>
+          <div class="capability-item">
+            <i class="fa-solid fa-check text-copper"></i>
+            <span>Security Hardening</span>
+          </div>
+          <div class="capability-item">
+            <i class="fa-solid fa-check text-copper"></i>
+            <span>Model Infrastructure</span>
+          </div>
+          <div class="capability-item">
+            <i class="fa-solid fa-check text-copper"></i>
+            <span>24/7 Managed Operations</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO & FOOTER -->
+<section class="manifesto-section">
+  <img src="assets/Jebat-Transparent.png" alt="JEBAT Background Mark" class="watermark-bg" />
+  <div class="container">
+    <p class="manifesto-text">
+      Models will change. Providers will change. Infrastructure will evolve.<br/>
+      Your command should remain yours.
+    </p>
+    <h2 class="manifesto-tagline copper-gradient">KEEP COMMAND.</h2>
+    <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+      <a href="#deploy" class="btn btn-copper">Deploy JEBAT</a>
+      <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener" class="btn btn-outline">Talk to NusaByte</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="brand-lockup" aria-label="JEBAT Home">
+          <img src="assets/Jebat-Transparent.png" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 42px; width: auto; object-fit: contain;" />
+        </a>
+        <p>Sovereign AI Command Layer for private model inference, persistent memory, and agent governance.</p>
+      </div>
+
+      <div class="footer-col">
+        <h5>PLATFORM</h5>
+        <ul>
+          <li><a href="#control">Control Layer</a></li>
+          <li><a href="#core">Four Commands</a></li>
+          <li><a href="#api-dashboard">Studio API</a></li>
+          <li><a href="#mcp">MCP Bus</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#deploy">Deployment</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>DEVELOPERS</h5>
+        <ul>
+          <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="docs.html">Documentation</a></li>
+          <li><a href="#developers">Quickstart</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>ENTERPRISE</h5>
+        <ul>
+          <li><a href="https://nusabyte.my/jebat" target="_blank" rel="noopener">NusaByte Deployment</a></li>
+          <li><a href="https://nusabyte.my" target="_blank" rel="noopener">NusaByte Main Site</a></li>
+          <li><a href="#enterprise">Services & SLAs</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 JEBAT. A NusaByte Technology.</span>
+      <span>ENGINEERED IN NUSANTARA • DEPLOY ANYWHERE • <span class="jawi-cipher">جبت</span></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// WEB AUDIO API TERMINAL SOUND FX SYNTHESIS
+let audioFxEnabled = true;
+let audioCtx = null;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function playClickSound() {
+  if (!audioFxEnabled || prefersReducedMotion) return;
+  try {
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return;
+      audioCtx = new AudioContextCtor();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.04);
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.04);
+  } catch(e){}
+}
+
+function toggleAudioFX(btn) {
+  audioFxEnabled = !audioFxEnabled;
+  if (audioFxEnabled) {
+    btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> Audio: ON';
+    btn.style.color = 'var(--hermes-pucuk)';
+    showToast("Terminal audio FX enabled!");
+  } else {
+    btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Audio: OFF';
+    btn.style.color = 'var(--hermes-text-subtle)';
+    showToast("Terminal audio FX muted!");
+  }
+  btn.setAttribute('aria-pressed', String(audioFxEnabled));
+}
+
+// ⌘K COMMAND PALETTE MODAL CONTROLS
+function openCmdPalette() {
+  const modal = document.getElementById('cmd-modal');
+  modal.classList.add('active');
+  document.getElementById('cmd-input').focus();
+  playClickSound();
+}
+
+function closeCmdPalette(event) {
+  const modal = document.getElementById('cmd-modal');
+  modal.classList.remove('active');
+}
+
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openCmdPalette();
+  } else if (e.key === 'Escape') {
+    closeCmdPalette();
+  }
+});
+
+function executeCmdNav(type) {
+  closeCmdPalette();
+  playClickSound();
+  if (type === 'status') {
+    runHeroCLI('status');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (type === 'mcp') {
+    document.getElementById('mcp').scrollIntoView({ behavior: 'smooth' });
+  } else if (type === 'api') {
+    document.getElementById('api-dashboard').scrollIntoView({ behavior: 'smooth' });
+  } else if (type === 'deploy') {
+    document.getElementById('deploy').scrollIntoView({ behavior: 'smooth' });
+  } else if (type === 'docker') {
+    copyCode();
+  }
+}
+
+function filterCmdList(query) {
+  const items = document.querySelectorAll('.cmd-modal-item');
+  const q = query.toLowerCase();
+  items.forEach(item => {
+    if (item.innerText.toLowerCase().includes(q)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+// HERO HTML5 NEURAL PARTICLE MATRIX CANVAS
+(function initNeuralCanvas() {
+  const canvas = document.getElementById('hero-neural-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  if (prefersReducedMotion) return;
+
+  const particles = [];
+  const numParticles = 40;
+  for (let i = 0; i < numParticles; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      radius: Math.random() * 2 + 1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#F59E0B';
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.15)';
+
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let j = i + 1; j < particles.length; j++) {
+        let p2 = particles[j];
+        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+        if (dist < 130) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// HERO SWARM MODE SWITCHER
+function switchHeroSwarm(role, chip) {
+  playClickSound();
+  const chips = document.querySelectorAll('.swarm-chip');
+  chips.forEach(c => {
+    c.classList.remove('active');
+    c.setAttribute('aria-pressed', 'false');
+  });
+  chip.classList.add('active');
+  chip.setAttribute('aria-pressed', 'true');
+
+  const box = document.getElementById('hero-cli-output');
+  if (role === 'hulubalang') {
+    box.innerHTML = `> AGENT SELECTED: <span style="color: var(--hermes-amber)">Hulubalang (Security Orchestrator)</span><br/>
+> Scanning local ports & airgap boundaries...<br/>
+<span style="color: var(--hermes-pucuk)">✓ Security Audit Passed: 0 vulnerabilities found.</span>`;
+  } else if (role === 'pawang') {
+    box.innerHTML = `> AGENT SELECTED: <span style="color: var(--hermes-amber)">Pawang (Knowledge & Research)</span><br/>
+> Querying Ghost DB 6-Type Persistent Memory...<br/>
+<span style="color: var(--hermes-pucuk)">✓ Context Retrieved: 24,190 embeddings indexed.</span>`;
+  } else if (role === 'tukang') {
+    box.innerHTML = `> AGENT SELECTED: <span style="color: var(--hermes-amber)">Tukang (Code & Development)</span><br/>
+> Inspecting repository diffs & refactoring AST...<br/>
+<span style="color: var(--hermes-pucuk)">✓ Build Verified: Zero lint errors detected.</span>`;
+  } else if (role === 'syahbandar') {
+    box.innerHTML = `> AGENT SELECTED: <span style="color: var(--hermes-amber)">Syahbandar (Ops & Infrastructure)</span><br/>
+> Dispatching Docker Compose & Kubernetes helm charts...<br/>
+<span style="color: var(--hermes-pucuk)">✓ Airgap Cluster Status: 100% Operational.</span>`;
+  }
+}
+
+// Show Toast Message
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toast-message');
+  msgEl.innerText = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 40) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+});
+
+// Interactive Studio API Tester
+function updateApiPayload(val) {
+  playClickSound();
+  const reqEl = document.getElementById('api-request-payload');
+  const resEl = document.getElementById('api-response-body');
+  const resStatusEl = document.getElementById('api-res-status');
+
+  if (val === 'chat') {
+    reqEl.innerHTML = `{\n  "model": "jebat-sovereign-local",\n  "messages": [\n    { "role": "system", "content": "Act as JEBAT Sovereign Core Agent" },\n    { "role": "user", "content": "Execute pentest scan on localhost" }\n  ],\n  "temperature": 0.2\n}`;
+    resEl.innerHTML = `{\n  "id": "chatcmpl-jebat-94821",\n  "object": "chat.completion",\n  "created": 1772323200,\n  "model": "local_vps_llamacpp",\n  "choices": [\n    {\n      "message": { "role": "assistant", "content": "[Hulubalang Agent] Scan complete. 0 vulnerabilities found." }\n    }\n  ]\n}`;
+    resStatusEl.innerText = "STATUS: 200 OK (14ms)";
+  } else if (val === 'models') {
+    reqEl.innerHTML = `{\n  "action": "list_models",\n  "status": "active"\n}`;
+    resEl.innerHTML = `{\n  "object": "list",\n  "data": [\n    { "id": "llama-3.3-70b-instruct", "latency": "14ms", "provider": "local_vps" },\n    { "id": "claude-3-5-sonnet", "latency": "240ms", "provider": "anthropic" },\n    { "id": "gpt-4o", "latency": "310ms", "provider": "openai" }\n  ]\n}`;
+    resStatusEl.innerText = "STATUS: 200 OK (8ms)";
+  } else if (val === 'mcp') {
+    reqEl.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": { "name": "github.create_pr", "arguments": { "title": "feat: JEBAT Core v8.3" } }\n}`;
+    resEl.innerHTML = `{\n  "jsonrpc": "2.0",\n  "result": { "pr_number": 142, "url": "https://github.com/nusabyte-my/jebat-core/pull/142", "status": "created" }\n}`;
+    resStatusEl.innerText = "STATUS: 200 OK (18ms)";
+  } else if (val === 'memory') {
+    reqEl.innerHTML = `{\n  "query": "NusaByte enterprise policy",\n  "modalities": ["vector", "episodic"],\n  "top_k": 3\n}`;
+    resEl.innerHTML = `{\n  "matches": [\n    { "id": "mem_9842", "text": "NusaByte enterprise SLAs and private deployment posture", "score": 0.94 }\n  ]\n}`;
+    resStatusEl.innerText = "STATUS: 200 OK (5ms)";
+  }
+}
+
+function sendStudioApiRequest() {
+  playClickSound();
+  showToast("Studio API request executed successfully!");
+}
+
+// MCP Server Selector & Live RPC Dispatcher
+function selectMcpServer(name, card) {
+  playClickSound();
+  const cards = document.querySelectorAll('.mcp-server-card');
+  cards.forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+
+  const title = document.getElementById('mcp-active-title');
+  const stream = document.getElementById('mcp-rpc-output');
+
+  if (name === 'postgres') {
+    title.innerText = "Server: mcp-server-postgres-vector";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "pgvector.similarity_search",\n    "arguments": { "query": "NusaByte sovereign AI architecture", "top_k": 3 }\n  },\n  "status": "EXECUTED",\n  "latency": "2ms",\n  "result": { "embeddings_matched": 3, "similarity_score": 0.96 }\n}`;
+  } else if (name === 'filesystem') {
+    title.innerText = "Server: mcp-server-filesystem";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "fs.read_file",\n    "arguments": { "path": "d:/Jebat/index.html" }\n  },\n  "status": "EXECUTED",\n  "latency": "1ms",\n  "result": { "bytes_read": 69646, "encoding": "utf-8" }\n}`;
+  } else if (name === 'git') {
+    title.innerText = "Server: mcp-server-devops-git";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "github.create_pr",\n    "arguments": { "branch": "main", "title": "feat: MCP Bus Integration" }\n  },\n  "status": "EXECUTED",\n  "latency": "24ms",\n  "result": { "pr_id": 143, "status": "merged" }\n}`;
+  } else if (name === 'browser') {
+    title.innerText = "Server: mcp-server-browser-playwright";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "browser.screenshot",\n    "arguments": { "url": "http://localhost:8080" }\n  },\n  "status": "EXECUTED",\n  "latency": "18ms",\n  "result": { "format": "webp", "resolution": "1920x1080" }\n}`;
+  } else if (name === 'security') {
+    title.innerText = "Server: mcp-server-hulubalang-scan";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "hulubalang.scan",\n    "arguments": { "target": "127.0.0.1:8080" }\n  },\n  "status": "EXECUTED",\n  "latency": "6ms",\n  "result": { "open_ports": [80, 443, 8081], "vulnerabilities": 0 }\n}`;
+  } else if (name === 'webhooks') {
+    title.innerText = "Server: mcp-server-crm-webhooks";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "crm.create_deal",\n    "arguments": { "client": "NusaByte Partner", "value": 50000 }\n  },\n  "status": "EXECUTED",\n  "latency": "12ms",\n  "result": { "deal_id": "DEAL-8891", "status": "created" }\n}`;
+  }
+}
+
+function triggerMcpExecution() {
+  playClickSound();
+  showToast("MCP Tool RPC dispatched!");
+}
+
+// Interactive Hero CLI Playground Simulator
+function runHeroCLI(type) {
+  playClickSound();
+  const box = document.getElementById('hero-cli-output');
+  if (type === 'status') {
+    box.innerHTML = `> $ jebat status<br/>
+<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.3.0 Operational</span><br/>
+> Model Route: llama.cpp (72.62.255.206:8081) [14ms]<br/>
+> Ghost DB Vector Store: Connected (24,190 embeddings)<br/>
+> MCP Protocol Bus: 78 tools active`;
+  } else if (type === 'pentest') {
+    box.innerHTML = `> $ jebat agent "Pentest localhost"<br/>
+<span style="color: var(--hermes-amber)">[Hulubalang Security Agent Dispatched]</span><br/>
+> Port scan: 80, 443, 8081 open.<br/>
+> Vulnerability check: 0 critical, 0 high.<br/>
+<span style="color: var(--hermes-pucuk)">✓ Security Audit Passed. Airgap boundaries active.</span>`;
+  } else if (type === 'memory') {
+    box.innerHTML = `> $ jebat memory query "NusaByte"<br/>
+<span style="color: var(--hermes-amber)">[Ghost DB Hybrid Vector Search]</span><br/>
+> Match #1: "NusaByte Commercial AI Architecture & Ops" (Score: 0.94)<br/>
+> Match #2: "JEBAT Sovereign Runtime Cutover" (Score: 0.89)<br/>
+<span style="color: var(--hermes-pucuk)">✓ Context retrieved from persistent store.</span>`;
+  }
+}
+
+// Topology Node Highlight
+function highlightNode(name) {
+  playClickSound();
+  const box = document.getElementById('hero-cli-output');
+  box.innerHTML = `> TOPOLOGY NODE SELECTED: <span style="color: var(--hermes-amber)">${name}</span><br/>
+> Active routing path established via JEBAT Core Runtime.<br/>
+<span style="color: var(--hermes-pucuk)">✓ Traffic encrypted TLS 1.3 | Policy Enforcement: Passed</span>`;
+}
+
+// Interactive Model Switcher
+function switchModel(type, btn) {
+  playClickSound();
+  const tabs = document.querySelectorAll('.switcher-tab');
+  tabs.forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+    t.setAttribute('aria-pressed', 'false');
+  });
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+  btn.setAttribute('aria-pressed', 'true');
+
+  const output = document.getElementById('model-output');
+  if (type === 'local') {
+    output.innerHTML = `> ROUTE: local_vps_llamacpp (72.62.255.206:8081)<br/>> LATENCY: 14ms | COST: $0.00 | TELEMETRY: DISABLED<br/>> STATUS: 100% Air-Gapped Local Inference`;
+  } else if (type === 'anthropic') {
+    output.innerHTML = `> ROUTE: api.anthropic.com (claude-3-5-sonnet)<br/>> LATENCY: 240ms | ENCRYPTION: TLS 1.3 | POLICY GATE: PASSED<br/>> STATUS: Governed External Route`;
+  } else if (type === 'openai') {
+    output.innerHTML = `> ROUTE: api.openai.com (gpt-4o)<br/>> LATENCY: 310ms | FAILOVER: READY | TOKEN BUDGET: OK<br/>> STATUS: Governed External Route`;
+  }
+}
+
+// Interactive Deployment Selector
+function selectDeploy(mode, btn) {
+  playClickSound();
+  const btns = document.querySelectorAll('.deploy-btn');
+  btns.forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
+  btn.classList.add('active');
+  btn.setAttribute('aria-pressed', 'true');
+
+  const title = document.getElementById('deploy-title');
+  const desc = document.getElementById('deploy-desc');
+  const net = document.getElementById('spec-net');
+  const inf = document.getElementById('spec-inf');
+  const mem = document.getElementById('spec-mem');
+  const tel = document.getElementById('spec-tel');
+
+  if (mode === 'airgap') {
+    title.innerText = 'Air-Gapped Sovereign Deployment';
+    desc.innerText = 'Zero external internet connectivity. Inference runs on local GPUs via llama.cpp, vector search operates locally in Ghost DB, and telemetry is completely disabled.';
+    net.innerText = 'DISCONNECTED';
+    inf.innerText = 'LOCAL GPU';
+    mem.innerText = 'LOCAL PGVECTOR';
+    tel.innerText = 'DISABLED';
+  } else if (mode === 'onprem') {
+    title.innerText = 'On-Premise Enterprise Deployment';
+    desc.innerText = 'Deploys directly on your internal hardware cluster with high-availability load balancing, local storage, and custom corporate SSO auth.';
+    net.innerText = 'INTERNAL ONLY';
+    inf.innerText = 'ON-PREM CLUSTER';
+    mem.innerText = 'ON-PREM POSTGRES';
+    tel.innerText = 'INTERNAL ONLY';
+  } else if (mode === 'privatecloud') {
+    title.innerText = 'Private Cloud (AWS / GCP / Azure)';
+    desc.innerText = 'Self-hosted VPC setup with private endpoints, cloud GPU instances, KMS encryption, and strict IAM governance.';
+    net.innerText = 'VPC ISOLATED';
+    inf.innerText = 'CLOUD GPU';
+    mem.innerText = 'RDS / VECTOR';
+    tel.innerText = 'ENCRYPTED';
+  } else if (mode === 'hybrid') {
+    title.innerText = 'Hybrid Command Topology';
+    desc.innerText = 'Sensitive memory and policies stay local, while non-sensitive heavy tasks route to cloud LLM providers via governed proxies.';
+    net.innerText = 'GOVERNED BUS';
+    inf.innerText = 'DYNAMIC ROUTE';
+    mem.innerText = 'LOCAL + HYBRID';
+    tel.innerText = 'AUDITED';
+  }
+}
+
+// Token Savings Calculator
+function updateCalculator(val) {
+  const tokensMillion = parseInt(val);
+  const display = document.getElementById('token-val-display');
+  const cloudCostEl = document.getElementById('cloud-cost');
+  const localCostEl = document.getElementById('local-cost');
+  const annualSavingsEl = document.getElementById('annual-savings');
+
+  display.innerText = (tokensMillion * 1000000).toLocaleString() + ' TOKENS / MO';
+  const monthlyCloudCost = tokensMillion * 15;
+  const annualSavings = monthlyCloudCost * 12;
+
+  cloudCostEl.innerText = '$' + monthlyCloudCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' / mo';
+  annualSavingsEl.innerText = '$' + annualSavings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// Interactive FAQ Accordion Toggle
+function toggleFaq(element) {
+  playClickSound();
+  const item = element.parentElement;
+  item.classList.toggle('active');
+  element.setAttribute('aria-expanded', String(item.classList.contains('active')));
+}
+
+// Interactive Architecture Hover/Click Detail Drawer
+function showArchDetail(layer) {
+  playClickSound();
+  const drawer = document.getElementById('arch-drawer');
+  if (layer === 'model') {
+    drawer.innerHTML = `<strong>MODEL INFERENCE LAYER:</strong> Dynamic prompt routing to 17 model providers. Supports continuous local fallback (llama.cpp / Ollama) and external API governance (OpenAI, Anthropic, Gemini).`;
+  } else if (layer === 'core') {
+    drawer.innerHTML = `<strong>JEBAT CORE RUNTIME:</strong> State engine handling ReAct loops, token budget allocation, policy enforcement, distributed HALO tracing, and security sandboxing.`;
+  } else if (layer === 'mcp') {
+    drawer.innerHTML = `<strong>EXECUTION SUB-BUS:</strong> Model Context Protocol (MCP) gateway hosting 47+ tools alongside Ghost DB's 6-type persistent memory engine (episodic, vector, working, entity, procedural, semantic).`;
+  } else if (layer === 'agents') {
+    drawer.innerHTML = `<strong>SPECIALIZED AGENT SWARM:</strong> 17 domain-specific agent roles including Tukang (Development), Keris (Security), Pawang (Research), and Syahbandar (Infrastructure/Ops).`;
+  }
+}
+
+// Copy Code Snippet
+function copyCode() {
+  playClickSound();
+  const code = document.getElementById('code-snippet').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.querySelector('.copy-code-btn');
+    btn.innerText = 'Copied!';
+    showToast('Quickstart code copied to clipboard!');
+    setTimeout(() => btn.innerText = 'Copy', 2000);
+  });
+}
+
+// Copy Pill Command
+function copyPillCommand(btn) {
+  playClickSound();
+  navigator.clipboard.writeText('jebat chat "Act as Jebat Agent"').then(() => {
+    btn.innerHTML = '<i class="fa-solid fa-check text-pucuk"></i>';
+    showToast('CLI command copied to clipboard!');
+    setTimeout(() => btn.innerHTML = '<i class="fa-regular fa-copy"></i>', 2000);
+  });
+}
+
+// Mobile Menu Toggle
+function toggleMobileMenu() {
+  playClickSound();
+  const links = document.querySelector('.nav-links');
+  const trigger = document.querySelector('.mobile-toggle');
+  if (links.style.display === 'flex') {
+    links.style.display = 'none';
+    trigger.setAttribute('aria-expanded', 'false');
+  } else {
+    links.style.display = 'flex';
+    links.style.flexDirection = 'column';
+    links.style.position = 'absolute';
+     links.style.top = '68px';
+    links.style.left = '0';
+    links.style.right = '0';
+    links.style.background = '#090B0E';
+    links.style.padding = '20px';
+    links.style.borderBottom = '1px solid var(--border-mid)';
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function toggleDeployMenu(event) {
+  event.stopPropagation();
+  const trigger = event.currentTarget;
+  const menu = trigger.nextElementSibling;
+  const open = menu.classList.toggle('is-open');
+  trigger.setAttribute('aria-expanded', String(open));
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.nav-dropdown-menu.is-open').forEach((menu) => {
+    menu.classList.remove('is-open');
+    menu.previousElementSibling?.setAttribute('aria-expanded', 'false');
+  });
+});
+
+// Accessibility enhancement for legacy interactive spans and stateful controls.
+document.querySelectorAll('.cli-chip[onclick], .swarm-chip[onclick], .node[onclick], .cmd-modal-item[onclick], .mcp-server-card[onclick], .arch-layer[onclick], .faq-question[onclick]').forEach((element) => {
+  if (element.tagName !== 'BUTTON') {
+    element.setAttribute('role', 'button');
+    element.setAttribute('tabindex', '0');
+  }
+  if (!element.getAttribute('aria-label')) element.setAttribute('aria-label', element.textContent.trim());
+  element.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      element.click();
+    }
+  });
+});
+
+document.querySelectorAll('.faq-question[onclick]').forEach((element) => {
+  element.setAttribute('aria-expanded', String(element.parentElement.classList.contains('active')));
+});
+
+document.querySelectorAll('.swarm-chip, .switcher-tab, .deploy-btn').forEach((element) => {
+  element.setAttribute('aria-pressed', String(element.classList.contains('active')));
+});
+document.querySelectorAll('.switcher-tab').forEach((element) => element.setAttribute('role', 'tab'));
+document.querySelectorAll('.switcher-tab').forEach((element) => {
+  element.addEventListener('click', () => {
+    document.querySelectorAll('.switcher-tab').forEach((tab) => tab.setAttribute('aria-selected', 'false'));
+    element.setAttribute('aria-selected', 'true');
+  });
+});
+</script>
 
 </body>
 </html>
