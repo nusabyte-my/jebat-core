@@ -1,0 +1,82 @@
+# Hybrid WhatsApp Gateway - Docker Compose
+# Architecture: Router (Python) -> Meta (Python) + Baileys (Node.js)
+# Auto-fallback: Meta 503/4xx -> Baileys retry
+
+version: "3.8"
+
+services:
+  wa-router:
+    build:
+      context: ./wa-router
+      dockerfile: Dockerfile
+    container_name: wa-router
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - META_URL=http://wa-meta:8084
+      - BAILEYS_URL=http://wa-baileys:8085
+      - DEFAULT_BACKEND=meta
+      - FALLBACK_ENABLED=true
+      - LOG_LEVEL=info
+    depends_on:
+      - wa-meta
+      - wa-baileys
+    networks:
+      - wa-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  wa-meta:
+    build:
+      context: ./wa-meta
+      dockerfile: Dockerfile
+    container_name: wa-meta
+    restart: unless-stopped
+    expose:
+      - "8084"
+    environment:
+      - PORT=8084
+      - LOG_LEVEL=info
+    volumes:
+      - ./wa-meta/logs:/app/logs
+    networks:
+      - wa-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  wa-baileys:
+    build:
+      context: ./wa-baileys
+      dockerfile: Dockerfile
+    container_name: wa-baileys
+    restart: unless-stopped
+    expose:
+      - "8085"
+    environment:
+      - PORT=8085
+      - LOG_LEVEL=info
+      - BAILEYS_PRINT_QR=true
+    volumes:
+      - baileys-sessions:/app/sessions
+      - ./wa-baileys/logs:/app/logs
+    networks:
+      - wa-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  wa-net:
+    driver: bridge
+
+volumes:
+  baileys-sessions:

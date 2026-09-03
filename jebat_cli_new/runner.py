@@ -10,6 +10,8 @@ import time
 import urllib.request
 from typing import Optional, Tuple
 
+from jebat_cli_new.models import BROWSER_UA
+
 
 def ollama_complete(
     model: str = "qwen2.5-coder:7b",
@@ -35,7 +37,7 @@ def ollama_complete(
     req = urllib.request.Request(
         url,
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "User-Agent": BROWSER_UA},
         method="POST",
     )
     start = time.time()

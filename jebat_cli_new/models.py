@@ -10,6 +10,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
 
+# Browser-like User-Agent for urllib requests. Cloudflare-fronted endpoints
+# (e.g. jebat.online/ollama) return HTTP 403 for the default Python-urllib UA.
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+)
+
 
 @dataclass
 class ProviderConfig:

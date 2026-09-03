@@ -215,3 +215,14 @@ jebat-core/
 !packages/cli/skills/
 !packages/cli/validate-workspace.ps1
 !packages/cli/scripts/
+.mail-passwords-*
+
+# JEBAT runtime dirs
+.jebat/
+.omx/
+.tmp-jebat-home/
+.local-backups/
+
+# PDFs with passwords
+EvolvePlayBoost_Mailbox_Passwords_*.pdf
+EvolvePlayBoost_Mailbox_Passwords_*.pdf

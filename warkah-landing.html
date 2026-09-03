@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WARKAH — Warkah moden untuk bisnes anda</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── WARKAH Design System ──
+         * Based on JEBAT brutalist CSS
+         * Monochrome. Zero shadows. Binary border-radius.
+         */
+
+        :root {
+            /* Monochrome palette */
+            --black:      #000000;
+            --near-black: #262626;
+            --darkest:    #090909;
+            --white:      #ffffff;
+            --snow:       #fafafa;
+            --gray-light: #e5e5e5;
+            --gray-mid:   #525252;
+            --stone:      #737373;
+            --silver:     #a3a3a3;
+            --border:     #d4d4d4;
+
+            /* Spacing */
+            --unit: 8px;
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            --space-3xl: 88px;
+
+            /* Typography */
+            --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --size-hero: 48px;
+            --size-h1: 36px;
+            --size-h2: 30px;
+            --size-h3: 24px;
+            --size-body-lg: 18px;
+            --size-body: 16px;
+            --size-caption: 14px;
+            --size-small: 12px;
+            --weight-normal: 400;
+            --weight-medium: 500;
+
+            /* Border radius — BINARY */
+            --radius-container: 12px;
+            --radius-pill: 9999px;
+        }
+
+        /* ── Reset ── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+        body {
+            font-family: var(--font);
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ── Typography ── */
+        h1, h2, h3, h4 { font-weight: var(--weight-medium); line-height: 1.1; }
+        h1 { font-size: var(--size-h1); }
+        h2 { font-size: var(--size-h2); }
+        h3 { font-size: var(--size-h3); }
+        p { line-height: 1.6; color: var(--near-black); }
+        small, .small { font-size: var(--size-small); color: var(--stone); }
+        .muted { color: var(--stone); }
+        .silver { color: var(--silver); }
+        code, pre, .mono { font-family: var(--font-mono); font-size: 14px; }
+
+        /* ── Layout ── */
+        .container { max-width: 1152px; margin: 0 auto; padding: 0 var(--space-lg); }
+        .section { padding: var(--space-3xl) 0; }
+        .section-sm { padding: var(--space-2xl) 0; }
+        .stack { display: flex; flex-direction: column; gap: var(--space-lg); }
+        .stack-sm { display: flex; flex-direction: column; gap: var(--space-md); }
+        .row { display: flex; gap: var(--space-lg); align-items: flex-start; }
+        .row-center { display: flex; gap: var(--space-md); align-items: center; }
+        .grid { display: grid; gap: var(--space-lg); }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .wrap { flex-wrap: wrap; }
+
+        /* ── Navigation ── */
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--gray-light);
+            background: var(--white);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-weight: var(--weight-medium);
+            font-size: var(--size-body-lg);
+            color: var(--black);
+            text-decoration: none;
+        }
+        .nav-brand-icon {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--black);
+            border-radius: var(--radius-container);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        .nav-links { display: flex; gap: var(--space-xs); align-items: center; }
+        .nav-link {
+            padding: var(--space-xs) 12px;
+            font-size: var(--size-caption);
+            color: var(--stone);
+            text-decoration: none;
+            border-radius: var(--radius-pill);
+            transition: color 0.15s;
+        }
+        .nav-link:hover { color: var(--black); }
+        .nav-link.active { color: var(--black); background: var(--gray-light); }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 10px 24px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-pill);
+            font-family: var(--font);
+            font-size: var(--size-body);
+            font-weight: var(--weight-medium);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.1s, border-color 0.1s;
+            line-height: 1;
+        }
+        .btn:hover { background: var(--snow); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-black {
+            background: var(--black);
+            color: var(--white);
+            border-color: var(--black);
+        }
+        .btn-black:hover { background: var(--near-black); border-color: var(--near-black); }
+        .btn-outline {
+            background: transparent;
+            color: var(--near-black);
+            border-color: var(--gray-light);
+        }
+        .btn-outline:hover { border-color: var(--silver); background: var(--snow); }
+        .btn-sm { padding: 6px 14px; font-size: var(--size-caption); }
+        .btn-group { display: flex; gap: var(--space-xs); }
+
+        /* ── Forms ── */
+        .input {
+            padding: 10px 14px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-pill);
+            font-family: var(--font);
+            font-size: var(--size-body);
+            color: var(--black);
+            outline: none;
+            width: 100%;
+            background: var(--white);
+        }
+        .input:focus { border-color: var(--stone); }
+        .input::placeholder { color: var(--silver); }
+        textarea.input {
+            border-radius: var(--radius-container);
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: var(--space-xs); }
+        .form-label { font-size: var(--size-caption); font-weight: var(--weight-medium); color: var(--near-black); }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-container);
+            padding: var(--space-lg);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-md);
+        }
+        .card-label {
+            font-size: var(--size-small);
+            font-weight: var(--weight-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--stone);
+            margin-bottom: var(--space-sm);
+        }
+        .card-title {
+            font-size: var(--size-h3);
+            font-weight: var(--weight-medium);
+            color: var(--black);
+        }
+        .card-body { color: var(--near-black); line-height: 1.6; }
+        .card-footer {
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--gray-light);
+        }
+
+        /* ── Chip / Tag ── */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-pill);
+            font-size: var(--size-small);
+            font-weight: var(--weight-normal);
+            color: var(--near-black);
+            background: var(--snow);
+        }
+        .chip-ok { border-color: var(--near-black); background: var(--near-black); color: var(--white); }
+
+        /* ── Hero ── */
+        .hero {
+            padding: var(--space-3xl) 0 var(--space-2xl);
+            text-align: center;
+        }
+        .hero-eyebrow {
+            font-size: var(--size-small);
+            font-weight: var(--weight-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--stone);
+            margin-bottom: var(--space-md);
+        }
+        .hero h1 {
+            font-size: var(--size-hero);
+            font-weight: var(--weight-medium);
+            line-height: 1.0;
+            color: var(--black);
+            margin-bottom: var(--space-md);
+        }
+        .hero p {
+            font-size: var(--size-body-lg);
+            color: var(--stone);
+            max-width: 640px;
+            margin: 0 auto var(--space-lg);
+            line-height: 1.56;
+        }
+        .hero-actions { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; }
+
+        /* ── Status strip ── */
+        .status-strip {
+            display: flex;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-lg);
+            border-bottom: 1px solid var(--gray-light);
+            background: var(--snow);
+            font-size: var(--size-small);
+            flex-wrap: wrap;
+        }
+        .status-item { display: flex; align-items: center; gap: 6px; color: var(--stone); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--near-black); }
+        .status-dot.ok { background: var(--near-black); }
+        .status-dot.warn { background: var(--silver); }
+
+        /* ── Provider grid ── */
+        .provider-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-md); }
+        .provider-card {
+            padding: var(--space-md);
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-container);
+        }
+        .provider-card h4 { font-size: var(--size-body-lg); margin-bottom: var(--space-xs); }
+        .provider-card .small-note { font-size: var(--size-small); color: var(--stone); }
+
+        /* ── Pricing ── */
+        .pricing-card {
+            background: var(--white);
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-container);
+            padding: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+        .pricing-card.featured {
+            border-color: var(--black);
+            background: var(--snow);
+        }
+        .pricing-price {
+            font-size: var(--size-hero);
+            font-weight: var(--weight-medium);
+            color: var(--black);
+        }
+        .pricing-price span {
+            font-size: var(--size-body);
+            color: var(--stone);
+            font-weight: var(--weight-normal);
+        }
+
+        /* ── Steps ── */
+        .steps { counter-reset: step; }
+        .step-row {
+            display: flex;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-container);
+            margin-bottom: var(--space-sm);
+            align-items: flex-start;
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--gray-light);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: var(--size-small);
+            font-weight: var(--weight-medium);
+            flex-shrink: 0;
+        }
+
+        /* ── QR Section ── */
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-xl);
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-container);
+            background: var(--snow);
+        }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: var(--white);
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius-container);
+            display: grid;
+            place-items: center;
+            font-size: var(--size-small);
+            color: var(--stone);
+        }
+
+        /* ── Loading ── */
+        .pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .row { flex-direction: column; }
+            .nav-links { display: none; }
+            .hero h1 { font-size: var(--size-h2); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="#" class="nav-brand">
+            <div class="nav-brand-icon">W</div>
+            WARKAH
+        </a>
+        <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#pricing" class="nav-link">Pricing</a>
+            <a href="#docs" class="nav-link">Docs</a>
+            <a href="#login" class="nav-link">Login</a>
+            <a href="#register" class="btn btn-black btn-sm">Mula Percuma</a>
+        </div>
+    </nav>
+
+    <!-- Status Strip -->
+    <div class="status-strip">
+        <div class="status-item">
+            <div class="status-dot ok"></div>
+            <span>All systems operational</span>
+        </div>
+        <div class="status-item">
+            <span>Meta API: <strong>Online</strong></span>
+        </div>
+        <div class="status-item">
+            <span>Baileys: <strong>Online</strong></span>
+        </div>
+        <div class="status-item">
+            <span>Response time: <strong>1.2s avg</strong></span>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero container">
+        <div class="hero-eyebrow">WARKA.MY</div>
+        <h1>Warkah moden untuk<br>bisnes anda</h1>
+        <p>Platform bot WhatsApp dengan AI. Sambung WhatsApp, pilih AI provider, dan biar bot anda membalas pelanggan 24/7. Bawa kunci AI anda sendiri (BYOK).</p>
+        <div class="hero-actions">
+            <a href="#register" class="btn btn-black">Mula Percuma →</a>
+            <a href="#demo" class="btn btn-outline">Lihat Demo</a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="section">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: var(--space-xl);">Everything you need</h2>
+            <div class="grid grid-3">
+                <div class="card">
+                    <div class="card-label">01 / Connect</div>
+                    <h3 class="card-title">Sambung WhatsApp</h3>
+                    <p class="card-body">Scan QR atau guna Meta Business. Dua kaedah untuk semua jenis bisnes.</p>
+                </div>
+                <div class="card">
+                    <div class="card-label">02 / Configure</div>
+                    <h3 class="card-title">Pilih AI Provider</h3>
+                    <p class="card-body">OpenAI, Anthropic, Gemini, atau custom. Bawa kunci sendiri (BYOK).</p>
+                </div>
+                <div class="card">
+                    <div class="card-label">03 / Build</div>
+                    <h3 class="card-title">Bina Bot</h3>
+                    <p class="card-body">Tulis system prompt, upload knowledge base, test dalam 5 minit.</p>
+                </div>
+                <div class="card">
+                    <div class="card-label">04 / Validate</div>
+                    <h3 class="card-title">Uji & Sah</h3>
+                    <p class="card-body">5 ujian scenario automatik. Bot hanya live jika semua lulus.</p>
+                </div>
+                <div class="card">
+                    <div class="card-label">05 / Go Live</div>
+                    <h3 class="card-title">Aktifkan</h3>
+                    <p class="card-body">Bot membalas pelanggan 24/7. Anda fokus pada bisnes.</p>
+                </div>
+                <div class="card">
+                    <div class="card-label">06 / Monitor</div>
+                    <h3 class="card-title">Analitik</h3>
+                    <p class="card-body">Dashboard real-time. Mesej, kos AI, response time, semua dalam satu tempat.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Providers -->
+    <section class="section-sm" style="background: var(--snow);">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: var(--space-xl);">Pilih AI Provider</h2>
+            <div class="provider-grid">
+                <div class="provider-card">
+                    <h4>🤖 OpenAI</h4>
+                    <p class="small-note">gpt-4o, gpt-4o-mini, o1-preview</p>
+                    <p>Best all-round. Paling popular untuk bisnes.</p>
+                </div>
+                <div class="provider-card">
+                    <h4>🧠 Anthropic</h4>
+                    <p class="small-note">claude-3.5-sonnet, claude-3-opus</p>
+                    <p>Best reasoning. Selamat dan precise.</p>
+                </div>
+                <div class="provider-card">
+                    <h4>🔍 Google</h4>
+                    <p class="small-note">gemini-1.5-pro, gemini-1.5-flash</p>
+                    <p>Best price. Value untuk money.</p>
+                </div>
+                <div class="provider-card">
+                    <h4>🖥️ Custom</h4>
+                    <p class="small-note">Ollama, vLLM, LiteLLM, AnythingLLM</p>
+                    <p>Self-hosted. Privacy terjaga.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: var(--space-xl);">How it works</h2>
+            <div class="steps">
+                <div class="step-row">
+                    <div class="step-num">1</div>
+                    <div>
+                        <strong>Daftar akaun</strong>
+                        <p class="muted">Masukkan email dan nama bisnes. Percuma untuk mula.</p>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <div class="step-num">2</div>
+                    <div>
+                        <strong>Sambung WhatsApp</strong>
+                        <p class="muted">Scan QR atau verify Meta Business. Dua minit sahaja.</p>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <div class="step-num">3</div>
+                    <div>
+                        <strong>Konfigurasi AI</strong>
+                        <p class="muted">Pilih provider, masukkan API key, test connection.</p>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <div class="step-num">4</div>
+                    <div>
+                        <strong>Bina bot</strong>
+                        <p class="muted">Tulis system prompt, upload knowledge base, test dengan chat.</p>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <div class="step-num">5</div>
+                    <div>
+                        <strong>Go live</strong>
+                        <p class="muted">Aktifkan bot. Bot membalas pelanggan 24/7.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="section-sm" style="background: var(--snow);">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: var(--space-xl);">Pricing</h2>
+            <div class="grid grid-3">
+                <div class="pricing-card">
+                    <div class="card-label">FREE</div>
+                    <div class="pricing-price">RM0<span>/bulan</span></div>
+                    <p>Untuk trial dan testing</p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--space-sm);">
+                        <li>✓ 1 bot</li>
+                        <li>✓ 100 mesej/bulan</li>
+                        <li>✓ Baileys (laptop tunnel)</li>
+                        <li>✓ Sokongan komuniti</li>
+                    </ul>
+                    <a href="#register" class="btn btn-outline" style="width: 100%; justify-content: center;">Mula Percuma</a>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="card-label">PERDANA</div>
+                    <div class="pricing-price">RM29<span>/bulan</span></div>
+                    <p>Untuk bisnes kecil</p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--space-sm);">
+                        <li>✓ 5 bot</li>
+                        <li>✓ 10,000 mesej/bulan</li>
+                        <li>✓ Meta API (bisnes disahkan)</li>
+                        <li>✓ Dashboard analitik</li>
+                        <li>✓ Sokongan keutamaan</li>
+                    </ul>
+                    <a href="#register" class="btn btn-black" style="width: 100%; justify-content: center;">Pilih Perdana</a>
+                </div>
+                <div class="pricing-card">
+                    <div class="card-label">BISNES</div>
+                    <div class="pricing-price">RM99<span>/bulan</span></div>
+                    <p>Untuk bisnes sederhana</p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--space-sm);">
+                        <li>✓ Bot tanpa had</li>
+                        <li>✓ 100,000 mesej/bulan</li>
+                        <li>✓ Meta API + Baileys hybrid</li>
+                        <li>✓ White-label</li>
+                        <li>✓ Webhooks + API access</li>
+                        <li>✓ SLA 99.9%</li>
+                    </ul>
+                    <a href="#register" class="btn btn-outline" style="width: 100%; justify-content: center;">Pilih Bisnes</a>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: var(--space-lg);" class="muted">Overage: RM0.01/mesej (Perdana), RM0.005/mesej (Bisnes). AI: BYOK (anda bayar sendiri).</p>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section">
+        <div class="container" style="text-align: center;">
+            <h2>Sedia mula?</h2>
+            <p style="max-width: 500px; margin: var(--space-md) auto var(--space-lg);">Daftar dalam 2 minit. Tiada kad kredit diperlukan untuk free tier.</p>
+            <div class="hero-actions">
+                <a href="#register" class="btn btn-black">Daftar Sekarang →</a>
+                <a href="#contact" class="btn btn-outline">Hubungi Kami</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="border-top: 1px solid var(--gray-light); padding: var(--space-xl) 0;">
+        <div class="container">
+            <div class="grid grid-4">
+                <div>
+                    <div class="row-center" style="margin-bottom: var(--space-md);">
+                        <div class="nav-brand-icon">W</div>
+                        <strong>WARKAH</strong>
+                    </div>
+                    <p class="small">Warkah moden untuk bisnes anda. Platform bot WhatsApp dengan AI.</p>
+                </div>
+                <div>
+                    <strong style="display: block; margin-bottom: var(--space-sm);">Product</strong>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--space-xs);">
+                        <li><a href="#" class="muted" style="text-decoration: none;">Features</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">Pricing</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">Docs</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">API</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <strong style="display: block; margin-bottom: var(--space-sm);">Company</strong>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--space-xs);">
+                        <li><a href="#" class="muted" style="text-decoration: none;">About</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">Blog</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">Careers</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <strong style="display: block; margin-bottom: var(--space-sm);">Legal</strong>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: var(--space-xs);">
+                        <li><a href="#" class="muted" style="text-decoration: none;">Privacy</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">Terms</a></li>
+                        <li><a href="#" class="muted" style="text-decoration: none;">SLA</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--gray-light);">
+                <p class="small">© 2026 WARKAH. Built in Malaysia 🇲🇾</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

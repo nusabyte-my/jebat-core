@@ -20,7 +20,7 @@ import urllib.error
 import urllib.request
 from typing import Dict, Optional, Type
 
-from jebat_cli_new.models import ProviderConfig, Provider
+from jebat_cli_new.models import ProviderConfig, Provider, BROWSER_UA
 from jebat_cli_new.runner import ollama_complete
 from jebat_cli_new.provider_openai import OpenAIProviderImpl
 from jebat_cli_new.provider_anthropic import AnthropicProviderImpl
@@ -32,7 +32,9 @@ from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 def _ollama_reachable(host: str, timeout: float = 2.0) -> bool:
     url = f"{host.rstrip('/')}/api/tags"
     try:
-        with urllib.request.urlopen(urllib.request.Request(url), timeout=timeout):
+        with urllib.request.urlopen(
+            urllib.request.Request(url, headers={"User-Agent": BROWSER_UA}), timeout=timeout
+        ):
             return True
     except Exception:
         return False
@@ -41,7 +43,10 @@ def _ollama_reachable(host: str, timeout: float = 2.0) -> bool:
 def _ollama_models(host: str) -> list:
     try:
         with urllib.request.urlopen(
-            urllib.request.Request(f"{host.rstrip('/')}/api/tags"), timeout=5
+            urllib.request.Request(
+                f"{host.rstrip('/')}/api/tags", headers={"User-Agent": BROWSER_UA}
+            ),
+            timeout=5,
         ) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         return [m.get("name", "") for m in data.get("models", [])]

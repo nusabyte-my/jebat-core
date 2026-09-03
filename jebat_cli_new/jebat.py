@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
-from jebat_cli_new.models import CompletionRequest, CompletionResponse, resolve_api_key
+from jebat_cli_new.models import CompletionRequest, CompletionResponse, resolve_api_key, BROWSER_UA
 from jebat_cli_new.providers import (
     OllamaProviderImpl,
     OpenAIProviderImpl,
@@ -256,7 +256,9 @@ def _fetch_live_models(api_base, api_key=None):
         import urllib.request
 
         url = f"{api_base.rstrip('/')}/models"
-        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        headers = {"User-Agent": BROWSER_UA}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read())
@@ -1085,7 +1087,7 @@ def tool_provider_health():
         api_key = cfg.get("api_key", "")
         try:
             if kind == "ollama":
-                req = urllib.request.Request(f"{api_base}/api/tags")
+                req = urllib.request.Request(f"{api_base}/api/tags", headers={"User-Agent": BROWSER_UA})
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     data = json.loads(resp.read())
                     model_count = len(data.get("models", []))
@@ -1096,7 +1098,7 @@ def tool_provider_health():
                 else:
                     lines.append(f"  {C.YELLOW}●{C.RESET} {C.BOLD}{pid}{C.RESET} ({kind}) — {C.YELLOW}no key{C.RESET}")
             else:
-                headers = {}
+                headers = {"User-Agent": BROWSER_UA}
                 if api_key:
                     headers["Authorization"] = f"Bearer {api_key}"
                 req = urllib.request.Request(f"{api_base}/models", headers=headers)
@@ -1129,7 +1131,7 @@ def _list_ollama_models(provider_cfg):
     """List available models from Ollama."""
     try:
         api_base = provider_cfg.get("api_base", "http://127.0.0.1:11434")
-        req = urllib.request.Request(f"{api_base}/api/tags", headers={})
+        req = urllib.request.Request(f"{api_base}/api/tags", headers={"User-Agent": BROWSER_UA})
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read())
             return [m["name"] for m in data.get("models", [])]
@@ -3612,14 +3614,16 @@ def _interactive_test_provider(registry):
     for pid, cfg in registry.configs.items():
         try:
             if cfg.kind == "ollama":
-                req = urllib.request.Request(f"{cfg.api_base}/api/tags")
+                req = urllib.request.Request(f"{cfg.api_base}/api/tags", headers={"User-Agent": BROWSER_UA})
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     data = json.loads(resp.read())
                     n = len(data.get("models", []))
                     cprint(f"  {C.GREEN}✓{C.RESET} {C.BOLD}{pid}{C.RESET} — {n} models available")
             else:
                 key = resolve_api_key(cfg)
-                headers = {"Authorization": f"Bearer {key}"} if key else {}
+                headers = {"User-Agent": BROWSER_UA}
+                if key:
+                    headers["Authorization"] = f"Bearer {key}"
                 req = urllib.request.Request(f"{cfg.api_base}/models", headers=headers)
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     cprint(f"  {C.GREEN}✓{C.RESET} {C.BOLD}{pid}{C.RESET} — reachable")
@@ -3648,24 +3652,30 @@ def _list_models_for_provider(provider_cfg):
     models = []
     try:
         if kind == "ollama":
-            req = urllib.request.Request(f"{api_base}/api/tags")
+            req = urllib.request.Request(f"{api_base}/api/tags", headers={"User-Agent": BROWSER_UA})
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read())
                 models = [m["name"] for m in data.get("models", [])]
         elif kind == "openrouter":
-            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            headers = {"User-Agent": BROWSER_UA}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             req = urllib.request.Request("https://openrouter.ai/api/v1/models", headers=headers)
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read())
                 models = [m["id"] for m in data.get("data", [])]
         elif kind == "groq":
-            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            headers = {"User-Agent": BROWSER_UA}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             req = urllib.request.Request("https://api.groq.com/openai/v1/models", headers=headers)
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read())
                 models = [m["id"] for m in data.get("data", [])]
         else:
-            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            headers = {"User-Agent": BROWSER_UA}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             req = urllib.request.Request(f"{api_base}/models", headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
                 data = json.loads(resp.read())

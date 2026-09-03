@@ -1,0 +1,12 @@
+# ngrok config for WA Baileys tunnel
+# Place in: %USERPROFILE%/.ngrok2/ngrok.yml
+
+version: "2"
+authtoken: YOUR_NGROK_AUTH_TOKEN_HERE
+region: ap
+tunnels:
+  wa-baileys:
+    proto: http
+    addr: 8085
+    hostname: wa-baileys.ngrok.io  # optional: custom domain
+    inspect: true

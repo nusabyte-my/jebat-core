@@ -7,7 +7,7 @@ from __future__ import annotations
 import json, time, urllib.request
 from typing import Optional
 
-from jebat_cli_new.models import ProviderConfig, CompletionRequest, CompletionResponse, resolve_api_key
+from jebat_cli_new.models import ProviderConfig, CompletionRequest, CompletionResponse, resolve_api_key, BROWSER_UA
 
 
 class OpenAIProviderImpl:
@@ -25,7 +25,7 @@ class OpenAIProviderImpl:
             "max_tokens": request.max_tokens,
             "stream": False,
         }
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", "User-Agent": BROWSER_UA}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
 

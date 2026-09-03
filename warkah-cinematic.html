@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WARKAH — Warkah moden untuk bisnes anda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0a 70%);
+        }
+
+        /* ── Ambient particles ── */
+        .ambient {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .ambient span {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(201, 162, 39, 0.4);
+            border-radius: 50%;
+            animation: drift linear infinite;
+        }
+        @keyframes drift {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+
+        /* ── Stage ── */
+        .stage {
+            perspective: 1200px;
+            width: 400px;
+            height: 280px;
+            position: relative;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* ── Envelope ── */
+        .envelope {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stage.opened .envelope {
+            transform: translateY(-30px) scale(0.95);
+        }
+
+        /* Back panel */
+        .env-back {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, #f5f0e8 0%, #e8e0d0 50%, #dcd4c4 100%);
+            border-radius: 4px;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,255,255,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        /* Front panel */
+        .env-front {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, #faf8f3 0%, #f0ebe0 50%, #e6e0d2 100%);
+            border-radius: 4px;
+            clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
+            transform-origin: top center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+            z-index: 3;
+            box-shadow: 
+                0 10px 40px rgba(0,0,0,0.3),
+                inset 0 -2px 4px rgba(0,0,0,0.05);
+        }
+        .stage.opened .env-front {
+            transform: rotateX(-180deg);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+        }
+
+        /* Flap shadow */
+        .env-flap-shadow {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 4;
+            opacity: 1;
+            transition: opacity 0.4s;
+        }
+        .stage.opened .env-flap-shadow {
+            opacity: 0;
+        }
+
+        /* Letter paper */
+        .letter-paper {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            height: 220px;
+            background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+            border-radius: 2px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            transform: translateY(20px);
+            opacity: 0.8;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s, opacity 0.6s 0.3s;
+            box-shadow: 
+                0 4px 20px rgba(0,0,0,0.1),
+                inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        .stage.opened .letter-paper {
+            transform: translateY(-80px);
+            opacity: 1;
+        }
+
+        /* Paper texture */
+        .letter-paper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* Wax seal */
+        .wax-seal {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            z-index: 5;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s, opacity 0.4s 0.8s;
+        }
+        .stage.opened .wax-seal {
+            transform: translateX(-50%) scale(0) rotate(180deg);
+            opacity: 0;
+        }
+
+        .wax-body {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #e74c3c, #c0392b 60%, #922b21);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 8px 24px rgba(192, 57, 43, 0.5),
+                inset 0 -4px 8px rgba(0,0,0,0.3),
+                inset 0 4px 8px rgba(255,255,255,0.2);
+        }
+        .wax-body::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+        }
+        .wax-body::after {
+            content: 'W';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Amiri', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Wax drips */
+        .wax-drip {
+            position: absolute;
+            width: 12px;
+            height: 16px;
+            background: radial-gradient(circle at 50% 0%, #e74c3c, #c0392b);
+            border-radius: 0 0 50% 50%;
+            top: -8px;
+            box-shadow: inset -2px 0 4px rgba(0,0,0,0.2);
+        }
+        .wax-drip:nth-child(1) { left: 10px; transform: rotate(-15deg); }
+        .wax-drip:nth-child(2) { right: 8px; transform: rotate(20deg); height: 12px; }
+        .wax-drip:nth-child(3) { left: 25px; top: -5px; width: 8px; height: 10px; }
+
+        /* ── Letter content ── */
+        .letter-content {
+            text-align: center;
+            z-index: 1;
+        }
+        .letter-bismillah {
+            font-family: 'Amiri', serif;
+            font-size: 32px;
+            color: #C9A227;
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+        .letter-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .letter-subtitle {
+            font-size: 12px;
+            color: #737373;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* ── Glow effect ── */
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(201,162,39,0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.8s 0.6s;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .stage.opened .glow {
+            opacity: 1;
+        }
+
+        /* ── Light rays ── */
+        .rays {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .ray {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(180deg, rgba(201,162,39,0.6) 0%, transparent 100%);
+            top: 50%;
+            left: 50%;
+            transform-origin: top center;
+            opacity: 0;
+            transition: opacity 0.6s 0.8s;
+        }
+        .stage.opened .ray {
+            opacity: 1;
+            animation: rayPulse 2s ease-in-out infinite;
+        }
+        @keyframes rayPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ── Success state ── */
+        .success-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s 1s, transform 0.6s 1s;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .stage.opened .success-state {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .success-state h1 {
+            font-size: 48px;
+            font-weight: 800;
+            color: #fff;
+            text-align: center;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+            text-shadow: 0 0 40px rgba(201,162,39,0.5);
+        }
+        .success-state h1 span {
+            background: linear-gradient(135deg, #C9A227 0%, #e8c547 50%, #C9A227 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .success-state p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.7);
+            max-width: 500px;
+            text-align: center;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+        .success-state .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #C9A227 0%, #e8c547 100%);
+            color: #0a0a0a;
+            font-weight: 600;
+            font-size: 16px;
+            border-radius: 9999px;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .success-state .cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(201,162,39,0.4);
+        }
+
+        /* ── Replay button ── */
+        .replay {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 9999px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.4s 1.5s, background 0.2s;
+            z-index: 20;
+        }
+        .stage.opened .replay {
+            opacity: 1;
+        }
+        .replay:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 500px) {
+            .stage { width: 320px; height: 220px; }
+            .letter-paper { height: 180px; padding: 20px; }
+            .letter-bismillah { font-size: 24px; }
+            .letter-title { font-size: 22px; }
+            .wax-seal { width: 56px; height: 56px; }
+            .wax-body::after { font-size: 22px; }
+            .success-state h1 { font-size: 32px; }
+            .success-state p { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <!-- Ambient particles -->
+        <div class="ambient" id="ambient"></div>
+
+        <!-- Stage -->
+        <div class="stage" id="stage">
+            <!-- Glow -->
+            <div class="glow"></div>
+
+            <!-- Light rays -->
+            <div class="rays" id="rays"></div>
+
+            <!-- Envelope -->
+            <div class="envelope">
+                <div class="env-back"></div>
+                <div class="letter-paper">
+                    <div class="letter-content">
+                        <div class="letter-bismillah">بسم الله</div>
+                        <div class="letter-title">WARKAH</div>
+                        <div class="letter-subtitle">Warkah moden untuk bisnes anda</div>
+                    </div>
+                </div>
+                <div class="env-front"></div>
+                <div class="env-flap-shadow"></div>
+                <div class="wax-seal">
+                    <div class="wax-body"></div>
+                    <div class="wax-drip"></div>
+                    <div class="wax-drip"></div>
+                    <div class="wax-drip"></div>
+                </div>
+            </div>
+
+            <!-- Success state -->
+            <div class="success-state">
+                <h1>Warkah moden untuk<br><span>bisnes anda</span></h1>
+                <p>Platform bot WhatsApp dengan AI. Sambung WhatsApp, pilih AI provider, dan biar bot anda membalas pelanggan 24/7.</p>
+                <a href="#" class="cta">Mula Percuma →</a>
+            </div>
+
+            <!-- Replay -->
+            <button class="replay" id="replay">↺ Ulang animasi</button>
+        </div>
+    </section>
+
+    <script>
+        const stage = document.getElementById('stage');
+        const replay = document.getElementById('replay');
+        const ambient = document.getElementById('ambient');
+        const rays = document.getElementById('rays');
+        let isOpen = false;
+
+        // Create ambient particles
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('span');
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (8 + Math.random() * 12) + 's';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            ambient.appendChild(particle);
+        }
+
+        // Create light rays
+        for (let i = 0; i < 12; i++) {
+            const ray = document.createElement('div');
+            ray.className = 'ray';
+            ray.style.transform = `rotate(${i * 30}deg)`;
+            ray.style.animationDelay = (i * 0.1) + 's';
+            rays.appendChild(ray);
+        }
+
+        // Open function
+        function openEnvelope() {
+            isOpen = true;
+            stage.classList.add('opened');
+        }
+
+        // Close function
+        function closeEnvelope() {
+            isOpen = false;
+            stage.classList.remove('opened');
+        }
+
+        // Click to toggle
+        stage.addEventListener('click', (e) => {
+            if (e.target === replay) return;
+            if (isOpen) {
+                closeEnvelope();
+            } else {
+                openEnvelope();
+            }
+        });
+
+        // Replay button
+        replay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeEnvelope();
+            setTimeout(openEnvelope, 400);
+        });
+
+        // Auto-open after 3 seconds
+        setTimeout(openEnvelope, 3000);
+    </script>
+</body>
+</html>
