@@ -226,7 +226,8 @@ jebat-core/
 .omx/
 .tmp-jebat-home/
 .local-backups/
+.omo/
+.playwright-mcp/
 
 # PDFs with passwords
-EvolvePlayBoost_Mailbox_Passwords_*.pdf
 EvolvePlayBoost_Mailbox_Passwords_*.pdf
