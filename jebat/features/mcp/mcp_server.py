@@ -8,7 +8,7 @@ incoming tool calls to the JEBAT tool registry.
 Transport: stdio (JSON-RPC 2.0 messages, one per line, over stdin/stdout)
            HTTP (SSE + StreamableHTTP, for remote IDE connections)
 
-Protocol version: 2024-11-05
+Protocol versions: 2024-11-05, 2025-03-26, 2025-06-18
 
 Usage:
     # Start MCP server (IDE connects via stdio)
@@ -26,18 +26,19 @@ import logging
 import os
 import sys
 import traceback
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from jebat.tools import TOOL_REGISTRY, ToolDef, call_tool
+from jebat.tools import TOOL_REGISTRY, ToolDef, call_tool, classify_tool_call
 
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────
 
-MCP_PROTOCOL_VERSION = "2024-11-05"
+MCP_PROTOCOL_VERSION = "2025-06-18"
+SUPPORTED_PROTOCOL_VERSIONS = ("2024-11-05", "2025-03-26", "2025-06-18")
 JSONRPC_VERSION = "2.0"
 SERVER_NAME = "jebat-mcp-server"
 SERVER_VERSION = "0.1.0"
@@ -45,12 +46,12 @@ SERVER_VERSION = "0.1.0"
 
 # ── Data Structures ────────────────────────────────────────────────────────
 
-@dataclass
+@dataclass(frozen=True)
 class MCPCapabilities:
     """Server capabilities announced during initialization."""
     tools: bool = True
-    resources: bool = False  # Future: expose JEBAT knowledge base
-    prompts: bool = False    # Future: expose JEBAT skill prompts
+    resources: bool = True
+    prompts: bool = True
     logging: bool = True
     experimental: Dict[str, bool] = field(default_factory=dict)
 
@@ -139,6 +140,13 @@ def build_tool_schema(tool_def: ToolDef) -> Dict[str, Any]:
         "name": tool_def.name,
         "description": tool_def.description or f"JEBAT tool: {tool_def.name}",
         "inputSchema": input_schema,
+        "annotations": {
+            "readOnlyHint": tool_def.safety_tier == "auto",
+            "destructiveHint": tool_def.safety_tier == "dangerous",
+            "idempotentHint": tool_def.safety_tier == "auto",
+            "openWorldHint": tool_def.name.startswith(("browser", "search", "web")),
+        },
+        "_meta": {"jebat/safetyTier": tool_def.safety_tier},
     }
 
 
@@ -172,7 +180,9 @@ class MCPServer:
             "tools/list": self._handle_tools_list,
             "tools/call": self._handle_tools_call,
             "resources/list": self._handle_resources_list,
+            "resources/read": self._handle_resources_read,
             "prompts/list": self._handle_prompts_list,
+            "prompts/get": self._handle_prompts_get,
             "ping": self._handle_ping,
             "logging/setLevel": self._handle_set_log_level,
             "completion/complete": self._handle_completion,
@@ -239,10 +249,19 @@ class MCPServer:
 
         self._initialized = True
 
+        requested_version = params.get("protocolVersion")
+        protocol_version = (
+            requested_version
+            if requested_version in SUPPORTED_PROTOCOL_VERSIONS
+            else MCP_PROTOCOL_VERSION
+        )
+
         return {
-            "protocolVersion": MCP_PROTOCOL_VERSION,
+            "protocolVersion": protocol_version,
             "capabilities": {
                 "tools": {"listChanged": True},
+                "resources": {"subscribe": True, "listChanged": True},
+                "prompts": {"listChanged": True},
                 "logging": {},
                 "experimental": self.capabilities.experimental,
             },
@@ -280,6 +299,16 @@ class MCPServer:
             ("todo", "jebat.tools.todo_tools"),
             ("session", "jebat.tools.session_search_tools"),
             ("execute_code", "jebat.tools.execute_code"),
+            # Ghost DB & ephemeral database branching
+            ("ghost", "jebat.features.ghost.ghost_tools"),
+            # Autonomous multi-turn ReAct agent harness
+            ("agent_exec", "jebat.tools.agent_tools"),
+            # Design & UI/UX (Pawang Estetika)
+            ("design_tools", "jebat.tools.design_tools"),
+            # Copywriting & Conversion (Pawang Jualan)
+            ("copywriting_tools", "jebat.tools.copywriting_tools"),
+            # Voyager-style Dynamic Tool Synthesis
+            ("dynamic_synthesis", "jebat.tools.dynamic_synthesis"),
         ]
         _loaded = 0
         _failed = []
@@ -309,7 +338,7 @@ class MCPServer:
         """Execute a tool call requested by the IDE."""
         self._ensure_tools_loaded()
         tool_name = params.get("name", "")
-        arguments = params.get("arguments", {})
+        arguments = params.get("arguments") or {}
 
         if tool_name not in TOOL_REGISTRY:
             return {
@@ -317,17 +346,22 @@ class MCPServer:
                 "content": [{"type": "text", "text": f"Tool not found: {tool_name}"}],
             }
 
-        tool_def = TOOL_REGISTRY[tool_name]
-
-        # Safety tier check — dangerous tools require confirmation
-        if tool_def.safety_tier == "dangerous":
+        # Safety metadata is returned instead of silently executing a write.
+        safety_tier = classify_tool_call(tool_name, arguments)
+        if safety_tier in ("confirm", "dangerous"):
             return {
                 "isError": True,
                 "content": [{
                     "type": "text",
-                    "text": f"Tool '{tool_name}' is in the dangerous safety tier. "
-                            f"Requires explicit confirmation in CLI mode."
+                    "text": f"Tool '{tool_name}' requires {safety_tier} approval before execution.",
                 }],
+                "structuredContent": {
+                    "status": "approval_required",
+                    "tool": tool_name,
+                    "safetyTier": safety_tier,
+                    "arguments": arguments,
+                    "next": "Approve this exact call in JEBAT CLI, then retry it.",
+                },
             }
 
         try:
@@ -361,15 +395,218 @@ class MCPServer:
             }
 
     async def _handle_resources_list(self, params: Dict) -> Dict:
-        """Return available resources (future: JEBAT knowledge base)."""
-        # Not yet implemented — return empty
-        return {"resources": []}
+        """Return stable workflow, live tool-registry, and dynamic context resources."""
+        return {
+            "resources": [
+                {
+                    "uri": "jebat://workflow",
+                    "name": "JEBAT execution workflow",
+                    "description": "Plan, approve, execute, verify, and remember every change.",
+                    "mimeType": "text/markdown",
+                },
+                {
+                    "uri": "jebat://tools",
+                    "name": "JEBAT tool registry",
+                    "description": "Current tools, safety tiers, and execution limits.",
+                    "mimeType": "application/json",
+                },
+                {
+                    "uri": "jebat://memory/project",
+                    "name": "JEBAT active project memory (SelfLearn)",
+                    "description": "Durable learned facts about the current project (stack, conventions, environment, gotchas).",
+                    "mimeType": "application/json",
+                },
+                {
+                    "uri": "jebat://memory/dream",
+                    "name": "JEBAT autoMimpi dream summary",
+                    "description": "Consolidated heuristics, learning profile, and suggestions from latest dream cycle.",
+                    "mimeType": "application/json",
+                },
+                {
+                    "uri": "jebat://database/schema",
+                    "name": "JEBAT database schema",
+                    "description": "Active database schema layout, tables, and definitions.",
+                    "mimeType": "text/sql",
+                },
+                {
+                    "uri": "jebat://design/tokens",
+                    "name": "JEBAT project design tokens",
+                    "description": "Detected design tokens, typography scale, and color rules for active project.",
+                    "mimeType": "application/json",
+                },
+                {
+                    "uri": "jebat://copy/rules",
+                    "name": "JEBAT sales copywriting guidelines",
+                    "description": "Mandatory copywriting conversion rules: CTA formulas, buzzword blacklists, and frameworks.",
+                    "mimeType": "application/json",
+                },
+            ]
+        }
+
+    async def _handle_resources_read(self, params: Dict) -> Dict:
+        """Read a JEBAT workflow, memory, design, or database resource for context-aware IDE clients."""
+        uri = params.get("uri", "")
+        if uri == "jebat://workflow":
+            text = """# JEBAT workflow
+
+1. Plan: state intent, scope, constraints, and risk.
+2. Approve: classify each action as AUTO, CONFIRM, or DANGEROUS.
+3. Execute: call the smallest tool set needed.
+4. Verify: check the observable result, not internal assumptions.
+5. Remember: store durable project facts without secrets.
+"""
+            return {"contents": [{"uri": uri, "mimeType": "text/markdown", "text": text}]}
+
+        if uri == "jebat://tools":
+            self._ensure_tools_loaded()
+            tools = [
+                {"name": name, "safetyTier": tool.safety_tier, "timeout": tool.timeout}
+                for name, tool in sorted(TOOL_REGISTRY.items())
+            ]
+            return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(tools)}]}
+
+        if uri == "jebat://memory/project":
+            try:
+                from jebat.tools.automimpi_tools import _get_memory, _recall_project_facts
+                memory = _get_memory()
+                facts = _recall_project_facts(memory)
+                payload = {"project": Path(os.getcwd()).name, "total": len(facts), "facts": facts}
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(payload, indent=2)}]}
+            except Exception as e:
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
+
+        if uri == "jebat://memory/dream":
+            try:
+                from jebat.tools.automimpi_tools import _get_automimpi
+                engine = _get_automimpi()
+                status = engine.get_status()
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(status, indent=2)}]}
+            except Exception as e:
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
+
+        if uri == "jebat://database/schema":
+            try:
+                schema_file = Path(__file__).resolve().parents[3] / "database" / "schema.sql"
+                if schema_file.exists():
+                    text = schema_file.read_text(encoding="utf-8")
+                else:
+                    text = "-- Schema file not found at database/schema.sql"
+                return {"contents": [{"uri": uri, "mimeType": "text/sql", "text": text}]}
+            except Exception as e:
+                return {"contents": [{"uri": uri, "mimeType": "text/sql", "text": f"-- Error reading schema: {e}"}]}
+
+        if uri == "jebat://design/tokens":
+            try:
+                from jebat.tools.design_tools import design_preflight
+                tokens = await design_preflight(".")
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(tokens, indent=2)}]}
+            except Exception as e:
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
+
+        if uri == "jebat://copy/rules":
+            try:
+                from jebat.tools.copywriting_tools import AI_BUZZWORDS, GENERIC_CTAS
+                rules = {
+                    "mandatory_cta_formula": "[Action Verb] + [What They Get]",
+                    "banned_generic_ctas": GENERIC_CTAS,
+                    "prohibited_ai_filler": AI_BUZZWORDS,
+                    "principles": [
+                        "Benefits over features, customer language over company jargon",
+                        "No fabricated metrics, logos, or testimonials",
+                        "Single primary CTA per surface with subtle secondary option",
+                    ],
+                }
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(rules, indent=2)}]}
+            except Exception as e:
+                return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
+
+        return {"contents": []}
 
     async def _handle_prompts_list(self, params: Dict) -> Dict:
-        """Return available prompts (future: JEBAT skill prompts)."""
-        # Not yet implemented — return empty
-        return {"prompts": []}
+        """Return reusable prompts for governed agent workflows."""
+        return {
+            "prompts": [
+                {
+                    "name": "plan-act-verify-remember",
+                    "description": "Run a governed JEBAT task from intent through durable memory.",
+                    "arguments": [
+                        {"name": "task", "description": "The task to perform", "required": True},
+                        {"name": "scope", "description": "Files, services, or systems in scope", "required": False},
+                    ],
+                },
+                {
+                    "name": "hallmark-design-audit",
+                    "description": "Audit UI markup against Hallmark 6-axis anti-slop gates and 8-state interaction rules.",
+                    "arguments": [
+                        {"name": "markup", "description": "UI component markup or code", "required": True},
+                        {"name": "component_type", "description": "Type of component (button, card, hero, pricing)", "required": False},
+                    ],
+                },
+                {
+                    "name": "sales-copy-review",
+                    "description": "Mandatory copywriting conversion review: strip AI buzzwords and transform generic CTAs.",
+                    "arguments": [
+                        {"name": "copy", "description": "Sales or marketing text to audit", "required": True},
+                        {"name": "benefit", "description": "Specific tangible benefit the customer achieves", "required": False},
+                    ],
+                },
+            ]
+        }
 
+    async def _handle_prompts_get(self, params: Dict) -> Dict:
+        """Return the requested guided workflow prompt."""
+        name = params.get("name", "")
+        arguments = params.get("arguments", {})
+
+        if name == "plan-act-verify-remember":
+            task = arguments.get("task", "the requested task")
+            scope = arguments.get("scope", "the current workspace")
+            text = (
+                f"Perform this task: {task}\nScope: {scope}\n\n"
+                "First plan the smallest reversible change. Before each CONFIRM or "
+                "DANGEROUS action, return the exact operation and wait for approval. "
+                "After execution, verify the user-visible result and remember only "
+                "durable non-secret project facts."
+            )
+            return {
+                "description": "Governed JEBAT task workflow",
+                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
+            }
+
+        if name == "hallmark-design-audit":
+            markup = arguments.get("markup", "")
+            c_type = arguments.get("component_type", "generic")
+            text = (
+                f"Audit this {c_type} markup against Hallmark standards:\n\n{markup}\n\n"
+                "Evaluate against:\n"
+                "1. 6-Axis Scoring (Philosophy, Hierarchy, Execution, Specificity, Restraint, Variety)\n"
+                "2. 8-State Interactive Discipline (default, hover, focus-visible, active, disabled, loading, error, success)\n"
+                "3. Hard Rules: No italic headers, no re-drawn browser chrome, responsive at 320/375/768px.\n"
+                "Provide the Hallmark score stamp: /* Hallmark · pre-emit critique: P# H# E# S# R# V# */ and concrete fixes."
+            )
+            return {
+                "description": "Hallmark anti-slop design audit prompt",
+                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
+            }
+
+        if name == "sales-copy-review":
+            copy = arguments.get("copy", "")
+            benefit = arguments.get("benefit", "clear value proposition")
+            text = (
+                f"Perform a sales copywriting review on this text:\n\n{copy}\n\n"
+                f"Target Benefit: {benefit}\n\n"
+                "Requirements:\n"
+                "1. Transform any generic CTA into [Action Verb] + [What They Get].\n"
+                "2. Strip banned AI buzzwords (delve, testament, tapestry, seamless, game-changer).\n"
+                "3. Ensure benefits over features, customer language, and active voice.\n"
+                "4. Enforce: No fabricated statistics, testimonials, or claims."
+            )
+            return {
+                "description": "Sales copywriting conversion review prompt",
+                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
+            }
+
+        return {"description": "Unknown prompt", "messages": []}
     async def _handle_ping(self, params: Dict) -> Dict:
         """Health check ping."""
         return {"status": "ok", "timestamp": str(asyncio.get_event_loop().time())}
@@ -404,7 +641,7 @@ class MCPServer:
         This is the mode used by IDEs that launch JEBAT as a
         subprocess (VS Code, Cursor, Windsurf, JetBrains).
         """
-        logger.info(f"Starting MCP server on stdio transport")
+        logger.info("Starting MCP server on stdio transport")
         sys.stderr.write(f"[JEBAT MCP Server] Starting on stdio, "
                          f"protocol v{MCP_PROTOCOL_VERSION}\n")
         sys.stderr.flush()
@@ -470,7 +707,6 @@ class MCPServer:
 
         This mode allows remote IDEs to connect over network.
         """
-        from httpx import ASGITransport, AsyncClient
         import uvicorn  # type: ignore
         from starlette.applications import Starlette  # type: ignore
         from starlette.routing import Route  # type: ignore
@@ -526,6 +762,12 @@ class MCPServer:
 
 def run_server(transport: str = "stdio", port: int = 8099, host: str = "127.0.0.1"):
     """Start the MCP server — called from jebat mcp serve CLI command."""
+    if transport == "streamable-http":
+        from jebat.features.mcp.mcp_transport import run_streamable_http
+
+        run_streamable_http(MCPServer(), port=port, host=host)
+        return
+
     transport_mode = TransportMode(transport)
     server = MCPServer(transport=transport_mode, http_port=port, host=host)
 
