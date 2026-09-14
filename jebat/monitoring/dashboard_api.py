@@ -8,9 +8,12 @@ REST API for monitoring dashboard:
 - WebSocket for real-time updates
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
+
+from fastapi import APIRouter, BackgroundTasks
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +33,22 @@ class DashboardAPI:
             metrics_collector: MetricsCollector instance
         """
         self.metrics = metrics_collector
-        self.routes = self._register_routes()
+        self.router = APIRouter(prefix="/api", tags=["dashboard"])
+        self._register_routes()
 
-        logger.info("DashboardAPI initialized")
+        logger.info("DashboardAPI initialized with FastAPI router")
+
+    def _register_routes(self) -> None:
+        """Register routes with FastAPI router."""
+        self.router.add_api_route("/health", self.health_check, methods=["GET"])
+        self.router.add_api_route("/status", self.get_status, methods=["GET"])
+        self.router.add_api_route("/metrics", self.get_metrics, methods=["GET"])
+        self.router.add_api_route("/metrics/system", self.get_system_metrics, methods=["GET"])
+        self.router.add_api_route("/metrics/application", self.get_application_metrics, methods=["GET"])
+        self.router.add_api_route("/metrics/jebat", self.get_jebat_metrics, methods=["GET"])
+        self.router.add_api_route("/workflows", self.get_workflows, methods=["GET"])
+        self.router.add_api_route("/agents", self.get_agents, methods=["GET"])
+        self.router.add_api_route("/alerts/test", self.test_alert, methods=["POST"])
 
     def _register_routes(self) -> Dict[str, callable]:
         """Register API routes."""
@@ -126,25 +142,10 @@ class DashboardAPI:
             ],
         }
 
-    async def test_alert(self) -> Dict[str, Any]:
+    async def test_alert(self, background_tasks: BackgroundTasks = None) -> Dict[str, Any]:
         """Test alert endpoint."""
         return {
             "status": "success",
             "message": "Test alert sent",
             "timestamp": datetime.now().isoformat(),
-        }
-
-    def get_openapi_schema(self) -> Dict[str, Any]:
-        """Get OpenAPI schema."""
-        return {
-            "openapi": "3.0.0",
-            "info": {
-                "title": "JEBAT Monitoring API",
-                "version": "2.0.0",
-                "description": "Real-time monitoring and observability",
-            },
-            "paths": {
-                route: {"get": {"summary": route.split("/")[-1]}}
-                for route in self.routes.keys()
-            },
         }

@@ -32,6 +32,7 @@ class ProviderConfig:
     #   "store" -> look up a named key in ~/.jebat/auth/tokens.json (`auth_ref`)
     auth_method: str = "key"
     auth_ref: Optional[str] = None
+    active: bool = False
     meta: Dict[str, Any] = field(default_factory=dict)
 
 

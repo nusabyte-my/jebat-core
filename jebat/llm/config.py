@@ -19,7 +19,7 @@ class JebatLLMConfig:
     context_window: int = 16384
     ollama_host: str = "http://127.0.0.1:11434"
     ollama_keep_alive: str = ""  # e.g. "5m", "1h", "0" (0 unloads immediately); empty = server default
-    llamacpp_host: str = "http://127.0.0.1:8080"
+    llamacpp_host: str = "http://127.0.0.1:8081"
     fallback_providers: tuple[str, ...] = ("local",)
     history_path: str = ".jebat/chat_history.jsonl"
     # Custom OpenAI-compatible endpoint support
@@ -38,7 +38,7 @@ def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
     max_tokens = int(os.getenv("JEBAT_LLM_MAX_TOKENS", raw.get("max_tokens", 1200)))
     context_window = int(os.getenv("JEBAT_LLM_CONTEXT_WINDOW", raw.get("context_window", 16384)))
     ollama_host = os.getenv("OLLAMA_HOST", raw.get("ollama_host", "http://127.0.0.1:11434"))
-    llamacpp_host = os.getenv("LLAMA_CPP_HOST", raw.get("llamacpp_host", "http://127.0.0.1:8080"))
+    llamacpp_host = os.getenv("LLAMA_CPP_HOST", raw.get("llamacpp_host", "http://127.0.0.1:8081"))
     ollama_keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", raw.get("ollama_keep_alive", ""))
     fallback_raw = os.getenv("JEBAT_LLM_FALLBACKS", ",".join(raw.get("fallback_providers", ["local"])))
     history_path = os.getenv("JEBAT_CHAT_HISTORY_PATH", raw.get("history_path", ".jebat/chat_history.jsonl"))

@@ -215,17 +215,24 @@ class ProviderRegistry:
         if not os.path.exists(self.path):
             return
         try:
-            data = json.load(open(self.path, "r", encoding="utf-8"))
+            raw_data = json.load(open(self.path, "r", encoding="utf-8"))
+            if isinstance(raw_data, dict):
+                items = list(raw_data.values())
+            elif isinstance(raw_data, list):
+                items = raw_data
+            else:
+                items = []
         except Exception:
             return
-        for item in data:
+        for item in items:
+            if not isinstance(item, dict):
+                continue
             try:
                 cfg = ProviderConfig(**item)
             except Exception:
                 continue
             self.configs[cfg.id] = cfg
             self.providers[cfg.id] = _provider_factory(cfg)
-
     def save(self):
         data = []
         for cfg in self.configs.values():

@@ -1060,16 +1060,21 @@ async def chat(message: ChatMessage):
             conversation["messages"].append({"role": "user", "content": message.message, "created_at": _now_iso()})
             conversation["updated_at"] = _now_iso()
             _persist_conversations()
-            prompt = _conversation_prompt(conversation, profile)
+
+            system_prompt = None
+            if profile:
+                guidance = profile.get("system_prompt") or profile.get("description")
+                system_prompt = f"You are {profile['name']}, a {profile['agent_type']} agent.\n{guidance}"
 
         response, used_provider, config = await generate_chat_reply(
-            prompt=prompt,
+            prompt=message.message,
             mode=message.thinking_mode,
             preset=message.preset,
             provider_override=RUNTIME_OVERRIDES["provider"],
             model_override=RUNTIME_OVERRIDES["model"],
+            conversation_messages=conversation["messages"][:-1],
+            system_prompt_override=system_prompt,
         )
-
         async with STATE_LOCK:
             conversation["messages"].append({"role": "assistant", "content": response, "created_at": _now_iso()})
             conversation["updated_at"] = _now_iso()
@@ -1259,11 +1264,10 @@ async def agents_status():
 @webui_router.get("/webui/api/health")
 async def health_check():
     """Lightweight health check."""
-    from datetime import datetime, timezone as _dt
     return {
         "ok": True,
         "uptime": "JEBAT online",
-        "timestamp": _dt.now(_dt.timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -1407,9 +1411,47 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 @webui_router.get("/webui/integrations", response_class=HTMLResponse)
 @webui_router.get("/webui/learning", response_class=HTMLResponse)
 @webui_router.get("/webui/setup", response_class=HTMLResponse)
+@webui_router.get("/webui/audit", response_class=HTMLResponse)
 async def serve_spa():
     """Serve the Brutalist SPA shell. Client-side router handles all navigation."""
     return FileResponse(STATIC_DIR / "index.html")
+
+
+class WebUIAuditRequest(BaseModel):
+    markup: Optional[str] = ""
+    copy_text: Optional[str] = ""
+    component_type: Optional[str] = "generic"
+
+
+@webui_router.post("/webui/api/audit")
+@webui_router.post("/api/webui/audit")
+async def webui_audit_endpoint(req: WebUIAuditRequest):
+    from jebat.tools.design_tools import ui_critique, component_states
+    from jebat.tools.copywriting_tools import copy_audit, copy_transform_cta
+
+    design_res = None
+    states_res = None
+    if req.markup and req.markup.strip():
+        design_res = await ui_critique(req.markup, req.component_type or "generic")
+        states_res = await component_states(req.markup)
+
+    copy_res = None
+    transformed_cta = None
+    if req.copy_text and req.copy_text.strip():
+        copy_res = await copy_audit(req.copy_text)
+        transformed_cta = await copy_transform_cta("Get Started", "immediate access to sovereign agent")
+
+    return {
+        "status": "ok",
+        "design": {
+            "critique": design_res,
+            "interaction_states": states_res,
+        },
+        "copywriting": {
+            "audit": copy_res,
+            "cta_recommendation": transformed_cta,
+        },
+    }
 
 
 @webui_router.get("/webui/partials/{page}", response_class=HTMLResponse)

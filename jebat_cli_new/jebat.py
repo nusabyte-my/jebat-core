@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
+from jebat_cli_new import __version__
 from jebat_cli_new.models import CompletionRequest, CompletionResponse, resolve_api_key, BROWSER_UA
 from jebat_cli_new.providers import (
     OllamaProviderImpl,
@@ -25,7 +26,7 @@ from jebat_cli_new.providers import (
 from jebat.features.auth.custom_providers import CUSTOM_PROVIDER_IDS
 
 
-VERSION = "7.5"
+VERSION = __version__
 
 # ═══════════════════════════════════════════════════════════════════
 # CONSTANTS
@@ -101,6 +102,7 @@ PROVIDER_KINDS = [
     ("zenmux",          "ZenMux",          "",                                              "zenmux/default",         True,  "ZenMux token-multiplexing router (OpenAI-compatible)"),
     ("tokerrouter",     "TokerRouter",     "",                                              "tokerrouter/default",    True,  "TokerRouter token-usage router (OpenAI-compatible)"),
     ("agent_router",    "Agent Router",    "",                                              "agent-router/default",   True,  "Agent Router orchestration, SSO/OAuth (OpenAI-compatible)"),
+    ("rootsys_cloud",    "rootsys cloud",   "",                                              "claude-opus-5",          True,  "rootsys cloud gateway (OpenAI-compatible)"),
 ]
 
 
@@ -237,6 +239,26 @@ MODEL_CATALOG = {
         ("agent-router/default",       "Agent Router Default", 128000, 8192, 0, 0, ["code"]),
         ("agent-router/orchestrator",  "Agent Router Orchestrator", 128000, 8192, 0, 0, ["code"]),
     ],
+    "rootsys_cloud": [
+        ("claude-opus-5",                  "Claude Opus 5",            200000, 8192, 0, 0, ["code", "chat", "best"]),
+        ("claude-opus-4.8",                "Claude Opus 4.8",          200000, 8192, 0, 0, ["code", "chat", "best"]),
+        ("claude-opus-4.7",                "Claude Opus 4.7",          200000, 8192, 0, 0, ["code", "chat", "best"]),
+        ("claude-opus-4.6",                "Claude Opus 4.6",          200000, 8192, 0, 0, ["code", "chat", "best"]),
+        ("claude-sonnet-5",                "Claude Sonnet 5",          200000, 8192, 0, 0, ["code", "chat", "fast"]),
+        ("claude-sonnet-4.6",              "Claude Sonnet 4.6",        200000, 8192, 0, 0, ["code", "chat", "fast"]),
+        ("gpt-5.6-sol",                    "GPT 5.6 Sol",              200000, 8192, 0, 0, ["code", "chat"]),
+        ("gpt-5.6-sol-thinking",           "GPT 5.6 Sol Thinking",     200000, 8192, 0, 0, ["code", "chat", "reasoning"]),
+        ("gpt-5.6-sol-agentic",            "GPT 5.6 Sol Agentic",       200000, 8192, 0, 0, ["code", "chat", "agentic"]),
+        ("gpt-5.6-sol-thinking-agentic",   "GPT 5.6 Sol Thinking Agentic", 200000, 8192, 0, 0, ["code", "chat", "reasoning", "agentic"]),
+        ("gpt-5.6-terra",                  "GPT 5.6 Terra",            200000, 8192, 0, 0, ["code", "chat"]),
+        ("gpt-5.6-terra-thinking",         "GPT 5.6 Terra Thinking",   200000, 8192, 0, 0, ["code", "chat", "reasoning"]),
+        ("gpt-5.6-terra-agentic",          "GPT 5.6 Terra Agentic",    200000, 8192, 0, 0, ["code", "chat", "agentic"]),
+        ("gpt-5.6-terra-thinking-agentic", "GPT 5.6 Terra Thinking Agentic", 200000, 8192, 0, 0, ["code", "chat", "reasoning", "agentic"]),
+        ("gpt-5.6-luna",                   "GPT 5.6 Luna",             200000, 8192, 0, 0, ["code", "chat"]),
+        ("gpt-5.6-luna-thinking",          "GPT 5.6 Luna Thinking",    200000, 8192, 0, 0, ["code", "chat", "reasoning"]),
+        ("gpt-5.6-luna-agentic",           "GPT 5.6 Luna Agentic",     200000, 8192, 0, 0, ["code", "chat", "agentic"]),
+        ("gpt-5.6-luna-thinking-agentic",  "GPT 5.6 Luna Thinking Agentic", 200000, 8192, 0, 0, ["code", "chat", "reasoning", "agentic"]),
+    ],
 }
 
 
@@ -330,6 +352,8 @@ class C:
 
 
 def cprint(*args, **kwargs):
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     print(*args, **kwargs)
 
 
@@ -367,7 +391,7 @@ def _gradient(text, c1, c2):
     return out
 
 
-JEBAT_VERSION = "7.5"
+JEBAT_VERSION = __version__
 
 def banner():
     """JEBAT banner — clean and clear."""
@@ -1621,6 +1645,8 @@ class ProviderRegistry:
         if PROVIDER_FILE.exists():
             try:
                 data = json.loads(PROVIDER_FILE.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    data = {item.get("id", str(i)): item for i, item in enumerate(data) if isinstance(item, dict)}
                 for key, cfg in data.items():
                     self.configs[key] = ProviderConfig(**cfg)
                     if cfg.get("active"):
@@ -2075,8 +2101,10 @@ class Agent:
         total_chars = sum(len(m.get("content", "")) for m in messages)
         return total_chars // 4
 
-    def _call_llm(self, messages):
+    def _call_llm(self, messages, provider=None, model=None):
         cfg = self.registry.get_active()
+        if provider:
+            cfg = self.registry.configs.get(provider)
         if not cfg:
             return CompletionResponse(text="Error: no provider configured.", model="", provider="")
         self.spinner.start("JEBAT thinking")
@@ -2087,7 +2115,7 @@ class Agent:
             mode_prefix = mode_info.get("system", "") + "\n\n" if self.mode != "code" else ""
             prompt = mode_prefix + (messages[-1]["content"] if messages else "")
             req = CompletionRequest(
-                provider=cfg.kind, model=cfg.model,
+                provider=cfg.kind, model=model or cfg.model,
                 prompt=prompt, temperature=0.2, max_tokens=4096
             )
             if kind == "ollama":
@@ -2237,13 +2265,15 @@ class Agent:
         self.spinner.stop()
         return resp
 
-    def step(self, task: str) -> AgentStep:
+    def step(self, task: str, provider=None, model=None) -> AgentStep:
         """Execute a single task with tool loop."""
         self.iterations = 0
         tool_actions = []
         start_time = time.time()
         cfg = self.registry.get_active()
-        model_str = cfg.model if cfg else "unknown"
+        if provider:
+            cfg = self.registry.configs.get(provider)
+        model_str = model or (cfg.model if cfg else "unknown")
 
         # Get relevant memory
         mem_ctx = self._get_relevant_memory(task)
@@ -2262,7 +2292,7 @@ class Agent:
 
         while self.iterations < 10:
             self.iterations += 1
-            resp = self._call_llm(messages)
+            resp = self._call_llm(messages, provider=provider, model=model)
             text = resp.text
             self.total_tokens += resp.tokens_used
             self.total_latency += resp.latency_ms
@@ -2313,13 +2343,13 @@ class Agent:
             latency_ms=elapsed_ms,
         )
 
-    def chat(self, prompt: str) -> str:
+    def chat(self, prompt: str, provider=None, model=None) -> str:
         """Simple chat, no tools."""
         messages = [
             {"role": "system", "content": "You are JEBAT, a helpful coding assistant."},
             {"role": "user", "content": prompt}
         ]
-        resp = self._call_llm(messages)
+        resp = self._call_llm(messages, provider=provider, model=model)
         return resp.text
 
 
@@ -3740,19 +3770,33 @@ def main():
     taskdb = TaskDB()
     skills = SkillManager()
 
-    if args[0] == "code":
+    if args[0] in ("tool", "tools"):
+        from jebat_cli_new.tool_command import run_tool_command
+
+        return run_tool_command(args[1:])
+
+    if args[0] in ("code", "agent"):
         # Code mode
-        prompt_parts = args[1:]
-        # Parse flags
-        yolo = "--yolo" in prompt_parts
-        auto_commit = "--auto-commit" in prompt_parts or "-a" in prompt_parts
-        plan = "--plan" in prompt_parts
-        prompt_parts = [p for p in prompt_parts if not p.startswith("--") and p != "-a"]
+        from jebat_cli_new.cli_args import parse_code_options
+
+        try:
+            code_options = parse_code_options(args[1:])
+        except ValueError as exc:
+            print(f"  {C.RED}Error: {exc}{C.RESET}")
+            return
+        prompt_parts = list(code_options.prompt_parts)
 
         if prompt_parts:
             # One-shot mode
             prompt = " ".join(prompt_parts)
-            agent = Agent(registry, taskdb, skills, yolo=yolo, auto_commit=auto_commit, plan_first=plan)
+            agent = Agent(
+                registry,
+                taskdb,
+                skills,
+                yolo=code_options.yolo,
+                auto_commit=code_options.auto_commit,
+                plan_first=code_options.plan,
+            )
 
             banner()
             cfg = registry.get_active()
@@ -3760,7 +3804,11 @@ def main():
                 show_setup(cfg.kind, cfg.model, cfg.api_base, "Running")
 
             start_time = time.time()
-            step = agent.step(prompt)
+            step = agent.step(
+                prompt,
+                provider=code_options.provider,
+                model=code_options.model,
+            )
             elapsed = time.time() - start_time
 
             # Answer — clean markdown style
@@ -3771,11 +3819,12 @@ def main():
             cost = estimate_cost(model_str, step.tokens)
             bottom_bar(cfg.kind if cfg else "unknown", model_str, tokens=step.tokens, tool_count=len(step.tool_actions), elapsed_s=elapsed, cost_usd=cost)
 
-            # Drop into REPL after one-shot
-            print()
-            cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
-            repl(registry, taskdb, skills)
-        else:
+            # Drop into REPL after one-shot only if running in an interactive terminal
+            if sys.stdin.isatty():
+                print()
+                cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
+                repl(registry, taskdb, skills)
+            return
             # REPL mode
             banner()
             cfg = registry.get_active()
@@ -3784,7 +3833,14 @@ def main():
             repl(registry, taskdb, skills)
 
     elif args[0] == "chat":
-        prompt = " ".join(args[1:]) if len(args) > 1 else ""
+        from jebat_cli_new.cli_args import parse_chat_options
+
+        try:
+            chat_options = parse_chat_options(args[1:])
+        except ValueError as exc:
+            print(f"  {C.RED}Error: {exc}{C.RESET}")
+            return
+        prompt = " ".join(chat_options.prompt_parts)
         agent = Agent(registry, taskdb, skills)
 
         banner()
@@ -3793,7 +3849,7 @@ def main():
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Chat")
 
         if prompt:
-            cprint(f"\n  {agent.chat(prompt)}\n")
+            cprint(f"\n  {agent.chat(prompt, provider=chat_options.provider, model=chat_options.model)}\n")
             return
 
         # Interactive chat

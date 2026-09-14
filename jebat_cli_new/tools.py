@@ -8,6 +8,48 @@ from __future__ import annotations
 import json, os, subprocess, time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
+from pydantic import BaseModel, Field, ValidationError
+
+
+# ─── Atomic Agents Pydantic Schemas ──────────────────────────────
+
+class ReadFileInput(BaseModel):
+    path: str = Field(..., description="Absolute or relative file path")
+    offset: int = Field(default=1, ge=1, description="Start line (1-indexed)")
+    limit: int = Field(default=200, ge=1, le=2000, description="Max lines to return")
+
+
+class WriteFileInput(BaseModel):
+    path: str = Field(..., description="File path to write")
+    content: str = Field(..., description="Full file content")
+
+
+class SearchFilesInput(BaseModel):
+    pattern: str = Field(..., description="Glob or regex pattern")
+    path: str = Field(default=".", description="Directory to search in")
+    target: str = Field(default="files", description="Target: 'files' or 'content'")
+    file_glob: str = Field(default="", description="Filter files by extension")
+    limit: int = Field(default=50, ge=1, le=500, description="Max results")
+
+
+class TerminalInput(BaseModel):
+    command: str = Field(..., description="Shell command to execute")
+    timeout: int = Field(default=120, ge=1, le=600, description="Max seconds")
+    workdir: Optional[str] = Field(default=None, description="Working directory")
+
+
+class ListDirInput(BaseModel):
+    path: str = Field(default=".", description="Directory path")
+    pattern: str = Field(default="*", description="Glob filter pattern")
+
+
+TOOL_SCHEMAS: Dict[str, type[BaseModel]] = {
+    "read_file": ReadFileInput,
+    "write_file": WriteFileInput,
+    "search_files": SearchFilesInput,
+    "terminal": TerminalInput,
+    "list_dir": ListDirInput,
+}
 
 
 @dataclass
@@ -220,6 +262,20 @@ HANDLERS: Dict[str, Callable[[Dict[str, Any]], str]] = {
 }
 
 
+def _add_shared_registry_tools() -> None:
+    """Expose shared registry definitions without replacing native CLI tools."""
+    from jebat_cli_new.tool_bridge import shared_tool_definitions
+
+    existing = {definition["name"] for definition in TOOL_DEFINITIONS}
+    for definition in shared_tool_definitions():
+        name = definition["name"]
+        if name not in existing:
+            TOOL_DEFINITIONS.append(definition)
+
+
+_add_shared_registry_tools()
+
+
 def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> str:
     """Execute a tool with optional safety checks.
     
@@ -228,9 +284,24 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
         arguments: Tool arguments
         yolo: If True, skip safety confirmations
     """
+    if name not in HANDLERS:
+        from jebat_cli_new.tool_bridge import execute_shared_tool
+
+        return execute_shared_tool(name, arguments, yolo=yolo)
+
     handler = HANDLERS.get(name)
     if not handler:
         return f"Unknown tool: {name}"
+
+    # Atomic Agents-style schema validation
+    if name in TOOL_SCHEMAS:
+        schema_cls = TOOL_SCHEMAS[name]
+        try:
+            validated = schema_cls(**arguments)
+            arguments = validated.model_dump(exclude_unset=False)
+        except ValidationError as err:
+            err_msgs = [f"{e['loc'][0]}: {e['msg']}" for e in err.errors()]
+            return f"[TOOL_SCHEMA_ERROR for {name}]: Invalid parameters ({'; '.join(err_msgs)}). Please fix arguments to match schema and retry."
     
     # Safety checks for dangerous operations
     if not yolo:

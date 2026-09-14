@@ -330,6 +330,50 @@ class LlamaCppProvider:
             ),
         )
 
+    async def generate_stream(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "You are JEBAT."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "top_k": self.top_k,
+            "max_tokens": self.max_tokens,
+            "stream": True,
+        }
+        import httpx
+        yield {"type": "metadata", "provider": "llamacpp", "model": self.model}
+        async with httpx.AsyncClient(timeout=180) as client:
+            async with client.stream(
+                "POST",
+                urljoin(self.host.rstrip("/") + "/", "v1/chat/completions"),
+                json=payload,
+            ) as response:
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data:"):
+                        continue
+                    data_str = line[5:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        chunk = json.loads(data_str)
+                        choices = chunk.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content")
+                            if content:
+                                yield {"type": "token", "text": content}
+                    except Exception:
+                        continue
+        yield {"type": "done", "provider": "llamacpp"}
+
 
 @dataclass(slots=True)
 class OllamaProvider:
@@ -345,8 +389,12 @@ class OllamaProvider:
         prompt: str,
         system_prompt: str | None = None,
     ) -> ProviderGeneration:
+        model_name = self.model
+        if model_name.endswith(".gguf") or model_name.startswith("gpt-") or model_name.startswith("claude-"):
+            model_name = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:7b")
+
         payload = {
-            "model": self.model,
+            "model": model_name,
             "system": system_prompt or "You are JEBAT.",
             "prompt": prompt,
             "stream": False,
@@ -569,19 +617,28 @@ async def generate_stream_with_failover(
     prompt: str,
     system_prompt: str | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
-    """Expose the SSE contract when a provider only supports full responses."""
-    response, provider = await generate_with_failover(
+    """Stream tokens live from provider when supported, with fallback."""
+    try:
+        provider = build_provider(config)
+        if hasattr(provider, "generate_stream"):
+            async for chunk in provider.generate_stream(prompt=prompt, system_prompt=system_prompt):
+                yield chunk
+            return
+    except Exception:
+        pass
+
+    response, p_name = await generate_with_failover(
         config=config,
         prompt=prompt,
         system_prompt=system_prompt,
         return_metadata=True,
     )
-    assert isinstance(response, ProviderGeneration)
-    yield {"type": "metadata", "provider": provider, "model": config.model}
-    if response.text:
-        yield {"type": "token", "text": response.text}
-    yield {"type": "done", "provider": provider, "usage": response.usage.to_dict()}
-
+    text = response.text if isinstance(response, ProviderGeneration) else str(response)
+    usage = response.usage.to_dict() if isinstance(response, ProviderGeneration) else {}
+    yield {"type": "metadata", "provider": p_name, "model": config.model}
+    if text:
+        yield {"type": "token", "text": text}
+    yield {"type": "done", "provider": p_name, "usage": usage}
 
 def list_supported_providers() -> list[dict[str, str]]:
     return [

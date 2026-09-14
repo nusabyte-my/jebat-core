@@ -7,40 +7,42 @@
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Core Palette ── */
-  --bg-ink:       #030303;
-  --bg-surface:   #0a0a0a;
-  --bg-card:      #111111;
-  --bg-elevated:  #1a1a1a;
-  --bg-hover:     #222222;
-  --bg-active:    #2a2a2a;
+  /* ── Core Palette (Malam, Besi, Keluli) ── */
+  --bg-ink:       #080a09;
+  --bg-surface:   #141816;
+  --bg-card:      #1a1f1c;
+  --bg-elevated:  #202723;
+  --bg-hover:     #29322d;
+  --bg-active:    #333d37;
 
-  /* ── Neon Accents ── */
-  --cyan:         #00f0ff;
-  --cyan-dim:     #00f0ff66;
-  --cyan-glow:    #00f0ff22;
-  --purple:       #a855f7;
-  --purple-dim:   #a855f766;
-  --purple-glow:  #a855f722;
-  --amber:        #f59e0b;
-  --amber-dim:    #f59e0b66;
-  --amber-glow:   #f59e0b22;
-  --green:        #22c55e;
-  --green-dim:    #22c55e66;
-  --red:          #ef4444;
-  --red-dim:      #ef444466;
+  /* ── Authentic Accents (Tembaga #C97A40 + Bara #D58A4A + Pucuk #2F6F55) ── */
+  --cyan:         #e1a06f;
+  --cyan-dim:     rgba(201, 122, 64, 0.15);
+  --cyan-glow:    rgba(201, 122, 64, 0.28);
+  --copper:       #c97a40;
+  --copper-dim:   rgba(201, 122, 64, 0.15);
+  --copper-glow:  rgba(201, 122, 64, 0.30);
+  --purple:       #c97a40;
+  --purple-dim:   rgba(201, 122, 64, 0.15);
+  --purple-glow:  rgba(201, 122, 64, 0.30);
+  --amber:        #d58a4a;
+  --amber-dim:    rgba(213, 138, 74, 0.15);
+  --amber-glow:   rgba(213, 138, 74, 0.28);
+  --green:        #2f6f55;
+  --green-dim:    rgba(47, 111, 85, 0.18);
+  --red:          #c96b57;
+  --red-dim:      rgba(201, 107, 87, 0.15);
 
   /* ── Text ── */
-  --text-primary:   #e5e5e5;
-  --text-secondary: #a3a3a3;
-  --text-muted:     #525252;
-  --text-bright:    #ffffff;
+  --text-primary:   #f0eadf;
+  --text-secondary: #99a39e;
+  --text-muted:     #99a39e;
+  --text-bright:    #f0eadf;
 
   /* ── Borders ── */
-  --border:       #1f1f1f;
-  --border-focus: #00f0ff44;
-  --border-hover: #00f0ff33;
-
+  --border:       rgba(240, 234, 223, 0.09);
+  --border-focus: rgba(201, 122, 64, 0.45);
+  --border-hover: rgba(225, 160, 111, 0.35);
   /* ── Spacing ── */
   --unit: 8px;
   --space-xs: 4px;

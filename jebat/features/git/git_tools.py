@@ -463,5 +463,3 @@ for tool_def in GIT_TOOLS:
             timeout=tool_def.timeout,
             description=tool_def.description,
         )
-
-print(f"[PendekarGit] 8 git tools registered: commit, diff, log, blame, status, branch, apply, stash")

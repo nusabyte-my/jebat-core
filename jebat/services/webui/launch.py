@@ -37,6 +37,10 @@ except ModuleNotFoundError:
     def require_action_confirmation(*_args, **_kwargs):
         return None
 from jebat.services.webui.webui_server import webui_router, _mount_static, STATIC_DIR
+from jebat.monitoring.dashboard_api import DashboardAPI
+
+# Initialize dashboard API router
+dashboard_api = DashboardAPI()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -278,6 +282,12 @@ async def system_metrics():
         }
     except ImportError:
         return {"cpu_percent": 0, "memory": {"total_gb": 0, "used_gb": 0, "percent": 0}, "disk": {"total_gb": 0, "used_gb": 0, "percent": 0}, "note": "psutil not installed"}
+
+
+# ═══════════════════════════════════════════════════════════════
+# Dashboard API Router (Merged into app)
+# ═══════════════════════════════════════════════════════════════
+app.include_router(dashboard_api.router)
 
 
 # ═══════════════════════════════════════════════════════════════

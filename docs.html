@@ -12,24 +12,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="assets/jebat-theme.css?v=20260909_copper" />
 <style>
 :root {
-  /* JEBAT / Hermes Studio shared theme tokens */
+  /* JEBAT Sovereign Theme — Authentic Copper, Black, Gold */
   --void: #080A09;
   --graphite: #141816;
   --surface: #1A1F1C;
   --surface-mid: #202723;
   --surface-bright: #29322D;
-  --emerald: #C97A40;
-  --emerald-dim: rgba(201,122,64,0.10);
-  --emerald-glow: rgba(201,122,64,0.20);
-  --emerald-bright: #E1A06F;
-  --cyan: #99A39E;
-  --cyan-dim: rgba(153,163,158,0.10);
+  --emerald: #2F6F55;
+  --emerald-dim: rgba(47,111,85,0.18);
+  --emerald-glow: rgba(47,111,85,0.28);
+  --emerald-bright: #3D8C6C;
+  --cyan: #C97A40;
+  --cyan-dim: rgba(201,122,64,0.14);
   --amber: #D58A4A;
-  --amber-dim: rgba(213,138,74,0.12);
+  --amber-dim: rgba(213,138,74,0.14);
   --red: #C96B57;
-  --red-dim: rgba(201,107,87,0.12);
+  --red-dim: rgba(201,107,87,0.14);
   --purple: #C97A40;
   --border-dim: rgba(240,234,223,0.09);
   --border-mid: rgba(201,122,64,0.30);
@@ -172,7 +173,7 @@ footer a { color: var(--emerald); text-decoration: none; }
     <li><a href="/">Home</a></li>
     <li><a href="/docs" class="active" aria-current="page">Docs</a></li>
     <li class="nav-separator" aria-hidden="true"></li>
-    <li><a href="/swagger" target="_blank" rel="noopener">Swagger</a></li>
+    <li><a href="/webui/" target="_blank" rel="noopener">WebUI</a></li>
     <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">GitHub</a></li>
   </ul>
   <div class="nav-actions">
@@ -409,8 +410,8 @@ footer a { color: var(--emerald); text-decoration: none; }
 <ul>
   <li><code>/</code> — API root and liveness check</li>
   <li><code>/health</code> — Health probe</li>
-  <li><code>/swagger</code> — Swagger UI (interactive API explorer)</li>
-  <li><code>/webui/</code> — Web console</li>
+  <li><code>/webui/audit</code> — Multi-domain AGI audit scorecard</li>
+  <li><code>/webui/</code> — Tactical WebUI dashboard</li>
 </ul>
 </section>
 
@@ -785,19 +786,19 @@ API Server (72.62.254.65:8000)
 <h2>API Reference</h2>
 <p>JEBAT exposes a RESTful API with interactive documentation. All endpoints are protected by API key authentication with SHA-256 hashed keys, support SSE streaming, and include CORS headers for cross-origin deployments.</p>
 
-<h3>Interactive Docs</h3>
+<h3>Interactive Exploration</h3>
 <div class="card-grid">
-  <a href="/swagger" class="card" target="_blank">
-    <div class="card-icon"><i class="fa-solid fa-code"></i></div>
-    <h4>Swagger UI</h4>
-    <p>Interactive API explorer. Test endpoints directly from the browser.</p>
-    <span class="arrow">Open Swagger →</span>
+  <a href="/webui/" class="card" target="_blank">
+    <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
+    <h4>Tactical WebUI</h4>
+    <p>Live system telemetry, agent swarms, chat sessions, and audit trail.</p>
+    <span class="arrow">Open WebUI →</span>
   </a>
-  <a href="/redoc" class="card" target="_blank">
-    <div class="card-icon"><i class="fa-solid fa-book"></i></div>
-    <h4>ReDoc</h4>
-    <p>Readable API documentation with request/response schemas.</p>
-    <span class="arrow">Open ReDoc →</span>
+  <a href="/webui/audit" class="card" target="_blank">
+    <div class="card-icon"><i class="fa-solid fa-award"></i></div>
+    <h4>AGI Multi-Audit</h4>
+    <p>Hallmark 6-axis anti-slop design scorecard & Pawang Jualan copywriting review.</p>
+    <span class="arrow">Run Audit →</span>
   </a>
 </div>
 
@@ -894,7 +895,7 @@ User Request → ContextManager (token budget assembly)
 <span class="cmd">jebat ghost fork production-db sandbox</span>
 <span class="cmd">jebat catalyst trace start --name my-trace</span></pre>
 
-<p>For the full CLI reference, run <code>jebat --help</code> or visit the <a href="/swagger" style="color:var(--emerald);">Swagger UI</a>.</p>
+<p>For the full CLI reference, run <code>jebat --help</code> or inspect the <a href="#endpoints" style="color:var(--emerald);">Endpoint Overview</a> below.</p>
 </section>
 
 <!-- ═══════════════ TROUBLESHOOTING ═══════════════ -->
@@ -931,8 +932,8 @@ User Request → ContextManager (token budget assembly)
 <h3>Getting Help</h3>
 <ul>
   <li><a href="https://github.com/nusabyte-my/jebat-core/issues" style="color:var(--emerald);">GitHub Issues</a> — Report bugs and request features</li>
-  <li><a href="/swagger" style="color:var(--emerald);">Swagger UI</a> — Interactive API testing</li>
-  <li><a href="/redoc" style="color:var(--emerald);">ReDoc</a> — Full API schema documentation</li>
+  <li><a href="/webui/" style="color:var(--emerald);">Tactical WebUI</a> — Live system console & telemetry</li>
+  <li><a href="/webui/audit" style="color:var(--emerald);">AGI Multi-Audit</a> — Real-time Hallmark & copywriting scorecard</li>
 </ul>
 </section>
 
@@ -943,7 +944,7 @@ User Request → ContextManager (token budget assembly)
 <!-- FOOTER -->
 <footer>
 <div class="container">
-  <p>JEBAT v8.2.0 — Sovereign Agent OS · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="/">Home</a> · <a href="/swagger">API</a></p>
+  <p>JEBAT v8.3.0 — Sovereign Agent OS · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="/">Home</a> · <a href="/webui/">WebUI</a></p>
 </div>
 </footer>
 

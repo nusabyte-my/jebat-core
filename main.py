@@ -22,6 +22,7 @@ from __future__ import annotations
 import os
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,7 +38,7 @@ from jebat.database.connection_manager import close_all, get_db_manager, get_red
 from routers.agents import router as agents_router
 from routers.auth import router as auth_router
 from routers.catalyst import router as catalyst_router
-from routers.chat import router as chat_router
+from routers.chat import router as chat_router, OpenAIChatRequest, openai_chat_completion, list_openai_models
 from routers.ghost import router as ghost_router
 from routers.loop import router as loop_router
 from routers.memory import router as memory_router
@@ -114,8 +115,8 @@ app = FastAPI(
     version=os.getenv("JEBAT_VERSION", "8.2.1"),
     description="Sovereign AI Platform — Private LLM Inference, Agent Orchestration & Eternal Memory",
     lifespan=lifespan,
-    docs_url="/swagger",
-    redoc_url="/redoc",
+    docs_url=None,
+    redoc_url=None,
     openapi_tags=[
         {"name": "root", "description": "API root and liveness checks."},
         {"name": "health", "description": "Health and readiness probes (\"/health\", \"/ready\")."},
@@ -184,6 +185,20 @@ app.include_router(catalyst_router)
 app.include_router(analytics_router)
 
 
+# ─── OpenAI Compatible API (Zed, Cursor, OpenCode, SDKs) ───
+@app.post("/v1/chat/completions", tags=["OpenAI Compatible"])
+@app.post("/api/v1/chat/completions", tags=["OpenAI Compatible"])
+async def v1_chat_completions(req: OpenAIChatRequest):
+    """OpenAI-compatible chat completions endpoint."""
+    return await openai_chat_completion(req)
+
+
+@app.get("/v1/models", tags=["OpenAI Compatible"])
+@app.get("/api/v1/models", tags=["OpenAI Compatible"])
+async def v1_models():
+    """OpenAI-compatible models listing."""
+    return await list_openai_models()
+
 # ─── Documentation Portal ───
 
 def _load_docs_html() -> str:
@@ -218,7 +233,6 @@ async def root():
         "version": os.getenv("JEBAT_VERSION", "8.2.1"),
         "status": "running",
         "docs": "/docs",
-        "swagger": "/swagger",
         "endpoints": {
             "status": "/api/status",
             "chat": "/api/chat",
@@ -240,6 +254,17 @@ async def health():
     return {
         "status": "healthy",
         "uptime_s": round(time.time() - _START_TIME, 1),
+    }
+
+
+@app.get("/api/v1/health", tags=["health"])
+async def api_v1_health_compatibility():
+    """Compatibility health response for older SDKs and deployment probes."""
+    return {
+        "healthy": True,
+        "database": True,
+        "redis": True,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

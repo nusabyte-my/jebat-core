@@ -36,22 +36,14 @@ class REPL:
         self.preset = "deliberate"
 
     def start(self):
-        """Start the interactive REPL."""
+        """Start the interactive REPL with OMP style."""
+        TerminalUX.banner(provider=self.provider, model=self.model)
+        TerminalUX.info("Commands: /help, /plan, /provider, /model, /preset, /yolo, /clear, /exit")
         print()
-        if self.style == "openmanus":
-            print("  JEBAT  ⚔️  unified coding agent (OpenManus mode)")
-        else:
-            print("  JEBAT  ⚔️  unified coding agent")
-        print(f"  provider: {self.provider}  model: {self.model}")
-        print(f"  style: {self.style}  preset: {self.preset}")
-        print(f"  yolo: {self.yolo}  auto-commit: {self.auto_commit}")
-        print()
-        print("  /help, /plan, /provider, /model, /preset, /yolo, /commit, /clear, /exit")
-        print()
-
         while True:
             try:
-                raw = input(f"  [{self.provider}:{self.model}] ").rstrip()
+                prompt_str = TerminalUX.prompt_prefix(self.provider, self.model)
+                raw = input(prompt_str).rstrip()
             except (KeyboardInterrupt, EOFError):
                 print()
                 break
@@ -66,8 +58,8 @@ class REPL:
                 if handled is True:
                     continue
             else:
-                text, _ = self._call_runtime(raw)
-                streaming_print(text, self.provider, self.model)
+                text, latency_ms = self._call_runtime(raw)
+                TerminalUX.response_card(text, latency_ms=latency_ms)
 
     def _handle_slash(self, raw: str):
         """Handle slash commands."""

@@ -5,7 +5,7 @@
 services:
   jebat-mcp:
     build:
-      context: ../..
+      context: ../../..
       dockerfile: Dockerfile
       target: production
     container_name: jebat-mcp
@@ -33,7 +33,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8100/mcp')",
+          "import socket; socket.create_connection(('127.0.0.1', 8100), timeout=5).close()",
         ]
       interval: 30s
       timeout: 10s

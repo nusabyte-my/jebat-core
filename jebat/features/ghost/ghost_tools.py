@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 from jebat.features.ghost.ghost_integration import GhostClient, create_ghost_client
+from jebat.tools import register_tool
 
 logger = logging.getLogger(__name__)
 
@@ -233,3 +234,39 @@ class GhostToolRegistry:
 
 # Singleton registry instance
 ghost_tool_registry = GhostToolRegistry()
+
+
+def _register_ghost_into_global_registry(registry: GhostToolRegistry) -> None:
+    """Register Ghost tools into JEBAT global TOOL_REGISTRY for MCP and Agent use."""
+    for tool_name, tool in registry._tools.items():
+        props = {k: {"type": "string", "description": v} for k, v in tool.parameters.items()}
+        schema = {"type": "object", "properties": props}
+        safety = "confirm" if any(k in tool_name for k in ("delete", "destroy", "cleanup", "restore")) else "auto"
+
+        def _create_handler(t_name: str):
+            async def _handler(**kwargs: Any) -> Any:
+                return await registry.execute(t_name, **kwargs)
+            return _handler
+
+        handler = _create_handler(tool_name)
+        register_tool(
+            name=tool_name,
+            handler=handler,
+            schema=schema,
+            description=tool.description,
+            safety_tier=safety,
+            timeout=60,
+        )
+        underscore_name = tool_name.replace(".", "_")
+        if underscore_name != tool_name:
+            register_tool(
+                name=underscore_name,
+                handler=handler,
+                schema=schema,
+                description=tool.description,
+                safety_tier=safety,
+                timeout=60,
+            )
+
+
+_register_ghost_into_global_registry(ghost_tool_registry)

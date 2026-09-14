@@ -94,6 +94,40 @@ CUSTOM_PROVIDERS: dict[str, CustomProvider] = {
         # Placeholder catalog — override via live /v1/models fetch or edit here.
         default_models=("agent-router/default", "agent-router/orchestrator"),
     ),
+    "rootsys_cloud": CustomProvider(
+        id="rootsys_cloud",
+        label="rootsys cloud",
+        description="rootsys cloud model gateway (OpenAI-compatible).",
+        api_key_env="ROOTSYS_CLOUD_API_KEY",
+        base_url_env="ROOTSYS_CLOUD_BASE_URL",
+        default_base_url="",
+        auth_url_env="ROOTSYS_CLOUD_AUTH_URL",
+        default_auth_url="",
+        models_path="/v1/models",
+        # Catalog of models exposed by the rootsys cloud gateway.
+        default_models=(
+            # Claude (6)
+            "claude-opus-5",
+            "claude-opus-4.8",
+            "claude-opus-4.7",
+            "claude-opus-4.6",
+            "claude-sonnet-5",
+            "claude-sonnet-4.6",
+            # GPT (12)
+            "gpt-5.6-sol",
+            "gpt-5.6-sol-thinking",
+            "gpt-5.6-sol-agentic",
+            "gpt-5.6-sol-thinking-agentic",
+            "gpt-5.6-terra",
+            "gpt-5.6-terra-thinking",
+            "gpt-5.6-terra-agentic",
+            "gpt-5.6-terra-thinking-agentic",
+            "gpt-5.6-luna",
+            "gpt-5.6-luna-thinking",
+            "gpt-5.6-luna-agentic",
+            "gpt-5.6-luna-thinking-agentic",
+        ),
+    ),
 }
 
 CUSTOM_PROVIDER_IDS: tuple[str, ...] = tuple(CUSTOM_PROVIDERS)

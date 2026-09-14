@@ -49,6 +49,7 @@ def test_custom_providers_registry_complete():
         "zenmux",
         "tokerrouter",
         "agent_router",
+        "rootsys_cloud",
     }
     for cp in CUSTOM_PROVIDERS.values():
         assert isinstance(cp, CustomProvider)

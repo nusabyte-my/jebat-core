@@ -1,13 +1,14 @@
 # JEBAT LLM Configuration
 llm:
-  provider: ollama
-  model: qwen3:8b
+  provider: openai
+  model: gpt-5.4
   ollama_host: http://127.0.0.1:11434
-  llamacpp_host: http://72.62.255.206:8080
+  llamacpp_host: http://127.0.0.1:8081
   temperature: 0.2
-  max_tokens: 8192
+  max_tokens: 4096
   context_window: 16384
   fallback_providers:
     - llamacpp
+    - ollama
     - local
   history_path: .jebat/chat_history.jsonl

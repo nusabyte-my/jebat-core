@@ -56,11 +56,16 @@ def _project_name() -> str:
 def _get_memory() -> EnhancedMemorySystem:
     global _memory
     if _memory is None:
-        _memory = EnhancedMemorySystem()
+        ghost_client = None
+        try:
+            from jebat.features.ghost_db.client import GhostDBClient
+            ghost_client = GhostDBClient()
+        except Exception:
+            pass
+        _memory = EnhancedMemorySystem(ghost_client=ghost_client)
         # Load any existing cross-session traces
         _memory._load()
     return _memory
-
 
 def _get_automimpi() -> AutoMimpi:
     global _automimpi

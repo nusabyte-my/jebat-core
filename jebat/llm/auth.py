@@ -94,6 +94,7 @@ PROVIDER_ENV_MAP = {
     "zenmux": ("ZENMUX_API_KEY",),
     "tokerrouter": ("TOKERROUTER_API_KEY",),
     "agent_router": ("AGENT_ROUTER_API_KEY",),
+    "rootsys_cloud": ("ROOTSYS_CLOUD_API_KEY",),
 }
 
 PROVIDER_PRIORITY = (
@@ -111,6 +112,7 @@ PROVIDER_PRIORITY = (
     "zenmux",
     "tokerrouter",
     "agent_router",
+    "rootsys_cloud",
 )
 
 

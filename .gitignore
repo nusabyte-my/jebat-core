@@ -120,6 +120,10 @@ ssh/
 authorized_keys
 known_hosts
 config
+!jebat/config/
+jebat/config/*
+!jebat/config/config.yaml
+!jebat/config/manager.py
 *.pub
 *.pem
 *.crt

@@ -87,20 +87,40 @@ def budget_input(
     provider: str = "",
 ) -> BudgetedInput:
     """Fit an LLM request into its context window, keeping system instructions first."""
+    def count(text: str) -> int:
+        # Keep the bound conservative when the configured model tokenizer is
+        # unavailable to the caller that will validate or send the request.
+        return max(
+            estimate_tokens(text, model=model, provider=provider),
+            estimate_tokens(text, provider=provider),
+        )
+
     budget = input_token_budget(context_window, max_output_tokens)
     system = system_prompt or ""
     original_input = _join_input(system, prompt)
-    if estimate_tokens(original_input, model=model, provider=provider) <= budget:
-        return BudgetedInput(prompt, system, budget, estimate_tokens(original_input, model=model, provider=provider), False)
+    if count(original_input) <= budget:
+        return BudgetedInput(prompt, system, budget, count(original_input), False)
 
     system = truncate_to_token_budget(system, budget, model=model, provider=provider)
-    remaining = max(0, budget - estimate_tokens(system, model=model, provider=provider))
+    remaining = max(0, budget - count(system))
     prompt = truncate_to_token_budget(prompt, remaining, model=model, provider=provider)
     # Separators can consume tokens, so make a final prompt-only pass against the complete input.
-    total = estimate_tokens(_join_input(system, prompt), model=model, provider=provider)
+    total = count(_join_input(system, prompt))
     if total > budget:
         prompt = truncate_to_token_budget(prompt, max(0, remaining - (total - budget)), model=model, provider=provider)
-        total = estimate_tokens(_join_input(system, prompt), model=model, provider=provider)
+        total = count(_join_input(system, prompt))
+    while prompt and total > budget:
+        prompt = prompt[:-1]
+        total = count(_join_input(system, prompt))
+    if total > budget:
+        system = truncate_to_token_budget(system, budget, model=model, provider=provider)
+        total = count(_join_input(system, prompt))
+    while prompt and total > budget:
+        prompt = prompt[:-1]
+        total = count(_join_input(system, prompt))
+    while system and total > budget:
+        system = system[:-1]
+        total = count(_join_input(system, prompt))
     return BudgetedInput(prompt, system, budget, total, True)
 
 

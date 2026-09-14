@@ -322,10 +322,19 @@ class EnhancedMemorySystem:
         # crashes serialization and (before the _save re-raise fix) silently
         # discarded the whole store on save. Accept both, store the enum.
         memory_type = coerce_memory_type(memory_type)
+        normalized_content = content.strip()
+        normalized_context = context or {}
+        for existing in self.traces.values():
+            if (
+                existing.memory_type == memory_type
+                and existing.content.strip().casefold() == normalized_content.casefold()
+                and existing.context == normalized_context
+            ):
+                return existing
         trace = MemoryTrace(
             memory_type=memory_type,
-            content=content,
-            context=context or {},
+            content=normalized_content,
+            context=normalized_context,
             tags=tags_set or tags or set(),
             importance=importance,
             emotional_valence=emotional_valence,
@@ -354,6 +363,7 @@ class EnhancedMemorySystem:
 
         # Auto-link to active memories
         await self._auto_associate(trace)
+        self._save()
 
         return trace
 
@@ -447,12 +457,12 @@ class EnhancedMemorySystem:
 
         # Include linked traces
         if query.include_linked:
-            linked = set()
+            linked = {}
             for trace in results:
                 for linked_id in trace.linked_traces:
                     if linked_id in self.traces:
-                        linked.add(self.traces[linked_id])
-            results.extend(linked)
+                        linked[linked_id] = self.traces[linked_id]
+            results.extend(linked.values())
 
         # Update access stats
         for trace in results:
@@ -706,20 +716,33 @@ class EnhancedMemorySystem:
             import numpy as np
             vec = np.array(trace.embedding, dtype=np.float32)
             self._ensure_ghost_collection(len(trace.embedding))
-            from jebat.features.ghost_db.models import Document
-            self.ghost_client.upsert(
-                collection=self._ghost_collection,
-                documents=[Document(
-                    id=trace.trace_id,
-                    text=trace.content[:1000],
-                    embedding=vec,
-                    metadata={
-                        "memory_type": trace.memory_type.value,
-                        "importance": trace.importance,
-                        "created_at": trace.created_at.isoformat(),
-                    },
-                )],
-            )
+            metadata = {
+                "memory_type": trace.memory_type.value,
+                "importance": trace.importance,
+                "created_at": trace.created_at.isoformat(),
+            }
+            if hasattr(self.ghost_client, "insert_batch"):
+                from jebat.features.ghost_db.models import Document
+                self.ghost_client.insert_batch(
+                    self._ghost_collection,
+                    [Document(
+                        id=trace.trace_id,
+                        collection=self._ghost_collection,
+                        vector=vec.tolist(),
+                        text=trace.content[:1000],
+                        metadata=metadata,
+                    )],
+                )
+            else:
+                self.ghost_client.upsert(
+                    collection=self._ghost_collection,
+                    documents=[type("LegacyDocument", (), {
+                        "id": trace.trace_id,
+                        "text": trace.content[:1000],
+                        "embedding": vec,
+                        "metadata": metadata,
+                    })()],
+                )
         except Exception:
             pass  # Best-effort indexing
 
@@ -737,7 +760,13 @@ class EnhancedMemorySystem:
                 query_vector=vec,
                 k=top_k,
             )
-            return [(r.id, 1.0 - r.distance) for r in results]  # Convert distance to similarity
+            scores = []
+            for result in results:
+                if hasattr(result, "document"):
+                    scores.append((result.document.id, float(result.score)))
+                else:
+                    scores.append((result.id, 1.0 - result.distance))
+            return scores
         except Exception:
             return []
 

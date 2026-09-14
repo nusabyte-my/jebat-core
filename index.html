@@ -14,8 +14,8 @@
 <link rel="alternate" hreflang="en" href="https://jebat.online/" />
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" href="assets/favicon.png" />
-<link rel="apple-touch-icon" href="assets/jebat-app-icon.png" />
+<link rel="icon" type="image/png" href="assets/favicon.png?v=20260830" />
+<link rel="apple-touch-icon" href="assets/jebat-app-icon.png?v=20260830" />
 
 <!-- Open Graph / Social Media Meta -->
 <meta property="og:type" content="website" />
@@ -23,14 +23,14 @@
 <meta property="og:title" content="JEBAT — Sovereign AI Command Layer | Keep Command" />
 <meta property="og:description" content="Run any model. Give agents memory and tools. Govern every action. Deploy JEBAT on infrastructure you control." />
 <meta property="og:url" content="https://jebat.online/" />
-<meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
+<meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png?v=20260830" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="@nusabyte" />
 <meta name="twitter:title" content="JEBAT — Sovereign AI Command Layer" />
 <meta name="twitter:description" content="Run any model. Give agents memory and tools. Govern every action. Deploy JEBAT on infrastructure you control." />
-<meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
+<meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png?v=20260830" />
 
 <!-- Structured Data: SoftwareApplication + Organization + FAQPage -->
 <script type="application/ld+json">
@@ -42,7 +42,7 @@
       "@id": "https://jebat.online/#organization",
       "name": "NusaByte",
       "url": "https://nusabyte.my",
-      "logo": "https://jebat.online/assets/Jebat-Transparent.png",
+      "logo": "https://jebat.online/assets/Jebat-Transparent.png?v=20260830",
       "sameAs": [
         "https://github.com/nusabyte-my/jebat-core"
       ]
@@ -102,7 +102,7 @@
           "name": "Does JEBAT support Model Context Protocol (MCP)?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, JEBAT features native MCP protocol integration, allowing AI agents to securely interact with over 78 custom tools, databases, APIs, and file systems."
+      "text": "Yes, JEBAT features native MCP protocol integration, allowing AI agents to securely interact with the tools, databases, APIs, and file systems enabled in your workspace."
           }
         }
       ]
@@ -116,21 +116,22 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="assets/jebat-theme.css?v=20260909_copper" />
 
 <style>
-/* HERMES STUDIO COLOR GRADE SYSTEM */
+/* HERMES STUDIO COLOR GRADE SYSTEM — AUTHENTIC JEBAT BRAND LOCK */
 :root {
   /* JEBAT Brand Lock: Malam / Besi / Tulang / Tembaga / Bara / Keluli / Pucuk */
   --jebat-malam: #080A09;
   --jebat-besi: #141816;
   --jebat-tulang: #F0EADF;
-  --jebat-tembaga: #C97A40;
-  --jebat-bara: #D58A4A;
-  --jebat-keluli: #99A39E;
-  --jebat-pucuk: #2F6F55;
+  --jebat-tembaga: #C97A40; /* Burnished Copper */
+  --jebat-bara: #D58A4A;    /* Molten Gold */
+  --jebat-keluli: #99A39E;  /* Steel Gray */
+  --jebat-pucuk: #2F6F55;   /* Forest Emerald */
   --jebat-border: rgba(240, 234, 223, 0.09);
   --jebat-copper-soft: rgba(201, 122, 64, 0.14);
-  --jebat-copper-glow: rgba(201, 122, 64, 0.20);
+  --jebat-copper-glow: rgba(201, 122, 64, 0.28);
   --hermes-obsidian: var(--jebat-malam);
   --hermes-dark: var(--jebat-besi);
   --hermes-surface: #1A1F1C;
@@ -155,10 +156,9 @@
   --border-mid: rgba(201, 122, 64, 0.30);
   --border-bright: rgba(201, 122, 64, 0.55);
 
-  --copper-soft: rgba(245, 158, 11, 0.12);
-  --copper-glow: rgba(245, 158, 11, 0.25);
-  --copper-glow-strong: rgba(245, 158, 11, 0.55);
-
+  --copper-soft: rgba(201, 122, 64, 0.14);
+  --copper-glow: rgba(201, 122, 64, 0.28);
+  --copper-glow-strong: rgba(201, 122, 64, 0.55);
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -278,7 +278,7 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 @supports not (background-clip: text) {
-  .copper-gradient { background: none; -webkit-text-fill-color: currentColor; }
+  .copper-gradient { background: none; -webkit-text-fill-color: var(--hermes-amber); }
 }
 
 :focus-visible {
@@ -286,7 +286,7 @@ h1, h2, h3, h4, h5, h6 {
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .btn, .pulse-dot { animation-duration: 4s !important; }
   html { scroll-behavior: auto; }
 }
 
@@ -374,31 +374,79 @@ h1, h2, h3, h4, h5, h6 {
 /* HERO VERIFICATION BADGES */
 .hero-verify-row {
   display: flex;
-  gap: 16px;
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--hermes-text-subtle);
 }
 
 .hero-verify-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--hermes-dark);
+  gap: 7px;
+  background: var(--hermes-surface);
   border: 1px solid var(--border-subtle);
-  padding: 8px 12px;
+  padding: 6px 12px;
   min-height: 28px;
+  color: var(--hermes-text-main);
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+
+.hero-verify-badge:hover {
+  border-color: var(--border-mid);
+  background: var(--hermes-surface-mid);
+}
+
+/* HERO INSTALL PILL */
+.hero-install-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-mid);
+  padding: 8px 14px;
+  margin-bottom: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  box-shadow: var(--shadow-level1);
+  transition: all 0.2s ease;
+}
+
+.hero-install-pill:hover {
+  border-color: var(--hermes-amber-bright);
+  box-shadow: 0 0 20px rgba(201, 122, 64, 0.2);
+}
+
+.hero-install-pill .cmd {
+  color: var(--hermes-text-main);
+  user-select: all;
+}
+
+.hero-install-pill button {
+  background: transparent;
+  border: none;
+  color: var(--hermes-amber);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.hero-install-pill button:hover {
+  color: var(--hermes-amber-bright);
+  transform: scale(1.15);
 }
 
 /* HERO INTERACTIVE CLI CONSOLE */
 .hero-cli-playground {
-  background: var(--hermes-dark);
+  background: var(--hermes-surface);
   border: 1px solid var(--border-mid);
   padding: 16px;
-  margin-top: 20px;
+  margin-top: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
   font-family: var(--font-mono);
   font-size: 11px;
 }
@@ -413,36 +461,67 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cli-chip {
-  background: var(--hermes-surface);
+  background: var(--hermes-dark);
   border: 1px solid var(--border-subtle);
   color: var(--hermes-text-subtle);
-  padding: 8px 12px;
-  min-height: 30px;
+  padding: 7px 12px;
+  min-height: 28px;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 10px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .cli-chip:hover {
   border-color: var(--hermes-amber);
-  color: var(--hermes-amber);
+  color: var(--hermes-amber-bright);
+  background: var(--copper-soft);
 }
 
 .hero-cli-box {
-  background: var(--hermes-surface-mid);
+  background: var(--hermes-obsidian);
   border: 1px solid var(--border-subtle);
-  padding: 12px 14px;
+  padding: 14px 16px;
   color: var(--hermes-text-main);
-  line-height: 1.6;
-  min-height: 52px;
+  line-height: 1.65;
+  min-height: 94px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
 }
-.hero-agent-prompt { display: flex; gap: 8px; margin-top: 12px; }
-.hero-agent-prompt input { flex: 1; min-width: 0; background: var(--hermes-obsidian); border: 1px solid var(--border-subtle); color: var(--hermes-text-main); padding: 10px 12px; font: 11px var(--font-mono); }
-.hero-agent-prompt input:focus-visible { outline: 2px solid var(--hermes-amber-bright); outline-offset: 2px; }
-.hero-agent-prompt button { border: 1px solid var(--hermes-amber); background: var(--copper-soft); color: var(--hermes-amber-bright); padding: 0 12px; font: 700 10px var(--font-mono); cursor: pointer; }
-.hero-agent-prompt button:hover { background: var(--hermes-amber); color: var(--hermes-obsidian); }
 
+.hero-agent-prompt { display: flex; gap: 8px; margin-top: 12px; }
+.hero-agent-prompt input {
+  flex: 1;
+  min-width: 0;
+  background: var(--hermes-obsidian);
+  border: 1px solid var(--border-mid);
+  color: var(--hermes-text-main);
+  padding: 10px 14px;
+  font: 11px var(--font-mono);
+  transition: border-color 0.2s ease;
+}
+.hero-agent-prompt input:focus-visible {
+  outline: none;
+  border-color: var(--hermes-amber-bright);
+  box-shadow: 0 0 16px rgba(201, 122, 64, 0.25);
+}
+.hero-agent-prompt button {
+  border: 1px solid var(--hermes-amber);
+  background: var(--copper-soft);
+  color: var(--hermes-amber-bright);
+  padding: 0 16px;
+  font: 700 10px var(--font-mono);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.hero-agent-prompt button:hover {
+  background: var(--hermes-amber);
+  color: var(--hermes-obsidian);
+  box-shadow: 0 0 20px rgba(201, 122, 64, 0.35);
+}
 /* NAVIGATION */
 nav {
   position: fixed;
@@ -681,15 +760,23 @@ nav.scrolled {
 
 .hero-glow-bg {
   position: absolute;
-  top: 15%;
-  right: 15%;
-  width: 650px;
+  top: 0%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1200px;
   height: 650px;
-  background: radial-gradient(circle at 55% 45%, rgba(245,158,11,0.18) 0%, transparent 68%);
+  background: radial-gradient(ellipse at 50% 25%, rgba(201, 122, 64, 0.28) 0%, rgba(213, 138, 74, 0.14) 45%, transparent 70%);
   pointer-events: none;
   z-index: 0;
+  filter: blur(50px);
+  animation: auraPulse 5s ease-in-out infinite alternate;
 }
 
+@keyframes auraPulse {
+  0% { opacity: 0.7; transform: translateX(-50%) scale(0.96); }
+  100% { opacity: 1.0; transform: translateX(-50%) scale(1.04); }
+}
 .hero-jawi-watermark {
   position: absolute;
   top: 45%;
@@ -802,19 +889,23 @@ nav.scrolled {
 
 .hero-mark-float {
   width: min(320px, 85%);
-  filter: drop-shadow(0 20px 60px rgba(245, 158, 11, 0.35));
+  filter: drop-shadow(0 20px 60px rgba(201, 122, 64, 0.35));
   position: relative;
   z-index: 2;
-  animation: floatLogo 6s ease-in-out infinite;
+  animation: floatLogo 3.5s ease-in-out infinite;
   margin-bottom: 6px;
 }
 
 @keyframes floatLogo {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+  0%, 100% {
+    transform: translateY(0px);
+    filter: drop-shadow(0 15px 35px rgba(201, 122, 64, 0.25));
+  }
+  50% {
+    transform: translateY(-16px);
+    filter: drop-shadow(0 28px 65px rgba(201, 122, 64, 0.48));
+  }
 }
-
 .topology-card {
   background: rgba(16, 19, 27, 0.95);
   border: 1px solid var(--border-mid);
@@ -907,13 +998,16 @@ nav.scrolled {
   top: 0;
   left: -1px;
   width: 3px;
-  height: 6px;
-  background: var(--hermes-amber);
-  animation: flowDown 2.2s infinite linear;
+  height: 8px;
+  background: var(--hermes-amber-bright);
+  box-shadow: 0 0 10px var(--hermes-gold), 0 0 4px var(--hermes-amber-bright);
+  animation: flowDown 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes flowDown {
-  0% { top: 0%; opacity: 1; }
+  0% { top: 0%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
   100% { top: 100%; opacity: 0; }
 }
 
@@ -1097,6 +1191,44 @@ nav.scrolled {
 .mcp-install-code code { color: var(--hermes-text-main); font: 12px/1.7 var(--font-mono); white-space: pre-wrap; }
 .mcp-copy-button { flex: 0 0 auto; border: 1px solid var(--border-mid); background: var(--hermes-dark); color: var(--hermes-amber); padding: 7px 9px; cursor: pointer; font: 10px var(--font-mono); }
 .mcp-copy-button:hover { border-color: var(--hermes-amber-bright); color: var(--hermes-amber-bright); }
+.mcp-workflow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  margin: 0 0 32px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+}
+.mcp-workflow-step {
+  min-height: 132px;
+  padding: 16px;
+  border: 0;
+  background: var(--hermes-dark);
+  color: var(--hermes-text-subtle);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+.mcp-workflow-step:hover, .mcp-workflow-step:focus-visible, .mcp-workflow-step.active {
+  background: var(--copper-soft);
+  color: var(--hermes-text-main);
+  outline: none;
+}
+.mcp-workflow-step:focus-visible { box-shadow: inset 0 0 0 2px var(--hermes-amber-bright); }
+.mcp-workflow-step.active { transform: translateY(-2px); }
+.mcp-workflow-index { display: block; margin-bottom: 18px; color: var(--hermes-amber-bright); font: 10px var(--font-mono); }
+.mcp-workflow-step strong { display: block; margin-bottom: 6px; color: inherit; font: 700 13px var(--font-display); }
+.mcp-workflow-step span:last-child { display: block; font-size: 11px; line-height: 1.45; }
+.mcp-workflow-output {
+  grid-column: 1 / -1;
+  min-height: 78px;
+  padding: 16px;
+  background: var(--hermes-obsidian);
+  color: var(--hermes-amber-bright);
+  font: 11px/1.7 var(--font-mono);
+  white-space: pre-wrap;
+}
 
 .mcp-hero {
   position: relative;
@@ -1109,14 +1241,62 @@ nav.scrolled {
 .mcp-hero h2 { max-width: 620px; margin: 12px 0 16px; font-size: clamp(2.4rem, 5vw, 4.7rem); line-height: 0.98; }
 .mcp-hero-copy p { max-width: 520px; color: var(--hermes-text-subtle); font-size: 15px; }
 .mcp-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
-.mcp-hero-console { border: 1px solid var(--border-mid); background: rgba(20, 24, 22, 0.8); box-shadow: 0 30px 80px rgba(0,0,0,0.45); }
+.mcp-hero-console {
+  position: relative;
+  border: 1px solid var(--border-mid);
+  background: rgba(20, 24, 22, 0.90);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7), 0 0 40px rgba(201, 122, 64, 0.12);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.mcp-hero-console::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent 0deg,
+    rgba(201, 122, 64, 0.1) 60deg,
+    var(--hermes-amber-bright) 120deg,
+    rgba(213, 138, 74, 0.15) 180deg,
+    transparent 240deg
+  );
+  animation: borderRotate 6s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+.mcp-hero-console::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: rgba(18, 22, 20, 0.96);
+  z-index: 0;
+  pointer-events: none;
+}
+.mcp-hero-console > * {
+  position: relative;
+  z-index: 1;
+}
+@keyframes borderRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.mcp-hero-console:hover {
+  border-color: rgba(201, 122, 64, 0.45);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), 0 0 60px rgba(201, 122, 64, 0.25);
+}
 .mcp-hero-console-head { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); font: 10px var(--font-mono); color: var(--hermes-text-subtle); }
 .mcp-hero-tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 16px; }
-.mcp-hero-tool { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; min-height: 78px; border: 1px solid var(--border-subtle); background: var(--hermes-dark); color: var(--hermes-text-subtle); cursor: pointer; text-align: left; }
-.mcp-hero-tool:hover, .mcp-hero-tool.active { border-color: var(--hermes-amber); color: var(--hermes-text-main); background: var(--copper-soft); }
+.mcp-hero-tool { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; min-height: 78px; border: 1px solid var(--border-subtle); background: var(--hermes-dark); color: var(--hermes-text-subtle); cursor: pointer; text-align: left; transition: all 0.2s cubic-bezier(0.2, 0.6, 0.25, 1); }
+.mcp-hero-tool:hover { border-color: var(--border-mid); color: var(--hermes-text-main); background: var(--hermes-surface); transform: translateY(-1px); }
+.mcp-hero-tool.active { border-color: var(--hermes-amber); color: var(--hermes-text-main); background: var(--copper-soft); box-shadow: inset 0 2px 0 var(--hermes-amber), 0 4px 14px rgba(201, 122, 64, 0.18); transform: translateY(-2px); }
 .mcp-hero-tool strong { font: 700 12px var(--font-display); }
 .mcp-hero-tool span { font: 10px var(--font-mono); }
-.mcp-hero-output { margin: 0 16px 16px; padding: 16px; min-height: 106px; background: var(--hermes-obsidian); border: 1px solid var(--border-subtle); color: var(--hermes-amber-bright); font: 11px/1.7 var(--font-mono); white-space: pre-wrap; }
+.mcp-hero-output { margin: 0 16px 16px; padding: 16px; min-height: 106px; background: var(--hermes-obsidian); border: 1px solid var(--border-subtle); color: var(--hermes-amber-bright); font: 11px/1.7 var(--font-mono); white-space: pre-wrap; transition: all 0.2s ease; }
 
 .mcp-servers-grid {
   display: grid;
@@ -1975,6 +2155,7 @@ footer {
   }
   .mcp-setup-panel { grid-template-columns: 1fr; }
   .mcp-hero-grid { grid-template-columns: 1fr; gap: 36px; }
+  .mcp-workflow { grid-template-columns: repeat(2, 1fr); }
   .commands-grid, .operators-grid, .mcp-servers-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2000,6 +2181,8 @@ footer {
   .commands-grid, .operators-grid, .mcp-servers-grid, .calculator-stats-grid, .api-metrics-grid {
     grid-template-columns: 1fr;
   }
+  .mcp-workflow { grid-template-columns: 1fr; }
+  .mcp-workflow-output { grid-column: auto; }
   .deploy-spec-grid {
     grid-template-columns: 1fr;
   }
@@ -2037,19 +2220,19 @@ footer {
 <div class="top-ticker-bar" role="status" aria-label="JEBAT platform status">
   <div class="ticker-content">
    <div class="ticker-track">
-    <span><span class="pulse-dot"></span> INFRASTRUCTURE: ONLINE</span>
+    <span><span class="pulse-dot"></span> SOVEREIGN AI INFRASTRUCTURE: ONLINE</span>
     <span>•</span>
-    <span>17 MODEL PROVIDERS</span>
+    <span>85 MCP TOOLS ACTIVE</span>
     <span>•</span>
-    <span>78 MCP TOOLS READY</span>
+    <span>LLAMA.CPP IN-MEMORY (:8081)</span>
     <span>•</span>
-    <span>TOOLS: FILESYSTEM · BROWSER · MEMORY · GIT · SQL · SECURITY · WEB</span>
+    <span>GHOST DB + PGVECTOR MEMORY</span>
     <span>•</span>
-    <span>ZERO TELEMETRY</span>
+    <span>AUTONOMOUS REFLEXION GATES (BUILD · DESIGN · COPY)</span>
     <span>•</span>
-    <span>MIT LICENSE</span>
+    <span>NIGHTLY autoMIMPI DAEMON (04:00 MYT)</span>
     <span>•</span>
-    <span class="text-pucuk">RELEASE v8.3.0 OPERATIONAL</span>
+    <span class="text-pucuk" style="color:var(--jebat-pucuk)">RELEASE v8.3.0 OPERATIONAL</span>
    </div>
   </div>
 </div>
@@ -2097,7 +2280,9 @@ footer {
 <nav id="navbar">
   <div class="nav-inner">
     <a href="#" class="brand-lockup" aria-label="JEBAT Home">
-      <img src="assets/Jebat-Transparent.png" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 38px; width: auto; object-fit: contain;" />
+      <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 36px; width: auto; object-fit: contain;" />
+      <span class="logo-text" style="font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: -0.02em; color: var(--hermes-text-main);">JEBAT</span>
+      <span class="logo-chip" style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; background: var(--copper-soft); color: var(--hermes-amber-bright); border: 1px solid var(--border-mid); letter-spacing: 0.5px;">v8.3</span>
     </a>
 
     <ul class="nav-links" id="primary-navigation">
@@ -2106,6 +2291,8 @@ footer {
       <li><a href="#api-dashboard">Studio API</a></li>
       <li><a href="#mcp">MCP Bus</a></li>
       <li><a href="#architecture">Architecture</a></li>
+      <li><a href="docs.html">Docs</a></li>
+      <li><a href="/webui/">WebUI</a></li>
     </ul>
 
     <div class="nav-actions">
@@ -2116,7 +2303,7 @@ footer {
 
       <div class="nav-dropdown">
         <button class="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" onclick="toggleDeployMenu(event)">
-          <span>DEPLOY JEBAT</span>
+          <span>DEPLOY SOVEREIGN</span>
           <i class="fa-solid fa-chevron-down" style="font-size: 9px;"></i>
         </button>
         <div class="nav-dropdown-menu">
@@ -2159,30 +2346,30 @@ footer {
         <h1>KEEP <span class="copper-gradient">COMMAND.</span></h1>
 
         <p class="lead">
-          Run any model. Give agents persistent memory and tools. Govern every action. Deploy JEBAT on infrastructure you control.
+          Run private multi-turn agents. Connect 85 MCP tools. Verify code, design, and copy with autonomous Reflexion gates. Deploy on infrastructure you control.
         </p>
 
         <div class="hero-verify-row">
-          <span class="hero-verify-badge"><i class="fa-solid fa-check text-pucuk"></i> MIT Open Source</span>
-          <span class="hero-verify-badge"><i class="fa-solid fa-plug text-copper"></i> Native MCP Transport</span>
           <span class="hero-verify-badge"><i class="fa-solid fa-shield-halved text-pucuk"></i> Zero Telemetry</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-network-wired" style="color:var(--jebat-tembaga)"></i> 85 MCP Tools</span>
+          <span class="hero-verify-badge" style="border-color:rgba(16,185,129,0.4);color:#10b981"><i class="fa-solid fa-award"></i> Hallmark P5 H5 E5 S5 R5 V5</span>
         </div>
 
         <div class="hero-ctas">
           <a href="#deploy" class="btn btn-copper">
-            <span>Deploy JEBAT</span>
+            <span>Deploy Sovereign Agent</span>
             <i class="fa-solid fa-arrow-right"></i>
           </a>
 
-          <a href="#api-dashboard" class="btn btn-outline">
-            <span>Hermes Studio API</span>
-            <i class="fa-solid fa-gauge-high"></i>
+          <a href="docs.html" class="btn btn-outline">
+            <span>Explore 85 MCP Tools</span>
+            <i class="fa-solid fa-microchip"></i>
           </a>
         </div>
 
         <div class="hero-install-pill">
-          <i class="fa-solid fa-terminal text-copper"></i>
-          <span class="cmd">jebat chat "Act as Jebat Agent"</span>
+          <i class="fa-solid fa-terminal" style="color:var(--jebat-tembaga)"></i>
+          <span class="cmd">curl -fsSL https://jebat.online/install.sh | bash</span>
           <button onclick="copyPillCommand(this)" title="Copy command" aria-label="Copy CLI Command"><i class="fa-regular fa-copy"></i></button>
         </div>
 
@@ -2191,8 +2378,9 @@ footer {
           <div class="hero-cli-chips">
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button class="cli-chip" onclick="runHeroCLI('status')">jebat status</button>
-              <button class="cli-chip" onclick="runHeroCLI('pentest')">jebat agent "Pentest"</button>
-              <button class="cli-chip" onclick="runHeroCLI('memory')">jebat memory query</button>
+              <button class="cli-chip" onclick="runHeroCLI('mcp')">jebat mcp list</button>
+              <button class="cli-chip" onclick="runHeroCLI('audit')">jebat agi audit</button>
+              <button class="cli-chip" onclick="runHeroCLI('dream')">jebat autoMimpi</button>
             </div>
             <button onclick="toggleAudioFX(this)" class="cli-chip" style="color: var(--hermes-pucuk);" aria-label="Toggle terminal audio effects" aria-pressed="true">
               <i class="fa-solid fa-volume-high"></i> Audio: ON
@@ -2224,7 +2412,7 @@ footer {
           <span class="swarm-chip" onclick="switchHeroSwarm('syahbandar', this)">🧭 Syahbandar</span>
         </div>
 
-        <img src="assets/Jebat-Transparent.png" alt="JEBAT Brand Logo" class="hero-mark-float" />
+        <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Brand Logo" class="hero-mark-float" />
 
         <div class="topology-card">
           <div class="topology-header">
@@ -2272,7 +2460,7 @@ footer {
         </div>
       </div>
       <div class="mcp-hero-console" aria-label="Interactive MCP capability preview">
-        <div class="mcp-hero-console-head"><span><i class="fa-solid fa-terminal text-copper"></i> PROMPT → POLICY → TOOL → RESULT</span><span class="text-pucuk">AGENT READY</span></div>
+        <div class="mcp-hero-console-head"><span><i class="fa-solid fa-terminal text-copper"></i> PROMPT → POLICY → TOOL → RESULT</span><span class="text-pucuk" style="display:inline-flex;align-items:center;gap:6px"><span class="pulse-dot"></span> AGENT READY (85 TOOLS)</span></div>
         <div class="mcp-hero-tools" role="tablist" aria-label="MCP capability examples">
           <button class="mcp-hero-tool active" role="tab" aria-selected="true" onclick="previewMcpCapability('memory', this)"><strong>Remember</strong><span>ghost.search</span></button>
           <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('browser', this)"><strong>Inspect web</strong><span>browser.navigate</span></button>
@@ -2515,17 +2703,18 @@ footer {
     <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 04 / MCP BUS (MODEL CONTEXT PROTOCOL)</span>
     <h2 class="section-title">Native Tool Execution Sub-Bus</h2>
     <p class="section-desc">
-      JEBAT connects AI models to real-world infrastructure using open Model Context Protocol (MCP) servers. Explore active tools and test live JSON-RPC dispatches.
+      Connect an IDE to JEBAT's local MCP server. Recover context, expose the right tools, and keep write actions behind an explicit approval boundary.
     </p>
 
     <div class="mcp-setup-panel">
       <div class="mcp-setup-copy">
         <span class="mono text-copper">CONNECT YOUR TOOL BUS</span>
         <h3>Install once. Let agents act.</h3>
-        <p>Start with the runtime you already use, then expose approved tools for files, browsers, memory, Git, databases, web research, and security workflows.</p>
+         <p>Start the local MCP server, then expose approved tools for files, browsers, memory, Git, databases, web research, and security workflows.</p>
         <div class="mcp-capability-list" aria-label="MCP capabilities">
           <span>Filesystem</span><span>Browser</span><span>Memory</span><span>Git</span><span>SQL</span><span>Security</span><span>Web</span>
-        </div>
+     </div>
+
         <form class="mcp-agent-prompt" onsubmit="askMcpAgent(event)">
           <input id="mcp-agent-input" type="text" value="Use the GitHub MCP server to summarize open issues" aria-label="Prompt JEBAT agent" />
           <button type="submit"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ASK AGENT</button>
@@ -2533,22 +2722,43 @@ footer {
       </div>
       <div class="mcp-install-console">
         <div class="mcp-install-tabs" role="tablist" aria-label="Installation methods">
-          <button class="mcp-install-tab active" role="tab" aria-selected="true" onclick="switchMcpInstall('npm', this)">npm</button>
-          <button class="mcp-install-tab" role="tab" aria-selected="false" onclick="switchMcpInstall('docker', this)">Docker</button>
-          <button class="mcp-install-tab" role="tab" aria-selected="false" onclick="switchMcpInstall('python', this)">Python</button>
+           <button class="mcp-install-tab active" role="tab" aria-selected="true" onclick="switchMcpInstall('python', this)">Python</button>
+           <button class="mcp-install-tab" role="tab" aria-selected="false" onclick="switchMcpInstall('docker', this)">Docker</button>
+           <button class="mcp-install-tab" role="tab" aria-selected="false" onclick="switchMcpInstall('npm', this)">npm</button>
         </div>
         <div class="mcp-install-code">
-          <code id="mcp-install-command">npx @nusabyte/jebat mcp serve</code>
+           <code id="mcp-install-command">python ./jebat-mcp --transport stdio</code>
           <button class="mcp-copy-button" onclick="copyMcpInstall(this)" aria-label="Copy installation command">COPY</button>
         </div>
-      </div>
-    </div>
+     </div>
+   </div>
 
-    <div class="mcp-servers-grid">
+   <div class="mcp-workflow" aria-label="Governed MCP workflow">
+     <button class="mcp-workflow-step active" type="button" aria-pressed="true" onclick="showMcpWorkflow('intent', this)">
+       <span class="mcp-workflow-index">01 / INTENT</span><strong>Ask in your IDE</strong><span>Describe the outcome, not the tool call.</span>
+     </button>
+     <button class="mcp-workflow-step" type="button" aria-pressed="false" onclick="showMcpWorkflow('context', this)">
+       <span class="mcp-workflow-index">02 / CONTEXT</span><strong>Recover project state</strong><span>Bring workspace facts and durable memory into scope.</span>
+     </button>
+     <button class="mcp-workflow-step" type="button" aria-pressed="false" onclick="showMcpWorkflow('policy', this)">
+       <span class="mcp-workflow-index">03 / POLICY</span><strong>Gate the action</strong><span>AUTO, CONFIRM, or DANGEROUS is visible before execution.</span>
+     </button>
+     <button class="mcp-workflow-step" type="button" aria-pressed="false" onclick="showMcpWorkflow('execute', this)">
+       <span class="mcp-workflow-index">04 / EXECUTE</span><strong>Dispatch MCP</strong><span>Call the smallest approved tool set through JSON-RPC.</span>
+     </button>
+     <button class="mcp-workflow-step" type="button" aria-pressed="false" onclick="showMcpWorkflow('remember', this)">
+       <span class="mcp-workflow-index">05 / REMEMBER</span><strong>Keep the useful trace</strong><span>Verify the result and store non-secret project facts.</span>
+     </button>
+     <div class="mcp-workflow-output" id="mcp-workflow-output" role="status" aria-live="polite">&gt; INTENT RECEIVED
+&gt; “Summarize the open issues and propose the smallest safe fix.”
+&gt; NEXT: recover project context before selecting a tool</div>
+   </div>
+
+   <div class="mcp-servers-grid">
       <div class="mcp-server-card active" onclick="selectMcpServer('postgres', this)">
         <div class="mcp-card-top">
           <span class="mcp-server-name"><i class="fa-solid fa-database text-copper"></i> pgvector DB</span>
-          <span class="mcp-badge">ACTIVE</span>
+           <span class="mcp-badge">AVAILABLE</span>
         </div>
         <p class="mcp-server-desc">Ghost DB persistent vector search & hybrid semantic retrieval engine.</p>
         <div class="mcp-tools-list">
@@ -2560,7 +2770,7 @@ footer {
       <div class="mcp-server-card" onclick="selectMcpServer('filesystem', this)">
         <div class="mcp-card-top">
           <span class="mcp-server-name"><i class="fa-solid fa-folder-open text-copper"></i> Filesystem</span>
-          <span class="mcp-badge">ACTIVE</span>
+           <span class="mcp-badge">AVAILABLE</span>
         </div>
         <p class="mcp-server-desc">Sandboxed file reading, writing, diff patching, and workspace inspection.</p>
         <div class="mcp-tools-list">
@@ -2572,7 +2782,7 @@ footer {
       <div class="mcp-server-card" onclick="selectMcpServer('git', this)">
         <div class="mcp-card-top">
           <span class="mcp-server-name"><i class="fa-brands fa-github text-copper"></i> GitHub & DevOps</span>
-          <span class="mcp-badge">ACTIVE</span>
+           <span class="mcp-badge">AVAILABLE</span>
         </div>
         <p class="mcp-server-desc">Automated PR creation, issue triage, and CI/CD workflow triggers.</p>
         <div class="mcp-tools-list">
@@ -2584,7 +2794,7 @@ footer {
       <div class="mcp-server-card" onclick="selectMcpServer('browser', this)">
         <div class="mcp-card-top">
           <span class="mcp-server-name"><i class="fa-solid fa-globe text-copper"></i> Playwright Web</span>
-          <span class="mcp-badge">ACTIVE</span>
+           <span class="mcp-badge">AVAILABLE</span>
         </div>
         <p class="mcp-server-desc">Autonomous browser navigation, DOM inspection, and screenshot capture.</p>
         <div class="mcp-tools-list">
@@ -2596,7 +2806,7 @@ footer {
       <div class="mcp-server-card" onclick="selectMcpServer('security', this)">
         <div class="mcp-card-top">
           <span class="mcp-server-name"><i class="fa-solid fa-shield-halved text-copper"></i> Hulubalang Scan</span>
-          <span class="mcp-badge">ACTIVE</span>
+           <span class="mcp-badge">AVAILABLE</span>
         </div>
         <p class="mcp-server-desc">Automated pentesting, port auditing, and policy boundary verification.</p>
         <div class="mcp-tools-list">
@@ -2608,7 +2818,7 @@ footer {
       <div class="mcp-server-card" onclick="selectMcpServer('webhooks', this)">
         <div class="mcp-card-top">
           <span class="mcp-server-name"><i class="fa-solid fa-bolt text-copper"></i> CRM & Webhooks</span>
-          <span class="mcp-badge">ACTIVE</span>
+           <span class="mcp-badge">AVAILABLE</span>
         </div>
         <p class="mcp-server-desc">Real-time enterprise webhooks, WhatsApp integrations, and CRM deal creation.</p>
         <div class="mcp-tools-list">
@@ -2991,7 +3201,7 @@ jebat chat "Act as Jebat Agent for this repo"
 
 <!-- MANIFESTO & FOOTER -->
 <section class="manifesto-section">
-  <img src="assets/Jebat-Transparent.png" alt="JEBAT Background Mark" class="watermark-bg" />
+  <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Background Mark" class="watermark-bg" />
   <div class="container">
     <p class="manifesto-text">
       Models will change. Providers will change. Infrastructure will evolve.<br/>
@@ -3010,7 +3220,7 @@ jebat chat "Act as Jebat Agent for this repo"
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="#" class="brand-lockup" aria-label="JEBAT Home">
-          <img src="assets/Jebat-Transparent.png" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 42px; width: auto; object-fit: contain;" />
+          <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 42px; width: auto; object-fit: contain;" />
         </a>
         <p>Sovereign AI Command Layer for private model inference, persistent memory, and agent governance.</p>
       </div>
@@ -3163,24 +3373,33 @@ function filterCmdList(query) {
   resize();
   window.addEventListener('resize', resize);
 
-  if (prefersReducedMotion) return;
+  let mouse = { x: -1000, y: -1000 };
+  canvas.parentElement.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+  });
+  canvas.parentElement.addEventListener('mouseleave', () => {
+    mouse.x = -1000;
+    mouse.y = -1000;
+  });
 
   const particles = [];
-  const numParticles = 40;
+  const numParticles = 55;
+  const colors = ['#C97A40', '#D58A4A', '#E1A06F', '#2F6F55'];
   for (let i = 0; i < numParticles; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      radius: Math.random() * 2 + 1
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: (Math.random() - 0.5) * 0.7,
+      radius: Math.random() * 2.2 + 1,
+      color: colors[i % colors.length]
     });
   }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#F59E0B';
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.15)';
 
     for (let i = 0; i < particles.length; i++) {
       let p = particles[i];
@@ -3190,14 +3409,29 @@ function filterCmdList(query) {
       if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
       if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
+      ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fill();
 
+      // Connect to mouse
+      const mouseDist = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+      if (mouseDist < 160) {
+        ctx.strokeStyle = `rgba(201, 122, 64, ${0.45 * (1 - mouseDist / 160)})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+      }
+
+      // Connect to neighbors
       for (let j = i + 1; j < particles.length; j++) {
         let p2 = particles[j];
         let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-        if (dist < 130) {
+        if (dist < 125) {
+          ctx.strokeStyle = `rgba(201, 122, 64, ${0.22 * (1 - dist / 125)})`;
+          ctx.lineWidth = 0.8;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(p2.x, p2.y);
@@ -3292,7 +3526,7 @@ function sendStudioApiRequest() {
 }
 
 const mcpInstallCommands = {
-  npm: 'npx @nusabyte/jebat mcp serve',
+  npm: 'python ./jebat-mcp --transport stdio',
   docker: 'docker compose up -d jebat-mcp',
   python: 'python ./jebat-mcp --transport stdio'
 };
@@ -3304,9 +3538,29 @@ const mcpCapabilityPreviews = {
   security: '> TOOL READY: hulubalang.scan\n> Ask the agent: “Check the staging surface for exposed ports.”\n> POLICY: scan target must be explicitly scoped'
 };
 
-function previewMcpCapability(name, tab) {
-  playClickSound();
-  document.getElementById('mcp-hero-output').textContent = mcpCapabilityPreviews[name];
+let mcpCycleIdx = 0;
+const mcpKeys = ['memory', 'browser', 'git', 'security'];
+let mcpAutoTimer = setInterval(() => {
+  mcpCycleIdx = (mcpCycleIdx + 1) % mcpKeys.length;
+  const tools = document.querySelectorAll('.mcp-hero-tool');
+  if (tools && tools[mcpCycleIdx]) {
+    previewMcpCapability(mcpKeys[mcpCycleIdx], tools[mcpCycleIdx], false);
+  }
+}, 4200);
+
+function previewMcpCapability(name, tab, userInitiated = true) {
+  if (userInitiated) {
+    clearInterval(mcpAutoTimer);
+    playClickSound();
+  }
+  const output = document.getElementById('mcp-hero-output');
+  if (output) {
+    output.style.opacity = '0.3';
+    setTimeout(() => {
+      output.textContent = mcpCapabilityPreviews[name];
+      output.style.opacity = '1';
+    }, 120);
+  }
   document.querySelectorAll('.mcp-hero-tool').forEach((item) => {
     item.classList.remove('active');
     item.setAttribute('aria-selected', 'false');
@@ -3324,6 +3578,25 @@ function switchMcpInstall(method, tab) {
   });
   tab.classList.add('active');
   tab.setAttribute('aria-selected', 'true');
+}
+
+const mcpWorkflowPreviews = {
+  intent: '> INTENT RECEIVED\n> “Summarize the open issues and propose the smallest safe fix.”\n> NEXT: recover project context before selecting a tool',
+  context: '> CONTEXT RECOVERED\n> RESOURCE: jebat://workflow\n> RESOURCE: jebat://tools\n> MEMORY: project conventions loaded\n> NEXT: classify the proposed action',
+  policy: '> POLICY CHECK\n> TOOL: github.list_issues (AUTO)\n> TOOL: file_patch (CONFIRM)\n> DANGEROUS ACTIONS: none\n> NEXT: wait for confirmation on the patch',
+  execute: '> MCP DISPATCH\n> METHOD: tools/call\n> NAME: github.list_issues\n> STATUS: ready for client execution\n> TRACE: approval boundary preserved',
+  remember: '> VERIFICATION\n> RESULT: issue summary returned\n> MEMORY: durable non-secret decision recorded\n> STATUS: workflow complete'
+};
+
+function showMcpWorkflow(stage, button) {
+  playClickSound();
+  document.getElementById('mcp-workflow-output').textContent = mcpWorkflowPreviews[stage];
+  document.querySelectorAll('.mcp-workflow-step').forEach((item) => {
+    item.classList.remove('active');
+    item.setAttribute('aria-pressed', 'false');
+  });
+  button.classList.add('active');
+  button.setAttribute('aria-pressed', 'true');
 }
 
 function copyMcpInstall(button) {
@@ -3400,13 +3673,33 @@ function runHeroCLI(type) {
 <span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.3.0 Operational</span><br/>
 > Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]<br/>
 > Ghost DB Vector Store: Connected (24,190 embeddings)<br/>
-> MCP Protocol Bus: 78 tools active`;
+> MCP Protocol Bus: tool registry available`;
   } else if (type === 'pentest') {
     box.innerHTML = `> $ jebat agent "Pentest localhost"<br/>
 <span style="color: var(--hermes-amber)">[Hulubalang Security Agent Dispatched]</span><br/>
 > Port scan: 80, 443, 8081 open.<br/>
 > Vulnerability check: 0 critical, 0 high.<br/>
 <span style="color: var(--hermes-pucuk)">✓ Security Audit Passed. Airgap boundaries active.</span>`;
+  } else if (type === 'mcp') {
+    box.innerHTML = `> $ jebat mcp list<br/>
+<span style="color: var(--hermes-amber)">[MCP Protocol Bus · Streamable-HTTP :8100]</span><br/>
+> Discovered: <strong>85 Active Sovereign Tools</strong><br/>
+> Ghost DB: 14 tools (ghost.sql, ghost.create, ghost.checkpoint)<br/>
+> Design & Copy: design_preflight, ui_critique, copy_audit<br/>
+<span style="color: var(--hermes-pucuk)">✓ Streamable HTTP & stdio transports operational.</span>`;
+  } else if (type === 'audit') {
+    box.innerHTML = `> $ jebat agi audit --all<br/>
+<span style="color: var(--hermes-amber)">[Autonomous Reflexion Gates Active]</span><br/>
+> Build Gate: AST parse validated (0 syntax errors)<br/>
+> Hallmark Design Gate: P5 H5 E5 S5 R5 V5 (Roman headers, 8 states)<br/>
+> Pawang Jualan Copy Gate: [Action Verb] + [What They Get] enforced<br/>
+<span style="color: var(--hermes-pucuk)">✓ Multi-domain quality sign-off confirmed.</span>`;
+  } else if (type === 'dream') {
+    box.innerHTML = `> $ jebat autoMimpi dream<br/>
+<span style="color: var(--hermes-amber)">[Nightly Memory Sleep Consolidation · 04:00 MYT]</span><br/>
+> Processed: 34 traces | Noise pruned: 0 | Patterns: 1<br/>
+> Embeddings: Synced to Ghost DB HNSW vector store<br/>
+<span style="color: var(--hermes-pucuk)">✓ "Errors are the Grid's way of showing where the wall is."</span>`;
   } else if (type === 'memory') {
     box.innerHTML = `> $ jebat memory query "NusaByte"<br/>
 <span style="color: var(--hermes-amber)">[Ghost DB Hybrid Vector Search]</span><br/>
@@ -3415,7 +3708,6 @@ function runHeroCLI(type) {
 <span style="color: var(--hermes-pucuk)">✓ Context retrieved from persistent store.</span>`;
   }
 }
-
 // Topology Node Highlight
 function highlightNode(name) {
   playClickSound();
