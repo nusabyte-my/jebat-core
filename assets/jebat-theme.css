@@ -1,0 +1,271 @@
+/**
+ * JEBAT Sovereign Design System — Unified Token Sheet v8.3
+ * Anchored in JEBAT Logo DNA: Electric Blue (#3B82F6) + Emerald (#10B981) + Deep Charcoal (#08090A)
+ * Engineered with Linear App precision tokens and Hallmark Anti-Slop discipline.
+ */
+
+:root {
+  /* ── 1. Canvas & Surface Hierarchy (Obsidian, Besi, Keluli) ── */
+  --bg-canvas:           #080a09;  /* Malam (Obsidian Black) */
+  --bg-surface:          #141816;  /* Besi (Forged Iron) */
+  --bg-card:             #1a1f1c;  /* Surface */
+  --bg-elevated:         #202723;  /* Surface Mid */
+  --bg-hover:            #29322d;  /* Surface Bright */
+  --bg-active:           #333d37;
+
+  /* ── 2. Brand Identity Tokens (Tembaga / Copper & Bara / Gold) ── */
+  --brand-copper:        #c97a40;  /* Tembaga (Burnished Copper) */
+  --brand-copper-hover:  #e1a06f;  /* Bright Amber/Copper */
+  --brand-copper-active: #b26832;
+  --brand-copper-dim:    rgba(201, 122, 64, 0.14);
+  --brand-copper-glow:   rgba(201, 122, 64, 0.28);
+
+  --brand-gold:          #d58a4a;  /* Bara (Molten Gold) */
+  --brand-gold-hover:    #e5a065;
+  --brand-gold-dim:      rgba(213, 138, 74, 0.14);
+  --brand-gold-glow:     rgba(213, 138, 74, 0.28);
+
+  --brand-pucuk:         #2f6f55;  /* Pucuk (Forest Emerald) */
+  --brand-pucuk-bright:  #3d8c6c;
+  --brand-pucuk-dim:     rgba(47, 111, 85, 0.18);
+
+  /* Aliases for backwards compatibility */
+  --brand-blue:          var(--brand-copper);
+  --brand-blue-hover:    var(--brand-copper-hover);
+  --brand-blue-glow:     var(--brand-copper-glow);
+  --brand-cyan:          #e1a06f;
+  --brand-emerald:       #3d8c6c;
+
+  /* ── 3. Semantic System ── */
+  --color-warning:       #d58a4a;
+  --color-warning-dim:   rgba(213, 138, 74, 0.14);
+  --color-danger:        #c96b57;
+  --color-danger-dim:    rgba(201, 107, 87, 0.14);
+  --color-info:          #c97a40;
+
+  /* ── 4. Typography Scale & High-Contrast Colors ── */
+  --text-primary:        #f0eadf;  /* Tulang (Warm Bone White) */
+  --text-secondary:      #99a39e;  /* Keluli (Steel Gray) */
+  --text-muted:          #99a39e;
+  --text-dim:            #66736d;
+  --text-inverse:        #080a09;
+  --text-inverse:        #08090a;
+
+  --font-display:        'Space Grotesk', 'Inter', -apple-system, sans-serif;
+  --font-body:           'Inter', -apple-system, sans-serif;
+  --font-mono:           'JetBrains Mono', 'Berkeley Mono', monospace;
+
+  /* ── 5. Borders & Rings ── */
+  --border-subtle:       rgba(255, 255, 255, 0.07);
+  --border-mid:          rgba(255, 255, 255, 0.12);
+  --border-bright:       rgba(255, 255, 255, 0.22);
+  --border-brand:        rgba(59, 130, 246, 0.35);
+  --border-emerald:      rgba(16, 185, 129, 0.35);
+
+  /* ── 6. Precision Radii (NeedMCP Linear Spec) ── */
+  --radius-xs:           3px;
+  --radius-sm:           4px;
+  --radius-md:           6px;
+  --radius-lg:           8px;
+  --radius-xl:           12px;
+  --radius-full:         9999px;
+
+  /* ── 7. Multi-Layer Shadows & Depth ── */
+  --shadow-level1:       0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-level2:       0 0 0 1px var(--border-subtle), 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-level3:       0 0 0 1px var(--border-mid), 0 8px 24px rgba(0, 0, 0, 0.65);
+  --shadow-glow-blue:    0 0 20px var(--brand-blue-glow);
+  --shadow-glow-emerald: 0 0 20px var(--brand-emerald-glow);
+
+  /* ── 8. Transitions (Shadcn Animate Spec) ── */
+  --transition-fast:     120ms cubic-bezier(0.2, 0.6, 0.25, 1);
+  --transition-normal:   180ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --transition-smooth:   280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL RESETS & ATMOSPHERIC GRID BACKGROUND
+   ═══════════════════════════════════════════════════════════════════ */
+
+body {
+  background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -15%, rgba(201, 122, 64, 0.25) 0%, rgba(213, 138, 74, 0.12) 40%, transparent 75%),
+    linear-gradient(to right, rgba(240, 234, 223, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(240, 234, 223, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-position: center top, center center, center center;
+  background-repeat: no-repeat, repeat, repeat;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hard Hallmark Rule: Headers must be roman, never italic */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-style: normal !important;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HALLMARK 8-STATE INTERACTIVE BUTTON SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */
+
+.jebat-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--brand-blue);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+.jebat-btn-primary:hover {
+  background-color: var(--brand-blue-hover);
+  box-shadow: var(--shadow-glow-blue), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.jebat-btn-primary:focus-visible {
+  outline: 2px solid var(--brand-cyan);
+  outline-offset: 2px;
+}
+
+.jebat-btn-primary:active {
+  background-color: var(--brand-blue-active);
+  transform: translateY(1px);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.jebat-btn-primary:disabled,
+.jebat-btn-primary[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.jebat-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-mid);
+  box-shadow: var(--shadow-level1);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+.jebat-btn-secondary:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-bright);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.jebat-btn-secondary:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+.jebat-btn-secondary:active {
+  background-color: var(--bg-active);
+  transform: translateY(1px);
+}
+
+.jebat-btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PRECISION BADGES & PILLS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.jebat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.jebat-badge-blue {
+  background: var(--brand-blue-dim);
+  color: var(--brand-blue-hover);
+  border: 1px solid var(--border-brand);
+}
+
+.jebat-badge-emerald {
+  background: var(--brand-emerald-dim);
+  color: var(--brand-emerald-hover);
+  border: 1px solid var(--border-emerald);
+}
+
+.jebat-badge-cyan {
+  background: var(--brand-cyan-dim);
+  color: var(--brand-cyan);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ELEVATION CARD SYSTEM (Linear Layering)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.jebat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-level2);
+  padding: 24px;
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.jebat-card:hover {
+  border-color: var(--border-mid);
+  box-shadow: var(--shadow-level3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HALLMARK AGI SCORECARD STAMP
+   ═══════════════════════════════════════════════════════════════════ */
+
+.hallmark-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid var(--border-emerald);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--brand-emerald);
+}
