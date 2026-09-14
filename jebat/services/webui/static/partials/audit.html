@@ -1,0 +1,148 @@
+<!-- AGI Multi-Domain Audit — Hallmark Design & Pawang Jualan Copywriting -->
+<style>
+  .audit-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  @media (max-width: 900px) { .audit-layout { grid-template-columns: 1fr; } }
+  
+  .audit-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
+  .audit-panel h3 { font-size: 16px; margin-bottom: 8px; color: var(--text-bright); display: flex; align-items: center; gap: 8px; }
+  .audit-panel p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  
+  .audit-textarea { width: 100%; height: 160px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); padding: 12px; font-family: var(--font-mono); font-size: 12px; resize: vertical; outline: none; margin-bottom: 16px; transition: border-color var(--transition-fast); }
+  .audit-textarea:focus { border-color: var(--cyan); }
+  
+  .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .score-box { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; text-align: center; }
+  .score-box .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .score-box .val { font-size: 20px; font-weight: 700; font-family: var(--font-mono); color: var(--green); }
+  
+  .states-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-top: 12px; }
+  .state-badge { padding: 6px 10px; border-radius: var(--radius-sm); font-size: 11px; font-family: var(--font-mono); display: flex; align-items: center; gap: 6px; }
+  .state-badge.covered { background: rgba(34, 197, 94, 0.12); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+  .state-badge.missing { background: rgba(239, 68, 68, 0.10); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+  
+  .cta-card { background: var(--bg-elevated); border: 1px solid var(--border-focus); border-radius: var(--radius-md); padding: 16px; margin-top: 12px; }
+  .stamp-box { background: rgba(16, 185, 129, 0.08); border: 1px dashed var(--green); border-radius: var(--radius-sm); padding: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--green); word-break: break-all; margin-top: 12px; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">AGI Multi-Domain Audit</h1>
+    <p class="page-desc">Hallmark 6-Axis Design Critique & Pawang Jualan Sales Copywriting Review</p>
+  </div>
+  <button class="btn btn-primary" onclick="runAGIAudit()" id="audit-run-btn">⚡ Run Sovereign Audit</button>
+</div>
+
+<div class="audit-layout">
+  <!-- Input Column -->
+  <div class="audit-panel">
+    <h3>🎨 UI/UX Component Markup</h3>
+    <p>Paste HTML, JSX, or Tailwind markup to audit against Hallmark anti-slop rules.</p>
+    <textarea class="audit-textarea" id="audit-markup" placeholder="<button class='bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50'>Submit</button>"><button class="bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50">Submit</button></textarea>
+    
+    <h3>✍️ Sales Copywriting Text</h3>
+    <p>Paste landing page headlines, CTAs, or feature copy to audit conversion strength.</p>
+    <textarea class="audit-textarea" id="audit-copy" placeholder="Click here to delve into our revolutionary platform. 99.9% guaranteed satisfaction.">Click here to delve into our revolutionary cutting-edge platform. 99.9% guaranteed satisfaction.</textarea>
+  </div>
+
+  <!-- Output Column -->
+  <div class="audit-panel" id="audit-results-panel">
+    <h3>🎯 Audit Scorecard</h3>
+    <p id="audit-status-msg">Click "Run Sovereign Audit" to evaluate design and copy.</p>
+
+    <!-- Hallmark Design Scores -->
+    <div id="design-results" style="display:none; margin-bottom:20px;">
+      <div style="font-weight:600; font-size:13px; color:var(--text-bright); margin-bottom:8px;">Hallmark Anti-Slop 6-Axis Score:</div>
+      <div class="score-grid">
+        <div class="score-box"><div class="label">Philosophy</div><div class="val" id="sc-phi">—</div></div>
+        <div class="score-box"><div class="label">Hierarchy</div><div class="val" id="sc-hie">—</div></div>
+        <div class="score-box"><div class="label">Execution</div><div class="val" id="sc-exe">—</div></div>
+        <div class="score-box"><div class="label">Specificity</div><div class="val" id="sc-spe">—</div></div>
+        <div class="score-box"><div class="label">Restraint</div><div class="val" id="sc-res">—</div></div>
+        <div class="score-box"><div class="label">Variety</div><div class="val" id="sc-var">—</div></div>
+      </div>
+      
+      <div class="stamp-box" id="audit-stamp">/* Hallmark Stamp */</div>
+      
+      <div style="font-weight:600; font-size:13px; color:var(--text-bright); margin:16px 0 8px;">8-State Interactive Discipline:</div>
+      <div class="states-grid" id="states-container"></div>
+    </div>
+
+    <!-- Copywriting Results -->
+    <div id="copy-results" style="display:none;">
+      <div style="font-weight:600; font-size:13px; color:var(--text-bright); margin-bottom:8px;">Pawang Jualan Copywriting Audit:</div>
+      <div id="copy-violations" style="font-size:12px; color:var(--red); line-height:1.6;"></div>
+      
+      <div class="cta-card">
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Transformed High-Converting CTA:</div>
+        <div style="font-size:15px; font-weight:700; color:var(--cyan); font-family:var(--font-display);" id="transformed-cta-text">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function runAGIAudit() {
+  const btn = document.getElementById('audit-run-btn');
+  const markup = document.getElementById('audit-markup').value;
+  const copyText = document.getElementById('audit-copy').value;
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Evaluating...';
+  
+  try {
+    const res = await fetch('/webui/api/audit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ markup: markup, copy_text: copyText })
+    });
+    const data = await res.json();
+    
+    document.getElementById('audit-status-msg').textContent = 'Audit complete. Review domain evaluation below.';
+    
+    // 1. Render Design Scores
+    if (data.design && data.design.critique) {
+      document.getElementById('design-results').style.display = 'block';
+      const sc = data.design.critique.scores;
+      document.getElementById('sc-phi').textContent = sc.Philosophy + '/5';
+      document.getElementById('sc-hie').textContent = sc.Hierarchy + '/5';
+      document.getElementById('sc-exe').textContent = sc.Execution + '/5';
+      document.getElementById('sc-spe').textContent = sc.Specificity + '/5';
+      document.getElementById('sc-res').textContent = sc.Restraint + '/5';
+      document.getElementById('sc-var').textContent = sc.Variety + '/5';
+      document.getElementById('audit-stamp').textContent = data.design.critique.critique_stamp;
+      
+      // Render states
+      const st = data.design.interaction_states.states;
+      const container = document.getElementById('states-container');
+      container.innerHTML = '';
+      for (const [sName, covered] of Object.entries(st)) {
+        const badge = document.createElement('div');
+        badge.className = 'state-badge ' + (covered ? 'covered' : 'missing');
+        badge.textContent = (covered ? '✔ ' : '✗ ') + sName;
+        container.appendChild(badge);
+      }
+    }
+    
+    // 2. Render Copy Results
+    if (data.copywriting && data.copywriting.audit) {
+      document.getElementById('copy-results').style.display = 'block';
+      const viols = data.copywriting.audit.violations || [];
+      const vBox = document.getElementById('copy-violations');
+      if (viols.length > 0) {
+        vBox.innerHTML = viols.map(v => '• ' + v).join('<br/>');
+      } else {
+        vBox.innerHTML = '<span style=\"color:var(--green)\">✔ Copy is clean — zero generic CTAs or AI buzzwords found.</span>';
+      }
+      
+      if (data.copywriting.cta_recommendation) {
+        document.getElementById('transformed-cta-text').textContent = data.copywriting.cta_recommendation.primary_recommendation;
+      }
+    }
+  } catch (e) {
+    document.getElementById('audit-status-msg').textContent = 'Audit failed: ' + e;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ Run Sovereign Audit';
+  }
+}
+</script>
