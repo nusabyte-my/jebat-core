@@ -455,34 +455,52 @@ class UltraLoop:
                 cognition = context.outputs.get("cognition", {})
                 action = context.outputs.get("action", {})
 
-                cycle_summary = (
-                    f"Cycle {context.cycle_id}: "
-                    f"Gathered {perception.get('messages_gathered', 0)} messages, "
-                    f"Made {cognition.get('decisions_made', 0)} decisions, "
-                    f"Executed {action.get('tasks_executed', 0)} tasks"
-                )
+                messages_gathered = perception.get("messages_gathered", 0)
+                decisions_made = cognition.get("decisions_made", 0)
+                tasks_executed = action.get("tasks_executed", 0)
 
-                tags = {"ultra_loop", f"cycle:{context.cycle_id}"}
-                # Add agent tags
-                for agent in cognition.get("agents_selected", []):
-                    if agent:
-                        tags.add(f"agent:{agent}")
+                # Gate on WORK, not on polling. `messages_gathered` is a
+                # constant 5 on an idle daemon (it counts poll attempts, not
+                # inbound traffic), so including it still encoded a trace per
+                # tick. An idle cycle made 0 decisions and executed 0 tasks;
+                # that is the only reliable definition of "nothing happened".
+                #
+                # Encoding one per tick made the store 95% heartbeat: 1664 of
+                # 1747 traces (2.8 MB), each with a unique `cycle:` tag, so
+                # every dream re-processed all of them and still extracted 0
+                # patterns. Idle cycles remain in the `ultra_loop_cycles` DB
+                # table for telemetry; they do not belong in semantic memory.
+                if decisions_made or tasks_executed:
+                    cycle_summary = (
+                        f"Cycle {context.cycle_id}: "
+                        f"Gathered {messages_gathered} messages, "
+                        f"Made {decisions_made} decisions, "
+                        f"Executed {tasks_executed} tasks"
+                    )
 
-                await enhanced.encode(
-                    content=cycle_summary,
-                    memory_type=enhanced.MemoryType.EPISODIC
-                    if hasattr(enhanced, "MemoryType")
-                    else __import__("jebat.features.memory", fromlist=["MemoryType"]).MemoryType.EPISODIC,
-                    tags=tags,
-                    importance=0.4,
-                    context={
-                        "cycle_id": context.cycle_id,
-                        "messages": perception.get("messages_gathered", 0),
-                        "decisions": cognition.get("decisions_made", 0),
-                        "tasks": action.get("tasks_executed", 0),
-                    },
-                )
-                memory_result["memories_stored"] += 1
+                    # No per-cycle tag: cycle_id lives in `context` where it is
+                    # queryable without minting a new tag namespace per tick.
+                    tags = {"ultra_loop"}
+                    # Add agent tags
+                    for agent in cognition.get("agents_selected", []):
+                        if agent:
+                            tags.add(f"agent:{agent}")
+
+                    await enhanced.encode(
+                        content=cycle_summary,
+                        memory_type=enhanced.MemoryType.EPISODIC
+                        if hasattr(enhanced, "MemoryType")
+                        else __import__("jebat.features.memory", fromlist=["MemoryType"]).MemoryType.EPISODIC,
+                        tags=tags,
+                        importance=0.4,
+                        context={
+                            "cycle_id": context.cycle_id,
+                            "messages": messages_gathered,
+                            "decisions": decisions_made,
+                            "tasks": tasks_executed,
+                        },
+                    )
+                    memory_result["memories_stored"] += 1
             except Exception as e:
                 logger.warning(f"Memory encoding failed: {e}")
 

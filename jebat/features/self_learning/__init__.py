@@ -14,7 +14,15 @@ from .self_learning import (
     DEFAULT_ALERT_RULES,
 )
 
-from .memory import (
+# Memory classes are defined in jebat.features.memory (the canonical
+# implementation). This package used to carry a byte-for-byte fork in
+# `.memory` that shadowed it: two distinct EnhancedMemorySystem classes with
+# two independent class hierarchies for the same store. The fork had no
+# symbols of its own, was imported by nothing, and had drifted — it still
+# carried the unreachable-0.8 pattern predicate, the strength-ratcheting
+# decay(), and the empty-concept generalization bug that were fixed in the
+# canonical module. Re-exported here so existing import paths keep working.
+from ..memory import (
     EnhancedMemorySystem,
     MemoryType,
     MemoryPhase,

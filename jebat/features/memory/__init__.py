@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import random
 import uuid
 from dataclasses import dataclass, field
@@ -25,6 +26,23 @@ from collections import defaultdict
 from collections import deque
 
 import numpy as np
+
+
+# ── Bookkeeping tags ────────────────────────────────────────────────
+# Tags that describe the memory PIPELINE rather than its subject matter.
+# They group unrelated memories (every trace carries "project"), so they
+# must never be treated as a recurring theme or a learning domain.
+BOOKKEEPING_TAGS: frozenset = frozenset({"project", "ultra_loop", "cycle"})
+
+
+def is_bookkeeping_tag(tag: str) -> bool:
+    """True for pipeline/metadata tags, not subject-matter tags."""
+    return (
+        tag in BOOKKEEPING_TAGS
+        or tag.startswith("project:")
+        or tag.startswith("category:")
+        or tag.startswith("cycle:")
+    )
 
 
 class MemoryType(Enum):
@@ -160,9 +178,22 @@ class MemoryTrace:
         self.last_reinforced = datetime.now(timezone.utc)
 
     def decay(self):
-        """Apply decay (called periodically)"""
+        """Apply decay (called periodically). This can only ever LOWER strength.
+
+        `calculate_current_strength()` is a *reported* value: it multiplies by a
+        recency boost (x1.5 under a day, x1.2 under a week) and an amplification
+        term (1 + reinforcement * 0.5). Writing that value back made a forgetting
+        step a NET STRENGTHENER whenever the trace had been touched recently —
+        and `retrieve()` refreshes `last_accessed` on every hit, so real traces
+        were pinned at 1.0 forever and `_prune_weak_memories()` (threshold 0.15)
+        was unreachable. Measured on the live store: 30 of 85 traces would have
+        been *raised* to 1.0 by a decay pass, none could ever fall.
+
+        Clamping to the stored value keeps the boost meaningful for reporting
+        and retrieval ranking without letting the forgetting curve run backwards.
+        """
         current_strength = self.calculate_current_strength()
-        self.strength = current_strength
+        self.strength = min(self.strength, current_strength)
 
     def link_to(self, trace_id: str):
         """Create associative link"""
@@ -267,7 +298,15 @@ class EnhancedMemorySystem:
         
         # Pattern extraction
         self.pattern_min_occurrences = 3
-        self.pattern_similarity_threshold = 0.8
+        # Character n-gram Jaccard. Calibrated on the live store (2026-09-19):
+        # at 0.20 the same-topic clusters (Erawan convention/gotcha/PM2 groups)
+        # separate cleanly into ~3-member themes; below ~0.18 unrelated traces
+        # start chaining through a few shotgun-similar pairs, above ~0.25 the
+        # genuine themes fall apart. The previous 0.8 was never reachable —
+        # real multi-sentence traces score 0.01-0.34 pairwise.
+        self.pattern_similarity_threshold = self.config.get(
+            "pattern_similarity_threshold", 0.20
+        )
         self.extracted_patterns: Dict[str, Dict] = {}
         
         # Generalization
@@ -324,13 +363,23 @@ class EnhancedMemorySystem:
         memory_type = coerce_memory_type(memory_type)
         normalized_content = content.strip()
         normalized_context = context or {}
+        # Compare on the CONTENT identity, not raw context equality: a caller
+        # that passes a per-write token (e.g. MemoryManager's `legacy_id`) must
+        # still dedup. Raw equality turned every re-store into a new trace.
+        candidate = MemoryTrace(
+            memory_type=memory_type,
+            content=normalized_content,
+            context=normalized_context,
+        )
+        candidate_key = self._identity_key(candidate)
         for existing in self.traces.values():
-            if (
-                existing.memory_type == memory_type
-                and existing.content.strip().casefold() == normalized_content.casefold()
-                and existing.context == normalized_context
-            ):
+            if self._identity_key(existing) == candidate_key:
                 return existing
+        # Drop volatile write-metadata before it is persisted.
+        normalized_context = {
+            k: v for k, v in normalized_context.items()
+            if k not in self.VOLATILE_CONTEXT_KEYS
+        }
         trace = MemoryTrace(
             memory_type=memory_type,
             content=normalized_content,
@@ -481,10 +530,21 @@ class EnhancedMemorySystem:
                 to_consolidate.append(trace)
 
         # 2. Strengthen important memories
+        #
+        # Reinforcing a trace calls trace.reinforce(), which sets
+        # last_accessed = now. That is correct for a memory that was
+        # RECALLED — but this loop touches every trace unconditionally, so
+        # each dream reset the decay clock and bumped access_count, pinning
+        # strength at 1.0 and making _prune_weak_memories() unreachable
+        # (nothing could ever fall below min_strength_threshold). A trace
+        # that is consolidated purely because a scheduler ran must not be
+        # treated as "recalled": leave last_accessed alone so the forgetting
+        # curve can actually run.
+        now = datetime.now(timezone.utc)
         for trace in to_consolidate:
             if trace.calculate_current_strength() > 0.4:
-                trace.reinforce(0.15)
-                trace.last_consolidated = datetime.now(timezone.utc)
+                trace.strength = min(1.0, trace.strength + 0.15)
+                trace.last_consolidated = now
                 trace.consolidation_count += 1
                 result.strengthened_count += 1
             result.consolidated_count += 1
@@ -507,84 +567,220 @@ class EnhancedMemorySystem:
         return result
 
     async def _extract_patterns(self) -> List[str]:
-        """Extract recurring patterns from memories"""
-        patterns = []
-        
-        # Group by tags
-        tag_groups = defaultdict(list)
-        for trace in self.traces.values():
-            for tag in trace.tags:
-                tag_groups[tag].append(trace)
+        """Extract recurring themes by clustering trace CONTENT.
 
-        for tag, traces in tag_groups.items():
-            if len(traces) >= self.pattern_min_occurrences:
-                # Check similarity
-                contents = [t.content for t in traces]
-                if self._are_similar(contents):
-                    pattern = self._extract_pattern(tag, traces)
-                    if pattern:
-                        patterns.append(pattern)
-                        self.extracted_patterns[pattern] = {
-                            "tag": tag,
-                            "count": len(traces),
-                            "traces": [t.trace_id for t in traces],
-                            "extracted_at": datetime.now(timezone.utc).isoformat(),
-                        }
+        The previous implementation required `jaccard(intersection of ALL word
+        sets, union of ALL word sets) > 0.8` inside a tag group. Measured on the
+        live store, that predicate is unreachable: the all-vs-all form is bounded
+        above by the minimum pairwise similarity, and real multi-sentence traces
+        (per-gotcha reports, deploy logs) score 0.01-0.34 pairwise. `patterns`
+        was therefore structurally guaranteed to stay empty.
+
+        Replacement: character n-gram similarity over content, connected
+        components at `pattern_similarity_threshold`, then trim members whose
+        MEAN similarity to the rest is below threshold (single-linkage chains
+        unrelated traces through a few shotgun-similar pairs). A component of
+        >= `pattern_min_occurrences` survivors is a recurring theme.
+
+        Grouping is by content, not by tag: the bookkeeping tags every trace
+        carries ("project", "project:X", "category:Y") group unrelated memories,
+        so they can label a cluster but must not define one.
+        """
+        patterns: List[str] = []
+        traces = list(self.traces.values())
+        if len(traces) < self.pattern_min_occurrences:
+            return patterns
+
+        for cluster in self._cluster_similar(traces):
+            label = self._pattern_label(cluster)
+            if not label:
+                continue
+            pattern = self._extract_pattern(label, cluster)
+            if not pattern:
+                continue
+            patterns.append(pattern)
+            self.extracted_patterns[pattern] = {
+                "tag": label,
+                "count": len(cluster),
+                "traces": [t.trace_id for t in cluster],
+                "extracted_at": datetime.now(timezone.utc).isoformat(),
+            }
+            for t in cluster:
+                t.pattern_extracted = True
 
         return patterns
+
+    def _cluster_similar(self, traces: List[MemoryTrace]) -> List[List[MemoryTrace]]:
+        """Connected components at the similarity threshold, chain-trimmed."""
+        n = len(traces)
+        threshold = self.pattern_similarity_threshold
+        adj: Dict[int, Set[int]] = defaultdict(set)
+        for i in range(n):
+            for j in range(i + 1, n):
+                if self._similarity(traces[i].content, traces[j].content) >= threshold:
+                    adj[i].add(j)
+                    adj[j].add(i)
+
+        seen: Set[int] = set()
+        clusters: List[List[MemoryTrace]] = []
+        for start in range(n):
+            if start in seen or not adj[start]:
+                continue
+            stack = [start]
+            component: List[int] = []
+            while stack:
+                node = stack.pop()
+                if node in seen:
+                    continue
+                seen.add(node)
+                component.append(node)
+                stack.extend(adj[node] - seen)
+
+            # Trim until every member clears the threshold against the MEAN of
+            # the others. Drops the dissimilar tail that single-linkage drags in.
+            changed = True
+            while changed and len(component) >= self.pattern_min_occurrences:
+                changed = False
+                for member in list(component):
+                    others = [o for o in component if o != member]
+                    if not others:
+                        component.remove(member)
+                        changed = True
+                        break
+                    mean = sum(
+                        self._similarity(traces[member].content, traces[o].content)
+                        for o in others
+                    ) / len(others)
+                    if mean < threshold:
+                        component.remove(member)
+                        changed = True
+                        break
+
+            if len(component) >= self.pattern_min_occurrences:
+                clusters.append([traces[i] for i in component])
+
+        return clusters
+
+    @staticmethod
+    def _pattern_label(cluster: List[MemoryTrace]) -> str:
+        """Tag used to name a pattern.
+
+        Prefer the subject-matter tags the cluster shares. Traces that carry
+        only bookkeeping tags still deserve a name — falling back to them beats
+        emitting an unlabelled `Pattern: ` (the degenerate row class the
+        2026-09-19 generalization fix removed).
+        """
+        counts: Dict[str, int] = defaultdict(int)
+        for t in cluster:
+            for tag in t.tags:
+                counts[tag] += 1
+        # Tags must be shared by the whole cluster to describe it.
+        shared = [tag for tag, c in counts.items() if c == len(cluster)]
+        subject = sorted(t for t in shared if not is_bookkeeping_tag(t))
+        if subject:
+            return ", ".join(subject[:3])
+        # Fall back to the pipeline tags, minus the ones every trace carries.
+        fallback = sorted(
+            t for t in shared if t not in ("project", "ultra_loop") and not t.startswith("cycle:")
+        )
+        return ", ".join(fallback[:3])
+
+    def _similarity(self, text_a: str, text_b: str) -> float:
+        """Similarity used for pattern clustering (delegates to _text_similarity)."""
+        return self._text_similarity(text_a, text_b)
 
     def _are_similar(self, contents: List[str]) -> bool:
         """Check if contents are similar enough for pattern"""
         if len(contents) < 2:
             return False
-        # Simple similarity check
-        # In practice, would use embeddings
-        words_sets = [set(c.lower().split()) for c in contents]
-        common = set.intersection(*words_sets)
-        union = set.union(*words_sets)
-        return len(common) / len(union) > self.pattern_similarity_threshold if union else False
+        # Mean pairwise similarity rather than the all-vs-all intersection:
+        # the latter is bounded by min(pairwise) and cannot pass any useful
+        # threshold on real multi-sentence traces.
+        pairs = [
+            self._similarity(a, b)
+            for i, a in enumerate(contents)
+            for b in contents[i + 1 :]
+        ]
+        if not pairs:
+            return False
+        return (sum(pairs) / len(pairs)) >= self.pattern_similarity_threshold
 
     def _extract_pattern(self, tag: str, traces: List[MemoryTrace]) -> str:
         """Extract pattern description from similar traces"""
-        # Simple extraction - in practice would use LLM
-        common_words = set.intersection(*[set(t.content.lower().split()) for t in traces])
-        return f"Pattern: {tag} - recurring themes: {', '.join(list(common_words)[:5])}"
+        # Rank words by how much of the cluster uses them. The previous
+        # implementation intersected the word sets of EVERY trace, which is
+        # bounded by the rarest word in the cluster — on real multi-sentence
+        # traces that intersection is empty, so every pattern came out as
+        # "recurring themes: " with nothing after it.
+        counts: Dict[str, int] = defaultdict(int)
+        for t in traces:
+            for word in set(t.content.lower().split()):
+                counts[word] += 1
+        width = len(traces)
+        # Only words the whole cluster shares describe the cluster.
+        shared = sorted(
+            (w for w, c in counts.items() if c == width),
+            key=lambda w: (-counts[w], -len(w), w),
+        )
+        themes = ", ".join(shared[:5]) if shared else "content cluster"
+        return f"Pattern: {tag} - recurring themes: {themes}"
 
     async def _extract_generalizations(self) -> List[str]:
         """Extract generalizations from specific memories"""
         generalizations = []
-        
-        # Group by similarity and extract commonalities
-        episodic = [t for t in self.traces.values() if t.memory_type == MemoryType.EPISODIC]
-        
-        # Group similar episodic memories
-        groups = defaultdict(list)
-        for trace in episodic:
-            key = tuple(sorted(trace.tags))[:3] if trace.tags else "untagged"
-            groups[key].append(trace)
 
-        for key, traces in groups.items():
-            if len(traces) >= 3:
-                # Extract common structure
-                gen = self._create_generalization(traces)
-                if gen:
-                    self.generalizations[gen["id"]] = gen
-                    generalizations.append(gen["concept"])
+        # Group by CONTENT similarity, not by an exact tag-tuple key.
+        # The old key was `tuple(sorted(tags))[:3]`, which is an identity
+        # comparison: two episodes describing the same theme but carrying
+        # different tag sets land in different groups, and untagged episodes
+        # all collapse into one "untagged" group where intersection is empty.
+        # Either way no group ever reached the size threshold with shared
+        # subject matter.
+        episodic = [t for t in self.traces.values() if t.memory_type == MemoryType.EPISODIC]
+        if len(episodic) < 3:
+            return generalizations
+
+        for cluster in self._cluster_similar(episodic):
+            gen = self._create_generalization(cluster)
+            if gen:
+                self.generalizations[gen["id"]] = gen
+                generalizations.append(gen["concept"])
 
         return generalizations
 
     def _create_generalization(self, traces: List[MemoryTrace]) -> Optional[Dict]:
         """Create a generalized semantic memory from episodes"""
-        if len(traces) < 3:
+        if len(traces) < self.pattern_min_occurrences:
             return None
 
-        # Find common structure
-        common_tags = set.intersection(*[set(t.tags) for t in traces]) if traces[0].tags else set()
-        
+        # Common subject-matter tags across ALL traces. The previous guard was
+        # `set.intersection(*[...]) if traces[0].tags else set()` — `tags` is
+        # a set, so `if traces[0].tags` is truthy whenever ANY tag exists, and
+        # then intersection often yields the empty set for heterogeneous
+        # traces. That produced 178 generalizations all named exactly
+        # "Generalized: " (empty concept) and carries no retrievable meaning.
+        tagsets = [set(t.tags) for t in traces if t.tags]
+        common_tags = set.intersection(*tagsets) if tagsets else set()
+        concept_tags = sorted(t for t in common_tags if not is_bookkeeping_tag(t))
+
+        # Clusters are formed on content, so traces that carry only pipeline
+        # tags are still a real theme — name them from their shared tags and
+        # fall back to the cluster label rather than dropping the concept.
+        if not concept_tags:
+            concept_tags = sorted(
+                t for t in common_tags
+                if t not in ("project", "ultra_loop") and not t.startswith("cycle:")
+            )
+        if not concept_tags:
+            label = self._pattern_label(traces)
+            if not label:
+                return None
+            concept_tags = [label]
+
         gen_id = f"gen_{uuid.uuid4().hex[:8]}"
         return {
             "id": gen_id,
-            "concept": f"Generalized: {', '.join(list(common_tags)[:3])}",
+            "concept": f"Generalized: {', '.join(concept_tags[:3])}",
             "source_traces": [t.trace_id for t in traces],
             "confidence": min(1.0, len(traces) * 0.15),
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -875,11 +1071,147 @@ class EnhancedMemorySystem:
                 "concept_weights": dict(self.concept_weights),
                 "concept_graph": {k: list(v) for k, v in self.concept_graph.items()},
             }
-            with open(self.traces_file, "w", encoding="utf-8") as f:
+            # Atomic write. A crash or a concurrent reader mid-`json.dump` left a
+            # truncated file, which `_load` then rejected — losing the store to a
+            # parse error rather than to data loss. Write a sibling temp file and
+            # `os.replace` (atomic on both POSIX and Windows), matching the
+            # discipline the dream-state writer already uses.
+            tmp = self.traces_file.with_suffix(".json.tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(data, f, default=str, indent=2)
+            os.replace(tmp, self.traces_file)
         except Exception as e:
             print(f"Memory save error: {e}")
             raise
+
+    def _prune_idle_loop_traces(self) -> int:
+        """Drop ultra_loop heartbeat traces that carry no work (self-healing).
+
+        `ultra_loop.memory_phase` used to encode one episodic trace per cycle
+        with a unique `cycle:` tag, regardless of whether the cycle did
+        anything. A daemon polls far more often than it acts, so this filled
+        the store with ~95% heartbeats ("Made 0 decisions, Executed 0 tasks")
+        and starved pattern/generalization extraction. The writer is fixed;
+        this heals stores written before that fix.
+
+        A trace is dropped only when ALL of these hold:
+          * it is tagged `ultra_loop`
+          * its own context reports 0 decisions AND 0 tasks
+          * nothing OUTSIDE the ultra_loop set references it
+
+        Idempotent: a clean store is a no-op.
+        """
+        heartbeat_ids = {
+            tid for tid, t in self.traces.items()
+            if "ultra_loop" in t.tags
+            and not (t.context or {}).get("decisions")
+            and not (t.context or {}).get("tasks")
+        }
+        if not heartbeat_ids:
+            return 0
+
+        # Never drop something a real trace or a generalization points at.
+        referenced: Set[str] = set()
+        for tid, t in self.traces.items():
+            if tid in heartbeat_ids:
+                continue
+            for linked in t.linked_traces:
+                if linked in heartbeat_ids:
+                    referenced.add(linked)
+            if t.source_trace in heartbeat_ids:
+                referenced.add(t.source_trace)
+        for gen in self.generalizations.values():
+            for src in gen.get("source_traces", []):
+                if src in heartbeat_ids:
+                    referenced.add(src)
+
+        to_drop = heartbeat_ids - referenced
+        for tid in to_drop:
+            self._remove_trace(tid)
+        return len(to_drop)
+
+    def _drop_empty_generalizations(self) -> int:
+        """Drop generalizations whose concept is empty (self-healing).
+
+        The old `_create_generalization` could emit `concept="Generalized: "`
+        with no tags — 178 such rows were found in the wild, carrying no
+        retrievable meaning.
+        """
+        degenerate = [
+            gid for gid, gen in self.generalizations.items()
+            if not (gen.get("concept") or "").replace("Generalized:", "").strip()
+        ]
+        for gid in degenerate:
+            del self.generalizations[gid]
+        return len(degenerate)
+
+    #: Context keys that identify a WRITE rather than the memory's content.
+    #: `legacy_id` is `mem_<timestamp>` — unique per call — so treating it as
+    #: part of a trace's identity made every re-store a new trace.
+    VOLATILE_CONTEXT_KEYS: frozenset = frozenset({"legacy_id"})
+
+    def _identity_key(self, trace: MemoryTrace) -> Tuple:
+        """Key that identifies a trace's content, ignoring write metadata."""
+        stable = {
+            k: v for k, v in (trace.context or {}).items()
+            if k not in self.VOLATILE_CONTEXT_KEYS
+        }
+        return (
+            trace.memory_type,
+            trace.content.strip().casefold(),
+            json.dumps(stable, sort_keys=True, default=str),
+        )
+
+    def _merge_duplicate_traces(self) -> int:
+        """Collapse traces identical in (type, content, stable context).
+
+        `MemoryManager.store` used to pass a per-call unique `legacy_id` inside
+        `context`, which defeated `encode()`'s dedup AND made the traces
+        unmergeable by a plain context comparison. The result was one trace per
+        call for the same text — 17+ identical "Learned to optimize database
+        queries with indexes" rows in the live store. They inflate the store,
+        and because clustering counts members, they manufacture a fake
+        19-member "pattern" out of one repeated line.
+
+        Keeps the strongest copy, merges access counts, folds the extras'
+        associations onto the survivor, and strips the volatile key so the
+        duplicates cannot recur. Idempotent.
+        """
+        groups: Dict[Tuple, List[str]] = defaultdict(list)
+        for tid, t in self.traces.items():
+            groups[self._identity_key(t)].append(tid)
+
+        merged = 0
+        for ids in groups.values():
+            if len(ids) < 2:
+                continue
+            # Survivor: strongest, then most-accessed, then oldest (stable).
+            ids.sort(key=lambda i: (-self.traces[i].strength, -self.traces[i].access_count, self.traces[i].created_at))
+            keep = self.traces[ids[0]]
+            for tid in ids[1:]:
+                dup = self.traces[tid]
+                keep.access_count += dup.access_count
+                keep.consolidation_count = max(keep.consolidation_count, dup.consolidation_count)
+                keep.importance = max(keep.importance, dup.importance)
+                keep.strength = max(keep.strength, dup.strength)
+                keep.linked_traces |= dup.linked_traces
+                keep.linked_traces.discard(tid)
+                self._remove_trace(tid)
+                merged += 1
+            keep.context = {
+                k: v for k, v in (keep.context or {}).items()
+                if k not in self.VOLATILE_CONTEXT_KEYS
+            }
+
+        # Point surviving links at the survivors.
+        if merged:
+            live = set(self.traces)
+            for t in self.traces.values():
+                t.linked_traces &= live
+                if t.source_trace and t.source_trace not in live:
+                    t.source_trace = None
+
+        return merged
 
     def _load(self):
         try:
@@ -912,6 +1244,23 @@ class EnhancedMemorySystem:
                 self.generalizations = data.get("generalizations", {})
                 self.concept_weights = defaultdict(float, data.get("concept_weights", {}))
                 self.concept_graph = defaultdict(set, {k: set(v) for k, v in data.get("concept_graph", {}).items()})
+
+                # One-time self-healing of stores written before the
+                # ultra_loop heartbeat, empty-generalization, and
+                # duplicate-trace fixes. Idempotent; persists only when it
+                # actually changed things.
+                heal_before = len(self.traces)
+                healed_gen = self._drop_empty_generalizations()
+                healed_dupes = self._merge_duplicate_traces()
+                healed_traces = self._prune_idle_loop_traces()
+                if healed_traces or healed_gen or healed_dupes:
+                    print(
+                        f"Memory migration: dropped {healed_traces} idle ultra_loop "
+                        f"heartbeat trace(s) and {healed_dupes} duplicate(s) "
+                        f"({heal_before} -> {len(self.traces)}), "
+                        f"{healed_gen} empty generalization(s)."
+                    )
+                    self._save()
         except Exception as e:
             print(f"Memory load error: {e}")
 

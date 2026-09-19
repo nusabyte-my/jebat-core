@@ -166,11 +166,18 @@ class MemoryManager:
                     MemoryLayer.M4_PROCEDURAL: MemoryType.PROCEDURAL,
                 }
                 mem_type = type_map.get(layer, MemoryType.EPISODIC)
+                # `legacy_id` must NOT go in `context`. EnhancedMemorySystem.encode
+                # dedups on (memory_type, content, context), and the legacy id is
+                # `mem_<timestamp>` — unique per call — so including it defeated
+                # dedup entirely and re-stored the same text on every call.
+                # Measured: 17 identical traces for one sentence. The linkage is
+                # carried by `source_trace_id` instead, which is not compared.
                 await enhanced.encode(
                     content=content,
                     memory_type=mem_type,
                     importance=0.5,
-                    context={"user_id": user_id, "legacy_id": memory.memory_id},
+                    context={"user_id": user_id},
+                    source_trace_id=memory.memory_id,
                 )
             except Exception:
                 pass
