@@ -908,7 +908,12 @@ class MCPServer:
                     "strategy_success_rates": profile.strategy_success_rates,
                 }
 
+                # `get_status()` keys stay at the TOP LEVEL: that was this
+                # resource's published shape before the dream report was
+                # enriched, and IDE clients plus tests read dream_count and
+                # last_dream_at directly. New fields are additive only.
                 report_data = {
+                    **status,
                     "status": status,
                     "profile": profile_dict,
                     "suggestions": suggestions_list,

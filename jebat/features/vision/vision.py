@@ -112,17 +112,31 @@ def _encode_file_base64(p: Path) -> tuple[str, str]:
 
 
 def _select_vision_provider() -> str:
-    """Pick a configured vision-capable provider using JEBAT config + auth."""
+    """Pick a configured provider that is actually able to analyse images.
+
+    Only providers with an entry in _ANALYZE_DISPATCH can take an image, so a
+    configured-but-text-only provider (ollama, llamacpp, …) must be skipped
+    rather than selected and then rejected downstream with
+    "Unsupported vision provider".
+    """
     cfg = load_config()
-    preferred = cfg.get("vision.provider", cfg.get("model.provider", "openai"))
-    # Try preferred first, then fallback chain
-    for candidate in (preferred, "openai", "anthropic", "google"):
+    preferred = cfg.get("vision.provider") or cfg.get("model.provider", "openai")
+    candidates = (preferred, *(k for k in _ANALYZE_DISPATCH if k != preferred))
+    tried = []
+    for candidate in candidates:
+        if candidate not in _ANALYZE_DISPATCH:
+            tried.append(f"{candidate} (no image support)")
+            continue
         try:
             get_provider_secret(candidate)
             return candidate
         except RuntimeError:
+            tried.append(f"{candidate} (no credentials)")
             continue
-    raise RuntimeError("No vision-capable provider is configured (openai/anthropic/google)")
+    raise RuntimeError(
+        "No vision-capable provider is configured (openai/anthropic/google)."
+        + (" Tried: " + "; ".join(tried) if tried else "")
+    )
 
 
 # ── Vision Analyze: OpenAI ────────────────────────────────────────────────

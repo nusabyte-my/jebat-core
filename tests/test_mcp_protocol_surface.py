@@ -123,6 +123,10 @@ def test_stdio_entrypoint_completes_initialize_handshake() -> None:
         timeout=30,
     )
 
-    response = json.loads(completed.stdout.strip().splitlines()[-1])
+    # The server may push unsolicited notifications after the handshake
+    # (e.g. notifications/advisorReady), so select the response by id rather
+    # than taking the last line — that is what a conforming client does.
     assert completed.returncode == 0
+    frames = [json.loads(line) for line in completed.stdout.strip().splitlines() if line.strip()]
+    response = next(f for f in frames if f.get("id") == 1)
     assert response["result"]["protocolVersion"] == "2025-03-26"

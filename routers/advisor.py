@@ -400,38 +400,32 @@ def _get_or_load_model(backend_pref: str) -> Tuple[Any, Optional[str]]:
             if backend_pref in ("auto", cached_tier):
                 return _MODEL_CACHE["instance"], cached_tier
 
-        # Try laya if requested or auto
+        # Laya proper: the PyPI `laya` package is the real typed-decision
+        # engine (bidirectional encoder + decision heads, calibrated by
+        # temperature). Load ONE agent rather than laya.Router(preload=True),
+        # which keeps all three checkpoints resident (~2.5 GB) — too much for
+        # a CPU box already serving the API.
         if backend_pref in ("auto", "laya"):
             try:
-                import laya
-                router_cls = getattr(laya, "Router", None)
-                if router_cls is not None:
-                    instance = router_cls(preload=True)
-                    _MODEL_CACHE["instance"] = instance
-                    _MODEL_CACHE["tier"] = "laya"
-                    _MODEL_CACHE["model_id"] = model_name or "laya-default"
-                    return instance, "laya"
-            except (ImportError, Exception) as e:
-                logger.debug("laya package load failed: %s", e)
+                import laya as _laya
 
-            # Try loading Laya via transformers if model_name specifies laya or backend_pref is laya
-            if (model_name and "laya" in model_name.lower()) or backend_pref == "laya":
-                target_model = model_name or "convaiinnovations/laya"
-                try:
-                    from transformers import pipeline
-                    instance = pipeline(
-                        "zero-shot-classification",
-                        model=target_model,
-                        device=device if device != "cpu" else -1,
-                    )
+                load_fn = getattr(_laya, "load", None)
+                if load_fn is not None:
+                    target = model_name or "convaiinnovations/laya"
+                    try:
+                        instance = load_fn(target, device=device)
+                    except TypeError:
+                        # Older/newer signature without a device kwarg.
+                        instance = load_fn(target)
                     _MODEL_CACHE["instance"] = instance
                     _MODEL_CACHE["tier"] = "laya"
-                    _MODEL_CACHE["model_id"] = target_model
+                    _MODEL_CACHE["model_id"] = target
+                    logger.info("advisor: loaded Laya agent %s on %s", target, device)
                     return instance, "laya"
-                except (ImportError, Exception) as e:
-                    logger.debug("transformers laya pipeline load failed: %s", e)
-                    if backend_pref == "laya":
-                        return None, None
+            except Exception as e:  # not installed, no weights, bad device
+                logger.debug("laya load failed: %s", e)
+                if backend_pref == "laya":
+                    return None, None
 
         # Try generic ModernBERT / sequence-classification via transformers
         if backend_pref in ("auto", "transformers"):
@@ -469,58 +463,86 @@ def _call_local_transformer(
     try:
         # Check if instance is a Laya router (has predict method)
         if tier == "laya" and hasattr(instance, "predict"):
-            laya_questions = {}
+            # Laya's schema differs from ours and the old code got all three
+            # of these wrong, silently answering with candidates[0]:
+            #   choice -> criteria is a {label: description} dict, answer key "choice"
+            #   score  -> criteria is a list, answer key "score" (expected level, float)
+            #   noul   -> answer key "noul" (P(true))
+            # and answers arrive under raw["answers"], not at the top level.
+            laya_questions: Dict[str, Any] = {}
             for k, q in questions.items():
                 qtype = q.get("type", "Noul") if isinstance(q, dict) else getattr(q, "type", "Noul")
                 instructions = q.get("instructions", "") if isinstance(q, dict) else getattr(q, "instructions", "")
                 if qtype == "Choice":
                     candidates = q.get("candidates", []) if isinstance(q, dict) else getattr(q, "candidates", [])
+                    if not candidates:
+                        return None, None
                     laya_questions[k] = {
                         "type": "choice",
                         "instructions": instructions,
-                        "criteria": candidates,
-                        "candidates": candidates,
+                        "criteria": {c: c for c in candidates},
                     }
                 elif qtype == "Score":
                     criteria = q.get("criteria", []) if isinstance(q, dict) else getattr(q, "criteria", [])
+                    if not criteria:
+                        return None, None
                     laya_questions[k] = {
                         "type": "score",
                         "instructions": instructions,
-                        "criteria": criteria,
+                        "criteria": list(criteria),
                     }
                 elif qtype == "Noul":
-                    laya_questions[k] = {
-                        "type": "noul",
-                        "instructions": instructions,
-                    }
+                    laya_questions[k] = {"type": "noul", "instructions": instructions}
+                else:
+                    return None, None
 
-            raw_res = instance.predict(state, laya_questions)
+            raw = instance.predict(state, laya_questions)
+            # An unexpected envelope falls through to the lexical tier. Never
+            # substitute a default answer — that is exactly how the previous
+            # implementation produced a confident-looking wrong category.
+            laya_answers = raw.get("answers") if isinstance(raw, dict) else None
+            if not isinstance(laya_answers, dict) or any(k not in laya_answers for k in questions):
+                logger.warning("laya returned an unexpected envelope; using lexical fallback")
+                return None, None
+
             answers: Dict[str, Any] = {}
             for k, q in questions.items():
                 qtype = q.get("type", "Noul") if isinstance(q, dict) else getattr(q, "type", "Noul")
-                res = raw_res.get(k, {})
+                res = laya_answers[k]
+                if not isinstance(res, dict):
+                    return None, None
+                probs_in = res.get("probabilities") or {}
                 if qtype == "Choice":
                     candidates = q.get("candidates", []) if isinstance(q, dict) else getattr(q, "candidates", [])
-                    ans = res.get("answer", candidates[0] if candidates else "unknown")
-                    raw_probs = res.get("probabilities", {})
-                    probs = {c: round(float(raw_probs.get(c, 1.0 / len(candidates))), 4) for c in candidates}
-                    diff = round(1.0 - sum(probs.values()), 4)
-                    probs[ans] = round(probs.get(ans, 0.0) + diff, 4)
-                    conf = round(float(res.get("confidence", max(probs.values()))), 4)
-                    answers[k] = {"answer": ans, "probabilities": probs, "confidence": conf}
+                    if "choice" not in res or not probs_in:
+                        return None, None
+                    probs = {c: float(probs_in.get(c, 0.0)) for c in candidates}
+                    total = sum(probs.values()) or 1.0
+                    probs = {c: round(v / total, 4) for c, v in probs.items()}
+                    answers[k] = {
+                        "answer": str(res["choice"]),
+                        "probabilities": probs,
+                        "confidence": round(float(res.get("confidence", max(probs.values()))), 4),
+                    }
                 elif qtype == "Score":
                     criteria = q.get("criteria", []) if isinstance(q, dict) else getattr(q, "criteria", [])
-                    ans = int(res.get("answer", 0))
-                    raw_probs = res.get("probabilities", {})
-                    probs = {str(i): round(float(raw_probs.get(str(i), 1.0 / len(criteria))), 4) for i in range(len(criteria))}
-                    diff = round(1.0 - sum(probs.values()), 4)
-                    probs[str(ans)] = round(probs.get(str(ans), 0.0) + diff, 4)
-                    conf = round(float(res.get("confidence", max(probs.values()))), 4)
-                    answers[k] = {"answer": ans, "probabilities": probs, "confidence": conf}
-                elif qtype == "Noul":
-                    prob = round(float(res.get("probability", 0.5)), 4)
-                    ans = bool(res.get("answer", prob >= 0.5))
-                    answers[k] = {"answer": ans, "probability": prob}
+                    if "score" not in res or not probs_in:
+                        return None, None
+                    probs = {str(i): float(probs_in.get(str(i), 0.0)) for i in range(len(criteria))}
+                    total = sum(probs.values()) or 1.0
+                    probs = {kk: round(v / total, 4) for kk, v in probs.items()}
+                    level = max(0, min(int(round(float(res["score"]))), len(criteria) - 1))
+                    answers[k] = {
+                        "answer": level,
+                        "probabilities": probs,
+                        "confidence": round(float(res.get("confidence", max(probs.values()))), 4),
+                        "expected_level": round(float(res["score"]), 4),
+                    }
+                else:
+                    if "noul" not in res:
+                        return None, None
+                    prob = round(float(res["noul"]), 4)
+                    answers[k] = {"answer": bool(prob >= 0.5), "probability": prob}
             return answers, "laya"
 
         # Otherwise use Hugging Face pipeline
