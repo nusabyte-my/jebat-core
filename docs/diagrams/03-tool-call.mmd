@@ -1,0 +1,15 @@
+flowchart TD
+    A["tools/call"] --> B["_TOOL_CALL_COUNTS[name]++"]
+    B --> C{name in TOOL_REGISTRY?}
+    C -->|no| D["_record_tool_error(kind=not_found)"]
+    D --> Z[isError response]
+    C -->|yes| E{safety_tier?}
+    E -->|confirm/dangerous| F[approval_required - NOT logged as error]
+    F --> Z
+    E -->|auto| G[progress notification if long tool]
+    G --> H[call_tool]
+    H --> I{exception?}
+    I -->|yes| J["_record_tool_error(kind=execution)"]
+    J --> Z
+    I -->|no| K[return content]
+    K --> L["resources: analytics/tools + errors/recent reflect live"]

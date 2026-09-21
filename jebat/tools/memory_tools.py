@@ -6,10 +6,13 @@ the agent can persist facts across sessions without user intervention.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from jebat.core.memory import MemoryLayer, MemoryManager
 from jebat.tools import register_tool
+
+MEMORY_BASE_DIR = Path.home() / ".jebat" / "memory"
 
 # ── Singleton MemoryManager instance ─────────────────────────────────────
 # Created lazily and shared across all tool calls. The in-memory store
@@ -20,7 +23,7 @@ _memory_manager: MemoryManager | None = None
 def _get_manager() -> MemoryManager:
     global _memory_manager
     if _memory_manager is None:
-        _memory_manager = MemoryManager()
+        _memory_manager = MemoryManager(config={"storage_path": str(MEMORY_BASE_DIR)})
     return _memory_manager
 
 
@@ -80,6 +83,7 @@ async def memory_store(
             "memory_id": memory_id,
             "category": category,
             "layer": layer.value,
+            "quality": 1.0,
             "content_preview": content[:100],
         }
     except Exception as e:
@@ -138,14 +142,18 @@ async def memory_search(
 
     formatted = []
     for mem in results[:limit]:
+        heat_val = round(mem.heat.calculate(), 3)
+        quality = getattr(mem, "quality", None)
+        if quality is None:
+            quality = round(min(1.0, heat_val * 0.5 + 0.5), 3)
         formatted.append({
             "memory_id": mem.memory_id,
             "content": mem.content,
             "layer": mem.layer.value,
-            "heat": round(mem.heat.calculate(), 3),
+            "heat": heat_val,
+            "quality": quality,
             "created": mem.created_at.isoformat(),
         })
-
     return {
         "status": "ok",
         "query": query,

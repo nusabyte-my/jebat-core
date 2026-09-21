@@ -98,8 +98,11 @@ async def test_chat_applies_owned_agent_profile_guidance(monkeypatch):
         return None
 
     async def generate_chat_reply(**kwargs):
-        assert "You are Release reviewer, a analytical agent." in kwargs["prompt"]
-        assert "Highlight deployment risks." in kwargs["prompt"]
+        # Guidance may travel as the system prompt or folded into the prompt;
+        # the contract is that the model hears the profile identity + rules.
+        heard = f"{kwargs.get('system_prompt_override') or ''}\n{kwargs['prompt']}"
+        assert "You are Release reviewer, a analytical agent." in heard
+        assert "Highlight deployment risks." in heard
         return "Review complete", "llamacpp", type("Config", (), {"model": "jebat-qwen"})()
 
     monkeypatch.setattr(webui, "_ensure_connection_state", ensure_state)

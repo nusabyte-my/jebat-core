@@ -47,6 +47,7 @@ from routers.skills import router as skills_router
 from routers.status import router as status_router
 from routers.analytics import router as analytics_router
 from routers.think import router as think_router
+from routers.advisor import router as advisor_router
 
 _START_TIME = time.time()
 _MAX_API_BODY_BYTES = int(os.getenv("JEBAT_MAX_API_BODY_BYTES", str(1_048_576)))
@@ -183,6 +184,7 @@ app.include_router(pentest_router)
 app.include_router(ghost_router)
 app.include_router(catalyst_router)
 app.include_router(analytics_router)
+app.include_router(advisor_router)
 
 
 # ─── OpenAI Compatible API (Zed, Cursor, OpenCode, SDKs) ───

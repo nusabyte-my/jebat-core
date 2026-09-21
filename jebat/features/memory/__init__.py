@@ -416,6 +416,36 @@ class EnhancedMemorySystem:
 
         return trace
 
+    def store(
+        self,
+        content: str,
+        memory_type: Union[str, MemoryType] = MemoryType.EPISODIC,
+        tags: Optional[Union[List[str], Set[str]]] = None,
+        confidence: float = 0.8,
+        importance: float = 0.5,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> MemoryTrace:
+        """Store a memory trace synchronously with persistence."""
+        m_type = coerce_memory_type(memory_type)
+        tag_set = set(tags) if tags else set()
+        normalized_content = content.strip()
+        normalized_context = context or {}
+        trace = MemoryTrace(
+            memory_type=m_type,
+            content=normalized_content,
+            context=normalized_context,
+            tags=tag_set,
+            importance=importance,
+            confidence=confidence,
+            decay_rate=self._calculate_decay_rate(m_type, importance),
+        )
+        self._store_trace(trace)
+        self._activate_trace(trace.trace_id, activation=1.0)
+        if m_type in (MemoryType.EPISODIC, MemoryType.WORKING):
+            self._add_to_working_memory(trace.trace_id)
+        self._save()
+        return trace
+
     async def retrieve(
         self,
         query: Union[str, MemoryQuery],

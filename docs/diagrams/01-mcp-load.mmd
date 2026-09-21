@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant IDE
+    participant Server as MCPServer
+    participant Mem as EnhancedMemorySystem
+    participant AM as AutoMimpi
+    participant SL as SelfLearn
+
+    IDE->>Server: initialize (protocolVersion)
+    Server->>Server: _handle_initialize()
+    Server-->>IDE: capabilities {tools,resources,prompts,logging,roots}
+    Server->>Server: _send_advisor_notification()
+    Server->>Mem: load ~/.jebat/memory/ (shared path)
+    Mem-->>Server: traces (90 memories)
+    Server->>AM: _build_learning_profile()
+    Server->>AM: _generate_suggestions(profile)
+    Server->>SL: analyze() velocity/retention
+    Server->>Server: queue advisorReady in _pending_notifications
+    Note over Server: response sent FIRST, notification queued
+    IDE->>Server: next request (tools/list)
+    Server->>Server: _flush_pending_notifications()
+    Server-->>IDE: notifications/advisorReady
+    Note over IDE: healthScore 0.99 + top-3 suggestions

@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant Agent
+    participant Gate as advisor_gate
+    participant Tool
+    participant Fail as mimpi_record_failure
+    participant Mem
+    participant AM as AutoMimpi
+
+    Agent->>Gate: pre-flight (operation)
+    Gate-->>Agent: risk=safe proceed
+    Agent->>Tool: execute
+    Tool-->>Agent: ERROR
+    Agent->>Fail: record_failure(tool, error)
+    Fail->>Mem: store trace tags=[failure,tool]
+    Fail-->>Agent: similar_failures=4 WARNING
+    Note over Agent: at 3+ avoidance suggestion
+    Agent->>AM: /dream (consolidate)
+    AM->>Mem: extract pattern "tool X fails"
+    AM-->>Agent: AVOID_FAILURE suggestion next load

@@ -23,6 +23,7 @@ _default_templates = [
     AgentTemplate(agent_type=AgentType.RESEARCHER, name="researcher", description="Research and information gathering", personality=AgentPersonality.TECHNICAL, capabilities=["research", "search", "web"]),
     AgentTemplate(agent_type=AgentType.TASK_EXECUTOR, name="executor", description="Task execution and automation", personality=AgentPersonality.TECHNICAL, capabilities=["execute", "automate", "deploy"]),
     AgentTemplate(agent_type=AgentType.ANALYTICAL, name="memory", description="Memory management and retrieval", personality=AgentPersonality.TECHNICAL, capabilities=["memory", "store", "recall"]),
+    AgentTemplate(agent_type=AgentType.ADVISOR, name="advisor", description="Fast typed-decision advisor (Jev-style System One). Classifies, routes, scores, verifies.", personality=AgentPersonality.TECHNICAL, capabilities=["classify", "route", "score", "verify", "gate", "triage"], model="jev", temperature=0.0),
 ]
 for tpl in _default_templates:
     agent_id = _factory.create(tpl)

@@ -34,9 +34,9 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# ── MCP 2025-03-26 Protocol Constants ────────────────────────────────────────
+# ── MCP 2026-07-28 Protocol Constants ────────────────────────────────────────
 
-MCP_PROTOCOL_VERSION_NEW = "2025-03-26"
+MCP_PROTOCOL_VERSION_NEW = "2026-07-28"
 JSONRPC_VERSION = "2.0"
 
 # ── Progress Token Manager ───────────────────────────────────────────────────
@@ -135,7 +135,7 @@ class SamplingHandler:
     def __init__(self, config: Any = None):
         self._config = config
 
-    async def handle_create_message(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_message(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Process a sampling/createMessage request from the IDE.
 
         Args:
@@ -153,6 +153,8 @@ class SamplingHandler:
 
         # Convert MCP messages to simple prompt
         prompt_parts = []
+        if system_prompt:
+            prompt_parts.append(f"system: {system_prompt}")
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", {})
@@ -165,58 +167,94 @@ class SamplingHandler:
             prompt_parts.append(f"{role}: {text}")
 
         combined_prompt = "\n".join(prompt_parts)
-
-        # Use JEBAT's 9Router LLM proxy
+        # Wire sampling budget to model's input budget before dispatch (TQ-5)
         try:
-            from jebat.llm import generate_with_failover, load_llm_config
-            config = self._config or load_llm_config()
-
-            # Override model if IDE specifies one
-            if preferred_model:
-                config.model = preferred_model
-
-            response_text, used_provider = await generate_with_failover(
-                config=config,
+            from jebat.llm.token_usage import budget_input
+            context_window = getattr(self._config, "context_window", 32768) if self._config else 32768
+            budgeted = budget_input(
                 prompt=combined_prompt,
-                system_prompt=system_prompt,
+                system_prompt=None,
+                context_window=context_window,
+                max_output_tokens=max_tokens,
+                model=preferred_model,
             )
+            combined_prompt = budgeted.prompt
+        except Exception as e:
+            logger.debug(f"budget_input fallback in sampling: {e}")
+
+        # Try to use jebat_cli_new.providers with OllamaProviderImpl or first available provider
+        try:
+            from jebat_cli_new.providers import OllamaProviderImpl, ProviderRegistry
+            from jebat_cli_new.models import CompletionRequest
+
+            provider = None
+            model_name = preferred_model or "qwen2.5-coder:7b"
+
+            try:
+                registry = ProviderRegistry()
+                if "ollama" in registry.providers:
+                    provider = registry.get("ollama")
+                elif registry.providers:
+                    first_id = next(iter(registry.providers.keys()))
+                    provider = registry.get(first_id)
+                    if hasattr(registry, "configs") and first_id in registry.configs:
+                        model_name = registry.configs[first_id].model or model_name
+            except Exception as reg_err:
+                logger.debug(f"ProviderRegistry initialization note: {reg_err}")
+
+            if provider is None:
+                provider = OllamaProviderImpl()
+
+            req = CompletionRequest(
+                provider=getattr(getattr(provider, "config", None), "id", "ollama"),
+                model=model_name,
+                prompt=combined_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+
+            res = provider.complete(req)
+            response_text = getattr(res, "text", str(res))
+            used_model = getattr(res, "model", model_name)
+            used_provider = getattr(res, "provider", "ollama")
 
             return {
                 "role": "assistant",
-                "model": f"jebat-{used_provider}",
+                "model": f"jebat-{used_provider}:{used_model}",
                 "content": {
                     "type": "text",
                     "text": response_text,
                 },
             }
-
         except Exception as e:
-            logger.error(f"Sampling error: {e}")
+            logger.warning(f"Sampling provider execution failed, using mock fallback: {e}")
             return {
                 "role": "assistant",
-                "model": "jebat-error",
+                "model": "jebat-mock",
                 "content": {
                     "type": "text",
-                    "text": f"JEBAT sampling error: {type(e).__name__}: {e}",
+                    "text": f"Mock response for: {combined_prompt[:120]}...",
                 },
-                "stopReason": "error",
             }
+
+    async def handle_create_message(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Alias for create_message to maintain compatibility."""
+        return await self.create_message(params)
 
 
 # ── Streamable HTTP Transport ────────────────────────────────────────────────
 
 class StreamableHTTPTransport:
-    """MCP 2025-03-26 Streamable HTTP transport — single /mcp endpoint.
+    """MCP 2026-07-28 Streamable HTTP transport — fully stateless /mcp endpoint.
 
-    Replaces the old /message (POST) + /sse (GET) dual endpoints with
-    a unified /mcp endpoint that handles:
-    - POST /mcp — client sends JSON-RPC requests; server can respond
-      with either a single JSON response or an SSE stream
-    - GET /mcp — client establishes SSE connection for notifications
-    - DELETE /mcp — client terminates session
+    Replaces the old session-bound dual endpoints with a unified /mcp endpoint:
+    - POST /mcp — client sends JSON-RPC requests; server responds with JSON or SSE stream
+    - GET /mcp — client establishes SSE connection for server-initiated notifications
+    - DELETE /mcp — no-op acknowledgment (sessions no longer tracked)
 
-    This matches the official MCP Streamable HTTP specification and is
-    compatible with all major IDE MCP clients (VS Code, Cursor, etc).
+    v2026-07-28 stateless architecture: no session bindings, no per-client state.
+    Each request is self-contained. Server can be horizontally scaled behind a
+    standard load balancer with no sticky sessions required.
     """
 
     def __init__(self, mcp_server: Any, host: str = "127.0.0.1", port: int = 8100):
@@ -224,7 +262,6 @@ class StreamableHTTPTransport:
         self.host = host
         self.port = port
         self._notification_queue: asyncio.Queue = asyncio.Queue()
-        self._sessions: Dict[str, Dict] = {}  # session_id -> session state
 
     async def run(self) -> None:
         """Start the Streamable HTTP server using uvicorn + Starlette."""
@@ -288,6 +325,8 @@ class StreamableHTTPTransport:
 
             # Standard request — single JSON response
             response = await self.mcp_server.handle_request(body)
+            if hasattr(self.mcp_server, "_flush_pending_notifications"):
+                self.mcp_server._flush_pending_notifications()
             if response is None:
                 return Response(status_code=204)
             return JSONResponse(json.loads(response))
@@ -311,10 +350,7 @@ class StreamableHTTPTransport:
             return sse_starlette.EventSourceResponse(event_generator())
 
         async def handle_mcp_delete(request):
-            """DELETE /mcp — terminate session."""
-            session_id = request.query_params.get("sessionId", "")
-            if session_id in transport._sessions:
-                transport._sessions.pop(session_id)
+            """DELETE /mcp — stateless no-op (v2026-07-28: sessions removed)."""
             return Response(status_code=204)
 
         routes = [

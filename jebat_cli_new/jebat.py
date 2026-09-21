@@ -884,6 +884,45 @@ def execute_tool(name: str, args: Dict[str, Any], yolo: bool = False) -> str:
             if not yolo and is_dangerous_file(path):
                 return f"BLOCKED: dangerous file {path}"
             os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+            # CQ-6: Show diff preview before writing
+            if not yolo and os.path.isfile(path):
+                import difflib
+                try:
+                    with open(path, "r", encoding="utf-8", errors="replace") as f:
+                        old = f.read()
+                    diff_lines = list(difflib.unified_diff(
+                        old.splitlines(keepends=True),
+                        content.splitlines(keepends=True),
+                        fromfile=f"a/{path}", tofile=f"b/{path}", lineterm=""
+                    ))
+                    if diff_lines:
+                        adds = sum(1 for l in diff_lines if l.startswith('+') and not l.startswith('+++'))
+                        dels = sum(1 for l in diff_lines if l.startswith('-') and not l.startswith('---'))
+                        cprint(f"\n  {C.NEON_AMBER}{C.BOLD}Diff: {path}{C.RESET} {C.GREEN}+{adds}{C.RESET} {C.RED}-{dels}{C.RESET}")
+                        cprint(f"  {C.BORDER}{'─' * 70}{C.RESET}")
+                        for dl in diff_lines[:40]:
+                            dl = dl.rstrip('\n')
+                            if dl.startswith('+++') or dl.startswith('---'):
+                                cprint(f"  {C.BOLD}{dl}{C.RESET}")
+                            elif dl.startswith('@@'):
+                                cprint(f"  {C.CYAN}{dl}{C.RESET}")
+                            elif dl.startswith('+'):
+                                cprint(f"  {C.GREEN}{dl}{C.RESET}")
+                            elif dl.startswith('-'):
+                                cprint(f"  {C.RED}{dl}{C.RESET}")
+                            else:
+                                cprint(f"  {C.DIM}{dl}{C.RESET}")
+                        if len(diff_lines) > 40:
+                            cprint(f"  {C.DIM}... {len(diff_lines) - 40} more lines{C.RESET}")
+                        cprint(f"  {C.BORDER}{'─' * 70}{C.RESET}")
+                        try:
+                            choice = input(f"  {C.NEON_AMBER}Apply?{C.RESET} [{C.GREEN}a{C.RESET}]pply / [{C.RED}r{C.RESET}]eject: ").strip().lower()
+                            if choice not in ('a', 'apply', 'y', 'yes', ''):
+                                return f"REJECTED: write to {path} cancelled by user"
+                        except (EOFError, KeyboardInterrupt):
+                            return f"REJECTED: write to {path} cancelled"
+                except Exception:
+                    pass  # Fall through to write if diff fails
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
             return f"Written {len(content)} bytes to {path}"
@@ -972,6 +1011,191 @@ def execute_tool(name: str, args: Dict[str, Any], yolo: bool = False) -> str:
     except Exception as e:
         return f"Error: {e}"
 
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CQ-3: @file REFERENCE EXPANSION
+# ═══════════════════════════════════════════════════════════════════
+
+def _expand_file_refs(prompt: str) -> str:
+    """Expand @path/to/file references by inlining file content."""
+    import re as _re
+    pattern = _re.compile(r'@((?:[A-Za-z]:)?[\w./_\\-]+(?:\.\w+)+)')
+    refs_found = []
+    for m in pattern.finditer(prompt):
+        fpath = m.group(1)
+        if os.path.isfile(fpath):
+            refs_found.append(fpath)
+    if not refs_found:
+        return prompt
+    # Strip @refs from prompt, append file contents
+    clean_prompt = prompt
+    context_blocks = []
+    for fpath in refs_found:
+        clean_prompt = clean_prompt.replace(f"@{fpath}", f"`{fpath}`")
+        try:
+            with open(fpath, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            if len(content) > 8000:
+                content = content[:8000] + f"\n... (truncated, {len(content)} total chars)"
+            context_blocks.append(f"--- {fpath} ---\n{content}\n--- end {fpath} ---")
+            cprint(f"  {C.CYAN}📎{C.RESET} {C.DIM}Attached:{C.RESET} {fpath} ({len(content):,} chars)")
+        except Exception as e:
+            cprint(f"  {C.YELLOW}⚠{C.RESET} {C.DIM}Cannot read {fpath}: {e}{C.RESET}")
+    if context_blocks:
+        return clean_prompt + "\n\n" + "\n\n".join(context_blocks)
+    return clean_prompt
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CQ-4: ! SHELL PREFIX EXECUTION
+# ═══════════════════════════════════════════════════════════════════
+
+def _run_shell_inline(cmd: str) -> str:
+    """Run a shell command and return output for display + context injection."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True,
+            timeout=30, encoding="utf-8", errors="replace",
+        )
+        output = (result.stdout + result.stderr).strip()
+        if len(output) > 4000:
+            output = output[:4000] + "\n... (truncated)"
+        return output or "(no output)"
+    except subprocess.TimeoutExpired:
+        return "(command timed out after 30s)"
+    except Exception as e:
+        return f"(error: {e})"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CQ-5: MULTI-LINE INPUT
+# ═══════════════════════════════════════════════════════════════════
+
+def _multiline_input() -> str:
+    """Collect multi-line input until closing triple-quote or EOF."""
+    cprint(f"  {C.DIM}Multi-line mode. Type {C.NEON_CYAN}\"\"\"{C.RESET}{C.DIM} on a new line to submit.{C.RESET}")
+    lines = []
+    while True:
+        try:
+            line = input(f"  {C.BORDER}…{C.RESET} ")
+            if line.strip() == '"""':
+                break
+            lines.append(line)
+        except (EOFError, KeyboardInterrupt):
+            break
+    return "\n".join(lines)
+
+
+def _editor_input() -> str:
+    """Open $EDITOR for composing a prompt. Returns the text."""
+    import tempfile
+    editor = os.environ.get("EDITOR", os.environ.get("VISUAL", ""))
+    if not editor:
+        cprint(f"  {C.YELLOW}⚠{C.RESET} {C.DIM}$EDITOR not set. Use triple-quote mode: type {C.NEON_CYAN}\"\"\"{C.RESET}{C.DIM} to start multi-line.{C.RESET}")
+        return ""
+    try:
+        import subprocess
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+            f.write("# Enter your prompt below\n\n")
+            tmp_path = f.name
+        subprocess.run([editor, tmp_path], check=True)
+        with open(tmp_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        os.unlink(tmp_path)
+        # Strip the header comment
+        lines = content.split("\n")
+        if lines and lines[0].startswith("# Enter your prompt"):
+            lines = lines[1:]
+        return "\n".join(lines).strip()
+    except Exception as e:
+        cprint(f"  {C.RED}✗{C.RESET} Editor failed: {e}")
+        return ""
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CQ-10: /compact — REAL CONTEXT SUMMARIZATION
+# ═══════════════════════════════════════════════════════════════════
+
+def _compact_messages(agent, messages: list) -> list:
+    """Summarize conversation history using the LLM, return compacted messages."""
+    if len(messages) < 4:
+        return messages
+    # Build a summary prompt from conversation
+    conv_text = ""
+    for m in messages:
+        role = m.role if hasattr(m, 'role') else m.get('role', '?')
+        content = m.content if hasattr(m, 'content') else m.get('content', '')
+        conv_text += f"[{role}]: {content[:500]}\n"
+    summary_prompt = (
+        "Summarize this conversation as concise context for continuing work. "
+        "Preserve: key decisions, file paths mentioned, current task state, "
+        "and any important findings. Be terse.\n\n" + conv_text[:6000]
+    )
+    try:
+        summary = agent.chat(summary_prompt)
+        # Replace messages with a single context message
+        return [AgentMessage(role="system", content=f"Previous context (compacted):\n{summary}")]
+    except Exception:
+        return messages
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CQ-9: SESSION FORK
+# ═══════════════════════════════════════════════════════════════════
+
+def _fork_session(messages) -> str:
+    """Copy current messages to a new session file, return path."""
+    path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}_fork.json"
+    serializable = [{
+        "role": m.role if hasattr(m, 'role') else m.get('role', ''),
+        "content": m.content if hasattr(m, 'content') else m.get('content', '')
+    } for m in messages]
+    path.write_text(json.dumps(serializable, indent=2, ensure_ascii=False), encoding="utf-8")
+    return str(path)
+
+
+def _load_session_by_id(session_id: str) -> list:
+    """Load a session by filename or partial match."""
+    for f in sorted(SESSIONS_DIR.glob("session_*.json"), reverse=True):
+        if session_id in f.name or session_id in f.stem:
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                return [AgentMessage(role=m["role"], content=m["content"]) for m in data]
+            except Exception:
+                return []
+    return []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# CQ-7: COLLAPSIBLE TOOL OUTPUT
+# ═══════════════════════════════════════════════════════════════════
+
+_DETAIL_MODE = False  # toggled by /details
+_TOOL_LOG: List[Dict] = []  # ring buffer of recent tool outputs
+
+
+def _tool_summary(name: str, args: Dict, result: str, elapsed_ms: float = 0) -> str:
+    """One-line tool execution summary."""
+    # Generate smart summary based on tool type
+    if name == "read_file":
+        path = args.get("path", "?")
+        lines = result.count('\n') + 1
+        return f"{path} ({lines} lines)"
+    elif name == "write_file":
+        path = args.get("path") or args.get("filename", "?")
+        size = len(args.get("content", ""))
+        return f"{path} ({size:,} bytes)"
+    elif name == "terminal":
+        cmd = args.get("command", "?")
+        return cmd[:50] + ("..." if len(cmd) > 50 else "")
+    elif name == "search_files":
+        pattern = args.get("pattern", "?")
+        matches = result.count('\n') + 1 if result and result != "No matches" else 0
+        return f"\"{pattern}\" → {matches} matches"
+    else:
+        return result.split('\n')[0][:60] if result else "done"
 
 # ═══════════════════════════════════════════════════════════════════
 # CODEBASE TOOLS
@@ -1598,25 +1822,25 @@ def _auto_mimpi_check(taskdb):
 
 
 def _run_dream(taskdb):
-    """Write dream-state memory consolidation."""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dream_file = DREAM_DIR / f"dream_{timestamp}.md"
-    mem = memory_list()
-    content = f"# Dream State — {timestamp}\n\n"
-    content += f"## Memory Keys ({len(mem)} total)\n"
-    for key in list(mem.keys())[:20]:
-        content += f"- {key}\n"
-    content += f"\n## Task History\n"
+    """Run real AutoMimpi dream cycle."""
     try:
-        tasks = taskdb.list_tasks(5)
-        for t in tasks:
-            content += f"- [{t[3]}] {t[2][:80]}\n"
-    except Exception:
-        content += "- (no tasks)\n"
-    dream_file.write_text(content, encoding="utf-8")
-    state = _load_dream_state()
-    _double_box("Mimpi (autoDream)", f"Sessions since last dream: {state.get('sessions_since_dream', 0)} (threshold: 5)\nConsolidating memory and writing dream-state...\nDream written: {dream_file.name}")
-
+        from jebat.features.memory import EnhancedMemorySystem
+        from jebat.features.memory.automimpi import AutoMimpi
+        import asyncio
+        mem = EnhancedMemorySystem()
+        engine = AutoMimpi(mem)
+        report = asyncio.run(engine.dream(force=True))
+        _double_box("Mimpi (autoDream)",
+            f"Processed: {report.memories_processed} memories\n"
+            f"Patterns: {report.patterns_extracted} extracted\n"
+            f"Pruned: {report.memories_pruned} weak memories\n"
+            f"Suggestions: {len(report.suggestions or [])}\n"
+            f"\n{report.laksamana_quote or ''}")
+        # Show top suggestions
+        for s in (report.suggestions or [])[:3]:
+            cprint(f"  {C.YELLOW}💡{C.RESET} {s.title}: {C.DIM}{s.reason}{C.RESET}")
+    except Exception as e:
+        _double_box("Mimpi", f"Dream cycle failed: {e}")
 
 # ═══════════════════════════════════════════════════════════════════
 # PROVIDER REGISTRY
@@ -2288,6 +2512,7 @@ class Agent:
 
         # Optional planning phase
         if self.plan_first:
+            cprint(f"  {C.DIM}💡 Advisor pre-flight: Use /advisor score to evaluate plan feasibility.{C.RESET}")
             messages.append({"role": "user", "content": "First, analyze and create a numbered plan. Then execute step by step."})
 
         while self.iterations < 10:
@@ -2297,17 +2522,31 @@ class Agent:
             self.total_tokens += resp.tokens_used
             self.total_latency += resp.latency_ms
 
-            # Show tool calls
+            # Show tool calls — CQ-7: collapsible output
             tool_calls = _parse_tool_calls(text)
             for tc in tool_calls:
                 name = tc.get("tool", "")
                 args = tc.get("args", {})
-                summary = self._summarize_tool_args(name, args)
-                print(f"  {C.DIM}⚙️  {name}{C.RESET} {C.DIM}{summary}{C.RESET}")
+                cprint(f"  {C.DIM}⚙️  {name}{C.RESET} {C.DIM}{self._summarize_tool_args(name, args)}{C.RESET}")
+                tool_start = time.time()
                 result = execute_tool(name, args, yolo=self.yolo)
-                # Show result with checkmark
-                print(f"  {C.GREEN}✓{C.RESET}  {name} {C.DIM}0.{random.randint(1,9)}s{C.RESET}")
-                tool_actions.append(f"{name}({summary})")
+                tool_ms = (time.time() - tool_start) * 1000
+                # Smart summary line
+                summary_line = _tool_summary(name, args, result, tool_ms)
+                is_err = result.startswith("Error:") or result.startswith("BLOCKED:")
+                status = f"{C.RED}✗{C.RESET}" if is_err else f"{C.GREEN}✓{C.RESET}"
+                cprint(f"  {status}  {name} {C.DIM}{summary_line} ({tool_ms:.0f}ms){C.RESET}")
+                # Detail mode — show full output
+                if _DETAIL_MODE and result and not is_err:
+                    for rl in result.splitlines()[:20]:
+                        cprint(f"    {C.DIM}{rl}{C.RESET}")
+                    if result.count('\n') > 20:
+                        cprint(f"    {C.DIM}... {result.count(chr(10)) - 20} more lines{C.RESET}")
+                # Store in tool log ring buffer
+                _TOOL_LOG.append({"name": name, "args": args, "result": result[:2000], "ms": tool_ms})
+                if len(_TOOL_LOG) > 50:
+                    _TOOL_LOG.pop(0)
+                tool_actions.append(f"{name}({self._summarize_tool_args(name, args)})")
                 messages.append({"role": "assistant", "content": text})
                 messages.append({"role": "user", "content": f"TOOL_RESULT[{name}]: {result[:2000]}"})
 
@@ -2644,6 +2883,8 @@ COMMANDS = [
     # Agent
     ("/swarm",      "Auto-orchestrate task"),
     ("/mimpi",      "Trigger auto-dream"),
+    ("/dream",      "Trigger auto-dream (Mimpi)"),
+    ("/advisor",    "Advisor classify/verify/score"),
     ("/history",    "Show session history"),
     ("/ghost",      "Toggle ghost mode (silent)"),
     ("/agents",     "Show running sub-agents"),
@@ -2658,7 +2899,7 @@ COMMANDS = [
     ("/skin",       "Switch UI skin"),
     ("/think",      "Toggle think mode"),
     ("/verbose",    "Toggle verbose output"),
-    ("/compact",    "Toggle compact mode"),
+    ("/compact",    "Summarize and compress conversation context"),
     ("/agentdb",    "Show agent run database"),
     ("/commit",     "Git commit with message"),
     ("/cost",       "Estimate cost for tokens"),
@@ -2690,6 +2931,12 @@ COMMANDS = [
     # DB
     ("/db",         "Database operations"),
     ("/search",     "Search tasks in DB"),
+    # New — CQ quickwins
+    ("/details",    "Toggle detailed tool output"),
+    ("/editor",     "Open $EDITOR for multi-line prompt"),
+    ("/fork",       "Fork current session into a new branch"),
+    ("/continue",   "Continue from last saved session"),
+    ("/thinking",   "Toggle thinking block visibility"),
 ]
 
 
@@ -2786,7 +3033,23 @@ def _save_session_history(messages, taskdb):
         path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         serializable = [{"role": m.role, "content": m.content} for m in messages]
         path.write_text(json.dumps(serializable, indent=2, ensure_ascii=False), encoding="utf-8")
-
+        try:
+            session_id = path.stem
+            topic_summary = ""
+            for m in messages:
+                r = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+                if r == "user":
+                    c = getattr(m, "content", "") or (m.get("content", "") if isinstance(m, dict) else "")
+                    topic_summary = c[:60].replace("\n", " ").strip()
+                    break
+            if not topic_summary:
+                topic_summary = f"{len(messages)} messages"
+            try:
+                memory_store(f"Session {session_id}: discussed {topic_summary}", tags=["session", session_id])
+            except TypeError:
+                memory_store(f"session:{session_id}", f"discussed {topic_summary}")
+        except Exception:
+            pass
 
 def _load_session_history():
     """Load recent session history."""
@@ -2806,21 +3069,31 @@ def _load_session_history():
 
 
 
+_SPARK_BLOCKS = ' ▁▂▃▄▅▆▇█'
+
+def sparkline(values):
+    if not values:
+        return ''
+    mn, mx = min(values), max(values)
+    rng = mx - mn or 1
+    return ''.join(_SPARK_BLOCKS[min(8, int((v - mn) / rng * 8))] for v in values)
+
+
 def _print_categorized_help():
     """Print categorized help with icons and colors."""
     cmd_map = {cmd: desc for cmd, desc in COMMANDS}
     sections = [
-        ("⚡ Session",      ["/clear", "/exit", "/banner", "/version"]),
+        ("⚡ Session",      ["/clear", "/exit", "/banner", "/version", "/fork", "/continue"]),
         ("🔌 Providers",    ["/provider", "/model", "/providers", "/health", "/ping"]),
-        ("🧠 Memory",       ["/memory", "/mem+", "/mem", "/memory+", "/recall"]),
+        ("🧠 Memory",       ["/memory", "/mem+", "/mem", "/memory+", "/recall", "/dream", "/mimpi"]),
         ("📋 Tasks",        ["/tasks", "/task", "/agentdb", "/search"]),
         ("🎮 Modes",        ["/mode", "/brainstorm", "/scan", "/audit", "/ports", "/detect", "/scaffold", "/pentest"]),
         ("🛠️  Skills",       ["/skills", "/skill"]),
-        ("📊 Info",         ["/status", "/ctx", "/history", "/diff"]),
+        ("📊 Info",         ["/status", "/ctx", "/history", "/diff", "/cost", "/advisor"]),
         ("💾 Export",        ["/export", "/export-md", "/commit"]),
         ("🤖 Agent",        ["/agents", "/swarm", "/delegate", "/auth", "/apikey"]),
         ("🛡️  Security",     ["/validate", "/ratelimit"]),
-        ("🎨 UI",           ["/skin", "/think", "/verbose", "/compact", "/ghost", "/plan"]),
+        ("🎨 UI",           ["/skin", "/think", "/verbose", "/compact", "/details", "/thinking", "/editor", "/ghost", "/plan"]),
     ]
     print()
     cprint(f"  {C.NEON_CYAN}{C.BOLD}JEBAT REPL Commands{C.RESET} {C.DIM}v{JEBAT_VERSION}{C.RESET}")
@@ -2836,14 +3109,72 @@ def _print_categorized_help():
 
 def repl(registry, taskdb, skills):
     """Interactive REPL with all features."""
+    global _DETAIL_MODE
     cfg = registry.get_active()
     agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
+    show_thinking = False  # CQ-11: thinking block visibility
 
     # Auto-mimpi check
     _auto_mimpi_check(taskdb)
 
+    # Advisor startup panel (A2 + D1)
+    try:
+        from jebat.features.memory import EnhancedMemorySystem
+        from jebat.features.memory.automimpi import AutoMimpi, SelfLearn
+
+        mem = EnhancedMemorySystem()
+        traces = list(mem.traces.values())
+        engine = AutoMimpi(mem)
+        selflearn = SelfLearn(mem)
+
+        profile = engine._build_learning_profile()
+        dream_state = _load_dream_state()
+
+        # 7-day velocity sparkline
+        now = datetime.now(timezone.utc)
+        daily_counts = [0] * 7
+        for t in traces:
+            days_ago = (now - t.created_at).days
+            if 0 <= days_ago < 7:
+                daily_counts[6 - days_ago] += 1
+        spark = sparkline(daily_counts)
+
+        health_val = profile.consolidation_health * 10
+        health_bar = '█' * min(10, max(0, int(health_val))) + '░' * max(0, 10 - min(10, max(0, int(health_val))))
+        vel_day = profile.learning_velocity * 24
+        spark_str = f" {spark}" if spark else ""
+
+        advisor_lines = []
+        advisor_lines.append(f"  {C.BOLD}Health:{C.RESET} {health_bar} {health_val:.1f}/10   {C.BOLD}Velocity:{C.RESET} {vel_day:.1f}/day{spark_str}")
+
+        if profile.weak_areas:
+            w_area = profile.weak_areas[0]
+            w_strengths = [t.calculate_current_strength() for t in traces if w_area in t.tags]
+            w_pct = (sum(w_strengths) / len(w_strengths)) if w_strengths else 0.28
+            advisor_lines.append(f"  {C.YELLOW}⚠{C.RESET}  {C.YELLOW}Strengthen:{C.RESET} {w_area} ({w_pct:.0%} strength)")
+        elif profile.knowledge_gaps:
+            advisor_lines.append(f"  {C.YELLOW}⚠{C.RESET}  {C.YELLOW}Knowledge gap:{C.RESET} {profile.knowledge_gaps[0]}")
+
+        if profile.strong_areas:
+            s_area = profile.strong_areas[0]
+            s_strengths = [t.calculate_current_strength() for t in traces if s_area in t.tags]
+            s_pct = (sum(s_strengths) / len(s_strengths)) if s_strengths else 0.92
+            advisor_lines.append(f"  {C.GREEN}✓{C.RESET}  {C.GREEN}Strong:{C.RESET} {s_area} ({s_pct:.0%})")
+
+        pat_cnt = profile.pattern_count or len(getattr(mem, "extracted_patterns", []))
+        if pat_cnt > 0:
+            advisor_lines.append(f"  {C.YELLOW}💡{C.RESET} {pat_cnt} pattern{'s' if pat_cnt != 1 else ''} detected — run /dream to consolidate")
+        else:
+            since = dream_state.get("sessions_since_dream", 0)
+            advisor_lines.append(f"  {C.YELLOW}💡{C.RESET} {since} session{'s' if since != 1 else ''} since last dream — run /dream to consolidate")
+
+        panel("Advisor", "\n".join(advisor_lines), width=60)
+    except Exception:
+        pass
+
     print()
     cprint(f"  {C.DIM}Type / for commands, /help for list, Ctrl+C to cancel{C.RESET}")
+    cprint(f"  {C.DIM}Shortcuts: {C.NEON_CYAN}@file{C.RESET}{C.DIM} attach · {C.NEON_GREEN}!cmd{C.RESET}{C.DIM} shell · {C.NEON_PURPLE}\"\"\"{C.RESET}{C.DIM} multi-line{C.RESET}")
     print()
 
     messages = []
@@ -2852,11 +3183,12 @@ def repl(registry, taskdb, skills):
         try:
             cfg = registry.get_active()
             model_str = cfg.model if cfg else "none"
-            # Build dynamic prompt with mode indicator
+            # CQ-12: Mode-aware prompt with colored border
             mode_info = MODES.get(agent.mode, {})
             mode_icon = mode_info.get("icon", "💻")
+            mode_color = mode_info.get("color", C.CYAN)
             model_short = cfg.model.split(":")[0] if cfg and ":" in cfg.model else (cfg.model if cfg else "?")
-            prompt = input(f"  {C.NEON_GREEN}{mode_icon}{C.RESET} {C.NEON_CYAN}{model_short}{C.RESET} {C.BORDER}❯{C.RESET} ").strip()
+            prompt = input(f"  {mode_color}{mode_icon}{C.RESET} {C.NEON_CYAN}{model_short}{C.RESET} {C.BORDER}❯{C.RESET} ").strip()
         except (EOFError, KeyboardInterrupt):
             # Save session on exit
             if agent.messages:
@@ -2867,6 +3199,23 @@ def repl(registry, taskdb, skills):
 
         if not prompt:
             continue
+
+        # CQ-4: ! shell prefix — run inline, show output, inject into context
+        if prompt.startswith("!"):
+            shell_cmd = prompt[1:].strip()
+            if shell_cmd:
+                cprint(f"  {C.DIM}$ {shell_cmd}{C.RESET}")
+                output = _run_shell_inline(shell_cmd)
+                cprint(f"  {C.DIM}{output}{C.RESET}")
+                # Inject into agent context for follow-up questions
+                agent.messages.append(AgentMessage(role="user", content=f"Shell output of `{shell_cmd}`:\n{output}"))
+            continue
+
+        # CQ-5: Triple-quote multi-line mode
+        if prompt.strip() == '"""':
+            prompt = _multiline_input()
+            if not prompt:
+                continue
 
         # Slash commands
         if prompt.startswith("/"):
@@ -2902,6 +3251,8 @@ def repl(registry, taskdb, skills):
                 agent.plan_first = not agent.plan_first
                 state = "ON" if agent.plan_first else "OFF"
                 cprint(f"  Plan mode: {C.CYAN}{state}{C.RESET}")
+                if agent.plan_first:
+                    cprint(f"  {C.DIM}💡 Tip: Use {C.CYAN}/advisor score <plan> --criteria risky,feasible,optimal{C.RESET}{C.DIM} to test feasibility.{C.RESET}")
 
             elif cmd == "/provider":
                 if not arg:
@@ -2980,7 +3331,12 @@ def repl(registry, taskdb, skills):
                 cprint(f"  Verbose: {C.CYAN}{state}{C.RESET}")
 
             elif cmd == "/compact":
-                cprint(f"  {C.DIM}Compact mode: ON (reduced output){C.RESET}")
+                if not agent.messages or len(agent.messages) < 4:
+                    cprint(f"  {C.DIM}Not enough conversation to compact.{C.RESET}")
+                else:
+                    cprint(f"  {C.CYAN}⏳{C.RESET} {C.DIM}Compacting {len(agent.messages)} messages...{C.RESET}")
+                    agent.messages = _compact_messages(agent, agent.messages)
+                    cprint(f"  {C.GREEN}✓{C.RESET} Compacted to {len(agent.messages)} message(s). Context reclaimed.")
 
             elif cmd == "/memory":
                 mem = memory_list()
@@ -3056,9 +3412,74 @@ def repl(registry, taskdb, skills):
                     cprint(f"  {C.DIM}No sessions saved yet.{C.RESET}")
 
             elif cmd == "/health":
-                cprint(f"  {C.CYAN}Pinging providers...{C.RESET}")
-                result = tool_provider_health()
-                panel("Provider Health", result)
+                lines = []
+                # Memory health
+                try:
+                    from jebat.features.memory import EnhancedMemorySystem
+                    mem = EnhancedMemorySystem()
+                    traces = list(mem.traces.values())
+                    strengths = [t.calculate_current_strength() for t in traces]
+                    healthy = sum(1 for s in strengths if s > 0.5)
+                    health_pct = (healthy / len(strengths) * 100) if strengths else 0
+                    lines.append(f"  Memory: {len(traces)} traces, {health_pct:.0f}% healthy")
+                except Exception:
+                    lines.append("  Memory: unavailable")
+                # Dream state
+                state = _load_dream_state()
+                lines.append(f"  Dreams: {state.get('dream_count', 0)} total, {state.get('sessions_since_dream', 0)} sessions since last")
+                # Provider
+                cfg = registry.get_active()
+                if cfg:
+                    lines.append(f"  Provider: {cfg.kind}/{cfg.model}")
+                else:
+                    lines.append("  Provider: none")
+                # Disk
+                jebat_dir = Path.home() / '.jebat'
+                if jebat_dir.exists():
+                    total = sum(f.stat().st_size for f in jebat_dir.rglob('*') if f.is_file())
+                    lines.append(f"  Storage: {total / 1024:.0f} KB in ~/.jebat/")
+                panel("System Health", "\n".join(lines))
+
+            elif cmd == "/advisor":
+                if not arg:
+                    cprint(f"  {C.DIM}Usage: /advisor classify <text> --categories cat1,cat2,cat3{C.RESET}")
+                    cprint(f"  {C.DIM}       /advisor verify <text> --claim <claim>{C.RESET}")
+                    cprint(f"  {C.DIM}       /advisor score <text> --criteria low,medium,high{C.RESET}")
+                else:
+                    # Parse subcommand
+                    parts = arg.split(maxsplit=1)
+                    sub = parts[0] if parts else ""
+                    rest = parts[1] if len(parts) > 1 else ""
+                    try:
+                        import asyncio
+                        from routers.advisor import _decide
+                        if sub == "classify" and "--categories" in rest:
+                            text, _, cats = rest.partition("--categories")
+                            categories = [c.strip() for c in cats.strip().split(",")]
+                            questions = {"category": {"type": "Choice", "instructions": "Classify", "candidates": categories}}
+                            answers, _ = asyncio.run(_decide(text.strip(), questions))
+                            result = answers.get("category", {})
+                            cprint(f"  {C.GREEN}Category:{C.RESET} {result.get('answer', '?')} ({result.get('confidence', 0):.0%})")
+                        elif sub == "verify" and "--claim" in rest:
+                            text, _, claim = rest.partition("--claim")
+                            questions = {"check": {"type": "Noul", "instructions": claim.strip()}}
+                            answers, _ = asyncio.run(_decide(text.strip(), questions))
+                            result = answers.get("check", {})
+                            prob = result.get("probability", 0.5)
+                            verdict = f"{C.GREEN}YES{C.RESET}" if result.get("answer") else f"{C.RED}NO{C.RESET}"
+                            cprint(f"  {verdict} ({prob:.0%} confidence)")
+                        elif sub == "score" and "--criteria" in rest:
+                            text, _, crits = rest.partition("--criteria")
+                            criteria = [c.strip() for c in crits.strip().split(",")]
+                            questions = {"rating": {"type": "Score", "instructions": "Rate", "criteria": criteria}}
+                            answers, _ = asyncio.run(_decide(text.strip(), questions))
+                            result = answers.get("rating", {})
+                            score_val = result.get("answer", 0)
+                            cprint(f"  {C.CYAN}Score:{C.RESET} {score_val}/{len(criteria)-1}")
+                        else:
+                            cprint(f"  {C.DIM}Unknown subcommand. Use classify/verify/score.{C.RESET}")
+                    except Exception as e:
+                        cprint(f"  {C.RED}Advisor error: {e}{C.RESET}")
 
             elif cmd == "/providers":
                 result = tool_provider_health()
@@ -3073,12 +3494,9 @@ def repl(registry, taskdb, skills):
                 result = tool_export_backup(output)
                 panel("Export", result)
 
-            elif cmd == "/mimpi":
-                cprint(f"  {C.CYAN}Triggering manual Mimpi (autoDream)...{C.RESET}")
-                state = _load_dream_state()
-                state["sessions_since_dream"] = 999
-                _save_dream_state(state)
-                _auto_mimpi_check(taskdb)
+            elif cmd in ("/dream", "/mimpi"):
+                cprint(f"  {C.DIM}Running dream cycle...{C.RESET}")
+                _run_dream(taskdb)
 
             elif cmd == "/history":
                 sessions = _load_session_history()
@@ -3181,7 +3599,8 @@ def repl(registry, taskdb, skills):
                 resp = agent._call_llm(messages)
                 agent.spinner.stop()
                 _print_answer(resp.text)
-
+                # Advisor auto-triage hint: rank generated ideas
+                cprint(f"  {C.DIM}💡 Tip: Use {C.CYAN}/advisor score <idea> --criteria weak,viable,strong{C.RESET}{C.DIM} to rank ideas.{C.RESET}")
             elif cmd == "/scan":
                 path = arg or "."
                 cprint(f"  {C.RED}🛡️ Security Scan:{C.RESET} {path}")
@@ -3235,19 +3654,25 @@ def repl(registry, taskdb, skills):
                     cprint(f"  {C.DIM}Usage: /memory+ <key> = <value>{C.RESET}")
 
             elif cmd == "/recall":
-                if not arg:
-                    cprint(f"  {C.DIM}Usage: /recall <query>{C.RESET}")
-                else:
-                    mem = memory_list()
-                    q = arg.lower()
-                    matches = {k: v for k, v in mem.items() if q in k.lower() or q in str(v).lower()}
-                    if matches:
-                        cprint(f"  {C.CYAN}Recalled {len(matches)} memories:{C.RESET}")
-                        for k, v in list(matches.items())[:10]:
-                            cprint(f"    {C.CYAN}{k}{C.RESET}: {str(v)[:80]}")
+                query = arg or ""
+                try:
+                    from jebat.features.memory import EnhancedMemorySystem
+                    mem = EnhancedMemorySystem()
+                    traces = list(mem.traces.values())
+                    if query:
+                        traces = [t for t in traces if query.lower() in t.content.lower() or any(query.lower() in tag.lower() for tag in t.tags)]
+                    if not traces:
+                        cprint(f"  {C.DIM}No memories found{' for: ' + query if query else ''}.{C.RESET}")
                     else:
-                        cprint(f"  {C.DIM}No memories matching: {arg}{C.RESET}")
-
+                        traces.sort(key=lambda t: t.calculate_current_strength(), reverse=True)
+                        lines = []
+                        for t in traces[:10]:
+                            strength = t.calculate_current_strength()
+                            bar = '█' * int(strength * 5) + '░' * (5 - int(strength * 5))
+                            lines.append(f"  {bar} {C.CYAN}{t.content[:60]}{C.RESET} {C.DIM}[{', '.join(t.tags[:3])}]{C.RESET}")
+                        panel(f"Recall ({len(traces)} found)", "\n".join(lines))
+                except Exception as e:
+                    cprint(f"  {C.RED}Memory error: {e}{C.RESET}")
             elif cmd == "/swarm":
                 if not arg:
                     cprint(f"  {C.DIM}Usage: /swarm <task>{C.RESET}")
@@ -3386,6 +3811,53 @@ def repl(registry, taskdb, skills):
             elif cmd == "/agents":
                 cprint(f"  {C.DIM}No sub-agents currently running.{C.RESET}")
 
+            elif cmd == "/details":
+                _DETAIL_MODE = not _DETAIL_MODE
+                state = "ON" if _DETAIL_MODE else "OFF"
+                cprint(f"  Detail mode: {C.CYAN}{state}{C.RESET}")
+
+            elif cmd == "/editor":
+                text = _editor_input()
+                if text:
+                    prompt = text
+                    # Fall through to regular prompt processing below
+                    # We need to NOT continue here
+                else:
+                    continue
+
+            elif cmd == "/fork":
+                if agent.messages:
+                    fork_path = _fork_session(agent.messages)
+                    cprint(f"  {C.GREEN}✓{C.RESET} Session forked to: {C.DIM}{fork_path}{C.RESET}")
+                    cprint(f"  {C.DIM}Continuing in forked session.{C.RESET}")
+                else:
+                    cprint(f"  {C.DIM}No conversation to fork.{C.RESET}")
+
+            elif cmd == "/continue":
+                sessions = sorted(SESSIONS_DIR.glob("session_*.json"), reverse=True)
+                if arg:
+                    loaded = _load_session_by_id(arg)
+                    if loaded:
+                        agent.messages = loaded
+                        cprint(f"  {C.GREEN}✓{C.RESET} Loaded {len(loaded)} messages from session matching '{arg}'")
+                    else:
+                        cprint(f"  {C.RED}✗{C.RESET} No session matching '{arg}'")
+                elif sessions:
+                    latest = sessions[0]
+                    loaded = _load_session_by_id(latest.stem)
+                    if loaded:
+                        agent.messages = loaded
+                        cprint(f"  {C.GREEN}✓{C.RESET} Continued from {latest.name} ({len(loaded)} messages)")
+                    else:
+                        cprint(f"  {C.DIM}Could not load latest session.{C.RESET}")
+                else:
+                    cprint(f"  {C.DIM}No saved sessions found.{C.RESET}")
+
+            elif cmd == "/thinking":
+                show_thinking = not show_thinking
+                state = "ON" if show_thinking else "OFF"
+                cprint(f"  Thinking visibility: {C.CYAN}{state}{C.RESET}")
+
             elif cmd == "/cost":
                 if not arg:
                     cprint(f"  {C.DIM}Usage: /cost <model> <tokens>{C.RESET}")
@@ -3395,8 +3867,14 @@ def repl(registry, taskdb, skills):
                     tokens = int(parts[1]) if len(parts) > 1 else 1000
                     cost = estimate_cost(model, tokens)
                     cprint(f"  {C.GREEN}Estimated cost for {model} ({tokens:,} tokens): {format_cost(cost)}{C.RESET}")
-
             continue
+
+        # /editor fell through — prompt already set
+        if prompt.startswith("/editor") and not prompt.startswith("/editor "):
+            continue  # already handled above
+
+        # CQ-3: Expand @file references in prompt
+        prompt = _expand_file_refs(prompt)
 
         # Regular prompt — run agent
         cfg = registry.get_active()
@@ -3406,12 +3884,29 @@ def repl(registry, taskdb, skills):
         step = agent.step(prompt)
         elapsed = time.time() - start_time
 
+        # CQ-11: Show thinking blocks if enabled
+        if show_thinking and step.response.text:
+            import re as _re
+            thinking_match = _re.search(r'<think(?:ing)?>(.*?)</think(?:ing)?>', step.response.text, _re.DOTALL)
+            if thinking_match:
+                thought_text = thinking_match.group(1).strip()
+                cprint(f"\n  {C.BORDER}╭── {C.YELLOW}💭 Thinking ({elapsed:.1f}s){C.RESET}{C.BORDER} {'─' * 50}╮{C.RESET}")
+                for tl in thought_text.splitlines()[:15]:
+                    cprint(f"  {C.BORDER}│{C.RESET}  {C.ITALIC}{C.DIM}{tl}{C.RESET}")
+                if len(thought_text.splitlines()) > 15:
+                    cprint(f"  {C.BORDER}│{C.RESET}  {C.DIM}... {len(thought_text.splitlines()) - 15} more lines{C.RESET}")
+                cprint(f"  {C.BORDER}╰{'─' * 72}╯{C.RESET}")
+
         # Answer — clean markdown style
         cprint()
         _print_answer(step.response.text)
 
-        # Status + bottom bar
+        # CQ-8: Per-turn cost + token display
         cost = estimate_cost(model_str, step.tokens)
+        cost_str = f" · {C.NEON_GREEN}${cost:.4f}{C.RESET}" if cost > 0 else ""
+        cprint(f"  {C.DIM}{step.tokens:,} tok · {elapsed:.1f}s{C.RESET}{cost_str}")
+
+        # Status + bottom bar
         bottom_bar(cfg.kind if cfg else "unknown", model_str, tokens=step.tokens, tool_count=len(step.tool_actions), elapsed_s=elapsed, cost_usd=cost)
 
 
@@ -3724,6 +4219,23 @@ def main():
     """CLI entry point — default to REPL."""
     args = sys.argv[1:]
 
+    # CQ-9: Session continuation flags
+    continue_last = False
+    resume_session = None
+    filtered_args = []
+    i = 0
+    while i < len(args):
+        if args[i] in ("-c", "--continue"):
+            continue_last = True
+        elif args[i] in ("-s", "--session"):
+            if i + 1 < len(args):
+                resume_session = args[i + 1]
+                i += 1
+        else:
+            filtered_args.append(args[i])
+        i += 1
+    args = filtered_args
+
     if not args:
         # No args → start interactive REPL directly
         registry = ProviderRegistry()
@@ -3737,6 +4249,18 @@ def main():
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
         else:
             show_setup("none", "none", "none", "No provider")
+
+        # CQ-9: Auto-load session if requested
+        if continue_last or resume_session:
+            agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
+            if resume_session:
+                loaded = _load_session_by_id(resume_session)
+            else:
+                sessions = sorted(SESSIONS_DIR.glob("session_*.json"), reverse=True)
+                loaded = _load_session_by_id(sessions[0].stem) if sessions else []
+            if loaded:
+                agent.messages = loaded
+                cprint(f"  {C.GREEN}✓{C.RESET} Resumed {len(loaded)} messages from previous session")
 
         repl(registry, taskdb, skills)
         return
@@ -3755,14 +4279,24 @@ def main():
         print(f"    provider use X      Switch active provider")
         print(f"    (no args)        Start interactive REPL")
         print()
+        print(f"  {C.CYAN}Flags:{C.RESET}")
+        print(f"    -c, --continue   Resume last session")
+        print(f"    -s, --session ID Resume specific session")
+        print()
+        print(f"  {C.CYAN}REPL Shortcuts:{C.RESET}")
+        print(f"    @file.py         Attach file content to prompt")
+        print(f"    !git diff        Run shell command inline")
+        print(f'    """              Enter multi-line input mode')
+        print()
         print(f"  {C.CYAN}REPL Commands:{C.RESET}")
-        print(f"    /help /plan /mode /provider /model /scan /brainstorm /clear /exit")
-        print(f"    /swarm /ghost /memory /tasks /session /diff /export /health")
+        print(f"    /help /plan /mode /provider /model /compact /fork /details")
+        print(f"    /editor /thinking /swarm /ghost /memory /tasks /diff /export")
         print()
         print(f"  {C.CYAN}Examples:{C.RESET}")
-        print(f"    jebat                           # Start REPL")
-        print(f"    jebat code \"Fix the bug\"        # One-shot coding")
-        print(f"    jebat chat \"What is Python?\"    # Chat mode")
+        print(f"    jebat                                # Start REPL")
+        print(f"    jebat -c                             # Continue last session")
+        print(f"    jebat code \"Fix the bug\"              # One-shot coding")
+        print(f"    jebat chat \"What is Python?\"          # Chat mode")
         print(f"    jebat provider add openai --id work")
         return
 

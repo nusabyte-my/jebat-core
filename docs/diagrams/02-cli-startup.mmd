@@ -1,0 +1,13 @@
+flowchart TD
+    A["repl()"] --> B["_auto_mimpi_check(taskdb)"]
+    B --> C{sessions_since_dream >= 5?}
+    C -->|yes| D["_run_dream() AutoMimpi.dream(force=True)"]
+    D --> E[consolidate + extract patterns + prune]
+    E --> F[display suggestions + quote]
+    C -->|no| G[skip]
+    F --> H[advisor panel]
+    G --> H
+    H --> I["load profile: skill_level, weak/strong areas"]
+    I --> J["sparkline: 7-day velocity"]
+    J --> K["render: Health bar + suggestions"]
+    K --> L[REPL ready - prompt loop]

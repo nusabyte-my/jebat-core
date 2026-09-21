@@ -1,10 +1,10 @@
-# JEBAT v8.2.1 MCP Integration
+# JEBAT MCP Integration (Stateless v2026-07-28)
 
 JEBAT can act as a local Model Context Protocol (MCP) server from a full workspace checkout. It exposes the tools enabled in that checkout to VS Code, Cursor, Windsurf, JetBrains, and other compatible clients.
 
 The supported entry point is `python ./jebat-mcp`. The npm launcher is for the CLI and does not itself host MCP. Remote MCP deployments must be self-hosted and protected by authentication.
 
-The server negotiates MCP protocol versions `2024-11-05`, `2025-03-26`, and `2025-06-18`. In addition to tools, it exposes workflow resources and governed prompts so an IDE can recover context before acting.
+The server negotiates MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06-18`, and `2026-07-28` (stateless). The v2026-07-28 stateless architecture eliminates session bindings — each request is self-contained, enabling horizontal scaling behind standard load balancers. In addition to tools, it exposes workflow resources and governed prompts so an IDE can recover context before acting.
 
 ## Quick Setup
 
@@ -107,11 +107,32 @@ python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
 ```
 Best for remote connections or multi-user setups.
 
-### Streamable HTTP
+### Streamable HTTP (Stateless)
 ```bash
 python ./jebat-mcp --transport streamable-http --host 127.0.0.1 --port 8100
 ```
-Uses the single `/mcp` endpoint defined by the newer MCP transport. Put it behind an authenticated reverse proxy before allowing network access.
+Uses the single `/mcp` endpoint. Fully stateless as of v2026-07-28 — no session bindings, horizontally scalable behind Nginx/HAProxy. Put it behind an authenticated reverse proxy before allowing network access.
+
+### Multi-Instance Deployment (Production)
+```bash
+# Run 2-4 instances behind Nginx round-robin on VPS
+pm2 start "python ./jebat-mcp --transport streamable-http --port 8100" --name mcp-0
+pm2 start "python ./jebat-mcp --transport streamable-http --port 8101" --name mcp-1
+pm2 start "python ./jebat-mcp --transport streamable-http --port 8102" --name mcp-2
+```
+```nginx
+# Nginx upstream (no sticky sessions needed — stateless)
+upstream jebat_mcp {
+    server 127.0.0.1:8100;
+    server 127.0.0.1:8101;
+    server 127.0.0.1:8102;
+}
+server {
+    location /mcp {
+        proxy_pass http://jebat_mcp;
+    }
+}
+```
 
 ## Full Sovereign Harness Capabilities
 
@@ -134,7 +155,15 @@ JEBAT MCP operates as an active sovereign harness rather than a passive tool ser
    - Cross-session memory traces in `~/.jebat/memory/traces.json` mirrored to Ghost DB / SQLite-vec for semantic search.
 
 5. **Production Deployment on VPS .206**:
-   - Streamable HTTP endpoint running on port 8100 under PM2, reverse-proxied via Nginx at `https://jebat.nusabyte.my/mcp`.
+   - Stateless Streamable HTTP endpoint(s) running on ports 8100-8102 under PM2, reverse-proxied via Nginx at `https://jebat.nusabyte.my/mcp`.
+   - v2026-07-28: no sticky sessions — round-robin across instances for HA and zero-downtime restarts.
+
+6. **Advisor Tools (Jev-style System One Decisions)**:
+   - `advisor_classify`: Classify text into categories with confidence (~100ms)
+   - `advisor_verify`: Yes/no claim verification with calibrated probability
+   - `advisor_score`: Rate text on a scale with confidence
+   - `advisor_decide`: Full multi-question typed decision in one parallel pass
+   - Backend: TypeSafe Jev API when `TYPESAFE_API_KEY` is set; local fallback otherwise
 
 ## Environment Variables
 
@@ -143,6 +172,8 @@ JEBAT MCP operates as an active sovereign harness rather than a passive tool ser
 | `JEBAT_PROVIDER` | Provider to use | ollama |
 | `JEBAT_MODEL` | Model name | qwen2.5-coder:7b |
 | `JEBAT_API_KEY` | API key for cloud providers | - |
+| `TYPESAFE_API_KEY` | TypeSafe Jev API key for advisor tools | - (local fallback) |
+| `TYPESAFE_BASE_URL` | TypeSafe API base URL | `https://api.typesafe.ai` |
 | `JEBAT_MCP_PORT` | Deployment-defined HTTP port | 8099 |
 
 ## Troubleshooting

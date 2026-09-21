@@ -22,6 +22,7 @@ class AgentType(str, Enum):
     CREATIVE = "creative"
     TASK_EXECUTOR = "task_executor"
     RESEARCHER = "researcher"
+    ADVISOR = "advisor"
 
 
 class AgentPersonality(str, Enum):
@@ -86,6 +87,17 @@ class AgentFactory:
                 description="Creative content agent",
                 personality=AgentPersonality.CREATIVE,
                 capabilities=["creation", "brainstorming"],
+            ),
+            AgentTemplate(
+                agent_type=AgentType.ADVISOR,
+                name="AdvisorAgent",
+                description="Fast typed-decision advisor using System One judgments (Jev-style). "
+                "Routes, classifies, scores, and gates with calibrated probabilities "
+                "instead of LLM prose. Ideal for triage, guardrails, and agent pre-routing.",
+                personality=AgentPersonality.TECHNICAL,
+                capabilities=["classify", "route", "score", "verify", "gate", "triage"],
+                model="jev",
+                temperature=0.0,
             ),
         ]
 

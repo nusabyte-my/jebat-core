@@ -29,6 +29,8 @@ from jebat.features.memory import (
     SelfLearn,
 )
 
+MEMORY_BASE_DIR = Path.home() / ".jebat" / "memory"
+
 # ── Singleton engine ────────────────────────────────────────────────────
 # Persisted across tool calls for the lifetime of the MCP server process.
 # Storage defaults to ~/.jebat/memory/ (traces.json) — cross-session.
@@ -63,7 +65,7 @@ def _get_memory() -> EnhancedMemorySystem:
             ghost_client = GhostDBClient()
         except Exception:
             pass
-        _memory = EnhancedMemorySystem(ghost_client=ghost_client)
+        _memory = EnhancedMemorySystem(storage_path=MEMORY_BASE_DIR, ghost_client=ghost_client)
         # Load any existing cross-session traces
         _memory._load()
     return _memory
@@ -469,4 +471,123 @@ async def adapt_environment() -> dict[str, Any]:
             f"Call mimpi_dream periodically to consolidate session learnings.",
             f"Call project_recall at session start to restore project memory.",
         ],
+    }
+
+
+# ── selflearn_tool_guidance ─────────────────────────────────────────────
+
+@register_tool(
+    "selflearn_tool_guidance",
+    description="Get SelfLearn guidance for a specific tool or domain. Returns confidence level and any learned patterns.",
+    safety_tier="auto",
+    schema={
+        "type": "object",
+        "properties": {
+            "tool_name": {"type": "string", "description": "Tool or domain to get guidance for"},
+        },
+        "required": ["tool_name"],
+    },
+)
+async def selflearn_tool_guidance(tool_name: str) -> dict[str, Any]:
+    sl = _get_selflearn()
+    analysis = sl.analyze()
+    skills = analysis.get("skill_assessment", {})
+    # Find relevant skill info
+    relevant = {}
+    for domain, info in skills.items():
+        if tool_name.lower() in domain.lower() or domain.lower() in tool_name.lower():
+            relevant[domain] = info
+    # Get related memories
+    mem = _get_memory()
+    related_traces = [t for t in mem.traces.values() if tool_name.lower() in t.content.lower() or any(tool_name.lower() in tag.lower() for tag in t.tags)]
+    return {
+        "tool": tool_name,
+        "skill_match": relevant,
+        "confidence": max((info.get("avg_strength", 0) for info in relevant.values()), default=0),
+        "related_memories": len(related_traces),
+        "recommendation": "confident" if any(info.get("avg_strength", 0) > 0.7 for info in relevant.values()) else "verify_results" if related_traces else "new_territory",
+        "velocity": analysis.get("learning_velocity", {}),
+    }
+
+
+# ── mimpi_record_failure ────────────────────────────────────────────────
+
+@register_tool(
+    "mimpi_record_failure",
+    description="Record a tool failure pattern. After 3+ similar failures, generates a suggestion to avoid the pattern.",
+    safety_tier="auto",
+    schema={
+        "type": "object",
+        "properties": {
+            "tool_name": {"type": "string"},
+            "error": {"type": "string"},
+            "context": {"type": "string", "description": "What was being attempted"},
+        },
+        "required": ["tool_name", "error"],
+    },
+)
+async def mimpi_record_failure(tool_name: str, error: str, context: str = "") -> dict[str, Any]:
+    mem = _get_memory()
+    from jebat.features.memory import MemoryType
+    # Store the failure
+    trace = mem.store(
+        content=f"Tool {tool_name} failed: {error}. Context: {context}",
+        memory_type=MemoryType.EPISODIC,
+        tags=["failure", tool_name, "pattern-watch"],
+        confidence=0.8,
+    )
+    # Count similar failures
+    similar = [t for t in mem.traces.values() if "failure" in t.tags and tool_name in t.tags]
+    result = {
+        "recorded": True,
+        "memory_id": trace.trace_id,
+        "similar_failures": len(similar),
+    }
+    if len(similar) >= 3:
+        result["warning"] = f"Recurring failure pattern: {tool_name} has failed {len(similar)} times"
+        result["suggestion"] = f"Consider alternative approach or verify {tool_name} prerequisites before calling"
+    return result
+
+
+# ── session_learning_commit ─────────────────────────────────────────────
+
+@register_tool(
+    "session_learning_commit",
+    description="Commit session learnings to memory. Call at end of a session to extract and store key facts.",
+    safety_tier="auto",
+    schema={
+        "type": "object",
+        "properties": {
+            "summary": {"type": "string", "description": "Summary of what was learned in this session"},
+            "key_facts": {"type": "array", "items": {"type": "string"}, "description": "Key facts to remember"},
+            "session_id": {"type": "string", "description": "Session identifier"},
+        },
+        "required": ["summary"],
+    },
+)
+async def session_learning_commit(summary: str, key_facts: list = None, session_id: str = "") -> dict[str, Any]:
+    mem = _get_memory()
+    from jebat.features.memory import MemoryType
+    stored = []
+    # Store session summary
+    t = mem.store(
+        content=f"Session summary: {summary}",
+        memory_type=MemoryType.EPISODIC,
+        tags=["session", "summary", _project_name()] + ([session_id] if session_id else []),
+        confidence=0.7,
+    )
+    stored.append(t.trace_id)
+    # Store individual facts
+    for fact in (key_facts or []):
+        t = mem.store(
+            content=fact,
+            memory_type=MemoryType.SEMANTIC,
+            tags=["session", "fact", _project_name()] + ([session_id] if session_id else []),
+            confidence=0.8,
+        )
+        stored.append(t.trace_id)
+    return {
+        "committed": len(stored),
+        "memory_ids": stored,
+        "project": _project_name(),
     }

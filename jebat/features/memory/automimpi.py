@@ -35,6 +35,8 @@ from . import (
     SelfLearningMemory,
 )
 
+MEMORY_BASE_DIR: Path = Path.home() / ".jebat" / "memory"
+
 
 # ────────────────────────────────────────────────────────────
 #  Types
@@ -80,7 +82,7 @@ class LearningProfile:
     consolidation_health: float = 0.5  # 0-1, how well memories are consolidating
     pattern_count: int = 0
     strategy_success_rates: Dict[str, float] = field(default_factory=dict)
-
+    memory_quality_avg: float = 0.5
 
 @dataclass
 class DreamReport:
@@ -254,13 +256,85 @@ class AutoMimpi:
 
         return report
 
+    def quality_score(self, trace: MemoryTrace) -> float:
+        """Public alias for _compute_memory_quality."""
+        return self._compute_memory_quality(trace)
+
+    def _compute_memory_quality(self, trace: MemoryTrace) -> float:
+        """Compute quality score for a memory trace."""
+        strength = trace.calculate_current_strength()
+        now = datetime.now(timezone.utc)
+        created_at = trace.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        last_accessed = trace.last_accessed
+        if last_accessed.tzinfo is None:
+            last_accessed = last_accessed.replace(tzinfo=timezone.utc)
+        access_frequency = trace.access_count / max(1, (now - created_at).days)
+        recency = 1.0 / max(1, (now - last_accessed).days)
+        link_bonus = min(0.2, len(trace.linked_traces) * 0.05)
+        confidence = getattr(trace, "confidence", 0.8)
+        return min(1.0, strength * 0.4 + min(1.0, access_frequency) * 0.2 + recency * 0.2 + confidence * 0.1 + link_bonus * 0.1)
+
+    def record_failure(
+        self, tool_name: str, error: str, context: str = ""
+    ) -> Tuple[MemoryTrace, List[MemoryTrace]]:
+        """Record a tool failure pattern (C2)."""
+        tags = {"failure", tool_name, "pattern-watch"}
+        trace = self.memory.store(
+            content=f"Tool {tool_name} failed: {error}. Context: {context}",
+            memory_type=MemoryType.EPISODIC,
+            tags=tags,
+            confidence=0.8,
+        )
+        similar = [
+            t for t in self.memory.traces.values()
+            if "failure" in t.tags and tool_name in t.tags
+        ]
+        return trace, similar
+
+    def commit_session_learning(
+        self,
+        summary: str,
+        key_facts: Optional[List[str]] = None,
+        session_id: str = "",
+        project: str = "",
+    ) -> List[str]:
+        """Commit session summary and facts to memory (D4)."""
+        tags_base = ["session", "summary", project] if project else ["session", "summary"]
+        if session_id:
+            tags_base.append(session_id)
+
+        stored = []
+        t = self.memory.store(
+            content=f"Session summary: {summary}",
+            memory_type=MemoryType.EPISODIC,
+            tags=tags_base,
+            confidence=0.7,
+        )
+        stored.append(t.trace_id)
+
+        fact_tags = ["session", "fact", project] if project else ["session", "fact"]
+        if session_id:
+            fact_tags.append(session_id)
+
+        for fact in (key_facts or []):
+            tf = self.memory.store(
+                content=fact,
+                memory_type=MemoryType.SEMANTIC,
+                tags=fact_tags,
+                confidence=0.8,
+            )
+            stored.append(tf.trace_id)
+        return stored
+
     def _build_learning_profile(self) -> LearningProfile:
         """Analyze memory system to build a learning profile."""
         traces = list(self.memory.traces.values())
         total = len(traces)
 
         if total == 0:
-            return LearningProfile(skill_level=1)
+            return LearningProfile(skill_level=1, memory_quality_avg=0.5)
 
         # Skill level from memory count and diversity
         type_counts = {}
@@ -315,6 +389,10 @@ class AutoMimpi:
         strengths = [t.calculate_current_strength() for t in traces]
         consolidation_health = sum(strengths) / len(strengths) if strengths else 0.5
 
+        # Memory quality scoring (B4)
+        qualities = [self._compute_memory_quality(t) for t in traces]
+        memory_quality_avg = sum(qualities) / len(qualities) if qualities else 0.5
+
         # Strategy success rates (if SelfLearningMemory)
         strategy_rates = {}
         if isinstance(self.memory, SelfLearningMemory):
@@ -332,6 +410,7 @@ class AutoMimpi:
             consolidation_health=consolidation_health,
             pattern_count=len(self.memory.extracted_patterns),
             strategy_success_rates=strategy_rates,
+            memory_quality_avg=round(memory_quality_avg, 3),
         )
 
     def _generate_suggestions(self, profile: LearningProfile) -> List[DreamSuggestion]:
@@ -589,15 +668,53 @@ class SelfLearn:
 #  Convenience
 # ────────────────────────────────────────────────────────────
 
-def create_automimpi(memory_system: EnhancedMemorySystem) -> AutoMimpi:
+def create_automimpi(memory_system: Optional[EnhancedMemorySystem] = None) -> AutoMimpi:
     """Create an AutoMimpi engine."""
+    if memory_system is None:
+        memory_system = EnhancedMemorySystem(storage_path=MEMORY_BASE_DIR)
     return AutoMimpi(memory_system)
 
 
-def create_selflearn(memory_system: EnhancedMemorySystem) -> SelfLearn:
+def create_selflearn(memory_system: Optional[EnhancedMemorySystem] = None) -> SelfLearn:
     """Create a SelfLearn engine."""
+    if memory_system is None:
+        memory_system = EnhancedMemorySystem(storage_path=MEMORY_BASE_DIR)
     return SelfLearn(memory_system)
 
+
+def _enhanced_memory_store(
+    self: EnhancedMemorySystem,
+    content: str,
+    memory_type: Any = MemoryType.EPISODIC,
+    tags: Optional[Any] = None,
+    confidence: float = 0.8,
+    importance: float = 0.5,
+    context: Optional[Dict[str, Any]] = None,
+) -> MemoryTrace:
+    """Store a memory trace synchronously with persistence."""
+    from . import coerce_memory_type
+    m_type = coerce_memory_type(memory_type)
+    tag_set = set(tags) if tags else set()
+    normalized_content = content.strip()
+    normalized_context = context or {}
+    trace = MemoryTrace(
+        memory_type=m_type,
+        content=normalized_content,
+        context=normalized_context,
+        tags=tag_set,
+        importance=importance,
+        confidence=confidence,
+        decay_rate=self._calculate_decay_rate(m_type, importance),
+    )
+    self._store_trace(trace)
+    self._activate_trace(trace.trace_id, activation=1.0)
+    if m_type in (MemoryType.EPISODIC, MemoryType.WORKING):
+        self._add_to_working_memory(trace.trace_id)
+    self._save()
+    return trace
+
+if not hasattr(EnhancedMemorySystem, "store"):
+    EnhancedMemorySystem.store = _enhanced_memory_store
 
 __all__ = [
     "AutoMimpi",
@@ -609,4 +726,5 @@ __all__ = [
     "SuggestionUrgency",
     "create_automimpi",
     "create_selflearn",
+    "MEMORY_BASE_DIR",
 ]

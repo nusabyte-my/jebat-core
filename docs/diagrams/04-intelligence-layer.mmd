@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph engines["Engines shared ~/.jebat/memory/"]
+        AM["AutoMimpi<br/>dream suggestions<br/>quality scoring"]
+        SL["SelfLearn<br/>velocity gaps<br/>skill assessment"]
+        AD["Advisor<br/>classify verify<br/>score gate"]
+    end
+    subgraph tools["MCP/CLI Tools"]
+        T1["mimpi_record_failure<br/>3+ to warning"]
+        T2["selflearn_tool_guidance<br/>conf per tool"]
+        T3["advisor_gate<br/>pre-flight risk"]
+        T4["session_learning_commit<br/>end of session"]
+    end
+    subgraph surfaces["Surfaces"]
+        S1["CLI advisor panel"]
+        S2["MCP advisorReady notif"]
+        S3["MCP resources<br/>dream/profile/kb"]
+        S4["MCP prompts<br/>kb-review/debug-this"]
+    end
+    AM --> S1
+    AM --> S2
+    AM --> S3
+    SL --> S1
+    SL --> S3
+    SL --> S4
+    AD --> T3
+    T1 --> AM
+    T2 --> SL
+    T4 --> AM
