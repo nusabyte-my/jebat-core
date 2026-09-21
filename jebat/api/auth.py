@@ -111,8 +111,10 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # Only protect /api/* routes
-        if not path.startswith("/api/"):
+        # Protect /api/* AND the OpenAI-compatible /v1/* inference endpoints.
+        # /v1/chat/completions runs models + costs tokens, so it must not be
+        # an unauthenticated backdoor while /api/* is gated.
+        if not (path.startswith("/api/") or path.startswith("/v1/")):
             return await call_next(request)
 
         # Try multiple auth methods
