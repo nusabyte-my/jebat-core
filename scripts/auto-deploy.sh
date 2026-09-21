@@ -96,24 +96,34 @@ fi
 chown -R www-data:www-data "$WEB_DIR" 2>/dev/null || true
 
 # ── 4. Decide propagation target ──────────────────────────────────────────
-# If the API runs here (webhook on the API host), restart in place.
-# Otherwise push changed files to the remote API host.
-restart_local() {
+# Only treat the API as local if it is actually RUNNING here. A stale or
+# stopped PM2 entry is not a deployment target: on .65 there is a leftover
+# stopped `jebat-api`, and trusting `pm2 describe` made the webhook restart
+# nothing while the tunnel to .206 made the health check pass anyway.
+pm2_online() {
     command -v pm2 &>/dev/null || return 1
-    pm2 describe "$API_PM2_NAME" &>/dev/null || return 1
-    for app in $PM2_APPS; do
-        pm2 describe "$app" &>/dev/null && pm2 restart "$app" --update-env || true
-    done
-    pm2 save --force || true
-    return 0
+    pm2 jlist 2>/dev/null | python3 -c '
+import sys, json
+try: apps = json.load(sys.stdin)
+except Exception: sys.exit(1)
+name = sys.argv[1]
+for a in apps:
+    if a.get("name") == name and a.get("pm2_env", {}).get("status") == "online":
+        sys.exit(0)
+sys.exit(1)
+' "$1"
 }
 
-if restart_local; then
-    echo "[4/6] restarted $API_PM2_NAME locally."
+if pm2_online "$API_PM2_NAME"; then
+    echo "[4/6] $API_PM2_NAME is online here — restarting in place."
+    for app in $PM2_APPS; do
+        pm2_online "$app" && pm2 restart "$app" --update-env || true
+    done
+    pm2 save --force || true
     HEALTH_URL="http://127.0.0.1:$API_PORT/health"
     HEALTH_HOST=""
 else
-    echo "[4/6] API not local — propagating to $API_HOST..."
+    echo "[4/6] $API_PM2_NAME not online here — propagating to $API_HOST..."
     # 4a. Back up the files we are about to change on the API host.
     BK="/root/jebat-deploy-backup-$(date +%s)"
     ssh $SSH_OPTS "$API_HOST" "mkdir -p '$BK' && cd '$API_DIR' && \
@@ -153,6 +163,12 @@ else
         pm2 save --force" || echo "  WARNING: pm2 restart failed on $API_HOST"
     HEALTH_URL="http://127.0.0.1:$API_PORT/health"
     HEALTH_HOST="$API_HOST"
+    # Stamp the target with the commit we just shipped. Health alone cannot
+    # prove the new code landed (a tunnel can answer for a host we never
+    # touched), so verify a marker that only this run could have written.
+    DEPLOY_STAMP="$SHORT"
+    ssh $SSH_OPTS "$API_HOST" "echo '$SHORT' > '$API_DIR/.jebat-deploy-commit'" || \
+        echo "  WARNING: could not write deploy stamp on $API_HOST"
 fi
 
 # ── 6. Verify ─────────────────────────────────────────────────────────────
@@ -165,10 +181,40 @@ else
 fi
 echo "  API health: $HEALTH"
 
+# Prove the code actually landed where we claimed to deploy it.
+CODE_OK=1
+if [ -n "$HEALTH_HOST" ]; then
+    STAMP=$(ssh $SSH_OPTS "$HEALTH_HOST" "cat '$API_DIR/.jebat-deploy-commit' 2>/dev/null" || true)
+    if [ "$STAMP" != "$SHORT" ]; then
+        echo "  ❌ deploy stamp mismatch on $HEALTH_HOST: expected $SHORT, found '${STAMP:-none}'"
+        CODE_OK=0
+    else
+        echo "  ✅ deploy stamp matches on $HEALTH_HOST ($SHORT)"
+    fi
+fi
+
+if [ -n "$ALL_CHANGED" ]; then
+    PROBE=$(printf '%s\n' "$ALL_CHANGED" | grep -E '\.py$' | head -1)
+    if [ -n "$PROBE" ]; then
+        if [ -n "$HEALTH_HOST" ]; then
+            REMOTE=$(ssh $SSH_OPTS "$HEALTH_HOST" "md5sum '$API_DIR/$PROBE' 2>/dev/null | cut -d' ' -f1" || true)
+        else
+            REMOTE=$(md5sum "$REPO_DIR/$PROBE" 2>/dev/null | cut -d' ' -f1)
+        fi
+        LOCAL=$(md5sum "$REPO_DIR/$PROBE" 2>/dev/null | cut -d' ' -f1)
+        if [ -n "$LOCAL" ] && [ "$REMOTE" = "$LOCAL" ]; then
+            echo "  ✅ code verified on target: $PROBE"
+        else
+            echo "  ❌ code mismatch on target: $PROBE"
+            CODE_OK=0
+        fi
+    fi
+fi
+
 END_TIME=$(date +%s)
 ELAPSED=$((END_TIME - START_TIME))
 
-if echo "$HEALTH" | grep -q healthy; then
+if echo "$HEALTH" | grep -q healthy && [ "$CODE_OK" = "1" ]; then
     echo "[$(date)] deploy SUCCESS ($ELAPSED s) commit=$SHORT"
     { echo "JEBAT_DEPLOY_RESULT=success"; echo "JEBAT_DEPLOY_COMMIT=$SHORT"; echo "JEBAT_DEPLOY_TIME=$ELAPSED"; } \
         > /tmp/jebat-deploy-last.json
