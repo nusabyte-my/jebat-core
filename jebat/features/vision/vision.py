@@ -141,6 +141,24 @@ def _select_vision_provider() -> str:
 
 # ── Vision Analyze: OpenAI ────────────────────────────────────────────────
 
+def _openai_chat_url() -> str:
+    """Resolve the OpenAI-compatible chat-completions endpoint.
+
+    Honours OPENAI_BASE_URL (also OPENAI_API_BASE) so a proxy/aggregator key
+    — TokenHarbor, OpenRouter, an Azure/one-api gateway — is sent to its own
+    host instead of api.openai.com, which would reject it as an invalid key.
+    Accepts either the /v1 root or a full /chat/completions URL.
+    """
+    base = (
+        os.getenv("OPENAI_BASE_URL")
+        or os.getenv("OPENAI_API_BASE")
+        or "https://api.openai.com/v1"
+    ).strip().rstrip("/")
+    if base.endswith("/chat/completions"):
+        return base
+    return f"{base}/chat/completions"
+
+
 async def _analyze_openai(
     image_content: str, mime: str, question: str, model: str,
 ) -> dict[str, Any]:
@@ -170,7 +188,7 @@ async def _analyze_openai(
 
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
         resp = await client.post(
-            "https://api.openai.com/v1/chat/completions",
+            _openai_chat_url(),
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
