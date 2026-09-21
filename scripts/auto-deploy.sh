@@ -191,13 +191,28 @@ fi
 
 # ── 6. Verify ─────────────────────────────────────────────────────────────
 echo "[6/6] Verifying..."
-sleep 5
-if [ -n "$HEALTH_HOST" ]; then
-    HEALTH=$(ssh $SSH_OPTS "$HEALTH_HOST" "curl -sf --max-time 8 '$HEALTH_URL'" 2>/dev/null || echo "unreachable")
-else
-    HEALTH=$(curl -sf --max-time 8 "$HEALTH_URL" 2>/dev/null || echo "unreachable")
-fi
-echo "  API health: $HEALTH"
+# The API warm-up thread loads the advisor checkpoint (250 MB+) right after
+# restart, which saturates an 8-core box for 60-90s. A single health probe
+# fired into that window times out and reports a deploy as failed even though
+# the code landed and the service is fine. Poll with a deadline instead.
+probe_health() {
+    if [ -n "$HEALTH_HOST" ]; then
+        ssh $SSH_OPTS "$HEALTH_HOST" "curl -sf --max-time 8 '$HEALTH_URL'" 2>/dev/null
+    else
+        curl -sf --max-time 8 "$HEALTH_URL" 2>/dev/null
+    fi
+}
+HEALTH=""
+for attempt in $(seq 1 18); do
+    sleep 5
+    HEALTH=$(probe_health || true)
+    if echo "$HEALTH" | grep -q healthy; then
+        [ "$attempt" -gt 1 ] && echo "  (healthy after $((attempt * 5))s warm-up)"
+        break
+    fi
+    HEALTH=""
+done
+echo "  API health: ${HEALTH:-unreachable}"
 
 # Prove the code actually landed where we claimed to deploy it.
 CODE_OK=1
