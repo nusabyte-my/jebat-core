@@ -115,7 +115,11 @@ class ClassifyRequest(BaseModel):
 
     text: str = Field(..., min_length=1)
     categories: List[str] = Field(..., min_length=2, max_length=255)
-    instructions: str = Field(default="Classify this text into the most fitting category.")
+    instructions: str = Field(
+        default="Which single category best describes the situation described in the text?",
+        description="Zero-shot hypothesis framing. Specific instructions materially "
+        "improve accuracy on the NLI-based transformer tier.",
+    )
 
 
 class ClassifyResponse(BaseModel):
@@ -123,6 +127,7 @@ class ClassifyResponse(BaseModel):
     confidence: float
     probabilities: Dict[str, float]
     latency_ms: float
+    backend: str = Field(description="'typesafe', 'laya', 'transformers', or 'local'")
 
 
 class VerifyRequest(BaseModel):
@@ -136,6 +141,7 @@ class VerifyResponse(BaseModel):
     result: bool
     probability: float
     latency_ms: float
+    backend: str = Field(description="'typesafe', 'laya', 'transformers', or 'local'")
 
 
 class ScoreRequest(BaseModel):
@@ -151,6 +157,7 @@ class ScoreResponse(BaseModel):
     level: str
     confidence: float
     latency_ms: float
+    backend: str = Field(description="'typesafe', 'laya', 'transformers', or 'local'")
 
 
 # ── Heuristic Fallback Support ──
@@ -679,7 +686,7 @@ async def advisor_classify(req: ClassifyRequest) -> ClassifyResponse:
             "candidates": req.categories,
         }
     }
-    answers, _ = await _decide(req.text, questions)
+    answers, backend = await _decide(req.text, questions)
     result = answers.get("category", {})
     latency = (time.perf_counter() - t0) * 1000
 
@@ -688,6 +695,7 @@ async def advisor_classify(req: ClassifyRequest) -> ClassifyResponse:
         confidence=result.get("confidence", 0.0),
         probabilities=result.get("probabilities", {}),
         latency_ms=round(latency, 1),
+        backend=backend,
     )
 
 
@@ -701,14 +709,15 @@ async def advisor_verify(req: VerifyRequest) -> VerifyResponse:
             "instructions": req.claim,
         }
     }
-    answers, _ = await _decide(req.text, questions)
+    answers, backend = await _decide(req.text, questions)
     result = answers.get("check", {})
     latency = (time.perf_counter() - t0) * 1000
 
     return VerifyResponse(
-        result=result.get("answer", False),
+        result=bool(result.get("answer", False)),
         probability=result.get("probability", 0.5),
         latency_ms=round(latency, 1),
+        backend=backend,
     )
 
 
@@ -723,18 +732,23 @@ async def advisor_score(req: ScoreRequest) -> ScoreResponse:
             "criteria": req.criteria,
         }
     }
-    answers, _ = await _decide(req.text, questions)
+    answers, backend = await _decide(req.text, questions)
     result = answers.get("rating", {})
-    score_idx = result.get("answer", 0)
+    # Tiers may return a float expected-level; index must be an int in range.
+    try:
+        score_idx = int(round(float(result.get("answer", 0) or 0)))
+    except (TypeError, ValueError):
+        score_idx = 0
+    score_idx = max(0, min(score_idx, len(req.criteria) - 1))
     latency = (time.perf_counter() - t0) * 1000
 
     return ScoreResponse(
         score=score_idx,
-        level=req.criteria[score_idx] if score_idx < len(req.criteria) else "unknown",
+        level=req.criteria[score_idx],
         confidence=result.get("confidence", 0.0),
         latency_ms=round(latency, 1),
+        backend=backend,
     )
-
 
 @router.get("/status")
 async def advisor_status() -> Dict[str, Any]:
