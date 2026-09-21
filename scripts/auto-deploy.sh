@@ -48,20 +48,37 @@ NEW=$(git rev-parse HEAD)
 SHORT=$(git rev-parse --short HEAD)
 echo "  $OLD -> $NEW ($SHORT)"
 
-if [ "$OLD" = "$NEW" ]; then
-    echo "  no new commits; nothing to do."
-    echo "JEBAT_DEPLOY_RESULT=noop" > /tmp/jebat-deploy-last.json
-    echo "JEBAT_DEPLOY_COMMIT=$SHORT" >> /tmp/jebat-deploy-last.json
-    exit 0
+# Diff against what the TARGET actually runs, not merely the last push.
+# Diffing OLD..NEW alone silently leaves a host behind whenever an earlier
+# deploy skipped it, because the stamp still advances each run and every
+# later diff starts from a base the target never received.
+# Read the target's current stamp. When this script runs ON the API host the
+# ssh is to ourselves and may be refused, so fall back to a local read.
+TARGET_BASE=$(ssh $SSH_OPTS "$API_HOST" "cat '$API_DIR/.jebat-deploy-commit' 2>/dev/null" 2>/dev/null || true)
+if [ -z "$TARGET_BASE" ]; then
+    TARGET_BASE=$(cat "$API_DIR/.jebat-deploy-commit" 2>/dev/null || true)
+fi
+SYNC_FULL=0
+if [ -n "$TARGET_BASE" ] && git rev-parse --verify --quiet "${TARGET_BASE}^{commit}" >/dev/null 2>&1; then
+    BASE=$(git rev-parse "${TARGET_BASE}^{commit}")
+    echo "  target reports $TARGET_BASE — diffing from that commit"
+else
+    SYNC_FULL=1
+    echo "  target state unknown — syncing the full tracked tree"
 fi
 
-# Files added/copied/modified/renamed/type-changed vs deleted in the range.
-EXISTING=$(git diff --name-only --diff-filter=ACMRT "$OLD" "$NEW" || true)
-DELETED=$(git diff --name-only --diff-filter=D "$OLD" "$NEW" || true)
-ALL_CHANGED=$(git diff --name-only "$OLD" "$NEW" || true)
+if [ "$SYNC_FULL" = "1" ]; then
+    EXISTING=$(git ls-files)
+    DELETED=""
+    ALL_CHANGED="$EXISTING"
+else
+    EXISTING=$(git diff --name-only --diff-filter=ACMRT "$BASE" "$NEW" || true)
+    DELETED=$(git diff --name-only --diff-filter=D "$BASE" "$NEW" || true)
+    ALL_CHANGED=$(git diff --name-only "$BASE" "$NEW" || true)
+fi
 
 if [ -z "$ALL_CHANGED" ]; then
-    echo "  commit range touched no files; skipping propagation."
+    echo "  target already matches $SHORT; nothing to propagate."
 fi
 
 # ── 2. Install deps locally if requirements changed ───────────────────────
@@ -120,6 +137,7 @@ if pm2_online "$API_PM2_NAME"; then
         pm2_online "$app" && pm2 restart "$app" --update-env || true
     done
     pm2 save --force || true
+    echo "$SHORT" > "$API_DIR/.jebat-deploy-commit" 2>/dev/null || true
     HEALTH_URL="http://127.0.0.1:$API_PORT/health"
     HEALTH_HOST=""
 else
@@ -183,18 +201,23 @@ echo "  API health: $HEALTH"
 
 # Prove the code actually landed where we claimed to deploy it.
 CODE_OK=1
+STAMP=""
 if [ -n "$HEALTH_HOST" ]; then
     STAMP=$(ssh $SSH_OPTS "$HEALTH_HOST" "cat '$API_DIR/.jebat-deploy-commit' 2>/dev/null" || true)
-    if [ "$STAMP" != "$SHORT" ]; then
-        echo "  ❌ deploy stamp mismatch on $HEALTH_HOST: expected $SHORT, found '${STAMP:-none}'"
-        CODE_OK=0
-    else
-        echo "  ✅ deploy stamp matches on $HEALTH_HOST ($SHORT)"
-    fi
+else
+    STAMP=$(cat "$API_DIR/.jebat-deploy-commit" 2>/dev/null || true)
+fi
+if [ "$STAMP" != "$SHORT" ]; then
+    echo "  ❌ deploy stamp mismatch: expected $SHORT, found '${STAMP:-none}'"
+    CODE_OK=0
+else
+    echo "  ✅ deploy stamp matches (${SHORT})"
 fi
 
 if [ -n "$ALL_CHANGED" ]; then
-    PROBE=$(printf '%s\n' "$ALL_CHANGED" | grep -E '\.py$' | head -1)
+    # `|| true` is required: grep exits 1 on no match and pipefail would
+    # otherwise abort the whole script after an otherwise successful deploy.
+    PROBE=$(printf '%s\n' "$ALL_CHANGED" | { grep -E '\.py$' || true; } | head -1)
     if [ -n "$PROBE" ]; then
         if [ -n "$HEALTH_HOST" ]; then
             REMOTE=$(ssh $SSH_OPTS "$HEALTH_HOST" "md5sum '$API_DIR/$PROBE' 2>/dev/null | cut -d' ' -f1" || true)
