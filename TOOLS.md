@@ -68,6 +68,14 @@ Add whatever helps you do your job. This is your cheat sheet.
 - **Frontend:** nginx serves dist/ (build on-box via deploy-to-vps.sh flow: pull → pnpm install → prisma generate → build w/ old-chunk retention → pm2 restart evolve-backend only). NOT behind Cloudflare (direct DNS).
 - **nginx vhost:** /etc/nginx/sites-enabled/evolveplayboost — `/uploads/` must keep `^~` (asset regex would otherwise win). DIVERGES from repo nginx/ copy (repo copy is stale/simplified).
 - **DB:** local PG `evolveplayboost` (postgres user, localhost:5432). Prisma migrations applied by hand + tracked in _prisma_migrations.
-### SkillPro / JEBAT
-- **Host:** `.65` VPS (SkillPro deploy target)
-- **JEBAT model host:** `72.62.255.206` (llama.cpp, TCP 8081 only from `.65`)
+### JEBAT VPS (.206 Mainframe — Production)
+- **Host:** `root@72.62.255.206` (SSH alias `72.62.255.206`, `jebat-vps`, key `~/.ssh/id_ed25519-hostinger`)
+- **Path:** `/var/www/jebat-core`
+- **Services (PM2):** `jebat-api` (:8000), `jebat-webui` (:8787)
+- **Local AI:** `llama-server` (:8081, systemd `llama-cpp-jebat`), `ollama` (:11434)
+- **Nginx:** `/etc/nginx/sites-available/jebat` -> `/etc/nginx/sites-enabled/jebat`
+
+### Public Gateway (.65 VPS)
+- **Host:** `root@72.62.254.65` (Cloudflare-facing reverse proxy & SkillPro/Serambi host)
+- **Tunnels:** `jebat-upstream-tunnel.service` forwards :8000 and :8787 to `72.62.255.206`
+- **Public URLs:** `https://jebat.online` (Landing), `https://jebat.online/api/` (API), `https://jebat.online/webui/` (WebUI)

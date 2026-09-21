@@ -233,11 +233,25 @@ def print_ninerouter_setup():
 # ── Supported free models ─────────────────────────────────────────────────
 
 FREE_MODELS: dict[str, dict[str, str]] = {
-    "kr/claude-sonnet-4.5": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude unlimited"},
-    "kr/claude-opus-4": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude Opus"},
+    # Kiro AI (free tier)
+    "kr/claude-sonnet-4.5": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude Sonnet 4.5"},
+    "kr/claude-opus-4": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude Opus 4"},
+    "kr/claude-opus-4.8": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude Opus 4.8"},
+    "kr/claude-opus-5": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude Opus 5"},
+    "kr/claude-sonnet-5": {"tier": "free", "provider": "Kiro AI", "notes": "Free Claude Sonnet 5"},
+    "kr/gpt-5.6-sol": {"tier": "free", "provider": "Kiro AI", "notes": "Free GPT 5.6 Sol via Kiro"},
+    "kr/gpt-5.6-terra": {"tier": "free", "provider": "Kiro AI", "notes": "Free GPT 5.6 Terra via Kiro"},
+    "kr/gpt-5.6-luna": {"tier": "free", "provider": "Kiro AI", "notes": "Free GPT 5.6 Luna via Kiro"},
+    # OpenCode (free tier)
     "oc/claude-sonnet-4.5": {"tier": "free", "provider": "OpenCode", "notes": "No auth required"},
+    # Kagiro (free via 9router)
+    "kagiro/deepseek-v4-flash-0731": {"tier": "free", "provider": "Kagiro", "notes": "DeepSeek V4 Flash via 9router"},
+    "kagiro/kagiro/opus4-7": {"tier": "free", "provider": "Kagiro", "notes": "Claude Opus 4.7 via 9router"},
+    "kagiro/kagiro/gpt-6-astra": {"tier": "free", "provider": "Kagiro", "notes": "GPT 6 Astra via 9router"},
+    # Cheap
     "glm-4-flash": {"tier": "cheap", "provider": "GLM", "notes": "$0.6/1M tokens"},
     "mm/MiniMax-Text-01": {"tier": "cheap", "provider": "MiniMax", "notes": "$0.2/1M tokens"},
+    # Free credits
     "vtx/gemini-2.5-pro": {"tier": "free-credits", "provider": "Vertex AI", "notes": "$300 free credits"},
 }
 
