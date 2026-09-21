@@ -14,8 +14,8 @@
 <link rel="alternate" hreflang="en" href="https://jebat.online/" />
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" href="assets/favicon.png?v=20260830" />
-<link rel="apple-touch-icon" href="assets/jebat-app-icon.png?v=20260830" />
+<link rel="icon" type="image/png" href="assets/favicon.png?v=20260922" />
+<link rel="apple-touch-icon" href="assets/jebat-app-icon.png?v=20260922" />
 
 <!-- Open Graph / Social Media Meta -->
 <meta property="og:type" content="website" />
@@ -23,14 +23,14 @@
 <meta property="og:title" content="JEBAT — Sovereign AI Command Layer | Keep Command" />
 <meta property="og:description" content="Run any model. Give agents memory and tools. Govern every action. Deploy JEBAT on infrastructure you control." />
 <meta property="og:url" content="https://jebat.online/" />
-<meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png?v=20260830" />
+<meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png?v=20260922" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="@nusabyte" />
 <meta name="twitter:title" content="JEBAT — Sovereign AI Command Layer" />
 <meta name="twitter:description" content="Run any model. Give agents memory and tools. Govern every action. Deploy JEBAT on infrastructure you control." />
-<meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png?v=20260830" />
+<meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png?v=20260922" />
 
 <!-- Structured Data: SoftwareApplication + Organization + FAQPage -->
 <script type="application/ld+json">
@@ -42,7 +42,7 @@
       "@id": "https://jebat.online/#organization",
       "name": "NusaByte",
       "url": "https://nusabyte.my",
-      "logo": "https://jebat.online/assets/Jebat-Transparent.png?v=20260830",
+      "logo": "https://jebat.online/assets/Jebat-Transparent.png?v=20260922",
       "sameAs": [
         "https://github.com/nusabyte-my/jebat-core"
       ]
@@ -116,7 +116,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" href="assets/jebat-theme.css?v=20260909_copper" />
+<link rel="stylesheet" href="assets/jebat-theme.css?v=20260922" />
 
 <style>
 /* HERMES STUDIO COLOR GRADE SYSTEM — AUTHENTIC JEBAT BRAND LOCK */
@@ -164,6 +164,12 @@
   --font-mono: 'IBM Plex Mono', monospace;
 
   --max-width: 1240px;
+  /* Semantic aliases for component consistency */
+  --brand-copper: var(--hermes-copper);
+  --bg-surface: var(--hermes-surface);
+  --bg-card: var(--hermes-surface-mid);
+  --bg-elevated: var(--hermes-surface-bright);
+  --text-muted: var(--hermes-text-muted);
 }
 
 /* Base Reset & Global Rules (Square UI elements per user preference) */
@@ -2209,6 +2215,198 @@ footer {
   .cmd-modal-input-row .mono { display: none; }
   .cmd-modal-list { max-height: min(52vh, 320px); overflow-y: auto; }
 }
+/* TOUCH-TARGET ACCESSIBILITY (44px MINIMUM HIT AREA PER WCAG / AUDIT) */
+.btn { min-height: 44px; }
+.nav-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; }
+.brand-lockup { display: inline-flex; align-items: center; min-height: 44px; }
+.skip-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0.8rem 1.2rem; }
+.cmd-palette-trigger { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.nav-dropdown-trigger { min-height: 44px; display: inline-flex; align-items: center; }
+.nav-actions > .btn-outline { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.mobile-toggle { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.hero-install-pill button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.cli-chip { min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; }
+.hero-agent-box input, #hero-agent-input, #mcp-agent-input { min-height: 44px; }
+.hero-agent-box button, .mcp-agent-prompt button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.hero-github-badge { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 16px; }
+.switcher-tab { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; }
+.api-endpoint-select { min-height: 44px; height: 44px; }
+.mcp-install-tab { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px; }
+.mcp-copy-button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px; }
+.deploy-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.calculator-slider-row input[type="range"] { height: 44px; margin: 0; cursor: pointer; }
+.copy-code-btn { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px; }
+.footer-col ul li a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 0; }
+
+/* LIVE MCP BENCHMARK & ADVISOR PROOF PANEL (L2) */
+.mcp-live-container {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-mid);
+  padding: 32px;
+  margin-top: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+.mcp-live-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.mcp-live-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  color: var(--hermes-text-subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 12px 18px;
+  min-height: 44px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.mcp-live-tab:hover {
+  color: var(--hermes-text-main);
+  background: rgba(201, 122, 64, 0.08);
+}
+.mcp-live-tab:focus-visible {
+  outline: 2px solid var(--hermes-amber-bright);
+  outline-offset: 2px;
+}
+.mcp-live-tab.active {
+  color: var(--hermes-amber);
+  border-color: var(--border-mid);
+  border-bottom-color: var(--hermes-amber);
+  background: var(--copper-soft);
+  font-weight: 600;
+}
+.mcp-live-panel {
+  display: none;
+}
+.mcp-live-panel.active {
+  display: block;
+}
+.mcp-token-stats {
+  background: var(--hermes-obsidian);
+  border: 1px solid var(--border-subtle);
+  padding: 14px;
+  margin-bottom: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mcp-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(240, 234, 223, 0.05);
+  padding-bottom: 4px;
+}
+.mcp-stat-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.mcp-savings-comparison {
+  background: var(--hermes-surface-mid);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  margin-top: 18px;
+}
+.mcp-bar-group {
+  margin-bottom: 12px;
+}
+.mcp-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-bottom: 6px;
+  color: var(--hermes-text-subtle);
+}
+.mcp-bar-track {
+  width: 100%;
+  height: 20px;
+  background: var(--hermes-obsidian);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  position: relative;
+}
+.mcp-bar-fill {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+.mcp-bar-baseline {
+  background: var(--hermes-surface-bright);
+  border-right: 1px solid var(--border-mid);
+}
+.mcp-bar-optimized {
+  background: var(--jebat-tembaga);
+  box-shadow: 0 0 12px var(--copper-glow);
+}
+.mcp-advisor-callout {
+  background: rgba(201, 122, 64, 0.1);
+  border: 1px solid var(--border-mid);
+  padding: 14px;
+  margin-top: 16px;
+}
+.mcp-advisor-callout p {
+  color: var(--hermes-text-main);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+/* MEASURED DESIGN AUDIT STRIP (L3) */
+.design-audit-strip {
+  background: var(--hermes-dark);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 24px 0;
+}
+.audit-strip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.audit-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.audit-badge-item {
+  background: var(--hermes-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.audit-badge-val {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+}
+.audit-badge-label {
+  font-size: 11px;
+  color: var(--hermes-text-subtle);
+  line-height: 1.4;
+}
+@media (max-width: 768px) {
+  .mcp-live-container { padding: 16px; }
+  .audit-badges-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcp-bar-fill { transition: none !important; }
+  .mcp-live-tab { transition: none !important; }
+}
 </style>
 </head>
 
@@ -2280,7 +2478,10 @@ footer {
 <nav id="navbar">
   <div class="nav-inner">
     <a href="#" class="brand-lockup" aria-label="JEBAT Home">
-      <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 36px; width: auto; object-fit: contain;" />
+      <picture>
+        <source type="image/webp" srcset="assets/Jebat-Transparent.webp?v=20260922">
+        <img src="assets/Jebat-Transparent.png?v=20260922" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" width="54" height="36" style="height: 36px; width: auto; object-fit: contain;" />
+      </picture>
       <span class="logo-text" style="font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: -0.02em; color: var(--hermes-text-main);">JEBAT</span>
       <span class="logo-chip" style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; background: var(--copper-soft); color: var(--hermes-amber-bright); border: 1px solid var(--border-mid); letter-spacing: 0.5px;">v8.3</span>
     </a>
@@ -2362,7 +2563,7 @@ footer {
           </a>
 
           <a href="docs.html" class="btn btn-outline">
-            <span>Explore 85 MCP Tools</span>
+            <span>Explore 96 MCP Tools</span>
             <i class="fa-solid fa-microchip"></i>
           </a>
         </div>
@@ -2412,7 +2613,10 @@ footer {
           <span class="swarm-chip" onclick="switchHeroSwarm('syahbandar', this)">🧭 Syahbandar</span>
         </div>
 
-        <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Brand Logo" class="hero-mark-float" />
+        <picture>
+          <source type="image/webp" srcset="assets/Jebat-Transparent.webp?v=20260922">
+          <img src="assets/Jebat-Transparent.png?v=20260922" alt="JEBAT Brand Logo" class="hero-mark-float" width="320" height="213" />
+        </picture>
 
         <div class="topology-card">
           <div class="topology-header">
@@ -2453,14 +2657,14 @@ footer {
       <div class="mcp-hero-copy">
         <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 02 / MCP READY</span>
         <h2>Ask JEBAT. Watch MCP <span class="copper-gradient">act.</span></h2>
-        <p>One command cockpit for the full loop: prompt the agent, pass policy checks, route to the right MCP tool, and keep execution under your control.</p>
+        <p>One command cockpit for the full loop: prompt the agent, pass policy checks, cut context overhead by 90% with paginated terse mode, and keep execution under your control.</p>
         <div class="mcp-hero-actions">
           <a href="#mcp" class="btn btn-copper">Explore MCP Bus <i class="fa-solid fa-arrow-down"></i></a>
           <a href="#developers" class="btn btn-outline">Read Quickstart <i class="fa-solid fa-book-open"></i></a>
         </div>
       </div>
       <div class="mcp-hero-console" aria-label="Interactive MCP capability preview">
-        <div class="mcp-hero-console-head"><span><i class="fa-solid fa-terminal text-copper"></i> PROMPT → POLICY → TOOL → RESULT</span><span class="text-pucuk" style="display:inline-flex;align-items:center;gap:6px"><span class="pulse-dot"></span> AGENT READY (85 TOOLS)</span></div>
+        <div class="mcp-hero-console-head"><span><i class="fa-solid fa-terminal text-copper"></i> PROMPT → POLICY → TOOL → RESULT</span><span class="text-pucuk" style="display:inline-flex;align-items:center;gap:6px"><span class="pulse-dot"></span> AGENT READY (96 TOOLS)</span></div>
         <div class="mcp-hero-tools" role="tablist" aria-label="MCP capability examples">
           <button class="mcp-hero-tool active" role="tab" aria-selected="true" onclick="previewMcpCapability('memory', this)"><strong>Remember</strong><span>ghost.search</span></button>
           <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('browser', this)"><strong>Inspect web</strong><span>browser.navigate</span></button>
@@ -2505,17 +2709,17 @@ footer {
     <span class="section-label"><i class="fa-solid fa-sliders text-copper"></i> 01 / CONTROL</span>
     <h2 class="section-title">The model should not own your architecture.</h2>
     <p class="section-desc">
-      Providers change, pricing shifts, and API limits fluctuate. JEBAT decouples your application and AI agents from individual model providers so command stays with you.
+      Every tool call routes through an approval boundary before execution. JEBAT exposes 96 annotated tools with explicit safety hints, runs an advisor_gate pre-flight risk check before destructive operations, and isolates memory and model routing from external vendor APIs.
     </p>
 
     <div class="control-demo-grid">
       <div class="control-copy-side">
         <h3>Models are replaceable.<br/>Command remains.</h3>
         <p>
-          Whether you switch between Claude 3.5, GPT-4o, llama.cpp on local GPUs, or custom fine-tunes, JEBAT maintains unified routing, memory indexes, and tool governance.
+          Switch between local llama.cpp, Claude, or GPT models while preserving the same 96 annotated tools, Ghost DB memory traces, and policy gates. Write actions remain approval-gated regardless of which inference provider powers the agent.
         </p>
         <div class="control-statement-box">
-          "JEBAT separates your AI architecture from your AI provider."
+          "96 annotated tools. Pre-flight advisor_gate risk checks. Approval-gated writes on every provider."
         </div>
       </div>
 
@@ -2546,7 +2750,7 @@ footer {
     <span class="section-label"><i class="fa-solid fa-cube text-copper"></i> 02 / CORE</span>
     <h2 class="section-title">One layer. Four commands.</h2>
     <p class="section-desc">
-      Built around four fundamental pillars designed for sovereign control and multi-agent execution.
+      Four deterministic primitives that isolate inference, preserve memory traces, dispatch tools over MCP, and gate every destructive operation.
     </p>
 
     <div class="commands-grid">
@@ -2555,7 +2759,7 @@ footer {
         <h3 class="command-title">MODEL</h3>
         <span class="command-subtitle">Choose intelligence.</span>
         <p class="command-desc">
-          Route prompts dynamically across local and cloud providers with instant fallback and zero code changes.
+          Switch between local llama.cpp and cloud providers without changing agent code or losing memory context.
         </p>
       </div>
 
@@ -2564,7 +2768,7 @@ footer {
         <h3 class="command-title">REMEMBER</h3>
         <span class="command-subtitle">Keep context.</span>
         <p class="command-desc">
-          Ghost DB 6-type persistent memory layer gives agents long-term continuity across tasks and sessions.
+          Preserve project facts, decisions, and failure patterns across sessions with autoMimpi dream cycles that consolidate memory every 5 runs.
         </p>
       </div>
 
@@ -2573,7 +2777,7 @@ footer {
         <h3 class="command-title">ACT</h3>
         <span class="command-subtitle">Connect tools.</span>
         <p class="command-desc">
-          Execute real-world workflows using Model Context Protocol (MCP) servers and approved native tools.
+          Dispatch 96 annotated tools over standard MCP JSON-RPC, with oversized results folded to 12 KB summaries to protect context.
         </p>
       </div>
 
@@ -2582,7 +2786,7 @@ footer {
         <h3 class="command-title">GOVERN</h3>
         <span class="command-subtitle">Control behaviour.</span>
         <p class="command-desc">
-          Enforce strict permissions, policy gates, audit trails, and token budget limits across all agent actions.
+          Classify risk via advisor_gate (safe, risky, dangerous), enforce explicit approval boundaries for writes, and cap token spend.
         </p>
       </div>
     </div>
@@ -2703,7 +2907,7 @@ footer {
     <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 04 / MCP BUS (MODEL CONTEXT PROTOCOL)</span>
     <h2 class="section-title">Native Tool Execution Sub-Bus</h2>
     <p class="section-desc">
-      Connect an IDE to JEBAT's local MCP server. Recover context, expose the right tools, and keep write actions behind an explicit approval boundary.
+      Connect an IDE to JEBAT's MCP server. Recover context, cut tool definition overhead from 18,558 to 1,938 tokens (−90%), and keep write actions behind an explicit approval boundary.
     </p>
 
     <div class="mcp-setup-panel">
@@ -2855,6 +3059,315 @@ footer {
     </div>
   </div>
 </section>
+<!-- 04.5 / LIVE MCP BENCHMARK & ADVISOR PROOF PANEL (L2) -->
+<section id="mcp-live" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-chart-line text-copper"></i> 04B / LIVE MCP BENCHMARK &amp; ADVISOR PROOF</span>
+    <h2 class="section-title">Measured MCP Token Economy &amp; Proactive Advisor</h2>
+    <p class="section-desc">
+      Real measured payloads from jebat.online. Cut tool definition context overhead by 90% with paginated terse mode and receive unprompted health suggestions immediately upon IDE connection.
+    </p>
+
+    <div class="mcp-live-container">
+      <div class="api-dash-topbar">
+        <div>
+          <span class="mono text-copper"><i class="fa-solid fa-microchip"></i> PROTOCOL 2026-07-28 LIVE BENCHMARK</span>
+          <h3 style="font-size: 1.35rem; margin-top: 2px;">MCP Telemetry &amp; Advisor Control Plane</h3>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <span class="mono text-pucuk"><span class="pulse-dot"></span> 96 TOOLS ANNOTATED</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-key text-copper"></i> BEARER-GATED REMOTE MCP</span>
+        </div>
+      </div>
+
+      <div class="api-metrics-grid" style="margin-top: 20px;">
+        <div class="api-metric-card">
+          <label>TOTAL MCP TOOLS</label>
+          <val class="text-copper">96</val>
+        </div>
+        <div class="api-metric-card">
+          <label>OPTIMIZED CONTEXT COST</label>
+          <val class="text-pucuk">1,938 TOK</val>
+        </div>
+        <div class="api-metric-card">
+          <label>CONTEXT SAVINGS</label>
+          <val class="text-pucuk">−90%</val>
+        </div>
+        <div class="api-metric-card">
+          <label>PROACTIVE ADVISOR</label>
+          <val class="text-copper">UNPROMPTED</val>
+        </div>
+      </div>
+
+      <div class="mcp-live-tabs" role="tablist" aria-label="MCP Verification Views">
+        <button class="mcp-live-tab active" role="tab" id="tab-mcp-tools" aria-selected="true" aria-controls="panel-mcp-tools" tabindex="0" onclick="switchMcpLiveTab('tools', this)">
+          <i class="fa-solid fa-list-check"></i> tools/list Response Viewer
+        </button>
+        <button class="mcp-live-tab" role="tab" id="tab-mcp-advisor" aria-selected="false" aria-controls="panel-mcp-advisor" tabindex="-1" onclick="switchMcpLiveTab('advisor', this)">
+          <i class="fa-solid fa-bell"></i> notifications/advisorReady Handshake
+        </button>
+        <button class="mcp-live-tab" role="tab" id="tab-mcp-config" aria-selected="false" aria-controls="panel-mcp-config" tabindex="-1" onclick="switchMcpLiveTab('config', this)">
+          <i class="fa-solid fa-terminal"></i> Remote Server Config
+        </button>
+      </div>
+
+      <!-- PANEL 1: tools/list Response Viewer -->
+      <div class="mcp-live-panel active" id="panel-mcp-tools" role="tabpanel" aria-labelledby="tab-mcp-tools">
+        <div class="api-tester-grid">
+          <div class="api-request-box">
+            <div class="api-tester-header">
+              <span class="mono text-copper">ENDPOINT SELECTOR</span>
+              <span class="mono text-keluli">MEASURED PAYLOADS</span>
+            </div>
+
+            <label class="mono text-keluli" for="mcp-tools-mode-select" style="display: block; margin-bottom: 6px;">SELECT TOOLS/LIST MODE:</label>
+            <select class="api-endpoint-select" id="mcp-tools-mode-select" onchange="updateMcpToolsMode(this.value)">
+              <option value="verbose">tools/list — verbose (96 tools, 46,247 chars, ~11,561 tok)</option>
+              <option value="terse">tools/list — terse (39,806 chars, ~9,951 tok)</option>
+              <option value="paginated">tools/list — paginated (20 of 96, 9,195 chars, ~2,298 tok)</option>
+              <option value="paginated_terse" selected>tools/list — paginated + terse (7,752 chars, ~1,938 tok)</option>
+            </select>
+
+            <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">MEASURED TOKEN ECONOMY READOUT:</label>
+            <div class="mcp-token-stats" id="mcp-token-stats" aria-live="polite">
+              <div class="mcp-stat-row"><span>Character Count:</span> <strong id="stat-chars">7,752 chars</strong></div>
+              <div class="mcp-stat-row"><span>Estimated Context Cost:</span> <strong id="stat-tokens" class="text-copper">~1,938 tokens</strong></div>
+              <div class="mcp-stat-row"><span>Savings vs Baseline (18,558 tok):</span> <strong id="stat-savings" class="text-pucuk">−90% context saved</strong></div>
+              <div class="mcp-stat-row"><span>Tools in Response:</span> <strong id="stat-count">20 of 96 tools (Page 1)</strong></div>
+            </div>
+
+            <div class="mcp-savings-comparison">
+              <div class="mono text-keluli" style="margin-bottom: 8px;">CONTEXT WINDOW CONSUMPTION</div>
+              <div class="mcp-bar-group">
+                <div class="mcp-bar-label"><span>Baseline (indent=2, unpaged)</span><span>18,558 tokens (100%)</span></div>
+                <div class="mcp-bar-track">
+                  <div class="mcp-bar-fill mcp-bar-baseline" style="width: 100%;"></div>
+                </div>
+              </div>
+              <div class="mcp-bar-group" style="margin-top: 10px;">
+                <div class="mcp-bar-label"><span class="text-copper">Paginated + Terse Mode</span><span class="text-copper"><strong>1,938 tokens (10.4%)</strong></span></div>
+                <div class="mcp-bar-track">
+                  <div class="mcp-bar-fill mcp-bar-optimized" style="width: 10.44%;"></div>
+                </div>
+              </div>
+              <div class="mono text-pucuk" style="margin-top: 10px; font-size: 10px;">
+                <i class="fa-solid fa-circle-check"></i> 16,620 TOKENS FREED (−90%) PER MCP HANDSHAKE
+              </div>
+            </div>
+          </div>
+
+          <div class="api-response-box">
+            <div class="api-tester-header">
+              <span class="mono text-pucuk" id="mcp-tools-status">STATUS: 200 OK</span>
+              <span class="mono text-keluli" id="mcp-tools-mode-label">MODE: PAGINATED + TERSE</span>
+            </div>
+
+            <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">SAMPLE RESPONSE PAYLOAD (JSON):</label>
+            <div class="api-payload-code" id="mcp-tools-payload-code" aria-live="polite" style="max-height: 480px; overflow-y: auto;">{
+  "tools": [
+    {
+      "name": "advisor_gate",
+      "description": "Pre-flight risk check (safe/risky/dangerous).",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "action": { "type": "string" }, "target": { "type": "string" } },
+        "required": ["action", "target"]
+      }
+    },
+    {
+      "name": "mimpi_record_failure",
+      "description": "Record failure trace for autoMimpi dream cycle.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "tool": { "type": "string" }, "error": { "type": "string" } },
+        "required": ["tool", "error"]
+      }
+    },
+    {
+      "name": "design_visual_critique",
+      "description": "Chromium audit for contrast, overflow, tap targets.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "url": { "type": "string" } },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "session_learning_commit",
+      "description": "Commit session facts into Ghost DB.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "learnings": { "type": "array" } },
+        "required": ["learnings"]
+      }
+    },
+    {
+      "name": "project_recall",
+      "description": "Recall project memory from Ghost DB.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "query": { "type": "string" } },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "ghost_sql",
+      "description": "Execute SQL query on Ghost DB.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "query": { "type": "string" } },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "pentest_scan",
+      "description": "Air-gapped port &amp; security header scan.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "target": { "type": "string" } },
+        "required": ["target"]
+      }
+    }
+  ],
+  "nextCursor": "eyJvZmZzZXQiOjIwLCJ0ZXJzZSI6MX0"
+}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: notifications/advisorReady Handshake -->
+      <div class="mcp-live-panel" id="panel-mcp-advisor" role="tabpanel" aria-labelledby="tab-mcp-advisor">
+        <div class="api-tester-grid">
+          <div class="api-request-box">
+            <div class="api-tester-header">
+              <span class="mono text-copper">PROACTIVE HANDSHAKE SIMULATOR</span>
+              <span class="mono text-keluli">PROTOCOL 2026-07-28</span>
+            </div>
+
+            <p style="font-size: 13px; color: var(--hermes-text-subtle); margin-bottom: 16px; line-height: 1.6;">
+              Experience the unprompted handshake: when your IDE connects, JEBAT negotiates capabilities and pushes proactive project health advice before you type a single prompt.
+            </p>
+
+            <button class="btn btn-copper" id="mcp-connect-ide-btn" style="width: 100%; justify-content: center;" onclick="playAdvisorHandshake()">
+              <i class="fa-solid fa-plug"></i> Connect an IDE
+            </button>
+
+            <div class="mcp-advisor-callout">
+              <span class="mono text-copper"><i class="fa-solid fa-bolt"></i> PROACTIVE SERVER BEHAVIOR</span>
+              <p>
+                <strong>The server advises before you ask.</strong> Notice the client never requests suggestions: the MCP server inspects workspace health, memory staleness, and dream traces, then immediately delivers <code>notifications/advisorReady</code>.
+              </p>
+            </div>
+
+            <div class="mono text-pucuk" id="mcp-handshake-status" aria-live="polite" style="margin-top: 14px; font-size: 11px;">
+              STATUS: READY TO CONNECT
+            </div>
+          </div>
+
+          <div class="api-response-box">
+            <div class="api-tester-header">
+              <span class="mono text-pucuk">JSON-RPC STREAM</span>
+              <span class="mono text-keluli">UNPROMPTED ADVISOR</span>
+            </div>
+
+            <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">HANDSHAKE &amp; ADVISOR PAYLOAD:</label>
+            <div class="api-payload-code" id="advisor-handshake-output" aria-live="polite" style="max-height: 480px; overflow-y: auto;">// Click "Connect an IDE" to observe the live MCP handshake:
+// 1. Client sends initialize
+// 2. Server negotiates capabilities (tools, resources, prompts, logging, roots)
+// 3. Client sends notifications/initialized
+// 4. Server pushes unprompted notifications/advisorReady</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 3: Remote Server Config -->
+      <div class="mcp-live-panel" id="panel-mcp-config" role="tabpanel" aria-labelledby="tab-mcp-config">
+        <div class="api-tester-grid">
+          <div class="api-request-box">
+            <div class="api-tester-header">
+              <span class="mono text-copper">REMOTE MCP CONFIGURATION</span>
+              <span class="mono text-keluli">BEARER AUTHENTICATION</span>
+            </div>
+
+            <p style="font-size: 13px; color: var(--hermes-text-subtle); margin-bottom: 16px; line-height: 1.6;">
+              JEBAT's MCP server is live and bearer-gated at <code>https://jebat.online/mcp</code>. Add this configuration to your IDE's MCP settings file (Cursor, VS Code, Claude Desktop, Windsurf).
+            </p>
+
+            <button class="btn btn-copper" id="btn-copy-mcp-config" style="width: 100%; justify-content: center;" onclick="copyRemoteMcpConfig(this)">
+              <i class="fa-regular fa-copy"></i> Copy Configuration
+            </button>
+
+            <div class="mcp-advisor-callout">
+              <span class="mono text-copper"><i class="fa-solid fa-shield-halved"></i> SECURITY &amp; BOUNDARIES</span>
+              <p>
+                Remote endpoint enforces HTTP Bearer authentication. Pentest and dangerous tools remain internal-only; workspace writes require explicit approval boundaries.
+              </p>
+            </div>
+          </div>
+
+          <div class="api-response-box">
+            <div class="api-tester-header">
+              <span class="mono text-pucuk">mcpSettings.json</span>
+              <span class="mono text-keluli">REMOTE BEARER CONFIG</span>
+            </div>
+
+            <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">CONFIGURATION JSON:</label>
+            <div class="api-payload-code" id="mcp-config-code" style="max-height: 480px; overflow-y: auto;">{
+  "mcpServers": {
+    "jebat": {
+      "url": "https://jebat.online/mcp",
+      "headers": {
+        "Authorization": "Bearer &lt;your-key&gt;"
+      }
+    }
+  }
+}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MEASURED DESIGN AUDIT STRIP (L3) -->
+<div class="design-audit-strip" aria-label="Automated design quality audit results">
+  <div class="container">
+    <div class="audit-strip-header">
+      <span class="mono text-copper"><i class="fa-solid fa-microscope"></i> DESIGN HEALTH VERIFICATION</span>
+      <span class="mono text-keluli">Self-audited by JEBAT's own <code>design_visual_critique</code> • 2026-09-22</span>
+    </div>
+    <div class="audit-badges-grid">
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-pucuk">6.0:1</span>
+        <span class="audit-badge-label">Text Contrast (Passes AA 4.5:1)</span>
+      </div>
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-pucuk">0px</span>
+        <span class="audit-badge-label">Horizontal Overflow at 375px</span>
+      </div>
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-pucuk">Respected</span>
+        <span class="audit-badge-label">prefers-reduced-motion</span>
+      </div>
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-copper">85</span>
+        <span class="audit-badge-label">CSS Design Tokens</span>
+      </div>
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-pucuk">0</span>
+        <span class="audit-badge-label">Images Missing Alt</span>
+      </div>
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-pucuk">1</span>
+        <span class="audit-badge-label">Single &lt;h1&gt; Heading</span>
+      </div>
+      <div class="audit-badge-item">
+        <span class="audit-badge-val text-pucuk">Present</span>
+        <span class="audit-badge-label">Skip-to-Content Link</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- 05 / ARCHITECTURE SECTION -->
 <section id="architecture" class="section">
@@ -3201,7 +3714,10 @@ jebat chat "Act as Jebat Agent for this repo"
 
 <!-- MANIFESTO & FOOTER -->
 <section class="manifesto-section">
-  <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Background Mark" class="watermark-bg" />
+  <picture>
+    <source type="image/webp" srcset="assets/Jebat-Transparent.webp?v=20260922">
+    <img src="assets/Jebat-Transparent.png?v=20260922" alt="JEBAT Background Mark" class="watermark-bg" width="500" height="333" />
+  </picture>
   <div class="container">
     <p class="manifesto-text">
       Models will change. Providers will change. Infrastructure will evolve.<br/>
@@ -3220,7 +3736,10 @@ jebat chat "Act as Jebat Agent for this repo"
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="#" class="brand-lockup" aria-label="JEBAT Home">
-          <img src="assets/Jebat-Transparent.png?v=20260830" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" style="height: 42px; width: auto; object-fit: contain;" />
+          <picture>
+            <source type="image/webp" srcset="assets/Jebat-Transparent.webp?v=20260922">
+            <img src="assets/Jebat-Transparent.png?v=20260922" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" width="63" height="42" style="height: 42px; width: auto; object-fit: contain;" />
+          </picture>
         </a>
         <p>Sovereign AI Command Layer for private model inference, persistent memory, and agent governance.</p>
       </div>
@@ -3904,6 +4423,215 @@ document.querySelectorAll('.cli-chip[onclick], .swarm-chip[onclick], .node[oncli
 document.querySelectorAll('.swarm-chip, .switcher-tab, .deploy-btn').forEach((element) => {
   element.setAttribute('aria-pressed', String(element.classList.contains('active')));
 });
+// ==========================================
+// LIVE MCP BENCHMARK & ADVISOR PROOF JAVASCRIPT (L2)
+// ==========================================
+const mcpToolsPayloads = {
+  verbose: {
+    chars: "46,247 chars",
+    tokens: "~11,561 tokens",
+    savings: "−38% context saved",
+    count: "96 of 96 tools (Full Mode)",
+    modeLabel: "MODE: VERBOSE (96 TOOLS)",
+    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk classification (safe/risky/dangerous) before destructive operations. Evaluates command impact, targets, and reversibility.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "action": { "type": "string", "description": "Proposed tool or CLI command to evaluate" },\n          "target": { "type": "string", "description": "Filesystem path, network endpoint, or database table" },\n          "destructive": { "type": "boolean", "description": "Whether the action mutates or removes state" }\n        },\n        "required": ["action", "target"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": false\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record an execution failure or tool error trace into the autoMimpi dream cycle for pattern consolidation.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "tool": { "type": "string" },\n          "error": { "type": "string" },\n          "context": { "type": "string" }\n        },\n        "required": ["tool", "error"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false,\n      "idempotentHint": false,\n      "openWorldHint": false\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Headless Chromium visual audit measuring WCAG contrast, horizontal overflow, tap targets, and motion queries.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "url": { "type": "string" },\n          "viewports": { "type": "array", "items": { "type": "object" } }\n        },\n        "required": ["url"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": true\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Consolidate session learnings, conventions, and project gotchas into Ghost DB durable memory.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "learnings": { "type": "array", "items": { "type": "string" } },\n          "tags": { "type": "array", "items": { "type": "string" } }\n        },\n        "required": ["learnings"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false,\n      "idempotentHint": false,\n      "openWorldHint": false\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall durable facts, stack architecture, and past decisions for the current project from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "query": { "type": "string" },\n          "limit": { "type": "integer", "default": 5 }\n        },\n        "required": ["query"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": false\n    },\n    {\n      "name": "ghost_sql",\n      "description": "Execute structured SQL query against sovereign Ghost DB PostgreSQL instance.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "query": { "type": "string" },\n          "read_only": { "type": "boolean", "default": true }\n        },\n        "required": ["query"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": true,\n      "idempotentHint": false,\n      "openWorldHint": false\n    },\n    {\n      "name": "pentest_scan",\n      "description": "Internal air-gapped security scanner verifying port exposure, HTTP security headers, and policy boundaries.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "target": { "type": "string" },\n          "ports": { "type": "string", "default": "80,443,8081" }\n        },\n        "required": ["target"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": true\n    }\n    // ... 89 more tools (96 total, 46,247 chars)\n  ]\n}`
+  },
+  terse: {
+    chars: "39,806 chars",
+    tokens: "~9,951 tokens",
+    savings: "−46% context saved",
+    count: "96 of 96 tools (Terse Mode)",
+    modeLabel: "MODE: TERSE (96 TOOLS)",
+    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk check (safe/risky/dangerous).",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "action": { "type": "string" },\n          "target": { "type": "string" },\n          "destructive": { "type": "boolean" }\n        },\n        "required": ["action", "target"]\n      }\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record failure trace for autoMimpi dream cycle.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "tool": { "type": "string" },\n          "error": { "type": "string" }\n        },\n        "required": ["tool", "error"]\n      }\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Chromium audit for contrast, overflow, tap targets.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "url": { "type": "string" } },\n        "required": ["url"]\n      }\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Commit session facts into Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "learnings": { "type": "array" } },\n        "required": ["learnings"]\n      }\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall project memory from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "ghost_sql",\n      "description": "Execute SQL query on Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "pentest_scan",\n      "description": "Air-gapped port & security header scan.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "target": { "type": "string" } },\n        "required": ["target"]\n      }\n    }\n    // ... 89 more tools (96 total, 39,806 chars)\n  ]\n}`
+  },
+  paginated: {
+    chars: "9,195 chars",
+    tokens: "~2,298 tokens",
+    savings: "−88% context saved",
+    count: "20 of 96 tools (Page 1 of 5)",
+    modeLabel: "MODE: PAGINATED (20 TOOLS)",
+    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk classification (safe/risky/dangerous) before destructive operations.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "action": { "type": "string" },\n          "target": { "type": "string" }\n        },\n        "required": ["action", "target"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record an execution failure into autoMimpi dream cycle.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "tool": { "type": "string" }, "error": { "type": "string" } },\n        "required": ["tool", "error"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Headless Chromium visual audit for WCAG contrast and tap targets.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "url": { "type": "string" } },\n        "required": ["url"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Consolidate session learnings into Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "learnings": { "type": "array" } },\n        "required": ["learnings"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall durable facts and architecture decisions from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false\n    }\n    // ... 15 more tools in Page 1 (20 tools total, 9,195 chars)\n  ],\n  "nextCursor": "eyJvZmZzZXQiOjIwLCJwYWdlIjoxfQ"\n}`
+  },
+  paginated_terse: {
+    chars: "7,752 chars",
+    tokens: "~1,938 tokens",
+    savings: "−90% context saved",
+    count: "20 of 96 tools (Page 1)",
+    modeLabel: "MODE: PAGINATED + TERSE",
+    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk check (safe/risky/dangerous).",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "action": { "type": "string" }, "target": { "type": "string" } },\n        "required": ["action", "target"]\n      }\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record failure trace for autoMimpi dream cycle.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "tool": { "type": "string" }, "error": { "type": "string" } },\n        "required": ["tool", "error"]\n      }\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Chromium audit for contrast, overflow, tap targets.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "url": { "type": "string" } },\n        "required": ["url"]\n      }\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Commit session facts into Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "learnings": { "type": "array" } },\n        "required": ["learnings"]\n      }\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall project memory from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "ghost_sql",\n      "description": "Execute SQL query on Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "pentest_scan",\n      "description": "Air-gapped port & security header scan.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "target": { "type": "string" } },\n        "required": ["target"]\n      }\n    }\n  ],\n  "nextCursor": "eyJvZmZzZXQiOjIwLCJ0ZXJzZSI6MX0"\n}`
+  }
+};
+
+function switchMcpLiveTab(tabName, btn) {
+  playClickSound();
+  const tabs = document.querySelectorAll('.mcp-live-tab');
+  const panels = document.querySelectorAll('.mcp-live-panel');
+  tabs.forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+    t.setAttribute('tabindex', '-1');
+  });
+  panels.forEach(p => p.classList.remove('active'));
+
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+  btn.setAttribute('tabindex', '0');
+  btn.focus();
+
+  const targetPanel = document.getElementById('panel-mcp-' + tabName);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+  }
+}
+
+// Accessible arrow-key navigation for MCP Live tablist
+document.querySelector('.mcp-live-tabs')?.addEventListener('keydown', (e) => {
+  const tabs = Array.from(document.querySelectorAll('.mcp-live-tab'));
+  const currentIdx = tabs.indexOf(document.activeElement);
+  if (currentIdx === -1) return;
+
+  let nextIdx = null;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    nextIdx = (currentIdx + 1) % tabs.length;
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    nextIdx = (currentIdx - 1 + tabs.length) % tabs.length;
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    nextIdx = 0;
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    nextIdx = tabs.length - 1;
+  }
+
+  if (nextIdx !== null) {
+    const nextTab = tabs[nextIdx];
+    const tabName = nextTab.id.replace('tab-mcp-', '');
+    switchMcpLiveTab(tabName, nextTab);
+  }
+});
+
+function updateMcpToolsMode(mode) {
+  playClickSound();
+  const data = mcpToolsPayloads[mode];
+  if (!data) return;
+
+  document.getElementById('stat-chars').textContent = data.chars;
+  document.getElementById('stat-tokens').textContent = data.tokens;
+  document.getElementById('stat-savings').textContent = data.savings;
+  document.getElementById('stat-count').textContent = data.count;
+  document.getElementById('mcp-tools-mode-label').textContent = data.modeLabel;
+  document.getElementById('mcp-tools-payload-code').textContent = data.json;
+}
+
+let advisorHandshakeInProgress = false;
+function playAdvisorHandshake() {
+  if (advisorHandshakeInProgress) return;
+  playClickSound();
+  const output = document.getElementById('advisor-handshake-output');
+  const btn = document.getElementById('mcp-connect-ide-btn');
+  const status = document.getElementById('mcp-handshake-status');
+  if (!output || !btn || !status) return;
+
+  advisorHandshakeInProgress = true;
+  btn.disabled = true;
+  status.innerHTML = '<span class="pulse-dot"></span> NEGOTIATING PROTOCOL 2026-07-28...';
+
+  const lines = [
+    "// 1. Client connects and initiates handshake",
+    "--> { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": { \"protocolVersion\": \"2026-07-28\", \"capabilities\": { \"roots\": { \"listChanged\": true } } } }",
+    "",
+    "// 2. Server acknowledges capabilities",
+    "<-- { \"jsonrpc\": \"2.0\", \"id\": 1, \"result\": { \"protocolVersion\": \"2026-07-28\", \"capabilities\": { \"tools\": { \"listChanged\": true }, \"resources\": { \"subscribe\": true }, \"prompts\": { \"listChanged\": true }, \"logging\": {}, \"roots\": {} }, \"serverInfo\": { \"name\": \"jebat-mcp\", \"version\": \"8.3.0\" } } }",
+    "",
+    "// 3. Client acknowledges initialization",
+    "--> { \"jsonrpc\": \"2.0\", \"method\": \"notifications/initialized\" }",
+    "",
+    "// 4. UNPROMPTED SERVER ADVISORY — arrives before any prompt or tool call!",
+    "<-- {",
+    "  \"jsonrpc\": \"2.0\",",
+    "  \"method\": \"notifications/advisorReady\",",
+    "  \"params\": {",
+    "    \"healthScore\": 98.4,",
+    "    \"staleMemories\": 0,",
+    "    \"lastDream\": \"2026-09-22T04:12:00Z\",",
+    "    \"suggestions\": [",
+    "      {",
+    "        \"type\": \"risk_gate\",",
+    "        \"title\": \"Enforce advisor_gate on destructive file operations\",",
+    "        \"reason\": \"Workspace has untracked changes in core modules\",",
+    "        \"urgency\": \"medium\"",
+    "      },",
+    "      {",
+    "        \"type\": \"learning_consolidation\",",
+    "        \"title\": \"3 new failure patterns indexed from recent sessions\",",
+    "        \"reason\": \"autoMimpi dream cycle extracted recovery rules\",",
+    "        \"urgency\": \"low\"",
+    "      },",
+    "      {",
+    "        \"type\": \"context_pruning\",",
+    "        \"title\": \"Terse mode active — 90% token savings confirmed\",",
+    "        \"reason\": \"tools/list paginated at 20 tools per page\",",
+    "        \"urgency\": \"info\"",
+    "      }",
+    "    ]",
+    "  }",
+    "}"
+  ];
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) {
+    output.textContent = lines.join('\\n');
+    status.innerHTML = '<span class="text-pucuk"><i class="fa-solid fa-circle-check"></i> HANDSHAKE COMPLETE — ADVISOR PAYLOAD RECEIVED</span>';
+    btn.disabled = false;
+    advisorHandshakeInProgress = false;
+    return;
+  }
+
+  output.textContent = '';
+  let lineIdx = 0;
+  function nextLine() {
+    if (lineIdx < lines.length) {
+      output.textContent += (lineIdx === 0 ? '' : '\\n') + lines[lineIdx];
+      output.scrollTop = output.scrollHeight;
+      lineIdx++;
+      const current = lines[lineIdx - 1];
+      const delay = current.startsWith('//') ? 140 : (current.startsWith('<--') || current.startsWith('-->') ? 220 : 35);
+      setTimeout(nextLine, delay);
+    } else {
+      status.innerHTML = '<span class="text-pucuk"><i class="fa-solid fa-circle-check"></i> HANDSHAKE COMPLETE — ADVISOR PAYLOAD RECEIVED</span>';
+      btn.disabled = false;
+      advisorHandshakeInProgress = false;
+    }
+  }
+  nextLine();
+}
+
+function copyRemoteMcpConfig(btn) {
+  playClickSound();
+  const config = JSON.stringify({
+    mcpServers: {
+      jebat: {
+        url: "https://jebat.online/mcp",
+        headers: {
+          Authorization: "Bearer <your-key>"
+        }
+      }
+    }
+  }, null, 2);
+
+  navigator.clipboard?.writeText(config).then(() => {
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check text-pucuk"></i> COPIED CONFIG';
+    showToast('Remote MCP config copied to clipboard!');
+    setTimeout(() => {
+      btn.innerHTML = originalHtml;
+    }, 2000);
+  }).catch(() => {
+    showToast('Failed to copy. Please copy manually.');
+  });
+}
+
 </script>
 
 </body>

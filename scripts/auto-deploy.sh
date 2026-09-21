@@ -74,13 +74,26 @@ else
     echo "[2/6] no dependency changes; skipping local pip."
 fi
 
-# ── 3. Landing page (served statically by nginx on .65) ───────────────────
-echo "[3/6] Updating landing page..."
+# ── 3. Landing page + static assets (served by nginx on .65) ──────────────
+# The web root is NOT a git checkout — it is a plain static directory that
+# nginx serves. Copy the page AND mirror assets/ so image changes ship too.
+echo "[3/6] Updating landing page + assets..."
 if [ -f index.html ]; then
     cp index.html "$WEB_DIR/index.html"
-    chown www-data:www-data "$WEB_DIR/index.html" 2>/dev/null || true
-    echo "  landing page updated"
+    echo "  index.html updated"
 fi
+if [ -d assets ]; then
+    mkdir -p "$WEB_DIR/assets"
+    # --delete keeps the web root from accumulating orphaned images; scope is
+    # the assets dir only, never the whole site.
+    if command -v rsync &>/dev/null; then
+        rsync -a --delete "$REPO_DIR/assets/" "$WEB_DIR/assets/"
+    else
+        cp -a "$REPO_DIR/assets/." "$WEB_DIR/assets/"
+    fi
+    echo "  assets mirrored ($(du -sh "$WEB_DIR/assets" 2>/dev/null | cut -f1))"
+fi
+chown -R www-data:www-data "$WEB_DIR" 2>/dev/null || true
 
 # ── 4. Decide propagation target ──────────────────────────────────────────
 # If the API runs here (webhook on the API host), restart in place.

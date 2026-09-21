@@ -103,6 +103,26 @@ async def lifespan(app: FastAPI):
     else:
         print("  ℹ️  JEBAT_REDIS_ENABLED not set — Redis layer disabled")
 
+    # Advisor model warm-up: opt-in and non-blocking. Loading a ~0.85 GB
+    # checkpoint must never delay startup or crash the API, so it runs in a
+    # worker thread and only when a model is actually configured.
+    if os.getenv("JEBAT_ADVISOR_MODEL"):
+        import threading
+
+        def _warm():
+            try:
+                from routers.advisor import warm_advisor
+
+                if warm_advisor():
+                    print(f"  ✅ Advisor model loaded: {os.getenv('JEBAT_ADVISOR_MODEL')}")
+                else:
+                    print("  ⚠️  Advisor model unavailable — lexical fallback in use")
+            except Exception as exc:
+                print(f"  ⚠️  Advisor warm-up failed (lexical fallback in use): {exc}")
+
+        threading.Thread(target=_warm, name="advisor-warm", daemon=True).start()
+        print("  ℹ️  Advisor model warm-up started in background")
+
     yield
 
     # --- Shutdown ---
