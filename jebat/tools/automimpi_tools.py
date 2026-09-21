@@ -16,6 +16,7 @@ remembers the project between sessions and adapts as the codebase evolves.
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -88,6 +89,39 @@ def _project_context_filter() -> str:
 
 # ── mimpi_dream ─────────────────────────────────────────────────────────
 
+def _workspace_dream_state_path() -> Path:
+    """Workspace mirror of dream state: <cwd>/memory/.dream-state.json.
+
+    Session bootstrap (and the JEBAT skill's dream-gate check) reads THIS
+    file, not the engine-owned ~/.jebat/dream_state.json. Without a mirror
+    write, tool-side dreams "don't count" and every session has to reconcile
+    the file by hand (the 2026-08-18 / 2026-09-21 manual fixes).
+    """
+    return Path(os.getcwd()) / "memory" / ".dream-state.json"
+
+
+def _mirror_dream_state_to_workspace() -> Optional[str]:
+    """Mirror engine dream state into the workspace bootstrap file.
+
+    Atomic write (tmp + os.replace) so bootstrap never reads a half file.
+    Returns the mirror path on success, raises on failure — callers may
+    treat mirror failure as non-fatal but must surface it loudly.
+    """
+    engine = _get_automimpi()
+    path = _workspace_dream_state_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "lastDreamAt": engine.last_dream_at.isoformat() if engine.last_dream_at else None,
+        "lastScanAt": engine.last_dream_at.isoformat() if engine.last_dream_at else None,
+        "sessionsSinceDream": 0,
+        "totalDreams": engine.dream_count,
+    }
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
+    return str(path)
+
+
 @register_tool(
     "mimpi_dream",
     schema={
@@ -110,9 +144,14 @@ def _project_context_filter() -> str:
 async def mimpi_dream(force: bool = False) -> dict[str, Any]:
     """Run a full dream cycle over project memory."""
     engine = _get_automimpi()
+    mirror_path: Optional[str] = None
     try:
         report = await engine.dream(force=force)
         _get_memory()._save()
+        # Mirror to the workspace bootstrap file — same success contract as
+        # the engine's own state save: a dream that doesn't flush its
+        # counters to BOTH files never happened as far as bootstrap cares.
+        mirror_path = _mirror_dream_state_to_workspace()
     except Exception as e:
         return {"status": "error", "error": f"{type(e).__name__}: {e}"}
 
@@ -135,6 +174,7 @@ async def mimpi_dream(force: bool = False) -> dict[str, Any]:
         "generalizations_created": report.generalizations_created,
         "memories_pruned": report.memories_pruned,
         "laksamana_quote": report.laksamana_quote,
+        "dream_state_mirror": mirror_path,
         "profile": {
             "skill_level": profile.skill_level,
             "weak_areas": profile.weak_areas,
