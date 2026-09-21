@@ -26,6 +26,8 @@ API_HOST="${JEBAT_API_HOST:-root@72.62.255.206}"
 API_DIR="${JEBAT_API_DIR:-/var/www/jebat-core}"
 API_PORT="${JEBAT_API_PORT:-8000}"
 API_PM2_NAME="${JEBAT_PM2_NAME:-jebat-api}"
+# All PM2 apps that must reload code after a deploy (api, mcp server, webui).
+PM2_APPS="${JEBAT_PM2_APPS:-jebat-api jebat-mcp jebat-webui}"
 
 SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
 
@@ -84,12 +86,13 @@ fi
 # If the API runs here (webhook on the API host), restart in place.
 # Otherwise push changed files to the remote API host.
 restart_local() {
-    if command -v pm2 &>/dev/null && pm2 describe "$API_PM2_NAME" &>/dev/null; then
-        pm2 restart "$API_PM2_NAME" --update-env || true
-        pm2 save --force || true
-        return 0
-    fi
-    return 1
+    command -v pm2 &>/dev/null || return 1
+    pm2 describe "$API_PM2_NAME" &>/dev/null || return 1
+    for app in $PM2_APPS; do
+        pm2 describe "$app" &>/dev/null && pm2 restart "$app" --update-env || true
+    done
+    pm2 save --force || true
+    return 0
 }
 
 if restart_local; then
@@ -130,10 +133,11 @@ else
               || pip install -r requirements.txt --quiet --break-system-packages; } || true"
     fi
 
-    # 4e. Restart the live API on the remote host.
-    echo "[5/6] Restarting $API_PM2_NAME on $API_HOST..."
-    ssh $SSH_OPTS "$API_HOST" "cd '$API_DIR' && pm2 restart '$API_PM2_NAME' --update-env && pm2 save --force" || \
-        echo "  WARNING: pm2 restart failed on $API_HOST"
+    # 4e. Restart every live JEBAT service on the remote host (api, mcp, webui).
+    echo "[5/6] Restarting [$PM2_APPS] on $API_HOST..."
+    ssh $SSH_OPTS "$API_HOST" "cd '$API_DIR' && for app in $PM2_APPS; do \
+        pm2 describe \$app >/dev/null 2>&1 && pm2 restart \$app --update-env; done && \
+        pm2 save --force" || echo "  WARNING: pm2 restart failed on $API_HOST"
     HEALTH_URL="http://127.0.0.1:$API_PORT/health"
     HEALTH_HOST="$API_HOST"
 fi

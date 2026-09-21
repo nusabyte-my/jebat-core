@@ -31,6 +31,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 DEPLOY_SCRIPT = os.path.join(os.path.dirname(__file__), "auto-deploy.sh")
@@ -115,11 +116,34 @@ class DeployHandler(BaseHTTPRequestHandler):
         env = os.environ.copy()
         env["JEBAT_DEPLOY_COMMIT"] = commit
         env["JEBAT_DEPLOY_DELIVERY"] = delivery
+        # Copy to a temp file before running: auto-deploy.sh does
+        # `git reset --hard`, which replaces the very file bash is reading.
+        # Bash reads scripts incrementally, so a longer incoming version
+        # would resume at a stale byte offset and execute garbage.
+        tmp_script = None
+        try:
+            with open(DEPLOY_SCRIPT, "rb") as src:
+                payload_bytes = src.read()
+            tmp_script = tempfile.NamedTemporaryFile(
+                mode="wb", suffix=".sh", delete=False, prefix="jebat-deploy-"
+            )
+            tmp_script.write(payload_bytes)
+            tmp_script.close()
+            os.chmod(tmp_script.name, 0o755)
+            script_to_run = tmp_script.name
+        except OSError as exc:
+            log.warning("could not stage temp script (%s); running in place", exc)
+            script_to_run = DEPLOY_SCRIPT
         result = subprocess.run(
-            ["bash", DEPLOY_SCRIPT],
+            ["bash", script_to_run],
             cwd=os.path.dirname(DEPLOY_SCRIPT) or "/",
             capture_output=True, text=True, env=env,
         )
+        if tmp_script is not None:
+            try:
+                os.unlink(tmp_script.name)
+            except OSError:
+                pass
 
         for line in result.stdout.splitlines():
             log.info("[deploy] %s", line)
