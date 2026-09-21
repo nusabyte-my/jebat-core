@@ -195,6 +195,46 @@ async def test_laya_failure_falls_back_when_only_laya_is_allowed(isolated, monke
     assert answers["route"]["answer"] == "billing"
 
 
+@pytest.mark.parametrize(
+    "pref,model,expected",
+    [
+        ("auto", "convaiinnovations/laya", True),
+        ("auto", "typeform/distilbert-base-uncased-mnli", False),
+        ("auto", None, False),
+        ("auto", "", False),
+        ("laya", None, True),
+        ("transformers", "convaiinnovations/laya", False),
+    ],
+)
+def test_laya_is_only_loaded_when_explicitly_intended(pref, model, expected):
+    """`auto` must never reach for the 421M Laya checkpoint on its own.
+
+    Laya measured >15 min of CPU inference for five questions on the 8-core
+    API box. An unconditional auto-load means clearing JEBAT_ADVISOR_MODEL
+    would hang the warm-up thread and starve the serving process, so the tier
+    is gated on the model name actually naming laya (or an explicit backend).
+    """
+    assert advisor._wants_laya(pref, model) is expected
+
+
+async def test_auto_with_non_laya_model_does_not_load_laya(isolated, monkeypatch):
+    """A stray laya install plus an MNLI model name must not load Laya."""
+    monkeypatch.setenv("JEBAT_ADVISOR_BACKEND", "auto")
+    monkeypatch.setenv("JEBAT_ADVISOR_MODEL", "typeform/distilbert-base-uncased-mnli")
+
+    def explode(model_id, device=None):  # pragma: no cover - must not run
+        raise AssertionError("laya.load must not be called for a non-laya model")
+
+    module = types.ModuleType("laya")
+    module.load = explode
+    monkeypatch.setitem(sys.modules, "laya", module)
+    monkeypatch.setattr(advisor, "_is_transformers_available", lambda: False)
+
+    answers, backend = await isolated._decide("double charged, refund please", CHOICE)
+    assert backend == "local"
+    assert answers["route"]["answer"] == "billing"
+
+
 async def test_lexical_fallback_is_input_sensitive(isolated, monkeypatch):
     """The fallback must not be the old always-first-category stub."""
     monkeypatch.setenv("JEBAT_ADVISOR_BACKEND", "fallback")

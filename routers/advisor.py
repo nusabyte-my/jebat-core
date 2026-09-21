@@ -369,6 +369,20 @@ def _is_laya_available() -> bool:
         return False
 
 
+def _wants_laya(backend_pref: str, model_name: str | None) -> bool:
+    """Single source of truth for whether the Laya tier should be attempted.
+
+    The 421M Laya checkpoint is ~15+ min of CPU inference on an 8-core box,
+    so `auto` only selects it when the configured model name actually says
+    laya. An explicit backend=laya forces the attempt regardless. _decide and
+    /status both call this so they can never disagree about which tier runs.
+    """
+    pref = (backend_pref or "auto").lower()
+    if pref == "laya":
+        return True
+    return pref == "auto" and bool(model_name) and "laya" in model_name.lower()
+
+
 def _is_transformers_available() -> bool:
     """Check if transformers and torch are importable and functional."""
     try:
@@ -401,11 +415,17 @@ def _get_or_load_model(backend_pref: str) -> Tuple[Any, Optional[str]]:
                 return _MODEL_CACHE["instance"], cached_tier
 
         # Laya proper: the PyPI `laya` package is the real typed-decision
-        # engine (bidirectional encoder + decision heads, calibrated by
-        # temperature). Load ONE agent rather than laya.Router(preload=True),
-        # which keeps all three checkpoints resident (~2.5 GB) — too much for
-        # a CPU box already serving the API.
-        if backend_pref in ("auto", "laya"):
+        # engine (bidirectional encoder + decision heads, temperature
+        # calibrated). Load ONE agent, never laya.Router(preload=True) which
+        # keeps all three checkpoints (~2.5 GB) resident.
+        #
+        # GATED like the transformers tier: in `auto` mode we only attempt
+        # Laya when the configured model name actually says laya. The 421M
+        # checkpoint is ~15+ min of CPU inference on an 8-core box (measured:
+        # a 5-question benchmark produced zero answers before timeout), so an
+        # unconditional auto-load would let a cleared JEBAT_ADVISOR_MODEL hang
+        # the API warm-up. Explicit backend=laya still forces the attempt.
+        if _wants_laya(backend_pref, model_name):
             try:
                 import laya as _laya
 
@@ -415,8 +435,7 @@ def _get_or_load_model(backend_pref: str) -> Tuple[Any, Optional[str]]:
                     try:
                         instance = load_fn(target, device=device)
                     except TypeError:
-                        # Older/newer signature without a device kwarg.
-                        instance = load_fn(target)
+                        instance = load_fn(target)  # signature without device
                     _MODEL_CACHE["instance"] = instance
                     _MODEL_CACHE["tier"] = "laya"
                     _MODEL_CACHE["model_id"] = target
@@ -803,9 +822,11 @@ async def advisor_status() -> Dict[str, Any]:
     elif backend_env == "transformers" and _is_transformers_available():
         advisor_backend = "transformers"
     elif backend_env == "auto":
-        if "laya" in available_backends and model_env:
+        # Must mirror _get_or_load_model exactly, or /status advertises a
+        # tier that _decide will never actually use.
+        if _wants_laya("auto", model_env) and _is_laya_available():
             advisor_backend = "laya"
-        elif "transformers" in available_backends and model_env:
+        elif model_env and _is_transformers_available():
             advisor_backend = "transformers"
         else:
             advisor_backend = "local"
