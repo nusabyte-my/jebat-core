@@ -95,13 +95,16 @@ fi
 
 # ── 2. Systemd service ─────────────────────────────────────────
 echo "[2/4] Installing systemd service..."
+PYTHON_BIN="$(command -v python3 || echo /usr/bin/python3)"
 cat > "$SERVICE_FILE" <<SERVICE
 [Unit]
 Description=JEBAT Auto-Deploy Webhook Listener
 After=network.target
 
 [Service]
-ExecStart=$REPO_DIR/infra/deploy/deploy-webhook.py --port $PORT --secret $SECRET
+# Invoke via python3 explicitly — the .py is mode 644 in git, so a direct
+# ExecStart=<file> hits systemd 203/EXEC after every git reset --hard.
+ExecStart=$PYTHON_BIN $REPO_DIR/infra/deploy/deploy-webhook.py --port $PORT --secret $SECRET
 WorkingDirectory=$REPO_DIR
 Restart=always
 RestartSec=5
