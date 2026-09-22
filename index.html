@@ -406,6 +406,52 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--hermes-surface-mid);
 }
 
+/* HERO GOVERNED-EXECUTION LEDGER (measured safety-tier split) */
+.hero-ledger-cap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--hermes-text-subtle);
+  letter-spacing: 0.3px;
+  margin: -10px 0 8px;
+}
+.hero-ledger {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--border-subtle);
+  background: var(--hermes-dark);
+  margin-bottom: 22px;
+}
+.hero-ledger-item {
+  padding: 12px 12px;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.hero-ledger-item:last-child { border-right: none; }
+.hero-ledger-val {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  color: var(--hermes-text-main);
+}
+.hero-ledger-val.lv-readonly { color: var(--jebat-pucuk); }
+.hero-ledger-val.lv-confirm { color: var(--jebat-tembaga); }
+.hero-ledger-val.lv-destructive { color: var(--jebat-bara); }
+.hero-ledger-key {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--hermes-text-subtle);
+}
+
 /* HERO INSTALL PILL */
 .hero-install-pill {
   display: inline-flex;
@@ -804,6 +850,8 @@ nav.scrolled {
   position: relative;
   z-index: 1;
 }
+
+.hero-content, .hero-visual-wrapper { min-width: 0; }
 
 .hero-eyebrow {
   display: inline-flex;
@@ -2543,19 +2591,35 @@ footer {
       <div class="hero-content">
         <div class="hero-eyebrow">
           <span class="pulse-dot"></span>
-          <span>SOVEREIGN EXECUTION / LIVE</span>
+          <span>SOVEREIGN EXECUTION / LIVE · MCP 2026-07-28</span>
         </div>
 
         <h1>KEEP <span class="copper-gradient">COMMAND.</span></h1>
 
         <p class="lead">
-          Run private multi-turn agents. Connect 118 MCP tools. Verify code, design, and copy with autonomous Reflexion gates. Deploy on infrastructure you control.
+          Run private multi-turn agents on infrastructure you control. Wire <strong>118 MCP tools</strong> behind explicit safety tiers, verify code, design and copy through autonomous Reflexion gates, and never ship a write you did not approve.
         </p>
 
         <div class="hero-verify-row">
           <span class="hero-verify-badge"><i class="fa-solid fa-shield-halved text-pucuk"></i> Zero Telemetry</span>
           <span class="hero-verify-badge"><i class="fa-solid fa-network-wired" style="color:var(--jebat-tembaga)"></i> 118 MCP Tools</span>
-          <span class="hero-verify-badge" style="border-color:rgba(16,185,129,0.4);color:#10b981"><i class="fa-solid fa-award"></i> Hallmark P5 H5 E5 S5 R5 V5</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-code-branch" style="color:var(--jebat-keluli)"></i> 17 Agent Roles</span>
+        </div>
+
+        <div class="hero-ledger-cap"><i class="fa-solid fa-lock text-copper"></i> GOVERNED EXECUTION — all 118 tools carry an MCP safety tier</div>
+        <div class="hero-ledger" role="list" aria-label="MCP tool safety-tier breakdown">
+          <div class="hero-ledger-item" role="listitem">
+            <span class="hero-ledger-val lv-readonly">31</span>
+            <span class="hero-ledger-key">Read-only</span>
+          </div>
+          <div class="hero-ledger-item" role="listitem">
+            <span class="hero-ledger-val lv-confirm">74</span>
+            <span class="hero-ledger-key">Write · confirm</span>
+          </div>
+          <div class="hero-ledger-item" role="listitem">
+            <span class="hero-ledger-val lv-destructive">13</span>
+            <span class="hero-ledger-key">Destructive · gated</span>
+          </div>
         </div>
 
         <div class="hero-ctas">
@@ -4215,7 +4279,7 @@ function runHeroCLI(type) {
     box.innerHTML = `> $ jebat agi audit --all<br/>
 <span style="color: var(--hermes-amber)">[Autonomous Reflexion Gates Active]</span><br/>
 > Build Gate: AST parse validated (0 syntax errors)<br/>
-> Hallmark Design Gate: P5 H5 E5 S5 R5 V5 (Roman headers, 8 states)<br/>
+> Hallmark Design Gate: 6-axis critique — philosophy · hierarchy · execution · specificity · restraint · variety<br/>
 > Pawang Jualan Copy Gate: [Action Verb] + [What They Get] enforced<br/>
 <span style="color: var(--hermes-pucuk)">✓ Multi-domain quality sign-off confirmed.</span>`;
   } else if (type === 'dream') {
