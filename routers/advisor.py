@@ -415,13 +415,28 @@ def _is_typesafe_available() -> bool:
     return bool(os.getenv("TYPESAFE_API_KEY", TYPESAFE_API_KEY))
 
 
+_AVAIL_CACHE: Dict[str, bool] = {}
+
+
+def _probe_available(name: str, import_check) -> bool:
+    """Memoise an import probe.
+
+    These run on every /api/advisor/status call. Importing torch takes
+    seconds and blocks the event loop, which made /status 502 behind
+    Cloudflare under load. The answer cannot change within a process, so
+    compute it once.
+    """
+    if name not in _AVAIL_CACHE:
+        try:
+            _AVAIL_CACHE[name] = bool(import_check())
+        except Exception:
+            _AVAIL_CACHE[name] = False
+    return _AVAIL_CACHE[name]
+
+
 def _is_laya_available() -> bool:
-    """Check if laya package is importable."""
-    try:
-        import laya  # noqa: F401
-        return True
-    except (ImportError, Exception):
-        return False
+    """Check if laya package is importable (cached)."""
+    return _probe_available("laya", lambda: __import__("laya") and True)
 
 
 def _wants_laya(backend_pref: str, model_name: str | None) -> bool:
@@ -439,13 +454,16 @@ def _wants_laya(backend_pref: str, model_name: str | None) -> bool:
 
 
 def _is_transformers_available() -> bool:
-    """Check if transformers and torch are importable and functional."""
-    try:
-        import transformers  # noqa: F401
+    """Check if transformers and torch are importable and functional (cached)."""
+
+    def check() -> bool:
         import torch  # noqa: F401
+        import transformers  # noqa: F401
+
         return True
-    except (ImportError, Exception):
-        return False
+
+    return _probe_available("transformers", check)
+
 
 
 def _get_or_load_model(backend_pref: str) -> Tuple[Any, Optional[str]]:
