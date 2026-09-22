@@ -417,26 +417,37 @@ def _is_typesafe_available() -> bool:
 
 _AVAIL_CACHE: Dict[str, bool] = {}
 
+# Packages whose *presence* we report without importing. torch's import is
+# ~4.6s cold and runs on the event loop, so a status poll that imported it
+# blew Cloudflare's timeout on the first request after every restart (the
+# cache only helps once one call has already paid the cost). find_spec just
+# locates the package on sys.path — milliseconds — and the real import still
+# happens inside _get_or_load_model, guarded by the timeout + breaker.
+_PROBE_MODULES = {
+    "laya": ("laya",),
+    "transformers": ("transformers", "torch"),
+}
 
-def _probe_available(name: str, import_check) -> bool:
-    """Memoise an import probe.
 
-    These run on every /api/advisor/status call. Importing torch takes
-    seconds and blocks the event loop, which made /status 502 behind
-    Cloudflare under load. The answer cannot change within a process, so
-    compute it once.
-    """
+def _is_module_installed(module: str) -> bool:
+    from importlib.util import find_spec
+    try:
+        return find_spec(module) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _probe_available(name: str) -> bool:
+    """Whether every module backing a tier is importable-by-path (cached)."""
     if name not in _AVAIL_CACHE:
-        try:
-            _AVAIL_CACHE[name] = bool(import_check())
-        except Exception:
-            _AVAIL_CACHE[name] = False
+        mods = _PROBE_MODULES.get(name, ())
+        _AVAIL_CACHE[name] = bool(mods) and all(_is_module_installed(m) for m in mods)
     return _AVAIL_CACHE[name]
 
 
 def _is_laya_available() -> bool:
-    """Check if laya package is importable (cached)."""
-    return _probe_available("laya", lambda: __import__("laya") and True)
+    """Check if the laya package is installed (does not import it)."""
+    return _probe_available("laya")
 
 
 def _wants_laya(backend_pref: str, model_name: str | None) -> bool:
@@ -454,15 +465,8 @@ def _wants_laya(backend_pref: str, model_name: str | None) -> bool:
 
 
 def _is_transformers_available() -> bool:
-    """Check if transformers and torch are importable and functional (cached)."""
-
-    def check() -> bool:
-        import torch  # noqa: F401
-        import transformers  # noqa: F401
-
-        return True
-
-    return _probe_available("transformers", check)
+    """Check if transformers and torch are installed (does not import them)."""
+    return _probe_available("transformers")
 
 
 
