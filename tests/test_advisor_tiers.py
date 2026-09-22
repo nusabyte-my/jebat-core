@@ -15,6 +15,7 @@ when the envelope is not what Laya documents.
 from __future__ import annotations
 
 import sys
+import time
 import types
 from typing import Any, Dict
 
@@ -25,13 +26,19 @@ from routers import advisor
 
 @pytest.fixture
 def isolated(monkeypatch):
-    """Clear the model cache and pin a known env for one test."""
+    """Clear model cache + circuit-breaker state and pin a known env."""
     advisor._MODEL_CACHE.clear()
+    # The breaker is module-level mutable state; envelope-fallback tests trip
+    # it, and a leaked cooldown would make later tests silently skip the model
+    # tier and fail on 'local' == 'laya'.
+    advisor._MODEL_STATE.update({"open_until": 0.0, "consecutive": 0})
     monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    monkeypatch.delenv("JEBAT_ADVISOR_TIMEOUT_S", raising=False)
     monkeypatch.setenv("JEBAT_ADVISOR_BACKEND", "laya")
     monkeypatch.setenv("JEBAT_ADVISOR_MODEL", "convaiinnovations/laya")
     yield advisor
     advisor._MODEL_CACHE.clear()
+    advisor._MODEL_STATE.update({"open_until": 0.0, "consecutive": 0})
 
 
 def _install_fake_laya(monkeypatch, predict_impl) -> None:
@@ -276,3 +283,69 @@ async def test_shortcut_endpoints_report_the_answering_backend(isolated, monkeyp
     assert verified.backend
     assert scored.backend
     assert 0 <= scored.score < 2
+
+
+async def test_model_timeout_falls_back_without_hanging(isolated, monkeypatch):
+    """A slow model must not stall the request past the budget.
+
+    This is the production-safety path: on a shared CPU box one classify
+    measured >75s while co-tenant mail processes saturated the machine. The
+    tier now runs in a worker thread behind asyncio.wait_for.
+    """
+    monkeypatch.setenv("JEBAT_ADVISOR_TIMEOUT_S", "0.3")
+
+    def slow(model_id, device=None):
+        class A:
+            def predict(self, state, questions):
+                time.sleep(5)  # simulates a saturated CPU inference
+                return {"answers": {}}
+        return A()
+
+    module = types.ModuleType("laya")
+    module.load = slow
+    monkeypatch.setitem(sys.modules, "laya", module)
+
+    started = time.monotonic()
+    answers, backend = await isolated._decide("the app crashes on login with a 500 error", CHOICE)
+    elapsed = time.monotonic() - started
+
+    assert backend == "local"
+    assert answers["route"]["answer"] == "technical"
+    assert elapsed < 2.0, f"fell back too slowly ({elapsed:.1f}s); timeout not enforced"
+
+
+async def test_repeated_model_failures_open_the_circuit(isolated, monkeypatch):
+    """After 2 slow/failed calls the model tier is skipped for a cooldown."""
+    monkeypatch.setenv("JEBAT_ADVISOR_TIMEOUT_S", "0.2")
+    monkeypatch.setenv("JEBAT_ADVISOR_COOLDOWN_S", "60")
+    calls = {"n": 0}
+
+    def failing(model_id, device=None):
+        class A:
+            def predict(self, state, questions):
+                calls["n"] += 1
+                time.sleep(1)
+                return {"answers": {}}
+        return A()
+
+    module = types.ModuleType("laya")
+    module.load = failing
+    monkeypatch.setitem(sys.modules, "laya", module)
+
+    for _ in range(3):
+        answers, backend = await isolated._decide("the app crashes on login", CHOICE)
+        assert backend == "local"
+
+    # Third call must not have reached the model — breaker is open.
+    assert calls["n"] <= 2, f"breaker did not trip; model called {calls['n']}x"
+    assert isolated._MODEL_STATE["open_until"] > time.time()
+
+
+def test_cooldown_expiry_closes_the_circuit(isolated, monkeypatch):
+    """A tripped breaker must self-heal once the window passes."""
+    isolated._MODEL_STATE.update({"open_until": time.time() + 100, "consecutive": 5})
+    assert isolated._model_in_cooldown() is True
+    isolated._MODEL_STATE["open_until"] = time.time() - 1
+    assert isolated._model_in_cooldown() is False
+    isolated._model_record_hit()
+    assert isolated._MODEL_STATE["consecutive"] == 0

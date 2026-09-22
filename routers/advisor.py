@@ -40,6 +40,61 @@ TYPESAFE_BASE_URL = os.getenv("TYPESAFE_BASE_URL", "https://api.typesafe.ai")
 _MODEL_CACHE: Dict[str, Any] = {}
 _MODEL_LOCK = threading.Lock()
 
+# A local model on a shared CPU box can stall for tens of seconds under load
+# (measured: >75s for one classify while co-tenant mail processes saturated
+# the machine). Bound it and stop hammering it after repeated misses.
+def _advisor_timeout_s() -> float:
+    try:
+        return max(0.1, float(os.getenv("JEBAT_ADVISOR_TIMEOUT_S", "3")))
+    except ValueError:
+        return 3.0
+
+
+def _advisor_cooldown_s() -> float:
+    try:
+        return max(1.0, float(os.getenv("JEBAT_ADVISOR_COOLDOWN_S", "60")))
+    except ValueError:
+        return 60.0
+
+
+# Circuit-breaker: after a timeout/error the model tier is skipped for a
+# cooldown window so one slow request cannot cascade across the traffic mix.
+_MODEL_STATE: Dict[str, Any] = {"open_until": 0.0, "consecutive": 0}
+_MODEL_STATE_LOCK = threading.Lock()
+
+
+def _advisor_torch_threads() -> None:
+    """Cap torch intra-op threads so inference cannot starve co-tenants."""
+    try:
+        import torch
+        n = int(os.getenv("JEBAT_ADVISOR_THREADS", "2"))
+        if n > 0:
+            torch.set_num_threads(n)
+    except Exception:
+        pass
+
+
+def _model_in_cooldown() -> bool:
+    with _MODEL_STATE_LOCK:
+        return time.time() < _MODEL_STATE.get("open_until", 0.0)
+
+
+def _model_record_miss() -> None:
+    with _MODEL_STATE_LOCK:
+        _MODEL_STATE["consecutive"] = _MODEL_STATE.get("consecutive", 0) + 1
+        if _MODEL_STATE["consecutive"] >= 2:
+            _MODEL_STATE["open_until"] = time.time() + _advisor_cooldown_s()
+            logger.warning(
+                "advisor model tier cooling down for %.0fs after %d slow/failed calls",
+                _advisor_cooldown_s(), _MODEL_STATE["consecutive"],
+            )
+
+
+def _model_record_hit() -> None:
+    with _MODEL_STATE_LOCK:
+        _MODEL_STATE["consecutive"] = 0
+        _MODEL_STATE["open_until"] = 0.0
+
 
 # ── Request / Response Models ──
 
@@ -413,7 +468,7 @@ def _get_or_load_model(backend_pref: str) -> Tuple[Any, Optional[str]]:
             cached_tier = _MODEL_CACHE.get("tier", "transformers")
             if backend_pref in ("auto", cached_tier):
                 return _MODEL_CACHE["instance"], cached_tier
-
+        _advisor_torch_threads()
         # Laya proper: the PyPI `laya` package is the real typed-decision
         # engine (bidirectional encoder + decision heads, temperature
         # calibrated). Load ONE agent, never laya.Router(preload=True) which
@@ -670,11 +725,36 @@ async def _decide(state: str, questions: Dict[str, Any]) -> Tuple[Dict[str, Any]
         except Exception as exc:
             logger.warning("TypeSafe API call failed, falling back to local: %s", exc)
 
-    # 2. Local transformer backend (Laya or generic ModernBERT / sequence-classification)
-    if backend_pref in ("auto", "laya", "transformers"):
-        answers, tier = _call_local_transformer(state, questions, backend_pref)
-        if answers is not None and tier is not None:
-            return answers, tier
+    # 2. Local transformer backend (Laya or ModernBERT sequence-classification).
+    # Runs in a worker thread with a hard deadline: the inference is synchronous
+    # and CPU-bound, so calling it directly on the event loop would freeze the
+    # whole worker for its duration, and on a loaded shared box that duration
+    # can be tens of seconds. A timeout or breaker trip falls through to the
+    # lexical tier rather than hanging the request.
+    if backend_pref in ("auto", "laya", "transformers") and not _model_in_cooldown():
+        try:
+            answers, tier = await asyncio.wait_for(
+                asyncio.to_thread(_call_local_transformer, state, questions, backend_pref),
+                timeout=_advisor_timeout_s(),
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "advisor model tier exceeded %.0fs; using lexical fallback", _advisor_timeout_s()
+            )
+            _model_record_miss()
+            answers, tier = None, None
+        except Exception as exc:
+            logger.warning("advisor model tier failed (%s); using lexical fallback", exc)
+            _model_record_miss()
+            answers, tier = None, None
+        else:
+            if answers is not None and tier is not None:
+                _model_record_hit()
+                return answers, tier
+            # None means either "no model configured" (nothing to cool down) or
+            # "a loaded model produced nothing usable" (worth cooling down).
+            if _MODEL_CACHE.get("instance") is not None:
+                _model_record_miss()
 
     # 3. Deterministic lexical fallback
     res = _local_fallback(state, questions)
