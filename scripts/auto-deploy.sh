@@ -91,14 +91,22 @@ else
     echo "[2/6] no dependency changes; skipping local pip."
 fi
 
-# ── 3. Landing page + static assets (served by nginx on .65) ──────────────
+# ── 3. Site pages + static assets (served by nginx on .65) ────────────────
 # The web root is NOT a git checkout — it is a plain static directory that
-# nginx serves. Copy the page AND mirror assets/ so image changes ship too.
-echo "[3/6] Updating landing page + assets..."
-if [ -f index.html ]; then
-    cp index.html "$WEB_DIR/index.html"
-    echo "  index.html updated"
-fi
+# nginx serves. Copy every served page AND mirror assets/ so image changes
+# ship too. Listing only index.html here silently froze docs.html, install.html
+# and PITCH_DECK.html at whatever was uploaded by hand — they drifted for
+# weeks while the rest of the stack moved on.
+# 404.html is deliberately absent: it exists only on the server and is not in
+# the repo, so copying the repo's root HTML must never delete or overwrite it.
+echo "[3/6] Updating site pages + assets..."
+SITE_PAGES="index.html docs.html install.html PITCH_DECK.html"
+for page in $SITE_PAGES; do
+    if [ -f "$page" ]; then
+        cp "$page" "$WEB_DIR/$page"
+        echo "  $page updated"
+    fi
+done
 if [ -d assets ]; then
     mkdir -p "$WEB_DIR/assets"
     # --delete keeps the web root from accumulating orphaned images; scope is
