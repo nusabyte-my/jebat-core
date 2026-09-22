@@ -190,6 +190,9 @@ jebat-core/
 
 # Keep JEBAT skill entrypoints under version control.
 !jebat-tokguru/skills/**/SKILL.md
+# Vendored skills are code packages: their SKILL.md and reference/*.md are read
+# by the skill scripts at runtime, so they must survive a fresh clone.
+!skills/**/*.md
 
 # But keep core system files (root only)
 !/README.md

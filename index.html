@@ -971,6 +971,23 @@ nav.scrolled {
   position: relative;
 }
 
+/* JEBAT mascot — cursor-tracking head in the topology card corner */
+.jebat-mascot-host {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 3;
+  width: 92px;
+  height: 92px;
+  pointer-events: none;
+}
+.jebat-mascot-host .jebat-mascot { pointer-events: auto; }
+/* Touch widths: tracking is off anyway, and the head would sit on a
+   clickable topology node — hide rather than block it. */
+@media (max-width: 768px), (hover: none) {
+  .jebat-mascot-host { display: none; }
+}
+
 .topology-header {
   display: flex;
   justify-content: space-between;
@@ -2685,6 +2702,10 @@ footer {
         </picture>
 
         <div class="topology-card">
+          <div class="jebat-mascot-host" data-jebat-mascot
+               data-directions="assets/mascots/pendekar-directions.webp?v=20260922"
+               data-reactions="assets/mascots/pendekar-reactions.webp?v=20260922"
+               data-size="92" data-label="Pendekar"></div>
           <div class="topology-header">
             <span class="topology-title"><i class="fa-solid fa-terminal text-copper"></i> TOPOLOGY // LIVE ROUTING</span>
             <span class="mono text-pucuk"><span class="pulse-dot"></span> ACTIVE</span>
@@ -4285,15 +4306,15 @@ function runHeroCLI(type) {
   } else if (type === 'dream') {
     box.innerHTML = `> $ jebat autoMimpi dream<br/>
 <span style="color: var(--hermes-amber)">[Nightly Memory Sleep Consolidation · 04:00 MYT]</span><br/>
-> Processed: 34 traces | Noise pruned: 0 | Patterns: 1<br/>
-> Embeddings: Synced to Ghost DB HNSW vector store<br/>
+> Consolidation pass complete — traces scored, decayed and pruned<br/>
+> Patterns extracted | Embeddings synced to Ghost DB (HNSW, cosine)<br/>
 <span style="color: var(--hermes-pucuk)">✓ "Errors are the Grid's way of showing where the wall is."</span>`;
   } else if (type === 'memory') {
-    box.innerHTML = `> $ jebat memory query "NusaByte"<br/>
-<span style="color: var(--hermes-amber)">[Ghost DB Hybrid Vector Search]</span><br/>
-> Match #1: "NusaByte Commercial AI Architecture & Ops" (Score: 0.94)<br/>
-> Match #2: "JEBAT Sovereign Runtime Cutover" (Score: 0.89)<br/>
-<span style="color: var(--hermes-pucuk)">✓ Context retrieved from persistent store.</span>`;
+    box.innerHTML = `> $ jebat memory search "NusaByte"<br/>
+<span style="color: var(--hermes-amber)">[Ghost DB Hybrid Retrieval · BM25 + vector, cosine]</span><br/>
+> Query embedded → matched against the memory collection<br/>
+> Ranked hits returned with a per-result confidence score<br/>
+<span style="color: var(--hermes-pucuk)">✓ Context retrieved from the persistent store.</span>`;
   }
 }
 // Topology Node Highlight
@@ -4701,6 +4722,7 @@ function copyRemoteMcpConfig(btn) {
 }
 
 </script>
+<script src="assets/jebat-mascot.js?v=20260922" defer></script>
 
 </body>
 </html>
