@@ -1,19 +1,28 @@
-"""JEBAT File Operations — read, write, patch, search, diff, undo."""
+"""JEBAT File Operations — read, write, patch, search, tree, undo.
+
+The implementations live in :mod:`jebat.features.fileops.file_ops` and register
+themselves into the tool registry via @register_tool at import time. This
+package must import that submodule, otherwise `import jebat.features.fileops`
+(a no-op package init) registers nothing and the MCP server silently exposes
+no file tools at all.
+"""
 
 from __future__ import annotations
 
+from .file_ops import (
+    file_patch,
+    file_read,
+    file_search,
+    file_tree,
+    file_undo,
+    file_write,
+)
 
-async def read_file(path: str, offset: int = 1, limit: int = 500) -> dict:
-    ...
-
-
-async def write_file(path: str, content: str, force: bool = False) -> dict:
-    ...
-
-
-async def patch_file(path: str, old: str, new: str, replace_all: bool = False) -> dict:
-    ...
-
-
-async def search_files(pattern: str, path: str = ".", file_glob: str | None = None, limit: int = 50) -> dict:
-    ...
+__all__ = [
+    "file_patch",
+    "file_read",
+    "file_search",
+    "file_tree",
+    "file_undo",
+    "file_write",
+]

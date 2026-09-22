@@ -30,10 +30,11 @@ from jebat.tools import TOOL_REGISTRY, ToolDef, register_tool
 
 logger = logging.getLogger(__name__)
 
-# ── Constants ──────────────────────────────────────────────────────────────
+# ── Constants (single source: jebat.features.mcp.protocol) ─────────────────
+# Offer the newest revision we speak; the old hardcoded "2024-11-05" made
+# JEBAT's own client negotiate down against JEBAT's own server.
 
-MCP_PROTOCOL_VERSION = "2024-11-05"
-JSONRPC_VERSION = "2.0"
+from .protocol import CLIENT_NAME, CLIENT_VERSION, JSONRPC_VERSION, MCP_PROTOCOL_VERSION
 
 
 class TransportType(str, Enum):
@@ -593,8 +594,8 @@ class MCPClient:
                 "resources": {},
             },
             "clientInfo": {
-                "name": "jebat-cli",
-                "version": "1.0.0",
+                "name": CLIENT_NAME,
+                "version": CLIENT_VERSION,
             },
         })
 

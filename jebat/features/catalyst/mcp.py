@@ -14,6 +14,7 @@ try:
 except ImportError:
     Server = InitializationOptions = stdio_server = Tool = TextContent = None
 
+from jebat import __version__ as SERVER_VERSION  # report the package version, not a drifting literal
 from .client import CatalystClient, CatalystConfig
 from .halo import run_halo_analysis
 from .alerting import AlertManager, AlertRule, AlertSeverity, BUILTIN_ALERT_RULES
@@ -400,7 +401,7 @@ async def main() -> None:
             write_stream,
             InitializationOptions(
                 server_name="catalyst-o11y",
-                server_version="0.1.0",
+                server_version=SERVER_VERSION,
                 capabilities=server.get_capabilities(
                     notification_options=None,
                     experimental_capabilities={},

@@ -16,6 +16,7 @@ except ImportError:
         ImageContent
     ) = EmbeddedResource = None
 
+from . import __version__ as SERVER_VERSION  # ghost-db keeps its own component version; don't repeat the literal
 from .client import GhostClient, GhostError
 from .models import GhostConfig, DistanceMetric
 from .embeddings import get_embedding_provider
@@ -364,7 +365,7 @@ class GhostMCPServer:
                 write_stream,
                 InitializationOptions(
                     server_name="ghost-db",
-                    server_version="0.1.0",
+                    server_version=SERVER_VERSION,
                     capabilities=self.server.get_capabilities(
                         notification_options=None,
                         experimental_capabilities={},

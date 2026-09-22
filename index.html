@@ -52,7 +52,7 @@
       "name": "JEBAT",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Linux, Windows, macOS",
-      "softwareVersion": "8.3.0",
+      "softwareVersion": "8.2.1",
       "description": "Sovereign AI command layer for model orchestration, persistent memory, MCP tool integration, and enterprise governance.",
       "url": "https://jebat.online",
       "license": "https://opensource.org/licenses/MIT",
@@ -2129,6 +2129,7 @@ footer {
   font-family: var(--font-mono);
   font-size: 14px;
   width: 100%;
+  min-height: 44px;
   outline: none;
 }
 
@@ -2139,6 +2140,7 @@ footer {
 }
 
 .cmd-modal-item {
+  min-height: 44px;
   padding: 12px 20px;
   display: flex;
   justify-content: space-between;
@@ -2420,7 +2422,7 @@ footer {
    <div class="ticker-track">
     <span><span class="pulse-dot"></span> SOVEREIGN AI INFRASTRUCTURE: ONLINE</span>
     <span>•</span>
-    <span>85 MCP TOOLS ACTIVE</span>
+    <span>118 MCP TOOLS ACTIVE</span>
     <span>•</span>
     <span>LLAMA.CPP IN-MEMORY (:8081)</span>
     <span>•</span>
@@ -2430,7 +2432,7 @@ footer {
     <span>•</span>
     <span>NIGHTLY autoMIMPI DAEMON (04:00 MYT)</span>
     <span>•</span>
-    <span class="text-pucuk" style="color:var(--jebat-pucuk)">RELEASE v8.3.0 OPERATIONAL</span>
+    <span class="text-pucuk" style="color:var(--jebat-pucuk)">RELEASE v8.2.1 OPERATIONAL</span>
    </div>
   </div>
 </div>
@@ -2483,7 +2485,7 @@ footer {
         <img src="assets/Jebat-Transparent.png?v=20260922" alt="JEBAT Sovereign AI Logo" class="brand-logo-img" width="54" height="36" style="height: 36px; width: auto; object-fit: contain;" />
       </picture>
       <span class="logo-text" style="font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: -0.02em; color: var(--hermes-text-main);">JEBAT</span>
-      <span class="logo-chip" style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; background: var(--copper-soft); color: var(--hermes-amber-bright); border: 1px solid var(--border-mid); letter-spacing: 0.5px;">v8.3</span>
+      <span class="logo-chip" style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; background: var(--copper-soft); color: var(--hermes-amber-bright); border: 1px solid var(--border-mid); letter-spacing: 0.5px;">v8.2</span>
     </a>
 
     <ul class="nav-links" id="primary-navigation">
@@ -2547,12 +2549,12 @@ footer {
         <h1>KEEP <span class="copper-gradient">COMMAND.</span></h1>
 
         <p class="lead">
-          Run private multi-turn agents. Connect 85 MCP tools. Verify code, design, and copy with autonomous Reflexion gates. Deploy on infrastructure you control.
+          Run private multi-turn agents. Connect 118 MCP tools. Verify code, design, and copy with autonomous Reflexion gates. Deploy on infrastructure you control.
         </p>
 
         <div class="hero-verify-row">
           <span class="hero-verify-badge"><i class="fa-solid fa-shield-halved text-pucuk"></i> Zero Telemetry</span>
-          <span class="hero-verify-badge"><i class="fa-solid fa-network-wired" style="color:var(--jebat-tembaga)"></i> 85 MCP Tools</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-network-wired" style="color:var(--jebat-tembaga)"></i> 118 MCP Tools</span>
           <span class="hero-verify-badge" style="border-color:rgba(16,185,129,0.4);color:#10b981"><i class="fa-solid fa-award"></i> Hallmark P5 H5 E5 S5 R5 V5</span>
         </div>
 
@@ -2563,7 +2565,7 @@ footer {
           </a>
 
           <a href="docs.html" class="btn btn-outline">
-            <span>Explore 96 MCP Tools</span>
+            <span>Explore 118 MCP Tools</span>
             <i class="fa-solid fa-microchip"></i>
           </a>
         </div>
@@ -2664,16 +2666,18 @@ footer {
         </div>
       </div>
       <div class="mcp-hero-console" aria-label="Interactive MCP capability preview">
-        <div class="mcp-hero-console-head"><span><i class="fa-solid fa-terminal text-copper"></i> PROMPT → POLICY → TOOL → RESULT</span><span class="text-pucuk" style="display:inline-flex;align-items:center;gap:6px"><span class="pulse-dot"></span> AGENT READY (96 TOOLS)</span></div>
+        <div class="mcp-hero-console-head"><span><i class="fa-solid fa-terminal text-copper"></i> PROMPT → POLICY → TOOL → RESULT</span><span class="text-pucuk" style="display:inline-flex;align-items:center;gap:6px"><span class="pulse-dot"></span> AGENT READY (118 TOOLS)</span></div>
         <div class="mcp-hero-tools" role="tablist" aria-label="MCP capability examples">
-          <button class="mcp-hero-tool active" role="tab" aria-selected="true" onclick="previewMcpCapability('memory', this)"><strong>Remember</strong><span>ghost.search</span></button>
-          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('browser', this)"><strong>Inspect web</strong><span>browser.navigate</span></button>
-          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('git', this)"><strong>Ship code</strong><span>github.create_pr</span></button>
-          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('security', this)"><strong>Scan surface</strong><span>hulubalang.scan</span></button>
+          <button class="mcp-hero-tool active" role="tab" aria-selected="true" onclick="previewMcpCapability('memory', this)"><strong>Remember</strong><span>memory_search</span></button>
+          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('browser', this)"><strong>Inspect web</strong><span>browser_navigate</span></button>
+          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('code', this)"><strong>Patch code</strong><span>file_patch</span></button>
+          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('advisor', this)"><strong>Gate risk</strong><span>advisor_gate</span></button>
+          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('design', this)"><strong>Audit UI</strong><span>design_visual_critique</span></button>
+          <button class="mcp-hero-tool" role="tab" aria-selected="false" onclick="previewMcpCapability('security', this)"><strong>Scan surface</strong><span>pentest_scan</span></button>
         </div>
-        <div class="mcp-hero-output" id="mcp-hero-output">&gt; TOOL READY: ghost.search
+        <div class="mcp-hero-output" id="mcp-hero-output">&gt; TOOL READY: memory_search
 &gt; Ask the agent: “Find the last deployment decision.”
-&gt; POLICY: approval required before execution</div>
+&gt; POLICY: read-only; results carry a confidence score</div>
       </div>
     </div>
   </div>
@@ -2709,17 +2713,17 @@ footer {
     <span class="section-label"><i class="fa-solid fa-sliders text-copper"></i> 01 / CONTROL</span>
     <h2 class="section-title">The model should not own your architecture.</h2>
     <p class="section-desc">
-      Every tool call routes through an approval boundary before execution. JEBAT exposes 96 annotated tools with explicit safety hints, runs an advisor_gate pre-flight risk check before destructive operations, and isolates memory and model routing from external vendor APIs.
+      Every tool call routes through an approval boundary before execution. JEBAT exposes 118 annotated tools with explicit safety hints, runs an advisor_gate pre-flight risk check before destructive operations, and isolates memory and model routing from external vendor APIs.
     </p>
 
     <div class="control-demo-grid">
       <div class="control-copy-side">
         <h3>Models are replaceable.<br/>Command remains.</h3>
         <p>
-          Switch between local llama.cpp, Claude, or GPT models while preserving the same 96 annotated tools, Ghost DB memory traces, and policy gates. Write actions remain approval-gated regardless of which inference provider powers the agent.
+          Switch between local llama.cpp, Claude, or GPT models while preserving the same 118 annotated tools, Ghost DB memory traces, and policy gates. Write actions remain approval-gated regardless of which inference provider powers the agent.
         </p>
         <div class="control-statement-box">
-          "96 annotated tools. Pre-flight advisor_gate risk checks. Approval-gated writes on every provider."
+          "118 annotated tools. Pre-flight advisor_gate risk checks. Approval-gated writes on every provider."
         </div>
       </div>
 
@@ -2777,7 +2781,7 @@ footer {
         <h3 class="command-title">ACT</h3>
         <span class="command-subtitle">Connect tools.</span>
         <p class="command-desc">
-          Dispatch 96 annotated tools over standard MCP JSON-RPC, with oversized results folded to 12 KB summaries to protect context.
+          Dispatch 118 annotated tools over standard MCP JSON-RPC, with oversized results folded to 12 KB summaries to protect context.
         </p>
       </div>
 
@@ -2824,8 +2828,7 @@ footer {
           <val class="text-copper">4.2M</val>
         </div>
         <div class="api-metric-card">
-          <label>GHOST DB EMBEDDINGS</label>
-          <val>24,190</val>
+          <label>MCP TOOLS REGISTERED</label> <val>118</val>
         </div>
         <div class="api-metric-card">
           <label>AIRGAP SECURITY POSTURE</label>
@@ -2837,7 +2840,7 @@ footer {
         <div class="api-request-box">
           <div class="api-tester-header">
             <span class="mono text-copper">API ENDPOINT TESTER</span>
-            <span class="mono text-keluli">HERMES RUNTIME v8.3</span>
+            <span class="mono text-keluli">HERMES RUNTIME v8.2</span>
           </div>
 
           <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">SELECT ENDPOINT:</label>
@@ -2907,7 +2910,7 @@ footer {
     <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 04 / MCP BUS (MODEL CONTEXT PROTOCOL)</span>
     <h2 class="section-title">Native Tool Execution Sub-Bus</h2>
     <p class="section-desc">
-      Connect an IDE to JEBAT's MCP server. Recover context, cut tool definition overhead from 18,558 to 1,938 tokens (−90%), and keep write actions behind an explicit approval boundary.
+      Connect an IDE to JEBAT's MCP server. Recover context, cut tool definition overhead from 21,976 to 2,032 tokens (−91%), and keep write actions behind an explicit approval boundary.
     </p>
 
     <div class="mcp-setup-panel">
@@ -2920,7 +2923,7 @@ footer {
      </div>
 
         <form class="mcp-agent-prompt" onsubmit="askMcpAgent(event)">
-          <input id="mcp-agent-input" type="text" value="Use the GitHub MCP server to summarize open issues" aria-label="Prompt JEBAT agent" />
+          <input id="mcp-agent-input" type="text" value="Summarize recent decisions and propose the smallest safe fix" aria-label="Prompt JEBAT agent" />
           <button type="submit"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ASK AGENT</button>
         </form>
       </div>
@@ -2954,20 +2957,21 @@ footer {
        <span class="mcp-workflow-index">05 / REMEMBER</span><strong>Keep the useful trace</strong><span>Verify the result and store non-secret project facts.</span>
      </button>
      <div class="mcp-workflow-output" id="mcp-workflow-output" role="status" aria-live="polite">&gt; INTENT RECEIVED
-&gt; “Summarize the open issues and propose the smallest safe fix.”
+&gt; “Summarize recent decisions and propose the smallest safe fix.”
 &gt; NEXT: recover project context before selecting a tool</div>
    </div>
 
    <div class="mcp-servers-grid">
       <div class="mcp-server-card active" onclick="selectMcpServer('postgres', this)">
         <div class="mcp-card-top">
-          <span class="mcp-server-name"><i class="fa-solid fa-database text-copper"></i> pgvector DB</span>
+          <span class="mcp-server-name"><i class="fa-solid fa-database text-copper"></i> Ghost DB</span>
            <span class="mcp-badge">AVAILABLE</span>
         </div>
-        <p class="mcp-server-desc">Ghost DB persistent vector search & hybrid semantic retrieval engine.</p>
+        <p class="mcp-server-desc">Ephemeral Postgres workspaces for agents — create, fork, checkpoint and query isolated databases.</p>
         <div class="mcp-tools-list">
-          <span class="mcp-tool-pill">pgvector.search</span>
-          <span class="mcp-tool-pill">ghost.store_memory</span>
+          <span class="mcp-tool-pill">ghost_sql</span>
+          <span class="mcp-tool-pill">ghost.create</span>
+          <span class="mcp-tool-pill">ghost_checkpoint_create</span>
         </div>
       </div>
 
@@ -2978,20 +2982,21 @@ footer {
         </div>
         <p class="mcp-server-desc">Sandboxed file reading, writing, diff patching, and workspace inspection.</p>
         <div class="mcp-tools-list">
-          <span class="mcp-tool-pill">fs.read_file</span>
-          <span class="mcp-tool-pill">fs.replace_content</span>
+          <span class="mcp-tool-pill">file_read</span>
+          <span class="mcp-tool-pill">file_patch</span>
+          <span class="mcp-tool-pill">file_undo</span>
         </div>
       </div>
 
       <div class="mcp-server-card" onclick="selectMcpServer('git', this)">
         <div class="mcp-card-top">
-          <span class="mcp-server-name"><i class="fa-brands fa-github text-copper"></i> GitHub & DevOps</span>
+          <span class="mcp-server-name"><i class="fa-brands fa-github text-copper"></i> Git Context</span>
            <span class="mcp-badge">AVAILABLE</span>
         </div>
-        <p class="mcp-server-desc">Automated PR creation, issue triage, and CI/CD workflow triggers.</p>
+        <p class="mcp-server-desc">Read-only repository state exposed as MCP resources — working-tree status and diffs against any ref.</p>
         <div class="mcp-tools-list">
-          <span class="mcp-tool-pill">github.create_pr</span>
-          <span class="mcp-tool-pill">github.list_issues</span>
+          <span class="mcp-tool-pill">jebat://git/status</span>
+          <span class="mcp-tool-pill">jebat://git/diff</span>
         </div>
       </div>
 
@@ -3002,8 +3007,8 @@ footer {
         </div>
         <p class="mcp-server-desc">Autonomous browser navigation, DOM inspection, and screenshot capture.</p>
         <div class="mcp-tools-list">
-          <span class="mcp-tool-pill">browser.navigate</span>
-          <span class="mcp-tool-pill">browser.screenshot</span>
+          <span class="mcp-tool-pill">browser_navigate</span>
+          <span class="mcp-tool-pill">browser_snapshot</span>
         </div>
       </div>
 
@@ -3014,20 +3019,20 @@ footer {
         </div>
         <p class="mcp-server-desc">Automated pentesting, port auditing, and policy boundary verification.</p>
         <div class="mcp-tools-list">
-          <span class="mcp-tool-pill">hulubalang.scan</span>
-          <span class="mcp-tool-pill">policy.check_gate</span>
+          <span class="mcp-tool-pill">pentest_scan</span>
+          <span class="mcp-tool-pill">advisor_gate</span>
         </div>
       </div>
 
       <div class="mcp-server-card" onclick="selectMcpServer('webhooks', this)">
         <div class="mcp-card-top">
-          <span class="mcp-server-name"><i class="fa-solid fa-bolt text-copper"></i> CRM & Webhooks</span>
+          <span class="mcp-server-name"><i class="fa-solid fa-bolt text-copper"></i> Wiki &amp; Memory</span>
            <span class="mcp-badge">AVAILABLE</span>
         </div>
-        <p class="mcp-server-desc">Real-time enterprise webhooks, WhatsApp integrations, and CRM deal creation.</p>
+        <p class="mcp-server-desc">Persistent knowledge notes and agent memory — create, search, consolidate and recall across sessions.</p>
         <div class="mcp-tools-list">
-          <span class="mcp-tool-pill">crm.create_deal</span>
-          <span class="mcp-tool-pill">webhook.send</span>
+          <span class="mcp-tool-pill">wiki_create</span>
+          <span class="mcp-tool-pill">memory_store</span>
         </div>
       </div>
     </div>
@@ -3036,7 +3041,7 @@ footer {
       <div class="mcp-monitor-header">
         <div>
           <span class="mono text-copper"><i class="fa-solid fa-terminal"></i> MCP JSON-RPC DISPATCH MONITOR</span>
-          <h4 id="mcp-active-title" style="margin-top: 4px; font-size: 1.25rem;">Server: mcp-server-postgres-vector</h4>
+          <h4 id="mcp-active-title" style="margin-top: 4px; font-size: 1.25rem;">Server: jebat-mcp-server · ghost</h4>
         </div>
         <button class="btn btn-outline" style="padding: 6px 14px; font-size: 10px;" onclick="triggerMcpExecution()">
           <i class="fa-solid fa-play text-pucuk"></i> Dispatch MCP RPC
@@ -3048,12 +3053,12 @@ footer {
   "jsonrpc": "2.0",
   "method": "tools/call",
   "params": {
-    "name": "pgvector.similarity_search",
-    "arguments": { "query": "NusaByte sovereign AI architecture", "top_k": 3 }
+    "name": "ghost_sql",
+    "arguments": { "sql": "SELECT id, kind, body FROM traces LIMIT 3" }
   },
   "status": "EXECUTED",
-  "latency": "2ms",
-  "result": { "embeddings_matched": 3, "similarity_score": 0.96 }
+  "latency": "4ms",
+  "result": { "rows_returned": 3 }
 }
       </div>
     </div>
@@ -3075,23 +3080,21 @@ footer {
           <h3 style="font-size: 1.35rem; margin-top: 2px;">MCP Telemetry &amp; Advisor Control Plane</h3>
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <span class="mono text-pucuk"><span class="pulse-dot"></span> 96 TOOLS ANNOTATED</span>
+          <span class="mono text-pucuk"><span class="pulse-dot"></span> 118 TOOLS ANNOTATED</span>
           <span class="hero-verify-badge"><i class="fa-solid fa-key text-copper"></i> BEARER-GATED REMOTE MCP</span>
         </div>
       </div>
 
       <div class="api-metrics-grid" style="margin-top: 20px;">
         <div class="api-metric-card">
-          <label>TOTAL MCP TOOLS</label>
-          <val class="text-copper">96</val>
+          <label>TOTAL MCP TOOLS</label> <val class="text-copper">118</val>
         </div>
         <div class="api-metric-card">
-          <label>OPTIMIZED CONTEXT COST</label>
-          <val class="text-pucuk">1,938 TOK</val>
+          <label>OPTIMIZED CONTEXT COST</label> <val class="text-pucuk">2,032 TOK</val>
         </div>
         <div class="api-metric-card">
           <label>CONTEXT SAVINGS</label>
-          <val class="text-pucuk">−90%</val>
+          <val class="text-pucuk">−91%</val>
         </div>
         <div class="api-metric-card">
           <label>PROACTIVE ADVISOR</label>
@@ -3122,36 +3125,36 @@ footer {
 
             <label class="mono text-keluli" for="mcp-tools-mode-select" style="display: block; margin-bottom: 6px;">SELECT TOOLS/LIST MODE:</label>
             <select class="api-endpoint-select" id="mcp-tools-mode-select" onchange="updateMcpToolsMode(this.value)">
-              <option value="verbose">tools/list — verbose (96 tools, 46,247 chars, ~11,561 tok)</option>
-              <option value="terse">tools/list — terse (39,806 chars, ~9,951 tok)</option>
-              <option value="paginated">tools/list — paginated (20 of 96, 9,195 chars, ~2,298 tok)</option>
-              <option value="paginated_terse" selected>tools/list — paginated + terse (7,752 chars, ~1,938 tok)</option>
+              <option value="verbose">tools/list — verbose (118 tools, 59,176 chars, ~14,794 tok)</option>
+              <option value="terse">tools/list — terse (51,235 chars, ~12,809 tok)</option>
+              <option value="paginated">tools/list — paginated (20 of 118, 9,127 chars, ~2,282 tok)</option>
+              <option value="paginated_terse" selected>tools/list — paginated + terse (8,128 chars, ~2,032 tok)</option>
             </select>
 
             <label class="mono text-keluli" style="display: block; margin-bottom: 6px;">MEASURED TOKEN ECONOMY READOUT:</label>
             <div class="mcp-token-stats" id="mcp-token-stats" aria-live="polite">
-              <div class="mcp-stat-row"><span>Character Count:</span> <strong id="stat-chars">7,752 chars</strong></div>
-              <div class="mcp-stat-row"><span>Estimated Context Cost:</span> <strong id="stat-tokens" class="text-copper">~1,938 tokens</strong></div>
-              <div class="mcp-stat-row"><span>Savings vs Baseline (18,558 tok):</span> <strong id="stat-savings" class="text-pucuk">−90% context saved</strong></div>
-              <div class="mcp-stat-row"><span>Tools in Response:</span> <strong id="stat-count">20 of 96 tools (Page 1)</strong></div>
+              <div class="mcp-stat-row"><span>Character Count:</span> <strong id="stat-chars">8,128 chars</strong></div>
+              <div class="mcp-stat-row"><span>Estimated Context Cost:</span> <strong id="stat-tokens" class="text-copper">~2,032 tokens</strong></div>
+              <div class="mcp-stat-row"><span>Savings vs Baseline (21,976 tok):</span> <strong id="stat-savings" class="text-pucuk">−91% context saved</strong></div>
+              <div class="mcp-stat-row"><span>Tools in Response:</span> <strong id="stat-count">20 of 118 tools (Page 1 of 6)</strong></div>
             </div>
 
             <div class="mcp-savings-comparison">
               <div class="mono text-keluli" style="margin-bottom: 8px;">CONTEXT WINDOW CONSUMPTION</div>
               <div class="mcp-bar-group">
-                <div class="mcp-bar-label"><span>Baseline (indent=2, unpaged)</span><span>18,558 tokens (100%)</span></div>
+                <div class="mcp-bar-label"><span>Baseline (indent=2, unpaged)</span><span>21,976 tokens (100%)</span></div>
                 <div class="mcp-bar-track">
                   <div class="mcp-bar-fill mcp-bar-baseline" style="width: 100%;"></div>
                 </div>
               </div>
               <div class="mcp-bar-group" style="margin-top: 10px;">
-                <div class="mcp-bar-label"><span class="text-copper">Paginated + Terse Mode</span><span class="text-copper"><strong>1,938 tokens (10.4%)</strong></span></div>
+                <div class="mcp-bar-label"><span class="text-copper">Paginated + Terse Mode</span><span class="text-copper"><strong>2,032 tokens (9.2%)</strong></span></div>
                 <div class="mcp-bar-track">
-                  <div class="mcp-bar-fill mcp-bar-optimized" style="width: 10.44%;"></div>
+                  <div class="mcp-bar-fill mcp-bar-optimized" style="width: 9.25%;"></div>
                 </div>
               </div>
               <div class="mono text-pucuk" style="margin-top: 10px; font-size: 10px;">
-                <i class="fa-solid fa-circle-check"></i> 16,620 TOKENS FREED (−90%) PER MCP HANDSHAKE
+                <i class="fa-solid fa-circle-check"></i> 19,944 TOKENS FREED (−91%) PER MCP HANDSHAKE
               </div>
             </div>
           </div>
@@ -3982,7 +3985,7 @@ function switchHeroSwarm(role, chip) {
   } else if (role === 'pawang') {
     box.innerHTML = `> AGENT SELECTED: <span style="color: var(--hermes-amber)">Pawang (Knowledge & Research)</span><br/>
 > Querying Ghost DB 6-Type Persistent Memory...<br/>
-<span style="color: var(--hermes-pucuk)">✓ Context Retrieved: 24,190 embeddings indexed.</span>`;
+<span style="color: var(--hermes-pucuk)">✓ Context Retrieved: memory traces indexed.</span>`;
   } else if (role === 'tukang') {
     box.innerHTML = `> AGENT SELECTED: <span style="color: var(--hermes-amber)">Tukang (Code & Development)</span><br/>
 > Inspecting repository diffs & refactoring AST...<br/>
@@ -4029,8 +4032,8 @@ function updateApiPayload(val) {
      resEl.innerHTML = `{\n  "object": "list",\n  "data": [\n    { "id": "llama-3.3-70b-instruct", "latency": "runtime-measured", "provider": "local" },\n    { "id": "claude-3-5-sonnet", "latency": "runtime-measured", "provider": "anthropic" },\n    { "id": "gpt-4o", "latency": "runtime-measured", "provider": "openai" }\n  ]\n}`;
      resStatusEl.innerText = "STATUS: READY (MODEL CATALOG)";
   } else if (val === 'mcp') {
-    reqEl.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": { "name": "github.create_pr", "arguments": { "title": "feat: JEBAT Core v8.3" } }\n}`;
-    resEl.innerHTML = `{\n  "jsonrpc": "2.0",\n  "result": { "pr_number": 142, "url": "https://github.com/nusabyte-my/jebat-core/pull/142", "status": "created" }\n}`;
+    reqEl.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": { "name": "file_patch", "arguments": { "path": "app.py", "diff": "@@ ..." } }\n}`;
+    resEl.innerHTML = `{\n  "jsonrpc": "2.0",\n  "result": { "path": "app.py", "changed": true, "undoable": true }\n}`;
     resStatusEl.innerText = "STATUS: 200 OK (18ms)";
   } else if (val === 'memory') {
     reqEl.innerHTML = `{\n  "query": "NusaByte enterprise policy",\n  "modalities": ["vector", "episodic"],\n  "top_k": 3\n}`;
@@ -4051,14 +4054,16 @@ const mcpInstallCommands = {
 };
 
 const mcpCapabilityPreviews = {
-  memory: '> TOOL READY: ghost.search\n> Ask the agent: “Find the last deployment decision.”\n> POLICY: approval required before execution',
-  browser: '> TOOL READY: browser.navigate\n> Ask the agent: “Inspect the release notes and extract breaking changes.”\n> POLICY: browser session remains sandboxed',
-  git: '> TOOL READY: github.create_pr\n> Ask the agent: “Open a PR with the approved patch.”\n> POLICY: write action requires confirmation',
-  security: '> TOOL READY: hulubalang.scan\n> Ask the agent: “Check the staging surface for exposed ports.”\n> POLICY: scan target must be explicitly scoped'
-};
+  memory: '> TOOL READY: memory_search\n> Ask the agent: “Find the last deployment decision.”\n> POLICY: read-only; results carry a confidence score',
+  browser: '> TOOL READY: browser_navigate\n> Ask the agent: “Inspect the release notes and extract breaking changes.”\n> POLICY: browser session stays sandboxed',
+  code: '> TOOL READY: file_patch\n> Ask the agent: “Apply the approved patch to this file.”\n> POLICY: write action needs confirmation; undoable via file_undo',
+  security: '> TOOL READY: pentest_scan\n> Ask the agent: “Check the staging surface for exposed ports.”\n> POLICY: scan target must be explicitly scoped',
+  advisor: '> TOOL READY: advisor_gate\n> Ask the agent: “Is this action safe to run unattended?”\n> POLICY: typed verdict + confidence before execution',
+  design: '> TOOL READY: design_visual_critique\n> Ask the agent: “Score this screen for hierarchy and contrast.”\n> POLICY: advisory only; never mutates the page'
+};;
 
 let mcpCycleIdx = 0;
-const mcpKeys = ['memory', 'browser', 'git', 'security'];
+const mcpKeys = ['memory', 'browser', 'code', 'security', 'advisor', 'design'];
 let mcpAutoTimer = setInterval(() => {
   mcpCycleIdx = (mcpCycleIdx + 1) % mcpKeys.length;
   const tools = document.querySelectorAll('.mcp-hero-tool');
@@ -4100,11 +4105,11 @@ function switchMcpInstall(method, tab) {
 }
 
 const mcpWorkflowPreviews = {
-  intent: '> INTENT RECEIVED\n> “Summarize the open issues and propose the smallest safe fix.”\n> NEXT: recover project context before selecting a tool',
+  intent: '> INTENT RECEIVED\n> “Summarize recent decisions and propose the smallest safe fix.”\n> NEXT: recover project context before selecting a tool',
   context: '> CONTEXT RECOVERED\n> RESOURCE: jebat://workflow\n> RESOURCE: jebat://tools\n> MEMORY: project conventions loaded\n> NEXT: classify the proposed action',
-  policy: '> POLICY CHECK\n> TOOL: github.list_issues (AUTO)\n> TOOL: file_patch (CONFIRM)\n> DANGEROUS ACTIONS: none\n> NEXT: wait for confirmation on the patch',
-  execute: '> MCP DISPATCH\n> METHOD: tools/call\n> NAME: github.list_issues\n> STATUS: ready for client execution\n> TRACE: approval boundary preserved',
-  remember: '> VERIFICATION\n> RESULT: issue summary returned\n> MEMORY: durable non-secret decision recorded\n> STATUS: workflow complete'
+  policy: '> POLICY CHECK\n> TOOL: wiki_search (AUTO)\n> TOOL: file_patch (CONFIRM)\n> DANGEROUS ACTIONS: none\n> NEXT: wait for confirmation on the patch',
+  execute: '> MCP DISPATCH\n> METHOD: tools/call\n> NAME: wiki_search\n> STATUS: ready for client execution\n> TRACE: approval boundary preserved',
+  remember: '> VERIFICATION\n> RESULT: decision summary returned\n> MEMORY: durable non-secret decision recorded\n> STATUS: workflow complete'
 };
 
 function showMcpWorkflow(stage, button) {
@@ -4150,23 +4155,23 @@ function selectMcpServer(name, card) {
   const stream = document.getElementById('mcp-rpc-output');
 
   if (name === 'postgres') {
-    title.innerText = "Server: mcp-server-postgres-vector";
-    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "pgvector.similarity_search",\n    "arguments": { "query": "NusaByte sovereign AI architecture", "top_k": 3 }\n  },\n  "status": "EXECUTED",\n  "latency": "2ms",\n  "result": { "embeddings_matched": 3, "similarity_score": 0.96 }\n}`;
+    title.innerText = "Server: jebat-mcp-server · ghost";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "ghost_sql",\n    "arguments": { "sql": "SELECT id, kind, body FROM traces LIMIT 3" }\n  },\n  "status": "EXECUTED",\n  "latency": "4ms",\n  "result": { "rows_returned": 3 }\n}`;
   } else if (name === 'filesystem') {
     title.innerText = "Server: mcp-server-filesystem";
-    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "fs.read_file",\n    "arguments": { "path": "d:/Jebat/index.html" }\n  },\n  "status": "EXECUTED",\n  "latency": "1ms",\n  "result": { "bytes_read": 69646, "encoding": "utf-8" }\n}`;
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "file_read",\n    "arguments": { "path": "index.html", "limit": 40 }\n  },\n  "status": "EXECUTED",\n  "latency": "1ms",\n  "result": { "encoding": "utf-8" }\n}`;
   } else if (name === 'git') {
-    title.innerText = "Server: mcp-server-devops-git";
-    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "github.create_pr",\n    "arguments": { "branch": "main", "title": "feat: MCP Bus Integration" }\n  },\n  "status": "EXECUTED",\n  "latency": "24ms",\n  "result": { "pr_id": 143, "status": "merged" }\n}`;
+    title.innerText = "Server: jebat-mcp-server · git";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "resources/read",\n  "params": {\n    "uri": "jebat://git/status"\n  },\n  "status": "OK",\n  "latency": "9ms",\n  "result": { "contents": [ { "mimeType": "text/plain" } ] }\n}`;
   } else if (name === 'browser') {
-    title.innerText = "Server: mcp-server-browser-playwright";
-    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "browser.screenshot",\n    "arguments": { "url": "http://localhost:8080" }\n  },\n  "status": "EXECUTED",\n  "latency": "18ms",\n  "result": { "format": "webp", "resolution": "1920x1080" }\n}`;
+    title.innerText = "Server: jebat-mcp-server · browser";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "browser_snapshot",\n    "arguments": { "url": "http://localhost:8080" }\n  },\n  "status": "EXECUTED",\n  "latency": "18ms",\n  "result": { "nodes_captured": 128 }\n}`;
   } else if (name === 'security') {
-    title.innerText = "Server: mcp-server-hulubalang-scan";
-    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "hulubalang.scan",\n    "arguments": { "target": "127.0.0.1:8080" }\n  },\n  "status": "EXECUTED",\n  "latency": "6ms",\n  "result": { "open_ports": [80, 443, 8081], "vulnerabilities": 0 }\n}`;
+    title.innerText = "Server: jebat-mcp-server · security";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "pentest_scan",\n    "arguments": { "target": "127.0.0.1:8080" }\n  },\n  "status": "EXECUTED",\n  "latency": "6ms",\n  "result": { "open_ports": [80, 443, 8081], "vulnerabilities": 0 }\n}`;
   } else if (name === 'webhooks') {
-    title.innerText = "Server: mcp-server-crm-webhooks";
-    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "crm.create_deal",\n    "arguments": { "client": "NusaByte Partner", "value": 50000 }\n  },\n  "status": "EXECUTED",\n  "latency": "12ms",\n  "result": { "deal_id": "DEAL-8891", "status": "created" }\n}`;
+    title.innerText = "Server: jebat-mcp-server · wiki";
+    stream.innerHTML = `{\n  "jsonrpc": "2.0",\n  "method": "tools/call",\n  "params": {\n    "name": "wiki_create",\n    "arguments": { "title": "MCP Bus Integration", "body": "Decision record" }\n  },\n  "status": "EXECUTED",\n  "latency": "3ms",\n  "result": { "slug": "mcp-bus-integration" }\n}`;
   }
 }
 
@@ -4189,9 +4194,9 @@ function runHeroCLI(type) {
   const box = document.getElementById('hero-cli-output');
   if (type === 'status') {
     box.innerHTML = `> $ jebat status<br/>
-<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.3.0 Operational</span><br/>
+<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.2.1 Operational</span><br/>
 > Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]<br/>
-> Ghost DB Vector Store: Connected (24,190 embeddings)<br/>
+> Ghost DB Vector Store: Connected<br/>
 > MCP Protocol Bus: tool registry available`;
   } else if (type === 'pentest') {
     box.innerHTML = `> $ jebat agent "Pentest localhost"<br/>
@@ -4202,7 +4207,7 @@ function runHeroCLI(type) {
   } else if (type === 'mcp') {
     box.innerHTML = `> $ jebat mcp list<br/>
 <span style="color: var(--hermes-amber)">[MCP Protocol Bus · Streamable-HTTP :8100]</span><br/>
-> Discovered: <strong>85 Active Sovereign Tools</strong><br/>
+> Discovered: <strong>118 Registered Tools</strong><br/>
 > Ghost DB: 14 tools (ghost.sql, ghost.create, ghost.checkpoint)<br/>
 > Design & Copy: design_preflight, ui_critique, copy_audit<br/>
 <span style="color: var(--hermes-pucuk)">✓ Streamable HTTP & stdio transports operational.</span>`;
@@ -4336,11 +4341,11 @@ function showArchDetail(layer) {
   playClickSound();
   const drawer = document.getElementById('arch-drawer');
   if (layer === 'model') {
-    drawer.innerHTML = `<strong>MODEL INFERENCE LAYER:</strong> Dynamic prompt routing to 17 model providers. Supports continuous local fallback (llama.cpp / Ollama) and external API governance (OpenAI, Anthropic, Gemini).`;
+    drawer.innerHTML = `<strong>MODEL INFERENCE LAYER:</strong> Dynamic prompt routing across 8 provider adapters. Supports continuous local fallback (llama.cpp / Ollama) and external API governance (OpenAI, Anthropic, Gemini).`;
   } else if (layer === 'core') {
     drawer.innerHTML = `<strong>JEBAT CORE RUNTIME:</strong> State engine handling ReAct loops, token budget allocation, policy enforcement, distributed HALO tracing, and security sandboxing.`;
   } else if (layer === 'mcp') {
-    drawer.innerHTML = `<strong>EXECUTION SUB-BUS:</strong> Model Context Protocol (MCP) gateway hosting 47+ tools alongside Ghost DB's 6-type persistent memory engine (episodic, vector, working, entity, procedural, semantic).`;
+    drawer.innerHTML = `<strong>EXECUTION SUB-BUS:</strong> Model Context Protocol (MCP) gateway hosting 118 tools alongside Ghost DB's 6-type persistent memory engine (working, episodic, semantic, procedural, emotional, prospective).`;
   } else if (layer === 'agents') {
     drawer.innerHTML = `<strong>SPECIALIZED AGENT SWARM:</strong> 17 domain-specific agent roles including Tukang (Development), Keris (Security), Pawang (Research), and Syahbandar (Infrastructure/Ops).`;
   }
@@ -4428,39 +4433,38 @@ document.querySelectorAll('.swarm-chip, .switcher-tab, .deploy-btn').forEach((el
 // ==========================================
 const mcpToolsPayloads = {
   verbose: {
-    chars: "46,247 chars",
-    tokens: "~11,561 tokens",
-    savings: "−38% context saved",
-    count: "96 of 96 tools (Full Mode)",
-    modeLabel: "MODE: VERBOSE (96 TOOLS)",
-    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk classification (safe/risky/dangerous) before destructive operations. Evaluates command impact, targets, and reversibility.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "action": { "type": "string", "description": "Proposed tool or CLI command to evaluate" },\n          "target": { "type": "string", "description": "Filesystem path, network endpoint, or database table" },\n          "destructive": { "type": "boolean", "description": "Whether the action mutates or removes state" }\n        },\n        "required": ["action", "target"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": false\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record an execution failure or tool error trace into the autoMimpi dream cycle for pattern consolidation.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "tool": { "type": "string" },\n          "error": { "type": "string" },\n          "context": { "type": "string" }\n        },\n        "required": ["tool", "error"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false,\n      "idempotentHint": false,\n      "openWorldHint": false\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Headless Chromium visual audit measuring WCAG contrast, horizontal overflow, tap targets, and motion queries.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "url": { "type": "string" },\n          "viewports": { "type": "array", "items": { "type": "object" } }\n        },\n        "required": ["url"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": true\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Consolidate session learnings, conventions, and project gotchas into Ghost DB durable memory.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "learnings": { "type": "array", "items": { "type": "string" } },\n          "tags": { "type": "array", "items": { "type": "string" } }\n        },\n        "required": ["learnings"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false,\n      "idempotentHint": false,\n      "openWorldHint": false\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall durable facts, stack architecture, and past decisions for the current project from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "query": { "type": "string" },\n          "limit": { "type": "integer", "default": 5 }\n        },\n        "required": ["query"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": false\n    },\n    {\n      "name": "ghost_sql",\n      "description": "Execute structured SQL query against sovereign Ghost DB PostgreSQL instance.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "query": { "type": "string" },\n          "read_only": { "type": "boolean", "default": true }\n        },\n        "required": ["query"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": true,\n      "idempotentHint": false,\n      "openWorldHint": false\n    },\n    {\n      "name": "pentest_scan",\n      "description": "Internal air-gapped security scanner verifying port exposure, HTTP security headers, and policy boundaries.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "target": { "type": "string" },\n          "ports": { "type": "string", "default": "80,443,8081" }\n        },\n        "required": ["target"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false,\n      "idempotentHint": true,\n      "openWorldHint": true\n    }\n    // ... 89 more tools (96 total, 46,247 chars)\n  ]\n}`
+    chars: "59,176 chars",
+    tokens: "~14,794 tokens",
+    savings: "−33% context saved",
+    count: "118 of 118 tools (Full Mode)",
+    modeLabel: "MODE: VERBOSE (118 TOOLS)",
+    json: `{\n  "tools": [\n    {\n      "name": "file_read",\n      "description": "Read a file with line numbers and pagination.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "offset": {\n            "type": "integer",\n            "default": 1,\n            "description": "Starting line (1-indexed)"\n          },\n          "limit": {\n            "type": "integer",\n            "default": 500,\n            "description": "Max lines to read"\n          }\n        },\n        "required": [\n          "path"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": true,\n        "destructiveHint": false,\n        "idempotentHint": true,\n        "openWorldHint": false\n      }\n    },\n    {\n      "name": "file_write",\n      "description": "Write content to a file (overwrites existing).",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "content": {\n            "type": "string",\n            "description": "Content to write"\n          },\n          "force": {\n            "type": "boolean",\n            "default": false,\n            "description": "Overwrite without warning"\n          }\n        },\n        "required": [\n          "path",\n          "content"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": false,\n        "destructiveHint": true,\n        "idempotentHint": false,\n        "openWorldHint": false\n      },\n      "_meta": {\n        "jebat/safetyTier": "confirm"\n      }\n    }\n    // ... 116 more tools (118 total, 59,176 chars)\n  ]\n}`
   },
   terse: {
-    chars: "39,806 chars",
-    tokens: "~9,951 tokens",
-    savings: "−46% context saved",
-    count: "96 of 96 tools (Terse Mode)",
-    modeLabel: "MODE: TERSE (96 TOOLS)",
-    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk check (safe/risky/dangerous).",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "action": { "type": "string" },\n          "target": { "type": "string" },\n          "destructive": { "type": "boolean" }\n        },\n        "required": ["action", "target"]\n      }\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record failure trace for autoMimpi dream cycle.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "tool": { "type": "string" },\n          "error": { "type": "string" }\n        },\n        "required": ["tool", "error"]\n      }\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Chromium audit for contrast, overflow, tap targets.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "url": { "type": "string" } },\n        "required": ["url"]\n      }\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Commit session facts into Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "learnings": { "type": "array" } },\n        "required": ["learnings"]\n      }\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall project memory from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "ghost_sql",\n      "description": "Execute SQL query on Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "pentest_scan",\n      "description": "Air-gapped port & security header scan.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "target": { "type": "string" } },\n        "required": ["target"]\n      }\n    }\n    // ... 89 more tools (96 total, 39,806 chars)\n  ]\n}`
+    chars: "51,235 chars",
+    tokens: "~12,809 tokens",
+    savings: "−42% context saved",
+    count: "118 of 118 tools (Terse Mode)",
+    modeLabel: "MODE: TERSE (118 TOOLS)",
+    json: `{\n  "tools": [\n    {\n      "name": "file_read",\n      "description": "Read a file with line numbers and pagination.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "offset": {\n            "type": "integer",\n            "default": 1,\n            "description": "Starting line (1-indexed)"\n          },\n          "limit": {\n            "type": "integer",\n            "default": 500,\n            "description": "Max lines to read"\n          }\n        },\n        "required": [\n          "path"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": true,\n        "destructiveHint": false\n      }\n    },\n    {\n      "name": "file_write",\n      "description": "Write content to a file (overwrites existing).",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "content": {\n            "type": "string",\n            "description": "Content to write"\n          },\n          "force": {\n            "type": "boolean",\n            "default": false,\n            "description": "Overwrite without warning"\n          }\n        },\n        "required": [\n          "path",\n          "content"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": false,\n        "destructiveHint": true\n      },\n      "_meta": {\n        "jebat/safetyTier": "confirm"\n      }\n    }\n    // ... 116 more tools (118 total, 51,235 chars)\n  ]\n}`
   },
   paginated: {
-    chars: "9,195 chars",
-    tokens: "~2,298 tokens",
-    savings: "−88% context saved",
-    count: "20 of 96 tools (Page 1 of 5)",
+    chars: "9,127 chars",
+    tokens: "~2,282 tokens",
+    savings: "−90% context saved",
+    count: "20 of 118 tools (Page 1 of 6)",
     modeLabel: "MODE: PAGINATED (20 TOOLS)",
-    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk classification (safe/risky/dangerous) before destructive operations.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "action": { "type": "string" },\n          "target": { "type": "string" }\n        },\n        "required": ["action", "target"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record an execution failure into autoMimpi dream cycle.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "tool": { "type": "string" }, "error": { "type": "string" } },\n        "required": ["tool", "error"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Headless Chromium visual audit for WCAG contrast and tap targets.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "url": { "type": "string" } },\n        "required": ["url"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Consolidate session learnings into Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "learnings": { "type": "array" } },\n        "required": ["learnings"]\n      },\n      "readOnlyHint": false,\n      "destructiveHint": false\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall durable facts and architecture decisions from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      },\n      "readOnlyHint": true,\n      "destructiveHint": false\n    }\n    // ... 15 more tools in Page 1 (20 tools total, 9,195 chars)\n  ],\n  "nextCursor": "eyJvZmZzZXQiOjIwLCJwYWdlIjoxfQ"\n}`
+    json: `{\n  "tools": [\n    {\n      "name": "file_read",\n      "description": "Read a file with line numbers and pagination.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "offset": {\n            "type": "integer",\n            "default": 1,\n            "description": "Starting line (1-indexed)"\n          },\n          "limit": {\n            "type": "integer",\n            "default": 500,\n            "description": "Max lines to read"\n          }\n        },\n        "required": [\n          "path"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": true,\n        "destructiveHint": false,\n        "idempotentHint": true,\n        "openWorldHint": false\n      }\n    },\n    {\n      "name": "file_write",\n      "description": "Write content to a file (overwrites existing).",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "content": {\n            "type": "string",\n            "description": "Content to write"\n          },\n          "force": {\n            "type": "boolean",\n            "default": false,\n            "description": "Overwrite without warning"\n          }\n        },\n        "required": [\n          "path",\n          "content"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": false,\n        "destructiveHint": true,\n        "idempotentHint": false,\n        "openWorldHint": false\n      },\n      "_meta": {\n        "jebat/safetyTier": "confirm"\n      }\n    }\n    // ... 18 more tools (20 total, 9,127 chars)\n  ],\n  "nextCursor": "20"\n}`
   },
   paginated_terse: {
-    chars: "7,752 chars",
-    tokens: "~1,938 tokens",
-    savings: "−90% context saved",
-    count: "20 of 96 tools (Page 1)",
+    chars: "8,128 chars",
+    tokens: "~2,032 tokens",
+    savings: "−91% context saved",
+    count: "20 of 118 tools (Page 1 of 6)",
     modeLabel: "MODE: PAGINATED + TERSE",
-    json: `{\n  "tools": [\n    {\n      "name": "advisor_gate",\n      "description": "Pre-flight risk check (safe/risky/dangerous).",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "action": { "type": "string" }, "target": { "type": "string" } },\n        "required": ["action", "target"]\n      }\n    },\n    {\n      "name": "mimpi_record_failure",\n      "description": "Record failure trace for autoMimpi dream cycle.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "tool": { "type": "string" }, "error": { "type": "string" } },\n        "required": ["tool", "error"]\n      }\n    },\n    {\n      "name": "design_visual_critique",\n      "description": "Chromium audit for contrast, overflow, tap targets.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "url": { "type": "string" } },\n        "required": ["url"]\n      }\n    },\n    {\n      "name": "session_learning_commit",\n      "description": "Commit session facts into Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "learnings": { "type": "array" } },\n        "required": ["learnings"]\n      }\n    },\n    {\n      "name": "project_recall",\n      "description": "Recall project memory from Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "ghost_sql",\n      "description": "Execute SQL query on Ghost DB.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "query": { "type": "string" } },\n        "required": ["query"]\n      }\n    },\n    {\n      "name": "pentest_scan",\n      "description": "Air-gapped port & security header scan.",\n      "inputSchema": {\n        "type": "object",\n        "properties": { "target": { "type": "string" } },\n        "required": ["target"]\n      }\n    }\n  ],\n  "nextCursor": "eyJvZmZzZXQiOjIwLCJ0ZXJzZSI6MX0"\n}`
+    json: `{\n  "tools": [\n    {\n      "name": "file_read",\n      "description": "Read a file with line numbers and pagination.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "offset": {\n            "type": "integer",\n            "default": 1,\n            "description": "Starting line (1-indexed)"\n          },\n          "limit": {\n            "type": "integer",\n            "default": 500,\n            "description": "Max lines to read"\n          }\n        },\n        "required": [\n          "path"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": true,\n        "destructiveHint": false\n      }\n    },\n    {\n      "name": "file_write",\n      "description": "Write content to a file (overwrites existing).",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "path": {\n            "type": "string",\n            "description": "Path to the file"\n          },\n          "content": {\n            "type": "string",\n            "description": "Content to write"\n          },\n          "force": {\n            "type": "boolean",\n            "default": false,\n            "description": "Overwrite without warning"\n          }\n        },\n        "required": [\n          "path",\n          "content"\n        ]\n      },\n      "annotations": {\n        "readOnlyHint": false,\n        "destructiveHint": true\n      },\n      "_meta": {\n        "jebat/safetyTier": "confirm"\n      }\n    }\n    // ... 18 more tools (20 total, 8,128 chars)\n  ],\n  "nextCursor": "20"\n}`
   }
 };
-
 function switchMcpLiveTab(tabName, btn) {
   playClickSound();
   const tabs = document.querySelectorAll('.mcp-live-tab');
@@ -4542,7 +4546,7 @@ function playAdvisorHandshake() {
     "--> { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": { \"protocolVersion\": \"2026-07-28\", \"capabilities\": { \"roots\": { \"listChanged\": true } } } }",
     "",
     "// 2. Server acknowledges capabilities",
-    "<-- { \"jsonrpc\": \"2.0\", \"id\": 1, \"result\": { \"protocolVersion\": \"2026-07-28\", \"capabilities\": { \"tools\": { \"listChanged\": true }, \"resources\": { \"subscribe\": true }, \"prompts\": { \"listChanged\": true }, \"logging\": {}, \"roots\": {} }, \"serverInfo\": { \"name\": \"jebat-mcp\", \"version\": \"8.3.0\" } } }",
+    "<-- { \"jsonrpc\": \"2.0\", \"id\": 1, \"result\": { \"protocolVersion\": \"2026-07-28\", \"capabilities\": { \"tools\": { \"listChanged\": true }, \"resources\": { \"subscribe\": true }, \"prompts\": { \"listChanged\": true }, \"logging\": {}, \"roots\": {} }, \"serverInfo\": { \"name\": \"jebat-mcp-server\", \"version\": \"8.2.1\" } } }",
     "",
     "// 3. Client acknowledges initialization",
     "--> { \"jsonrpc\": \"2.0\", \"method\": \"notifications/initialized\" }",

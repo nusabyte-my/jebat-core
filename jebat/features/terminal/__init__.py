@@ -1,17 +1,27 @@
-"""JEBAT Terminal Execution — shell commands, background processes, PTY mode."""
+"""JEBAT Terminal Execution — shell commands, background processes, PTY mode.
 
+Implementations live in :mod:`.terminal_exec` and self-register via
+@register_tool at import time. The package must import that submodule or
+`import jebat.features.terminal` registers nothing and the MCP server exposes
+no shell/process tools at all.
+"""
 
-async def execute(command: str, timeout: int = 180, workdir: str | None = None, background: bool = False, pty: bool = False) -> dict:
-    ...
+from __future__ import annotations
 
+from .terminal_exec import (
+    process_kill,
+    process_list,
+    process_log,
+    process_write,
+    terminal,
+    terminal_bg,
+)
 
-async def process_list() -> list[dict]:
-    ...
-
-
-async def process_log(session_id: str) -> str:
-    ...
-
-
-async def process_kill(session_id: str) -> bool:
-    ...
+__all__ = [
+    "process_kill",
+    "process_list",
+    "process_log",
+    "process_write",
+    "terminal",
+    "terminal_bg",
+]

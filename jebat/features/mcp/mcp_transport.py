@@ -34,10 +34,9 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# ── MCP 2026-07-28 Protocol Constants ────────────────────────────────────────
+# ── MCP Protocol Constants (single source: jebat.features.mcp.protocol) ────
 
-MCP_PROTOCOL_VERSION_NEW = "2026-07-28"
-JSONRPC_VERSION = "2.0"
+from .protocol import JSONRPC_VERSION
 
 # ── Progress Token Manager ───────────────────────────────────────────────────
 

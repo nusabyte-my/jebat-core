@@ -37,13 +37,15 @@ from jebat.tools import TOOL_REGISTRY, ToolDef, call_tool, classify_tool_call
 
 logger = logging.getLogger(__name__)
 
-# ── Constants ──────────────────────────────────────────────────────────────
+# ── Constants (single source: jebat.features.mcp.protocol) ─────────────────
 
-MCP_PROTOCOL_VERSION = "2026-07-28"
-SUPPORTED_PROTOCOL_VERSIONS = ("2024-11-05", "2025-03-26", "2025-06-18", "2026-07-28")
-JSONRPC_VERSION = "2.0"
-SERVER_NAME = "jebat-mcp-server"
-SERVER_VERSION = "0.1.0"
+from .protocol import (
+    JSONRPC_VERSION,
+    MCP_PROTOCOL_VERSION,
+    SERVER_NAME,
+    SERVER_VERSION,
+    SUPPORTED_PROTOCOL_VERSIONS,
+)
 
 
 # ── Tracking & Severity ──────────────────────────────────────────────────────

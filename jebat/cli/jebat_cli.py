@@ -1108,7 +1108,7 @@ async def main():
     mcp_list = mcp_subparsers.add_parser("list", help="List connected MCP servers and their tools")
     mcp_start_all = mcp_subparsers.add_parser("start-all", help="Start all configured MCP servers")
     mcp_serve = mcp_subparsers.add_parser("serve", help="Start JEBAT as MCP server (for IDE integration)")
-    mcp_serve.add_argument("--transport", default="stdio", choices=["stdio", "http", "streamable-http"], help="Transport mode (stdio for IDEs, http for remote, streamable-http for MCP 2025-03-26)")
+    mcp_serve.add_argument("--transport", default="stdio", choices=["stdio", "http", "streamable-http"], help="Transport mode (stdio for IDEs, http for remote, streamable-http for the latest MCP revision)")
     mcp_serve.add_argument("--port", type=int, default=8099, help="HTTP port (for http transport)")
     mcp_serve.add_argument("--host", default="127.0.0.1", help="HTTP host (for http transport)")
     mcp_ide_config = mcp_subparsers.add_parser("ide-config", help="Print IDE configuration templates for JEBAT MCP")
@@ -1675,9 +1675,10 @@ async def main():
                 cli.print(f"  All MCP servers started. Total tools: {total_tools}")
             elif args.mcp_command == "serve":
                 from jebat.features.mcp.mcp_server import MCPServer, TransportMode, run_server
+                from jebat.features.mcp.protocol import MCP_PROTOCOL_VERSION
                 if args.transport == "streamable-http":
                     from jebat.features.mcp.mcp_transport import StreamableHTTPTransport
-                    cli.print(f"  Starting JEBAT MCP server (Streamable HTTP, MCP 2025-03-26)...")
+                    cli.print(f"  Starting JEBAT MCP server (Streamable HTTP, MCP {MCP_PROTOCOL_VERSION})...")
                     server = MCPServer(transport=TransportMode.HTTP, http_port=args.port, host=args.host)
                     transport = StreamableHTTPTransport(server, host=args.host, port=args.port)
                     await transport.run()
