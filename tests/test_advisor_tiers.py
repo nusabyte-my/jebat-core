@@ -33,6 +33,14 @@ def isolated(monkeypatch):
     # it, and a leaked cooldown would make later tests silently skip the model
     # tier and fail on 'local' == 'laya'.
     advisor._MODEL_STATE.update({"open_until": 0.0, "consecutive": 0})
+    # _get_or_load_model runs `import torch` (cold: ~2.1s measured) INSIDE the
+    # 3s model-tier deadline. The first test of the process therefore races
+    # the clock: it wins idle (2.1s < 3s) but loses under full-suite load (the
+    # terminal tests just spawned subprocesses) -> TimeoutError -> lexical
+    # fallback -> `backend == "laya"` fails. Production pays this import once
+    # via warm_advisor(); pay it here too, outside any timer, so every schema
+    # test deterministically exercises the warm path.
+    advisor._advisor_torch_threads()
     monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
     monkeypatch.delenv("JEBAT_ADVISOR_TIMEOUT_S", raising=False)
     monkeypatch.setenv("JEBAT_ADVISOR_BACKEND", "laya")
