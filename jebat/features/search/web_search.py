@@ -152,63 +152,95 @@ async def _search_bing(query: str, limit: int) -> list[dict[str, str]]:
 # ── DuckDuckGo HTML scrape ──────────────────────────────────────────────
 
 class _DDGResultParser(HTMLParser):
-    """Minimal HTML parser to extract search results from DuckDuckGo HTML."""
+    """Minimal HTML parser to extract search results from DuckDuckGo HTML.
+
+    Each hit lives in ``<div class="result results_links ...">``, but every
+    inner helper div (``result__extras``, ``result__extras__url``) ALSO starts
+    with "result" — a prefix match reset the title/url buffer mid-result, and
+    the first nested ``</div>`` closed the result before anything was stored,
+    so current DDG markup parsed to zero results. Match the container by
+    exact class token and track div depth instead.
+    """
 
     def __init__(self) -> None:
         super().__init__()
         self.results: list[dict[str, str]] = []
         self._in_result = False
+        self._div_depth = 0
+        self._skip_result = False
         self._in_title = False
         self._in_snippet = False
         self._current_url = ""
         self._current_title = ""
         self._current_snippet = ""
-        self._tag_stack: list[str] = []
+
+    @staticmethod
+    def _is_container(cls: str) -> bool:
+        """True only for the outer result wrapper, never result__* helpers."""
+        tokens = cls.split()
+        return "result" in tokens and "result--no-result" not in tokens
+
+    @staticmethod
+    def _unwrap_redirect(url: str) -> str:
+        if "duckduckgo.com/l/?" in url and "uddg=" in url:
+            from urllib.parse import unquote
+
+            return unquote(url.split("uddg=", 1)[1].split("&", 1)[0])
+        return url
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_dict = dict(attrs)
-        if tag == "div" and attrs_dict.get("class", "").startswith("result"):
-            self._in_result = True
-            self._current_title = ""
-            self._current_snippet = ""
-            self._current_url = ""
-        if self._in_result and tag == "a" and "result__a" in attrs_dict.get("class", ""):
-            self._in_title = True
-            url = attrs_dict.get("href", "")
-            # DDG uses redirect URLs; strip the wrapper if present
-            if url.startswith("//duckduckgo.com/l/?uddg="):
-                from urllib.parse import unquote
-                # Extract the actual URL from DDG redirect parameter
-                redirect_part = url.split("uddg=", 1)
-                if len(redirect_part) > 1:
-                    actual_url = unquote(redirect_part[1].split("&", 1)[0])
-                    self._current_url = actual_url
-            elif url:
-                self._current_url = url
-        if self._in_result and tag == "a" and "result__snippet" in attrs_dict.get("class", ""):
-            self._in_snippet = True
-        self._tag_stack.append(tag)
+        if tag == "div":
+            if self._in_result:
+                self._div_depth += 1
+                return
+            cls = attrs_dict.get("class", "") or ""
+            if self._is_container(cls):
+                self._in_result = True
+                self._div_depth = 1
+                self._skip_result = "sponsored" in cls or "result--ad" in cls
+                self._current_title = ""
+                self._current_url = ""
+                self._current_snippet = ""
+            return
+
+        if not self._in_result:
+            return
+        if tag == "a":
+            cls = attrs_dict.get("class", "") or ""
+            url = attrs_dict.get("href", "") or ""
+            if "result__a" in cls:
+                self._in_title = True
+                if "duckduckgo.com/y.js" in url:
+                    self._skip_result = True  # ad slot, not an organic result
+                elif url:
+                    self._current_url = self._unwrap_redirect(url)
+            elif "result__snippet" in cls:
+                self._in_snippet = True
 
     def handle_endtag(self, tag: str) -> None:
-        if self._tag_stack and self._tag_stack[-1] == tag:
-            self._tag_stack.pop()
-        if tag == "a" and self._in_title:
+        if tag == "a":
             self._in_title = False
-        if tag == "a" and self._in_snippet:
             self._in_snippet = False
-        if tag == "div" and self._in_result:
-            if self._current_title or self._current_url:
-                self.results.append({
-                    "title": self._current_title.strip(),
-                    "url": self._current_url.strip(),
-                    "snippet": self._current_snippet.strip(),
-                })
-            self._in_result = False
+            return
+        if tag != "div" or not self._in_result:
+            return
+        self._div_depth -= 1
+        if self._div_depth > 0:
+            return
+        if not self._skip_result and (self._current_title or self._current_url):
+            self.results.append({
+                "title": self._current_title.strip(),
+                "url": self._current_url.strip(),
+                "snippet": self._current_snippet.strip(),
+            })
+        self._in_result = False
+        self._skip_result = False
 
     def handle_data(self, data: str) -> None:
         if self._in_title:
             self._current_title += data
-        if self._in_snippet:
+        elif self._in_snippet:
             self._current_snippet += data
 
 
