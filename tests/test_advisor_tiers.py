@@ -359,3 +359,36 @@ def test_cooldown_expiry_closes_the_circuit(isolated, monkeypatch):
     assert isolated._model_in_cooldown() is False
     isolated._model_record_hit()
     assert isolated._MODEL_STATE["consecutive"] == 0
+
+
+def test_local_tier_timeout_waits_out_boot_warm(isolated, monkeypatch):
+    """A cold cache / in-flight boot warm waits for Laya instead of
+    dropping the FIRST call after startup to the lexical fallback.
+
+    An explicitly set JEBAT_ADVISOR_TIMEOUT_S must still win — that is an
+    operator budget (and the fast-fallback test above asserts on it).
+    """
+    # Fixture: JEBAT_ADVISOR_MODEL set, cache cold -> wait out the load.
+    assert isolated._local_tier_timeout_s("auto") == pytest.approx(90.0)
+
+    # Warm cache -> back to the normal fast deadline.
+    isolated._MODEL_CACHE["instance"] = object()
+    isolated._MODEL_CACHE["tier"] = "laya"
+    assert isolated._local_tier_timeout_s("auto") == pytest.approx(3.0)
+
+    # Load in flight (warm thread holds the lock) -> long wait even cold.
+    isolated._MODEL_CACHE.clear()
+    assert isolated._MODEL_LOCK.acquire(blocking=False)
+    try:
+        assert isolated._local_tier_timeout_s("auto") == pytest.approx(90.0)
+    finally:
+        isolated._MODEL_LOCK.release()
+
+    # Explicit budget always wins over the warm wait.
+    monkeypatch.setenv("JEBAT_ADVISOR_TIMEOUT_S", "0.3")
+    assert isolated._local_tier_timeout_s("auto") == pytest.approx(0.3)
+
+    # Custom warm-wait cap is respected.
+    monkeypatch.delenv("JEBAT_ADVISOR_TIMEOUT_S")
+    monkeypatch.setenv("JEBAT_ADVISOR_WARM_WAIT_S", "45")
+    assert isolated._local_tier_timeout_s("auto") == pytest.approx(45.0)

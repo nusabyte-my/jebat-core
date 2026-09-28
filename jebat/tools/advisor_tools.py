@@ -16,6 +16,7 @@ from jebat.tools import register_tool
     "advisor_classify",
     description="Classify text into one of N categories using a fast typed decision (Jev-style System One). Returns the chosen category with confidence and per-category probabilities. ~100ms, near-zero cost.",
     safety_tier="auto",
+    timeout=120,  # first call after boot may wait out the Laya warm (~90s cap)
     schema={
         "type": "object",
         "properties": {
@@ -49,6 +50,7 @@ async def advisor_classify(text: str, categories: List[str], instructions: str =
     "advisor_verify",
     description="Yes/no verification of a claim against text using a typed decision (Jev-style System One). Returns boolean result with calibrated probability. ~100ms.",
     safety_tier="auto",
+    timeout=120,  # first call after boot may wait out the Laya warm (~90s cap)
     schema={
         "type": "object",
         "properties": {
@@ -79,6 +81,7 @@ async def advisor_verify(text: str, claim: str) -> str:
     "advisor_score",
     description="Rate text on a scale using a typed decision (Jev-style System One). Returns the score index, level label, and confidence. ~100ms.",
     safety_tier="auto",
+    timeout=120,  # first call after boot may wait out the Laya warm (~90s cap)
     schema={
         "type": "object",
         "properties": {
@@ -113,6 +116,7 @@ async def advisor_score(text: str, criteria: List[str], instructions: str = "Rat
     "advisor_decide",
     description="Full typed-decision endpoint — send unstructured state + multiple typed questions (Noul/Choice/Score) and get all answers with calibrated probabilities in a single parallel pass. Jev-compatible.",
     safety_tier="auto",
+    timeout=120,  # first call after boot may wait out the Laya warm (~90s cap)
     schema={
         "type": "object",
         "properties": {
@@ -137,6 +141,7 @@ async def advisor_decide(state: str, questions: Any) -> str:
     "advisor_gate",
     description="Pre-flight safety check for destructive operations. Classifies the operation risk level and returns go/no-go.",
     safety_tier="auto",
+    timeout=120,  # first call after boot may wait out the Laya warm (~90s cap)
     schema={
         "type": "object",
         "properties": {

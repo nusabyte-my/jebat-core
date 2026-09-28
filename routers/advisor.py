@@ -57,6 +57,40 @@ def _advisor_cooldown_s() -> float:
         return 60.0
 
 
+def _local_tier_timeout_s(backend_pref: str) -> float:
+    """Deadline for one local-tier (Laya/transformers) call.
+
+    The normal deadline (JEBAT_ADVISOR_TIMEOUT_S, default 3s) bounds a
+    warm-cache inference. But when a load is in flight — the boot-time warm
+    thread holds _MODEL_LOCK for ~30-40s, and a cold cache without warm
+    means this call IS the load — waiting that out once is what keeps the
+    advisor on the model tier instead of dropping to the lexical fallback
+    on the first call after startup. JEBAT_ADVISOR_WARM_WAIT_S (default 90)
+    caps even those waits so a wedged load still falls back.
+
+    An explicitly set JEBAT_ADVISOR_TIMEOUT_S always wins: that is an
+    operator budget (or a test asserting fast fallback), not a default.
+    """
+    if os.getenv("JEBAT_ADVISOR_TIMEOUT_S", "").strip():
+        return _advisor_timeout_s()
+
+    configured = bool(os.getenv("JEBAT_ADVISOR_MODEL", "").strip()) or backend_pref in (
+        "laya",
+        "transformers",
+    )
+    loading = _MODEL_LOCK.locked() or (
+        configured and _MODEL_CACHE.get("instance") is None
+    )
+    if not loading:
+        return _advisor_timeout_s()
+
+    try:
+        warm_wait = float(os.getenv("JEBAT_ADVISOR_WARM_WAIT_S", "90"))
+    except ValueError:
+        warm_wait = 90.0
+    return max(_advisor_timeout_s(), min(warm_wait, 600.0))
+
+
 # Circuit-breaker: after a timeout/error the model tier is skipped for a
 # cooldown window so one slow request cannot cascade across the traffic mix.
 _MODEL_STATE: Dict[str, Any] = {"open_until": 0.0, "consecutive": 0}
@@ -529,6 +563,12 @@ def _get_or_load_model(backend_pref: str) -> Tuple[Any, Optional[str]]:
             # In auto mode, only attempt transformers if a model is explicitly configured
             if backend_pref == "auto" and not model_name:
                 return None, None
+            # Respect the availability probe: if the package is not importable
+            # (or a test says so), do not burn the tier deadline on an import
+            # that is guaranteed to fail.
+            if not _is_transformers_available():
+                logger.debug("transformers tier skipped: package not importable")
+                return None, None
             try:
                 from transformers import pipeline
                 instance = pipeline(
@@ -754,14 +794,15 @@ async def _decide(state: str, questions: Dict[str, Any]) -> Tuple[Dict[str, Any]
     # can be tens of seconds. A timeout or breaker trip falls through to the
     # lexical tier rather than hanging the request.
     if backend_pref in ("auto", "laya", "transformers") and not _model_in_cooldown():
+        tier_timeout = _local_tier_timeout_s(backend_pref)
         try:
             answers, tier = await asyncio.wait_for(
                 asyncio.to_thread(_call_local_transformer, state, questions, backend_pref),
-                timeout=_advisor_timeout_s(),
+                timeout=tier_timeout,
             )
         except asyncio.TimeoutError:
             logger.warning(
-                "advisor model tier exceeded %.0fs; using lexical fallback", _advisor_timeout_s()
+                "advisor model tier exceeded %.0fs; using lexical fallback", tier_timeout
             )
             _model_record_miss()
             answers, tier = None, None
