@@ -224,3 +224,100 @@ async def test_tools_allowlist_trims_tools_list(
     )
     full_names = {tool["name"] for tool in full["result"]["tools"]}
     assert "allowlist-hidden-tool" in full_names
+
+
+@pytest.mark.anyio
+async def test_skills_are_listed_and_readable_as_skill_resources() -> None:
+    """Every SKILL.md is exposed as skill://<store>/<name> and readable back."""
+    server = MCPServer()
+    await server.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"},
+        }
+    )
+    resources = json.loads(
+        await server.handle_request(
+            {"jsonrpc": "2.0", "id": 2, "method": "resources/list", "params": {}}
+        )
+        or "{}"
+    )
+
+    skill_uris = sorted(
+        item["uri"]
+        for item in resources["result"]["resources"]
+        if item["uri"].startswith("skill://")
+    )
+    assert skill_uris, "expected at least one skill:// resource"
+    assert any(uri.startswith("skill://tokguru/") for uri in skill_uris)
+
+    templates = {t["uriTemplate"] for t in resources["result"]["resourceTemplates"]}
+    assert "skill://{path}" in templates
+
+    # Read the first skill back — content must be the raw SKILL.md.
+    read = json.loads(
+        await server.handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "resources/read",
+                "params": {"uri": skill_uris[0]},
+            }
+        )
+        or "{}"
+    )
+    contents = read["result"]["contents"]
+    assert contents and contents[0]["mimeType"] == "text/markdown"
+    assert contents[0]["text"].startswith("---")
+    assert "name:" in contents[0]["text"]
+
+    # Unknown skill URIs report a readable error, not an empty result.
+    missing = json.loads(
+        await server.handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 4,
+                "method": "resources/read",
+                "params": {"uri": "skill://tokguru/does-not-exist"},
+            }
+        )
+        or "{}"
+    )
+    assert "Skill not found" in missing["result"]["contents"][0]["text"]
+
+
+@pytest.mark.anyio
+async def test_default_registry_exposes_jev_laya_and_skill_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With no allowlist configured, the full registry — including the Jev/Laya
+    typed-decision (advisor) tools and skill_manage — is what clients see."""
+    monkeypatch.delenv("JEBAT_MCP_TOOLS_ALLOW", raising=False)
+    server = MCPServer()
+    await server.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"},
+        }
+    )
+    listed = json.loads(
+        await server.handle_request(
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+        )
+        or "{}"
+    )
+    names = {tool["name"] for tool in listed["result"]["tools"]}
+
+    assert {
+        "advisor_classify",
+        "advisor_verify",
+        "advisor_score",
+        "advisor_decide",
+        "advisor_gate",
+        "skill_manage",
+    } <= names
+    assert len(names) >= 100, "unrestricted tools/list should expose the full registry"

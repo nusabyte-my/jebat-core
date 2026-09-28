@@ -128,6 +128,110 @@ def _allowed_tools() -> Optional[set]:
     raw = os.getenv("JEBAT_MCP_TOOLS_ALLOW", "")
     names = {name.strip() for name in raw.split(",") if name.strip()}
     return names or None
+
+
+# ── Skills as MCP resources (skill://) ─────────────────────────────────────
+# Every SKILL.md the workspace knows about is exposed as a resource instead
+# of one tool per skill: MCP tool-selection accuracy degrades sharply past
+# ~30-40 tools, while resources scale for free and stay readable by any
+# conforming client (resources/list + resources/read).
+
+_SKILL_INDEX: Optional[Dict[str, Dict[str, str]]] = None
+_SKILL_INDEX_AT = 0.0
+_SKILL_INDEX_TTL = 5.0  # seconds; skill_manage can add/remove skills at runtime
+
+
+def _skill_roots() -> List[tuple]:
+    """(store_key, path) pairs for every skill store JEBAT reads from."""
+    home = Path.home()
+    pkg_root = Path(__file__).resolve().parents[3]
+    cwd = Path.cwd()
+    candidates = [
+        ("tokguru", os.getenv("JEBAT_SKILLS_DIR", "") or str(home / ".jebat" / "tokguru")),
+        ("home", str(home / ".jebat" / "skills")),
+        ("bundle", str(pkg_root / "jebat-tokguru" / "skills")),
+        ("workspace", str(pkg_root / "skills")),
+        ("bundle", str(cwd / "jebat-tokguru" / "skills")),
+        ("workspace", str(cwd / "skills")),
+    ]
+    roots: List[tuple] = []
+    seen = set()
+    for store, raw in candidates:
+        if not raw:
+            continue
+        try:
+            path = Path(raw).expanduser().resolve()
+        except OSError:
+            continue
+        if path in seen or not path.is_dir():
+            continue
+        seen.add(path)
+        roots.append((store, path))
+    return roots
+
+
+def _skill_meta(content: str) -> Dict[str, str]:
+    """Extract name/description/category from SKILL.md YAML frontmatter."""
+    meta: Dict[str, str] = {}
+    if not content.startswith("---"):
+        return meta
+    end = content.find("---", 3)
+    if end == -1:
+        return meta
+    for line in content[3:end].splitlines():
+        line = line.strip()
+        if ": " not in line:
+            continue
+        key, value = line.split(": ", 1)
+        key = key.strip()
+        if key in ("name", "description", "category") and key not in meta:
+            meta[key] = value.strip().strip("\"'")
+    return meta
+
+
+def _skill_index(refresh: bool = False) -> Dict[str, Dict[str, str]]:
+    """Map skill://<store>/<name> → {name, description, category, store, path}."""
+    global _SKILL_INDEX, _SKILL_INDEX_AT
+    now = time.monotonic()
+    if (
+        not refresh
+        and _SKILL_INDEX is not None
+        and (now - _SKILL_INDEX_AT) < _SKILL_INDEX_TTL
+    ):
+        return _SKILL_INDEX
+
+    index: Dict[str, Dict[str, str]] = {}
+    for store, root in _skill_roots():
+        try:
+            skill_files = sorted(root.rglob("SKILL.md"))
+        except OSError:
+            continue
+        for skill_file in skill_files:
+            try:
+                rel = skill_file.parent.relative_to(root).as_posix()
+            except ValueError:
+                continue
+            uri = f"skill://{store}/{rel}"
+            if uri in index:
+                continue
+            try:
+                content = skill_file.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            meta = _skill_meta(content)
+            index[uri] = {
+                "name": meta.get("name") or skill_file.parent.name,
+                "description": meta.get("description", ""),
+                "category": meta.get("category", ""),
+                "store": store,
+                "path": str(skill_file),
+            }
+
+    _SKILL_INDEX = index
+    _SKILL_INDEX_AT = now
+    return index
+
+
 _TERSE_CLIENT_NAME: str = ""
 
 
@@ -841,10 +945,18 @@ class MCPServer:
                 "mimeType": "text/x-diff",
             },
         ]
+        for uri, entry in sorted(_skill_index().items()):
+            raw_resources.append({
+                "uri": uri,
+                "name": f"Skill: {entry['name']}",
+                "description": entry["description"] or f"JEBAT skill ({entry['store']}/{entry['name']})",
+                "mimeType": "text/markdown",
+            })
         raw_templates = [
             {"uriTemplate": "jebat://file/{path}", "name": "Project file content", "description": "Read any file from the project workspace", "mimeType": "text/plain"},
             {"uriTemplate": "jebat://git/diff/{ref}", "name": "Git diff against ref", "description": "Show diff against a git ref (branch, commit, HEAD~N)", "mimeType": "text/x-diff"},
             {"uriTemplate": "jebat://artifact/{id}", "name": "Truncated tool result", "description": "Full text of a tool result that exceeded the inline size cap", "mimeType": "text/plain"},
+            {"uriTemplate": "skill://{path}", "name": "JEBAT skill (SKILL.md)", "description": "Read any JEBAT skill's SKILL.md by store and name (e.g. skill://tokguru/page-mascot)", "mimeType": "text/markdown"},
         ]
         if mcp_terse_mode():
             resources = [{"uri": r["uri"], "name": r["name"], "mimeType": r.get("mimeType", "text/plain")} for r in raw_resources]
@@ -1113,6 +1225,19 @@ class MCPServer:
             except Exception as e:
                 text = f"Error running git diff against {ref}: {e}"
             return {"contents": [{"uri": uri, "mimeType": "text/x-diff", "text": text}]}
+
+        if uri.startswith("skill://"):
+            entry = _skill_index().get(uri)
+            if entry is None:
+                # TTL may be stale right after skill_manage wrote a new skill.
+                entry = _skill_index(refresh=True).get(uri)
+            if entry is None:
+                return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": f"Error: Skill not found: {uri}"}]}
+            try:
+                text = Path(entry["path"]).read_text(encoding="utf-8", errors="replace")
+            except OSError as e:
+                text = f"Error reading skill: {e}"
+            return {"contents": [{"uri": uri, "mimeType": "text/markdown", "text": text}]}
         return {"contents": []}
 
     async def _handle_prompts_list(self, params: Dict) -> Dict:
