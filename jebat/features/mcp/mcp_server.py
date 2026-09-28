@@ -646,6 +646,9 @@ class MCPServer:
             ("dynamic_synthesis", "jebat.tools.dynamic_synthesis"),
             # Advisor — Jev-style System One typed decisions (classify, verify, score)
             ("advisor_tools", "jebat.tools.advisor_tools"),
+            # Marketing & SEO (Pawang Pemasaran — strategy + on-page/search visibility)
+            ("seo", "jebat.tools.seo_tools"),
+            ("marketing", "jebat.tools.marketing_tools"),
         ]
         _loaded = 0
         _failed = []
@@ -1618,6 +1621,32 @@ class MCPServer:
 
 def run_server(transport: str = "stdio", port: int = 8099, host: str = "127.0.0.1"):
     """Start the MCP server — called from jebat mcp serve CLI command."""
+    # secrets.env (TYPESAFE_API_KEY etc.) is normally loaded by the CLI init
+    # path — stdio entrypoints never pass through it, so load it here before
+    # the advisor or provider code checks os.environ. Idempotent.
+    try:
+        from jebat.llm.auth import _ensure_secrets_loaded
+        _ensure_secrets_loaded()
+    except Exception as e:
+        logger.warning("secrets.env load skipped: %s", e)
+
+    # Warm a configured local advisor model (Laya/transformers) in the
+    # background: first load can take minutes (the 421M Laya checkpoint
+    # downloads + loads slowly), which would blow the per-call tier deadline.
+    if os.getenv("JEBAT_ADVISOR_MODEL", "").strip() or os.getenv(
+        "JEBAT_ADVISOR_BACKEND", "auto"
+    ).lower() in ("laya", "transformers"):
+        import threading
+
+        def _warm() -> None:
+            try:
+                from routers.advisor import warm_advisor
+                warm_advisor()
+            except Exception as e:
+                logger.info("advisor warm-up skipped: %s", e)
+
+        threading.Thread(target=_warm, name="advisor-warm", daemon=True).start()
+
     if transport == "streamable-http":
         from jebat.features.mcp.mcp_transport import run_streamable_http
 
