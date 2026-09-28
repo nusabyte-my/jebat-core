@@ -115,6 +115,19 @@ def _cap_result(text: str, tool_name: str) -> tuple[str, bool]:
 
 MCP_TOOLS_PAGE_SIZE = int(os.getenv("JEBAT_MCP_TOOLS_PAGE", "0"))
 _TOOLS_CACHE: Dict[tuple, Dict[str, Any]] = {}
+
+
+def _allowed_tools() -> Optional[set]:
+    """Return the JEBAT_MCP_TOOLS_ALLOW allowlist, or None when unrestricted.
+
+    The env var is a comma-separated list of tool names (set it from a
+    client's mcp.json ``env`` block to trim tools/list). Whitespace around
+    names is ignored; empty or unset exposes the full registry so existing
+    IDE configs keep every tool unless they opt in.
+    """
+    raw = os.getenv("JEBAT_MCP_TOOLS_ALLOW", "")
+    names = {name.strip() for name in raw.split(",") if name.strip()}
+    return names or None
 _TERSE_CLIENT_NAME: str = ""
 
 
@@ -561,6 +574,7 @@ class MCPServer:
 
         cursor = params.get("cursor")
         offset = int(cursor) if cursor is not None and str(cursor).isdigit() else 0
+        allowed = _allowed_tools()
 
         # Check page size from env or instance/constant
         page_size_env = os.getenv("JEBAT_MCP_TOOLS_PAGE")
@@ -572,11 +586,16 @@ class MCPServer:
         else:
             page_size = MCP_TOOLS_PAGE_SIZE
 
-        cache_key = (offset, page_size, is_terse)
+        # Allowlist participates in the cache key so toggling the env var
+        # (or per-client configs sharing a process) never serves stale lists.
+        cache_key = (offset, page_size, is_terse, frozenset(allowed) if allowed else None)
         if cache_key in self._tools_cache:
             return self._tools_cache[cache_key]
 
-        tool_items = list(TOOL_REGISTRY.items())
+        tool_items = [
+            (name, tool) for name, tool in TOOL_REGISTRY.items()
+            if allowed is None or name in allowed
+        ]
         total_tools = len(tool_items)
 
         if page_size > 0:
@@ -598,7 +617,8 @@ class MCPServer:
         """Return the full schema and description for a single tool (lazy-detail escape hatch)."""
         self._ensure_tools_loaded()
         tool_name = params.get("name", "")
-        if tool_name not in TOOL_REGISTRY:
+        allowed = _allowed_tools()
+        if tool_name not in TOOL_REGISTRY or (allowed is not None and tool_name not in allowed):
             return {
                 "error": f"Tool not found: {tool_name}",
             }
@@ -619,7 +639,8 @@ class MCPServer:
 
         if tool_name:
             _TOOL_CALL_COUNTS[tool_name] = _TOOL_CALL_COUNTS.get(tool_name, 0) + 1
-        if tool_name not in TOOL_REGISTRY:
+        allowed = _allowed_tools()
+        if tool_name not in TOOL_REGISTRY or (allowed is not None and tool_name not in allowed):
             _record_tool_error(tool_name, f"Tool not found: {tool_name}", arguments, kind="not_found")
             return {
                 "isError": True,
@@ -859,9 +880,11 @@ class MCPServer:
 
         if uri == "jebat://tools":
             self._ensure_tools_loaded()
+            allowed = _allowed_tools()
             tools = [
                 {"name": name, "safetyTier": tool.safety_tier, "timeout": tool.timeout}
                 for name, tool in sorted(TOOL_REGISTRY.items())
+                if allowed is None or name in allowed
             ]
             return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(tools)}]}
 

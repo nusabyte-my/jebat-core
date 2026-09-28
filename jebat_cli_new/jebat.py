@@ -4272,6 +4272,8 @@ def main():
         print(f"  {C.CYAN}Commands:{C.RESET}")
         print(f"    code [prompt]    Coding agent with tools (default: REPL)")
         print(f"    chat [message]   Chat mode (no tools)")
+        print("    mcp serve         Start MCP server for IDE integration")
+        print("    mcp ide-config    Print IDE MCP config templates")
         print(f"    provider list       List providers")
         print(f"    provider add        Connect new provider (wizard)")
         print(f"    provider remove     Remove a provider")
@@ -4299,6 +4301,13 @@ def main():
         print(f"    jebat chat \"What is Python?\"          # Chat mode")
         print(f"    jebat provider add openai --id work")
         return
+
+    if args[0] == "mcp":
+        # Dispatch before ProviderRegistry/TaskDB/SkillManager construction:
+        # for stdio transport stdout is the JSON-RPC channel and must stay clean.
+        from jebat_cli_new.mcp_command import run_mcp_command
+
+        return run_mcp_command(args[1:])
 
     registry = ProviderRegistry()
     taskdb = TaskDB()

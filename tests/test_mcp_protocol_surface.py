@@ -130,3 +130,97 @@ def test_stdio_entrypoint_completes_initialize_handshake() -> None:
     frames = [json.loads(line) for line in completed.stdout.strip().splitlines() if line.strip()]
     response = next(f for f in frames if f.get("id") == 1)
     assert response["result"]["protocolVersion"] == "2025-03-26"
+
+
+def test_canonical_cli_mcp_serve_completes_initialize_handshake() -> None:
+    """`jebat mcp serve` (the command in every shipped IDE config) must speak
+    MCP on stdout without printing a banner or dropping into the REPL."""
+    request = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {"protocolVersion": "2025-03-26"},
+    }
+
+    completed = subprocess.run(
+        [sys.executable, "-m", "jebat_cli_new", "mcp", "serve", "--transport", "stdio"],
+        input=json.dumps(request) + "\n",
+        capture_output=True,
+        text=True,
+        cwd=PROJECT_ROOT,
+        check=False,
+        timeout=60,
+    )
+
+    assert completed.returncode == 0
+    frames = [json.loads(line) for line in completed.stdout.strip().splitlines() if line.strip()]
+    response = next(f for f in frames if f.get("id") == 1)
+    assert response["result"]["serverInfo"]["name"] == "jebat-mcp-server"
+    assert response["result"]["protocolVersion"] == "2025-03-26"
+
+
+@pytest.mark.anyio
+async def test_tools_allowlist_trims_tools_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """JEBAT_MCP_TOOLS_ALLOW exposes only the listed tools; unset means all."""
+    monkeypatch.setitem(
+        TOOL_REGISTRY,
+        "allowlist-visible-tool",
+        ToolDef(name="allowlist-visible-tool", description="in"),
+    )
+    monkeypatch.setitem(
+        TOOL_REGISTRY,
+        "allowlist-hidden-tool",
+        ToolDef(name="allowlist-hidden-tool", description="out"),
+    )
+    monkeypatch.setenv("JEBAT_MCP_TOOLS_ALLOW", "allowlist-visible-tool, other")
+
+    server = MCPServer()
+    await server.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"},
+        }
+    )
+    listed = json.loads(
+        await server.handle_request(
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+        )
+        or "{}"
+    )
+    names = {tool["name"] for tool in listed["result"]["tools"]}
+
+    assert "allowlist-visible-tool" in names
+    assert "allowlist-hidden-tool" not in names
+    # Pagination must stay consistent with the trimmed set.
+    assert "nextCursor" not in listed["result"]
+
+    # Calls to trimmed tools are not found — same as unknown tools.
+    call = await server._handle_tools_call(  # noqa: SLF001
+        {"name": "allowlist-hidden-tool", "arguments": {}}
+    )
+    assert call["isError"] is True
+    assert "not found" in call["content"][0]["text"].lower()
+
+    # Unset env var restores the full registry.
+    monkeypatch.delenv("JEBAT_MCP_TOOLS_ALLOW")
+    server2 = MCPServer()
+    await server2.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"},
+        }
+    )
+    full = json.loads(
+        await server2.handle_request(
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+        )
+        or "{}"
+    )
+    full_names = {tool["name"] for tool in full["result"]["tools"]}
+    assert "allowlist-hidden-tool" in full_names
