@@ -6,6 +6,7 @@ the agent can persist facts across sessions without user intervention.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -130,8 +131,12 @@ async def memory_search(
     """Search for memories."""
     mgr = _get_manager()
 
+    # `asearch` (not the sync `search`) so enhanced-memory recall — similarity
+    # and Ghost DB vector results — is included. The HTTP router already uses
+    # it; this tool used the sync substring search, so the agent-facing surface
+    # silently returned a strictly weaker result set than `/api/memory/search`.
     try:
-        results = mgr.search(query=query, user_id="default", limit=limit)
+        results = await mgr.asearch(query=query, user_id="default", limit=limit)
     except Exception as e:
         return {"status": "error", "error": str(e), "results": []}
 
@@ -185,17 +190,9 @@ async def memory_forget(memory_id: str) -> dict[str, Any]:
     """Delete a memory by ID."""
     mgr = _get_manager()
 
-    # Find and remove the memory from all layers
-    removed = False
-    for layer in MemoryLayer:
-        mems = mgr.memories[layer]
-        for i, mem in enumerate(mems):
-            if mem.memory_id == memory_id:
-                mgr.memories[layer].pop(i)
-                removed = True
-                break
-        if removed:
-            break
+    # Manager clears the legacy record AND the linked enhanced trace, then
+    # persists. Offloaded because the enhanced store rewrites traces.json.
+    removed = await asyncio.to_thread(mgr.forget, memory_id)
 
     if removed:
         return {"status": "deleted", "memory_id": memory_id}
@@ -217,4 +214,4 @@ async def memory_forget(memory_id: str) -> dict[str, Any]:
 async def memory_stats() -> dict[str, Any]:
     """Get memory statistics."""
     mgr = _get_manager()
-    return mgr.get_stats()
+    return await asyncio.to_thread(mgr.get_stats)

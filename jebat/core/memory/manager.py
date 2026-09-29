@@ -14,6 +14,7 @@ Delegates to EnhancedMemorySystem for rich memory features
 import asyncio
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from .layers import (
@@ -73,12 +74,24 @@ class MemoryManager:
                 if self.config.get("vector_search"):
                     ghost_client, embedding_fn = self._build_vector_search()
 
+                # Coerce: the config carries a string, but the enhanced system
+                # calls `.mkdir()` on it. Passing the raw string raised
+                # AttributeError into the bare `except` below, which returned
+                # None and silently downgraded every read to legacy-substring.
+                storage_path = self.config.get("storage_path")
                 self._enhanced_memory = EnhancedMemorySystem(
+                    storage_path=Path(storage_path) if storage_path else None,
                     ghost_client=ghost_client,
                     embedding_fn=embedding_fn,
                 )
             except Exception:
-                pass
+                # Not silent: a failure here costs similarity/vector recall for
+                # the whole process, and two real bugs hid behind this `pass`.
+                logger.warning(
+                    "EnhancedMemorySystem unavailable; memory reads fall back to "
+                    "legacy substring search",
+                    exc_info=True,
+                )
         return self._enhanced_memory
 
     def _build_vector_search(self):
@@ -248,7 +261,12 @@ class MemoryManager:
                                 context={"trace_id": trace.trace_id},
                             ),
                             heat=HeatScore(
-                                visit_count=trace.access_count,
+                                # `HeatScore` field names matter: this call used
+                                # `visit_count=`, which does not exist, so every
+                                # enhanced result raised TypeError into the bare
+                                # `except` below and the whole similarity/vector
+                                # branch silently returned nothing.
+                                visit_frequency=min(1.0, trace.access_count * 0.1),
                                 interaction_depth=trace.importance,
                             ),
                             created_at=trace.created_at,
@@ -258,9 +276,65 @@ class MemoryManager:
                         if len(results) >= limit:
                             break
                 except Exception:
-                    pass
+                    # Never silent: swallowing here hid a total failure of the
+                    # enhanced recall branch (see the HeatScore note above).
+                    logger.warning(
+                        "Enhanced memory search failed; returning legacy-only results",
+                        exc_info=True,
+                    )
 
         return results
+
+    def forget(self, memory_id: str, user_id: str = "default") -> bool:
+        """Delete a memory by id from both the legacy and enhanced stores.
+
+        Synchronous, like `search`/`get_stats`, so async callers can offload it
+        with `asyncio.to_thread`.
+
+        Both stores must be cleared together. `asearch` merges enhanced traces
+        into its results, so dropping only the legacy record leaves the same
+        content reachable through the enhanced store — a forget that looks
+        like it worked and then un-forgets itself on the next search.
+
+        Returns True when something was actually removed.
+        """
+        # Resolve the id against BOTH stores before deleting. A legacy id
+        # (`mem_<ts>`) is the enhanced trace's `source_trace`, but an id
+        # returned by `asearch` is the *enhanced trace* id — and deleting only
+        # that direction leaves the legacy record behind, so the memory still
+        # shows up in `get_stats` (and the two stores drift apart).
+        legacy_ids = {memory_id}
+        enhanced_ids = {memory_id}
+        enhanced = self._get_enhanced_memory()
+        if enhanced is not None:
+            for trace_id, trace in enhanced.traces.items():
+                if trace_id != memory_id and trace.source_trace != memory_id:
+                    continue
+                legacy_ids.add(trace_id)
+                enhanced_ids.add(trace_id)
+                if trace.source_trace:
+                    legacy_ids.add(trace.source_trace)
+                    enhanced_ids.add(trace.source_trace)
+
+        removed = False
+        for layer in MemoryLayer:
+            kept = []
+            for memory in self.memories[layer]:
+                if memory.memory_id in legacy_ids and memory.metadata.user_id == user_id:
+                    removed = True
+                else:
+                    kept.append(memory)
+            self.memories[layer] = kept
+
+        if enhanced is not None:
+            try:
+                for trace_id in enhanced_ids:
+                    if enhanced.forget(trace_id):
+                        removed = True
+            except Exception:
+                logger.warning("Enhanced memory forget failed", exc_info=True)
+
+        return removed
 
     def get_stats(self) -> Dict:
         """Get memory statistics from both systems."""

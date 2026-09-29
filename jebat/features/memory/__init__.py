@@ -1027,6 +1027,47 @@ class EnhancedMemorySystem:
             del self.traces[trace_id]
             self.activation.pop(trace_id, None)
 
+    def forget(self, trace_id: str) -> int:
+        """Permanently delete a trace, persisting the removal.
+
+        Public counterpart to `_remove_trace`. `MemoryManager` stores its own
+        record first and then links the enhanced trace back to it through
+        `source_trace`, so an id coming from `MemoryManager` is normally a
+        *source* id rather than a trace id. Delete both, or the content is
+        still returned by `retrieve()` and reappears on the next search.
+
+        Also prunes dangling links and clears the working-memory slot, so a
+        forgotten trace cannot resurface through activation or rehearsal.
+
+        Returns the number of traces removed (0 when the id was unknown).
+        """
+        doomed = [
+            tid for tid, trace in self.traces.items()
+            if tid == trace_id or trace.source_trace == trace_id
+        ]
+        if not doomed:
+            return 0
+
+        for tid in doomed:
+            self._remove_trace(tid)
+            try:
+                self.working_memory.remove(tid)
+            except ValueError:
+                pass
+
+        # Dangling references would resurrect the id on the next _load prunes.
+        live = set(self.traces)
+        for trace in self.traces.values():
+            trace.linked_traces &= live
+            if trace.source_trace and trace.source_trace not in live:
+                trace.source_trace = None
+
+        # `force`: an explicit forget may empty the store, which the
+        # anti-clobber guard would otherwise refuse to persist — the deletion
+        # would look applied in-process and reappear on the next load.
+        self._save(force=True)
+        return len(doomed)
+
     async def _auto_associate(self, trace: MemoryTrace):
         """Automatically associate with similar active memories"""
         active_ids = [tid for tid, act in self.activation.items() if act > 0.3]
@@ -1075,7 +1116,7 @@ class EnhancedMemorySystem:
 
     # ── Persistence ─────────────────────────────────────────────────
 
-    def _save(self):
+    def _save(self, force: bool = False):
         """Save memory to disk. Failure is surfaced loudly — a silently
         swallowed save exception previously lost traces with no trace of
         the error (a corrupt trace made the whole write no-op).
@@ -1085,9 +1126,14 @@ class EnhancedMemorySystem:
         file), refuse to overwrite — a save here would clobber the store.
         The previous cp1252-on-Windows load failure produced exactly this:
         load printed an error, loaded 0 traces, and the next _save wiped
-        60+ traces. Always write UTF-8 (Windows default is cp1252)."""
+        60+ traces. Always write UTF-8 (Windows default is cp1252).
+
+        `force=True` is for deliberate deletions (`forget`) that legitimately
+        empty the store. It cannot mask a failed load: a load failure leaves 0
+        traces, so `forget` finds nothing to remove and never reaches a save.
+        """
         try:
-            if len(self.traces) == 0 and self.traces_file.exists() and self.traces_file.stat().st_size > 100:
+            if (not force) and len(self.traces) == 0 and self.traces_file.exists() and self.traces_file.stat().st_size > 100:
                 print(
                     f"Memory save ABORTED: {len(self.traces)} in-memory traces but "
                     f"{self.traces_file} has {self.traces_file.stat().st_size}B on disk — "

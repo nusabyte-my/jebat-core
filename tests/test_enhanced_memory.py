@@ -97,12 +97,13 @@ async def test_vector_search_ranking(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_manager_two_way_bridge(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path))
+async def test_manager_two_way_bridge(tmp_path):
+    # Explicit storage_path, not a patched HOME: on Windows `Path.home()` reads
+    # USERPROFILE, so the old form ran against the real ~/.jebat store.
     from jebat.core.memory.layers import MemoryLayer
     from jebat.core.memory.manager import MemoryManager
 
-    mm = MemoryManager()
+    mm = MemoryManager(config={"storage_path": str(tmp_path)})
     await mm.store(
         "Learned to optimize database queries with indexes",
         layer=MemoryLayer.M1_EPISODIC,
@@ -116,6 +117,29 @@ async def test_manager_two_way_bridge(tmp_path, monkeypatch):
 
     combined = legacy + enhanced
     assert any("database" in m.content.lower() for m in combined)
+
+
+@pytest.mark.asyncio
+async def test_asearch_surfaces_enhanced_only_traces(tmp_path):
+    """Regression: `asearch`'s enhanced branch raised TypeError.
+
+    It built `HeatScore(visit_count=...)`, a field that does not exist, and a
+    bare `except Exception: pass` swallowed it — so similarity/vector recall
+    returned nothing and `asearch` was silently legacy-substring-only.
+    """
+    from jebat.core.memory.manager import MemoryManager
+
+    mm = MemoryManager(config={"storage_path": str(tmp_path)})
+    await mm.store("Optimizing slow database queries with indexes", user_id="u1")
+
+    # The legacy substring search cannot see it, because the query is not a
+    # substring of the content...
+    assert mm.search("database query optimization", "u1") == []
+
+    # ...but the enhanced similarity branch must.
+    hits = await mm.asearch("database query optimization", "u1", limit=5)
+    assert any("database" in m.content.lower() for m in hits)
+    assert hits[0].heat.calculate() > 0
 
 
 @pytest.mark.asyncio
