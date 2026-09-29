@@ -17,6 +17,8 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from .wiki_format import page_filename, title_from_file
+
 
 WIKI_DIR = Path.home() / ".jebat" / "wiki"
 PAGES_DIR = WIKI_DIR / "pages"
@@ -106,40 +108,6 @@ class WikiStore:
         conn.execute("PRAGMA foreign_keys=ON")
         return conn
 
-    def _slug(self, title: str) -> str:
-        """Convert a title to a safe filename."""
-        slug = re.sub(r"[^a-zA-Z0-9_-]", "-", title.lower().strip())
-        slug = re.sub(r"-{2,}", "-", slug).strip("-")
-        return slug or "untitled"
-
-    def _filename(self, title: str) -> str:
-        return f"{self._slug(title)}.md"
-
-    def _file_path(self, title: str) -> Path:
-        return self._pages_dir / self._filename(title)
-
-    @staticmethod
-    def _title_from_file(content: str, stem: str) -> str:
-        """Page title: `# Wiki: <title>`, else the first markdown H1, else filename.
-
-        `wiki.py` writes the `# Wiki:` header, but pages that predate it (or were
-        written by hand) start at the body, so fall back to their own H1 before
-        degrading to a title-cased filename.
-        """
-        lines = content.split("\n")
-        first = lines[0].strip() if lines else ""
-        if first.startswith("# Wiki:"):
-            title = first[len("# Wiki:"):].strip()
-            if title:
-                return title
-        for line in lines[:10]:
-            line = line.strip()
-            if line.startswith("# "):
-                candidate = line[2:].strip()
-                if candidate and not candidate.lower().startswith("wiki:"):
-                    return candidate
-        return stem.replace("-", " ").replace("_", " ").strip().title() or stem
-
     def _reindex_from_files(self) -> int:
         """Adopt page files that were written without going through this index.
 
@@ -179,7 +147,7 @@ class WikiStore:
                     content = path.read_text(encoding="utf-8", errors="replace")
                 except OSError:
                     continue
-                title = self._title_from_file(content, path.stem)
+                title = title_from_file(content, path.stem)
                 if title in known_titles:
                     # A row already owns this title with a different filename;
                     # skip rather than violate the title primary key.
@@ -218,7 +186,7 @@ class WikiStore:
         except OSError as e:
             return {"error": f"Read failed: {e}"}
 
-        title = self._title_from_file(content, path.stem)
+        title = title_from_file(content, path.stem)
         filename = path.name
         size = len(content.encode("utf-8"))
         try:
@@ -313,7 +281,7 @@ class WikiStore:
             conn.close()
             return {"error": f"Page already exists: {title}"}
 
-        filename = self._filename(title)
+        filename = page_filename(title)
         file_path = self._pages_dir / filename
         now = time.time()
 

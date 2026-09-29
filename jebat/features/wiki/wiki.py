@@ -12,13 +12,19 @@ import os
 import re
 import subprocess
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from jebat.tools import register_tool
 
 from .wiki_core import WikiStore
+from .wiki_format import (
+    build_page,
+    page_filename,
+    parse_frontmatter,
+    slugify_title,
+    today_utc,
+)
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 
@@ -71,77 +77,9 @@ def _unindex_page(path: Path) -> None:
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def _slugify(title: str) -> str:
-    """Convert a title to a filesystem-safe slug."""
-    slug = title.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    slug = re.sub(r"-+", "-", slug)
-    return slug.strip("-")
-
-
 def _page_path(title_or_slug: str) -> Path:
     """Resolve a title or slug to its page path."""
-    slug = _slugify(title_or_slug)
-    return PAGES_DIR / f"{slug}.md"
-
-
-def _today() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-
-def _parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
-    """Parse our simple header-based frontmatter from markdown text.
-
-    Returns (metadata_dict, body_content).
-    """
-    meta: dict[str, Any] = {}
-    lines = text.split("\n")
-    body_start = 0
-
-    # First line: # Wiki: Title
-    if lines and lines[0].startswith("# Wiki:"):
-        meta["title"] = lines[0].replace("# Wiki:", "").strip()
-        body_start = 1
-
-    # Subsequent metadata lines: **Key**: value
-    for i in range(body_start, len(lines)):
-        m = re.match(r"^\*\*(\w+)\*\*:\s*(.+)$", lines[i])
-        if m:
-            key = m.group(1).lower()
-            val = m.group(2).strip()
-            if key == "tags":
-                meta["tags"] = [t.strip() for t in val.split(",") if t.strip()]
-            else:
-                meta[key] = val
-            body_start = i + 1
-        elif lines[i].strip() == "":
-            body_start = i + 1
-        else:
-            break
-
-    body = "\n".join(lines[body_start:]).strip()
-    return meta, body
-
-
-def _build_page(title: str, content: str, tags: list[str] | None = None,
-                source: str | None = None, created: str | None = None,
-                updated: str | None = None) -> str:
-    """Build a full wiki page string with header metadata."""
-    tags_str = ", ".join(tags) if tags else ""
-    created = created or _today()
-    updated = updated or _today()
-    source = source or ""
-
-    header = f"# Wiki: {title}\n"
-    if tags_str:
-        header += f"**Tags**: {tags_str}\n"
-    header += f"**Created**: {created}\n"
-    header += f"**Updated**: {updated}\n"
-    if source:
-        header += f"**Source**: {source}\n"
-    header += "\n"
-    return header + content
+    return PAGES_DIR / page_filename(title_or_slug)
 
 
 def _read_page_raw(path: Path) -> str | None:
@@ -353,13 +291,13 @@ def _hybrid_search(query: str, top_k: int = 10) -> list[tuple[str, float]]:
 async def wiki_create(title: str, content: str, tags: list[str] | None = None) -> dict[str, Any]:
     """Create a new wiki page."""
     _ensure_dirs()
-    slug = _slugify(title)
+    slug = slugify_title(title)
     path = PAGES_DIR / f"{slug}.md"
 
     if path.exists():
         return {"error": f"Page already exists: {title}", "slug": slug}
 
-    page_text = _build_page(title, content, tags=tags)
+    page_text = build_page(title, content, tags=tags)
     path.write_text(page_text, encoding="utf-8")
     _sync_index(path)
 
@@ -395,7 +333,7 @@ async def wiki_read(title: str) -> dict[str, Any]:
     raw = _read_page_raw(path)
     if raw is None:
         # Try fuzzy match
-        slug = _slugify(title)
+        slug = slugify_title(title)
         candidates = [p for p in _all_pages() if slug in p.stem]
         if len(candidates) == 1:
             path = candidates[0]
@@ -407,7 +345,7 @@ async def wiki_read(title: str) -> dict[str, Any]:
         else:
             return {"error": f"Page not found: {title}"}
 
-    meta, body = _parse_frontmatter(raw)
+    meta, body = parse_frontmatter(raw)
     return {
         "title": meta.get("title", title),
         "slug": path.stem,
@@ -445,14 +383,14 @@ async def wiki_edit(title: str, content: str) -> dict[str, Any]:
     if raw is None:
         return {"error": f"Page not found: {title}. Use wiki_create instead."}
 
-    meta, _old_body = _parse_frontmatter(raw)
+    meta, _old_body = parse_frontmatter(raw)
     page_title = meta.get("title", title)
     tags = meta.get("tags", [])
-    created = meta.get("created", _today())
+    created = meta.get("created", today_utc())
     source = meta.get("source", "")
 
-    page_text = _build_page(page_title, content, tags=tags,
-                            source=source, created=created, updated=_today())
+    page_text = build_page(page_title, content, tags=tags,
+                            source=source, created=created, updated=today_utc())
     path.write_text(page_text, encoding="utf-8")
     _sync_index(path)
 
@@ -462,7 +400,7 @@ async def wiki_edit(title: str, content: str) -> dict[str, Any]:
     except Exception:
         pass
 
-    return {"status": "updated", "slug": path.stem, "title": page_title, "updated": _today()}
+    return {"status": "updated", "slug": path.stem, "title": page_title, "updated": today_utc()}
 
 
 # ── Tool: wiki_delete ────────────────────────────────────────────────────────
@@ -529,7 +467,7 @@ async def wiki_list(tags: list[str] | None = None, limit: int = 50) -> dict[str,
         raw = _read_page_raw(p)
         if raw is None:
             continue
-        meta, _ = _parse_frontmatter(raw)
+        meta, _ = parse_frontmatter(raw)
         page_tags = meta.get("tags", [])
 
         # Filter by tags (AND logic)
@@ -590,7 +528,7 @@ async def wiki_search(query: str, mode: str = "hybrid", top_k: int = 10) -> dict
         raw = _read_page_raw(path)
         if raw is None:
             continue
-        meta, body = _parse_frontmatter(raw)
+        meta, body = parse_frontmatter(raw)
         # Truncate body for search results
         preview = body[:300] + ("..." if len(body) > 300 else "")
         results.append({
@@ -629,7 +567,7 @@ async def wiki_auto_save(content: str) -> dict[str, Any]:
         first_line = "Auto-saved Note"
     title = first_line[:80]
 
-    slug = _slugify(title)
+    slug = slugify_title(title)
     path = PAGES_DIR / f"{slug}.md"
 
     # If slug collision, append short uuid
@@ -640,7 +578,7 @@ async def wiki_auto_save(content: str) -> dict[str, Any]:
         path = PAGES_DIR / f"{slug}.md"
 
     session_id = os.environ.get("JEBAT_SESSION_ID", f"session_{uuid.uuid4().hex[:8]}")
-    page_text = _build_page(title, content, tags=["auto-saved"], source=session_id)
+    page_text = build_page(title, content, tags=["auto-saved"], source=session_id)
     path.write_text(page_text, encoding="utf-8")
     _sync_index(path)
 
@@ -688,12 +626,12 @@ async def wiki_suggest() -> dict[str, Any]:
         raw = _read_page_raw(p)
         if raw is None:
             continue
-        meta, body = _parse_frontmatter(raw)
+        meta, body = parse_frontmatter(raw)
 
         for pattern, category in fact_patterns:
             for match in re.finditer(pattern, body, re.IGNORECASE):
                 fact = match.group(1).strip()[:100]
-                suggested_slug = _slugify(fact[:50])
+                suggested_slug = slugify_title(fact[:50])
                 if suggested_slug and suggested_slug not in seen_titles:
                     suggestions.append({
                         "suggested_title": fact[:80],
@@ -734,7 +672,7 @@ async def wiki_consolidate(dry_run: bool = True) -> dict[str, Any]:
     for p in pages:
         raw = _read_page_raw(p)
         if raw:
-            meta, body = _parse_frontmatter(raw)
+            meta, body = parse_frontmatter(raw)
             page_data.append((p, meta.get("title", p.stem), body))
 
     # Find near-duplicates using simple Jaccard similarity on word sets
@@ -770,8 +708,8 @@ async def wiki_consolidate(dry_run: bool = True) -> dict[str, Any]:
             if raw_a is None or raw_b is None:
                 continue
 
-            meta_a, body_a = _parse_frontmatter(raw_a)
-            meta_b, body_b = _parse_frontmatter(raw_b)
+            meta_a, body_a = parse_frontmatter(raw_a)
+            meta_b, body_b = parse_frontmatter(raw_b)
 
             # Merge: keep A, append unique content from B
             combined_tags = list(set(meta_a.get("tags", []) + meta_b.get("tags", [])))
@@ -779,12 +717,12 @@ async def wiki_consolidate(dry_run: bool = True) -> dict[str, Any]:
             if body_b.strip() and body_b.strip() != body_a.strip():
                 combined_body += f"\n\n---\n\n*Merged from: {meta_b.get('title', title_b)}*\n\n{body_b}"
 
-            merged_text = _build_page(
+            merged_text = build_page(
                 meta_a.get("title", title_a),
                 combined_body,
                 tags=combined_tags,
-                created=meta_a.get("created", _today()),
-                updated=_today(),
+                created=meta_a.get("created", today_utc()),
+                updated=today_utc(),
                 source=meta_a.get("source", ""),
             )
             path_a.write_text(merged_text, encoding="utf-8")
@@ -795,7 +733,7 @@ async def wiki_consolidate(dry_run: bool = True) -> dict[str, Any]:
             # Update embedding
             try:
                 _update_embedding(path_a.stem, merged_text)
-                emb_b = _embedding_cache_path(_slugify(title_b))
+                emb_b = _embedding_cache_path(slugify_title(title_b))
                 if emb_b.exists():
                     emb_b.unlink()
             except Exception:
@@ -846,7 +784,7 @@ async def wiki_stats() -> dict[str, Any]:
         raw = _read_page_raw(p)
         if raw is None:
             continue
-        meta, body = _parse_frontmatter(raw)
+        meta, body = parse_frontmatter(raw)
 
         total_chars += len(raw)
         # Rough token estimate: ~4 chars per token
@@ -919,7 +857,7 @@ class WikiRAG:
             raw = _read_page_raw(path)
             if raw is None:
                 continue
-            meta, body = _parse_frontmatter(raw)
+            meta, body = parse_frontmatter(raw)
             results.append({
                 "title": meta.get("title", slug),
                 "slug": slug,
