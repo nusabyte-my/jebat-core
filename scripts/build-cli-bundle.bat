@@ -1,6 +1,6 @@
 @echo off
 REM build-cli-bundle.bat
-REM Copies required files from jebat-core to packages/cli for npm publishing
+REM Copies required files from this workspace to packages/cli for npm publishing
 
 setlocal enabledelayedexpansion
 
@@ -8,7 +8,7 @@ REM Get script directory
 set "SCRIPT_DIR=%~dp0"
 set "ROOT_DIR=%SCRIPT_DIR%.."
 set "CLI_DIR=%ROOT_DIR%\packages\cli"
-set "CORE_DIR=%ROOT_DIR%\jebat-core"
+set "CORE_DIR=%ROOT_DIR%"
 
 echo.
 echo Building CLI bundle...
@@ -19,7 +19,7 @@ echo.
 
 REM Verify directories exist
 if not exist "%CORE_DIR%" (
-    echo Error: jebat-core directory not found at %CORE_DIR%
+    echo Error: workspace root not found at %ROOT_DIR%
     exit /b 1
 )
 
@@ -42,7 +42,7 @@ for %%F in (AGENTS.md IDENTITY.md MEMORY.md ORCHESTRA.md SOUL.md TOOLS.md USER.m
         copy "%CORE_DIR%\%%F" "%CLI_DIR%\%%F" >nul
         echo    [OK] Copied %%F
     ) else (
-        echo    [WARN] %%F not found in jebat-core
+        echo    [WARN] %%F not found in workspace root
     )
 )
 
@@ -52,7 +52,7 @@ if exist "%CORE_DIR%\adapters" (
     xcopy "%CORE_DIR%\adapters" "%CLI_DIR%\adapters" /E /I /Y >nul
     echo    [OK] Copied adapters/
 ) else (
-    echo    [WARN] adapters directory not found in jebat-core
+    echo    [WARN] adapters directory not found in workspace root
 )
 
 REM Copy vault directory
@@ -61,7 +61,7 @@ if exist "%CORE_DIR%\vault" (
     xcopy "%CORE_DIR%\vault" "%CLI_DIR%\vault" /E /I /Y >nul
     echo    [OK] Copied vault/
 ) else (
-    echo    [WARN] vault directory not found in jebat-core
+    echo    [WARN] vault directory not found in workspace root
 )
 
 REM Copy skills directory
@@ -70,7 +70,7 @@ if exist "%CORE_DIR%\skills" (
     xcopy "%CORE_DIR%\skills" "%CLI_DIR%\skills" /E /I /Y >nul
     echo    [OK] Copied skills/
 ) else (
-    echo    [WARN] skills directory not found in jebat-core
+    echo    [WARN] skills directory not found in workspace root
 )
 
 REM Copy validate-workspace.ps1 if it exists

@@ -53,7 +53,7 @@ test-slow:  ## Run slow tests
 
 
 install:  ## Install package in editable mode
-	pip install --no-build-isolation -e ./jebat-core
+	pip install --no-build-isolation -e .
 
 # ─── Coverage Targets ─────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # build-cli-bundle.sh
-# Copies required files from jebat-core to packages/cli for npm publishing
+# Copies required files from this workspace to packages/cli for npm publishing
 #
 
 set -e
@@ -9,7 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CLI_DIR="$ROOT_DIR/packages/cli"
-CORE_DIR="$ROOT_DIR/jebat-core"
+CORE_DIR="$ROOT_DIR"
 
 echo "🔨 Building CLI bundle..."
 echo "   Root: $ROOT_DIR"
@@ -19,7 +19,7 @@ echo ""
 
 # Verify directories exist
 if [ ! -d "$CORE_DIR" ]; then
-  echo "❌ Error: jebat-core directory not found at $CORE_DIR"
+  echo "❌ Error: workspace root not found at $ROOT_DIR"
   exit 1
 fi
 
@@ -53,7 +53,7 @@ for file in "${COPY_FILES[@]}"; do
     cp "$CORE_DIR/$file" "$CLI_DIR/$file"
     echo "   ✓ Copied $file"
   else
-    echo "   ⚠ Warning: $file not found in jebat-core"
+    echo "   ⚠ Warning: $file not found in workspace root"
   fi
 done
 
@@ -62,8 +62,7 @@ echo "📦 Copying adapters..."
 if [ -d "$CORE_DIR/adapters" ]; then
   cp -r "$CORE_DIR/adapters" "$CLI_DIR/adapters"
   echo "   ✓ Copied adapters/"
-else
-  echo "   ⚠ Warning: adapters directory not found in jebat-core"
+else    echo "   ⚠ Warning: adapters directory not found in workspace root"
 fi
 
 # Copy vault directory
@@ -71,8 +70,7 @@ echo "📦 Copying vault..."
 if [ -d "$CORE_DIR/vault" ]; then
   cp -r "$CORE_DIR/vault" "$CLI_DIR/vault"
   echo "   ✓ Copied vault/"
-else
-  echo "   ⚠ Warning: vault directory not found in jebat-core"
+else    echo "   ⚠ Warning: vault directory not found in workspace root"
 fi
 
 # Copy skills directory
@@ -80,8 +78,7 @@ echo "📦 Copying skills..."
 if [ -d "$CORE_DIR/skills" ]; then
   cp -r "$CORE_DIR/skills" "$CLI_DIR/skills"
   echo "   ✓ Copied skills/"
-else
-  echo "   ⚠ Warning: skills directory not found in jebat-core"
+else    echo "   ⚠ Warning: skills directory not found in workspace root"
 fi
 
 # Copy validate-workspace.ps1 if it exists

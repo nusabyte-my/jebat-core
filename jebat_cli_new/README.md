@@ -8,7 +8,7 @@ A unified, provider-first coding-agent CLI built on:
 ## Quick Start
 
 ```bash
-cd D:/Jebat/jebat-core
+cd D:/Jebat
 
 # Show help
 python -m jebat_cli_new --help
