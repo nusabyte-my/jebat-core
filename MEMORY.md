@@ -6,7 +6,7 @@ This file is the root memory index for the workspace.
 
 - This repository is the canonical JEBAT workspace: the **top-level tree is the source of truth** (it is what Python imports and where active work happens).
 - Canonical startup begins from `AGENTS.md` then `BOOTSTRAP.md` (top-level).
-- If duplicate docs exist at the root and in `jebat-core/`, prefer the **top-level copy** — `jebat-core/` is a frozen archive (own `.git`, last committed 2026-07-04), read-only reference only.
+- If duplicate docs ever disagree, the **top-level copy** wins. `jebat-core/` (a frozen 2026-07-04 snapshot) was **removed 2026-09-30** — archived to `.local-backups/`, history safe on GitHub — so `jebat-core/` paths in older docs/scripts are historical; the repo name and the VPS `/var/www/jebat-core` deployments remain real.
 - Recorded in `vault/decisions/2026-09-29-top-level-tree-canonical.md` (supersedes the 2026-04-08 jebat-core startup rule).
 
 ## Active Projects

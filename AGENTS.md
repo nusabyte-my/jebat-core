@@ -4,11 +4,11 @@
 
 This repository is the canonical JEBAT workspace. The **top-level tree is the source of truth**: it is what Python imports (`jebat/`, `jebat_cli_new/`), it holds the newest docs, and it is where all active work happens.
 
-`jebat-core/` is a **frozen archive** — an older snapshot of this workspace with its own `.git`, last committed 2026-07-04. Treat it as read-only reference and history only:
+`jebat-core/` — an older snapshot of this workspace with its own `.git`, last committed 2026-07-04 — was **removed on 2026-09-30** (archived locally to `.local-backups/`; its git history is the same GitHub repo, `nusabyte-my/jebat-core`). Treat it accordingly:
 
-- Do not edit files inside `jebat-core/`.
-- If a duplicated doc exists at the top level and inside `jebat-core/`, the **top-level copy wins**; the `jebat-core/` copy is a stale snapshot.
-- Never resolve code through `jebat-core/`; imports resolve to the top-level tree.
+- Do not recreate `jebat-core/`; do not check out the old snapshot into it.
+- References to `jebat-core/` in older docs, scripts, or CI are historical: local paths are dead, while `jebat-core` as a repo name and the VPS `/var/www/jebat-core` deployments remain real.
+- The top-level copy of any duplicated doc always wins.
 
 `jebatcore/` (no hyphen) is the npm/JS package — unrelated to the archive.
 

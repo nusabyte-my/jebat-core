@@ -4,7 +4,7 @@
 
 Purpose:
 - Canonical source of truth for the workspace; the top-level tree is what runs and what changes
-- `jebat-core/` is a frozen archive (last committed 2026-07-04) — visual reference only
+- `jebat-core/` (frozen 2026-07-04) was removed on 2026-09-30; its visual direction carries on in the top-level tree
 - Its docs, generated interfaces, and setup experiences define the tone for the rest of the stack
 
 Visual direction:
