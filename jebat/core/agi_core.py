@@ -222,17 +222,43 @@ class AGICognitiveEngine:
         return ReflexionResult(passed=True, domain="general", score=5.0)
 
     async def consolidate_learning(self, goal: str, final_answer: str, tool_actions: List[str]) -> Dict[str, Any]:
-        """Extract durable heuristics from execution and persist to memory & vector DB."""
+        """Extract durable heuristics from execution and persist to memory & vector DB.
+
+        The stored fact must carry the actual lesson material — the goal, the
+        tools used, and what the run concluded — not a step count. A fact like
+        "Completed via N tool steps" passes every dedup check while saying
+        nothing, so N runs would store N near-identical no-op memories.
+        """
         if not final_answer or len(final_answer) < 10:
             return {"status": "skipped"}
 
-        # Extract lesson if substantive
         domain = self.classify_domain(goal)
-        clean_fact = f"Goal '{goal[:60]}': Completed via {len(tool_actions)} tool steps."
+        fact = self._build_learning_fact(goal, final_answer, tool_actions)
 
         try:
             from jebat.tools.automimpi_tools import project_remember
-            res = await project_remember(fact=clean_fact, category=domain.value, importance=0.7)
-            return {"status": "consolidated", "memory": res}
+            res = await project_remember(fact=fact, category=domain.value, importance=0.7)
+            return {"status": "consolidated", "fact": fact, "memory": res}
         except Exception as e:
             return {"status": "error", "error": str(e)}
+
+    @staticmethod
+    def _build_learning_fact(goal: str, final_answer: str, tool_actions: List[str],
+                             max_actions: int = 8) -> str:
+        """Render a run as a compact, informative fact.
+
+        Truncation bounds keep one memory small (the goal and outcome are
+        summaries, not transcripts); dropped tool actions are counted so the
+        fact still says how much happened.
+        """
+        goal_text = " ".join((goal or "").split())[:200]
+        outcome = " ".join((final_answer or "").split())[:300]
+        actions = tool_actions or []
+        shown = ", ".join(actions[:max_actions])
+        if len(actions) > max_actions:
+            shown += f" (+{len(actions) - max_actions} more)"
+        return (
+            f"Goal: {goal_text or '(unknown)'}\n"
+            f"Tools: {shown or 'none'}\n"
+            f"Outcome: {outcome}"
+        )
