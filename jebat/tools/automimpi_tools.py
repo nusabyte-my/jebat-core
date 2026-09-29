@@ -94,29 +94,32 @@ def _project_context_filter() -> str:
 def _workspace_dream_state_path() -> Path:
     """Workspace mirror of dream state: <cwd>/memory/.dream-state.json.
 
-    Session bootstrap (and the JEBAT skill's dream-gate check) reads THIS
-    file, not the engine-owned ~/.jebat/dream_state.json. Without a mirror
-    write, tool-side dreams "don't count" and every session has to reconcile
-    the file by hand (the 2026-08-18 / 2026-09-21 manual fixes).
+    The JEBAT skill's dream-gate check reads THIS file, so it keeps its path and
+    camelCase schema for compatibility. Its values are a *view* of the canonical
+    state in the dream engine — it is not a second ledger.
     """
     return Path(os.getcwd()) / "memory" / ".dream-state.json"
 
 
 def _mirror_dream_state_to_workspace() -> Optional[str]:
-    """Mirror engine dream state into the workspace bootstrap file.
+    """Refresh the workspace bootstrap file from the canonical dream state.
 
-    Atomic write (tmp + os.replace) so bootstrap never reads a half file.
-    Returns the mirror path on success, raises on failure — callers may
-    treat mirror failure as non-fatal but must surface it loudly.
+    Reads the canonical state from disk rather than the in-memory engine, so the
+    mirror cannot report a stale counter. Atomic write (tmp + os.replace) so a
+    reader never sees a half file. Returns the mirror path on success, raises on
+    failure — callers may treat mirror failure as non-fatal but must surface it.
     """
-    engine = _get_automimpi()
+    from jebat.features.memory.automimpi import load_dream_state
+
+    state = load_dream_state()
+    last = state.get("last_dream")
     path = _workspace_dream_state_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "lastDreamAt": engine.last_dream_at.isoformat() if engine.last_dream_at else None,
-        "lastScanAt": engine.last_dream_at.isoformat() if engine.last_dream_at else None,
-        "sessionsSinceDream": 0,
-        "totalDreams": engine.dream_count,
+        "lastDreamAt": last,
+        "lastScanAt": last,
+        "sessionsSinceDream": state.get("sessions_since_dream", 0),
+        "totalDreams": state.get("dream_count", 0),
     }
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")

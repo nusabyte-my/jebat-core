@@ -133,6 +133,67 @@ WELCOME_MESSAGES = {
 #  AutoMimpi Engine
 # ────────────────────────────────────────────────────────────
 
+# ── Canonical dream state ────────────────────────────────────────────────────
+# One file is authoritative: the engine persists it on every successful dream(),
+# whichever entry point started the dream. The CLI session gate and the
+# workspace mirror are views of it. They used to keep private counters, and the
+# three files disagreed at the same moment — 68 / 52 / 2 dreams.
+
+DREAM_STATE_FILE: Path = Path.home() / ".jebat" / "dream_state.json"
+
+_EMPTY_DREAM_STATE: Dict[str, Any] = {
+    "sessions_since_dream": 0,
+    "last_dream": None,
+    "dream_count": 0,
+}
+
+
+def load_dream_state() -> Dict[str, Any]:
+    """Read the canonical dream state, tolerating both historical schemas.
+
+    Accepts the engine schema (snake_case) and the older workspace-mirror schema
+    (camelCase) so state written by either epoch still loads. Missing, corrupt,
+    or non-dict state starts fresh — boot must never raise on this file.
+    """
+    state = dict(_EMPTY_DREAM_STATE)
+    if not DREAM_STATE_FILE.exists():
+        return state
+    try:
+        raw = json.loads(DREAM_STATE_FILE.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"Dream state load error (starting fresh): {e}")
+        return state
+    if not isinstance(raw, dict):
+        return state
+
+    count = raw.get("dream_count", raw.get("totalDreams"))
+    if isinstance(count, int) and count >= 0:
+        state["dream_count"] = count
+    last = raw.get("last_dream", raw.get("lastDreamAt"))
+    if isinstance(last, str) and last:
+        state["last_dream"] = last
+    sessions = raw.get("sessions_since_dream", raw.get("sessionsSinceDream"))
+    if isinstance(sessions, int) and sessions >= 0:
+        state["sessions_since_dream"] = sessions
+    return state
+
+
+def save_dream_state(state: Dict[str, Any]) -> None:
+    """Atomically write the canonical state, stamping `updated_at`.
+
+    Write UTF-8 to a temp file in the same directory, then os.replace. A failed
+    save must never zero the file (corrupt-in-place): on error the old file stays
+    untouched and the caller surfaces it. `updated_at` is stamped here so both
+    the engine and the CLI keep it without having to remember.
+    """
+    DREAM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    payload = dict(state)
+    payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+    tmp = DREAM_STATE_FILE.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    os.replace(tmp, DREAM_STATE_FILE)
+
+
 class AutoMimpi:
     """
     JEBAT's dream cycle engine.
@@ -155,56 +216,36 @@ class AutoMimpi:
         # last_dream_at/dream_count in memory ONLY — no writer existed for
         # ~/.jebat/dream_state.json, so consecutive dreams looked "stuck"
         # (two sessions assumed persistence that no code performed). The
-        # engine now owns the state file: loaded here, saved atomically at
-        # the end of every successful dream().
-        self.state_file: Path = Path.home() / ".jebat" / "dream_state.json"
+        # engine now owns the canonical state file: loaded here, saved
+        # atomically at the end of every successful dream().
+        self.state_file: Path = DREAM_STATE_FILE
         self._load_state()
 
     # ── Dream state persistence ─────────────────────────────────────
 
     def _load_state(self) -> None:
-        """Restore dream counters from ~/.jebat/dream_state.json.
-
-        Tolerant of both live schemas seen on disk:
-        - engine schema: {"dream_count": int, "last_dream": iso, ...}
-        - workspace mirror schema: {"totalDreams": int, "lastDreamAt": iso, ...}
-        Missing/corrupt file starts at 0 — never raise on boot.
-        """
-        try:
-            if not self.state_file.exists():
-                return
-            raw = json.loads(self.state_file.read_text(encoding="utf-8"))
-            count = raw.get("dream_count", raw.get("totalDreams", 0))
-            last = raw.get("last_dream", raw.get("lastDreamAt"))
-            if isinstance(count, int) and count >= 0:
-                self.dream_count = count
-            if isinstance(last, str) and last:
-                try:
-                    self.last_dream_at = datetime.fromisoformat(last.replace("Z", "+00:00"))
-                except ValueError:
-                    pass
-        except Exception as e:
-            print(f"Dream state load error (starting fresh): {e}")
+        """Restore dream counters from the canonical state file."""
+        state = load_dream_state()
+        self.dream_count = state["dream_count"]
+        last = state.get("last_dream")
+        if last:
+            try:
+                self.last_dream_at = datetime.fromisoformat(last.replace("Z", "+00:00"))
+            except ValueError:
+                pass
 
     def _save_state(self, sessions_since_dream: int = 0) -> None:
-        """Atomically persist dream counters.
-
-        Same discipline as the 9f4a2c2 traces.json guard: write UTF-8 to a
-        temp file in the same directory, then os.replace for atomicity. A
-        failed save must never zero the file (corrupt-in-place) — on error
-        the old file stays untouched and we surface loudly.
-        """
+        """Persist dream counters to the canonical state file."""
         try:
-            self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            payload = {
-                "sessions_since_dream": sessions_since_dream,
-                "last_dream": self.last_dream_at.isoformat() if self.last_dream_at else None,
-                "dream_count": self.dream_count,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-            tmp = self.state_file.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-            os.replace(tmp, self.state_file)
+            save_dream_state(
+                {
+                    "sessions_since_dream": sessions_since_dream,
+                    "last_dream": (
+                        self.last_dream_at.isoformat() if self.last_dream_at else None
+                    ),
+                    "dream_count": self.dream_count,
+                }
+            )
         except Exception as e:
             print(f"Dream state save error: {e}")
             raise

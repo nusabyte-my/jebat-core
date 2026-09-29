@@ -40,7 +40,10 @@ AUDIT_DB = _JEBAT_HOME / "audit.db"
 TASKS_DB = _JEBAT_HOME / "tasks.db"
 COST_DB = _JEBAT_HOME / "costs.db"
 EXPORT_DIR = _JEBAT_HOME / "exports"
-DREAM_STATE_FILE = Path(".") / ".jebat" / "dream_state.json"
+# NOTE: dream state deliberately has no constant here. It is owned by the dream
+# engine (jebat.features.memory.automimpi), which persists it on every successful
+# dream. This module used to keep a second, CWD-relative counter, so the session
+# gate, /status, and the engine reported different totals for the same history.
 DREAM_DIR = Path(".") / ".jebat" / "dreams"
 
 # Ensure directories exist
@@ -1797,17 +1800,17 @@ def tool_brainstorm(topic, mode="default"):
 # ═══════════════════════════════════════════════════════════════════
 
 def _load_dream_state():
-    if DREAM_STATE_FILE.exists():
-        try:
-            return json.loads(DREAM_STATE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {"sessions_since_dream": 0, "last_dream": None, "dream_count": 0}
+    """Read the canonical dream state owned by the dream engine."""
+    from jebat.features.memory.automimpi import load_dream_state
+
+    return load_dream_state()
 
 
 def _save_dream_state(state):
-    DREAM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    DREAM_STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    """Write the canonical dream state (atomic, engine-owned schema)."""
+    from jebat.features.memory.automimpi import save_dream_state
+
+    save_dream_state(state)
 
 
 def _auto_mimpi_check(taskdb):
@@ -1830,6 +1833,14 @@ def _run_dream(taskdb):
         mem = EnhancedMemorySystem()
         engine = AutoMimpi(mem)
         report = asyncio.run(engine.dream(force=True))
+        # Keep the workspace mirror in step: it is a view of the canonical state,
+        # and the CLI is a dream path the tool-side mirror never saw.
+        try:
+            from jebat.tools.automimpi_tools import _mirror_dream_state_to_workspace
+
+            _mirror_dream_state_to_workspace()
+        except Exception:
+            pass
         _double_box("Mimpi (autoDream)",
             f"Processed: {report.memories_processed} memories\n"
             f"Patterns: {report.patterns_extracted} extracted\n"
