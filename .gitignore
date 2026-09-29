@@ -234,3 +234,18 @@ jebat-core/
 
 # PDFs with passwords
 EvolvePlayBoost_Mailbox_Passwords_*.pdf
+
+# Design-review QA screenshots (local captures; referenced by no tracked file)
+/docs-nav-1280.png
+/docs-nav-375-open.png
+/docs-nav-final-1280.png
+/docs-theme-375.png
+/hero-interactive-375.png
+/landing-header-1280.png
+/landing-header-375.png
+/landing-header-final-1280.png
+/landing-mobile-390.png
+/local-landing-375.png
+/mcp-workflow-375.png
+/two-heroes-1280.png
+/two-heroes-375.png
