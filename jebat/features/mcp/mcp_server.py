@@ -232,6 +232,114 @@ def _skill_index(refresh: bool = False) -> Dict[str, Dict[str, str]]:
     return index
 
 
+# ── Wiki pages as MCP resources (wiki://) ──────────────────────────────────
+# Mirrors the skill:// surface: one resource per page, plus a URI template.
+# Pages are read from the markdown files themselves rather than through
+# WikiStore's SQLite index, because the tool surface (`wiki.py`) writes those
+# same files without updating that index — the files are the only view that is
+# guaranteed to match what is actually on disk.
+
+_WIKI_INDEX: Optional[Dict[str, Dict[str, str]]] = None
+_WIKI_INDEX_AT = 0.0
+_WIKI_INDEX_TTL = 5.0  # seconds; the wiki_* tools can write pages at runtime
+
+
+def _wiki_roots() -> List[Path]:
+    """The `pages/` directory holding wiki markdown.
+
+    `JEBAT_WIKI_DIR` *replaces* the default wiki root, matching how
+    `wiki_rag` resolves the same variable — adding to it instead would mean the
+    variable could never point a caller at a self-contained store.
+    """
+    env_dir = os.getenv("JEBAT_WIKI_DIR", "")
+    base = Path(env_dir).expanduser() if env_dir else Path.home() / ".jebat" / "wiki"
+    candidates = [base / "pages"]
+    roots: List[Path] = []
+    seen = set()
+    for raw in candidates:
+        try:
+            path = raw.resolve()
+        except OSError:
+            continue
+        if path in seen or not path.is_dir():
+            continue
+        seen.add(path)
+        roots.append(path)
+    return roots
+
+
+def _wiki_meta(content: str, stem: str) -> Dict[str, str]:
+    """Title/tags/updated from a page header (`# Wiki:` then `**Key**: value`)."""
+    lines = content.split("\n")
+    meta: Dict[str, str] = {}
+    if lines and lines[0].strip().startswith("# Wiki:"):
+        meta["title"] = lines[0].split("# Wiki:", 1)[1].strip()
+    for line in lines[:12]:
+        line = line.strip()
+        if not line.startswith("**") or ": " not in line:
+            continue
+        key, value = line.split(": ", 1)
+        key = key.strip("*").strip().lower()
+        if key in ("tags", "updated") and key not in meta:
+            meta[key] = value.strip()
+    if not meta.get("title"):
+        for line in lines[:10]:
+            line = line.strip()
+            if line.startswith("# "):
+                meta["title"] = line[2:].strip()
+                break
+    meta.setdefault(
+        "title", stem.replace("-", " ").replace("_", " ").strip().title() or stem
+    )
+    return meta
+
+
+def _wiki_index(refresh: bool = False) -> Dict[str, Dict[str, str]]:
+    """Map wiki://<slug> → {slug, title, description, tags, updated, path}."""
+    global _WIKI_INDEX, _WIKI_INDEX_AT
+    now = time.monotonic()
+    if (
+        not refresh
+        and _WIKI_INDEX is not None
+        and (now - _WIKI_INDEX_AT) < _WIKI_INDEX_TTL
+    ):
+        return _WIKI_INDEX
+
+    index: Dict[str, Dict[str, str]] = {}
+    for root in _wiki_roots():
+        try:
+            page_files = sorted(root.glob("*.md"))
+        except OSError:
+            continue
+        for page_file in page_files:
+            slug = page_file.stem
+            uri = f"wiki://{slug}"
+            if uri in index:
+                continue
+            try:
+                content = page_file.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            meta = _wiki_meta(content, slug)
+            tags = meta.get("tags", "")
+            updated = meta.get("updated", "")
+            description = f"JEBAT wiki page · tags: {tags}" if tags else "JEBAT wiki page"
+            if updated:
+                description += f" · updated {updated}"
+            index[uri] = {
+                "slug": slug,
+                "title": meta["title"],
+                "description": description,
+                "tags": tags,
+                "updated": updated,
+                "path": str(page_file),
+            }
+
+    _WIKI_INDEX = index
+    _WIKI_INDEX_AT = now
+    return index
+
+
 _TERSE_CLIENT_NAME: str = ""
 
 
@@ -955,11 +1063,19 @@ class MCPServer:
                 "description": entry["description"] or f"JEBAT skill ({entry['store']}/{entry['name']})",
                 "mimeType": "text/markdown",
             })
+        for uri, entry in sorted(_wiki_index().items()):
+            raw_resources.append({
+                "uri": uri,
+                "name": f"Wiki: {entry['title']}",
+                "description": entry["description"],
+                "mimeType": "text/markdown",
+            })
         raw_templates = [
             {"uriTemplate": "jebat://file/{path}", "name": "Project file content", "description": "Read any file from the project workspace", "mimeType": "text/plain"},
             {"uriTemplate": "jebat://git/diff/{ref}", "name": "Git diff against ref", "description": "Show diff against a git ref (branch, commit, HEAD~N)", "mimeType": "text/x-diff"},
             {"uriTemplate": "jebat://artifact/{id}", "name": "Truncated tool result", "description": "Full text of a tool result that exceeded the inline size cap", "mimeType": "text/plain"},
             {"uriTemplate": "skill://{path}", "name": "JEBAT skill (SKILL.md)", "description": "Read any JEBAT skill's SKILL.md by store and name (e.g. skill://tokguru/page-mascot)", "mimeType": "text/markdown"},
+            {"uriTemplate": "wiki://{slug}", "name": "JEBAT wiki page", "description": "Read any JEBAT wiki page as markdown by slug (e.g. wiki://erawan-qpos-operational-invariants)", "mimeType": "text/markdown"},
         ]
         if mcp_terse_mode():
             resources = [{"uri": r["uri"], "name": r["name"], "mimeType": r.get("mimeType", "text/plain")} for r in raw_resources]
@@ -1240,6 +1356,27 @@ class MCPServer:
                 text = Path(entry["path"]).read_text(encoding="utf-8", errors="replace")
             except OSError as e:
                 text = f"Error reading skill: {e}"
+            return {"contents": [{"uri": uri, "mimeType": "text/markdown", "text": text}]}
+
+        if uri.startswith("wiki://"):
+            entry = _wiki_index().get(uri)
+            if entry is None:
+                # TTL may be stale right after a wiki_* tool wrote a new page.
+                entry = _wiki_index(refresh=True).get(uri)
+            if entry is None:
+                # Accept a title or slug-ish title, not just the exact slug.
+                wanted = uri[len("wiki://"):].strip().lower()
+                wanted_slug = "-".join(wanted.replace("_", " ").split())
+                for candidate in _wiki_index(refresh=True).values():
+                    if wanted in (candidate["slug"].lower(), candidate["title"].lower()) or wanted_slug == candidate["slug"].lower():
+                        entry = candidate
+                        break
+            if entry is None:
+                return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": f"Error: Wiki page not found: {uri}"}]}
+            try:
+                text = Path(entry["path"]).read_text(encoding="utf-8", errors="replace")
+            except OSError as e:
+                text = f"Error reading wiki page: {e}"
             return {"contents": [{"uri": uri, "mimeType": "text/markdown", "text": text}]}
         return {"contents": []}
 

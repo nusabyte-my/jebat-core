@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+from pathlib import Path
 
 from jebat.features.wiki.wiki_core import WikiStore
 
@@ -105,3 +106,98 @@ def test_get_stats() -> None:
         assert stats["page_count"] == 2
         assert stats["total_size_bytes"] > 0
         assert stats["last_updated"]["title"] in ("a", "b")
+
+
+# ── Index drift: pages written outside the index ─────────────────────────────
+# `jebat.features.wiki.wiki` (the tool surface the MCP server loads) writes
+# `pages/*.md` directly and never touches index.db, so FTS5 — and therefore
+# `inject_wiki_rag` — could not see those pages. On the live store that meant 20
+# page files and 3 index rows.
+
+
+def _write_page_file(wiki_dir: str, slug: str, text: str) -> Path:
+    """Write a page the way wiki.py does: straight to disk, bypassing the DB."""
+    pages = Path(wiki_dir) / "pages"
+    pages.mkdir(parents=True, exist_ok=True)
+    path = pages / f"{slug}.md"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_reindex_adopts_pages_written_outside_the_index() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        wiki_dir = os.path.join(tmp, "wiki")
+        WikiStore(wiki_dir=wiki_dir)  # create the database
+        _write_page_file(
+            wiki_dir,
+            "erawan-qpos-operational-invariants",
+            "# Wiki: Erawan QPOS Operational Invariants\n"
+            "**Tags**: erawan-qsys, invariants\n"
+            "**Updated**: 2026-09-23\n\n"
+            "Group checkout uses a running number.\n",
+        )
+
+        wiki = WikiStore(wiki_dir=wiki_dir)
+
+        assert wiki.get_stats()["page_count"] == 1
+        assert wiki.search("running number")["count"] == 1
+        read = wiki.read_page("Erawan QPOS Operational Invariants")
+        assert read["content"].startswith("# Wiki: Erawan QPOS")
+
+
+def test_reindex_falls_back_to_the_first_markdown_heading() -> None:
+    """Pages without the `# Wiki:` header still get a real title, not a slug."""
+    with tempfile.TemporaryDirectory() as tmp:
+        wiki_dir = os.path.join(tmp, "wiki")
+        WikiStore(wiki_dir=wiki_dir)
+        _write_page_file(
+            wiki_dir,
+            "erawan-qsys-2026-09-28-session",
+            "# Erawan-QSys — 2026-09-28 Session\n\n## Gantt Timeline Overhaul\n",
+        )
+
+        wiki = WikiStore(wiki_dir=wiki_dir)
+
+        titles = [p["title"] for p in wiki.list_pages()["pages"]]
+        assert titles == ["Erawan-QSys — 2026-09-28 Session"]
+
+
+def test_reindex_is_idempotent() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        wiki_dir = os.path.join(tmp, "wiki")
+        WikiStore(wiki_dir=wiki_dir)
+        _write_page_file(wiki_dir, "once", "# Wiki: Once\n\nbody\n")
+
+        assert WikiStore(wiki_dir=wiki_dir).get_stats()["page_count"] == 1
+        assert WikiStore(wiki_dir=wiki_dir).get_stats()["page_count"] == 1
+
+
+def test_reindex_does_not_resurrect_soft_deleted_page() -> None:
+    """`delete_page` keeps the .md file, so adoption needs the tombstone."""
+    with tempfile.TemporaryDirectory() as tmp:
+        wiki_dir = os.path.join(tmp, "wiki")
+        wiki = WikiStore(wiki_dir=wiki_dir)
+        wiki.create_page("doomed", "secret content")
+        wiki.delete_page("doomed")
+        # Soft delete: the file is deliberately left on disk.
+        assert (Path(wiki_dir) / "pages" / "doomed.md").exists()
+
+        reopened = WikiStore(wiki_dir=wiki_dir)
+
+        assert reopened.get_stats()["page_count"] == 0
+        assert "error" in reopened.read_page("doomed")
+        assert reopened.search("secret")["count"] == 0
+
+
+def test_recreating_a_soft_deleted_page_indexes_it_again() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        wiki_dir = os.path.join(tmp, "wiki")
+        wiki = WikiStore(wiki_dir=wiki_dir)
+        wiki.create_page("phoenix", "first")
+        wiki.delete_page("phoenix")
+        wiki.create_page("phoenix", "second")
+
+        reopened = WikiStore(wiki_dir=wiki_dir)
+
+        assert reopened.get_stats()["page_count"] == 1
+        assert reopened.read_page("phoenix")["content"] == "second"

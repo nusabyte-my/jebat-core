@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from jebat.features.mcp import mcp_server
 from jebat.features.mcp.mcp_server import MCPServer
 from jebat.tools import TOOL_REGISTRY, ToolDef
 
@@ -286,6 +287,100 @@ async def test_skills_are_listed_and_readable_as_skill_resources() -> None:
         or "{}"
     )
     assert "Skill not found" in missing["result"]["contents"][0]["text"]
+
+
+@pytest.mark.anyio
+async def test_wiki_pages_are_listed_and_readable_as_wiki_resources(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`wiki://` mirrors `skill://`: one resource per page file, plus a template.
+
+    Pages are read from the markdown files rather than WikiStore's index, since
+    the tool surface writes those files without updating that index.
+    """
+    wiki_root = tmp_path / "wiki"
+    pages = wiki_root / "pages"
+    pages.mkdir(parents=True)
+    (pages / "erawan-qpos-operational-invariants.md").write_text(
+        "# Wiki: Erawan QPOS Operational Invariants\n"
+        "**Tags**: erawan-qsys, invariants\n"
+        "**Updated**: 2026-09-23\n\n"
+        "Group checkout uses a running number.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("JEBAT_WIKI_DIR", str(wiki_root))
+    monkeypatch.setattr(mcp_server, "_WIKI_INDEX", None)
+
+    server = MCPServer()
+    await server.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"},
+        }
+    )
+    resources = json.loads(
+        await server.handle_request(
+            {"jsonrpc": "2.0", "id": 2, "method": "resources/list", "params": {}}
+        )
+        or "{}"
+    )
+
+    listed = resources["result"]["resources"]
+    wiki_uris = [item["uri"] for item in listed if item["uri"].startswith("wiki://")]
+    assert wiki_uris == ["wiki://erawan-qpos-operational-invariants"]
+
+    entry = next(i for i in listed if i["uri"] == wiki_uris[0])
+    assert entry["name"] == "Wiki: Erawan QPOS Operational Invariants"
+    assert entry["mimeType"] == "text/markdown"
+    assert "erawan-qsys" in entry["description"]
+
+    templates = {t["uriTemplate"] for t in resources["result"]["resourceTemplates"]}
+    assert "wiki://{slug}" in templates
+
+    read = json.loads(
+        await server.handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "resources/read",
+                "params": {"uri": wiki_uris[0]},
+            }
+        )
+        or "{}"
+    )
+    contents = read["result"]["contents"]
+    assert contents and contents[0]["mimeType"] == "text/markdown"
+    assert contents[0]["text"].startswith("# Wiki: Erawan QPOS")
+
+    # Clients do not always have the slug; a title must resolve too.
+    by_title = json.loads(
+        await server.handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 4,
+                "method": "resources/read",
+                "params": {"uri": "wiki://Erawan QPOS Operational Invariants"},
+            }
+        )
+        or "{}"
+    )
+    assert "running number" in by_title["result"]["contents"][0]["text"]
+
+    # Unknown pages report a readable error, not an empty result.
+    missing = json.loads(
+        await server.handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 5,
+                "method": "resources/read",
+                "params": {"uri": "wiki://does-not-exist"},
+            }
+        )
+        or "{}"
+    )
+    assert "Wiki page not found" in missing["result"]["contents"][0]["text"]
 
 
 @pytest.mark.anyio

@@ -35,6 +35,14 @@ class WikiStore:
         self._db_path = base / "index.db"
         self._pages_dir.mkdir(parents=True, exist_ok=True)
         self._init_db()
+        # Self-heal: adopt page files written without going through this index.
+        adopted = self._reindex_from_files()
+        if adopted:
+            on_disk = len(list(self._pages_dir.glob("*.md")))
+            print(
+                f"Wiki index migration: adopted {adopted} page(s) written outside "
+                f"the index ({on_disk} on disk)."
+            )
 
     def _init_db(self) -> None:
         """Create tables if they don't exist."""
@@ -78,6 +86,17 @@ class WikiStore:
                 PRIMARY KEY (source, target)
             )
         """)
+        # Tombstones for soft-deleted pages. `delete_page` keeps the .md file,
+        # so file presence alone cannot distinguish "written by wiki.py and not
+        # yet indexed" from "deleted on purpose" — without this, the reindex
+        # below would resurrect every CLI-deleted page.
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS deleted_pages (
+                filename TEXT PRIMARY KEY,
+                title TEXT NOT NULL DEFAULT '',
+                deleted_at REAL NOT NULL
+            )
+        """)
         conn.commit()
         conn.close()
 
@@ -98,6 +117,89 @@ class WikiStore:
 
     def _file_path(self, title: str) -> Path:
         return self._pages_dir / self._filename(title)
+
+    @staticmethod
+    def _title_from_file(content: str, stem: str) -> str:
+        """Page title: `# Wiki: <title>`, else the first markdown H1, else filename.
+
+        `wiki.py` writes the `# Wiki:` header, but pages that predate it (or were
+        written by hand) start at the body, so fall back to their own H1 before
+        degrading to a title-cased filename.
+        """
+        lines = content.split("\n")
+        first = lines[0].strip() if lines else ""
+        if first.startswith("# Wiki:"):
+            title = first[len("# Wiki:"):].strip()
+            if title:
+                return title
+        for line in lines[:10]:
+            line = line.strip()
+            if line.startswith("# "):
+                candidate = line[2:].strip()
+                if candidate and not candidate.lower().startswith("wiki:"):
+                    return candidate
+        return stem.replace("-", " ").replace("_", " ").strip().title() or stem
+
+    def _reindex_from_files(self) -> int:
+        """Adopt page files that were written without going through this index.
+
+        `jebat.features.wiki.wiki` (the tool surface the MCP server loads) writes
+        markdown straight into this same `pages/` directory and never touches
+        the SQLite index, so pages created through the tools were invisible to
+        FTS5. Measured on the live store: 20 page files on disk, 3 index rows —
+        `inject_wiki_rag` was searching 15% of the knowledge base.
+
+        Runs on construction, adopts only files missing from the index, and is
+        idempotent. Soft-deleted pages are skipped via their tombstone, so this
+        never resurrects something deleted with `delete_page`.
+
+        Returns the number of pages adopted.
+        """
+        try:
+            files = sorted(self._pages_dir.glob("*.md"))
+        except OSError:
+            return 0
+        if not files:
+            return 0
+
+        conn = self._get_conn()
+        try:
+            known_files = {row[0] for row in conn.execute("SELECT filename FROM pages")}
+            known_titles = {row[0] for row in conn.execute("SELECT title FROM pages")}
+            tombstoned = {
+                row[0] for row in conn.execute("SELECT filename FROM deleted_pages")
+            }
+
+            adopted = 0
+            for path in files:
+                filename = path.name
+                if filename in known_files or filename in tombstoned:
+                    continue
+                try:
+                    content = path.read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    continue
+                title = self._title_from_file(content, path.stem)
+                if title in known_titles:
+                    # A row already owns this title with a different filename;
+                    # skip rather than violate the title primary key.
+                    continue
+                try:
+                    mtime = path.stat().st_mtime
+                except OSError:
+                    mtime = time.time()
+                conn.execute(
+                    """INSERT OR IGNORE INTO pages
+                       (title, filename, content, size_bytes, created_at, updated_at)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (title, filename, content, len(content.encode("utf-8")), mtime, mtime),
+                )
+                known_titles.add(title)
+                adopted += 1
+            conn.commit()
+            return adopted
+        finally:
+            conn.close()
 
     def _extract_links(self, content: str) -> list[str]:
         """Extract [[wikilink]] targets from content."""
@@ -141,6 +243,9 @@ class WikiStore:
             return {"error": f"Write failed: {e}"}
 
         size = len(content.encode("utf-8"))
+        # Re-creating a previously soft-deleted page clears its tombstone, so the
+        # page is indexed again instead of being skipped as deleted.
+        conn.execute("DELETE FROM deleted_pages WHERE filename = ?", (filename,))
         conn.execute(
             """INSERT INTO pages (title, filename, content, size_bytes, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?)""",
@@ -233,6 +338,13 @@ class WikiStore:
             conn.close()
             return {"error": f"Page not found: {title}"}
 
+        # Tombstone first: the .md file is intentionally kept, so without a
+        # record of the deletion the reindex would adopt it straight back.
+        conn.execute(
+            "INSERT OR REPLACE INTO deleted_pages (filename, title, deleted_at) "
+            "VALUES (?, ?, ?)",
+            (row[1], title, time.time()),
+        )
         conn.execute("DELETE FROM pages WHERE title = ?", (title,))
         conn.execute("DELETE FROM backlinks WHERE source = ?", (title,))
         conn.commit()
