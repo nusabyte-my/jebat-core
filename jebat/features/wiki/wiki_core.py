@@ -201,6 +201,87 @@ class WikiStore:
         finally:
             conn.close()
 
+    def sync_page_file(self, path: Path) -> dict[str, Any]:
+        """Index one page file written by another writer.
+
+        `jebat.features.wiki.wiki` owns the page files but not this index, so it
+        calls this after every write. Doing it inline instead of relying on
+        `_reindex_from_files` matters because the RAG store is a process-lifetime
+        singleton: "reindex on next open" can mean "not for the rest of this
+        session". Idempotent — the file is the source of truth.
+
+        Returns a summary dict, or `{"error": ...}` when the file is unreadable.
+        """
+        path = Path(path)
+        try:
+            content = path.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            return {"error": f"Read failed: {e}"}
+
+        title = self._title_from_file(content, path.stem)
+        filename = path.name
+        size = len(content.encode("utf-8"))
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            mtime = time.time()
+
+        conn = self._get_conn()
+        try:
+            # A page that exists on disk is not deleted; clear any tombstone so a
+            # recreated page cannot stay permanently unindexed.
+            conn.execute("DELETE FROM deleted_pages WHERE filename = ?", (filename,))
+            existing = conn.execute(
+                "SELECT title FROM pages WHERE filename = ?", (filename,)
+            ).fetchone()
+            if existing is not None and existing[0] != title:
+                # Title changed, so the old row would collide on the title key.
+                conn.execute("DELETE FROM pages WHERE filename = ?", (filename,))
+                existing = None
+            if existing is None:
+                conn.execute(
+                    """INSERT OR REPLACE INTO pages
+                       (title, filename, content, size_bytes, created_at, updated_at)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (title, filename, content, size, mtime, mtime),
+                )
+            else:
+                conn.execute(
+                    "UPDATE pages SET size_bytes = ?, updated_at = ?, content = ? "
+                    "WHERE filename = ?",
+                    (size, mtime, content, filename),
+                )
+            conn.commit()
+        finally:
+            conn.close()
+
+        self._update_backlinks(title, content)
+        return {"title": title, "filename": filename, "size_bytes": size}
+
+    def unindex_page_file(self, path: Path) -> bool:
+        """Drop the index row for a page file that was hard-deleted.
+
+        `wiki_delete` unlinks the file, so there is nothing left to re-adopt and
+        no tombstone is needed. Returns True when a row was removed.
+        """
+        filename = Path(path).name
+        conn = self._get_conn()
+        try:
+            row = conn.execute(
+                "SELECT title FROM pages WHERE filename = ?", (filename,)
+            ).fetchone()
+            removed = (
+                conn.execute("DELETE FROM pages WHERE filename = ?", (filename,)).rowcount
+                > 0
+            )
+            conn.execute("DELETE FROM deleted_pages WHERE filename = ?", (filename,))
+            if row is not None:
+                conn.execute("DELETE FROM backlinks WHERE source = ?", (row[0],))
+            conn.commit()
+            return removed
+        finally:
+            conn.close()
+
     def _extract_links(self, content: str) -> list[str]:
         """Extract [[wikilink]] targets from content."""
         return WIKILINK_RE.findall(content)

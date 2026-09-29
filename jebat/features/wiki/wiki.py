@@ -18,6 +18,8 @@ from typing import Any
 
 from jebat.tools import register_tool
 
+from .wiki_core import WikiStore
+
 # ── Paths ────────────────────────────────────────────────────────────────────
 
 WIKI_DIR = Path.home() / ".jebat" / "wiki"
@@ -29,6 +31,42 @@ def _ensure_dirs() -> None:
     """Create wiki directories if they don't exist."""
     PAGES_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ── Index bridge ─────────────────────────────────────────────────────────────
+# Page files live here, but `index.db` (the FTS5 index that `wiki_rag` searches)
+# is owned by WikiStore. Every write goes through this bridge so the two cannot
+# drift: the RAG store is a process-lifetime singleton, so deferring to
+# WikiStore's reindex-on-open could leave a fresh page unsearchable for the rest
+# of the session. `WikiStore._reindex_from_files` remains the safety net for
+# anything that writes to PAGES_DIR without going through here.
+
+_index_store: WikiStore | None = None
+
+
+def _get_index_store() -> WikiStore:
+    """Shared WikiStore used to keep index.db in step with pages/*.md."""
+    global _index_store
+    if _index_store is None:
+        _index_store = WikiStore(wiki_dir=WIKI_DIR)
+    return _index_store
+
+
+def _sync_index(path: Path) -> None:
+    """Index a page just written. The page write already succeeded, so a failure
+    here must not fail the write — the reindex-on-open still self-heals it."""
+    try:
+        _get_index_store().sync_page_file(path)
+    except Exception:
+        pass
+
+
+def _unindex_page(path: Path) -> None:
+    """Drop the index row for a page file that was just unlinked."""
+    try:
+        _get_index_store().unindex_page_file(path)
+    except Exception:
+        pass
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -323,6 +361,7 @@ async def wiki_create(title: str, content: str, tags: list[str] | None = None) -
 
     page_text = _build_page(title, content, tags=tags)
     path.write_text(page_text, encoding="utf-8")
+    _sync_index(path)
 
     # Update embedding index
     try:
@@ -415,6 +454,7 @@ async def wiki_edit(title: str, content: str) -> dict[str, Any]:
     page_text = _build_page(page_title, content, tags=tags,
                             source=source, created=created, updated=_today())
     path.write_text(page_text, encoding="utf-8")
+    _sync_index(path)
 
     # Update embedding
     try:
@@ -450,6 +490,7 @@ async def wiki_delete(title: str) -> dict[str, Any]:
 
     slug = path.stem
     path.unlink()
+    _unindex_page(path)
 
     # Remove cached embedding
     emb_path = _embedding_cache_path(slug)
@@ -601,6 +642,7 @@ async def wiki_auto_save(content: str) -> dict[str, Any]:
     session_id = os.environ.get("JEBAT_SESSION_ID", f"session_{uuid.uuid4().hex[:8]}")
     page_text = _build_page(title, content, tags=["auto-saved"], source=session_id)
     path.write_text(page_text, encoding="utf-8")
+    _sync_index(path)
 
     try:
         _update_embedding(slug, page_text)
@@ -747,6 +789,8 @@ async def wiki_consolidate(dry_run: bool = True) -> dict[str, Any]:
             )
             path_a.write_text(merged_text, encoding="utf-8")
             path_b.unlink()
+            _sync_index(path_a)
+            _unindex_page(path_b)
 
             # Update embedding
             try:
