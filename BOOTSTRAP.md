@@ -4,16 +4,15 @@
 
 This is the canonical startup file for assistants working in this repository.
 
-`jebat-core/` is the primary source of truth for JEBAT behavior, architecture, and implementation unless the user explicitly says otherwise.
+The **top-level tree** is the primary source of truth for JEBAT behavior, architecture, and implementation. `jebat-core/` is a frozen archive (own `.git`, last committed 2026-07-04) — reference only, never the working copy.
 
 ## Session Start Order
 
 Read these files in order before substantial work:
 
 1. `AGENTS.md`
-2. `JEBAT_ASSISTANT_GUIDE.md`
+2. `IDENTITY.md`
 3. `MASTER_INDEX.md`
-4. `../CODEX_PROFILE.md` when the active assistant is Codex
 
 Then load task-specific docs and code only as needed.
 
@@ -40,7 +39,7 @@ When deciding where to work:
 
 ## Canonical Rule
 
-If duplicated documentation exists at the repository root and inside `jebat-core/`, prefer the `jebat-core/` copy unless the user points to another file.
+If duplicated documentation exists at the repository root and inside `jebat-core/`, prefer the **top-level copy**. The `jebat-core/` copy is a stale snapshot and does not govern current behavior.
 
 ## First-Turn Behavior
 

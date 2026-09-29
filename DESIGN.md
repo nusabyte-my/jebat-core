@@ -1,9 +1,10 @@
 # DESIGN.md
 
-## jebat-core
+## Workspace (top-level tree)
 
 Purpose:
-- Canonical operating center of the workspace
+- Canonical source of truth for the workspace; the top-level tree is what runs and what changes
+- `jebat-core/` is a frozen archive (last committed 2026-07-04) — visual reference only
 - Its docs, generated interfaces, and setup experiences define the tone for the rest of the stack
 
 Visual direction:

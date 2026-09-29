@@ -4,10 +4,10 @@ This file is the root memory index for the workspace.
 
 ## Current Operating Memory
 
-- This repository should be treated as a JEBAT workspace with `jebat-core/` as the canonical operating center.
-- Canonical startup begins from `jebat-core/BOOTSTRAP.md`.
-- Codex sessions should also load `CODEX_PROFILE.md`.
-- If duplicate docs exist at the root and in `jebat-core/`, prefer the `jebat-core/` copy unless the user explicitly directs otherwise.
+- This repository is the canonical JEBAT workspace: the **top-level tree is the source of truth** (it is what Python imports and where active work happens).
+- Canonical startup begins from `AGENTS.md` then `BOOTSTRAP.md` (top-level).
+- If duplicate docs exist at the root and in `jebat-core/`, prefer the **top-level copy** — `jebat-core/` is a frozen archive (own `.git`, last committed 2026-07-04), read-only reference only.
+- Recorded in `vault/decisions/2026-09-29-top-level-tree-canonical.md` (supersedes the 2026-04-08 jebat-core startup rule).
 
 ## Active Projects
 
@@ -49,9 +49,9 @@ This file is the root memory index for the workspace.
 
 ## Durable Decisions
 
-- Architecture and operating decisions live in `jebat-core/vault/decisions/`.
-- See `jebat-core/vault/decisions/2026-04-08-jebatcore-canonical-startup.md` for the accepted JEBATCore startup rule.
-- See `jebat-core/vault/decisions/2026-04-16-llamacpp-jebat-llm-production-cutover.md` for the production `llama.cpp` cutover, VPS tuning, JEBAT chat preset routing, and the current `.65 -> .206` remote model-host topology.
+- Architecture and operating decisions live in `vault/decisions/` (top-level; the `jebat-core/vault/` copy is frozen).
+- See `vault/decisions/2026-04-08-jebatcore-canonical-startup.md` for the accepted JEBATCore startup rule (superseded 2026-09-29: top-level tree is canonical).
+- See `vault/decisions/2026-04-16-llamacpp-jebat-llm-production-cutover.md` for the production `llama.cpp` cutover, VPS tuning, JEBAT chat preset routing, and the current `.65 -> .206` remote model-host topology.
 
 ## Integration Stack (MCP + Skills)
 
