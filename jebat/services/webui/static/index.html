@@ -2,14 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>JEBAT — Sovereign AI Platform</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/webui/static/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/webui/static/jebat-app-icon.png" />
   <meta name="description" content="JEBAT Sovereign AI Platform — 5 products, 1 memory, infinite agents" />
   <meta property="og:title" content="JEBAT — Sovereign AI Platform" />
   <meta property="og:description" content="Hang Jebat's memory. Sahabat's voice. Keris's shield. Pandai's mind. Perisai's reach." />
   <meta property="og:type" content="website" />
-  <meta name="theme-color" content="#030303" />
+  <meta name="theme-color" content="#080A09" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="JEBAT" />
   <link rel="manifest" href="/webui/static/manifest.json" />
   <link rel="stylesheet" href="/webui/static/css/stealth.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -844,6 +850,11 @@
     // ═══════════════════════════════════════════════════
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/webui/static/sw.js').catch(() => {});
+      // When a new SW takes over, reload once so clients pick up fresh shell
+      let refreshed = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshed) { refreshed = true; location.reload(); }
+      });
     }
 
     // ═══════════════════════════════════════════════════

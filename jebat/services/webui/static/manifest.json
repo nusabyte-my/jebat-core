@@ -2,11 +2,33 @@
   "name": "JEBAT — Sovereign AI Platform",
   "short_name": "JEBAT",
   "description": "5 products, 1 memory, infinite agents",
+  "id": "/webui/",
   "start_url": "/webui/",
+  "scope": "/webui/",
   "display": "standalone",
-  "background_color": "#030303",
-  "theme_color": "#030303",
+  "orientation": "any",
+  "background_color": "#080A09",
+  "theme_color": "#080A09",
+  "categories": ["developer", "productivity", "utilities"],
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/webui/static/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/webui/static/favicon.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "/webui/static/jebat-app-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/webui/static/jebat-app-icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/webui/static/jebat-app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Chat",
+      "short_name": "Chat",
+      "url": "/webui/?view=chat",
+      "icons": [{ "src": "/webui/static/favicon-32.png", "sizes": "32x32" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/webui/?view=dashboard",
+      "icons": [{ "src": "/webui/static/favicon-32.png", "sizes": "32x32" }]
+    }
   ]
 }
