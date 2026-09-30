@@ -16,7 +16,10 @@
 #   BACKUP=1 bash scripts/deploy-tar-over-ssh.sh           # tar the server dir first
 #   bash scripts/deploy-tar-over-ssh.sh                    # deploy
 #
-# Env overrides: VPS_HOST, VPS_CODE_DIR, TMPDIR
+# Env overrides: VPS_HOST, VPS_CODE_DIR, TMPDIR, EXTRA_PRUNE
+#   EXTRA_PRUNE="training integrations"  — skip extra top-level dirs (space-
+#   separated) when the target only needs the runtime tree. Overlay semantics
+#   leave any server-side copies of skipped dirs untouched.
 
 set -euo pipefail
 
@@ -35,6 +38,11 @@ echo ""
 
 cd "$LOCAL_DIR"
 
+# Optional extra top-level prunes (see header).
+EXTRA_PRUNE="${EXTRA_PRUNE:-}"
+EXTRA_PATHS=()
+for d in $EXTRA_PRUNE; do EXTRA_PATHS+=(-o -path "./$d"); done
+
 # Prune during traversal (fast): every root dotdir (.git, .venv, .jebat, .freebuff,
 # local tooling...), dependency/build dirs, local-only weights and state.
 find . \
@@ -42,7 +50,8 @@ find . \
      -o -type d \( -name node_modules -o -name __pycache__ -o -name '*.egg-info' \
         -o -name venv -o -name dist \) \
      -o -type d \( -path './gguf-models' -o -path './jebat-core' -o -path './jebat-online' \
-        -o -path './out' -o -path './memory' -o -path './vault' \) \
+        -o -path './out' -o -path './memory' -o -path './vault' \
+        ${EXTRA_PATHS[@]+"${EXTRA_PATHS[@]}"} \) \
   \) -prune \
   -o -type f \( ! -name '*.pyc' ! -name '*.png' ! -name '.env' ! -name '*.npy' \) -print \
   > /tmp/jebat-deploy-files.$$.txt
