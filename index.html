@@ -107,7 +107,17 @@
       "text": "Yes, JEBAT features native MCP protocol integration, allowing AI agents to securely interact with the tools, databases, APIs, and file systems enabled in your workspace."
           }
         }
-      ]
+      ,
+        {
+          "@type": "Question",
+          "name": "What is Agentix and which template should I pick?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Agentix is JEBAT's solution lifecycle: scaffold, build, deploy, and run agents as versioned artifacts. Templates: hermes (ReAct reasoning loop), openclaw (workspace-driven), atomic (schema-typed tools). Deploy targets are allowlist-gated in agentix.yaml." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I reuse MCP servers I already configured in omp, opencode, or Claude Code?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. jebat config import reads the other CLI's config, normalizes transports, timeouts and env templates, then merges into the JEBAT config with collision-safe skipping and automatic backups. Use --dry-run to preview." }
+        }]
     }
   ]
 }
@@ -1474,7 +1484,7 @@ nav.scrolled {
   min-height: 140px;
 }
 
-/* PROBLEM SECTION (01 / CONTROL) */
+/* PROBLEM SECTION (02 / CONTROL) */
 .control-demo-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1560,7 +1570,7 @@ nav.scrolled {
   color: var(--hermes-text-subtle);
 }
 
-/* FOUR COMMANDS SECTION (02 / CORE) */
+/* FOUR COMMANDS SECTION (03 / CORE) */
 .commands-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -2495,7 +2505,7 @@ footer {
     <span>•</span>
     <span>GHOST DB + PGVECTOR MEMORY</span>
     <span>•</span>
-    <span>AUTONOMOUS REFLEXION GATES (BUILD · DESIGN · COPY)</span>
+    <span>AGENTIX LIFECYCLE (CREATE · BUILD · DEPLOY · RUN)</span>
     <span>•</span>
     <span>NIGHTLY autoMIMPI DAEMON (04:00 MYT)</span>
     <span>•</span>
@@ -2616,29 +2626,14 @@ footer {
         <h1>KEEP <span class="copper-gradient">COMMAND.</span></h1>
 
         <p class="lead">
-          Run private multi-turn agents on infrastructure you control. Wire <strong>118 MCP tools</strong> behind explicit safety tiers, verify code, design and copy through autonomous Reflexion gates, and never ship a write you did not approve.
+          A command layer that sits between your apps and any model — <strong>118 MCP tools</strong> behind explicit safety tiers, persistent Ghost DB memory, and a CLI that now builds, ships, and runs agent solutions. Never ship a write you did not approve.
         </p>
 
         <div class="hero-verify-row">
           <span class="hero-verify-badge"><i class="fa-solid fa-shield-halved text-pucuk"></i> Zero Telemetry</span>
-          <span class="hero-verify-badge"><i class="fa-solid fa-network-wired" style="color:var(--jebat-tembaga)"></i> 118 MCP Tools</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-key" style="color:var(--jebat-tembaga)"></i> Security Hardened</span>
+          <span class="hero-verify-badge"><i class="fa-solid fa-cubes-stacked" style="color:var(--jebat-tembaga)"></i> Agentix Lifecycle</span>
           <span class="hero-verify-badge"><i class="fa-solid fa-code-branch" style="color:var(--jebat-keluli)"></i> 17 Agent Roles</span>
-        </div>
-
-        <div class="hero-ledger-cap"><i class="fa-solid fa-lock text-copper"></i> GOVERNED EXECUTION — all 118 tools carry an MCP safety tier</div>
-        <div class="hero-ledger" role="list" aria-label="MCP tool safety-tier breakdown">
-          <div class="hero-ledger-item" role="listitem">
-            <span class="hero-ledger-val lv-readonly">31</span>
-            <span class="hero-ledger-key">Read-only</span>
-          </div>
-          <div class="hero-ledger-item" role="listitem">
-            <span class="hero-ledger-val lv-confirm">74</span>
-            <span class="hero-ledger-key">Write · confirm</span>
-          </div>
-          <div class="hero-ledger-item" role="listitem">
-            <span class="hero-ledger-val lv-destructive">13</span>
-            <span class="hero-ledger-key">Destructive · gated</span>
-          </div>
         </div>
 
         <div class="hero-ctas">
@@ -2657,29 +2652,6 @@ footer {
           <i class="fa-solid fa-terminal" style="color:var(--jebat-tembaga)"></i>
           <span class="cmd">curl -fsSL https://jebat.online/install.sh | bash</span>
           <button onclick="copyPillCommand(this)" title="Copy command" aria-label="Copy CLI Command"><i class="fa-regular fa-copy"></i></button>
-        </div>
-
-        <!-- HERO INTERACTIVE CLI CONSOLE WITH AUDIO TOGGLE -->
-        <div class="hero-cli-playground">
-          <div class="hero-cli-chips">
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button class="cli-chip" onclick="runHeroCLI('status')">jebat status</button>
-              <button class="cli-chip" onclick="runHeroCLI('mcp')">jebat mcp list</button>
-              <button class="cli-chip" onclick="runHeroCLI('agentix')">jebat agentix status</button>
-              <button class="cli-chip" onclick="runHeroCLI('audit')">jebat agi audit</button>
-              <button class="cli-chip" onclick="runHeroCLI('dream')">jebat autoMimpi</button>
-            </div>
-            <button onclick="toggleAudioFX(this)" class="cli-chip" style="color: var(--hermes-pucuk);" aria-label="Toggle terminal audio effects" aria-pressed="true">
-              <i class="fa-solid fa-volume-high"></i> Audio: ON
-            </button>
-          </div>
-          <div class="hero-cli-box" id="hero-cli-output">
-            > CLICK OR TYPE A COMMAND ABOVE TO EXECUTE LIVE CLI SIMULATION...
-          </div>
-          <form class="hero-agent-prompt" onsubmit="runHeroPrompt(event)">
-            <input id="hero-agent-input" type="text" value="Ask JEBAT to inspect your MCP tools" aria-label="Prompt JEBAT agent" />
-            <button type="submit"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> RUN AGENT</button>
-          </form>
         </div>
 
         <div style="margin-top: 14px;">
@@ -2745,12 +2717,12 @@ footer {
   <div class="container">
     <div class="mcp-hero-grid">
       <div class="mcp-hero-copy">
-        <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 02 / MCP READY</span>
+        <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 01 / MCP READY</span>
         <h2>Ask JEBAT. Watch MCP <span class="copper-gradient">act.</span></h2>
         <p>One command cockpit for the full loop: prompt the agent, pass policy checks, cut context overhead by 90% with paginated terse mode, and keep execution under your control.</p>
         <div class="mcp-hero-actions">
           <a href="#mcp" class="btn btn-copper">Explore MCP Bus <i class="fa-solid fa-arrow-down"></i></a>
-          <a href="#developers" class="btn btn-outline">Read Quickstart <i class="fa-solid fa-book-open"></i></a>
+          <a href="#workbench" class="btn btn-outline">Open Workbench <i class="fa-solid fa-book-open"></i></a>
         </div>
       </div>
       <div class="mcp-hero-console" aria-label="Interactive MCP capability preview">
@@ -2795,10 +2767,72 @@ footer {
   </div>
 </div>
 
+<!-- 03 / WORKBENCH — CLI + AGENTIX -->
+<section id="workbench" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-screwdriver-wrench text-copper"></i> 03 / WORKBENCH</span>
+    <h2 class="section-title">The CLI is the cockpit.</h2>
+    <p class="section-desc">
+      One binary drives the whole stack: simulate commands below, scaffold agent solutions, import your MCP fleet from omp, opencode, or Claude Code. Everything you see here maps to a real subcommand.
+    </p>
+
+    <div class="control-demo-grid">
+      <div>
+<!-- HERO INTERACTIVE CLI CONSOLE WITH AUDIO TOGGLE -->
+        <div class="hero-cli-playground">
+          <div class="hero-cli-chips">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button class="cli-chip" onclick="runHeroCLI('status')">jebat status</button>
+              <button class="cli-chip" onclick="runHeroCLI('mcp')">jebat mcp list</button>
+              <button class="cli-chip" onclick="runHeroCLI('agentix')">jebat agentix status</button>
+              <button class="cli-chip" onclick="runHeroCLI('audit')">jebat agi audit</button>
+              <button class="cli-chip" onclick="runHeroCLI('dream')">jebat autoMimpi</button>
+            </div>
+            <button onclick="toggleAudioFX(this)" class="cli-chip" style="color: var(--hermes-pucuk);" aria-label="Toggle terminal audio effects" aria-pressed="true">
+              <i class="fa-solid fa-volume-high"></i> Audio: ON
+            </button>
+          </div>
+          <div class="hero-cli-box" id="hero-cli-output">
+            > CLICK OR TYPE A COMMAND ABOVE TO EXECUTE LIVE CLI SIMULATION...
+          </div>
+          <form class="hero-agent-prompt" onsubmit="runHeroPrompt(event)">
+            <input id="hero-agent-input" type="text" value="Ask JEBAT to inspect your MCP tools" aria-label="Prompt JEBAT agent" />
+            <button type="submit"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> RUN AGENT</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="agentix" class="control-copy-side" style="border-left: 1px solid var(--border-subtle); padding-left: 28px;">
+        <h3>Agentix:<br/>solutions, not scripts.</h3>
+        <p>
+          Scaffold with <strong>hermes</strong> (ReAct loop), <strong>openclaw</strong> (workspace-driven), or <strong>atomic</strong> (schema-typed tools). Build into a SHA-stamped artifact, deploy against an allowlist — local registry, IDE-ready MCP config, or VPS — then run by name. Import your existing MCP servers first: <span class="mono text-copper">jebat config import -s omp|opencode|claude</span>.
+        </p>
+        <div class="control-statement-box">
+          "jebat agentix create → build → deploy → run. Deterministic templates, governed targets."
+        </div>
+        <div class="code-block-wrapper">
+          <button class="copy-code-btn" onclick="copySnippetToClipboard('agentix-snippet', this)" aria-label="Copy Agentix commands">Copy</button>
+          <div class="code-block" id="agentix-snippet"><span style="color:var(--hermes-text-subtle)">$</span> jebat config import -s omp --dry-run
+<span style="color:var(--hermes-pucuk)">┌─ import from omp (mcp.json)</span>
+│  ✓ stitch      http   https://stitch.googleapis.com/mcp
+│  ✓ hostinger   stdio  npx.cmd --package=hostinger-api-mcp
+<span style="color:var(--hermes-pucuk)">└─ timeouts ms→s · {env:VAR}→${VAR} · collisions skipped</span>
+
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix create usher -t atomic
+<span style="color:var(--hermes-pucuk)">✓ created atomic solution</span>
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix build ./usher
+<span style="color:var(--hermes-pucuk)">✓ built usher v0.1.0 sha:85c718ae</span>
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix run usher "close ticket 4128"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- 01 / CONTROL SECTION -->
 <section id="control" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-sliders text-copper"></i> 01 / CONTROL</span>
+    <span class="section-label"><i class="fa-solid fa-sliders text-copper"></i> 02 / CONTROL</span>
     <h2 class="section-title">The model should not own your architecture.</h2>
     <p class="section-desc">
       Every tool call routes through an approval boundary before execution. JEBAT exposes 118 annotated tools with explicit safety hints, runs an advisor_gate pre-flight risk check before destructive operations, and isolates memory and model routing from external vendor APIs.
@@ -2843,7 +2877,7 @@ footer {
 <!-- 02 / CORE SECTION -->
 <section id="core" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-cube text-copper"></i> 02 / CORE</span>
+    <span class="section-label"><i class="fa-solid fa-cube text-copper"></i> 03 / CORE</span>
     <h2 class="section-title">One layer. Four commands.</h2>
     <p class="section-desc">
       Four deterministic primitives that isolate inference, preserve memory traces, dispatch tools over MCP, and gate every destructive operation.
@@ -2892,7 +2926,7 @@ footer {
 <!-- 03 / STUDIO API DASHBOARD (HERMES STUDIO THEME) -->
 <section id="api-dashboard" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-gauge-high text-copper"></i> 03 / HERMES STUDIO API DASHBOARD</span>
+    <span class="section-label"><i class="fa-solid fa-gauge-high text-copper"></i> 04 / HERMES STUDIO API</span>
     <h2 class="section-title">Real-time Command & Telemetry Studio</h2>
     <p class="section-desc">
       Monitor live inference throughput, agent token budgets, provider failover latency, and API endpoints in a high-density Hermes-Studio environment.
@@ -2999,7 +3033,7 @@ footer {
 <!-- 04 / MCP BUS SECTION (MODEL CONTEXT PROTOCOL) -->
 <section id="mcp" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 04 / MCP BUS (MODEL CONTEXT PROTOCOL)</span>
+    <span class="section-label"><i class="fa-solid fa-microchip text-copper"></i> 05 / MCP BUS</span>
     <h2 class="section-title">Native Tool Execution Sub-Bus</h2>
     <p class="section-desc">
       Connect an IDE to JEBAT's MCP server. Recover context, cut tool definition overhead from 21,976 to 2,032 tokens (−91%), and keep write actions behind an explicit approval boundary.
@@ -3159,7 +3193,7 @@ footer {
 <!-- 04.5 / LIVE MCP BENCHMARK & ADVISOR PROOF PANEL (L2) -->
 <section id="mcp-live" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-chart-line text-copper"></i> 04B / LIVE MCP BENCHMARK &amp; ADVISOR PROOF</span>
+    <span class="section-label"><i class="fa-solid fa-chart-line text-copper"></i> 05B / MCP BENCHMARK &amp; ADVISOR PROOF</span>
     <h2 class="section-title">Measured MCP Token Economy &amp; Proactive Advisor</h2>
     <p class="section-desc">
       Real measured payloads from jebat.online. Cut tool definition context overhead by 90% with paginated terse mode and receive unprompted health suggestions immediately upon IDE connection.
@@ -3464,10 +3498,10 @@ footer {
   </div>
 </div>
 
-<!-- 05 / ARCHITECTURE SECTION -->
+<!-- 06 / ARCHITECTURE SECTION -->
 <section id="architecture" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-layer-group text-copper"></i> 05 / ARCHITECTURE</span>
+    <span class="section-label"><i class="fa-solid fa-layer-group text-copper"></i> 06 / ARCHITECTURE</span>
     <h2 class="section-title">AI becomes infrastructure when it can act.</h2>
     <p class="section-desc">
       JEBAT operates as an execution highway between intelligence models, stateful memory, and downstream systems. Hover over any layer to inspect detailed sub-tiers.
@@ -3503,10 +3537,10 @@ footer {
   </div>
 </section>
 
-<!-- 06 / DEPLOY SECTION -->
+<!-- 07 / DEPLOY SECTION -->
 <section id="deploy" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-server text-copper"></i> 06 / DEPLOY</span>
+    <span class="section-label"><i class="fa-solid fa-server text-copper"></i> 07 / DEPLOY</span>
     <h2 class="section-title">Deploy where your data belongs.</h2>
     <p class="section-desc">
       Choose the exact privacy posture required for your compliance and data security.
@@ -3582,10 +3616,10 @@ footer {
   </div>
 </section>
 
-<!-- 07 / OPERATORS (ECOSYSTEM) -->
+<!-- 08 / OPERATORS (ECOSYSTEM) -->
 <section class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-network-wired text-copper"></i> 07 / OPERATORS</span>
+    <span class="section-label"><i class="fa-solid fa-network-wired text-copper"></i> 08 / OPERATORS</span>
     <h2 class="section-title">Built on JEBAT Core.</h2>
     <p class="section-desc">
       Specialized operator environments powered by the JEBAT command runtime.
@@ -3619,10 +3653,10 @@ footer {
   </div>
 </section>
 
-<!-- 08 / EXECUTION DEMO TERMINAL -->
+<!-- 09 / EXECUTION DEMO TERMINAL -->
 <section class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-code text-copper"></i> 08 / EXECUTION</span>
+    <span class="section-label"><i class="fa-solid fa-code text-copper"></i> 09 / EXECUTION</span>
     <h2 class="section-title">From conversation to action.</h2>
     <p class="section-desc">
       Watch JEBAT coordinate agents across memory, knowledge bases, and tools to execute complex real-world workflows.
@@ -3669,10 +3703,10 @@ footer {
   </div>
 </section>
 
-<!-- 09 / DEVELOPERS SECTION -->
+<!-- 10 / DEVELOPERS SECTION -->
 <section id="developers" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-laptop-code text-copper"></i> 09 / DEVELOPERS</span>
+    <span class="section-label"><i class="fa-solid fa-laptop-code text-copper"></i> 10 / DEVELOPERS</span>
     <h2 class="section-title">First agent in minutes.</h2>
     <p class="section-desc">
       Start building with JEBAT locally in under 5 minutes using Docker or Python.
@@ -3706,50 +3740,10 @@ jebat chat "Act as Jebat Agent for this repo"
   </div>
 </section>
 
-<!-- 09B / AGENTIX & CONFIG IMPORT SECTION -->
-<section id="agentix" class="section">
-  <div class="container">
-    <span class="section-label"><i class="fa-solid fa-cubes-stacked text-copper"></i> 09B / AGENTIX</span>
-    <h2 class="section-title">One import. One lifecycle.</h2>
-    <p class="section-desc">
-      Bring your MCP servers from omp, opencode, or Claude Code in a single command — then build, deploy, and run agent solutions from the same CLI. Every deploy is allowlist-gated; every build is content-addressed.
-    </p>
-
-    <div class="control-demo-grid">
-      <div class="control-copy-side">
-        <h3>Solutions as artifacts,<br/>not scripts.</h3>
-        <p>
-          Scaffold an agent with <strong>hermes</strong> (ReAct reasoning loop), <strong>openclaw</strong> (workspace-driven), or <strong>atomic</strong> (schema-typed tools). Build validates and compiles it into a SHA-stamped artifact. Deploy honors <span class="mono text-copper">deploy.allow</span> — local registry, IDE-ready MCP config, or VPS. Run resolves by name or path and injects typed tools via <span class="mono text-copper">ctx.tools</span>.
-        </p>
-        <div class="control-statement-box">
-          "jebat agentix create → build → deploy → run. Deterministic templates, governed targets, real registry."
-        </div>
-      </div>
-
-      <div class="code-block-wrapper" style="align-self: center;">
-        <button class="copy-code-btn" onclick="copySnippetToClipboard('agentix-snippet', this)" aria-label="Copy Agentix commands">Copy</button>
-        <div class="code-block" id="agentix-snippet"><span style="color:var(--hermes-text-subtle)">$</span> jebat config import -s omp --dry-run
-<span style="color:var(--hermes-pucuk)">┌─ import from omp (mcp.json)</span>
-│  ✓ stitch      http   https://stitch.googleapis.com/mcp
-│  ✓ hostinger   stdio  npx.cmd --package=hostinger-api-mcp
-<span style="color:var(--hermes-pucuk)">└─ 26 servers matched — timeouts ms→s, {env:VAR}→${VAR}</span>
-
-<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix create usher -t atomic
-<span style="color:var(--hermes-pucuk)">✓ created atomic solution</span>
-<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix build ./usher
-<span style="color:var(--hermes-pucuk)">✓ built usher v0.1.0 sha:85c718ae</span>
-<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix deploy ./usher --target local
-<span style="color:var(--hermes-pucuk)">✓ registered → ~/.jebat/agentix/registry.json</span>
-<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix run usher "close out ticket 4128"</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 10 / FAQ ACCORDION SECTION -->
+<!-- 11 / FAQ ACCORDION SECTION -->
 <section id="faq" class="section">
   <div class="container">
-    <span class="section-label"><i class="fa-solid fa-circle-question text-copper"></i> 10 / FAQ</span>
+    <span class="section-label"><i class="fa-solid fa-circle-question text-copper"></i> 11 / FAQ</span>
     <h2 class="section-title">Frequently Asked Questions</h2>
     <p class="section-desc">
       Common questions about JEBAT command layer architecture, privacy postures, and enterprise deployment options.
@@ -3799,13 +3793,13 @@ jebat chat "Act as Jebat Agent for this repo"
   </div>
 </section>
 
-<!-- 11 / ENTERPRISE (NUSABYTE BRIDGE) -->
+<!-- 12 / ENTERPRISE (NUSABYTE BRIDGE) -->
 <section id="enterprise" class="section">
   <div class="container">
     <div class="enterprise-card">
       <div class="enterprise-grid">
         <div>
-          <span class="section-label" style="color: var(--hermes-gold);">11 / ENTERPRISE</span>
+          <span class="section-label" style="color: var(--hermes-gold);">12 / ENTERPRISE</span>
           <h2>Need JEBAT in production?</h2>
           <p style="color: var(--hermes-text-subtle); margin: 16px 0 24px; line-height: 1.7;">
             NusaByte architects, integrates, secures, deploys, and operates JEBAT inside your enterprise infrastructure.
@@ -3842,6 +3836,26 @@ jebat chat "Act as Jebat Agent for this repo"
             <span>24/7 Managed Operations</span>
           </div>
         </div>
+
+        <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>What is Agentix and which template should I pick?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Agentix is JEBAT's solution lifecycle: scaffold, build, deploy, and run agents as versioned artifacts. Pick <strong>hermes</strong> for ReAct-style reasoning loops, <strong>openclaw</strong> for folder-driven task workspaces, or <strong>atomic</strong> for schema-typed tools the agent can only orchestrate. Every deploy target is allowlist-gated in <span class="mono">agentix.yaml</span>.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Can I reuse MCP servers I already configured in omp, opencode, or Claude Code?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Yes — <span class="mono">jebat config import -s omp|opencode|claude</span> reads the other CLI's config, normalizes transports, millisecond timeouts, and env templates, then merges into <span class="mono">~/.jebat/config.yaml</span>. Collisions are skipped by default, existing keys are never overwritten, and a timestamped backup is written before any change. Preview first with <span class="mono">--dry-run</span>.
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -3897,6 +3911,8 @@ jebat chat "Act as Jebat Agent for this repo"
           <li><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">GitHub</a></li>
           <li><a href="docs.html">Documentation</a></li>
           <li><a href="#developers">Quickstart</a></li>
+          <li><a href="#workbench">Workbench &amp; Agentix</a></li>
+          <li><a href="#faq">Import FAQ</a></li>
         </ul>
       </div>
 
