@@ -13,6 +13,7 @@ Features:
 
 import re
 import sqlite3
+import sys
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -41,9 +42,13 @@ class WikiStore:
         adopted = self._reindex_from_files()
         if adopted:
             on_disk = len(list(self._pages_dir.glob("*.md")))
+            # stdout is the MCP stdio transport — a bare print here corrupts the
+            # JSON-RPC stream ("Failed to parse JSONL") on the first wiki write
+            # of a process. Diagnostics belong on stderr.
             print(
                 f"Wiki index migration: adopted {adopted} page(s) written outside "
-                f"the index ({on_disk} on disk)."
+                f"the index ({on_disk} on disk).",
+                file=sys.stderr,
             )
 
     def _init_db(self) -> None:

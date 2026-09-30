@@ -96,3 +96,26 @@ def test_direct_file_writes_are_still_adopted(wiki_env):
     store = WikiStore(wiki_dir=wiki_env.WIKI_DIR)
 
     assert store.search("zzqdelta")["count"] == 1
+
+
+@pytest.mark.anyio
+async def test_wiki_writes_never_touch_stdout(wiki_env, capsys):
+    """stdout IS the MCP stdio transport.
+
+    A bare `print` on this path emits a non-JSON line between JSON-RPC frames,
+    so the client fails the very call that wrote the page ("Failed to parse
+    JSONL") and reconnects. The index-migration notice used to print there; it
+    must stay on stderr.
+    """
+    pages = wiki_env.PAGES_DIR
+    pages.mkdir(parents=True, exist_ok=True)
+    # A page written without the bridge forces the migration notice on the next
+    # WikiStore construction — the exact code path that corrupted the stream.
+    (pages / "outside.md").write_text("# Wiki: Outside\n\nzzqoutside\n", encoding="utf-8")
+
+    result = await wiki_env.wiki_auto_save("zzqstdout probe page\nbody")
+
+    captured = capsys.readouterr()
+    assert result["status"] == "auto_saved"
+    assert captured.out == ""
+    assert "Wiki index migration" in captured.err

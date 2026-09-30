@@ -39,7 +39,7 @@ try:
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
-    print("MCP library not installed. Install with: pip install mcp")
+    print("MCP library not installed. Install with: pip install mcp", file=sys.stderr)
 
 try:
     from jebat_dev.brain import DevBrain
@@ -419,7 +419,7 @@ class JEBATMCPServer:
     async def run_stdio(self):
         """Run server using stdio transport."""
         if not self.server:
-            print("MCP library not available")
+            print("MCP library not available", file=sys.stderr)
             return
 
         logger.info("Starting JEBAT MCP Server (stdio)")
