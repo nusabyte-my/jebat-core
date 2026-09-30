@@ -20,6 +20,13 @@
 #   EXTRA_PRUNE="training integrations"  — skip extra top-level dirs (space-
 #   separated) when the target only needs the runtime tree. Overlay semantics
 #   leave any server-side copies of skipped dirs untouched.
+#   KEEP_LAST=5 — after a successful deploy, delete old runtime backups on the
+#   server, keeping the newest N (default 5; 0 disables pruning). The just-
+#   created backup is always kept regardless of N.
+#
+# Backups fail closed: if the server-side tar reports a nonzero exit, the
+# deploy aborts BEFORE extracting anything (a truncated backup must never
+# sit next to a successful deploy as if it were a rollback option).
 
 set -euo pipefail
 
@@ -29,6 +36,8 @@ LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 DRY_RUN="${DRY_RUN:-0}"
 BACKUP="${BACKUP:-0}"
+KEEP_LAST="${KEEP_LAST:-5}"
+SSH_BIN="${SSH_BIN:-ssh}"  # override to pin a specific ssh binary (also used by tests)
 
 echo "⚔️  JEBAT tar-over-ssh sync"
 echo "   Source:   $LOCAL_DIR"
@@ -73,17 +82,38 @@ if [ "$DRY_RUN" = "1" ]; then
 fi
 
 echo "🔗 Streaming and extracting..."
+# NOTE: $STAMP below is expanded LOCALLY while building the command string
+# (ssh does not propagate env), so the backup name carries the real stamp.
+# Keep this remote script free of prose: everything here is executed verbatim.
 tar -cf - -T "$PAYLIST" \
-  | ssh -o BatchMode=yes "$VPS_HOST" "
+  | "$SSH_BIN" -o BatchMode=yes "$VPS_HOST" "
       set -e
       mkdir -p '$VPS_CODE_DIR'
       if [ '$BACKUP' = '1' ]; then
         echo '   💾 Backing up server dir...'
-        tar -czf /root/jebat-runtime-backup-$STAMP.tar.gz -C '$VPS_CODE_DIR' . 2>/dev/null || true
+        if ! tar -czf /root/jebat-runtime-backup-$STAMP.tar.gz -C '$VPS_CODE_DIR' .; then
+          echo '   ❌ server-side backup FAILED (see stderr above)' >&2
+          echo '   deploy aborted — nothing was extracted' >&2
+          exit 1
+        fi
       fi
       tar -xf - -C '$VPS_CODE_DIR'
       echo '   ✓ extracted'
     "
+
+if [ "$BACKUP" = "1" ] && [ "$KEEP_LAST" != "0" ]; then
+  # Compute the cutoff locally: KEEP_LAST must not be evaluated on the server,
+  # where it is unset (an unset var in $((...)) is 0, which would make
+  # `tail -n +1` select EVERY backup — including the fresh one — for deletion).
+  PRUNE_FROM=$((KEEP_LAST + 1))
+  "$SSH_BIN" -o BatchMode=yes "$VPS_HOST" "
+    cd /root && ls -1t jebat-runtime-backup-*.tar.gz 2>/dev/null | tail -n +$PRUNE_FROM | while read -r old; do
+      rm -f -- \"\$old\"
+      echo \"   🗑 pruned old backup: \$old\"
+    done
+    true
+  "
+fi
 
 echo ""
 echo "✅ Synced to $VPS_CODE_DIR"
