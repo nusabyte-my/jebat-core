@@ -5,6 +5,7 @@ A reliable web interface for JEBAT AI Assistant.
 """
 
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -1325,6 +1326,23 @@ async def skills_import(payload: dict):
 @webui_router.websocket("/webui/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
     """WebSocket endpoint for real-time communication"""
+    configured_key = os.getenv("JEBAT_API_KEY", "")
+    if configured_key:
+        provided_key = (
+            websocket.query_params.get("api_key")
+            or websocket.headers.get("x-api-key")
+            or ""
+        )
+        if not provided_key:
+            auth_header = websocket.headers.get("authorization", "")
+            if auth_header.lower().startswith("bearer "):
+                provided_key = auth_header[7:].strip()
+
+        if not provided_key or not hmac.compare_digest(provided_key.encode(), configured_key.encode()):
+            logger.warning(f"WebSocket auth failed for user_id={user_id}")
+            await websocket.close(code=4401, reason="Unauthorized: invalid or missing API key")
+            return
+
     await websocket.accept()
     active_connections[user_id] = websocket
     logger.info(f"WebSocket connected: {user_id}")

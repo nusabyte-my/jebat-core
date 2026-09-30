@@ -745,6 +745,7 @@ async def seo_serp_check(query: str, domain: str = "", top_n: int = 10) -> Dict[
 async def seo_url_audit(url: str, target_keyword: str = "") -> Dict[str, Any]:
     """Fetch a URL and run the on-page audit against the live page."""
     import httpx
+    from jebat.features.security.outbound import get_validated, OutboundURLBlocked
 
     url = (url or "").strip()
     if not url.lower().startswith(("http://", "https://")):
@@ -752,23 +753,24 @@ async def seo_url_audit(url: str, target_keyword: str = "") -> Dict[str, Any]:
 
     headers = {"User-Agent": "JEBAT-SEO-Audit/1.0 (+https://github.com/jebat)"}
     try:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=headers) as client:
-            resp = await client.get(url)
+        async with httpx.AsyncClient(timeout=15.0, headers=headers) as client:
+            resp = await get_validated(client, url, headers=headers)
             elapsed_ms = int(resp.elapsed.total_seconds() * 1000)
 
             robots_status = None
             sitemap_urls: List[str] = []
             origin = f"{resp.url.scheme}://{resp.url.netloc}"
             try:
-                robots = await client.get(f"{origin}/robots.txt")
+                robots = await get_validated(client, f"{origin}/robots.txt", headers=headers)
                 robots_status = robots.status_code
                 if robots.status_code == 200:
                     sitemap_urls = re.findall(r"(?i)^sitemap:\s*(\S+)", robots.text)[:5]
             except Exception:
                 pass
+    except OutboundURLBlocked as exc:
+        return {"status": "error", "error": f"Blocked unsafe URL: {exc}", "url": url}
     except Exception as e:
         return {"status": "error", "error": f"Fetch failed: {e}", "url": url}
-
     content_type = resp.headers.get("content-type", "")
     facts: Dict[str, Any] = {
         "status_code": resp.status_code,

@@ -27,8 +27,10 @@ import os
 import sys
 import traceback
 import subprocess
+import threading
 import time
 import uuid
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -50,12 +52,52 @@ from .protocol import (
 
 # ── Tracking & Severity ──────────────────────────────────────────────────────
 
-_RECENT_ERRORS: List[Dict[str, Any]] = []
+_RECENT_ERRORS: "deque[Dict[str, Any]]" = deque(maxlen=50)
 _TOOL_CALL_COUNTS: Dict[str, int] = {}
+_TOOL_ERROR_COUNTS: Dict[str, int] = {}
+# Per-tool latency ring for p50/p95 (ms). Bounded so the metrics resource
+# stays cheap no matter how long the server runs.
+_TOOL_LATENCIES: Dict[str, "deque[float]"] = {}
+_TOOL_LATENCY_RING = 200
+
+
+def _record_tool_latency(tool_name: str, duration_ms: float) -> None:
+    ring = _TOOL_LATENCIES.setdefault(tool_name, deque(maxlen=_TOOL_LATENCY_RING))
+    ring.append(duration_ms)
+
+
+def _percentile(ring: "deque[float]", pct: float) -> float:
+    if not ring:
+        return 0.0
+    ordered = sorted(ring)
+    idx = min(len(ordered) - 1, max(0, round(pct * (len(ordered) - 1))))
+    return ordered[idx]
+
+
+def _build_metrics_json() -> str:
+    tools = []
+    for name in sorted(_TOOL_CALL_COUNTS):
+        ring = _TOOL_LATENCIES.get(name)
+        tools.append({
+            "tool": name,
+            "calls": _TOOL_CALL_COUNTS[name],
+            "errors": _TOOL_ERROR_COUNTS.get(name, 0),
+            "latency_ms": {
+                "p50": round(_percentile(ring, 0.50), 1),
+                "p95": round(_percentile(ring, 0.95), 1),
+            },
+        })
+    payload = {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "tools": tools,
+        "recentErrors": list(_RECENT_ERRORS)[-10:],
+    }
+    return mcp_json(payload)
 
 
 def _record_tool_error(tool_name: str, error: str, arguments: Dict, kind: str = "execution") -> None:
     """Append a tool error to the bounded recent-errors ring (F3)."""
+    _TOOL_ERROR_COUNTS[tool_name] = _TOOL_ERROR_COUNTS.get(tool_name, 0) + 1
     _RECENT_ERRORS.append({
         "tool": tool_name,
         "error": error,
@@ -63,8 +105,6 @@ def _record_tool_error(tool_name: str, error: str, arguments: Dict, kind: str = 
         "timestamp": time.time(),
         "arguments": arguments,
     })
-    if len(_RECENT_ERRORS) > 50:
-        _RECENT_ERRORS.pop(0)
 
 LOG_LEVEL_SEVERITY: Dict[str, int] = {
     "debug": 10,
@@ -117,227 +157,39 @@ MCP_TOOLS_PAGE_SIZE = int(os.getenv("JEBAT_MCP_TOOLS_PAGE", "0"))
 _TOOLS_CACHE: Dict[tuple, Dict[str, Any]] = {}
 
 
+_TOOLS_ALLOW_MEMO: Dict[str, Optional[set]] = {}
+
+
+# ── Skills / wiki resource indexes (extracted to mcp_resources.py) ─────────
+# Index builders + TTL caches live in mcp_resources.py; the JSON-RPC handlers
+# below consume them. Names re-exported here keep existing import paths stable.
+from jebat.features.mcp.mcp_resources import (  # noqa: E402,F401
+    _skill_index,
+    _skill_meta,
+    _skill_roots,
+    _wiki_index,
+    _wiki_meta,
+    _wiki_roots,
+)
+
+
 def _allowed_tools() -> Optional[set]:
     """Return the JEBAT_MCP_TOOLS_ALLOW allowlist, or None when unrestricted.
 
     The env var is a comma-separated list of tool names (set it from a
     client's mcp.json ``env`` block to trim tools/list). Whitespace around
     names is ignored; empty or unset exposes the full registry so existing
-    IDE configs keep every tool unless they opt in.
+    IDE configs keep every tool unless they opt in. Memoized per raw env
+    value — this sits on the tools/call hot path and os.getenv + split
+    per request is wasted work when the value never changes.
     """
     raw = os.getenv("JEBAT_MCP_TOOLS_ALLOW", "")
+    if raw in _TOOLS_ALLOW_MEMO:
+        return _TOOLS_ALLOW_MEMO[raw]
     names = {name.strip() for name in raw.split(",") if name.strip()}
-    return names or None
-
-
-# ── Skills as MCP resources (skill://) ─────────────────────────────────────
-# Every SKILL.md the workspace knows about is exposed as a resource instead
-# of one tool per skill: MCP tool-selection accuracy degrades sharply past
-# ~30-40 tools, while resources scale for free and stay readable by any
-# conforming client (resources/list + resources/read).
-
-_SKILL_INDEX: Optional[Dict[str, Dict[str, str]]] = None
-_SKILL_INDEX_AT = 0.0
-_SKILL_INDEX_TTL = 5.0  # seconds; skill_manage can add/remove skills at runtime
-
-
-def _skill_roots() -> List[tuple]:
-    """(store_key, path) pairs for every skill store JEBAT reads from."""
-    home = Path.home()
-    pkg_root = Path(__file__).resolve().parents[3]
-    cwd = Path.cwd()
-    candidates = [
-        ("tokguru", os.getenv("JEBAT_SKILLS_DIR", "") or str(home / ".jebat" / "tokguru")),
-        ("home", str(home / ".jebat" / "skills")),
-        ("bundle", str(pkg_root / "jebat-tokguru" / "skills")),
-        ("workspace", str(pkg_root / "skills")),
-        ("bundle", str(cwd / "jebat-tokguru" / "skills")),
-        ("workspace", str(cwd / "skills")),
-    ]
-    roots: List[tuple] = []
-    seen = set()
-    for store, raw in candidates:
-        if not raw:
-            continue
-        try:
-            path = Path(raw).expanduser().resolve()
-        except OSError:
-            continue
-        if path in seen or not path.is_dir():
-            continue
-        seen.add(path)
-        roots.append((store, path))
-    return roots
-
-
-def _skill_meta(content: str) -> Dict[str, str]:
-    """Extract name/description/category from SKILL.md YAML frontmatter."""
-    meta: Dict[str, str] = {}
-    if not content.startswith("---"):
-        return meta
-    end = content.find("---", 3)
-    if end == -1:
-        return meta
-    for line in content[3:end].splitlines():
-        line = line.strip()
-        if ": " not in line:
-            continue
-        key, value = line.split(": ", 1)
-        key = key.strip()
-        if key in ("name", "description", "category") and key not in meta:
-            meta[key] = value.strip().strip("\"'")
-    return meta
-
-
-def _skill_index(refresh: bool = False) -> Dict[str, Dict[str, str]]:
-    """Map skill://<store>/<name> → {name, description, category, store, path}."""
-    global _SKILL_INDEX, _SKILL_INDEX_AT
-    now = time.monotonic()
-    if (
-        not refresh
-        and _SKILL_INDEX is not None
-        and (now - _SKILL_INDEX_AT) < _SKILL_INDEX_TTL
-    ):
-        return _SKILL_INDEX
-
-    index: Dict[str, Dict[str, str]] = {}
-    for store, root in _skill_roots():
-        try:
-            skill_files = sorted(root.rglob("SKILL.md"))
-        except OSError:
-            continue
-        for skill_file in skill_files:
-            try:
-                rel = skill_file.parent.relative_to(root).as_posix()
-            except ValueError:
-                continue
-            uri = f"skill://{store}/{rel}"
-            if uri in index:
-                continue
-            try:
-                content = skill_file.read_text(encoding="utf-8", errors="replace")
-            except OSError:
-                continue
-            meta = _skill_meta(content)
-            index[uri] = {
-                "name": meta.get("name") or skill_file.parent.name,
-                "description": meta.get("description", ""),
-                "category": meta.get("category", ""),
-                "store": store,
-                "path": str(skill_file),
-            }
-
-    _SKILL_INDEX = index
-    _SKILL_INDEX_AT = now
-    return index
-
-
-# ── Wiki pages as MCP resources (wiki://) ──────────────────────────────────
-# Mirrors the skill:// surface: one resource per page, plus a URI template.
-# Pages are read from the markdown files themselves rather than through
-# WikiStore's SQLite index, because the tool surface (`wiki.py`) writes those
-# same files without updating that index — the files are the only view that is
-# guaranteed to match what is actually on disk.
-
-_WIKI_INDEX: Optional[Dict[str, Dict[str, str]]] = None
-_WIKI_INDEX_AT = 0.0
-_WIKI_INDEX_TTL = 5.0  # seconds; the wiki_* tools can write pages at runtime
-
-
-def _wiki_roots() -> List[Path]:
-    """The `pages/` directory holding wiki markdown.
-
-    `JEBAT_WIKI_DIR` *replaces* the default wiki root, matching how
-    `wiki_rag` resolves the same variable — adding to it instead would mean the
-    variable could never point a caller at a self-contained store.
-    """
-    env_dir = os.getenv("JEBAT_WIKI_DIR", "")
-    base = Path(env_dir).expanduser() if env_dir else Path.home() / ".jebat" / "wiki"
-    candidates = [base / "pages"]
-    roots: List[Path] = []
-    seen = set()
-    for raw in candidates:
-        try:
-            path = raw.resolve()
-        except OSError:
-            continue
-        if path in seen or not path.is_dir():
-            continue
-        seen.add(path)
-        roots.append(path)
-    return roots
-
-
-def _wiki_meta(content: str, stem: str) -> Dict[str, str]:
-    """Title/tags/updated from a page header (`# Wiki:` then `**Key**: value`)."""
-    lines = content.split("\n")
-    meta: Dict[str, str] = {}
-    if lines and lines[0].strip().startswith("# Wiki:"):
-        meta["title"] = lines[0].split("# Wiki:", 1)[1].strip()
-    for line in lines[:12]:
-        line = line.strip()
-        if not line.startswith("**") or ": " not in line:
-            continue
-        key, value = line.split(": ", 1)
-        key = key.strip("*").strip().lower()
-        if key in ("tags", "updated") and key not in meta:
-            meta[key] = value.strip()
-    if not meta.get("title"):
-        for line in lines[:10]:
-            line = line.strip()
-            if line.startswith("# "):
-                meta["title"] = line[2:].strip()
-                break
-    meta.setdefault(
-        "title", stem.replace("-", " ").replace("_", " ").strip().title() or stem
-    )
-    return meta
-
-
-def _wiki_index(refresh: bool = False) -> Dict[str, Dict[str, str]]:
-    """Map wiki://<slug> → {slug, title, description, tags, updated, path}."""
-    global _WIKI_INDEX, _WIKI_INDEX_AT
-    now = time.monotonic()
-    if (
-        not refresh
-        and _WIKI_INDEX is not None
-        and (now - _WIKI_INDEX_AT) < _WIKI_INDEX_TTL
-    ):
-        return _WIKI_INDEX
-
-    index: Dict[str, Dict[str, str]] = {}
-    for root in _wiki_roots():
-        try:
-            page_files = sorted(root.glob("*.md"))
-        except OSError:
-            continue
-        for page_file in page_files:
-            slug = page_file.stem
-            uri = f"wiki://{slug}"
-            if uri in index:
-                continue
-            try:
-                content = page_file.read_text(encoding="utf-8", errors="replace")
-            except OSError:
-                continue
-            meta = _wiki_meta(content, slug)
-            tags = meta.get("tags", "")
-            updated = meta.get("updated", "")
-            description = f"JEBAT wiki page · tags: {tags}" if tags else "JEBAT wiki page"
-            if updated:
-                description += f" · updated {updated}"
-            index[uri] = {
-                "slug": slug,
-                "title": meta["title"],
-                "description": description,
-                "tags": tags,
-                "updated": updated,
-                "path": str(page_file),
-            }
-
-    _WIKI_INDEX = index
-    _WIKI_INDEX_AT = now
-    return index
+    result: Optional[set] = names or None
+    _TOOLS_ALLOW_MEMO[raw] = result
+    return result
 
 
 _TERSE_CLIENT_NAME: str = ""
@@ -880,12 +732,16 @@ class MCPServer:
                 },
             }
 
-        # Wire ProgressManager for long-running tools (MQ-4)
+        # Wire ProgressManager for long-running tools (MQ-4). A ContextVar
+        # reporter lets inner loops (agent ReAct iterations, SQL batches)
+        # push fractional progress without importing JSON-RPC details.
         progress_tools = ('agent_execute', 'ghost_sql', 'pentest_scan', 'advisor_decide')
         progress_token = None
         pm = None
+        _reporter_token = None
         if tool_name in progress_tools:
             from jebat.features.mcp.mcp_transport import ProgressManager
+            from jebat_cli_new.progress import PROGRESS_REPORTER
             if not hasattr(self, "_progress_manager") or self._progress_manager is None:
                 self._progress_manager = ProgressManager()
             pm = self._progress_manager
@@ -895,15 +751,37 @@ class MCPServer:
                 "method": "notifications/progress",
                 "params": {
                     "progressToken": progress_token,
-                    "progress": 0.5,
+                    "progress": 0.0,
                     "total": 1,
                 },
             }
             self._send_notification(start_payload)
 
+            def _on_inner_progress(frac: float, message: str = "") -> None:
+                # ProgressManager.notify is queue-backed and thread-safe; the
+                # 0.5 cap leaves room for the final completion pulse.
+                pm.notify(progress_token, 0.05 + min(max(frac, 0.0), 1.0) * 0.9, message)
+
+            _reporter_token = PROGRESS_REPORTER.set(_on_inner_progress)
+
         try:
-            # Dispatch to JEBAT tool registry
-            result = await call_tool(tool_name, **arguments)
+            # Hard deadline per call: a hung tool (dead DB, stalled provider)
+            # must not wedge the JSON-RPC request indefinitely. Uses the
+            # tool's declared timeout (seconds) with a floor for slow tools.
+            tool_def = TOOL_REGISTRY.get(tool_name)
+            declared = getattr(tool_def, "timeout", None) if tool_def else None
+            call_timeout = max(float(declared or 30), 5.0)
+            if tool_name in ("agent_execute", "agi_execute", "ghost_sql", "pentest_scan"):
+                call_timeout = max(call_timeout, 600.0)
+            try:
+                _t0 = time.perf_counter()
+                result = await asyncio.wait_for(call_tool(tool_name, **arguments), timeout=call_timeout)
+                _record_tool_latency(tool_name, (time.perf_counter() - _t0) * 1000.0)
+            except asyncio.TimeoutError:
+                _record_tool_latency(tool_name, (time.perf_counter() - _t0) * 1000.0)
+                raise TimeoutError(
+                    f"tool '{tool_name}' exceeded its {call_timeout:.0f}s execution deadline"
+                )
 
             # Convert result to MCP content format
             if isinstance(result, str):
@@ -931,16 +809,19 @@ class MCPServer:
 
             return {"content": content}
 
+        except TimeoutError as e:
+            logger.error(f"Tool execution deadline exceeded for {tool_name}: {e}")
+            _record_tool_error(tool_name, f"TimeoutError: {e}", arguments)
+            return {
+                "isError": True,
+                "content": [{
+                    "type": "text",
+                    "text": f"Tool execution error: {e}",
+                }],
+            }
         except Exception as e:
             logger.error(f"Tool execution error for {tool_name}: {e}")
-            _RECENT_ERRORS.append({
-                "tool": tool_name,
-                "error": f"{type(e).__name__}: {e}",
-                "timestamp": time.time(),
-                "arguments": arguments,
-            })
-            if len(_RECENT_ERRORS) > 50:
-                _RECENT_ERRORS.pop(0)
+            _record_tool_error(tool_name, f"{type(e).__name__}: {e}", arguments)
             return {
                 "isError": True,
                 "content": [{
@@ -949,6 +830,9 @@ class MCPServer:
                 }],
             }
         finally:
+            if _reporter_token is not None:
+                from jebat_cli_new.progress import PROGRESS_REPORTER
+                PROGRESS_REPORTER.reset(_reporter_token)
             if progress_token and pm:
                 end_payload = {
                     "jsonrpc": JSONRPC_VERSION,
@@ -970,6 +854,12 @@ class MCPServer:
                 "name": "JEBAT execution workflow",
                 "description": "Plan, approve, execute, verify, and remember every change.",
                 "mimeType": "text/markdown",
+            },
+            {
+                "uri": "jebat://metrics/tools",
+                "name": "Tool call metrics and health",
+                "description": "Per-tool call counts, error counts, latency p50/p95, and recent errors.",
+                "mimeType": "application/json",
             },
             {
                 "uri": "jebat://tools",
@@ -1308,18 +1198,31 @@ class MCPServer:
             except Exception as e:
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
 
+        if uri == "jebat://metrics/tools":
+            return {"contents": [{"uri": uri, "mimeType": "application/json", "text": _build_metrics_json()}]}
+
         if uri == "jebat://git/status":
             try:
-                res = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, cwd=os.getcwd())
+                res = await asyncio.to_thread(
+                    subprocess.run, ["git", "status", "--porcelain"],
+                    capture_output=True, text=True, cwd=os.getcwd(), timeout=15,
+                )
                 text = res.stdout if res.returncode == 0 else f"git status error: {res.stderr}"
+            except subprocess.TimeoutExpired:
+                text = "git status timed out after 15s"
             except Exception as e:
                 text = f"Error running git status: {e}"
             return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": text}]}
 
         if uri == "jebat://git/diff":
             try:
-                res = subprocess.run(["git", "diff"], capture_output=True, text=True, cwd=os.getcwd())
+                res = await asyncio.to_thread(
+                    subprocess.run, ["git", "diff"],
+                    capture_output=True, text=True, cwd=os.getcwd(), timeout=15,
+                )
                 text = res.stdout if res.returncode == 0 else f"git diff error: {res.stderr}"
+            except subprocess.TimeoutExpired:
+                text = "git diff timed out after 15s"
             except Exception as e:
                 text = f"Error running git diff: {e}"
             return {"contents": [{"uri": uri, "mimeType": "text/x-diff", "text": text}]}
@@ -1327,7 +1230,10 @@ class MCPServer:
         if uri.startswith("jebat://file/"):
             rel_path = uri[len("jebat://file/"):]
             try:
-                file_path = (Path(os.getcwd()) / rel_path).resolve()
+                base_dir = Path(os.getcwd()).resolve()
+                file_path = (base_dir / rel_path).resolve()
+                if not file_path.is_relative_to(base_dir) or any(part.startswith(".") for part in file_path.relative_to(base_dir).parts):
+                    return {"error": {"code": -32602, "message": "Access denied: path traversal or hidden path detected"}}
                 if file_path.is_file():
                     text = file_path.read_text(encoding="utf-8", errors="replace")
                 else:
@@ -1335,12 +1241,16 @@ class MCPServer:
                 return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": text}]}
             except Exception as e:
                 return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": f"Error reading file: {e}"}]}
-
         if uri.startswith("jebat://git/diff/"):
             ref = uri[len("jebat://git/diff/"):]
             try:
-                res = subprocess.run(["git", "diff", ref], capture_output=True, text=True, cwd=os.getcwd())
+                res = await asyncio.to_thread(
+                    subprocess.run, ["git", "diff", ref],
+                    capture_output=True, text=True, cwd=os.getcwd(), timeout=15,
+                )
                 text = res.stdout if res.returncode == 0 else f"git diff error: {res.stderr}"
+            except subprocess.TimeoutExpired:
+                text = f"git diff {ref} timed out after 15s"
             except Exception as e:
                 text = f"Error running git diff against {ref}: {e}"
             return {"contents": [{"uri": uri, "mimeType": "text/x-diff", "text": text}]}
@@ -1382,212 +1292,16 @@ class MCPServer:
 
     async def _handle_prompts_list(self, params: Dict) -> Dict:
         """Return reusable prompts for governed agent workflows."""
-        raw_prompts = [
-            {
-                "name": "plan-act-verify-remember",
-                "description": "Run a governed JEBAT task from intent through durable memory.",
-                "arguments": [
-                    {"name": "task", "description": "The task to perform", "required": True},
-                    {"name": "scope", "description": "Files, services, or systems in scope", "required": False},
-                ],
-            },
-            {
-                "name": "hallmark-design-audit",
-                "description": "Audit UI markup against Hallmark 6-axis anti-slop gates and 8-state interaction rules.",
-                "arguments": [
-                    {"name": "markup", "description": "UI component markup or code", "required": True},
-                    {"name": "component_type", "description": "Type of component (button, card, hero, pricing)", "required": False},
-                ],
-            },
-            {
-                "name": "sales-copy-review",
-                "description": "Mandatory copywriting conversion review: strip AI buzzwords and transform generic CTAs.",
-                "arguments": [
-                    {"name": "copy", "description": "Sales or marketing text to audit", "required": True},
-                    {"name": "benefit", "description": "Specific tangible benefit the customer achieves", "required": False},
-                ],
-            },
-            {
-                "name": "project-onboard",
-                "description": "Auto-scan project files and SelfLearn memory to produce a comprehensive project context snapshot.",
-                "arguments": [
-                    {"name": "root", "description": "Project root directory", "required": False},
-                ],
-            },
-            {
-                "name": "kb-review",
-                "description": "Review JEBAT knowledge base: analyze strong areas, stale memories, knowledge gaps, and suggested consolidation actions.",
-                "arguments": [
-                    {"name": "focus_area", "description": "Optional focus area or topic to evaluate", "required": False},
-                ],
-            },
-            {
-                "name": "debug-this",
-                "description": "Structured 5-step debugging workflow for diagnosing and fixing errors.",
-                "arguments": [
-                    {"name": "error_message", "description": "The error message or traceback to debug", "required": True},
-                    {"name": "file", "description": "File or module where the error occurred", "required": False},
-                    {"name": "context", "description": "Additional context, reproducer, or logs", "required": False},
-                ],
-            },
-        ]
-        if mcp_terse_mode():
-            terse_prompts = []
-            for p in raw_prompts:
-                tp: Dict[str, Any] = {"name": p["name"]}
-                req_args = [a for a in p.get("arguments", []) if a.get("required")]
-                if req_args:
-                    tp["arguments"] = req_args
-                terse_prompts.append(tp)
-            return {"prompts": terse_prompts}
-        return {"prompts": raw_prompts}
+        from jebat.features.mcp.mcp_prompts import prompts_list
+
+        return prompts_list(terse=mcp_terse_mode())
 
     async def _handle_prompts_get(self, params: Dict) -> Dict:
         """Return the requested guided workflow prompt."""
-        name = params.get("name", "")
-        arguments = params.get("arguments", {})
+        from jebat.features.mcp.mcp_prompts import prompts_get
 
-        if name == "plan-act-verify-remember":
-            task = arguments.get("task", "the requested task")
-            scope = arguments.get("scope", "the current workspace")
-            text = (
-                f"Perform this task: {task}\nScope: {scope}\n\n"
-                "First plan the smallest reversible change. Before each CONFIRM or "
-                "DANGEROUS action, return the exact operation and wait for approval. "
-                "After execution, verify the user-visible result and remember only "
-                "durable non-secret project facts."
-            )
-            return {
-                "description": "Governed JEBAT task workflow",
-                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
-            }
+        return prompts_get(params)
 
-        if name == "hallmark-design-audit":
-            markup = arguments.get("markup", "")
-            c_type = arguments.get("component_type", "generic")
-            text = (
-                f"Audit this {c_type} markup against Hallmark standards:\n\n{markup}\n\n"
-                "Evaluate against:\n"
-                "1. 6-Axis Scoring (Philosophy, Hierarchy, Execution, Specificity, Restraint, Variety)\n"
-                "2. 8-State Interactive Discipline (default, hover, focus-visible, active, disabled, loading, error, success)\n"
-                "3. Hard Rules: No italic headers, no re-drawn browser chrome, responsive at 320/375/768px.\n"
-                "Provide the Hallmark score stamp: /* Hallmark · pre-emit critique: P# H# E# S# R# V# */ and concrete fixes."
-            )
-            return {
-                "description": "Hallmark anti-slop design audit prompt",
-                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
-            }
-
-        if name == "sales-copy-review":
-            copy = arguments.get("copy", "")
-            benefit = arguments.get("benefit", "clear value proposition")
-            text = (
-                f"Perform a sales copywriting review on this text:\n\n{copy}\n\n"
-                f"Target Benefit: {benefit}\n\n"
-                "Requirements:\n"
-                "1. Transform any generic CTA into [Action Verb] + [What They Get].\n"
-                "2. Strip banned AI buzzwords (delve, testament, tapestry, seamless, game-changer).\n"
-                "3. Ensure benefits over features, customer language, and active voice.\n"
-                "4. Enforce: No fabricated statistics, testimonials, or claims."
-            )
-            return {
-                "description": "Sales copywriting conversion review prompt",
-                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
-            }
-        if name == "project-onboard":
-            root_arg = arguments.get("root")
-            root_dir = Path(root_arg).resolve() if root_arg else Path(os.getcwd()).resolve()
-
-            snippets = []
-            common_files = ["package.json", "pyproject.toml", "tsconfig.json", ".jebat/memory.json", "README.md"]
-            for rel_name in common_files:
-                target_file = root_dir / rel_name
-                try:
-                    if target_file.is_file():
-                        content = target_file.read_text(encoding="utf-8", errors="replace")
-                        snippet = content[:4000] + ("\n... [truncated]" if len(content) > 4000 else "")
-                        snippets.append(f"--- {rel_name} ---\n{snippet}")
-                except Exception as e:
-                    logger.debug(f"Could not read {target_file} for project-onboard prompt: {e}")
-
-            files_context = "\n\n".join(snippets) if snippets else "No common project configuration files found."
-
-            prompt_text = (
-                f"You are onboarding to the project located at '{root_dir}'.\n\n"
-                f"Project configuration and context files detected:\n\n{files_context}\n\n"
-                "Please analyze this project:\n"
-                "1. Identify the tech stack, languages, frameworks, and architecture.\n"
-                "2. Note key conventions, build/test commands, and entry points.\n"
-                "3. Check for any prior project memory or gotchas.\n"
-                "4. Produce a comprehensive project context snapshot summarizing your findings."
-            )
-            return {
-                "description": "Auto-scan project files and SelfLearn memory to produce a comprehensive project context snapshot.",
-                "messages": [{"role": "user", "content": {"type": "text", "text": prompt_text}}],
-            }
-
-
-
-        if name == "kb-review":
-            focus_area = arguments.get("focus_area", "all domains")
-            stats_text = "Memory stats unavailable."
-            try:
-                from jebat.tools.automimpi_tools import _get_memory, _get_automimpi
-                memory = _get_memory()
-                automimpi = _get_automimpi()
-                total = len(memory.traces)
-                profile = automimpi._build_learning_profile()
-                strong = ", ".join(profile.strong_areas) if profile.strong_areas else "none"
-                weak = ", ".join(profile.weak_areas) if profile.weak_areas else "none"
-                gaps = ", ".join(profile.knowledge_gaps) if profile.knowledge_gaps else "none"
-                patterns = len(getattr(memory, "extracted_patterns", []))
-                stats_text = (
-                    f"Total memories: {total}\n"
-                    f"Strong areas: {strong}\n"
-                    f"Weak areas: {weak}\n"
-                    f"Knowledge gaps: {gaps}\n"
-                    f"Consolidated patterns: {patterns}\n"
-                    f"Consolidation health: {profile.consolidation_health:.2f}"
-                )
-            except Exception as e:
-                stats_text = f"Could not load memory stats: {e}"
-
-            text = (
-                f"Perform a comprehensive review of the JEBAT knowledge base for focus area: {focus_area}.\n\n"
-                f"Current Knowledge Base Statistics:\n{stats_text}\n\n"
-                "Please review the knowledge base and address:\n"
-                "1. What is strong: Identify domains with solid, high-strength memory coverage.\n"
-                "2. What is stale: Identify weak or decaying memories that need refreshing or pruning.\n"
-                "3. What is missing: Highlight critical knowledge gaps or unrepresented skills.\n"
-                "4. Suggested actions: Recommend concrete consolidation steps, practice areas, or facts to remember."
-            )
-            return {
-                "description": "JEBAT knowledge base review prompt",
-                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
-            }
-
-        if name == "debug-this":
-            error_message = arguments.get("error_message", "")
-            file_path = arguments.get("file", "unknown")
-            context = arguments.get("context", "")
-
-            text = (
-                f"Debug the following error:\n\n"
-                f"Error: {error_message}\n"
-                f"File: {file_path}\n"
-                + (f"Context: {context}\n\n" if context else "\n")
-                + "Follow this structured 5-step debugging workflow:\n"
-                "1. Reproduce the error: State the minimal conditions or command that reproduce the issue.\n"
-                "2. Identify the root cause: Trace execution to find the underlying bug, not just the crash point.\n"
-                "3. Fix the source, not the symptom: Implement a clean fix addressing the actual cause.\n"
-                "4. Verify the fix: Test and prove that the error is resolved and no regressions are introduced.\n"
-                "5. Store the pattern as a memory: Record the bug pattern and solution in JEBAT memory to avoid recurrence."
-            )
-            return {
-                "description": "Structured 5-step debugging workflow",
-                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
-            }
-        return {"description": "Unknown prompt", "messages": []}
     async def _handle_ping(self, params: Dict) -> Dict:
         """Health check ping."""
         return {"status": "ok", "timestamp": str(asyncio.get_event_loop().time())}
@@ -1648,19 +1362,39 @@ class MCPServer:
         infd = sys.stdin.fileno()
         outfd = sys.stdout.fileno()
 
-        def blocking_readline() -> Optional[bytes]:
+        # Dedicated reader thread feeding a queue: one blocked OS read parked
+        # on its own thread instead of one run_in_executor ticket PER LINE,
+        # which churned executor threads and added scheduler latency under
+        # bursty IDE traffic.
+        line_queue: "asyncio.Queue[Optional[bytes]]" = asyncio.Queue(maxsize=256)
+        loop = asyncio.get_event_loop()
+
+        def reader_thread() -> None:
             data = b""
-            while True:
-                chunk = os.read(infd, 1)
-                if chunk == b"":
-                    # EOF — client disconnected
-                    return data if data else None
-                data += chunk
-                if chunk == b"\n":
-                    return data
+            try:
+                while True:
+                    chunk = os.read(infd, 1)
+                    if chunk == b"":
+                        if data:
+                            loop.call_soon_threadsafe(line_queue.put_nowait, data)
+                        loop.call_soon_threadsafe(line_queue.put_nowait, b"")
+                        return
+                    data += chunk
+                    if chunk == b"\n":
+                        loop.call_soon_threadsafe(line_queue.put_nowait, data)
+                        data = b""
+            except OSError:
+                if data:
+                    loop.call_soon_threadsafe(line_queue.put_nowait, data)
+                loop.call_soon_threadsafe(line_queue.put_nowait, b"")
 
         async def read_line() -> Optional[bytes]:
-            return await asyncio.get_event_loop().run_in_executor(None, blocking_readline)
+            raw = await line_queue.get()
+            if raw == b"":
+                return None  # EOF sentinel
+            return raw
+
+        threading.Thread(target=reader_thread, daemon=True, name="mcp-stdio-reader").start()
 
         def write_line(payload: bytes) -> None:
             os.write(outfd, payload + b"\n")
@@ -1716,8 +1450,31 @@ class MCPServer:
         server_instance = self
         sse_connections: List = []
 
+        def check_auth(request) -> Optional[Response]:
+            expected_key = os.getenv("JEBAT_API_KEY", "")
+            if not expected_key:
+                return None
+            provided_key = (
+                request.headers.get("x-api-key")
+                or request.query_params.get("api_key")
+                or ""
+            )
+            if not provided_key:
+                auth_header = request.headers.get("authorization", "")
+                if auth_header.lower().startswith("bearer "):
+                    provided_key = auth_header[7:].strip()
+            if not provided_key or not hmac.compare_digest(provided_key.encode(), expected_key.encode()):
+                return JSONResponse(
+                    {"error": "unauthorized", "message": "API key required or invalid"},
+                    status_code=401,
+                )
+            return None
+
         async def handle_message(request):
             """Handle POST /message — client sends JSON-RPC request."""
+            auth_err = check_auth(request)
+            if auth_err:
+                return auth_err
             try:
                 body = await request.json()
             except json.JSONDecodeError:
@@ -1734,6 +1491,9 @@ class MCPServer:
 
         async def handle_sse(request):
             """Handle GET /sse — establish SSE connection for notifications."""
+            auth_err = check_auth(request)
+            if auth_err:
+                return auth_err
             async with sse_starlette.EventSourceResponse(request) as event_generator:
                 sse_connections.append(event_generator)
                 try:

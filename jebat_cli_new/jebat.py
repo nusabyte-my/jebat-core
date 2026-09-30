@@ -4320,6 +4320,27 @@ def main():
 
         return run_mcp_command(args[1:])
 
+    if args[0] == "agentix":
+        # Agentix solution create/build/deploy — standalone, no REPL state.
+        from jebat_cli_new.agentix import run_agentix_command
+
+        return run_agentix_command(args[1:])
+
+    if args[0] == "config":
+        # Config import (and future config subcommands) — standalone parser
+        # owns the subcommand token.
+        from jebat_cli_new.config_import import run_config_command
+
+        return run_config_command(args[1:])
+
+    if args[0] in ("capture", "agents"):
+        # Workspace capture: repo scan + AGENTS.md generation (backs up existing).
+        # NOTE: bare `init` intentionally still routes to legacy first-run provider
+        # setup; the claude-code-style /init verb lives here and in the REPL.
+        from jebat_cli_new.init_cmd import run_init_command
+
+        return run_init_command(args[1:])
+
     registry = ProviderRegistry()
     taskdb = TaskDB()
     skills = SkillManager()

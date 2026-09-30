@@ -29,6 +29,9 @@ def isolated(monkeypatch):
     """Clear model cache + circuit-breaker state and pin a known env."""
     advisor._MODEL_CACHE.clear()
     advisor._AVAIL_CACHE.clear()
+    # Decision cache must reset between tests: same (state, questions) pairs
+    # are reused with different fake-laya behaviors per test.
+    advisor._DECISION_CACHE.clear()
     # The breaker is module-level mutable state; envelope-fallback tests trip
     # it, and a leaked cooldown would make later tests silently skip the model
     # tier and fail on 'local' == 'laya'.
@@ -49,6 +52,7 @@ def isolated(monkeypatch):
     advisor._MODEL_CACHE.clear()
     advisor._MODEL_STATE.update({"open_until": 0.0, "consecutive": 0})
     advisor._AVAIL_CACHE.clear()
+    advisor._DECISION_CACHE.clear()
 
 
 def _install_fake_laya(monkeypatch, predict_impl) -> None:

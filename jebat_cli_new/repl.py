@@ -5,6 +5,7 @@ JEBAT — interactive REPL with OpenClaude & OpenManus styles.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Optional
 
 from jebat_cli_new.agent import AgentLoop
@@ -35,6 +36,35 @@ class REPL:
         self.auto_commit = agent.auto_commit
         self.preset = "deliberate"
 
+    @staticmethod
+    def _expand_at_files(raw: str) -> str:
+        """Expand @path tokens into file-content context blocks.
+
+        @src/main.py or @"path with spaces.py" inline the file (capped) so the
+        model sees the actual source. Missing files are flagged inline, never
+        silently dropped.
+        """
+        import re as _re
+
+        def _sub(m: "_re.Match") -> str:
+            quoted = m.group(1)
+            path_str = quoted[1:-1] if quoted else m.group(2)
+            p = Path(path_str).expanduser()
+            if not p.exists():
+                return f"@{path_str} [file not found]"
+            try:
+                text = p.read_text(encoding="utf-8", errors="replace")
+            except OSError as exc:
+                return f"@{path_str} [read error: {exc}]"
+            lines = text.splitlines()
+            cap = 400
+            if len(lines) > cap:
+                text = "\n".join(lines[:cap]) + f"\n… [truncated {len(lines) - cap} lines]"
+            return f"--- file: {p} ---\n{text}\n--- end of {p.name} ---"
+
+        pattern = _re.compile(r'@(?:"([^"]+)"|([\w./\\-]+))')
+        return pattern.sub(_sub, raw)
+
     def start(self):
         """Start the interactive REPL with OMP style."""
         TerminalUX.banner(provider=self.provider, model=self.model)
@@ -58,7 +88,8 @@ class REPL:
                 if handled is True:
                     continue
             else:
-                text, latency_ms = self._call_runtime(raw)
+                expanded = self._expand_at_files(raw)
+                text, latency_ms = self._call_runtime(expanded)
                 TerminalUX.response_card(text, latency_ms=latency_ms)
 
     def _handle_slash(self, raw: str):
@@ -105,6 +136,51 @@ class REPL:
                 print(f"  Unknown preset: {key}")
             return True
 
+        if cmd.name == "agentix":
+            from jebat_cli_new.agentix import run_agentix_command
+
+            tokens = args.split() if args else ["status"]
+            rc = run_agentix_command(tokens)
+            if rc == 0:
+                # Keep the REPL alive; surface nothing else on success.
+                return True
+            TerminalUX.warn(f"agentix exited with code {rc}")
+            return True
+
+        if cmd.name == "status":
+            self._print_status_card()
+            return True
+
+        if cmd.name == "import":
+            from jebat_cli_new.config_import import run_config_command
+
+            tokens = ["import"] + (args.split() if args else ["--dry-run"])
+            rc = run_config_command(tokens)
+            if rc != 0:
+                TerminalUX.warn(f"import exited with code {rc}")
+            return True
+
+        if cmd.name == "init":
+            from jebat_cli_new.init_cmd import run_init
+
+            rc = run_init(Path.cwd(), force=False)
+            if rc != 0:
+                TerminalUX.warn(f"init exited with code {rc}")
+            return True
+
+        if cmd.name == "resume":
+            from jebat_cli_new.resume import pick, load_by_id
+            from jebat_cli_new.agent import AgentMessage
+
+            picked = load_by_id(args.strip()) if args.strip() else pick()
+            if not picked:
+                return True
+            path, msgs = picked
+            self.agent.messages.clear()
+            self.agent.messages.extend(AgentMessage(role=m["role"], content=m.get("content", "")) for m in msgs)
+            TerminalUX.info(f"resumed {path.name} · {len(msgs)} messages")
+            return True
+
         if cmd.name == "plan":
             out = self.agent.run_plan_then_answer(args or raw.replace("/plan", "", 1),
                                                   provider=self.provider, model=self.model)
@@ -143,6 +219,18 @@ class REPL:
 
         print(render_help())
         return True
+
+    def _print_status_card(self):
+        """One-glance session card (omp-style status line, boxed)."""
+        from jebat_cli_new.theme import box, C, format_cost
+
+        msgs = len(self.agent.messages)
+        lines = [
+            f"provider : {self.provider}   model: {self.model}",
+            f"preset   : {self.preset}   mode: {self.mode}   tools: {'on' if self.tools_enabled else 'off'}",
+            f"yolo     : {'ON — no approvals' if self.yolo else 'off — staged approvals'}   messages: {msgs}",
+        ]
+        print(box("⚡ session status", "\n".join(lines), width=66, theme="info"))
 
     def _do_auto_commit(self, message: str = ""):
         """Manually trigger auto-commit."""

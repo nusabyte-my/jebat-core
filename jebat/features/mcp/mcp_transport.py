@@ -25,8 +25,10 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -150,10 +152,23 @@ class SamplingHandler:
         model_preference = params.get("modelPreferences", [{}])
         preferred_model = model_preference[0].get("name", "") if model_preference else ""
 
-        # Convert MCP messages to simple prompt
+        # Hard caps on IDE-supplied sampling input: this content is data, not
+        # instructions, and an unbounded request could balloon into a huge
+        # provider bill or starve the context window. ~400KB of text max.
+        MAX_SAMPLE_MESSAGES = 50
+        MAX_SAMPLE_CHARS = 400_000
+        messages = messages[:MAX_SAMPLE_MESSAGES] if isinstance(messages, list) else []
+        _truncate = lambda s: s[:MAX_SAMPLE_CHARS] if isinstance(s, str) else s
+        system_prompt = _truncate(system_prompt)
+        max_tokens = max(1, min(int(max_tokens or 4096), 32768))
+
+        # Convert MCP messages to simple prompt. User/IDE text is wrapped in
+        # the project trust boundary so the local model treats it as data.
+        from jebat.features.security.trust_boundary import mark_untrusted_content
+
         prompt_parts = []
         if system_prompt:
-            prompt_parts.append(f"system: {system_prompt}")
+            prompt_parts.append(f"system: {mark_untrusted_content(system_prompt, source='sampling:systemPrompt')}")
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", {})
@@ -163,7 +178,7 @@ class SamplingHandler:
                 text = content
             else:
                 text = str(content)
-            prompt_parts.append(f"{role}: {text}")
+            prompt_parts.append(f"{role}: {mark_untrusted_content(_truncate(text), source='sampling:message')}")
 
         combined_prompt = "\n".join(prompt_parts)
         # Wire sampling budget to model's input budget before dispatch (TQ-5)
@@ -286,6 +301,28 @@ class StreamableHTTPTransport:
         # Store progress manager on server instance
         self.mcp_server._progress_manager = pm
 
+        def check_auth(request) -> Optional[Response]:
+            expected_key = os.getenv("JEBAT_API_KEY", "")
+            if not expected_key:
+                return None
+
+            provided_key = (
+                request.headers.get("x-api-key")
+                or request.query_params.get("api_key")
+                or ""
+            )
+            if not provided_key:
+                auth_header = request.headers.get("authorization", "")
+                if auth_header.lower().startswith("bearer "):
+                    provided_key = auth_header[7:].strip()
+
+            if not provided_key or not hmac.compare_digest(provided_key.encode(), expected_key.encode()):
+                return JSONResponse(
+                    {"error": "unauthorized", "message": "API key required or invalid"},
+                    status_code=401,
+                )
+            return None
+
         async def handle_mcp_post(request):
             """POST /mcp — handle JSON-RPC requests.
 
@@ -294,6 +331,9 @@ class StreamableHTTPTransport:
             before the final result.
             Otherwise, respond with a single JSON-RPC response.
             """
+            auth_err = check_auth(request)
+            if auth_err:
+                return auth_err
             try:
                 body = await request.json()
             except json.JSONDecodeError:
@@ -332,6 +372,10 @@ class StreamableHTTPTransport:
 
         async def handle_mcp_get(request):
             """GET /mcp — establish SSE connection for server notifications."""
+            auth_err = check_auth(request)
+            if auth_err:
+                return auth_err
+
             async def event_generator():
                 # Send initial connection event
                 yield {"event": "endpoint", "data": f"/mcp?sessionId={uuid.uuid4().hex[:12]}"}
@@ -350,6 +394,9 @@ class StreamableHTTPTransport:
 
         async def handle_mcp_delete(request):
             """DELETE /mcp — stateless no-op (v2026-07-28: sessions removed)."""
+            auth_err = check_auth(request)
+            if auth_err:
+                return auth_err
             return Response(status_code=204)
 
         routes = [

@@ -15,12 +15,15 @@ See docs/JEV_CONTEXT.md for integration rationale.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import logging
 import math
 import os
 import re
 import threading
 import time
+from collections import OrderedDict
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -31,6 +34,50 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/advisor", tags=["advisor"])
+
+# ── Decision cache ──
+# The advisor is deterministic per (state, questions): same inputs must yield
+# the same typed answer regardless of which tier served it. Endpoints hit the
+# advisor in tight loops (gates, pre-routing, per-turn classification), and a
+# model-tier call costs 30-600ms (or a warm-up wait). Cache keyed on a stable
+# hash of state + questions, TTL-bounded so backends can be swapped without
+# serving stale judgments forever.
+_DECISION_CACHE: "OrderedDict[str, Tuple[float, Dict[str, Any]]]" = OrderedDict()
+_DECISION_CACHE_LOCK = threading.Lock()
+_DECISION_CACHE_TTL_S = 300.0
+_DECISION_CACHE_MAX = 512
+
+
+def _decision_cache_key(state: str, questions: Dict[str, Any]) -> str:
+    payload = json.dumps(
+        {"state": state, "questions": questions},
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _decision_cache_get(key: str) -> Optional[Tuple[Dict[str, Any], str]]:
+    with _DECISION_CACHE_LOCK:
+        entry = _DECISION_CACHE.get(key)
+        if entry is None:
+            return None
+        ts, cached = entry
+        if time.time() - ts > _DECISION_CACHE_TTL_S:
+            del _DECISION_CACHE[key]
+            return None
+        _DECISION_CACHE.move_to_end(key)
+        return cached[0], cached[1]
+
+
+def _decision_cache_put(key: str, answers: Dict[str, Any], backend: str) -> None:
+    with _DECISION_CACHE_LOCK:
+        _DECISION_CACHE[key] = (time.time(), (answers, backend))
+        _DECISION_CACHE.move_to_end(key)
+        while len(_DECISION_CACHE) > _DECISION_CACHE_MAX:
+            _DECISION_CACHE.popitem(last=False)
+
 
 # TypeSafe Jev endpoint — falls back to local heuristic if unset
 TYPESAFE_API_KEY = os.getenv("TYPESAFE_API_KEY", "")
@@ -425,6 +472,19 @@ class FallbackResult(tuple):
 # ── Core logic ──
 
 
+def _typesafe_timeout_s() -> float:
+    """Deadline for the TypeSafe Jev HTTP call.
+
+    The endpoint advertises ~100ms decisions; the old hardcoded 10s let one
+    slow/hung upstream stall the whole /api/advisor path (it runs before the
+    local tier). Mirror the advisor deadline and allow an env override.
+    """
+    try:
+        return max(0.5, min(float(os.getenv("JEBAT_TYPESAFE_TIMEOUT_S", "3.0")), 30.0))
+    except (TypeError, ValueError):
+        return 3.0
+
+
 async def _call_typesafe(state: str, questions: Dict[str, Any]) -> Dict[str, Any]:
     """Call TypeSafe Jev /v1/systemone endpoint."""
     headers = {
@@ -434,7 +494,7 @@ async def _call_typesafe(state: str, questions: Dict[str, Any]) -> Dict[str, Any
     payload = {"state": state, "questions": questions}
 
     base_url = os.getenv("TYPESAFE_BASE_URL", TYPESAFE_BASE_URL)
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=_typesafe_timeout_s()) as client:
         resp = await client.post(
             f"{base_url}/v1/systemone",
             json=payload,
@@ -776,6 +836,11 @@ def _local_fallback(state: str, questions: Dict[str, Any]) -> FallbackResult:
 
 async def _decide(state: str, questions: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     """Route to TypeSafe, local transformer backend, or lexical fallback."""
+    cache_key = _decision_cache_key(state, questions)
+    cached = _decision_cache_get(cache_key)
+    if cached is not None:
+        return cached
+
     backend_pref = os.getenv("JEBAT_ADVISOR_BACKEND", "auto").lower()
     typesafe_key = os.getenv("TYPESAFE_API_KEY", TYPESAFE_API_KEY)
 
@@ -783,7 +848,9 @@ async def _decide(state: str, questions: Dict[str, Any]) -> Tuple[Dict[str, Any]
     if backend_pref in ("auto", "typesafe") and typesafe_key:
         try:
             result = await _call_typesafe(state, questions)
-            return result.get("answers", result), "typesafe"
+            answers = result.get("answers", result)
+            _decision_cache_put(cache_key, answers, "typesafe")
+            return answers, "typesafe"
         except Exception as exc:
             logger.warning("TypeSafe API call failed, falling back to local: %s", exc)
 
@@ -813,13 +880,15 @@ async def _decide(state: str, questions: Dict[str, Any]) -> Tuple[Dict[str, Any]
         else:
             if answers is not None and tier is not None:
                 _model_record_hit()
+                _decision_cache_put(cache_key, answers, tier)
                 return answers, tier
             # None means either "no model configured" (nothing to cool down) or
             # "a loaded model produced nothing usable" (worth cooling down).
             if _MODEL_CACHE.get("instance") is not None:
                 _model_record_miss()
 
-    # 3. Deterministic lexical fallback
+    # 3. Deterministic lexical fallback — NOT cached: it is microseconds, and
+    # caching it would hide repeated model-tier misses from the breaker.
     res = _local_fallback(state, questions)
     return res[0], res[1]
 

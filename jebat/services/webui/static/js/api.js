@@ -5,18 +5,41 @@ const API = {
   base: '/webui/api',
   timeout: 15000,
 
+  getKey() {
+    return localStorage.getItem('jebat_api_key') || localStorage.getItem('api_key') || '';
+  },
+
+  setKey(key) {
+    if (key) {
+      localStorage.setItem('jebat_api_key', key);
+    } else {
+      localStorage.removeItem('jebat_api_key');
+    }
+  },
+
+  getWsUrl(userId) {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const key = this.getKey();
+    const query = key ? `?api_key=${encodeURIComponent(key)}` : '';
+    return `${proto}//${window.location.host}/webui/ws/${encodeURIComponent(userId || 'default')}${query}`;
+  },
+
   async fetch(path, opts = {}) {
     const url = `${this.base}${path}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeout);
     const headers = { ...opts.headers };
     if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    const key = this.getKey();
+    if (key && !headers['X-API-Key'] && !headers['Authorization'] && !headers['authorization']) {
+      headers['X-API-Key'] = key;
+    }
 
     try {
       const res = await fetch(url, { ...opts, headers, signal: controller.signal });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const error = new Error(payload.detail || payload.error || `Request failed (${res.status})`);
+        const error = new Error(payload.detail || payload.message || payload.error || `Request failed (${res.status})`);
         error.status = res.status;
         throw error;
       }

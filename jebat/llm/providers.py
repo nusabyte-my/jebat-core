@@ -183,15 +183,23 @@ class GoogleProvider:
         }
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{model_name}:generateContent?key={self.api_key}"
+            f"{model_name}:generateContent"
         )
         import httpx
 
-        async with httpx.AsyncClient(timeout=180) as client:
-            response = await client.post(url, json=payload)
-            response.raise_for_status()
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.api_key,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=180) as client:
+                response = await client.post(url, headers=headers, json=payload)
+                response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise RuntimeError(f"Google API error: HTTP {exc.response.status_code}") from None
+        except Exception as exc:
+            raise RuntimeError("Google API request failed") from None
         data = response.json()
-        candidates = data.get("candidates", [])
         parts: list[str] = []
         for candidate in candidates:
             content = candidate.get("content", {})

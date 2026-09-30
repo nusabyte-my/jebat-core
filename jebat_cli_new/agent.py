@@ -293,7 +293,20 @@ class AgentLoop:
         working_conversation = history
         last_latency = 0.0
 
+        # Optional incremental progress reporter (set by the MCP server for
+        # long-running tools). Never active in plain CLI runs.
+        from jebat_cli_new.progress import PROGRESS_REPORTER, report as _report_progress
+
+        _reporter = PROGRESS_REPORTER.get()
+        _notify_progress = (
+            (lambda frac, msg: _report_progress(min(max(frac, 0.0), 1.0), msg)))
+        max_iters = max(self.max_iterations, 1)
+
+        def _step_progress(stage: str, frac: float) -> None:
+            _notify_progress(frac, f"iteration {iteration + 1}/{max_iters}: {stage}")
+
         while iteration < self.max_iterations:
+            _step_progress("reasoning", iteration / max_iters)
             resp = self._call_provider(
                 working_conversation,
                 provider_name,
@@ -318,6 +331,7 @@ class AgentLoop:
                 break
 
             tool_results = []
+            _step_progress("acting", (iteration + 0.5) / max_iters)
             for tc in tool_calls:
                 tool_name = tc.get("tool", "")
                 tool_args = tc.get("args", {})

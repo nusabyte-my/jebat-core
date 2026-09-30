@@ -27,8 +27,8 @@ services:
       - path: .env
         required: false
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-jebat}:${POSTGRES_PASSWORD:-jebat_secure_password_change_me}@postgres:5432/${POSTGRES_DB:-jebat_db}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_password_change_me}@redis:6379/0
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-jebat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}@postgres:5432/${POSTGRES_DB:-jebat_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required in .env}@redis:6379/0
       - JEBAT_API_HOST=0.0.0.0
       - JEBAT_API_PORT=8080
       - JEBAT_WEBUI_HOST=0.0.0.0
@@ -95,7 +95,7 @@ services:
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-jebat_db}
       - POSTGRES_USER=${POSTGRES_USER:-jebat}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-jebat_secure_password_change_me}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}
     volumes:
       - jebat-pgdata:/home/postgres/pgdata/data
       # Mount schema files for initialization
@@ -119,7 +119,7 @@ services:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     command: >
       redis-server
-      --requirepass ${REDIS_PASSWORD:-redis_secure_password_change_me}
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required in .env}
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
       --appendonly yes
@@ -128,7 +128,7 @@ services:
     networks:
       - jebat-internal
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secure_password_change_me}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?REDIS_PASSWORD is required in .env}", "ping"]
       interval: 10s
       timeout: 3s
       start_period: 10s
@@ -164,11 +164,11 @@ services:
       - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-jebat_admin_change_me}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required in .env}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_AUTH_ANONYMOUS_ENABLED=false
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-jebat_secure_password_change_me}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password_change_me}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required in .env}
     volumes:
       - ./database/config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
       - ./database/config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
@@ -191,7 +191,7 @@ services:
     container_name: jebat-pg-exporter
     restart: unless-stopped
     environment:
-      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER:-jebat}:${POSTGRES_PASSWORD:-jebat_secure_password_change_me}@postgres:5432/${POSTGRES_DB:-jebat_db}?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER:-jebat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}@postgres:5432/${POSTGRES_DB:-jebat_db}?sslmode=disable
     ports:
       - "127.0.0.1:9187:9187"
     depends_on:
@@ -207,7 +207,7 @@ services:
     restart: unless-stopped
     environment:
       - REDIS_ADDR=redis:6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password_change_me}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required in .env}
     ports:
       - "127.0.0.1:9121:9121"
     depends_on:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from jebat.features.mcp import mcp_server
+from jebat.features.mcp import mcp_resources, mcp_server
 from jebat.features.mcp.mcp_server import MCPServer
 from jebat.tools import TOOL_REGISTRY, ToolDef
 
@@ -309,7 +309,8 @@ async def test_wiki_pages_are_listed_and_readable_as_wiki_resources(
         encoding="utf-8",
     )
     monkeypatch.setenv("JEBAT_WIKI_DIR", str(wiki_root))
-    monkeypatch.setattr(mcp_server, "_WIKI_INDEX", None)
+    # The index cache lives in mcp_resources since the P2-4 split.
+    monkeypatch.setattr(mcp_resources, "_WIKI_INDEX", None)
 
     server = MCPServer()
     await server.handle_request(

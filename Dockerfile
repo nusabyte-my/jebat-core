@@ -17,8 +17,11 @@ RUN apt-get update && \
         python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.prod.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.prod.txt
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+ENV UV_PROJECT_ENVIRONMENT=/install
+COPY uv.lock pyproject.toml ./
+RUN uv sync --frozen --no-dev
 
 # ---------- Stage 2: Runtime ----------
 FROM python:3.12-slim AS runtime

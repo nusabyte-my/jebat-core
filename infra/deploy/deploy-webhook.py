@@ -165,12 +165,15 @@ class DeployHandler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description="JEBAT auto-deploy webhook")
     parser.add_argument("--port", type=int, default=8081, help="listen port")
-    parser.add_argument("--secret", default="", help="GitHub webhook secret")
+    parser.add_argument("--secret", default=os.getenv("GITHUB_WEBHOOK_SECRET", ""), help="GitHub webhook secret")
     parser.add_argument("--host", default="127.0.0.1", help="bind address")
     args = parser.parse_args()
 
-    DeployHandler.secret = args.secret
+    if not args.secret:
+        log.error("Fatal: webhook secret is required (--secret or GITHUB_WEBHOOK_SECRET env)")
+        sys.exit(1)
 
+    DeployHandler.secret = args.secret
     if not os.path.exists(DEPLOY_SCRIPT):
         log.error("deploy script not found: %s", DEPLOY_SCRIPT)
         sys.exit(1)

@@ -70,9 +70,34 @@ def _resolve_path(image_url: str) -> Path | None:
     # Heuristic: no scheme prefix and not starting with // → treat as local
     if image_url.startswith(("http://", "https://", "ftp://", "data:")):
         return None
-    p = Path(image_url).expanduser().resolve()
-    return p if p.exists() else None
+    try:
+        p = Path(image_url).expanduser().resolve()
+    except Exception:
+        return None
 
+    # Reject hidden paths or sensitive file extensions
+    blocked_exts = {".env", ".pem", ".key"}
+    if any(p.name.endswith(ext) or p.suffix.lower() == ext for ext in blocked_exts):
+        return None
+
+    # Reject sensitive directories (~/.ssh, ~/.aws, ~/.jebat) or any component starting with '.'
+    home = Path.home().resolve()
+    sensitive_dirs = [
+        (home / ".ssh").resolve(),
+        (home / ".aws").resolve(),
+        (home / ".jebat").resolve(),
+    ]
+    for s_dir in sensitive_dirs:
+        try:
+            if p.is_relative_to(s_dir):
+                return None
+        except ValueError:
+            pass
+
+    if any(part.startswith(".") for part in p.parts):
+        return None
+
+    return p if p.exists() else None
 
 def _mime_from_path(p: Path) -> str:
     """Guess MIME type from file extension."""
@@ -280,8 +305,9 @@ async def _analyze_gemini(
     parts: list[dict[str, Any]] = [{"text": question}]
     if image_content.startswith(("http://", "https://")):
         # Gemini supports fileUri but for simplicity we fetch + encode
+        from jebat.features.security.outbound import get_validated
         async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as dl:
-            img_resp = await dl.get(image_content)
+            img_resp = await get_validated(dl, image_content)
             img_resp.raise_for_status()
             img_bytes = img_resp.content
             img_b64 = base64.b64encode(img_bytes).decode("ascii")
@@ -297,14 +323,24 @@ async def _analyze_gemini(
 
     payload = {"contents": [{"parts": parts}]}
 
-    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
-        resp = await client.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
-            headers={"Content-Type": "application/json"},
-            json=payload,
-        )
-        resp.raise_for_status()
-        data = resp.json()
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": api_key,
+    }
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    try:
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+            resp = await client.post(
+                endpoint,
+                headers=headers,
+                json=payload,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPStatusError as exc:
+        raise RuntimeError(f"Google Gemini API error: HTTP {exc.response.status_code}") from None
+    except Exception as exc:
+        raise RuntimeError("Google Gemini API request failed") from None
 
     candidates = data.get("candidates", [])
     text = ""

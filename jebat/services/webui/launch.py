@@ -8,7 +8,9 @@ Usage:
 """
 
 import argparse
+import hmac
 import logging
+import os
 import sys
 import time
 import uuid
@@ -32,6 +34,18 @@ except ModuleNotFoundError:
         """Compatibility middleware for pre-v8.2.1 runtime images."""
 
         async def dispatch(self, request: Request, call_next):
+            path = request.url.path
+            api_key_env = os.getenv("JEBAT_API_KEY", "")
+            if not api_key_env:
+                return await call_next(request)
+            if not (path.startswith("/api/") or path.startswith("/webui/api/") or path.startswith("/webui/ws/") or path.startswith("/v1/")):
+                return await call_next(request)
+            key = request.headers.get("x-api-key") or request.query_params.get("api_key")
+            auth_h = request.headers.get("authorization", "")
+            if auth_h.lower().startswith("bearer "):
+                key = auth_h[7:].strip()
+            if not key or not hmac.compare_digest(key.encode(), api_key_env.encode()):
+                return JSONResponse({"error": "unauthorized"}, status_code=401)
             return await call_next(request)
 
     def require_action_confirmation(*_args, **_kwargs):

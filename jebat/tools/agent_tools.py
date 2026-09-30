@@ -34,14 +34,14 @@ class AgentExecuteInput(BaseModel):
         },
         "required": ["task"],
     },
-    safety_tier="auto",
+    safety_tier="confirm",
     timeout=300,
     description="Autonomous multi-turn ReAct coding agent powered by OpenManus, Hermes reasoning, and Atomic tools.",
 )
 async def agent_execute(
     task: str,
     max_iterations: int = 8,
-    yolo: bool = True,
+    yolo: bool = False,
     model: Optional[str] = None,
     provider: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -96,7 +96,7 @@ class AGIExecuteInput(BaseModel):
         },
         "required": ["goal"],
     },
-    safety_tier="auto",
+    safety_tier="confirm",
     timeout=300,
     description="Autonomous Sovereign AGI Engine: executes goal through Perception -> Reason -> Act -> Reflexion (Build/Hallmark/Copy) -> Consolidate.",
 )
@@ -104,6 +104,7 @@ async def agi_execute(
     goal: str,
     domain: str = "auto",
     max_iterations: int = 8,
+    yolo: bool = False,
 ) -> Dict[str, Any]:
     """Execute a goal using the sovereign AGI multi-domain cognitive architecture."""
     from jebat.core.agi_core import AGICognitiveEngine
@@ -132,7 +133,7 @@ async def agi_execute(
         registry=registry,
         default_provider=config.provider,
         model=config.model,
-        yolo=True,
+        yolo=yolo,
         context_window=config.context_window,
     )
     loop.max_iterations = max_iterations

@@ -15,6 +15,28 @@ import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+# ─── Rich backend (optional, graceful fallback) ──────────────────
+try:
+    from rich.console import Console as _RichConsole
+    from rich.live import Live as _RichLive
+    from rich.markdown import Markdown as _RichMarkdown
+    from rich.text import Text as _RichText
+
+    _RICH = True
+except ImportError:  # pragma: no cover - rich is a declared dep; fallback only
+    _RICH = False
+
+_SHARED_RICH_CONSOLE = None
+
+
+def get_rich_console():
+    """Shared rich Console (width-honoring, terminal-aware)."""
+    global _SHARED_RICH_CONSOLE
+    if _RICH and _SHARED_RICH_CONSOLE is None:
+        _SHARED_RICH_CONSOLE = _RichConsole()
+    return _SHARED_RICH_CONSOLE
+
+
 # ─── Color Enforcement & Detection ───────────────────────────────
 
 USE_COLOR = os.environ.get("NO_COLOR") is None and hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
@@ -325,35 +347,71 @@ class ThinkingSpinner:
         self._stop.clear()
         self._msg = msg
         self._start_time = time.time()
-        self._thread = threading.Thread(target=self._run, daemon=True)
+        if _RICH:
+            self._live = _RichLive(
+                "", console=get_rich_console(), refresh_per_second=8, transient=True
+            )
+            self._live.start()
+            self._thread = threading.Thread(target=self._run_rich, daemon=True)
+        else:
+            self._thread = threading.Thread(target=self._run_fallback, daemon=True)
         self._thread.start()
 
     def stop(self):
         self._stop.set()
         if self._thread:
             self._thread.join(timeout=1.0)
-        sys.stdout.write("\r" + " " * 80 + "\r")
-        sys.stdout.flush()
+        if _RICH and getattr(self, "_live", None) is not None:
+            try:
+                self._live.stop()
+            except Exception:
+                pass
+            self._live = None
+        else:
+            sys.stdout.write("\r" + " " * 80 + "\r")
+            sys.stdout.flush()
 
-    def _run(self):
+    def _frame_text(self) -> str:
+        elapsed = time.time() - self._start_time
+        pct = min(100, int(elapsed / 60 * 100))
+        filled = pct // 5
+        bar = "█" * filled + "░" * (20 - filled)
+        mins = int(elapsed // 60)
+        secs = int(elapsed % 60)
+        time_str = f"{mins}m{secs:02d}s" if mins else f"{secs}s"
+        max_quote = 40
+        quote = _spinner_quote(elapsed)
+        quote_display = quote[:max_quote] + "..." if len(quote) > max_quote else quote
+        return f"⏳ {self._msg}... [{bar}] {pct}% {time_str}  {quote_display}"
+
+    def _run_rich(self):
+        from rich.text import Text as _Text
+
+        while not self._stop.is_set():
+            t = _Text()
+            t.append(self._frame_text(), style="cyan")
+            try:
+                self._live.update(t)
+            except Exception:
+                pass
+            time.sleep(0.15)
+
+    def _run_fallback(self):
         i = 0
         last_quote = time.time()
         quote = random.choice(THINK_QUOTES)
         while not self._stop.is_set():
             now = time.time()
             elapsed = now - self._start_time
-            # Progress bar: grows over 60 seconds
             pct = min(100, int(elapsed / 60 * 100))
             filled = pct // 5
             bar = "█" * filled + "░" * (20 - filled)
             mins = int(elapsed // 60)
             secs = int(elapsed % 60)
             time_str = f"{mins}m{secs:02d}s" if mins else f"{secs}s"
-            # Rotate quote every 3 seconds
             if now - last_quote > 3:
                 quote = random.choice(THINK_QUOTES)
                 last_quote = now
-            # Truncate quote to fit
             max_quote = 40
             quote_display = quote[:max_quote] + "..." if len(quote) > max_quote else quote
             text = f"\r  {C.CYAN}⏳{C.RESET} {self._msg}... {C.DIM}[{bar}] {pct}% {time_str}{C.RESET}  {C.DIM}{quote_display}{C.RESET}"
@@ -363,25 +421,66 @@ class ThinkingSpinner:
             time.sleep(0.3)
 
 
+_SPINNER_QUOTE_IDX = {"i": 0}
+
+
+def _spinner_quote(elapsed: float) -> str:
+    """Quote that rotates every ~3s without re-seeding random per frame."""
+    idx = int(elapsed // 3)
+    return THINK_QUOTES[idx % len(THINK_QUOTES)]
+
+
 # ─── Streaming Markdown Renderer ─────────────────────────────────
 
 class StreamingMarkdown:
-    """Incremental markdown renderer for token-by-token streaming."""
+    """Incremental markdown renderer for token-by-token streaming.
+
+    rich backend: completed lines accumulate into a live-updating Markdown
+    panel (true reflow, proper tables/code). Fallback: the original ANSI
+    line renderer. Public API unchanged: start/feed/end.
+    """
+
     def __init__(self, width: int = 78):
         self.width = width
         self._in_code = False
         self._buffer = ""
         self._started = False
+        self._full_text = ""
+        self._live = None
+        self._console = get_rich_console() if _RICH else None
 
     def start(self):
         """Open the streaming response frame."""
+        self._started = True
+        if _RICH:
+            from rich.markdown import Markdown as _Md
+
+            self._live = _RichLive(
+                _Md("", code_theme="monokai"),
+                console=self._console,
+                refresh_per_second=12,
+                vertical_overflow="visible",
+            )
+            try:
+                self._live.start()
+            except Exception:
+                self._live = None
+            return
         border = C.BORDER
         print(f"\n{border}╭── {C.NEON_GREEN}{C.BOLD}Response{C.RESET}{border} {'─' * (self.width - 14)}╮{C.RESET}")
-        self._started = True
 
     def feed(self, token: str):
         """Feed a token into the renderer. Renders completed lines."""
         self._buffer += token
+        if _RICH and self._live is not None:
+            self._full_text += token
+            try:
+                from rich.markdown import Markdown as _Md
+
+                self._live.update(_Md(self._full_text, code_theme="monokai"))
+            except Exception:
+                self._live = None  # degrade to line mode mid-stream
+            return
         while '\n' in self._buffer:
             line, self._buffer = self._buffer.split('\n', 1)
             self._render_line(line)
@@ -432,6 +531,18 @@ class StreamingMarkdown:
 
     def end(self, latency_ms: float = 0, tokens: int = 0, cost_usd: float = 0):
         """Close the streaming frame with stats."""
+        if _RICH and self._live is not None:
+            try:
+                self._live.stop()
+            except Exception:
+                pass
+            self._live = None
+            stats = f"{tokens:,} tok · {latency_ms:.0f}ms"
+            if cost_usd > 0:
+                stats += f" · ${cost_usd:.4f}"
+            print(f"  {C.DIM}{stats}{C.RESET}")
+            self._buffer = ""
+            return
         if self._buffer.strip():
             self._render_line(self._buffer)
             self._buffer = ""

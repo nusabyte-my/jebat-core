@@ -63,10 +63,12 @@
       },
       "featureList": [
         "Multi-Model Routing (Local & Cloud Providers)",
+        "Agentix Solution Lifecycle (create, build, deploy, run — hermes / openclaw / atomic templates)",
+        "Cross-CLI Config Import (omp, opencode, Claude Code MCP servers)",
         "Ghost DB 6-Type Persistent Memory Engine",
-        "Model Context Protocol (MCP) Tool Integration",
+        "Model Context Protocol (MCP) Tool Integration with Per-Call Deadlines",
         "Zero-Telemetry Air-Gapped Deployment",
-        "Enterprise Governance & Policy Enforcement"
+        "Enterprise Governance: Staged Approvals, Path Containment, Outbound SSRF Guard"
       ],
       "author": { "@id": "https://jebat.online/#organization" }
     },
@@ -2663,6 +2665,7 @@ footer {
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button class="cli-chip" onclick="runHeroCLI('status')">jebat status</button>
               <button class="cli-chip" onclick="runHeroCLI('mcp')">jebat mcp list</button>
+              <button class="cli-chip" onclick="runHeroCLI('agentix')">jebat agentix status</button>
               <button class="cli-chip" onclick="runHeroCLI('audit')">jebat agi audit</button>
               <button class="cli-chip" onclick="runHeroCLI('dream')">jebat autoMimpi</button>
             </div>
@@ -2809,6 +2812,10 @@ footer {
         </p>
         <div class="control-statement-box">
           "118 annotated tools. Pre-flight advisor_gate risk checks. Approval-gated writes on every provider."
+        </div>
+        <div class="control-statement-box" style="border-color: var(--border-subtle); background: var(--jebat-besi);">
+          <span style="color:var(--jebat-pucuk); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 1px;">SECURITY HARDENED · v8.2.x</span><br/>
+          Key-gated WebUI + MCP transports · path-contained resource reads · outbound SSRF guard · per-call execution deadlines · fail-closed deploys. Live tool health: <span class="mono" style="color:var(--hermes-amber-bright)">jebat://metrics/tools</span>
         </div>
       </div>
 
@@ -3699,6 +3706,46 @@ jebat chat "Act as Jebat Agent for this repo"
   </div>
 </section>
 
+<!-- 09B / AGENTIX & CONFIG IMPORT SECTION -->
+<section id="agentix" class="section">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-cubes-stacked text-copper"></i> 09B / AGENTIX</span>
+    <h2 class="section-title">One import. One lifecycle.</h2>
+    <p class="section-desc">
+      Bring your MCP servers from omp, opencode, or Claude Code in a single command — then build, deploy, and run agent solutions from the same CLI. Every deploy is allowlist-gated; every build is content-addressed.
+    </p>
+
+    <div class="control-demo-grid">
+      <div class="control-copy-side">
+        <h3>Solutions as artifacts,<br/>not scripts.</h3>
+        <p>
+          Scaffold an agent with <strong>hermes</strong> (ReAct reasoning loop), <strong>openclaw</strong> (workspace-driven), or <strong>atomic</strong> (schema-typed tools). Build validates and compiles it into a SHA-stamped artifact. Deploy honors <span class="mono text-copper">deploy.allow</span> — local registry, IDE-ready MCP config, or VPS. Run resolves by name or path and injects typed tools via <span class="mono text-copper">ctx.tools</span>.
+        </p>
+        <div class="control-statement-box">
+          "jebat agentix create → build → deploy → run. Deterministic templates, governed targets, real registry."
+        </div>
+      </div>
+
+      <div class="code-block-wrapper" style="align-self: center;">
+        <button class="copy-code-btn" onclick="copySnippetToClipboard('agentix-snippet', this)" aria-label="Copy Agentix commands">Copy</button>
+        <div class="code-block" id="agentix-snippet"><span style="color:var(--hermes-text-subtle)">$</span> jebat config import -s omp --dry-run
+<span style="color:var(--hermes-pucuk)">┌─ import from omp (mcp.json)</span>
+│  ✓ stitch      http   https://stitch.googleapis.com/mcp
+│  ✓ hostinger   stdio  npx.cmd --package=hostinger-api-mcp
+<span style="color:var(--hermes-pucuk)">└─ 26 servers matched — timeouts ms→s, {env:VAR}→${VAR}</span>
+
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix create usher -t atomic
+<span style="color:var(--hermes-pucuk)">✓ created atomic solution</span>
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix build ./usher
+<span style="color:var(--hermes-pucuk)">✓ built usher v0.1.0 sha:85c718ae</span>
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix deploy ./usher --target local
+<span style="color:var(--hermes-pucuk)">✓ registered → ~/.jebat/agentix/registry.json</span>
+<span style="color:var(--hermes-text-subtle)">$</span> jebat agentix run usher "close out ticket 4128"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- 10 / FAQ ACCORDION SECTION -->
 <section id="faq" class="section">
   <div class="container">
@@ -4279,10 +4326,16 @@ function runHeroCLI(type) {
   const box = document.getElementById('hero-cli-output');
   if (type === 'status') {
     box.innerHTML = `> $ jebat status<br/>
-<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.2.1 Operational</span><br/>
+<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.2.1 Operational — Security Hardened</span><br/>
 > Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]<br/>
-> Ghost DB Vector Store: Connected<br/>
-> MCP Protocol Bus: tool registry available`;
+> Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated<br/>
+> MCP Protocol Bus: tool registry available · jebat://metrics/tools live`;
+  } else if (type === 'agentix') {
+    box.innerHTML = `> $ jebat agentix status<br/>
+<span style="color: var(--hermes-amber)">[Agentix Solution Registry]</span><br/>
+> deploy-usher   v0.1.0  atomic   sha:85c718ae → deployed<br/>
+> research-hive  v0.1.0  hermes   sha:d87e474c → built<br/>
+<span style="color: var(--hermes-pucuk)">✓ create → build → deploy → run. Templates: hermes · openclaw · atomic.</span>`;
   } else if (type === 'pentest') {
     box.innerHTML = `> $ jebat agent "Pentest localhost"<br/>
 <span style="color: var(--hermes-amber)">[Hulubalang Security Agent Dispatched]</span><br/>
@@ -4444,6 +4497,17 @@ function copyCode() {
     const btn = document.querySelector('.copy-code-btn');
     btn.innerText = 'Copied!';
     showToast('Quickstart code copied to clipboard!');
+    setTimeout(() => btn.innerText = 'Copy', 2000);
+  });
+}
+
+// Generic snippet copy (Agentix etc.) — scoped to the calling button
+function copySnippetToClipboard(elementId, btn) {
+  playClickSound();
+  const code = document.getElementById(elementId).innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.innerText = 'Copied!';
+    showToast('Commands copied to clipboard!');
     setTimeout(() => btn.innerText = 'Copy', 2000);
   });
 }

@@ -1,9 +1,9 @@
 # JEBAT v8.2.1 — Sovereign Agent OS & Agent Workstation
 
 ![Version](https://img.shields.io/badge/version-v8.2.1--stable-10b981?style=flat-square)
-![Security](https://img.shields.io/badge/security-audited-06b6d4?style=flat-square)
+![Security](https://img.shields.io/badge/security-hardened%20%2B%20audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-7%2F7--passing-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-270%20passing-10b981?style=flat-square)
 ![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.2-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![WebUI](https://img.shields.io/badge/WebUI-Stealth--Dark-030303?style=flat-square&labelColor=030303)
@@ -345,14 +345,32 @@ POST /webui/api/runtime         Runtime control
 
 | Command | Description |
 |---------|-------------|
-| `jebat repl` | **Interactive REPL** — streaming, tools, history |
+| `jebat repl` | **Interactive REPL** — streaming, tools, staged approvals, `/status` card, `/resume` picker, `@file` expansion |
 | `jebat chat "prompt"` | One-shot chat with tool calling |
 | `jebat agent "task"` | Run one-shot agent with tool-calling |
 | `jebat code "prompt"` | Generate code from description |
 | `jebat webui` | Launch Stealth-Dark WebUI |
 | `jebat status` | System health & provider status |
 | `jebat doctor` | Diagnose environment issues |
-| `jebat init` | Initialize JEBAT with provider config |
+| `jebat init` | First-run provider setup (REPL `/init` = workspace scan → `AGENTS.md`) |
+
+### Workspace & Config Import
+
+| Command | Description |
+|---------|-------------|
+| `jebat capture` (alias `agents`) | Repo scan → generate `AGENTS.md` (backs up existing; stack, layout, entrypoints, tests) |
+| `jebat config import -s omp\|opencode\|claude` | Import MCP server config from another CLI — normalizes transports/timeouts/env templates; `--dry-run`, `--only`, `--overwrite`; auto-backup |
+
+### Agentix — Solution Lifecycle
+
+| Command | Description |
+|---------|-------------|
+| `jebat agentix create NAME -t hermes\|openclaw\|atomic` | Scaffold an agent solution (ReAct loop / workspace-driven / schema-driven tools) |
+| `jebat agentix build PATH` | Validate + compile + content-addressed build manifest (`.agentix/build.json`) |
+| `jebat agentix deploy PATH --target local\|mcp\|vps` | Ship it: local registry, ready-to-paste MCP config, or scp to VPS — gated by `deploy.allow` in `agentix.yaml` |
+| `jebat agentix run NAME\|PATH "task"` | Execute a deployed solution (tools injected via `ctx.tools`) |
+| `jebat agentix status [PATH]` | Solution state + deployed registry |
+
 
 ### Configuration & Memory
 
@@ -732,6 +750,22 @@ To safeguard target servers, JEBAT categorizes all tool execution into permissio
 - **AUTO**: Read-only, safe commands executed without intervention (e.g. `cat`, `grep`).
 - **CONFIRM**: Write and modification commands prompting user validation (e.g. `write`, `patch`, `git commit`).
 - **DANGEROUS**: Destructive or privilege-escalating commands requiring explicit terminal validation tags (e.g. `rm -rf`, `sudo`).
+
+**Staged CLI approvals.** The REPL classifies shell commands into `read` (runs free) → `write` → `execute` stages; each higher stage prompts **once per session**, `yolo` bypasses. `write_file` previews a diff card first — answer `y` (once), `a` (always this session), or `n`.
+
+## Security Hardening (v8.2.x)
+
+Production audit fixes shipped across API, WebUI, MCP transport, and tools:
+
+- **WebUI control plane auth** — `/webui/api/*` and `/webui/ws/*` now enforce the API key (previously only `/api/*` + `/v1/*` were gated); the SPA attaches `X-API-Key` / `?api_key=` automatically.
+- **MCP HTTP transport auth** — `streamable-http` and legacy HTTP transports reject unauthenticated `tools/call` when `JEBAT_API_KEY` is set (timing-safe compare; dev fail-open preserved).
+- **Path containment** — `jebat://file/{path}` resource reads and `vision_analyze` local-path inputs are workspace/denylist-contained (no traversal, no secret-file exfil to external APIs).
+- **SSRF guard** — `seo_url_audit` and vision URL fetches route through the outbound validator (blocks loopback/link-local/metadata targets, re-resolves DNS per hop).
+- **Fail-closed defaults** — deploy webhook refuses to run without `--secret`; compose files require `${POSTGRES_PASSWORD:?}`-style mandatory interpolation; `agent_execute` defaults `yolo=False` + confirm tier.
+- **Key hygiene** — Google API key moved to the `x-goog-api-key` header (never in URLs or error strings).
+- **Per-call deadlines** — every MCP `tools/call` is bounded by its declared timeout; hung tools return structured `isError` instead of wedging the IDE.
+- **MCP observability** — `jebat://metrics/tools` resource exposes per-tool call counts, error counts, and p50/p95 latency.
+- **Sampling boundary** — IDE `sampling/createMessage` content is size-capped and wrapped as untrusted data before reaching the local model.
 
 ---
 

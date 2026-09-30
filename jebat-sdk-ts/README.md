@@ -1,3 +1,5 @@
+> ⚠️ DEPRECATED — canonical TypeScript SDK is now jebat_sdk/typescript (jebat-sdk@1.0.0). See DEPRECATED.md.
+
 # JEBAT TypeScript SDK
 
 Official TypeScript SDK for the [JEBAT AI Assistant](https://github.com/humm1ngb1rd/jebat) REST API.

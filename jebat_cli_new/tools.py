@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json, os, subprocess, time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from pydantic import BaseModel, Field, ValidationError
 
@@ -276,6 +277,47 @@ def _add_shared_registry_tools() -> None:
 _add_shared_registry_tools()
 
 
+def _preview_write_card(path: str, content: str, width: int = 78) -> str:
+    """Build a preview card for an impending file write."""
+    from jebat_cli_new.theme import C, render_diff
+
+    p = Path(path)
+    if p.exists():
+        try:
+            old = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            old = ""
+        card = render_diff(old, content, path, width=width)
+        verb = "OVERWRITE"
+    else:
+        lines = content.splitlines()
+        shown = "\n".join(lines[:14])
+        more = f"\n… +{len(lines) - 14} more lines" if len(lines) > 14 else ""
+        card = f"{C.CYAN}new file{C.RESET} {path}\n{C.DIM}{'─' * 60}{C.RESET}\n{shown}{more}"
+        verb = "CREATE"
+    return f"{C.BOLD}[{verb}]{C.RESET} {card}"
+
+
+_ALWAYS_APPROVED: set = set()
+
+
+def prompt_tool_approval(tool: str, preview: str) -> str:
+    """Ask once / always / no for a tool call. Returns 'yes'|'always'|'no'."""
+    from jebat_cli_new.theme import cprint, C
+
+    cprint(f"\n╭─ ⚒ {tool} wants to act {C.DIM}(y = once, a = always this session, n = no){C.RESET}", C.YELLOW)
+    print(preview)
+    try:
+        ans = input("╰─ allow? [y/a/n]: ").strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print()
+        return "no"
+    if ans in ("a", "always"):
+        _ALWAYS_APPROVED.add(tool)
+        return "always"
+    return "yes" if ans in ("y", "yes", "") else "no"
+
+
 def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> str:
     """Execute a tool with optional safety checks.
     
@@ -305,14 +347,23 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
     
     # Safety checks for dangerous operations
     if not yolo:
-        from jebat_cli_new.safety import is_dangerous_command, is_dangerous_file, confirm_action
-        
+        from jebat_cli_new.safety import is_dangerous_command, is_dangerous_file, confirm_action, classify_command_action
+
         if name == "terminal":
             cmd = arguments.get("command", "")
             dangerous, reason = is_dangerous_command(cmd)
             if dangerous:
                 if not confirm_action(f"Dangerous command detected: {reason}", f"Command: {cmd}"):
                     return f"Command blocked by safety: {reason}"
+            # Staged approval (claude-code style): read-only commands run free;
+            # write/execute commands confirm once per stage per session.
+            stage = classify_command_action(cmd)
+            if stage and not _stage_approved(stage):
+                if not confirm_action(
+                    f"[staged:{stage}] first {stage} command this session", f"Command: {cmd}"
+                ):
+                    return f"Command blocked by safety: staged approval denied for '{stage}'"
+            _remember_stage(stage, cmd)
         
         if name == "write_file":
             path = arguments.get("path", "")
@@ -320,5 +371,12 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
             if dangerous:
                 if not confirm_action(f"Dangerous file modification: {reason}", f"File: {path}"):
                     return f"File write blocked by safety: {reason}"
+            # Preview card + always-allow (kilocode style). yolo or a prior
+            # 'always' for this tool skips the prompt entirely.
+            if "write_file" not in _ALWAYS_APPROVED:
+                preview = _preview_write_card(path, arguments.get("content", ""))
+                verdict = prompt_tool_approval("write_file", preview)
+                if verdict == "no":
+                    return "File write blocked by user (preview declined)"
     
     return handler(arguments)

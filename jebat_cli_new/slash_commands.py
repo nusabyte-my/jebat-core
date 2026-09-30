@@ -37,6 +37,11 @@ COMMANDS = [
     SlashCommand(name="rerank", aliases=["r"], help="Rerank last answer"),
     SlashCommand(name="compact", aliases=["c"], help="Compact chat context"),
     SlashCommand(name="system", aliases=["sys"], help="Set system prompt", usage="<prompt>"),
+    SlashCommand(name="agentix", aliases=["ax"], help="Agentix solutions: status | create NAME -t TEMPLATE | build PATH | deploy PATH --target local|mcp|vps", usage="<status|create|build|deploy> [args]"),
+    SlashCommand(name="status", aliases=["st"], help="Show session status card", usage=""),
+    SlashCommand(name="import", aliases=["imp"], help="Import MCP config from omp/opencode/claude", usage="[--source omp|opencode|claude] [--dry-run] [--only names]"),
+    SlashCommand(name="init", aliases=[], help="Scan workspace and generate AGENTS.md (backs up existing)", usage=""),
+    SlashCommand(name="resume", aliases=["rs"], help="Resume a previous session (picker, or partial id)", usage="[session-id]"),
 ]
 
 
