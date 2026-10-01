@@ -40,7 +40,7 @@
       "@type": "FAQPage",
       "mainEntity": [
         { "@type": "Question", "name": "What is JEBAT and how does it fit into my stack?", "acceptedAnswer": { "@type": "Answer", "text": "A sovereign AI command layer between your applications and LLM providers. It decouples agent logic from model vendors, manages persistent memory via Ghost DB, dispatches tools over MCP, and enforces approval-gated security on every write." } },
-        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, deploy, run agents as versioned artifacts. Archetypes: hermes (ReAct reasoning loop), openclaw (workspace-driven), atomic (schema-typed tools). Deploy targets are allowlist-gated in agentix.yaml." } },
+        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, deploy, run agents as versioned artifacts. Archetypes: reflex (ReAct reasoning loop), flow (workspace-driven), lattice (schema-typed tools). Deploy targets are allowlist-gated in agentix.yaml." } },
         { "@type": "Question", "name": "Can I reuse MCP servers from omp, opencode, or Claude Code?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. jebat config import reads the other CLI's config, normalizes transports, timeouts and env templates, and merges with collision-safe skipping and automatic backups. Preview first with --dry-run." } },
         { "@type": "Question", "name": "Can JEBAT run 100% air-gapped?", "acceptedAnswer": { "@type": "Answer", "text": "Yes - local llama.cpp or Ollama inference with zero outbound calls. Cloud providers are opt-in per route. The whole stack runs on your hardware with no telemetry." } }
       ]
@@ -647,7 +647,7 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
     <div class="split">
       <div class="panel">
         <h3>Agentix: solutions, not scripts</h3>
-        <p>Scaffold with <strong>hermes</strong> (ReAct loop), <strong>openclaw</strong> (workspace-driven), or <strong>atomic</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name.</p>
+        <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name.</p>
         <div class="code-wrap">
           <button class="code-copy" onclick="copySnippet('agentix-snippet',this)">Copy</button>
           <div class="code" id="agentix-snippet"><span class="dim">$</span> jebat config import -s omp --dry-run
@@ -656,8 +656,8 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
 │  ✓ hostinger   stdio  npx.cmd --package=hostinger-api-mcp
 <span class="ok">└─ timeouts ms→s · {env:VAR}→${VAR} · collisions skipped</span>
 
-<span class="dim">$</span> jebat agentix create usher -t atomic
-<span class="ok">✓ created atomic solution</span>
+<span class="dim">$</span> jebat agentix create usher -t lattice
+<span class="ok">✓ created lattice solution</span>
 <span class="dim">$</span> jebat agentix build ./usher
 <span class="ok">✓ built usher v0.1.0 sha:85c718ae</span>
 <span class="dim">$</span> jebat agentix run usher "close ticket 4128"</div>
@@ -748,9 +748,9 @@ jebat mcp ide-config
           <table>
             <thead><tr><th>Your task looks like</th><th>Scaffold</th><th>Why it fits</th></tr></thead>
             <tbody>
-              <tr><td>A reasoning-heavy task with tool branching</td><td class="mono cu">hermes</td><td>Bounded ReAct loop: think → act → reflect per step</td></tr>
-              <tr><td>A folder of files that IS the workflow</td><td class="mono cu">openclaw</td><td>Agent reads/edits plan.md + workspace — zero orchestration code</td></tr>
-              <tr><td>Typed API capabilities to expose</td><td class="mono cu">atomic</td><td>Every tool ships a JSON schema; the agent only orchestrates</td></tr>
+              <tr><td>A reasoning-heavy task with tool branching</td><td class="mono cu">reflex</td><td>Bounded ReAct loop: think → act → reflect per step</td></tr>
+              <tr><td>A folder of files that IS the workflow</td><td class="mono cu">flow</td><td>Agent reads/edits plan.md + workspace — zero orchestration code</td></tr>
+              <tr><td>Typed API capabilities to expose</td><td class="mono cu">lattice</td><td>Every tool ships a JSON schema; the agent only orchestrates</td></tr>
             </tbody>
           </table>
         </div>
@@ -969,7 +969,7 @@ jebat mcp ide-config
       <div class="qa"><button onclick="toggleQA(this)"><span>What is JEBAT and how does it fit into my stack?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
         <div class="a"><p>A sovereign AI command layer between your applications and LLM providers. It decouples agent logic from model vendors, manages persistent memory via Ghost DB, dispatches tools over MCP, and enforces approval-gated security on every write.</p></div></div>
       <div class="qa"><button onclick="toggleQA(this)"><span>What is Agentix and which archetype should I pick?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>Agentix is the solution lifecycle: scaffold, build, deploy, run agents as versioned artifacts. Pick <strong>hermes</strong> for ReAct reasoning loops, <strong>openclaw</strong> for folder-driven workspaces, <strong>atomic</strong> for schema-typed tools. Deploy targets are allowlist-gated in <span class="mono">agentix.yaml</span>.</p></div></div>
+        <div class="a"><p>Agentix is the solution lifecycle: scaffold, build, deploy, run agents as versioned artifacts. Pick <strong>reflex</strong> for ReAct reasoning loops, <strong>flow</strong> for folder-driven workspaces, <strong>lattice</strong> for schema-typed tools. Deploy targets are allowlist-gated in <span class="mono">agentix.yaml</span>.</p></div></div>
       <div class="qa"><button onclick="toggleQA(this)"><span>Can I reuse MCP servers from omp, opencode, or Claude Code?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
         <div class="a"><p>Yes. <span class="mono">jebat config import</span> reads the other CLI's config, normalizes transports/timeouts/env templates, and merges with collision-safe skipping plus automatic backups. Preview first with <span class="mono">--dry-run</span>.</p></div></div>
       <div class="qa"><button onclick="toggleQA(this)"><span>Can JEBAT run 100% air-gapped?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
@@ -1010,9 +1010,9 @@ function runHeroCLI(type) {
   } else if (type === 'agentix') {
     box.innerHTML = `> $ jebat agentix status<br/>
 <span style="color: var(--jc-copper)">[Agentix Solution Registry]</span><br/>
-> deploy-usher   v0.1.0  atomic   sha:85c718ae → deployed<br/>
-> research-hive  v0.1.0  hermes   sha:d87e474c → built<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ create → build → deploy → run. Archetypes: hermes · openclaw · atomic.</span>`;
+> deploy-usher   v0.1.0  lattice   sha:85c718ae → deployed<br/>
+> research-hive  v0.1.0  reflex   sha:d87e474c → built<br/>
+<span style="color: var(--jc-pucuk-ink)">✓ create → build → deploy → run. Archetypes: reflex · flow · lattice.</span>`;
   } else if (type === 'pentest') {
     box.innerHTML = `> $ jebat agent "Pentest localhost"<br/>
 <span style="color: var(--jc-copper)">[Hulubalang Security Agent Dispatched]</span><br/>

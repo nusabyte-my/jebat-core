@@ -2,20 +2,20 @@
 
 Consolidates three agent-construction styles into one scaffold+deploy pipeline:
 
-- **hermes**   — ReAct reasoning-loop agent (perceive → reason → act → reflect),
+- **reflex**   — ReAct reasoning-loop agent (perceive → reason → act → reflect),
                  modeled on the Hermes/Atomic execution loop already in JEBAT.
-- **openclaw** — project-style solution: task folder + shared workspace files
+- **flow**     — project-style solution: task folder + shared workspace files
                  the agent reads/writes across steps (scaffold-driven, no code).
-- **atomic**   — schema-driven typed tools: every capability is a small typed
+- **lattice**  — schema-driven typed tools: every capability is a small typed
                  function with a JSON schema; the agent only orchestrates calls.
 
 A solution is a directory with an `agentix.yaml` manifest:
 
     name: my-solution
     version: 0.1.0
-    template: hermes            # hermes | openclaw | atomic
+    template: reflex            # reflex | flow | lattice
     entrypoint: agent.py        # module with run(task: str, ctx) -> str
-    tools: []                   # tool module names under tools/ (atomic lists schemas)
+    tools: []                   # tool module names under tools/ (lattice lists schemas)
     deploy:
       allow: [local, mcp, vps]  # permitted deploy targets (staged approval)
 
@@ -49,7 +49,7 @@ MANIFEST_NAME = "agentix.yaml"
 # Templates
 # ---------------------------------------------------------------------------
 
-_HERMES_AGENT = '''"""{name} — Hermes-style ReAct agent.
+_HERMES_AGENT = '''"""{name} — Reflex archetype: bounded ReAct agent.
 
 Loop: perceive -> reason -> act -> reflect. The model reasons in steps and
 chooses tools explicitly; every action is checked against the solution's
@@ -128,7 +128,7 @@ def run(task: str, **kwargs) -> str:
     return f"{tool} handled: {{task[:80]}}"
 '''
 
-_ATOMIC_AGENT = '''"""{name} — Atomic-style orchestrator over schema-driven tools."""
+_ATOMIC_AGENT = '''"""{name} — Lattice archetype: orchestrator over schema-driven tools."""
 
 from __future__ import annotations
 
@@ -152,7 +152,7 @@ def _manifest(name: str, template: str) -> Dict[str, Any]:
         "version": "0.1.0",
         "template": template,
         "entrypoint": "agent.py",
-        "tools": [] if template != "atomic" else ["tools/example.py"],
+        "tools": [] if template != "lattice" else ["tools/example.py"],
         "deploy": {"allow": ["local", "mcp", "vps"]},
     }
 
@@ -165,17 +165,17 @@ def _scaffold(name: str, template: str, target: Path) -> Path:
     (sol / MANIFEST_NAME).write_text(
         yaml.safe_dump(_manifest(name, template), sort_keys=False), encoding="utf-8"
     )
-    if template == "hermes":
+    if template == "reflex":
         (sol / "agent.py").write_text(_HERMES_AGENT.format(name=name), encoding="utf-8")
-    elif template == "openclaw":
+    elif template == "flow":
         (sol / "workspace").mkdir()
         (sol / "plan.md").write_text(_PLAN_MD.format(name=name), encoding="utf-8")
         (sol / "agent.py").write_text(
-            "# openclaw solutions are folder-driven; see workspace/ and plan.md\n",
+            "# flow solutions are folder-driven; see workspace/ and plan.md\n",
             encoding="utf-8",
         )
         (sol / "README.md").write_text(_OPENCLAW_README.format(name=name), encoding="utf-8")
-    elif template == "atomic":
+    elif template == "lattice":
         tools = sol / "tools"
         tools.mkdir()
         (tools / "__init__.py").write_text("", encoding="utf-8")
@@ -183,7 +183,7 @@ def _scaffold(name: str, template: str, target: Path) -> Path:
         (sol / "agent.py").write_text(_ATOMIC_AGENT.format(name=name), encoding="utf-8")
     else:
         shutil.rmtree(sol, ignore_errors=True)
-        raise ValueError(f"unknown template: {template} (use hermes|openclaw|atomic)")
+        raise ValueError(f"unknown template: {template} (use reflex|flow|lattice)")
     return sol
 
 
@@ -393,13 +393,13 @@ def _run_solution(sol: Path, task: str) -> str:
 def run_agentix_command(tokens: Sequence[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="jebat agentix",
-        description="Create, build, and deploy Agentix solutions (hermes | openclaw | atomic).",
+        description="Create, build, and deploy Agentix solutions (reflex | flow | lattice).",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     create = sub.add_parser("create", help="Scaffold a new solution")
     create.add_argument("name")
-    create.add_argument("--template", "-t", default="hermes", choices=["hermes", "openclaw", "atomic"])
+    create.add_argument("--template", "-t", default="reflex", choices=["reflex", "flow", "lattice"])
     create.add_argument("--dir", default=".", help="target directory (default: cwd)")
 
     build = sub.add_parser("build", help="Validate + build (writes .agentix/build.json)")
