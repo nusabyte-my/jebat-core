@@ -136,10 +136,15 @@ tbody tr:hover td{background:rgba(201,122,64,.04)}
 @media(max-width:640px){.card-grid{grid-template-columns:1fr}}
 
 /* ── FOOTER ── */
-footer{border-top:1px solid var(--jc-line);padding:28px 0;margin-top:var(--jc-s4)}
-footer .container{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--jc-slate);font-size:13px}
-footer a{color:var(--jc-slate)}
-footer a:hover{color:var(--jc-copper)}
+footer{border-top:1px solid var(--jc-line);padding:36px 0 28px;margin-top:var(--jc-s4)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;max-width:1200px;margin:0 auto;padding:0 var(--jc-s3)}
+.foot .brand{display:flex;align-items:center;gap:10px;font-family:var(--jc-display);font-weight:700;font-size:14px;color:var(--jc-ink)}
+.foot .brand img{width:44px;height:auto;border-radius:10px}
+.foot-links{display:flex;gap:var(--jc-s3);font-size:13px}
+.foot-links a{color:var(--jc-slate);transition:color var(--jc-dur) var(--jc-ease)}
+.foot-links a:hover{color:var(--jc-copper)}
+.foot .mono{font-family:var(--jc-mono);font-size:11px;color:var(--jc-slate);letter-spacing:.02em}
+@media(max-width:640px){.foot{flex-direction:column;align-items:flex-start;gap:12px}.foot-links{flex-wrap:wrap;gap:12px}}
 
 /* misc */
 .arrow{color:var(--jc-copper);font-family:var(--jc-mono)}
@@ -1275,9 +1280,20 @@ Windows (adds bash to <code>PATH</code>) or run inside WSL.</p>
 
 <!-- FOOTER -->
 <footer>
-<div class="container">
-  <p>JEBAT v8.3.0 — Sovereign Agent OS · <a href="https://github.com/nusabyte-my/jebat-core">GitHub</a> · <a href="/">Home</a> · <a href="/webui/">WebUI</a></p>
-</div>
+  <div class="foot">
+    <a class="brand" href="/">
+      <picture><source type="image/webp" srcset="assets/Jebat-Transparent-ink.webp"><img src="assets/Jebat-Transparent-ink.png" alt="JEBAT" width="60" height="40" style="width:44px"></picture>
+      JEBAT
+    </a>
+    <div class="foot-links">
+      <a href="/">Home</a>
+      <a href="/docs">Docs</a>
+      <a href="/#compare">Compare</a>
+      <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener">NusaByte</a>
+    </div>
+    <span class="mono">🗡️ JEBAT — Because warriors remember everything that matters.</span>
+  </div>
 </footer>
 
 <script>
