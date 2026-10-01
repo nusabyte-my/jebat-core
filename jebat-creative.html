@@ -212,6 +212,26 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 .matrix td:first-child{color:var(--jc-ink);font-weight:500}
 .matrix tr:hover td{background:var(--jc-copper-soft)}
 
+/* ── ROUTING CARDS ── */
+.route-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--jc-s3)}
+.route-card{background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);border-left:4px solid var(--jc-copper)}
+.route-card:nth-child(2n){border-left-color:var(--jc-pucuk)}
+.route-card h4{font-family:var(--jc-display);font-size:1rem;margin-bottom:8px}
+.route-card p{font-size:13px;color:var(--jc-slate);line-height:1.7}
+.route-card .mono{font-size:11.5px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
+@media(max-width:768px){.route-grid{grid-template-columns:1fr}}
+
+/* ── RETRIEVAL STEPS ── */
+.retr{display:grid;gap:0;max-width:720px}
+.rstep{display:flex;gap:14px;padding:14px 0;border-bottom:1px dashed var(--jc-line);align-items:flex-start}
+.rstep:last-child{border-bottom:none}
+.rnum{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:999px;background:var(--jc-ink);color:#fff;font-family:var(--jc-mono);font-size:12px;font-weight:600}
+.rstep:nth-child(2) .rnum{background:var(--jc-copper)}
+.rstep:nth-child(3) .rnum{background:var(--jc-bara)}
+.rstep:nth-child(4) .rnum{background:var(--jc-pucuk)}
+.rstep b{font-family:var(--jc-display);font-size:.95rem;display:block;margin-bottom:3px}
+.rstep p{font-size:13px;color:var(--jc-slate)}
+
 /* ── TRADEOFF NOTES ── */
 .tradeoffs{margin-top:var(--jc-s2)}
 .topt{border-left:3px solid var(--jc-copper);background:var(--jc-copper-soft);border-radius:0 10px 10px 0;padding:12px 14px;animation:fadein .25s var(--jc-ease)}
@@ -446,6 +466,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
   </div>
 </section>
 
+<div class="wrap" style="padding-top:var(--jc-s4)">
 <div class="tier-ref">
   <div class="tref-head mono">SAFETY TIERS — ENFORCED IN <span style="color:var(--jc-copper)">jebat/core/agent_loop.py</span> BEFORE ANY TOOL EXECUTES</div>
   <table class="tref-table">
@@ -472,6 +493,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
     </tbody>
   </table>
   <p class="tref-note">Classification is pattern-based, evaluates <em>arguments</em> (not just tool names), and is queryable: <span class="mono">jebat safety classify "rm -rf /tmp/x" → DANGEROUS</span>. MCP clients receive the same verdict as structuredContent before anything executes.</p>
+</div>
 </div>
 
 <!-- 01A / GHOST DB MEMORY TYPES -->
@@ -683,6 +705,52 @@ jebat mcp ide-config
 > notifications/advisorReady  →  proactive health suggestions enabled
 <span style="color:#8FD3B8">✓ GOVERNED BUS ONLINE — writes will pause at your approval gate</span></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03B2 / MODEL ROUTING -->
+<section class="section" id="routing" style="padding-top:var(--jc-s5)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">MODEL ROUTING</span>
+      <h2>Providers are a routing table, not an architecture decision.</h2>
+      <p>Every provider implements one interface; the router tries them in priority order and your tools, memory, and approvals are untouched by the switch.</p>
+    </div>
+    <div class="route-grid">
+      <div class="route-card">
+        <h4>Failover chain</h4>
+        <p><span class="mono">generate_with_failover()</span> walks providers in configured order. Local llama.cpp answers first; cloud keys only fire when you let them — and per-route policy gates apply to either.</p>
+      </div>
+      <div class="route-card">
+        <h4>Adaptive context budget</h4>
+        <p>Input is budgeted against the model's real context window (<span class="mono">input_token_budget()</span>) — prompts are truncated to tokens, not characters, so a 4k local model and a 128k cloud model both get valid input.</p>
+      </div>
+      <div class="route-card">
+        <h4>NineRouter integration</h4>
+        <p>Already running a local LLM proxy? JEBAT speaks <span class="mono">ninerouter://</span> natively — point it at your existing gateway and keep one endpoint for every model.</p>
+      </div>
+      <div class="route-card">
+        <h4>Per-call cost visibility</h4>
+        <p>Token usage is recorded per provider and per call (<span class="mono">token_usage.py</span>) — the WebUI surfaces spend, and local routes report cost as unmetered instead of hiding it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03B3 / MEMORY RETRIEVAL -->
+<section class="section" id="retrieval" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">RETRIEVAL</span>
+      <h2>How a memory query actually resolves.</h2>
+    </div>
+    <div class="retr">
+      <div class="rstep"><span class="rnum">1</span><div><b>Embed</b><p>Query text is embedded (vector) and tokenized (BM25) in parallel.</p></div></div>
+      <div class="rstep"><span class="rnum">2</span><div><b>Hybrid search</b><p>HNSW vector index (cosine) + BM25 lexical index both fire — neither alone is trusted.</p></div></div>
+      <div class="rstep"><span class="rnum">3</span><div><b>Fuse + rank</b><p>Reciprocal-rank fusion merges both lists; results carry per-hit confidence scores.</p></div></div>
+      <div class="rstep"><span class="rnum">4</span><div><b>Decay-aware</b><p>Strength-weighted: stale memories sink unless re-confirmed; autoMimpi prunes nightly at 04:00 MYT.</p></div></div>
+      <div class="rstep"><span class="rnum">5</span><div><b>Inject bounded</b><p>Recalled context enters the prompt under the same token budget as everything else — memory can't crowd out your task.</p></div></div>
     </div>
   </div>
 </section>
