@@ -1307,13 +1307,13 @@ async def skills_import(payload: dict):
     source = (payload.get("source") or "").lower()
     action = payload.get("action", "preview")
     repo = REPO_ROOT
-    counts = {"hermes": 0, "openclaw": 0, "claude": 0, "codex": 0}
+    counts = {"reflex": 0, "flow": 0, "claude": 0, "codex": 0}
     skill_dir = repo / "jebat-tokguru"
     if skill_dir.exists():
-        counts["hermes"] = len(list(skill_dir.glob("*/SKILL.md")))
+        counts["reflex"] = len(list(skill_dir.glob("*/SKILL.md")))
     integrations_skills = repo / "integrations" / "jebat-gateway" / "workspace" / "skills"
     if integrations_skills.exists():
-        counts["openclaw"] = len(list(integrations_skills.glob("*")))
+        counts["flow"] = len(list(integrations_skills.glob("*")))
     return {
         "source": source,
         "action": action,
@@ -1546,7 +1546,7 @@ def _console_meta() -> dict[str, Any]:
         registry = build_skill_registry(skill_root)
         all_skills = registry.get_all_skills()
         featured_names = [
-            "hermes-agent",
+            "reflex-agent",
             "skill-forge",
             "webfetch",
             "search",
@@ -1572,20 +1572,20 @@ def _console_meta() -> dict[str, Any]:
         all_skills = []
         top_skills = []
 
-    openclaw_skill_path = (
+    flow_skill_path = (
         REPO_ROOT
         / "integrations"
         / "jebat-gateway"
         / "workspace"
         / "skills"
-        / "hermes-agent"
+        / "reflex-agent"
         / "SKILL.md"
     )
-    openclaw_skill_excerpt = ""
-    if openclaw_skill_path.exists():
-        openclaw_skill_excerpt = "\n".join(
+    flow_skill_excerpt = ""
+    if flow_skill_path.exists():
+        flow_skill_excerpt = "\n".join(
             line.strip()
-            for line in openclaw_skill_path.read_text().splitlines()
+            for line in flow_skill_path.read_text().splitlines()
             if line.strip() and not line.startswith("---")
         )[:280]
 
@@ -1609,19 +1609,19 @@ def _console_meta() -> dict[str, Any]:
         "channels": available_channels,
         "workstations": [
             {"name": "CLI", "path": "~/.local/bin/jebat-cli", "state": "ready"},
-            {"name": "Jebat Gateway", "path": "~/.openclaw", "state": "ready"},
+            {"name": "Jebat Gateway", "path": "~/.jebat/flow", "state": "ready"},
             {"name": "VS Code", "path": "~/.config/Code/User", "state": "ready"},
             {"name": "VPS", "path": "jebat.online", "state": "live"},
         ],
         "integrations": [
-            {"name": "OpenClaw Bundle", "path": "integrations/openclaw", "state": "versioned"},
+            {"name": "Flow Bundle", "path": "integrations/flow", "state": "versioned"},
             {"name": "MCP Guide", "path": "docs/MCP_INTEGRATION_GUIDE.md", "state": "available"},
             {"name": "IDE Guide", "path": "docs/IDE_INTEGRATION_GUIDE.md", "state": "available"},
         ],
         "skills": {
             "count": len(all_skills),
             "top": top_skills,
-            "jebat_gateway_excerpt": openclaw_skill_excerpt,
+            "jebat_gateway_excerpt": flow_skill_excerpt,
         },
         "learning": {
             "modules": [
@@ -1635,7 +1635,7 @@ def _console_meta() -> dict[str, Any]:
 
 def _gateway_template() -> dict[str, Any]:
     """Load the optional gateway template without allowing bad local config to break status APIs."""
-    path = REPO_ROOT / "integrations" / "jebat-gateway" / "openclaw.template.json"
+    path = REPO_ROOT / "integrations" / "jebat-gateway" / "flow.template.json"
     if not path.exists():
         return {}
     try:
@@ -1733,7 +1733,7 @@ def _channel_catalog() -> list[dict[str, Any]]:
 def _workstation_catalog() -> list[dict[str, Any]]:
     return [
         {"id": "cli", "label": "CLI", "path": "~/.local/bin/jebat-cli", "supports_remote": False},
-        {"id": "jebat-gateway", "label": "Jebat Gateway", "path": "~/.openclaw", "supports_remote": False},
+        {"id": "jebat-gateway", "label": "Jebat Gateway", "path": "~/.jebat/flow", "supports_remote": False},
         {"id": "vscode", "label": "VS Code", "path": "~/.config/Code/User", "supports_remote": False},
         {"id": "vps", "label": "VPS", "path": "jebat.online", "supports_remote": True},
 ]

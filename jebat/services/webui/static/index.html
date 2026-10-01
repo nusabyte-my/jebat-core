@@ -18,7 +18,7 @@
   <meta name="apple-mobile-web-app-title" content="JEBAT" />
   <link rel="manifest" href="/webui/static/manifest.json" />
   <link rel="stylesheet" href="/webui/static/css/stealth.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     /* ── Toast System ── */
     .toast-container { position: fixed; top: 16px; right: 16px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
@@ -270,12 +270,12 @@
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">Agent Modes</div>
-        <a class="sidebar-link" data-page="hermes" href="#hermes">
-          <span class="sidebar-link-icon">⚔️</span> Hermes Workspace
+        <a class="sidebar-link" data-page="reflex" href="#reflex">
+          <span class="sidebar-link-icon">⚔️</span> Reflex Workspace
           <span class="sidebar-link-badge">RUN</span>
         </a>
-        <a class="sidebar-link" data-page="openclaw" href="#openclaw">
-          <span class="sidebar-link-icon">🦞</span> OpenClaw Hub
+        <a class="sidebar-link" data-page="flow" href="#flow">
+          <span class="sidebar-link-icon">🦞</span> Flow Hub
           <span class="sidebar-link-badge">LINK</span>
         </a>
         <a class="sidebar-link" data-page="audit" href="#audit">
@@ -416,8 +416,8 @@
       { icon: '📊', name: 'Dashboard', desc: 'Platform overview', page: 'dashboard', badge: 'Platform' },
       { icon: '💬', name: 'Chat', desc: 'Universal LLM chat', page: 'chat', badge: 'Platform' },
        { icon: '⚙️', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
-       { icon: '⚔️', name: 'Hermes Workspace', desc: 'Plans, tools, execution, and agent runs', page: 'hermes', badge: 'Agent' },
-       { icon: '🦞', name: 'OpenClaw Hub', desc: 'Gateway, channels, MCP, and skill bridge', page: 'openclaw', badge: 'Integration' },
+       { icon: '⚔️', name: 'Reflex Workspace', desc: 'Plans, tools, execution, and agent runs', page: 'reflex', badge: 'Agent' },
+       { icon: '🦞', name: 'Flow Hub', desc: 'Gateway, channels, MCP, and skill bridge', page: 'flow', badge: 'Integration' },
       { icon: '🤖', name: 'Sahabat', desc: 'Conversational AI companion', page: 'sahabat', badge: 'v1.0' },
       { icon: '🛡️', name: 'Keris', desc: 'Sentinel Security — pentest', page: 'keris', badge: 'v1.0' },
       { icon: '💻', name: 'Pandai', desc: 'Developer Suite', page: 'pandai', badge: 'v1.0' },
@@ -487,7 +487,7 @@
 
     // G+{key} navigation
     let gPending = false;
-    const G_MAP = { d: 'dashboard', c: 'chat', h: 'hermes', o: 'openclaw', s: 'sahabat', k: 'keris', p: 'perisai', a: 'agents', n: 'channels', t: 'setup' };
+    const G_MAP = { d: 'dashboard', c: 'chat', r: 'reflex', f: 'flow', s: 'sahabat', k: 'keris', p: 'perisai', a: 'agents', n: 'channels', t: 'setup' };
 
     document.addEventListener('keydown', e => {
       // Skip if typing in input
@@ -579,7 +579,7 @@
     // ═══════════════════════════════════════════════════
     const PAGE_TITLES = {
       dashboard: 'Mission Control', chat: 'Chat', control: 'Control Center',
-      hermes: 'Hermes — Agent Workspace', openclaw: 'OpenClaw — Integration Hub',
+      reflex: 'Reflex — Agent Workspace', flow: 'Flow — Integration Hub',
       sahabat: 'Sahabat — Companion', keris: 'Keris — Sentinel Security',
       pandai: 'Pandai — Developer Suite', perisai: 'Perisai — Nexus',
       skills: 'Skills', agents: 'Agents', channels: 'Channels', setup: 'Setup',
@@ -604,6 +604,9 @@
     async function navigate(name) {
       if (!PAGE_TITLES[name]) name = 'dashboard';
       const sequence = ++navigationSequence;
+    const progressBar = document.getElementById('progress-bar');
+    function showProgress() { if (progressBar) progressBar.style.width = '40%'; }
+    function hideProgress() { if (progressBar) { progressBar.style.width = '100%'; setTimeout(() => { progressBar.style.width = '0'; }, 300); } }
       const main = document.getElementById('app-shell');
       const title = document.getElementById('page-title');
       const breadcrumb = document.getElementById('page-breadcrumb');
@@ -648,13 +651,6 @@
 
     // ── Initial activity ──
     logActivity('SYS', 'WebUI loaded');
-
-    // ═══════════════════════════════════════════════════
-    // 8. PROGRESS BAR
-    // ═══════════════════════════════════════════════════
-    const progressBar = document.getElementById('progress-bar');
-    function showProgress() { progressBar.style.width = '40%'; }
-    function hideProgress() { progressBar.style.width = '100%'; setTimeout(() => { progressBar.style.width = '0'; }, 300); }
 
     // ═══════════════════════════════════════════════════
     // 9. THEME TOGGLE

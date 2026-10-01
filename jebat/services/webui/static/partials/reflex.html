@@ -1,0 +1,127 @@
+<!-- Reflex Command Center -->
+<style>
+  .reflex-command { max-width: 1440px; margin: 0 auto; }
+  .reflex-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .reflex-kicker { color: var(--cyan); font: 600 var(--font-size-xs) var(--font-mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: var(--space-xs); }
+  .reflex-command h2 { margin-bottom: var(--space-xs); }
+  .reflex-command-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .85fr); gap: var(--space-md); }
+  .reflex-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+  .reflex-panel-title { color: var(--text-muted); font: 600 var(--font-size-xs) var(--font-mono); letter-spacing: .1em; text-transform: uppercase; margin-bottom: var(--space-md); }
+  .reflex-plan { min-height: 260px; white-space: pre-wrap; color: var(--text-primary); }
+  .reflex-composer { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+  .reflex-composer .input { flex: 1; }
+  .reflex-activity { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .reflex-activity-row, .reflex-status-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid var(--border); font-size: var(--font-size-sm); }
+  .reflex-activity-row:last-child, .reflex-status-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .reflex-status-row span:last-child { font-family: var(--font-mono); color: var(--text-secondary); text-align: right; overflow-wrap: anywhere; }
+  .reflex-tools { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+  .reflex-tools .badge { padding: 4px 8px; }
+  @media (max-width: 900px) { .reflex-command-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .reflex-header, .reflex-composer { flex-direction: column; } .reflex-composer .btn { width: 100%; justify-content: center; } .reflex-status-grid { grid-template-columns: 1fr; } }
+</style>
+
+<section class="reflex-command" aria-labelledby="reflex-title">
+  <header class="reflex-header">
+    <div>
+      <div class="reflex-kicker">Agent Operations</div>
+      <h2 id="reflex-title">Reflex Command Center</h2>
+      <p class="text-muted">Plan, execute, and inspect the active workspace from one operator console.</p>
+    </div>
+    <span class="badge badge-green"><span class="status-dot online"></span> Ready</span>
+  </header>
+
+  <div class="reflex-command-grid">
+    <div class="card glow-cyan">
+      <div class="reflex-panel-title">Mission Planner</div>
+      <div class="terminal reflex-plan" id="reflex-plan" aria-live="polite"><span class="prompt">reflex&gt;</span> Awaiting operator objective.
+
+Submit a task to generate an execution brief.</div>
+      <form class="reflex-composer" id="reflex-form">
+        <input class="input" id="reflex-objective" type="text" placeholder="Describe the objective or next action..." autocomplete="off" />
+        <button class="btn btn-primary" id="reflex-submit" type="submit">Run Plan</button>
+      </form>
+    </div>
+
+    <aside class="reflex-activity" aria-label="Reflex execution status">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Execution</div><span class="badge badge-muted" id="reflex-execution-badge">Idle</span></div>
+        <div class="reflex-activity">
+          <div class="reflex-activity-row"><span class="text-muted">Current run</span><span class="font-mono" id="reflex-current-run">None</span></div>
+          <div class="reflex-activity-row"><span class="text-muted">Thinking mode</span><span class="font-mono">deliberate</span></div>
+          <div class="reflex-activity-row"><span class="text-muted">Last response</span><span class="font-mono" id="reflex-last-response">--</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Available Tools</div><span class="badge badge-cyan">armed</span></div>
+        <div class="reflex-tools" id="reflex-tools">
+          <span class="badge badge-muted">workspace</span><span class="badge badge-muted">search</span><span class="badge badge-muted">webfetch</span><span class="badge badge-muted">test</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="reflex-status-grid mt-md">
+    <div class="card">
+      <div class="reflex-panel-title">Plan Status</div>
+      <div class="reflex-status-row"><span class="text-muted">State</span><span id="reflex-plan-state">Awaiting objective</span></div>
+      <div class="reflex-status-row"><span class="text-muted">Provider</span><span id="reflex-provider">--</span></div>
+      <div class="reflex-status-row"><span class="text-muted">Model</span><span id="reflex-model">--</span></div>
+    </div>
+    <div class="card">
+      <div class="reflex-panel-title">Workspace Status</div>
+      <div class="reflex-status-row"><span class="text-muted">Surface</span><span>WebUI</span></div>
+      <div class="reflex-status-row"><span class="text-muted">Session</span><span id="reflex-session">webui</span></div>
+      <div class="reflex-status-row"><span class="text-muted">Transport</span><span id="reflex-transport">API ready</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (() => {
+    const $ = id => document.getElementById(id);
+    const plan = $('reflex-plan');
+    const form = $('reflex-form');
+    const input = $('reflex-objective');
+    const submit = $('reflex-submit');
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const objective = input.value.trim();
+      if (!objective) { input.focus(); return; }
+
+      input.value = '';
+      submit.disabled = true;
+      $('reflex-execution-badge').className = 'badge badge-amber';
+      $('reflex-execution-badge').textContent = 'Running';
+      $('reflex-current-run').textContent = objective.length > 32 ? objective.slice(0, 32) + '...' : objective;
+      $('reflex-plan-state').textContent = 'Generating execution brief';
+      plan.textContent = 'reflex> Planning: ' + objective + '\n\nDispatching to the JEBAT chat runtime...';
+
+      try {
+        const response = await fetch('/webui/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: 'webui-reflex', message: objective, thinking_mode: 'deliberate', preset: 'default' }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Chat request failed');
+
+        plan.textContent = 'reflex> Execution brief\n\n' + (data.response || 'No execution brief returned.');
+        $('reflex-provider').textContent = data.provider || '--';
+        $('reflex-model').textContent = data.model || '--';
+        $('reflex-plan-state').textContent = 'Brief ready';
+        $('reflex-last-response').textContent = new Date().toLocaleTimeString();
+        $('reflex-execution-badge').className = 'badge badge-green';
+        $('reflex-execution-badge').textContent = 'Complete';
+      } catch (error) {
+        plan.textContent = 'reflex> Execution unavailable\n\n' + error.message;
+        $('reflex-plan-state').textContent = 'Request failed';
+        $('reflex-transport').textContent = 'API unavailable';
+        $('reflex-execution-badge').className = 'badge badge-red';
+        $('reflex-execution-badge').textContent = 'Failed';
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  })();
+</script>
