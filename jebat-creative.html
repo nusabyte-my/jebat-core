@@ -252,6 +252,30 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 .retp{margin-top:20px;border-left:3px solid var(--jc-pucuk);padding-left:14px;font-size:13px;color:var(--jc-slate);line-height:1.7}
 @media(max-width:1024px){.ret-grid{grid-template-columns:1fr}}
 
+/* ── HONEST COMPARISON ── */
+.cmp table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:16px;overflow:hidden;box-shadow:var(--jc-sh-ink);border:1px solid var(--jc-line)}
+.cmp th{background:var(--jc-ink);color:#fff;text-align:left;padding:12px 16px;font-family:var(--jc-display);font-size:.9rem;font-weight:600}
+.cmp th:last-child{background:linear-gradient(135deg,#B26832,#D58A4A)}
+.cmp td{padding:12px 16px;font-size:13.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate);vertical-align:top;line-height:1.6}
+.cmp td:first-child{color:var(--jc-ink);font-weight:600;width:22%}
+/* JEBAT column highlight — soft copper wash + border rails */
+.cmp td:nth-child(3){background:rgba(201,122,64,.05);border-left:1px solid rgba(201,122,64,.18);border-right:1px solid rgba(201,122,64,.18)}
+.cmp tbody tr:last-child td:nth-child(3){border-bottom:1px solid rgba(201,122,64,.18)}
+.cmp tbody tr:hover td{background:rgba(201,122,64,.04)}
+.cmp tbody tr:hover td:nth-child(3){background:rgba(201,122,64,.10)}
+.cmp td.good{color:var(--jc-ink)}
+.cmp td.good::before{content:"✓ ";color:var(--jc-pucuk);font-weight:700}
+.cmp td.bad::before{content:"— ";color:var(--jc-copper);font-weight:700}
+.cmp-verdict{margin-top:14px;font-size:12.5px;color:var(--jc-slate);border-left:3px solid var(--jc-pucuk);padding-left:12px;line-height:1.7}
+.cmp-verdict b{color:var(--jc-ink)}
+@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}.cmp td:nth-child(3){border-left:none;border-right:none}}
+
+
+.cmp td:nth-child(3){background:rgba(201,122,64,.05);border-left:1px solid rgba(201,122,64,.18);border-right:1px solid rgba(201,122,64,.18)}
+.cmp tbody tr:last-child td:nth-child(3){border-bottom:1px solid rgba(201,122,64,.18)}
+.cmp tbody tr:hover td{background:rgba(201,122,64,.04)}
+.cmp tbody tr:hover td:nth-child(3){background:rgba(201,122,64,.10)}
+@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}.cmp td:nth-child(3){border-left:none;border-right:none}}
 /* ── TRADEOFF NOTES ── */
 .tradeoffs{margin-top:var(--jc-s2)}
 .topt{border-left:3px solid var(--jc-copper);background:var(--jc-copper-soft);border-radius:0 10px 10px 0;padding:12px 14px;animation:fadein .25s var(--jc-ease)}
