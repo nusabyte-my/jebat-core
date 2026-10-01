@@ -247,11 +247,16 @@ pre {
   border-radius: 0 2px 2px 0;
 }
 .sidebar-link-icon {
-  font-size: var(--font-size-lg);
-  width: 24px;
-  text-align: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .6;
 }
+.sidebar-link:hover .sidebar-link-icon, .sidebar-link.active .sidebar-link-icon { opacity: 1; }
+.sidebar-link-icon svg { width: 16px; height: 16px; }
 .sidebar-link-badge {
   margin-left: auto;
   font-size: var(--font-size-xs);
