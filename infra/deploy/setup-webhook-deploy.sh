@@ -34,6 +34,10 @@ done
 
 if [ -z "$SECRET" ]; then
     echo "ERROR: --secret is required (set a random string, then use it in GitHub webhook settings)"
+mkdir -p /etc/jebat
+printf 'GITHUB_WEBHOOK_SECRET=%s\n' "$SECRET" > /etc/jebat/deploy-webhook.env
+chmod 600 /etc/jebat/deploy-webhook.env
+
     exit 1
 fi
 
@@ -104,6 +108,8 @@ After=network.target
 [Service]
 # Invoke via python3 explicitly — the .py is mode 644 in git, so a direct
 # ExecStart=<file> hits systemd 203/EXEC after every git reset --hard.
+# Persist the secret for restarts (deploy-webhook.py reads GITHUB_WEBHOOK_SECRET)
+EnvironmentFile=/etc/jebat/deploy-webhook.env
 ExecStart=$PYTHON_BIN $REPO_DIR/infra/deploy/deploy-webhook.py --port $PORT --secret $SECRET
 WorkingDirectory=$REPO_DIR
 Restart=always

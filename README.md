@@ -34,6 +34,9 @@ The public API and WebUI are production services. Configure provider credentials
 ### Option 1: npx (Recommended — Zero Install)
 
 ```bash
+# First run: configure your LLM provider (one-time wizard)
+npx @nusabyte/jebat init
+
 # Interactive REPL
 npx @nusabyte/jebat repl
 

@@ -13,6 +13,7 @@ const PRECACHE = [
   '/webui/static/favicon.png',
   '/webui/static/jebat-app-icon.png',
   '/webui/static/manifest.json',
+  '/webui/static/offline.html',
   '/favicon.svg'
 ];
 
@@ -58,7 +59,9 @@ self.addEventListener('fetch', event => {
           caches.open(SHELL_CACHE).then(c => c.put(event.request, copy));
           return resp;
         })
-        .catch(() => caches.match(event.request).then(c => c || caches.match('/webui/')))
+        .catch(() => caches.match(event.request)
+          .then(c => c || caches.match('/webui/'))
+          .then(c => c || caches.match('/webui/static/offline.html')))
     );
     return;
   }
