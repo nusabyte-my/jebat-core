@@ -69,8 +69,8 @@
   --jc-copper-soft:rgba(201,122,64,.10); --jc-copper-glow:rgba(201,122,64,.22);
   --jc-pucuk-soft:rgba(47,111,85,.10);
   /* harsh gradient (jebat-creative): copper → hard stop → pucuk */
-  --jc-grad:linear-gradient(90deg,var(--jc-copper) 0%,var(--jc-copper) 62%,var(--jc-pucuk) 62%);
-  --jc-grad-text:linear-gradient(92deg,#B26832 0%,#C97A40 45%,#2F6F55 100%);
+  --jc-grad:linear-gradient(135deg,#B26832 0%,#C97A40 48%,#D58A4A 100%);
+  --jc-grad-text:linear-gradient(92deg,#B26832 0%,#C97A40 40%,#D58A4A 100%);
   /* shadows tinted by hue */
   --jc-sh-copper:0 20px 40px -14px rgba(201,122,64,.30);
   --jc-sh-pucuk:0 20px 40px -14px rgba(47,111,85,.26);
@@ -105,8 +105,10 @@ a{color:inherit;text-decoration:none}
 .nav-links a{color:var(--jc-slate);padding:6px 2px;border-bottom:2px solid transparent;transition:color var(--jc-dur) var(--jc-ease)}
 .nav-links a:hover{color:var(--jc-ink)}
 .nav-links a:focus-visible{outline:2px solid var(--jc-copper);outline-offset:3px;border-radius:4px}
-.nav-cta{background:var(--jc-ink);color:#fff;padding:9px 18px;border-radius:999px;font-size:13.5px;font-weight:600;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease)}
-.nav-cta:hover{transform:translateY(-1px);box-shadow:var(--jc-sh-ink)}
+.nav-cta{background:var(--jc-ink);color:#fff;padding:9px 18px;border-radius:999px;font-size:13.5px;font-weight:600;position:relative;overflow:hidden;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease),background var(--jc-dur) var(--jc-ease)}
+.nav-cta::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(201,122,64,.28),transparent);transform:skewX(-20deg);transition:left .5s var(--jc-ease);pointer-events:none}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:var(--jc-sh-ink);background:#202723}
+.nav-cta:hover::after{left:130%}
 .nav-cta:active{transform:translateY(0)}
 .nav-cta:focus-visible{outline:2px solid var(--jc-copper);outline-offset:3px}
 .burger{display:none;background:none;border:1px solid var(--jc-line);border-radius:10px;padding:8px 10px;cursor:pointer}
@@ -131,15 +133,20 @@ h1 .grad{background:var(--jc-grad-text);-webkit-background-clip:text;background-
 .badge svg{width:13px;height:13px}
 .badge.b-copper svg{color:var(--jc-copper)} .badge.b-pucuk svg{color:var(--jc-pucuk)} .badge.b-ink svg{color:var(--jc-ink)}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:var(--jc-s3)}
-.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:999px;font-weight:600;font-size:14.5px;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease),background var(--jc-dur) var(--jc-ease)}
-.btn:active{transform:translateY(1px)}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:999px;font-weight:600;font-size:14.5px;position:relative;overflow:hidden;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease)}
+.btn:active{transform:translateY(1px) scale(.99)}
 .btn:focus-visible{outline:2px solid var(--jc-copper);outline-offset:3px}
+.btn .arr{transition:transform var(--jc-dur) var(--jc-ease)}
+.btn:hover .arr{transform:translateX(4px)}
+/* shine sweep — one pass per hover, clipped by the pill */
+.btn::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .5s var(--jc-ease);pointer-events:none}
+.btn:hover::after{left:130%}
 .btn-primary{background:var(--jc-grad);color:#fff;box-shadow:var(--jc-sh-copper)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 26px 48px -14px rgba(201,122,64,.4)}
-.btn-primary .arr{transition:transform var(--jc-dur) var(--jc-ease)}
-.btn-primary:hover .arr{transform:translateX(4px)}
+.btn-primary:hover{transform:translateY(-2px);animation:pulse-glow 2.2s var(--jc-ease) infinite}
+@keyframes pulse-glow{0%,100%{box-shadow:0 26px 48px -14px rgba(201,122,64,.45)}50%{box-shadow:0 26px 54px -10px rgba(201,122,64,.62)}}
 .btn-ghost{background:var(--jc-card);border:1px solid var(--jc-line);color:var(--jc-ink)}
-.btn-ghost:hover{transform:translateY(-2px);box-shadow:var(--jc-sh-ink);border-color:rgba(201,122,64,.4)}
+.btn-ghost::after{background:linear-gradient(105deg,transparent,rgba(201,122,64,.12),transparent)}
+.btn-ghost:hover{transform:translateY(-2px);box-shadow:var(--jc-sh-ink);border-color:rgba(201,122,64,.45)}
 .install{display:inline-flex;align-items:center;gap:10px;font-family:var(--jc-mono);font-size:12.5px;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:12px;padding:11px 14px;box-shadow:0 1px 3px rgba(20,24,22,.05)}
 .install .dollar{color:var(--jc-copper);font-weight:600}
 .install button{background:none;border:none;cursor:pointer;color:var(--jc-slate);display:inline-flex;padding:4px;border-radius:6px}
@@ -232,6 +239,24 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 .rstep b{font-family:var(--jc-display);font-size:.95rem;display:block;margin-bottom:3px}
 .rstep p{font-size:13px;color:var(--jc-slate)}
 
+/* ── HONEST COMPARISON ── */
+.cmp table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:16px;overflow:hidden;box-shadow:var(--jc-sh-ink);border:1px solid var(--jc-line)}
+.cmp th{background:var(--jc-ink);color:#fff;text-align:left;padding:12px 16px;font-family:var(--jc-display);font-size:.9rem;font-weight:600}
+.cmp th:last-child{background:linear-gradient(135deg,#B26832,#D58A4A)}
+.cmp td{padding:12px 16px;font-size:13.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate);vertical-align:top;line-height:1.6}
+.cmp td:first-child{color:var(--jc-ink);font-weight:600;width:22%}
+/* JEBAT column highlight — soft copper wash + border rails */
+.cmp td:nth-child(3){background:rgba(201,122,64,.05);border-left:1px solid rgba(201,122,64,.18);border-right:1px solid rgba(201,122,64,.18)}
+.cmp tbody tr:last-child td:nth-child(3){border-bottom:1px solid rgba(201,122,64,.18)}
+.cmp tbody tr:hover td{background:rgba(201,122,64,.04)}
+.cmp tbody tr:hover td:nth-child(3){background:rgba(201,122,64,.10)}
+.cmp td.good{color:var(--jc-ink)}
+.cmp td.good::before{content:"✓ ";color:var(--jc-pucuk);font-weight:700}
+.cmp td.bad::before{content:"— ";color:var(--jc-copper);font-weight:700}
+.cmp-verdict{margin-top:14px;font-size:12.5px;color:var(--jc-slate);border-left:3px solid var(--jc-pucuk);padding-left:12px;line-height:1.7}
+.cmp-verdict b{color:var(--jc-ink)}
+@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}.cmp td:nth-child(3){border-left:none;border-right:none}}
+
 /* ── TRADEOFF NOTES ── */
 .tradeoffs{margin-top:var(--jc-s2)}
 .topt{border-left:3px solid var(--jc-copper);background:var(--jc-copper-soft);border-radius:0 10px 10px 0;padding:12px 14px;animation:fadein .25s var(--jc-ease)}
@@ -297,7 +322,7 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3);text-align:left}
 .tier{background:rgba(240,234,223,.04);border:1px solid rgba(240,234,223,.12);border-radius:var(--jc-rad);padding:var(--jc-s3);backdrop-filter:blur(8px)}
 .tier.hot{border:1.5px solid var(--jc-copper);background:rgba(201,122,64,.08);position:relative}
-.tier .pop{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--jc-mono);font-size:9.5px;letter-spacing:.12em;background:var(--jc-grad);color:#fff;padding:4px 12px;border-radius:999px;white-space:nowrap}
+.tier .pop{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--jc-mono);font-size:9.5px;letter-spacing:.12em;background:var(--jebat-malam);color:var(--jc-bara);border:1px solid rgba(201,122,64,.5);padding:4px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 6px 16px -6px rgba(201,122,64,.45)}
 .tier h4{font-family:var(--jc-display);font-size:1.05rem;color:#F0EADF;margin-bottom:4px}
 .tier .t-sub{font-family:var(--jc-mono);font-size:10px;color:#99A39E;letter-spacing:.1em;margin-bottom:var(--jc-s2);display:block}
 .tier ul{list-style:none;display:grid;gap:9px}
@@ -776,6 +801,7 @@ jebat mcp ide-config
           <tr><td>Best fit</td><td class="good">Fast prototyping, no-ops teams</td><td class="good">Regulated data, enterprise control, long-lived agents</td></tr>
         </tbody>
       </table>
+      <p class="cmp-verdict"><b>Verdict heuristic:</b> if your data can leave your network without a contract, hosted platforms win on time-to-value — use them. If it can't — healthcare, legal, finance, client-NDA work — self-hosting isn't paranoia, it's the requirement. JEBAT exists for the second column.</p>
     </div>
   </div>
 </section>
