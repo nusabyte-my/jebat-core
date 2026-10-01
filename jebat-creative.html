@@ -181,23 +181,19 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 /* ── TIER REFERENCE ── */
 .tier-ref{margin-top:var(--jc-s4);background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);box-shadow:var(--jc-sh-ink)}
 .tref-head{font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin-bottom:var(--jc-s2)}
-.tref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
-.tref{border-top:3px solid var(--tc,var(--jc-copper));padding-top:10px}
-.tref b{font-family:var(--jc-display);font-size:.95rem;display:inline-block;margin-right:8px}
-.tref span{font-family:var(--jc-mono);font-size:10px;color:var(--tc,var(--jc-copper));letter-spacing:.06em}
-.tref p{font-size:12.5px;color:var(--jc-slate);margin-top:6px;line-height:1.65}
-@media(max-width:768px){.tref-grid{grid-template-columns:1fr}}
-
-/* ── COMPARISON ── */
-.cmp table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:16px;overflow:hidden;box-shadow:var(--jc-sh-ink);border:1px solid var(--jc-line)}
-.cmp th{background:var(--jc-ink);color:#fff;text-align:left;padding:12px 16px;font-family:var(--jc-display);font-size:.9rem;font-weight:600}
-.cmp td{padding:12px 16px;font-size:13.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate);vertical-align:top}
-.cmp td:first-child{color:var(--jc-ink);font-weight:600;width:22%}
-.cmp td.good{color:var(--jc-ink)}
-.cmp td.good::before{content:"✓ ";color:var(--jc-pucuk);font-weight:700}
-.cmp td.bad::before{content:"— ";color:var(--jc-copper);font-weight:700}
-.cmp tr:hover td:not(:first-child){background:var(--jc-copper-soft)}
-@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}}
+.tref-table{width:100%;border-collapse:collapse}
+.tref-table th{font-family:var(--jc-mono);font-size:10px;letter-spacing:.12em;text-align:left;color:var(--jc-slate);padding:8px 12px;border-bottom:2px solid var(--jc-line)}
+.tref-table td{padding:12px;border-top:1px solid var(--jc-line);font-size:12.5px;color:var(--jc-slate);vertical-align:top;line-height:1.6}
+.tref-table tr:hover td{background:rgba(20,24,22,.02)}
+.tref-table td.ex{font-family:var(--jc-mono);font-size:11px;color:var(--jc-ink)}
+.tref-table td.mono{color:var(--jc-copper);font-weight:500;white-space:nowrap}
+.pill{display:inline-block;font-family:var(--jc-mono);font-size:10px;font-weight:600;letter-spacing:.08em;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill-auto{background:rgba(47,111,85,.12);color:var(--jc-pucuk-ink);border:1px solid rgba(47,111,85,.3)}
+.pill-confirm{background:var(--jc-copper-soft);color:var(--jc-copper);border:1px solid var(--jc-copper-glow)}
+.pill-danger{background:rgba(179,38,30,.08);color:#B3261E;border:1px solid rgba(179,38,30,.3)}
+.tref-note{margin-top:var(--jc-s2);font-size:12px;color:var(--jc-slate);border-left:3px solid var(--jc-copper);padding-left:12px;line-height:1.7}
+.tref-note .mono{font-size:11px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
+@media(max-width:768px){.tref-table,.tref-table tbody,.tref-table tr,.tref-table td{display:block;width:100%}.tref-table thead{display:none}.tref-table tr{border-bottom:1px solid var(--jc-line);padding-bottom:10px;margin-bottom:10px}.tref-table td.mono{white-space:normal}}
 
 /* ── MEMORY GRID ── */
 .mem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
@@ -451,12 +447,31 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
 </section>
 
 <div class="tier-ref">
-  <div class="tref-head mono">SAFETY TIERS — WHAT RUNS WITHOUT YOU</div>
-  <div class="tref-grid">
-    <div class="tref" style="--tc:var(--jc-pucuk)"><b>AUTO</b><span>runs free</span><p>Read-only: file reads, search, memory queries, git status. Zero prompts.</p></div>
-    <div class="tref" style="--tc:var(--jc-copper)"><b>CONFIRM</b><span>one prompt / stage / session</span><p>Writes: file_patch, git commit, docker. Preview card first — answer y / a (always) / n.</p></div>
-    <div class="tref" style="--tc:#B3261E"><b>DANGEROUS</b><span>explicit flag + confirm</span><p>Destructive: rm -rf, sudo, disk ops. Requires the <span class="mono">--dangerous</span> consent tag even in yolo mode.</p></div>
-  </div>
+  <div class="tref-head mono">SAFETY TIERS — ENFORCED IN <span style="color:var(--jc-copper)">jebat/core/agent_loop.py</span> BEFORE ANY TOOL EXECUTES</div>
+  <table class="tref-table">
+    <thead><tr><th>Tier</th><th>Enforcement</th><th>Examples</th><th>Unlock</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="pill pill-auto">AUTO</span></td>
+        <td>Executes immediately, no interaction. Every call still passes the allowlist filter and lands in the metrics ring.</td>
+        <td class="ex">file reads · search_files · memory queries · git status/log · advisor_classify</td>
+        <td class="mono">default</td>
+      </tr>
+      <tr>
+        <td><span class="pill pill-confirm">CONFIRM</span></td>
+        <td>Pauses for interactive approval — prompt shows tool, tier, and truncated args. In the REPL, staged approval means one prompt per stage per session; <span class="mono">write_file</span> additionally renders a diff preview card.</td>
+        <td class="ex">file_patch · git commit · docker · package installs · agent_execute</td>
+        <td class="mono">answer Y, or a = always this session</td>
+      </tr>
+      <tr>
+        <td><span class="pill pill-danger">DANGEROUS</span></td>
+        <td>Hard-gated: pattern-matched on arguments (recursive deletes, disk writes, fork bombs) and rejected with a reason string. Only unlocked by launching the session with elevated safety — yolo alone lifts <em>prompts</em>, not the classification.</td>
+        <td class="ex">rm -rf / · mkfs · dd to block devices · fork bombs · sudo rm</td>
+        <td class="mono">--yolo or --safety dangerous at launch</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="tref-note">Classification is pattern-based, evaluates <em>arguments</em> (not just tool names), and is queryable: <span class="mono">jebat safety classify "rm -rf /tmp/x" → DANGEROUS</span>. MCP clients receive the same verdict as structuredContent before anything executes.</p>
 </div>
 
 <!-- 01A / GHOST DB MEMORY TYPES -->
