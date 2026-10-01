@@ -29,7 +29,7 @@
       "name": "JEBAT",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Linux, Windows, macOS",
-      "softwareVersion": "8.2.1",
+      "softwareVersion": "8.3.0",
       "description": "Sovereign AI command layer for model orchestration, persistent memory, MCP tool integration, and enterprise governance.",
       "url": "https://jebat.online",
       "license": "https://opensource.org/licenses/MIT",
@@ -166,6 +166,25 @@ h1 .grad{background:var(--jc-grad-text);-webkit-background-clip:text;background-
 .stat b{display:block;font-family:var(--jc-display);font-size:1.65rem;font-weight:700;letter-spacing:-.01em}
 .stat.s1 b{color:var(--jc-copper)}.stat.s2 b{color:var(--jc-pucuk)}.stat.s3 b{color:var(--jc-ink)}.stat.s4 b{color:var(--jc-bara)}
 .stat span{font-family:var(--jc-mono);font-size:10.5px;letter-spacing:.1em;color:var(--jc-slate)}
+
+/* ── NEWS STRIP ── */
+.news-strip{padding:var(--jc-s4) 0;border-top:1px solid var(--jc-line);border-bottom:1px solid var(--jc-line);background:linear-gradient(180deg,rgba(201,122,64,.04),transparent)}
+.news-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:var(--jc-s2);flex-wrap:wrap}
+.news-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--jc-mono);font-size:10.5px;letter-spacing:.14em;color:var(--jc-copper)}
+.news-kicker .pulse{width:6px;height:6px;border-radius:50%;background:var(--jc-pucuk);animation:pulse 2s infinite}
+.news-date{font-size:10px;color:var(--jc-slate)}
+.news-row{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
+.news-card{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:14px;padding:16px 18px;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease),border-color var(--jc-dur) var(--jc-ease)}
+.news-card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 3px 3px 0}
+.news-card.nc-copper{--nc:var(--jc-copper)} .news-card.nc-pucuk{--nc:var(--jc-pucuk)} .news-card.nc-bara{--nc:var(--jc-bara)}
+.news-card::before{background:var(--nc)}
+.news-card:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px rgba(20,24,22,.16);border-color:var(--nc)}
+.news-card .nc-src{font-size:9.5px;letter-spacing:.12em;color:var(--nc);text-transform:uppercase}
+.news-card .nc-title{font-family:var(--jc-display);font-size:.92rem;font-weight:600;color:var(--jc-ink);line-height:1.4}
+.news-card .nc-arr{margin-top:auto;align-self:flex-end;color:var(--nc);font-family:var(--jc-mono);transition:transform var(--jc-dur) var(--jc-ease)}
+.news-card:hover .nc-arr{transform:translateX(4px)}
+@media(max-width:1024px){.news-row{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.news-row{grid-template-columns:1fr}}
 
 /* ── SECTION SCAFFOLD ── */
 .section{padding:var(--jc-s7) 0}
@@ -402,7 +421,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
   <div class="wrap nav-in">
     <a class="brand" href="#">
       <span class="brand-logo"><picture><source type="image/webp" srcset="assets/Jebat-Transparent-ink.webp"><img src="assets/Jebat-Transparent-ink.png" alt="JEBAT logo" width="88" height="59"></picture></span>
-      <small>v8.2.1</small>
+      <small>v8.3.0</small>
     </a>
     <ul class="nav-links">
       <li><a href="#platform">Platform</a></li>
@@ -425,7 +444,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
   <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="dots"></div>
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow"><span class="pulse"></span> RELEASE v8.2.1 — SECURITY HARDENED</span>
+      <span class="eyebrow"><span class="pulse"></span> RELEASE v8.3.0 — SECURITY HARDENED</span>
       <h1>Keep <span class="grad">Command.</span><br/>Own the Stack.</h1>
       <p class="hero-lead">A sovereign AI command layer between your apps and any model — <strong>118 MCP tools</strong> behind explicit safety tiers, persistent Ghost DB memory, and a CLI that builds, ships, and runs agent solutions. Never ship a write you did not approve.</p>
       <div class="badges">
@@ -469,7 +488,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
           <button class="jchip" onclick="runCLI('dream',this)">autoMimpi</button>
         </div>
         <div class="term-body" id="hero-cli-output">> $ jebat status
-✓ JEBAT Core v8.2.1 Operational — Security Hardened
+✓ JEBAT Core v8.3.0 Operational — Security Hardened
 > Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]
 > Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated
 > MCP Protocol Bus: tool registry available · jebat://metrics/tools live</div>
@@ -486,6 +505,37 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
     </div>
   </div>
 </header>
+
+<!-- NEWS STRIP — LATEST AI IMPROVEMENTS (agent-fed) -->
+<section class="news-strip" aria-label="Latest AI news">
+  <div class="wrap">
+    <div class="news-head">
+      <span class="news-kicker"><span class="pulse"></span> WIRE — AI IMPROVEMENTS</span>
+      <span class="news-date mono">updated 2026-10-01 · via jebat news agent</span>
+    </div>
+    <div class="news-row" id="news-row"></div>
+  </div>
+</section>
+
+<script>
+/* Agent-fed news strip: server-side JSON snapshot baked in (no network at
+ * view time), re-rendered live if news.json is served alongside. */
+const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campaign", "link": "https://openai.com/index/disrupting-a-coordinated-model-distillation-campaign", "source": "OpenAI", "date": "Wed, 30 Sep 2026 10:30:00 GMT", "summary": "Learn how OpenAI disrupted a campaign to extract protected model reasoning and is strengthening defenses against adversarial distillation."}, {"title": "Helping small businesses put AI to work", "link": "https://openai.com/index/helping-small-businesses-put-ai-to-work", "source": "OpenAI", "date": "Wed, 30 Sep 2026 10:00:00 GMT", "summary": "OpenAI is partnering with America’s SBDC to expand hands-on AI training and local support for small businesses, alongside a new report on how small teams are using AI."}, {"title": "Quoting Anthropic Frontier Red Team", "link": "https://simonwillison.net/2026/Sep/29/anthropic-frontier-red-team/", "source": "Simon Willison", "date": "2026-09-29T22:20:28+00:00", "summary": "We evaluate several models on 100 tasks from the [internal Binary Exploitation benchmark] (selected at random), and find that GLM-5.3 develops full control flow hijacks in 4% of the trials; Claude Mythos Preview did so i"}];
+(function renderNews(){
+  const row = document.getElementById('news-row');
+  NEWS_ITEMS.forEach((n, i) => {
+    const hue = ['copper','pucuk','bara'][i % 3];
+    const a = document.createElement('a');
+    a.className = 'news-card nc-' + hue;
+    a.href = n.link; a.target = '_blank'; a.rel = 'noopener';
+    a.innerHTML = `<span class="nc-src mono">${n.source}</span>
+                   <span class="nc-title">${n.title}</span>
+                   <span class="nc-arr">→</span>`;
+    row.appendChild(a);
+  });
+})();
+</script>
+</section>
 
 <!-- 01 / PLATFORM -->
 <section class="section" id="platform">
@@ -686,7 +736,7 @@ curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
 
 <span class="cu"># 2 — verify the server greets you</span>
 jebat mcp serve --transport stdio
-<span class="ok">✓ JEBAT MCP Server v8.2.1 on stdio — protocol 2026-07-28</span>
+<span class="ok">✓ JEBAT MCP Server v8.3.0 on stdio — protocol 2026-07-28</span>
 
 <span class="cu"># 3 — point your IDE at it (Cursor / VS Code / Windsurf)</span>
 jebat mcp ide-config
@@ -953,7 +1003,7 @@ function runHeroCLI(type) {
   const box = document.getElementById('hero-cli-output');
   if (type === 'status') {
     box.innerHTML = `> $ jebat status<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ JEBAT Core v8.2.1 Operational — Security Hardened</span><br/>
+<span style="color: var(--jc-pucuk-ink)">✓ JEBAT Core v8.3.0 Operational — Security Hardened</span><br/>
 > Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]<br/>
 > Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated<br/>
 > MCP Protocol Bus: tool registry available · jebat://metrics/tools live`;
@@ -1020,7 +1070,7 @@ curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
 
 # 2 — verify the server greets you
 jebat mcp serve --transport stdio
-✓ JEBAT MCP Server v8.2.1 on stdio — protocol 2026-07-28
+✓ JEBAT MCP Server v8.3.0 on stdio — protocol 2026-07-28
 
 # 3 — point your IDE at it (Cursor / VS Code / Windsurf)
 jebat mcp ide-config

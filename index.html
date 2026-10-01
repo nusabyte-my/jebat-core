@@ -52,7 +52,7 @@
       "name": "JEBAT",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Linux, Windows, macOS",
-      "softwareVersion": "8.2.1",
+      "softwareVersion": "8.3.0",
       "description": "Sovereign AI command layer for model orchestration, persistent memory, MCP tool integration, and enterprise governance.",
       "url": "https://jebat.online",
       "license": "https://opensource.org/licenses/MIT",
@@ -63,6 +63,8 @@
       },
       "featureList": [
         "Multi-Model Routing (Local & Cloud Providers)",
+        "Jev Typed-Decision Advisor (Laya local model, ~100ms decisions)",
+        "Official TypeScript SDK (jebat-sdk 1.0.0)",
         "Agentix Solution Lifecycle (create, build, deploy, run — hermes / openclaw / atomic templates)",
         "Cross-CLI Config Import (omp, opencode, Claude Code MCP servers)",
         "Ghost DB 6-Type Persistent Memory Engine",
@@ -2509,7 +2511,7 @@ footer {
     <span>•</span>
     <span>NIGHTLY autoMIMPI DAEMON (04:00 MYT)</span>
     <span>•</span>
-    <span class="text-pucuk" style="color:var(--jebat-pucuk)">RELEASE v8.2.1 OPERATIONAL</span>
+    <span class="text-pucuk" style="color:var(--jebat-pucuk)">RELEASE v8.3.0 OPERATIONAL</span>
    </div>
   </div>
 </div>
@@ -4342,7 +4344,7 @@ function runHeroCLI(type) {
   const box = document.getElementById('hero-cli-output');
   if (type === 'status') {
     box.innerHTML = `> $ jebat status<br/>
-<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.2.1 Operational — Security Hardened</span><br/>
+<span style="color: var(--hermes-pucuk)">✓ JEBAT Core v8.3.0 Operational — Security Hardened</span><br/>
 > Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]<br/>
 > Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated<br/>
 > MCP Protocol Bus: tool registry available · jebat://metrics/tools live`;
