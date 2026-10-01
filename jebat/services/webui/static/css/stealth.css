@@ -846,3 +846,12 @@ tr:hover td { background: var(--bg-hover); }
 .font-mono { font-family: var(--font-mono); }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hidden { display: none !important; }
+
+/* ── Page Headers ── */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-lg); flex-wrap: wrap; }
+.page-header h1, .page-header h2 { margin-bottom: var(--space-xs); }
+.page-header .page-desc, .page-header p { font-size: var(--font-size-sm); color: var(--text-muted); max-width: 640px; }
+
+/* ── Tag/Meta Rows ── */
+.agent-profile-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--space-sm); }
+.agent-profile-meta span { display: inline-block; padding: 3px 8px; font-size: var(--font-size-xs); font-family: var(--font-mono); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); }
