@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Hallmark · pre-emit critique: P4 H4 E5 S5 R4 V4 — jebat-creative light DNA, locked Malam/Tembaga palette
+     Macrostructure: Workbench · genre: modern-minimal · theme: custom-locked (paper #F7F4EE / copper #C97A40 / pucuk #2F6F55)
+     gates: tokens-only · no invented proof · 2+1 fonts · no italic headers · rainbow ≤1 hue per element · real terminal output -->
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -51,9 +54,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
-/* Hallmark · pre-emit critique: P4 H4 E5 S5 R4 V4 — jebat-creative light DNA, locked Malam/Tembaga palette
- * Macrostructure: Workbench · genre: modern-minimal · theme: custom-locked (paper #F7F4EE / copper #C97A40 / pucuk #2F6F55)
- * gates: tokens-only · no invented proof · 2+1 fonts · no italic headers · rainbow ≤1 hue per element · real terminal output */
 :root{
   /* ── LOCKED BRAND (from index.html :root — do not edit) ── */
   --jebat-malam:#080A09; --jebat-besi:#141816; --jebat-tulang:#F0EADF;
@@ -228,34 +228,29 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 .route-card .mono{font-size:11.5px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
 @media(max-width:768px){.route-grid{grid-template-columns:1fr}}
 
-/* ── RETRIEVAL STEPS ── */
-.retr{display:grid;gap:0;max-width:720px}
-.rstep{display:flex;gap:14px;padding:14px 0;border-bottom:1px dashed var(--jc-line);align-items:flex-start}
+/* ── RETRIEVAL (deep dive) ── */
+.ret-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:var(--jc-s5);align-items:start}
+.ret-title{font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin-bottom:var(--jc-s2)}
+.rstep{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--jc-line);align-items:flex-start}
 .rstep:last-child{border-bottom:none}
-.rnum{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:999px;background:var(--jc-ink);color:#fff;font-family:var(--jc-mono);font-size:12px;font-weight:600}
-.rstep:nth-child(2) .rnum{background:var(--jc-copper)}
-.rstep:nth-child(3) .rnum{background:var(--jc-bara)}
-.rstep:nth-child(4) .rnum{background:var(--jc-pucuk)}
+.rnum{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:999px;background:var(--jc-ink);color:#fff;font-family:var(--jc-mono);font-size:12px;font-weight:600;flex-shrink:0}
+.rstep:nth-child(3) .rnum{background:var(--jc-copper)}
+.rstep:nth-child(4) .rnum{background:var(--jc-bara)}
+.rstep:nth-child(5) .rnum{background:var(--jc-pucuk)}
 .rstep b{font-family:var(--jc-display);font-size:.95rem;display:block;margin-bottom:3px}
-.rstep p{font-size:13px;color:var(--jc-slate)}
-
-/* ── HONEST COMPARISON ── */
-.cmp table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:16px;overflow:hidden;box-shadow:var(--jc-sh-ink);border:1px solid var(--jc-line)}
-.cmp th{background:var(--jc-ink);color:#fff;text-align:left;padding:12px 16px;font-family:var(--jc-display);font-size:.9rem;font-weight:600}
-.cmp th:last-child{background:linear-gradient(135deg,#B26832,#D58A4A)}
-.cmp td{padding:12px 16px;font-size:13.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate);vertical-align:top;line-height:1.6}
-.cmp td:first-child{color:var(--jc-ink);font-weight:600;width:22%}
-/* JEBAT column highlight — soft copper wash + border rails */
-.cmp td:nth-child(3){background:rgba(201,122,64,.05);border-left:1px solid rgba(201,122,64,.18);border-right:1px solid rgba(201,122,64,.18)}
-.cmp tbody tr:last-child td:nth-child(3){border-bottom:1px solid rgba(201,122,64,.18)}
-.cmp tbody tr:hover td{background:rgba(201,122,64,.04)}
-.cmp tbody tr:hover td:nth-child(3){background:rgba(201,122,64,.10)}
-.cmp td.good{color:var(--jc-ink)}
-.cmp td.good::before{content:"✓ ";color:var(--jc-pucuk);font-weight:700}
-.cmp td.bad::before{content:"— ";color:var(--jc-copper);font-weight:700}
-.cmp-verdict{margin-top:14px;font-size:12.5px;color:var(--jc-slate);border-left:3px solid var(--jc-pucuk);padding-left:12px;line-height:1.7}
-.cmp-verdict b{color:var(--jc-ink)}
-@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}.cmp td:nth-child(3){border-left:none;border-right:none}}
+.rstep p{font-size:13px;color:var(--jc-slate);line-height:1.65}
+.formula{background:var(--jebat-malam);border-radius:12px;padding:18px 20px;display:grid;gap:8px;box-shadow:var(--jc-sh-ink)}
+.formula .fx{font-family:var(--jc-mono);font-size:13px;color:#E1A06F;letter-spacing:.01em}
+.formula .fx sup{font-size:9px}
+.formula .fsub{font-family:var(--jc-mono);font-size:10.5px;color:#99A39E}
+.ret-p{font-size:13px;color:var(--jc-slate);line-height:1.7;margin-top:12px}
+.wt-table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:12px;overflow:hidden;box-shadow:var(--jc-sh-ink);margin-top:6px}
+.wt-table th{font-family:var(--jc-mono);font-size:10px;letter-spacing:.1em;text-align:left;background:var(--jc-ink);color:#fff;padding:9px 14px;font-weight:500}
+.wt-table td{padding:10px 14px;font-size:12.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate)}
+.wt-table td.mono{color:var(--jc-ink);font-weight:600}
+.wt-table tbody tr:hover td{background:var(--jc-copper-soft)}
+.retp{margin-top:20px;border-left:3px solid var(--jc-pucuk);padding-left:14px;font-size:13px;color:var(--jc-slate);line-height:1.7}
+@media(max-width:1024px){.ret-grid{grid-template-columns:1fr}}
 
 /* ── TRADEOFF NOTES ── */
 .tradeoffs{margin-top:var(--jc-s2)}
@@ -769,18 +764,46 @@ jebat mcp ide-config
     <div class="sec-head">
       <span class="kicker">RETRIEVAL</span>
       <h2>How a memory query actually resolves.</h2>
+      <p>Implemented in <span class="mono" style="color:var(--jc-copper)">EnhancedMemorySystem.retrieve()</span> — every filter, weight, and fallback below is in the shipped code, not aspirational.</p>
     </div>
-    <div class="retr">
-      <div class="rstep"><span class="rnum">1</span><div><b>Embed</b><p>Query text is embedded (vector) and tokenized (BM25) in parallel.</p></div></div>
-      <div class="rstep"><span class="rnum">2</span><div><b>Hybrid search</b><p>HNSW vector index (cosine) + BM25 lexical index both fire — neither alone is trusted.</p></div></div>
-      <div class="rstep"><span class="rnum">3</span><div><b>Fuse + rank</b><p>Reciprocal-rank fusion merges both lists; results carry per-hit confidence scores.</p></div></div>
-      <div class="rstep"><span class="rnum">4</span><div><b>Decay-aware</b><p>Strength-weighted: stale memories sink unless re-confirmed; autoMimpi prunes nightly at 04:00 MYT.</p></div></div>
-      <div class="rstep"><span class="rnum">5</span><div><b>Inject bounded</b><p>Recalled context enters the prompt under the same token budget as everything else — memory can't crowd out your task.</p></div></div>
+
+    <div class="ret-grid">
+      <div class="ret-col">
+        <div class="ret-title mono">QUERY PIPELINE</div>
+        <div class="rstep"><span class="rnum">1</span><div><b>Filter, before scoring</b><p>Candidates must pass every gate first: memory type, minimum strength, tag intersection, context match, time range. Cheap filters run before any embedding work.</p></div></div>
+        <div class="rstep"><span class="rnum">2</span><div><b>Ghost DB vector search</b><p>If Ghost DB + embeddings are configured, the query embeds once and HNSW-indexed similarity (cosine) pulls top-K × 3 candidates. No Ghost DB? N-gram text similarity takes over — degraded, never broken.</p></div></div>
+        <div class="rstep"><span class="rnum">3</span><div><b>Weighted score</b><p>Vector path: <span class="mono">similarity×0.6 + strength×0.3 + activation×0.1</span>. N-gram path: <span class="mono">strength×0.6 + activation×0.3 + similarity×0.1</span> — recency and usage dominate when embeddings are unavailable.</p></div></div>
+        <div class="rstep"><span class="rnum">4</span><div><b>Linked traces ride along</b><p>Results pull their linked traces (<span class="mono">include_linked</span>) so a decision arrives with its evidence — one query, full context chain.</p></div></div>
+        <div class="rstep"><span class="rnum">5</span><div><b>Bounded injection</b><p>Recalled context enters the prompt under the same token budget as your task. Memory enriches; it never crowds out.</p></div></div>
+      </div>
+
+      <div class="ret-col">
+        <div class="ret-title mono">STRENGTH: EBBINGHAUS, NOT COUNTS</div>
+        <div class="formula">
+          <span class="fx">strength(t) = strength₀ · e<sup>−decay·Δt</sup> · (1 + reinforcement·0.5)</span>
+          <span class="fsub">reinforcement = min(1, access_count·0.1 + consolidation_count·0.2)</span>
+        </div>
+        <p class="ret-p">Memories follow a modified Ebbinghaus forgetting curve. Access frequency and consolidation events raise the reinforcement factor, slowing decay — a memory you keep using survives, one you ignore fades below the 0.3 floor and drops out of retrieval entirely.</p>
+
+        <div class="ret-title mono" style="margin-top:24px">TWO SCORE WEIGHT PROFILES</div>
+        <table class="wt-table">
+          <thead><tr><th>Path</th><th>similarity</th><th>strength</th><th>activation</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">vector (Ghost DB)</td><td class="mono">0.6</td><td class="mono">0.3</td><td class="mono">0.1</td></tr>
+            <tr><td class="mono">n-gram fallback</td><td class="mono">0.1</td><td class="mono">0.6</td><td class="mono">0.3</td></tr>
+          </tbody>
+        </table>
+        <p class="ret-p">The flip is deliberate: raw text similarity is noisy, so the fallback leans on proven trust (strength) and recent usefulness (activation) instead of pretending substring match means relevance.</p>
+
+        <div class="retp">
+          <span class="mono" style="color:var(--jc-copper)">automimpi</span> consolidates nightly: traces are re-scored, decayed, pruned, and recurring error→fix pairs are promoted to Pattern memory — the retrieval stack gets smarter while you sleep, not while you wait.
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- 03C / HONEST COMPARISON -->
+<!-- 03C / HONEST COMPARISON --><!-- 03C / HONEST COMPARISON -->
 <section class="section" id="compare" style="padding-top:0">
   <div class="wrap">
     <div class="sec-head">
