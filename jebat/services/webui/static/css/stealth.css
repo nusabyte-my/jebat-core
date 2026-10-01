@@ -75,8 +75,8 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.7);
-  --shadow-glow-cyan: 0 0 20px rgba(0,240,255,0.15);
-  --shadow-glow-purple: 0 0 20px rgba(168,85,247,0.15);
+  --shadow-glow-cyan: 0 0 20px rgba(201,122,64,0.20);
+  --shadow-glow-purple: 0 0 20px rgba(178,104,50,0.20);
 
   /* ── Transitions ── */
   --transition-fast: 120ms ease;
@@ -113,8 +113,8 @@ body::after {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 240, 255, 0.015) 2px,
-    rgba(0, 240, 255, 0.015) 4px
+    rgba(201, 122, 64, 0.012) 2px,
+    rgba(201, 122, 64, 0.012) 4px
   );
   pointer-events: none;
   z-index: 9999;
@@ -177,14 +177,8 @@ pre {
 .sidebar-brand-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--cyan), var(--purple));
   border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: var(--font-size-lg);
-  color: var(--bg-ink);
+  object-fit: contain;
 }
 .sidebar-brand-text {
   font-weight: 700;

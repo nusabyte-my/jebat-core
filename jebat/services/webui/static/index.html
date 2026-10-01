@@ -238,17 +238,17 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
-        <div class="sidebar-brand-icon">J</div>
+        <img class="sidebar-brand-icon" src="/webui/static/favicon-32.png" alt="J" width="32" height="32" style="border-radius:8px">
         <div>
           <div class="sidebar-brand-text">JEBAT</div>
-          <div class="sidebar-brand-version">v8.2.1</div>
+          <div class="sidebar-brand-version">v8.3.0</div>
         </div>
       </div>
 
       <!-- Search Trigger -->
       <div class="sidebar-section" style="padding-top:var(--space-sm)">
         <button class="btn" style="width:100%;justify-content:flex-start;gap:8px;color:var(--text-muted);font-size:13px" onclick="openSearch()">
-          <span>🔍</span> Search...
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="opacity:.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Search...
           <span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--bg-elevated);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Ctrl+K</span>
         </button>
       </div>
@@ -360,12 +360,13 @@
       <div class="topbar-left">
         <button class="sidebar-toggle" id="topbar-toggle" style="display:none">☰</button>
         <div class="topbar-title" id="page-title">Dashboard</div>
+        <span class="badge badge-muted" style="font-size:10px;padding:2px 8px">v8.3.0</span>
         <div class="topbar-breadcrumb" id="page-breadcrumb">jebat / dashboard</div>
       </div>
       <div class="topbar-right">
-        <button class="btn btn-sm" onclick="openSearch()" title="Search (Ctrl+K)">🔍</button>
-        <button class="btn btn-sm" onclick="toggleActivity()" title="Activity Log (Ctrl+L)">📋</button>
-        <button class="btn btn-sm" onclick="showShortcuts()" title="Shortcuts (?)">⌨️</button>
+        <button class="btn btn-sm" onclick="openSearch()" title="Search (Ctrl+K)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+        <button class="btn btn-sm" onclick="toggleActivity()" title="Activity Log (Ctrl+L)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
+        <button class="btn btn-sm" onclick="showShortcuts()" title="Shortcuts (?)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg></button>
         <span class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</span>
         <button class="i18n-toggle" onclick="toggleLang()" id="lang-btn" title="Toggle language">EN</button>
         <div class="topbar-status">
@@ -413,19 +414,19 @@
     // 2. GLOBAL SEARCH PALETTE
     // ═══════════════════════════════════════════════════
     const SEARCH_ITEMS = [
-      { icon: '📊', name: 'Dashboard', desc: 'Platform overview', page: 'dashboard', badge: 'Platform' },
-      { icon: '💬', name: 'Chat', desc: 'Universal LLM chat', page: 'chat', badge: 'Platform' },
-       { icon: '⚙️', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
-       { icon: '⚔️', name: 'Reflex Workspace', desc: 'Plans, tools, execution, and agent runs', page: 'reflex', badge: 'Agent' },
-       { icon: '🦞', name: 'Flow Hub', desc: 'Gateway, channels, MCP, and skill bridge', page: 'flow', badge: 'Integration' },
-      { icon: '🤖', name: 'Sahabat', desc: 'Conversational AI companion', page: 'sahabat', badge: 'v1.0' },
-      { icon: '🛡️', name: 'Keris', desc: 'Sentinel Security — pentest', page: 'keris', badge: 'v1.0' },
-      { icon: '💻', name: 'Pandai', desc: 'Developer Suite', page: 'pandai', badge: 'v1.0' },
-      { icon: '🌐', name: 'Perisai', desc: 'Nexus multi-channel bot', page: 'perisai', badge: 'v1.0' },
-      { icon: '🧠', name: 'Skills', desc: 'Procedural memory browser', page: 'skills', badge: 'System' },
-      { icon: '🤝', name: 'Agents', desc: 'Multi-agent orchestration', page: 'agents', badge: 'System' },
-      { icon: '📡', name: 'Channels', desc: 'Gateway connections', page: 'channels', badge: 'System' },
-      { icon: '🔧', name: 'Setup', desc: 'Environment & providers', page: 'setup', badge: 'System' },
+      { icon: '▦', name: 'Dashboard', desc: 'Platform overview', page: 'dashboard', badge: 'Platform' },
+      { icon: '◫', name: 'Chat', desc: 'Universal LLM chat', page: 'chat', badge: 'Platform' },
+       { icon: '⚙', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
+       { icon: '⚡', name: 'Reflex Workspace', desc: 'Plans, tools, execution, and agent runs', page: 'reflex', badge: 'Agent' },
+       { icon: '⇄', name: 'Flow Hub', desc: 'Gateway, channels, MCP, and skill bridge', page: 'flow', badge: 'Integration' },
+      { icon: '◉', name: 'Sahabat', desc: 'Conversational AI companion', page: 'sahabat', badge: 'v1.0' },
+      { icon: '◇', name: 'Keris', desc: 'Sentinel Security — pentest', page: 'keris', badge: 'v1.0' },
+      { icon: '▭', name: 'Pandai', desc: 'Developer Suite', page: 'pandai', badge: 'v1.0' },
+      { icon: '◎', name: 'Perisai', desc: 'Nexus multi-channel bot', page: 'perisai', badge: 'v1.0' },
+      { icon: '☆', name: 'Skills', desc: 'Procedural memory browser', page: 'skills', badge: 'System' },
+      { icon: '⊞', name: 'Agents', desc: 'Multi-agent orchestration', page: 'agents', badge: 'System' },
+      { icon: '∿', name: 'Channels', desc: 'Gateway connections', page: 'channels', badge: 'System' },
+      { icon: '⌇', name: 'Setup', desc: 'Environment & providers', page: 'setup', badge: 'System' },
     ];
 
     const searchOverlay = document.getElementById('search-overlay');
