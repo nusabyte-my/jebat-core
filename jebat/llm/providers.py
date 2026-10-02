@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Protocol
@@ -378,7 +379,8 @@ class LlamaCppProvider:
                             content = delta.get("content")
                             if content:
                                 yield {"type": "token", "text": content}
-                    except Exception:
+                    except json.JSONDecodeError:
+                        # Keep-alive/comment frames are not JSON — skip them.
                         continue
         yield {"type": "done", "provider": "llamacpp"}
 
