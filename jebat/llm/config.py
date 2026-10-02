@@ -27,6 +27,26 @@ class JebatLLMConfig:
     custom_api_key: str = "sk-dummy"
 
 
+def normalize_host(value: str, default: str = "") -> str:
+    """Normalize a service host into a routable http(s) URL.
+
+    Environment files often carry the daemon's BIND address (OLLAMA_HOST=
+    0.0.0.0:11434) — 0.0.0.0/[::] are not connect targets, and a bare
+    host:port has no scheme for httpx. Both would make every client call
+    fail while the daemon is perfectly healthy.
+    """
+    host = str(value or "").strip() or default
+    if not host:
+        return host
+    if not host.startswith(("http://", "https://")):
+        host = f"http://{host}"
+    if host.startswith(("http://0.0.0.0", "https://0.0.0.0")):
+        host = host.replace("0.0.0.0", "127.0.0.1", 1)
+    if host.startswith(("http://[::]", "https://[::]")):
+        host = host.replace("[::]", "127.0.0.1", 1)
+    return host.rstrip("/")
+
+
 def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
     raw = _load_yaml_config(config_path)
 
@@ -55,8 +75,8 @@ def load_llm_config(config_path: str | Path | None = None) -> JebatLLMConfig:
         top_k=top_k,
         max_tokens=max_tokens,
         context_window=context_window,
-        ollama_host=str(ollama_host).strip(),
-        llamacpp_host=str(llamacpp_host).strip(),
+        ollama_host=normalize_host(ollama_host, "http://127.0.0.1:11434"),
+        llamacpp_host=normalize_host(llamacpp_host, "http://127.0.0.1:8081"),
         ollama_keep_alive=str(ollama_keep_alive).strip(),
         fallback_providers=fallbacks,
         history_path=str(history_path).strip(),

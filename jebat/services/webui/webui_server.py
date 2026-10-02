@@ -321,14 +321,12 @@ def _ollama_installed_models() -> list[str] | None:
         return list(cached_models)
     if cached_models is None and _OLLAMA_MODELS_CACHE["fetched_at"] > 0 and cache_age < 30:
         return None  # negative cache: daemon was down recently, don't retry every poll
-    host = ""
     try:
         from jebat.llm import load_llm_config
 
-        host = (load_llm_config().ollama_host or "").strip()
+        host = load_llm_config().ollama_host
     except Exception:
-        host = ""
-    host = (host or os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")).rstrip("/")
+        host = "http://127.0.0.1:11434"
     try:
         import httpx
 
