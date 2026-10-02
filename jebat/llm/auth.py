@@ -138,6 +138,15 @@ def get_provider_secret(provider: str) -> str:
     )
 
 
+def _google_oauth_connected() -> bool:
+    try:
+        from .oauth import google_oauth_status
+
+        return bool(google_oauth_status().connected)
+    except Exception:
+        return False
+
+
 def list_provider_auth_status() -> list[ProviderAuthStatus]:
     _ensure_secrets_loaded()
     statuses: list[ProviderAuthStatus] = []
@@ -147,6 +156,9 @@ def list_provider_auth_status() -> list[ProviderAuthStatus]:
             os.getenv(name, "").strip() or stored.get(name, "").strip() for name in env_vars
         )
         note = "Local fallback" if provider == "local" else "Configured" if configured else "Missing credentials"
+        if provider == "google" and _google_oauth_connected():
+            configured = True
+            note = "OAuth connected" if not note == "Configured" else "Configured (API key)"
         statuses.append(
             ProviderAuthStatus(
                 provider=provider,

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -88,6 +89,18 @@ class ProviderAuthRequest(BaseModel):
     provider: str
     secret: Optional[str] = None
     host: Optional[str] = None
+
+
+class GoogleOAuthStartRequest(BaseModel):
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+
+
+class GoogleOAuthPollRequest(BaseModel):
+    device_code: str
+
+
+GOOGLE_OAUTH_SESSIONS: Dict[str, Dict[str, Any]] = {}
 
 
 RUNTIME_OVERRIDES: Dict[str, Optional[str]] = {"provider": None, "model": None}
@@ -821,6 +834,90 @@ async def update_provider_auth(payload: ProviderAuthRequest):
         "provider": provider,
         "configured_targets": targets,
         "runtime": _runtime_state(),
+    }
+
+
+@webui_router.post("/webui/api/provider-auth/google/oauth/start")
+async def google_oauth_start(payload: GoogleOAuthStartRequest):
+    """Begin Google OAuth device flow (works from remote/headless WebUI)."""
+    from jebat.llm.oauth import google_device_start
+
+    client_id = (payload.client_id or "").strip() or os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+    client_secret = (payload.client_secret or "").strip() or os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+    if not client_id:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "client_id required — create an OAuth client of type "
+                "'TVs and Limited Input devices' in Google Cloud Console "
+                "(APIs & Services > Credentials) and enable the Generative Language API"
+            ),
+        )
+    try:
+        session = await google_device_start(client_id, client_secret)
+    except Exception as exc:  # noqa: BLE001 — surface provider error verbatim
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    GOOGLE_OAUTH_SESSIONS[session["device_code"]] = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "created_at": time.time(),
+    }
+    # never echo the device_code back in logs; it is a short-lived secret
+    return {
+        "user_code": session["user_code"],
+        "verification_url": session["verification_url"],
+        "expires_in": session["expires_in"],
+        "interval": session["interval"],
+        "device_code": session["device_code"],
+        "scopes": session["scopes"],
+    }
+
+
+@webui_router.post("/webui/api/provider-auth/google/oauth/poll")
+async def google_oauth_poll(payload: GoogleOAuthPollRequest):
+    """Poll the Google device-flow session once."""
+    from jebat.llm.oauth import google_oauth_status
+
+    session = GOOGLE_OAUTH_SESSIONS.get(payload.device_code)
+    if session is None:
+        raise HTTPException(status_code=404, detail="unknown or expired device session")
+    from jebat.llm.oauth import google_device_poll
+
+    result = await google_device_poll(
+        payload.device_code,
+        session["client_id"],
+        session.get("client_secret", ""),
+    )
+    if result.get("status") in {"ok", "expired", "denied", "error"}:
+        GOOGLE_OAUTH_SESSIONS.pop(payload.device_code, None)
+    if result.get("status") == "ok":
+        status = google_oauth_status()
+        result["expires_at"] = status.expires_at
+        # a chat provider just became available; refresh the runtime view
+        result["runtime"] = _runtime_state()
+    return result
+
+
+@webui_router.post("/webui/api/provider-auth/google/oauth/disconnect")
+async def google_oauth_disconnect_endpoint():
+    from jebat.llm.oauth import google_oauth_disconnect
+
+    return {"ok": True, "removed": google_oauth_disconnect()}
+
+
+@webui_router.get("/webui/api/provider-auth/oauth")
+async def oauth_status():
+    """OAuth connection status per provider (currently google)."""
+    from jebat.llm.oauth import google_oauth_status
+
+    status = google_oauth_status()
+    return {
+        "google": {
+            "connected": status.connected,
+            "expires_at": status.expires_at,
+            "scopes": list(status.scopes),
+            "error": status.error,
+        }
     }
 
 

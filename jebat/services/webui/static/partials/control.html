@@ -35,6 +35,23 @@
         <input class="input" id="ctrl-auth-secret" type="password" placeholder="API Key" />
         <button class="btn btn-primary btn-sm" id="ctrl-auth-save">Save Key</button>
       </div>
+      <div style="border-top:1px solid var(--border);margin-top:var(--space-md);padding-top:var(--space-md)">
+        <div class="text-sm" style="font-weight:600;margin-bottom:4px">Google OAuth <span class="badge badge-muted" id="ctrl-oauth-badge">not connected</span></div>
+        <p class="text-xs text-muted" style="margin-bottom:8px">Keyless Gemini access. In Google Cloud Console create an OAuth client (<em>TVs and Limited Input devices</em>) and enable the Generative Language API, then connect below.</p>
+        <div class="flex gap-sm" style="flex-wrap:wrap">
+          <input class="input" id="ctrl-oauth-client-id" placeholder="OAuth Client ID" style="flex:1;min-width:180px" />
+          <input class="input" id="ctrl-oauth-client-secret" type="password" placeholder="Client Secret (optional)" style="flex:1;min-width:140px" />
+        </div>
+        <div class="flex gap-sm mt-sm" style="flex-wrap:wrap">
+          <button class="btn btn-sm" id="ctrl-oauth-connect">Connect Google</button>
+          <button class="btn btn-sm btn-danger" id="ctrl-oauth-disconnect" hidden>Disconnect</button>
+        </div>
+        <div id="ctrl-oauth-flow" hidden style="margin-top:10px">
+          <div class="text-sm">Open <a id="ctrl-oauth-url" href="#" target="_blank" rel="noopener">google.com/device</a> and enter:</div>
+          <div class="font-mono" id="ctrl-oauth-code" style="font-size:20px;letter-spacing:3px;margin:6px 0;color:var(--cyan)"></div>
+          <div class="text-xs text-muted" id="ctrl-oauth-flow-status">Waiting for approval…</div>
+        </div>
+      </div>
     </div>
 
     <!-- Quick Actions -->
@@ -86,6 +103,75 @@
     } catch {}
   });
   document.getElementById('ctrl-refresh')?.click();
+  // ── Google OAuth (device flow) ──
+  const oauthBadge = document.getElementById('ctrl-oauth-badge');
+  const oauthConnect = document.getElementById('ctrl-oauth-connect');
+  const oauthDisconnect = document.getElementById('ctrl-oauth-disconnect');
+  let oauthPollTimer = null;
+
+  function setOauthState(connected, note) {
+    if (!oauthBadge) return;
+    oauthBadge.textContent = connected ? 'connected' : 'not connected';
+    oauthBadge.className = 'badge ' + (connected ? 'badge-green' : 'badge-muted');
+    if (oauthDisconnect) oauthDisconnect.hidden = !connected;
+    if (oauthConnect) oauthConnect.hidden = connected;
+    if (note) oauthBadge.title = note;
+  }
+
+  async function refreshOauthStatus() {
+    try {
+      const data = await API.get('/provider-auth/oauth');
+      setOauthState(!!data.google?.connected, data.google?.error || '');
+    } catch {}
+  }
+  refreshOauthStatus();
+
+  oauthConnect?.addEventListener('click', async () => {
+    const clientId = document.getElementById('ctrl-oauth-client-id').value.trim();
+    const clientSecret = document.getElementById('ctrl-oauth-client-secret').value.trim();
+    try {
+      const start = await API.providerAuthGoogleStart(clientId, clientSecret);
+      document.getElementById('ctrl-oauth-flow').hidden = false;
+      document.getElementById('ctrl-oauth-url').href = start.verification_url;
+      document.getElementById('ctrl-oauth-url').textContent = start.verification_url;
+      document.getElementById('ctrl-oauth-code').textContent = start.user_code;
+      document.getElementById('ctrl-oauth-flow-status').textContent = 'Waiting for approval…';
+      clearInterval(oauthPollTimer);
+      let interval = Math.max(start.interval || 5, 5) * 1000;
+      oauthPollTimer = setInterval(async () => {
+        try {
+          const result = await API.providerAuthGooglePoll(start.device_code);
+          if (result.status === 'pending') return;
+          if (result.status === 'slow_down') { interval += 2000; return; }
+          clearInterval(oauthPollTimer);
+          if (result.status === 'ok') {
+            document.getElementById('ctrl-oauth-flow-status').textContent = 'Connected.';
+            setOauthState(true);
+            window.toast?.('Google OAuth connected — Gemini is now keyless.', 'success');
+            document.getElementById('ctrl-refresh')?.click();
+          } else {
+            document.getElementById('ctrl-oauth-flow-status').textContent = 'Failed: ' + (result.status === 'denied' ? 'access denied' : result.status === 'expired' ? 'code expired' : result.error || result.status);
+          }
+        } catch (e) {
+          clearInterval(oauthPollTimer);
+          document.getElementById('ctrl-oauth-flow-status').textContent = 'Poll failed: ' + (e.message || e);
+        }
+      }, interval);
+    } catch (error) {
+      window.toast?.(error.message || 'Could not start Google OAuth.', 'error');
+    }
+  });
+
+  oauthDisconnect?.addEventListener('click', async () => {
+    try {
+      await API.providerAuthGoogleDisconnect();
+      setOauthState(false);
+      window.toast?.('Google OAuth disconnected.', 'info');
+    } catch (error) {
+      window.toast?.(error.message || 'Disconnect failed.', 'error');
+    }
+  });
+
   document.getElementById('ctrl-auth-save')?.addEventListener('click', async () => {
     const provider = document.getElementById('ctrl-auth-provider').value;
     const secret = document.getElementById('ctrl-auth-secret').value.trim();

@@ -70,6 +70,11 @@ const API = {
   connectStation(data) { return this.post('/workstations/connect', data); },
   checkStation(data) { return this.post('/workstations/check', data); },
   providerAuth(data) { return this.post('/provider-auth', data); },
+  providerAuthGoogleStart(clientId, clientSecret) {
+    return this.post('/provider-auth/google/oauth/start', { client_id: clientId || null, client_secret: clientSecret || null });
+  },
+  providerAuthGooglePoll(deviceCode) { return this.post('/provider-auth/google/oauth/poll', { device_code: deviceCode }); },
+  providerAuthGoogleDisconnect() { return this.post('/provider-auth/google/oauth/disconnect', {}); },
   memoryStats(layer) { return this.get(`/memory/stats?layer=${layer || 'all'}`); },
   consoleMeta() { return this.get('/console-meta'); }
 };

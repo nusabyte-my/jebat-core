@@ -164,6 +164,7 @@ class GoogleProvider:
     model: str
     temperature: float
     max_tokens: int
+    access_token: str = ""
 
     async def generate(self, prompt: str, system_prompt: str | None = None) -> str:
         return (await self.generate_with_metadata(prompt=prompt, system_prompt=system_prompt)).text
@@ -188,10 +189,11 @@ class GoogleProvider:
         )
         import httpx
 
-        headers = {
-            "Content-Type": "application/json",
-            "x-goog-api-key": self.api_key,
-        }
+        headers = {"Content-Type": "application/json"}
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        else:
+            headers["x-goog-api-key"] = self.api_key
         try:
             async with httpx.AsyncClient(timeout=180) as client:
                 response = await client.post(url, headers=headers, json=payload)
@@ -516,12 +518,30 @@ def build_provider(config: JebatLLMConfig) -> LLMProvider:
             max_tokens=config.max_tokens,
         )
     if provider == "google":
-        api_key = get_provider_secret("google")
+        api_key = ""
+        try:
+            api_key = get_provider_secret("google")
+        except RuntimeError:
+            api_key = ""
+        access_token = ""
+        if not api_key:
+            try:
+                from .oauth import get_google_access_token
+
+                access_token = get_google_access_token() or ""
+            except Exception:
+                access_token = ""
+        if not api_key and not access_token:
+            raise RuntimeError(
+                "missing required environment variable for google: one of "
+                "GOOGLE_API_KEY, GEMINI_API_KEY (or connect Google OAuth in the WebUI)"
+            )
         return GoogleProvider(
             api_key=api_key,
             model=config.model,
             temperature=config.temperature,
             max_tokens=config.max_tokens,
+            access_token=access_token,
         )
     if provider == "anthropic":
         api_key = get_provider_secret("anthropic")

@@ -24,6 +24,14 @@ from .history import ChatHistoryStore
 from .project_context import ProjectContext, build_project_context
 from .providers import ProviderGeneration, build_provider, generate_stream_with_failover, generate_with_failover, list_supported_providers
 from .ninerouter_provider import NineRouterProvider, build_ninerouter_provider, print_ninerouter_setup, list_free_models, FREE_MODELS
+from .oauth import (
+    DEFAULT_SCOPES,
+    get_google_access_token,
+    google_device_poll,
+    google_device_start,
+    google_oauth_disconnect,
+    google_oauth_status,
+)
 from .skills import build_skill_prompt, build_skill_registry, default_skills_path, select_relevant_skills
 from .token_usage import BudgetedInput, TokenUsage, budget_input, estimate_tokens, input_token_budget, usage_from_texts
 
@@ -53,6 +61,12 @@ __all__ = [
     "build_provider",
     "generate_with_failover",
     "generate_stream_with_failover",
+    "google_device_start",
+    "google_device_poll",
+    "google_oauth_status",
+    "google_oauth_disconnect",
+    "get_google_access_token",
+    "DEFAULT_SCOPES",
     "list_supported_providers",
     "TokenUsage",
     "BudgetedInput",
