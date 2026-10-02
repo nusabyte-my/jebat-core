@@ -29,24 +29,24 @@
     <h1 class="page-title">AGI Multi-Domain Audit</h1>
     <p class="page-desc">Hallmark 6-Axis Design Critique & Pawang Jualan Sales Copywriting Review</p>
   </div>
-  <button class="btn btn-primary" onclick="runAGIAudit()" id="audit-run-btn">⚡ Run Sovereign Audit</button>
+  <button class="btn btn-primary" onclick="runAGIAudit()" id="audit-run-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Run Sovereign Audit</button>
 </div>
 
 <div class="audit-layout">
   <!-- Input Column -->
   <div class="audit-panel">
-    <h3>🎨 UI/UX Component Markup</h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> UI/UX Component Markup</h3>
     <p>Paste HTML, JSX, or Tailwind markup to audit against Hallmark anti-slop rules.</p>
     <textarea class="audit-textarea" id="audit-markup" placeholder="<button class='bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50'>Submit</button>"><button class="bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50">Submit</button></textarea>
     
-    <h3>✍️ Sales Copywriting Text</h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg> Sales Copywriting Text</h3>
     <p>Paste landing page headlines, CTAs, or feature copy to audit conversion strength.</p>
     <textarea class="audit-textarea" id="audit-copy" placeholder="Click here to delve into our revolutionary platform. 99.9% guaranteed satisfaction.">Click here to delve into our revolutionary cutting-edge platform. 99.9% guaranteed satisfaction.</textarea>
   </div>
 
   <!-- Output Column -->
   <div class="audit-panel" id="audit-results-panel">
-    <h3>🎯 Audit Scorecard</h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Audit Scorecard</h3>
     <p id="audit-status-msg">Click "Run Sovereign Audit" to evaluate design and copy.</p>
 
     <!-- Hallmark Design Scores -->
@@ -87,7 +87,7 @@ async function runAGIAudit() {
   const copyText = document.getElementById('audit-copy').value;
   
   btn.disabled = true;
-  btn.textContent = '⏳ Evaluating...';
+  btn.textContent = 'Evaluating…';
   
   try {
     const res = await fetch('/webui/api/audit', {
@@ -142,7 +142,7 @@ async function runAGIAudit() {
     document.getElementById('audit-status-msg').textContent = 'Audit failed: ' + e;
   } finally {
     btn.disabled = false;
-    btn.textContent = '⚡ Run Sovereign Audit';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Run Sovereign Audit';
   }
 }
 </script>

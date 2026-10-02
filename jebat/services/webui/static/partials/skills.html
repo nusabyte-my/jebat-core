@@ -1,16 +1,16 @@
 <!-- Skills -->
 <div>
-  <h2 style="margin-bottom:var(--space-lg)">🧠 Skills</h2>
+  <h2 style="margin-bottom:var(--space-lg)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Skills</h2>
   <p class="text-muted mb-lg">Procedural memory — reusable approaches for recurring tasks.</p>
 
   <div class="flex gap-sm mb-lg">
     <input class="input" id="skills-search" placeholder="Search skills..." style="max-width:400px" />
-    <button class="btn btn-sm" id="skills-refresh">↻ Refresh</button>
+    <button class="btn btn-sm" id="skills-refresh"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Refresh</button>
   </div>
 
   <div class="grid grid-auto" id="skills-grid">
     <div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-state-icon">🧠</div>
+      <div class="empty-state-icon" style="opacity:.4"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
       <div class="empty-state-title">Loading skills...</div>
     </div>
   </div>
@@ -23,7 +23,7 @@
       const data = await res.json();
       const grid = document.getElementById('skills-grid');
       if (!data.skills || data.skills.length === 0) {
-        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🧠</div><div class="empty-state-title">No skills found</div></div>';
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon" style="opacity:.4"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="empty-state-title">No skills found</div></div>';
         return;
       }
       grid.innerHTML = data.skills.map(s => `

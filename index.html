@@ -196,6 +196,9 @@ h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.
 
 /* cards — 3-up, one hue each */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
+.cards.cols4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.cards.cols4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.cards.cols4{grid-template-columns:1fr}}
 .card{position:relative;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease)}
 .card:hover{transform:translateY(-3px)}
 .card .stripe{position:absolute;left:0;top:20px;bottom:20px;width:5px;border-radius:0 4px 4px 0}
@@ -429,6 +432,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
       <li><a href="#mcp">MCP</a></li>
       <li><a href="#deploy">Deploy</a></li>
       <li><a href="#faq">FAQ</a></li>
+      <li><a href="/webui/" target="_blank" rel="noopener">WebUI</a></li>
     </ul>
     <a class="nav-cta" href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">Get JEBAT</a>
     <button class="burger" aria-label="Menu" onclick="document.getElementById('mnav').classList.toggle('open')">
@@ -436,7 +440,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
     </button>
   </div>
   <div id="mnav" style="display:none" class="wrap">
-    <a href="#platform" class="mlink">Platform</a><a href="#workbench" class="mlink">Workbench</a><a href="#mcp" class="mlink">MCP</a><a href="#mcp-deploy" class="mlink">MCP Deploy</a><a href="#compare" class="mlink">Compare</a><a href="#deploy" class="mlink">Deploy</a><a href="#faq" class="mlink">FAQ</a><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="mlink">GitHub ↗</a>
+    <a href="#platform" class="mlink">Platform</a><a href="#workbench" class="mlink">Workbench</a><a href="#mcp" class="mlink">MCP</a><a href="#mcp-deploy" class="mlink">MCP Deploy</a><a href="#compare" class="mlink">Compare</a><a href="#deploy" class="mlink">Deploy</a><a href="#faq" class="mlink">FAQ</a><a href="/webui/" target="_blank" rel="noopener" class="mlink">WebUI ↗</a><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="mlink">GitHub ↗</a>
   </div>
 </nav>
 
@@ -563,6 +567,33 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
         <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg></span>
         <h3>Memory that persists</h3>
         <p>Ghost DB keeps six memory types — episodic, semantic, procedural — with hybrid BM25 + vector retrieval and nightly autoMimpi consolidation.</p>
+      </div>
+    </div>
+    <div class="mono" style="font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin:var(--jc-s4) 0 12px">PRODUCT SURFACES — BUILT INTO THE <a href="/webui/" target="_blank" rel="noopener" style="color:var(--jc-copper);border-bottom:1px solid var(--jc-copper-glow)">WEBUI</a></span></div>
+    <div class="cards cols4">
+      <div class="card c1">
+        <span class="stripe"></span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <h3>Sahabat</h3>
+        <p>Conversational companion for daily ops — briefings, tasks, meeting summaries, quick actions.</p>
+      </div>
+      <div class="card c2">
+        <span class="stripe"></span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+        <h3>Keris</h3>
+        <p>Sentinel security — autonomous pentest scans, CVE lookup, header and TLS audits.</p>
+      </div>
+      <div class="card c3">
+        <span class="stripe"></span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+        <h3>Pandai</h3>
+        <p>Developer suite — skills browser, code generation, refactors, debugging tools.</p>
+      </div>
+      <div class="card c1">
+        <span class="stripe"></span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span>
+        <h3>Perisai</h3>
+        <p>Nexus multi-channel bot — Telegram, WhatsApp, Discord, Slack adapters with readiness checks.</p>
       </div>
     </div>
   </div>

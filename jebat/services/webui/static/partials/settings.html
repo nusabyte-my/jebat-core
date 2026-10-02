@@ -15,7 +15,7 @@
 
 <div class="page-header">
   <div>
-    <h1 class="page-title">⚙️ Settings</h1>
+    <h1 class="page-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;opacity:.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Settings</h1>
     <p class="page-desc">Provider configuration and system preferences</p>
   </div>
 </div>
@@ -25,27 +25,27 @@
   <h3>AI Provider</h3>
   <div class="provider-grid" id="provider-grid">
     <div class="provider-item" data-provider="openai" onclick="selectProvider('openai')">
-      <h4>🟢 OpenAI</h4>
+      <h4><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10A37F;margin-right:6px"></span>OpenAI</h4>
       <p>GPT-4o, GPT-4.1, o3 — best general reasoning</p>
     </div>
     <div class="provider-item" data-provider="anthropic" onclick="selectProvider('anthropic')">
-      <h4>🟣 Anthropic</h4>
+      <h4><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#D97757;margin-right:6px"></span>Anthropic</h4>
       <p>Claude Sonnet 4, Opus 4 — best coding</p>
     </div>
     <div class="provider-item" data-provider="google" onclick="selectProvider('google')">
-      <h4>🔵 Google</h4>
+      <h4><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4285F4;margin-right:6px"></span>Google</h4>
       <p>Gemini 2.5 Pro — best multimodal</p>
     </div>
     <div class="provider-item" data-provider="openrouter" onclick="selectProvider('openrouter')">
-      <h4>🌐 OpenRouter</h4>
+      <h4><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#8B5CF6;margin-right:6px"></span>OpenRouter</h4>
       <p>Multi-model gateway — 200+ models</p>
     </div>
     <div class="provider-item" data-provider="ollama" onclick="selectProvider('ollama')">
-      <h4>🦙 Ollama (Local)</h4>
+      <h4><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C97A40;margin-right:6px"></span>Ollama (Local)</h4>
       <p>Local inference — free, private</p>
     </div>
     <div class="provider-item" data-provider="9router" onclick="selectProvider('9router')">
-      <h4>🆓 9Router</h4>
+      <h4><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0EA5E9;margin-right:6px"></span>9Router</h4>
       <p>Free models — no API key needed</p>
     </div>
   </div>
@@ -63,7 +63,7 @@
   <div class="setting-row">
     <span class="setting-label">Theme</span>
     <div class="setting-value">
-      <button class="btn btn-sm" onclick="toggleTheme()" id="pref-theme-btn">🌙 Dark</button>
+      <button class="btn btn-sm" onclick="toggleTheme()" id="pref-theme-btn">☾ Dark</button>
     </div>
   </div>
   <div class="setting-row">
@@ -124,7 +124,7 @@ async function loadConfig() {
 }
 
 // Sync preference buttons with current state
-document.getElementById('pref-theme-btn').textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '☀️ Light' : '🌙 Dark';
+document.getElementById('pref-theme-btn').innerHTML = document.documentElement.getAttribute('data-theme') === 'light' ? '☀ Light' : '☾ Dark';
 document.getElementById('pref-lang-btn').textContent = (localStorage.getItem('jebat_lang') || 'en').toUpperCase();
 
 loadConfig();

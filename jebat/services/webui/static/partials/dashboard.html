@@ -25,7 +25,7 @@
     <h1 class="page-title">Dashboard</h1>
     <p class="page-desc">JEBAT Platform — Sovereign AI Overview</p>
   </div>
-  <button class="btn btn-primary btn-sm" onclick="refreshDashboard()">↻ Refresh</button>
+  <button class="btn btn-primary btn-sm" onclick="refreshDashboard()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Refresh</button>
 </div>
 
 <!-- System Metrics -->
@@ -55,19 +55,19 @@
 <div class="section-title" style="margin-bottom:12px">Products</div>
 <div class="product-grid">
   <div class="product-card" onclick="navigate('sahabat')">
-    <h3>🤖 Sahabat <span class="product-badge badge-live">Live</span></h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-2px;opacity:.7"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Sahabat <span class="product-badge badge-live">Live</span></h3>
     <p>Companion — memory, briefing, meeting intelligence</p>
   </div>
   <div class="product-card" onclick="navigate('keris')">
-    <h3>🛡️ Keris <span class="product-badge badge-live">Live</span></h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-2px;opacity:.7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Keris <span class="product-badge badge-live">Live</span></h3>
     <p>Sentinel — autonomous pentest, vulnerability scanning</p>
   </div>
   <div class="product-card" onclick="navigate('perisai')">
-    <h3>📡 Perisai <span class="product-badge badge-live">Live</span></h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-2px;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> Perisai <span class="product-badge badge-live">Live</span></h3>
     <p>Nexus — multi-channel bot orchestrator</p>
   </div>
   <div class="product-card" onclick="navigate('pandai')">
-    <h3>⚡ Pandai <span class="product-badge badge-live">Live</span></h3>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-2px;opacity:.7"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Pandai <span class="product-badge badge-live">Live</span></h3>
     <p>Developer — skills, tools, code generation</p>
   </div>
 </div>
@@ -86,12 +86,16 @@
 
 <script>
 async function refreshDashboard() {
+  // Guard: bail if this page is no longer mounted (interval fired after navigation)
+  if (!document.getElementById('m-cpu')) return;
   try {
     const r = await fetch('/api/system/metrics');
     const m = await r.json();
-    document.getElementById('m-cpu').textContent = m.cpu_percent + '%';
-    document.getElementById('m-mem').textContent = m.memory.percent + '%';
-    document.getElementById('m-disk').textContent = m.disk.percent + '%';
+    const el = id => document.getElementById(id);
+    if (!el('m-cpu')) return;
+    el('m-cpu').textContent = m.cpu_percent + '%';
+    el('m-mem').textContent = m.memory.percent + '%';
+    el('m-disk').textContent = m.disk.percent + '%';
     const h = Math.floor(m.uptime_seconds / 3600);
     const d = Math.floor(h / 24);
     document.getElementById('m-uptime').textContent = d > 0 ? d + 'd ' + (h % 24) + 'h' : h + 'h ' + Math.floor((m.uptime_seconds % 3600) / 60) + 'm';
@@ -104,7 +108,7 @@ async function refreshDashboard() {
     });
 
     const info = [
-      'Platform: JEBAT v8.2.1',
+      'Platform: JEBAT v8.3.0',
       'PID: ' + m.pid,
       'Memory: ' + m.memory.used_gb + ' / ' + m.memory.total_gb + ' GB',
       'Disk: ' + m.disk.used_gb + ' / ' + m.disk.total_gb + ' GB',
@@ -126,7 +130,7 @@ async function refreshDashboard() {
   }
 }
 
-// Auto-refresh every 30s
+// Auto-refresh every 30s (pageInterval: auto-cleared by the shell on navigation)
 refreshDashboard();
-setInterval(refreshDashboard, 30000);
+pageInterval(refreshDashboard, 30000);
 </script>
