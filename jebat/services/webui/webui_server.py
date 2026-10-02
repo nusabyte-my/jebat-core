@@ -305,6 +305,49 @@ def _sanitize_workstation_state(name: str, state: Dict[str, Any]) -> Dict[str, A
     }
 
 
+_OLLAMA_MODELS_CACHE: Dict[str, Any] = {"fetched_at": 0.0, "models": None}
+
+
+def _ollama_installed_models() -> list[str] | None:
+    """Installed Ollama model names, or None when the daemon is unreachable.
+
+    TTL-cached (60s) so page polls never hammer the daemon. /api/tags does
+    not load models, so a live daemon answers in milliseconds.
+    """
+    global _OLLAMA_MODELS_CACHE
+    cache_age = time.time() - _OLLAMA_MODELS_CACHE["fetched_at"]
+    cached_models = _OLLAMA_MODELS_CACHE["models"]
+    if cached_models is not None and cache_age < 60:
+        return list(cached_models)
+    if cached_models is None and _OLLAMA_MODELS_CACHE["fetched_at"] > 0 and cache_age < 30:
+        return None  # negative cache: daemon was down recently, don't retry every poll
+    host = ""
+    try:
+        from jebat.llm import load_llm_config
+
+        host = (load_llm_config().ollama_host or "").strip()
+    except Exception:
+        host = ""
+    host = (host or os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")).rstrip("/")
+    try:
+        import httpx
+
+        with httpx.Client(timeout=1.5) as client:
+            response = client.get(f"{host}/api/tags")
+            response.raise_for_status()
+        names = sorted(
+            str(item.get("name", "")).strip()
+            for item in response.json().get("models", [])
+            if str(item.get("name", "")).strip()
+        )
+    except Exception:
+        # Unreachable daemon: fail open (callers skip validation)
+        _OLLAMA_MODELS_CACHE = {"fetched_at": time.time(), "models": None}
+        return None
+    _OLLAMA_MODELS_CACHE = {"fetched_at": time.time(), "models": names}
+    return names
+
+
 def _provider_model_catalog() -> dict[str, dict[str, Any]]:
     catalog: dict[str, dict[str, Any]] = {
         "openai": {
@@ -788,6 +831,13 @@ async def update_runtime(payload: RuntimeControlRequest):
 
     if provider and provider not in allowed:
         raise HTTPException(status_code=400, detail=f"unknown provider: {provider}")
+    if provider == "ollama" and model:
+        installed = _ollama_installed_models()
+        if installed is not None and model not in installed:
+            raise HTTPException(
+                status_code=400,
+                detail=f"model not installed in Ollama: {model} (available: {', '.join(installed) or 'none'})",
+            )
     if provider and provider in catalog:
         provider_models = catalog[provider].get("models", [])
         supports_custom = bool(catalog[provider].get("supports_custom"))
@@ -1873,6 +1923,12 @@ def _runtime_state() -> dict[str, Any]:
 
     config = load_llm_config()
     catalog = _provider_model_catalog()
+    installed_ollama = _ollama_installed_models()
+    if installed_ollama:
+        # Advertise only models the daemon actually has — the static list
+        # previously offered models that were not installed, and picking one
+        # stored an override that could never serve a request.
+        catalog["ollama"]["models"] = installed_ollama
     available = [
         {
             "provider": item.provider,
