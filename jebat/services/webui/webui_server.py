@@ -1352,12 +1352,20 @@ async def warm_prompt_cache() -> None:
 
         await asyncio.sleep(3)  # let the server finish binding first
         await _ensure_connection_state()
-        _, provider, config = await generate_chat_reply(
-            prompt="ping",
-            mode="deliberate",
-            preset="default",
-            provider_override=RUNTIME_OVERRIDES["provider"],
-            model_override=RUNTIME_OVERRIDES["model"],
+        # max_tokens_override caps generation: prompt PROCESSING is what warms
+        # the cache. Without the cap the model rambles for 34-81 tokens, which
+        # at ~0.2 tok/s holds the single llama.cpp slot for minutes and queues
+        # every user chat behind it.
+        _, provider, config = await asyncio.wait_for(
+            generate_chat_reply(
+                prompt="ping",
+                mode="deliberate",
+                preset="default",
+                max_tokens_override=4,
+                provider_override=RUNTIME_OVERRIDES["provider"],
+                model_override=RUNTIME_OVERRIDES["model"],
+            ),
+            timeout=900,
         )
         logger.info(f"Prompt cache warmed via {provider} ({config.model})")
     except Exception as exc:  # noqa: BLE001 — warmup is best-effort, never fatal
