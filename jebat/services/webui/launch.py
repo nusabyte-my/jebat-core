@@ -181,7 +181,7 @@ ERROR_PAGE = """<!DOCTYPE html>
 app = FastAPI(
     title="JEBAT WebUI",
     description="Sovereign AI Platform — Enterprise Web Interface",
-    version="8.2.1",
+    version="8.3.0",
 )
 
 # CORS — tightened for production
@@ -209,6 +209,15 @@ app.add_middleware(AuditMiddleware)
 app.add_middleware(APIKeyMiddleware)
 _mount_static(app)
 app.include_router(webui_router)
+
+
+@app.on_event("startup")
+async def _warm_prompt_cache_on_boot() -> None:
+    """Prime the provider prompt cache so the first user message is fast."""
+    import asyncio
+    from jebat.services.webui.webui_server import warm_prompt_cache
+
+    asyncio.create_task(warm_prompt_cache())
 
 
 @app.get("/favicon.ico")
@@ -255,7 +264,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "jebat-webui",
-        "version": "8.2.1",
+        "version": "8.3.0",
         "timestamp": time.time(),
         "features": ["rate-limiting", "cors", "csp", "error-pages", "audit-trail", "request-id"],
     }
@@ -287,8 +296,21 @@ async def system_metrics():
         import psutil
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
+        t1 = psutil.cpu_times()
+        import time as _time
+        _time.sleep(0.12)
+        t2 = psutil.cpu_times()
+        steal_pct = 0.0
+        try:
+            totals_1 = sum(getattr(t1, f, 0.0) for f in ("user", "system", "idle", "nice", "iowait", "irq", "softirq", "steal"))
+            totals_2 = sum(getattr(t2, f, 0.0) for f in ("user", "system", "idle", "nice", "iowait", "irq", "softirq", "steal"))
+            delta = max(totals_2 - totals_1, 1e-9)
+            steal_pct = round(max(getattr(t2, "steal", 0.0) - getattr(t1, "steal", 0.0), 0.0) / delta * 100, 1)
+        except Exception:
+            steal_pct = 0.0
         return {
             "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "cpu_steal_percent": steal_pct,
             "memory": {"total_gb": round(mem.total / 1e9, 1), "used_gb": round(mem.used / 1e9, 1), "percent": mem.percent},
             "disk": {"total_gb": round(disk.total / 1e9, 1), "used_gb": round(disk.used / 1e9, 1), "percent": disk.percent},
             "uptime_seconds": round(time.time() - psutil.boot_time()),

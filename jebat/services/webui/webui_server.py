@@ -24,7 +24,7 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -1098,6 +1098,125 @@ async def chat(message: ChatMessage):
             "error": str(e),
             "response": "Sorry, I encountered an error processing your message.",
         }
+
+
+def _sse(payload: dict[str, Any]) -> str:
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+@webui_router.post("/webui/api/chat/stream")
+async def chat_stream(message: ChatMessage):
+    """Streaming twin of /webui/api/chat — SSE frames of token/meta/done/error."""
+    from jebat.llm import generate_chat_reply_stream
+
+    await _ensure_connection_state()
+    async with STATE_LOCK:
+        conversation = CHAT_CONVERSATIONS.get(message.conversation_id or "")
+        if conversation is None:
+            conversation = _new_conversation(message.user_id, message.message[:80])
+        elif conversation.get("user_id") != message.user_id:
+            raise HTTPException(status_code=404, detail="conversation not found")
+
+        profile = None
+        if message.agent_profile_id:
+            profile = AGENT_PROFILES.get(message.agent_profile_id)
+            if profile is None or profile.get("user_id") != message.user_id:
+                raise HTTPException(status_code=404, detail="agent profile not found")
+            conversation["agent_profile_id"] = profile["id"]
+        elif conversation.get("agent_profile_id"):
+            profile = AGENT_PROFILES.get(conversation["agent_profile_id"])
+
+        conversation["messages"].append({"role": "user", "content": message.message, "created_at": _now_iso()})
+        conversation["updated_at"] = _now_iso()
+        _persist_conversations()
+
+        system_prompt = None
+        if profile:
+            guidance = profile.get("system_prompt") or profile.get("description")
+            system_prompt = f"You are {profile['name']}, a {profile['agent_type']} agent.\n{guidance}"
+
+        conversation_id = conversation["id"]
+        history = list(conversation["messages"][:-1])
+
+    async def event_stream():
+        collected: list[str] = []
+        used_provider: str | None = None
+        try:
+            yield _sse({"type": "meta", "conversation_id": conversation_id})
+            async for chunk in generate_chat_reply_stream(
+                prompt=message.message,
+                mode=message.thinking_mode,
+                preset=message.preset,
+                provider_override=RUNTIME_OVERRIDES["provider"],
+                model_override=RUNTIME_OVERRIDES["model"],
+                conversation_messages=history,
+                system_prompt_override=system_prompt,
+            ):
+                ctype = chunk.get("type")
+                if ctype == "meta":
+                    yield _sse({
+                        "type": "meta",
+                        "conversation_id": conversation_id,
+                        "provider": chunk.get("provider"),
+                        "model": chunk.get("model"),
+                    })
+                elif ctype == "token":
+                    text = chunk.get("text") or ""
+                    if text:
+                        collected.append(text)
+                        yield _sse({"type": "token", "text": text})
+                elif ctype == "done":
+                    used_provider = chunk.get("provider") or used_provider
+
+            full = "".join(collected).strip()
+            async with STATE_LOCK:
+                conversation["messages"].append({"role": "assistant", "content": full, "created_at": _now_iso()})
+                conversation["updated_at"] = _now_iso()
+                _persist_conversations()
+            yield _sse({
+                "type": "done",
+                "conversation_id": conversation_id,
+                "provider": used_provider,
+                "response": full,
+            })
+        except Exception as exc:  # noqa: BLE001 — surface any provider failure as a frame
+            logger.error(f"Chat stream error: {exc}")
+            yield _sse({"type": "error", "conversation_id": conversation_id, "error": str(exc)})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # keep proxies from buffering the stream
+        },
+    )
+
+
+async def warm_prompt_cache() -> None:
+    """One-shot boot warmup: prime the provider's prompt cache with the default
+    system prompt so the first real chat message skips cold prompt processing.
+
+    Disable with JEBAT_WEBUI_WARMUP=0.
+    """
+    if os.getenv("JEBAT_WEBUI_WARMUP", "1").strip().lower() in {"0", "false", "off", "no"}:
+        return
+    try:
+        from jebat.llm import generate_chat_reply
+
+        await asyncio.sleep(3)  # let the server finish binding first
+        await _ensure_connection_state()
+        _, provider, config = await generate_chat_reply(
+            prompt="ping",
+            mode="deliberate",
+            preset="default",
+            provider_override=RUNTIME_OVERRIDES["provider"],
+            model_override=RUNTIME_OVERRIDES["model"],
+        )
+        logger.info(f"Prompt cache warmed via {provider} ({config.model})")
+    except Exception as exc:  # noqa: BLE001 — warmup is best-effort, never fatal
+        logger.info(f"Prompt cache warmup skipped: {exc}")
 
 
 @webui_router.post("/webui/api/think")

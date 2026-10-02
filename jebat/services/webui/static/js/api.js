@@ -92,6 +92,29 @@ async function updateConnectionStatus() {
 updateConnectionStatus();
 setInterval(updateConnectionStatus, 15000);
 
+// ── Host CPU steal indicator ──
+// Shows a chip in the topbar when the hypervisor steals CPU from this VM
+// (visible cause of slow local inference). Hidden below the warn threshold.
+async function updateStealChip() {
+  const chip = document.getElementById('steal-chip');
+  if (!chip) return;
+  try {
+    const res = await fetch('/api/system/metrics', { cache: 'no-store' });
+    const m = await res.json();
+    const steal = Number(m.cpu_steal_percent || 0);
+    if (steal >= 12) {
+      chip.hidden = false;
+      chip.textContent = `steal ${steal.toFixed ? steal.toFixed(0) : steal}%`;
+      chip.classList.toggle('hot', steal >= 25);
+      chip.title = `Host CPU steal: ${steal}% — the hypervisor is taking CPU cycles from this VM. This directly slows local model inference.`;
+    } else {
+      chip.hidden = true;
+    }
+  } catch (_) { /* metrics unavailable — keep chip hidden */ }
+}
+updateStealChip();
+setInterval(updateStealChip, 60000);
+
 // ── Dark mode toggle (optional) ──
 (function() {
   const saved = localStorage.getItem('jebat-theme');

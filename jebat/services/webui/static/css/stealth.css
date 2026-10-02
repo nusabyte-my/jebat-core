@@ -295,6 +295,12 @@ pre {
   background: var(--green);
 }
 
+/* ── Infra Chip (host steal indicator) ── */
+.infra-chip { font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; padding: 3px 8px; border-radius: 999px; background: rgba(213,138,74,.15); color: var(--amber); border: 1px solid rgba(213,138,74,.35); white-space: nowrap; }
+.infra-chip.hot { background: rgba(201,107,87,.15); color: var(--red); border-color: rgba(201,107,87,.4); }
+[data-theme="light"] .infra-chip { background: rgba(213,138,74,.12); color: #9A5B22; border-color: rgba(213,138,74,.4); }
+[data-theme="light"] .infra-chip.hot { background: rgba(179,38,30,.08); color: #B3261E; border-color: rgba(179,38,30,.35); }
+
 /* ── Topbar ── */
 .topbar {
   grid-area: topbar;

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import replace
+from typing import Any, AsyncIterator
 
 from .config import JebatLLMConfig, load_llm_config
 from .conversation import PreparedPrompt, prepare_chat_prompt
-from .providers import ProviderGeneration, generate_with_failover
+from .providers import ProviderGeneration, generate_stream_with_failover, generate_with_failover
 from .token_usage import input_token_budget
 
 
@@ -199,3 +200,54 @@ async def generate_chat_reply(
         },
     )
     return response.text, used_provider, config, metadata
+
+
+async def generate_chat_reply_stream(
+    prompt: str,
+    mode: str | None = None,
+    preset: str | None = None,
+    provider_override: str | None = None,
+    model_override: str | None = None,
+    temperature_override: float | None = None,
+    max_tokens_override: int | None = None,
+    conversation_messages: list[dict[str, str]] | None = None,
+    system_prompt_override: str | None = None,
+) -> AsyncIterator[dict[str, Any]]:
+    """Streaming twin of generate_chat_reply.
+
+    Performs the same config resolution and prompt preparation, then yields
+    provider chunks: ``{"type": "meta"|"token"|"done", ...}``. ``meta`` always
+    arrives first; ``done`` always terminates (carrying the provider name).
+    """
+    config = apply_chat_preset(
+        resolve_llm_config(
+            provider_override=provider_override,
+            model_override=model_override,
+        ),
+        preset=preset,
+    )
+    config = apply_runtime_overrides(
+        config,
+        temperature=temperature_override,
+        max_tokens=max_tokens_override,
+    )
+    system_prompt = system_prompt_override or build_chat_system_prompt(mode, preset=preset)
+    prepared: PreparedPrompt = prepare_chat_prompt(
+        prompt,
+        mode=mode,
+        model=config.model,
+        provider=config.provider,
+        conversation_messages=conversation_messages,
+        input_token_budget=input_token_budget(config.context_window, config.max_tokens),
+        system_prompt=system_prompt,
+    )
+    yield {"type": "meta", "provider": config.provider, "model": config.model}
+    async for chunk in generate_stream_with_failover(
+        config=config,
+        prompt=prepared.prompt,
+        system_prompt=system_prompt,
+    ):
+        # Provider metadata duplicates our own meta frame — drop it.
+        if chunk.get("type") == "metadata":
+            continue
+        yield chunk
