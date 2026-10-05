@@ -141,7 +141,7 @@ def test_route_matches_description_words(tmp_path, registry_file):
     other = _scaffold("docs-writer", "flow", tmp_path)
     _deploy(other, "local", "x")
 
-    sol, routed = _route("map the attack surface of acme.test with reconnaissance")
+    _sol, routed, _ranked = _route("map the attack surface of acme.test with reconnaissance")
     assert routed["name"] == "osint-recon"
 
 

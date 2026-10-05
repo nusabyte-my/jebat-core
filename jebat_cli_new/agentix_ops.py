@@ -1,8 +1,11 @@
-"""Agentix ops — eval (golden tasks) and export (portability).
+"""Agentix ops — eval (golden tasks), doctor (health), export (portability).
 
 - `jebat agentix eval PATH [--live]` runs a solution's golden tasks plus
   structural checks. Code-runtime tasks execute deterministically; LLM
   runtime tasks are skipped unless --live (they need a real provider).
+- `jebat agentix doctor [--fix]` health-checks the whole agentix state:
+  dangling registry entries, stale builds, missing doctrine, tool
+  overload, unsanity budgets, description-doctrine drift.
 - `jebat agentix export PATH --format claude-subagent|skill [--out DIR]`
   ships the solution to other harnesses — the industry converges on
   markdown-in-folders; JEBAT's manifest is a superset of those formats.
@@ -10,6 +13,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -204,3 +208,115 @@ def export_solution(sol: Path, fmt: str, out_dir: Optional[Path]) -> Path:
         return out
 
     raise SystemExit(f"unknown format {fmt!r} (use claude-subagent | skill)")
+
+
+# ── Doctor ──────────────────────────────────────────────────────────
+
+def _manifest_sha(sol: Path) -> str:
+    return hashlib.sha256((sol / "agentix.yaml").read_bytes()).hexdigest()[:16]
+
+
+def _words(text: str) -> set:
+    return set(re.findall(r"[a-z0-9]{3,}", text.lower()))
+
+
+def doctor(fix: bool = False) -> Tuple[List[str], int]:
+    """Health-check the agentix state. Returns (lines, failure_count).
+
+    Warnings do not fail; dangling registry entries are pruned only with
+    fix=True (they are re-creatable via deploy, so pruning is safe).
+    """
+    from jebat_cli_new.agentix import REGISTRY_PATH, SPECIALISTS_DIR
+    from jebat_cli_new.agentix_llm import parse_wall_clock, _MIN_TOKENS_PER_ITERATION
+
+    lines: List[str] = []
+    failures = 0
+
+    # 1. Registry entries
+    registry: Dict[str, Any] = {}
+    if REGISTRY_PATH.is_file():
+        try:
+            registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            lines.append("FAIL registry.json is corrupt — move it aside and redeploy")
+            failures += 1
+    dangling = [
+        name for name, entry in registry.items()
+        if not (Path(entry.get("path", "")) / "agentix.yaml").is_file()
+    ]
+    if dangling:
+        if fix:
+            for name in dangling:
+                registry.pop(name)
+            REGISTRY_PATH.write_text(json.dumps(registry, indent=2), encoding="utf-8")
+            lines.append(f"fix  pruned {len(dangling)} dangling registry entr{'y' if len(dangling) == 1 else 'ies'}: {', '.join(dangling)}")
+        else:
+            lines.append(f"WARN dangling registry entries (path gone): {', '.join(sorted(dangling))} — rerun with --fix to prune")
+
+    # 2. Per-solution checks (dangling entries already handled above)
+    for name, entry in sorted(registry.items()):
+        if name in dangling:
+            continue
+        sol = Path(entry.get("path", ""))
+        prefix = f"[{name}]"
+        mf, load_err = None, None
+        try:
+            mf = _load_manifest(sol)
+        except Exception as exc:  # noqa: BLE001 — reported, not raised
+            load_err = str(exc)
+        if mf is None:
+            lines.append(f"FAIL {prefix} manifest unreadable: {load_err}")
+            failures += 1
+            continue
+
+        runtime = mf.get("runtime", "code")
+        build_path = sol / ".agentix" / "build.json"
+        if not build_path.is_file():
+            lines.append(f"WARN {prefix} never built — run: jebat agentix build {sol}")
+        else:
+            stored = json.loads(build_path.read_text(encoding="utf-8"))
+            if stored.get("manifest_sha256") != _manifest_sha(sol):
+                lines.append(f"WARN {prefix} manifest changed since last build (stale) — rebuild")
+
+        if runtime == "llm":
+            if not (sol / "agent.md").is_file():
+                lines.append(f"FAIL {prefix} runtime llm without agent.md")
+                failures += 1
+            allowlist = mf.get("llm_tools") or []
+            if len(allowlist) > MAX_ALLOWLIST:
+                lines.append(f"FAIL {prefix} llm_tools={len(allowlist)} exceeds cap {MAX_ALLOWLIST}")
+                failures += 1
+            if not str(mf.get("description", "")).strip():
+                lines.append(f"FAIL {prefix} empty description — ask-routing cannot match it")
+                failures += 1
+            budget = mf.get("budget") if isinstance(mf.get("budget"), dict) else {}
+            tokens = budget.get("tokens")
+            max_iter = int(mf.get("max_iterations") or 12)
+            if tokens is not None:
+                tokens = int(tokens)
+                if tokens < max_iter * _MIN_TOKENS_PER_ITERATION:
+                    lines.append(f"FAIL {prefix} budget.tokens={tokens} < floor {max_iter * _MIN_TOKENS_PER_ITERATION}")
+                    failures += 1
+            if budget.get("wall_clock") is not None and parse_wall_clock(budget.get("wall_clock")) is None:
+                lines.append(f"FAIL {prefix} budget.wall_clock={budget.get('wall_clock')!r} unparseable (use 30m / 1h)")
+                failures += 1
+            doctrine = (sol / "agent.md").read_text(encoding="utf-8", errors="replace")
+            if str(mf.get("description", "")) and doctrine:
+                overlap = _words(str(mf["description"])) & _words(doctrine)
+                if not overlap:
+                    lines.append(f"WARN {prefix} description and doctrine share no keywords — routing may misfire (stale template?)")
+
+    # 3. Specialist catalog must load clean
+    if SPECIALISTS_DIR.is_dir():
+        for path in sorted(SPECIALISTS_DIR.iterdir()):
+            if not (path / "agentix.yaml").is_file():
+                continue
+            try:
+                _load_manifest(path)
+            except Exception as exc:  # noqa: BLE001
+                lines.append(f"FAIL specialist {path.name}: {exc}")
+                failures += 1
+
+    if failures == 0:
+        lines.append("doctor: healthy" + ("" if len(registry) else " (registry empty)"))
+    return lines, failures

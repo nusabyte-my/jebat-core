@@ -70,17 +70,28 @@ def test_parse_wall_clock():
 # ── Budget gates in the loop ────────────────────────────────────────
 
 def test_token_budget_stops_the_loop(tmp_path):
-    sol = _llm_solution(tmp_path, "budgeted", budget={"tokens": 15})
-    # Each mock response costs 10 tokens; 15-token budget allows 1 call + wrap-up.
+    # max_iterations=8 -> floor 8*64=512; budget 600 allows 6 calls at 100
+    # tokens each, so the budget binds before the iteration cap.
+    sol = _llm_solution(tmp_path, "budgeted", max_iterations=8, budget={"tokens": 600})
     looping = (
         '<thought>t</thought><tool_call>'
         '{"tool": "list_dir", "args": {"path": "."}}'
         "</tool_call>"
     )
-    registry = _mock_registry(tmp_path, [looping, looping, looping, looping])
+    registry = ProviderRegistry(path=str(tmp_path / "providers.json"))
+    registry.register("mock", MockProvider([looping] * 20))
+
+    class Costly(MockProvider):
+        def complete(self, req):
+            resp = super().complete(req)
+            return CompletionResponse(text=resp.text, model="mock", provider="mock",
+                                      tokens_used=100, latency_ms=1)
+
+    registry.providers["mock"] = Costly([looping] * 20)
     result, info = _run_solution(sol, "loop forever", registry=registry, yolo=True,
                                  provider="mock", model="mock")
-    assert info["tokens"] <= 45  # budget cut the loop well before max_iterations=12
+    assert info["tokens"] <= 700  # 6 budgeted calls + wrap-up synthesis call
+    assert info["tool_calls"] <= 6
 
 
 def test_deadline_stops_the_loop(tmp_path):
@@ -218,5 +229,184 @@ def test_route_matches_specialist_description(tmp_path, registry_file):
     from jebat_cli_new.agentix import _deploy
 
     _deploy(sol, "local", "x")
-    routed_sol, mf = _route("passive reconnaissance footprinting for acme.test")
+    _sol, mf, _ranked = _route("passive reconnaissance footprinting for acme.test")
     assert mf["name"] == "recon"
+
+
+# ── Quickwins: doctor, budget sanity, run registry, resume, stdin, routing ──
+
+def test_doctor_reports_and_prunes_dangling(tmp_path, monkeypatch):
+    from jebat_cli_new.agentix_ops import doctor
+
+    reg = tmp_path / "registry.json"
+    reg.write_text(json.dumps({"ghost": {"path": str(tmp_path / "gone")}}), encoding="utf-8")
+    monkeypatch.setattr("jebat_cli_new.agentix.REGISTRY_PATH", reg)
+
+    lines, failures = doctor(fix=False)
+    assert failures == 0  # dangling is a warning
+    assert any("dangling" in line for line in lines)
+
+    lines, failures = doctor(fix=True)
+    assert any("pruned" in line for line in lines)
+    assert json.loads(reg.read_text(encoding="utf-8")) == {}
+
+
+def test_doctor_flags_stale_build_and_drift(tmp_path, monkeypatch):
+    from jebat_cli_new.agentix_ops import doctor
+
+    sol = _llm_solution(tmp_path, "stale-drift")
+    _build(sol)
+    (sol / "agentix.yaml").write_text(
+        yaml.safe_dump({**_load_manifest(sol), "version": "9.9.9"}), encoding="utf-8"
+    )
+    reg = tmp_path / "registry.json"
+    reg.write_text(json.dumps({"stale-drift": {"path": str(sol)}}), encoding="utf-8")
+    monkeypatch.setattr("jebat_cli_new.agentix.REGISTRY_PATH", reg)
+
+    lines, failures = doctor()
+    assert failures == 0
+    assert any("stale" in line.lower() for line in lines)
+
+
+def test_doctor_flags_unrunnable_budget(tmp_path, monkeypatch):
+    from jebat_cli_new.agentix_ops import doctor
+
+    sol = _llm_solution(tmp_path, "poor", budget={"tokens": 100})
+    reg = tmp_path / "registry.json"
+    reg.write_text(json.dumps({"poor": {"path": str(sol)}}), encoding="utf-8")
+    monkeypatch.setattr("jebat_cli_new.agentix.REGISTRY_PATH", reg)
+
+    lines, failures = doctor()
+    assert failures >= 1
+    assert any("floor" in line for line in lines)
+
+
+def test_spawn_refuses_absurd_budget(tmp_path):
+    sol = _llm_solution(tmp_path, "cheap", budget={"tokens": 50})
+    registry = _mock_registry(tmp_path, ["FINAL_ANSWER: never"])
+    with pytest.raises(Exception, match="refuse to spawn"):
+        _run_solution(sol, "go", registry=registry, provider="mock", model="mock")
+
+
+def test_run_records_to_run_registry(tmp_path, monkeypatch):
+    runs = tmp_path / "runs"
+    monkeypatch.setenv("JEBAT_AGENTIX_RUNS", str(runs))
+    sol = _llm_solution(tmp_path, "recorded")
+    registry = _mock_registry(tmp_path, ["FINAL_ANSWER: done"])
+    result, info = _run_solution(sol, "hello", registry=registry, provider="mock", model="mock")
+    run_path = runs / info["run_id"]
+    assert (run_path / "brief.json").is_file()
+    assert (run_path / "messages.json").is_file()
+    assert (run_path / "events.jsonl").is_file()
+    assert (run_path / "manifest.yaml").is_file()
+    brief = json.loads((run_path / "brief.json").read_text(encoding="utf-8"))
+    assert brief["task"] == "hello" and brief["resumed_from"] is None
+    messages = json.loads((run_path / "messages.json").read_text(encoding="utf-8"))
+    assert messages[0]["role"] == "user"
+
+
+def test_resume_continues_conversation(tmp_path, monkeypatch):
+    runs = tmp_path / "runs"
+    monkeypatch.setenv("JEBAT_AGENTIX_RUNS", str(runs))
+    sol = _llm_solution(tmp_path, "resumable")
+    registry = _mock_registry(tmp_path, ["FINAL_ANSWER: first", "FINAL_ANSWER: second"])
+
+    r1, info1 = _run_solution(sol, "turn one", registry=registry, provider="mock", model="mock")
+    r2, info2 = _run_solution(
+        sol, "turn two", registry=registry, provider="mock", model="mock",
+        resume_from=info1["run_id"],
+    )
+    assert info2["resumed_from"] == info1["run_id"]
+    messages = json.loads((runs / info2["run_id"] / "messages.json").read_text(encoding="utf-8"))
+    user_messages = [m for m in messages if m["role"] == "user"]
+    assert [m["content"] for m in user_messages] == ["turn one", "turn two"]
+
+    with pytest.raises(Exception, match="unknown run id"):
+        _run_solution(sol, "x", registry=registry, provider="mock", model="mock", resume_from="nope")
+
+
+def test_code_runtime_rejects_resume(tmp_path):
+    sol = _scaffold("stateless", "lattice", tmp_path)
+    with pytest.raises(SystemExit, match="stateless"):
+        _run_solution(sol, "x", resume_from="whatever")
+
+
+def test_provider_error_returns_exit_code_one(tmp_path, monkeypatch, capsys):
+    from jebat_cli_new.agentix import run_agentix_command
+
+    runs = tmp_path / "runs"
+    monkeypatch.setenv("JEBAT_AGENTIX_RUNS", str(runs))
+    sol = _llm_solution(tmp_path, "broken-provider")
+    registry = _mock_registry(tmp_path, ["[JEBAT provider error: HTTP Error 500]"])
+
+    def fake_registry():
+        return registry
+
+    monkeypatch.setattr("jebat_cli_new.providers.ProviderRegistry", fake_registry)
+    rc = run_agentix_command(["run", str(sol), "hello", "--provider", "mock", "--model", "mock"])
+    assert rc == 1
+    assert "provider call failed" in capsys.readouterr().err
+
+
+def test_run_reads_task_from_stdin(tmp_path, monkeypatch, capsys):
+    import io
+
+    from jebat_cli_new.agentix import run_agentix_command
+
+    monkeypatch.setenv("JEBAT_AGENTIX_RUNS", str(tmp_path / "runs"))
+    sol = _llm_solution(tmp_path, "piped")
+    registry = _mock_registry(tmp_path, ["FINAL_ANSWER: piped task ran"])
+    seen = []
+
+    class Recording(MockProvider):
+        def complete(self, req):
+            seen.append(req.prompt)
+            return super().complete(req)
+
+    registry.providers["mock"] = Recording(registry.providers["mock"].responses)
+    monkeypatch.setattr("jebat_cli_new.providers.ProviderRegistry", lambda: registry)
+    monkeypatch.setattr("sys.stdin", io.StringIO("task from stdin\n"))
+    rc = run_agentix_command(["run", str(sol), "-", "--provider", "mock", "--model", "mock"])
+    assert rc == 0
+    assert "task from stdin" in seen[0]
+
+
+def test_ask_shows_top3_candidates(tmp_path, monkeypatch, capsys):
+    from jebat_cli_new.agentix import _deploy, run_agentix_command
+
+    monkeypatch.setenv("JEBAT_AGENTIX_RUNS", str(tmp_path / "runs"))
+    a = _llm_solution(tmp_path, "alpha", description="audit security vulnerabilities in repos")
+    b = _llm_solution(tmp_path, "beta", description="audit security posture of networks")
+    reg = tmp_path / "registry.json"
+    monkeypatch.setattr("jebat_cli_new.agentix.REGISTRY_PATH", reg)
+    _deploy(a, "local", "x")
+    _deploy(b, "local", "x")
+
+    registry = _mock_registry(tmp_path, ["FINAL_ANSWER: routed"])
+    monkeypatch.setattr("jebat_cli_new.providers.ProviderRegistry", lambda: registry)
+    rc = run_agentix_command(["ask", "audit the security vulnerabilities", "--provider", "mock", "--model", "mock"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "also matched" in out and "beta" in out
+
+
+def test_status_shows_runtime_and_stale(tmp_path, monkeypatch, capsys):
+    from jebat_cli_new.agentix import _deploy, run_agentix_command
+
+    sol = _llm_solution(tmp_path, "vis")
+    reg = tmp_path / "registry.json"
+    monkeypatch.setattr("jebat_cli_new.agentix.REGISTRY_PATH", reg)
+    _deploy(sol, "local", "x")
+
+    rc = run_agentix_command(["status"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "(llm)" in out
+    assert "STALE" not in out  # deploy just built it
+
+    (sol / "agentix.yaml").write_text(
+        yaml.safe_dump({**_load_manifest(sol), "version": "2.0.0"}), encoding="utf-8"
+    )
+    capsys.readouterr()
+    run_agentix_command(["status"])
+    assert "STALE" in capsys.readouterr().out

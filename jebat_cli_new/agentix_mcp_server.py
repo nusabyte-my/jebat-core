@@ -80,6 +80,7 @@ def _status_payload() -> Dict[str, Any]:
 
 def _call_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
     from jebat_cli_new.agentix import _resolve_solution, _run_solution
+    from jebat_cli_new.agentix_llm import PROVIDER_ERROR_PREFIX
 
     if name == "agentix_status":
         return {"content": [{"type": "text", "text": json.dumps(_status_payload(), indent=2)}]}
@@ -89,6 +90,8 @@ def _call_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError("task must be a non-empty string")
         sol = _resolve_solution(_SOLUTION or "")
         result, info = _run_solution(sol, task, yolo=bool(arguments.get("yolo", False)))
+        if result and result.startswith(PROVIDER_ERROR_PREFIX):
+            return {"content": [{"type": "text", "text": result or ""}], "isError": True}
         return {"content": [{"type": "text", "text": result or ""}]}
     raise ValueError(f"unknown tool {name!r}")
 
