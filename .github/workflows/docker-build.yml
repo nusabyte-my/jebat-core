@@ -43,7 +43,8 @@ jobs:
       - name: Validate health endpoint wiring
         run: |
           # Verify main.py has /health endpoint (required by Dockerfile HEALTHCHECK)
-          grep -q '@app.get("/health")' main.py || {
+          # Prefix pattern: the decorator may carry kwargs (tags=[...]) before the paren.
+          grep -q '@app.get("/health"' main.py || {
             echo "::error::main.py is missing the /health endpoint required by Dockerfile HEALTHCHECK"
             exit 1
           }

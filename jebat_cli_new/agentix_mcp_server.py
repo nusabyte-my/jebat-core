@@ -144,7 +144,10 @@ def serve(solution: str) -> int:
             params = request.get("params") or {}
             try:
                 _respond(request_id, _call_tool(str(params.get("name")), params.get("arguments") or {}))
-            except Exception as exc:
+            except (Exception, SystemExit) as exc:
+                # SystemExit included: _resolve_solution/_run_solution signal
+                # "solution not found"/build errors that way — the server must
+                # answer a tool error, not die mid-session.
                 _respond(
                     request_id,
                     {

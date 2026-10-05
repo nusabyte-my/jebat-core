@@ -4247,6 +4247,11 @@ def main():
         i += 1
     args = filtered_args
 
+    # Advertised as a thinking session — tool-less chat is the honest
+    # implementation; never let these words fall through to the LLM prompt.
+    if args and args[0] == "think":
+        args[0] = "chat"
+
     if not args:
         # No args → start interactive REPL directly
         registry = ProviderRegistry()
@@ -4474,6 +4479,73 @@ def main():
             else:
                 print(f"  {C.DIM}Usage: jebat provider [list|use|add|remove|test] [kind]{C.RESET}")
         repl(registry, taskdb, skills)
+
+    elif args[0] == "repl":
+        # Word-dispatch for the advertised `jebat repl` (README Quick Start).
+        # Same behavior as no-args, including -c/-s session resume.
+        banner()
+        cfg = registry.get_active()
+        if cfg:
+            show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
+        else:
+            show_setup("none", "none", "none", "No provider")
+        if continue_last or resume_session:
+            agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
+            if resume_session:
+                loaded = _load_session_by_id(resume_session)
+            else:
+                sessions = sorted(SESSIONS_DIR.glob("session_*.json"), reverse=True)
+                loaded = _load_session_by_id(sessions[0].stem) if sessions else []
+            if loaded:
+                agent.messages = loaded
+                cprint(f"  {C.GREEN}✓{C.RESET} Resumed {len(loaded)} messages from previous session")
+        repl(registry, taskdb, skills)
+
+    elif args[0] == "doctor":
+        # Health check: agentix registry/builds/budgets + doctrine drift.
+        from jebat_cli_new.agentix_ops import doctor as agentix_doctor
+
+        lines, failures = agentix_doctor(fix=False)
+        print("\n".join(lines))
+        return 1 if failures else 0
+
+    elif args[0] == "status":
+        from jebat_cli_new.agentix_llm import runs_dir
+
+        provider_count = len(registry.configs)
+        active = registry.active_id or "(none)"
+        agentix_registry = Path.home() / ".jebat" / "agentix" / "registry.json"
+        deployed = 0
+        if agentix_registry.is_file():
+            try:
+                deployed = len(json.loads(agentix_registry.read_text(encoding="utf-8")))
+            except json.JSONDecodeError:
+                deployed = 0
+        runs = runs_dir()
+        run_count = len([p for p in runs.iterdir() if p.is_dir()]) if runs.is_dir() else 0
+        sessions = len(list(SESSIONS_DIR.glob("session_*.json"))) if SESSIONS_DIR.is_dir() else 0
+        print(f"  JEBAT v{VERSION}")
+        print(f"  providers    {provider_count} configured · active: {active}")
+        print(f"  agentix      {deployed} deployed solutions · {run_count} recorded runs")
+        print(f"  sessions     {sessions} saved")
+        return 0
+
+    elif args[0] == "webui":
+        # Serve the main app (webui router included) locally — the same app
+        # the production jebat-webui service runs, on the advertised port.
+        port = 8787
+        for token in args[1:]:
+            if token.isdigit():
+                port = int(token)
+                break
+        try:
+            import uvicorn
+        except ImportError:
+            print("  webui needs uvicorn: pip install uvicorn", file=sys.stderr)
+            return 1
+        print(f"  ⚔ JEBAT WebUI → http://127.0.0.1:{port}/webui/")
+        uvicorn.run("main:app", host="127.0.0.1", port=port, log_level="warning")
+        return 0
 
     else:
         # Unknown command — treat as one-shot prompt

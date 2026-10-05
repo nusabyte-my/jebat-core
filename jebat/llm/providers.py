@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Protocol
@@ -15,6 +16,8 @@ from jebat.features.auth.custom_providers import (
     get_custom_provider,
     is_custom_provider,
 )  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 
 class LLMProvider(Protocol):
@@ -647,15 +650,30 @@ async def generate_stream_with_failover(
     prompt: str,
     system_prompt: str | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
-    """Stream tokens live from provider when supported, with fallback."""
+    """Stream tokens live from provider when supported, with fallback.
+
+    Failover is only safe BEFORE any chunk has reached the caller: chunks
+    already yielded cannot be retracted, so a mid-stream failure is logged
+    and re-raised instead of silently followed by a duplicated fresh answer.
+    """
+    emitted = False
     try:
         provider = build_provider(config)
         if hasattr(provider, "generate_stream"):
             async for chunk in provider.generate_stream(prompt=prompt, system_prompt=system_prompt):
+                emitted = True
                 yield chunk
             return
     except Exception:
-        pass
+        if emitted:
+            # Chunks already streamed — a silent re-run would duplicate the
+            # answer downstream. Surface the failure instead.
+            logger.exception(
+                "streaming provider %s failed mid-stream after %d emitted chunk(s); not falling back",
+                config.provider,
+                emitted,
+            )
+            raise
 
     response, p_name = await generate_with_failover(
         config=config,

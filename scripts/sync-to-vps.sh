@@ -6,7 +6,9 @@ set -e
 
 VPS_HOST="root@72.62.255.206"
 VPS_CODE_DIR="/var/www/jebat-core"
-LOCAL_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Repo root, not scripts/ — this rsync is destructive (--delete); mirroring
+# scripts/ over /var/www/jebat-core would wipe the API host's code tree.
+LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "⚔️  JEBAT Sync to VPS"
 echo "====================="
@@ -35,4 +37,5 @@ rsync -avz --delete \
 echo ""
 echo "✅ Code synced to $VPS_CODE_DIR"
 echo ""
-echo "Next step: ssh $VPS_HOST 'cd $VPS_CODE_DIR && ./deploy.sh'"
+echo "Next step: restart services on the VPS (pm2 restart jebat-api jebat-mcp jebat-webui --update-env)"
+echo "or run scripts/deploy-tar-over-ssh.sh (BACKUP=1) for a full deployment."

@@ -394,7 +394,7 @@ Specialists declare their own budgets (`budget.tokens`, `budget.wall_clock`) —
 
 | Command | Description |
 |---------|-------------|
-| `jebat config show\|set\|reset\|edit` | Configuration management |
+| `jebat config import -s omp\|opencode\|claude` | Import MCP server config from another CLI (transport/timeout/env normalization, `--dry-run`, `--overwrite`) |
 | `jebat memory store\|search\|stats` | 6-type eternal memory with Ghost DB vector search |
 | `jebat llm providers\|config\|auth` | LLM provider management |
 | `jebat llm best-provider` | Auto-detect best available provider |
@@ -714,16 +714,10 @@ agent:
 ### Quick Config Commands
 
 ```bash
-# Show config
-jebat config show
+# Import MCP servers from another CLI (show/set/reset/edit are legacy-CLI only)
+jebat config import -s opencode --dry-run
 
-# Set value
-jebat config set agent.safety_mode confirm
-
-# Edit in $EDITOR
-jebat config edit
-
-# Health check
+# Agent + registry health check
 jebat doctor
 ```
 

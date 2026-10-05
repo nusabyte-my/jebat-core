@@ -720,7 +720,7 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
                      help="continue a recorded run's conversation (llm runtime; list ids: jebat agentix runs)")
 
     ask = sub.add_parser("ask", help="Type only an objective — routes to the best deployed solution")
-    ask.add_argument("objective", help="Objective text; matched against solution names + descriptions")
+    ask.add_argument("objective", nargs="+", help="Objective text; matched against solution names + descriptions")
     ask.add_argument("--provider", default=None, help="Override provider (llm runtime)")
     ask.add_argument("--model", default=None, help="Override model (llm runtime)")
     ask.add_argument("--yolo", action="store_true", help="Skip safety confirmations")
@@ -823,13 +823,14 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
                 return 1
             return 0
         if ns.command == "ask":
-            sol, mf, ranked = _route(ns.objective)
+            objective = " ".join(ns.objective) if isinstance(ns.objective, list) else str(ns.objective)
+            sol, mf, ranked = _route(objective)
             print(f"  routed to: {mf['name']} ({mf['template']})")
             if len(ranked) > 1:
                 others = "  ".join(f"{name}({score})" for score, name in ranked[1:])
                 print(f"  also matched: {others}")
             result, info = _run_solution(
-                sol, ns.objective, yolo=ns.yolo, provider=ns.provider, model=ns.model,
+                sol, objective, yolo=ns.yolo, provider=ns.provider, model=ns.model,
             )
             print(result or "(no answer)")
             if info and info.get("run_id"):
