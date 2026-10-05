@@ -21,4 +21,7 @@ def test_help_survives_legacy_windows_console_encoding() -> None:
     )
 
     assert completed.returncode == 0
-    assert b"v8.2.1" in completed.stdout
+    # Assert the live package version so this test survives version bumps.
+    from jebat_cli_new import __version__ as cli_version
+
+    assert f"v{cli_version}".encode() in completed.stdout

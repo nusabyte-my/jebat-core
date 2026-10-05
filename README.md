@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-v8.3.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-hardened%20%2B%20audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-270%20passing-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-327%20passing-10b981?style=flat-square)
 ![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.2-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![Jev](https://img.shields.io/badge/Jev-advisor%20shipped-10b981?style=flat-square)
@@ -370,10 +370,11 @@ POST /webui/api/runtime         Runtime control
 
 | Command | Description |
 |---------|-------------|
-| `jebat agentix create NAME -t hermes\|openclaw\|atomic` | Scaffold an agent solution (ReAct loop / workspace-driven / schema-driven tools) |
+| `jebat agentix create NAME -t reflex\|flow\|lattice` | Scaffold an agent solution (ReAct loop / workspace-driven / schema-driven tools) |
 | `jebat agentix build PATH` | Validate + compile + content-addressed build manifest (`.agentix/build.json`) |
 | `jebat agentix deploy PATH --target local\|mcp\|vps` | Ship it: local registry, ready-to-paste MCP config, or scp to VPS — gated by `deploy.allow` in `agentix.yaml` |
-| `jebat agentix run NAME\|PATH "task"` | Execute a deployed solution (tools injected via `ctx.tools`) |
+| `jebat agentix run NAME\|PATH "task"` | Spawn the agent: `runtime: llm` solutions run the shared ReAct loop with the solution's doctrine, tool allowlist and workspace jail; code solutions execute `run(task, ctx.tools)` |
+| `jebat agentix ask "objective"` | Type only an objective — routes to the best deployed solution by name + description |
 | `jebat agentix status [PATH]` | Solution state + deployed registry |
 
 
@@ -657,7 +658,7 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v8.2.1 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v8.3.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
 | **LLM Provider Routing** | **17 Providers (Failover)** | Single Provider | Ollama Only | Local Only |

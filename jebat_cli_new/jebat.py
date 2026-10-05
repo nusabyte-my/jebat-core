@@ -4495,4 +4495,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main() returns a process exit code on dispatched subcommands (mcp,
+    # agentix, config, tools); None from REPL paths means success.
+    raise SystemExit(main())

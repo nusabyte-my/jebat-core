@@ -202,7 +202,7 @@ class AgentLoop:
     def __init__(self, registry: ProviderRegistry, default_provider: str = "ollama",
                   model: str = "qwen2.5-coder:7b", yolo: bool = False,
                  auto_commit: bool = False, style: str = "jebat", context_window: int = 16384,
-                 verbose: bool = False):
+                 verbose: bool = False, system_prompt_extra: str = ""):
         self.registry = registry
         self.default_provider = default_provider
         self.model = model
@@ -213,6 +213,7 @@ class AgentLoop:
         self.style = style  # "jebat" or "openmanus"
         self.context_window = context_window
         self.verbose = verbose
+        self.system_prompt_extra = system_prompt_extra
 
     def _render_history(self, limit: int = 8) -> str:
         return "\n".join(
@@ -272,6 +273,8 @@ class AgentLoop:
 
         # Select system prompt based on style
         sys_prompt = SYSTEM_PROMPT if self.style == "openmanus" else MINIMAL_PROMPT
+        if self.system_prompt_extra:
+            sys_prompt += "\n\n" + self.system_prompt_extra
         from jebat_cli_new.tool_bridge import shared_tool_prompt
         sys_prompt += shared_tool_prompt()
 

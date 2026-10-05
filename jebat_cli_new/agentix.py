@@ -147,14 +147,44 @@ def run(task: str, ctx: Dict[str, Any]) -> str:
 
 
 def _manifest(name: str, template: str) -> Dict[str, Any]:
-    return {
+    descriptions = {
+        "reflex": "Deliberate ReAct agent — spawn by typing an objective; reasons, acts with tools, verifies.",
+        "flow": "Workspace-driven solution — the agent reads and edits workspace/ files across steps.",
+        "lattice": "Schema-driven typed tools — the agent only orchestrates declared capabilities.",
+    }
+    base = {
         "name": name,
         "version": "0.1.0",
+        "description": descriptions[template],
         "template": template,
         "entrypoint": "agent.py",
         "tools": [] if template != "lattice" else ["tools/example.py"],
         "deploy": {"allow": ["local", "mcp", "vps"]},
     }
+    if template == "reflex":
+        # reflex ships doctrine-driven: `jebat agentix run NAME "task"` spawns
+        # a real LLM agent with no code to write. Delete agent.md (or set
+        # runtime: code) to fall back to executing agent.py.
+        base["runtime"] = "llm"
+        base["max_iterations"] = 12
+        base["llm_tools"] = ["read_file", "write_file", "search_files", "terminal", "list_dir"]
+    return base
+
+
+_REFLEX_DOCTRINE = """\
+# Reflex doctrine — deliberate ReAct
+
+1. THINK in <thought> before every action. State what you know, what is
+   missing, and the single next action.
+2. ACT with exactly one tool batch per turn — no speculative calls.
+3. OBSERVE before re-planning. Never assume a tool succeeded; read the
+   <tool_response>.
+4. VERIFY at least one artifact per claimed outcome (read the file you
+   wrote, re-run the check you claim passes).
+5. REPORT with FINAL_ANSWER: facts, artifacts touched, and what remains.
+
+You do not fabricate command output, file contents, or verification results.
+"""
 
 
 def _scaffold(name: str, template: str, target: Path) -> Path:
@@ -167,6 +197,8 @@ def _scaffold(name: str, template: str, target: Path) -> Path:
     )
     if template == "reflex":
         (sol / "agent.py").write_text(_HERMES_AGENT.format(name=name), encoding="utf-8")
+        (sol / "agent.md").write_text(_REFLEX_DOCTRINE, encoding="utf-8")
+        (sol / "workspace").mkdir()
     elif template == "flow":
         (sol / "workspace").mkdir()
         (sol / "plan.md").write_text(_PLAN_MD.format(name=name), encoding="utf-8")
@@ -222,6 +254,13 @@ def _validate(sol: Path) -> List[str]:
         tp = sol / tool
         if not tp.exists():
             errors.append(f"declared tool missing: {tool}")
+        elif tp.suffix == ".py":
+            import py_compile
+
+            try:
+                py_compile.compile(str(tp), doraise=True)
+            except py_compile.PyCompileError as exc:
+                errors.append(f"tool does not compile: {exc}")
     allowed = (mf.get("deploy", {}) or {}).get("allow", [])
     if not allowed:
         errors.append("deploy.allow is empty — no deploy target permitted")
@@ -269,8 +308,10 @@ def _deploy_mcp(sol: Path) -> str:
     cfg = {
         "mcpServers": {
             f"agentix-{info['name']}": {
-                "command": "python",
-                "args": [str((Path(__file__).resolve().parents[1] / "jebat-mcp"))],
+                "command": sys.executable or "python",
+                "args": ["-m", "jebat_cli_new.agentix_mcp_server", "--solution", info["name"]],
+                "transport": "stdio",
+                "timeout": 300,
                 "env": {"JEBAT_AGENTIX_SOLUTION": str(sol.resolve())},
             }
         }
@@ -336,6 +377,36 @@ def _status(sol: Optional[Path]) -> str:
     return "\n".join(lines)
 
 
+def _route(objective: str) -> tuple[Path, Dict[str, Any]]:
+    """Type-only routing: match the objective against deployed solutions.
+
+    Scores name, description, and template words of every registry entry;
+    returns the best (path, manifest). Raises SystemExit when nothing matches.
+    """
+    import re as _re
+
+    if not REGISTRY_PATH.exists():
+        raise SystemExit("registry is empty — deploy a solution first: jebat agentix deploy PATH --target local")
+    registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+    words = set(_re.findall(r"[a-z0-9]+", objective.lower()))
+    best: Optional[tuple[float, Path, Dict[str, Any]]] = None
+    for name, entry in registry.items():
+        path = Path(entry.get("path", ""))
+        if not (path / MANIFEST_NAME).exists():
+            continue
+        try:
+            mf = _load_manifest(path)
+        except Exception:  # noqa: BLE001 — skip unreadable entries
+            continue
+        haystack = set(_re.findall(r"[a-z0-9]+", f"{name} {mf.get('description','')} {mf.get('template','')}".lower()))
+        score = len(words & haystack) / (len(words) or 1)
+        if best is None or score > best[0]:
+            best = (score, path, mf)
+    if best is None or best[0] <= 0:
+        raise SystemExit(f"no deployed solution matches {objective!r} — run `jebat agentix status` to list them")
+    return best[1], best[2]
+
+
 def _resolve_solution(path_or_name: str) -> Path:
     """Accept a solution directory OR a registry name."""
     p = Path(path_or_name)
@@ -368,11 +439,26 @@ def _load_tools(sol: Path, manifest: Dict[str, Any]) -> Dict[str, Any]:
     return tools
 
 
-def _run_solution(sol: Path, task: str) -> str:
+def _run_solution(sol: Path, task: str, *, yolo: bool = False, provider: Optional[str] = None,
+                  model: Optional[str] = None, verbose: bool = False,
+                  max_iterations: Optional[int] = None, registry=None):
+    """Execute a solution. Returns (result_text, info).
+
+    Runtime dispatch: `runtime: llm` spawns the shared AgentLoop with the
+    solution's doctrine/allowlist/jail (agentix_llm); the default code
+    runtime imports and executes the entrypoint's run(task, ctx).
+    """
     mf = _load_manifest(sol)
     errors = _validate(sol)
     if errors:
         raise SystemExit("run aborted — build errors:\n  " + "\n  ".join(errors))
+    if mf.get("runtime", "code") == "llm":
+        from jebat_cli_new.agentix_llm import run_with_agent_loop
+
+        return run_with_agent_loop(
+            sol, task, provider=provider, model=model, yolo=yolo,
+            verbose=verbose, max_iterations=max_iterations, registry=registry,
+        )
     tools = _load_tools(sol, mf)
     entry = sol / str(mf.get("entrypoint", "agent.py"))
     import importlib.util
@@ -382,7 +468,7 @@ def _run_solution(sol: Path, task: str) -> str:
     spec.loader.exec_module(module)  # type: ignore[union-attr]
     if not hasattr(module, "run"):
         raise SystemExit(f"entrypoint {entry.name} has no run(task, ctx) function")
-    return str(module.run(task, {"tools": tools, "manifest": mf, "root": str(sol)}))
+    return str(module.run(task, {"tools": tools, "manifest": mf, "root": str(sol)})), {}
 
 
 # ---------------------------------------------------------------------------
@@ -416,6 +502,17 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
     run = sub.add_parser("run", help="Execute a built solution: run PATH_OR_NAME \"task text\"")
     run.add_argument("solution", help="solution directory or registry name")
     run.add_argument("task", help="task text passed to the solution entrypoint")
+    run.add_argument("--provider", default=None, help="Override provider (llm runtime)")
+    run.add_argument("--model", default=None, help="Override model (llm runtime)")
+    run.add_argument("--iterations", type=int, default=None, help="Override max_iterations (llm runtime)")
+    run.add_argument("--yolo", action="store_true", help="Skip safety confirmations")
+    run.add_argument("--verbose", action="store_true", help="Show thought + tool cards")
+
+    ask = sub.add_parser("ask", help="Type only an objective — routes to the best deployed solution")
+    ask.add_argument("objective", help="Objective text; matched against solution names + descriptions")
+    ask.add_argument("--provider", default=None, help="Override provider (llm runtime)")
+    ask.add_argument("--model", default=None, help="Override model (llm runtime)")
+    ask.add_argument("--yolo", action="store_true", help="Skip safety confirmations")
 
     ns = parser.parse_args(list(tokens))
     try:
@@ -438,8 +535,24 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
             return 0
         if ns.command == "run":
             sol = _resolve_solution(ns.solution)
-            out = _run_solution(sol, ns.task)
-            print(out)
+            result, info = _run_solution(
+                sol, ns.task, yolo=ns.yolo, provider=ns.provider,
+                model=ns.model, verbose=ns.verbose, max_iterations=ns.iterations,
+            )
+            print(result or "(no answer)")
+            if info:
+                print(
+                    f"  [{info.get('provider','?')}:{info.get('model','?')}"
+                    f" · {info.get('tool_calls',0)} tool calls · {info.get('tokens',0)} tokens]"
+                )
+            return 0
+        if ns.command == "ask":
+            sol, mf = _route(ns.objective)
+            print(f"  routed to: {mf['name']} ({mf['template']})")
+            result, info = _run_solution(
+                sol, ns.objective, yolo=ns.yolo, provider=ns.provider, model=ns.model,
+            )
+            print(result or "(no answer)")
             return 0
     except SystemExit as exc:
         # argparse uses SystemExit(2) for usage errors — let those propagate.
