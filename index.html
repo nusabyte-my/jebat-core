@@ -12,12 +12,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="JEBAT" />
 <meta property="og:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
-<meta property="og:description" content="118 MCP tools behind explicit safety tiers, Ghost DB persistent memory, and an Agentix lifecycle that builds, ships, and runs agent solutions. Self-hosted or air-gapped." />
+<meta property="og:description" content="128 MCP tools behind explicit safety tiers, Ghost DB persistent memory, and an Agentix lifecycle that builds, ships, and runs agent solutions. Self-hosted or air-gapped." />
 <meta property="og:url" content="https://jebat.online/" />
 <meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
-<meta name="twitter:description" content="118 MCP tools behind explicit safety tiers, Ghost DB persistent memory, and an Agentix lifecycle that builds, ships, and runs agent solutions." />
+<meta name="twitter:description" content="128 MCP tools behind explicit safety tiers, Ghost DB persistent memory, and an Agentix lifecycle that builds, ships, and runs agent solutions." />
 <meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
 <link rel="manifest" href="assets/manifest-creative.json" />
 <script type="application/ld+json">
@@ -40,7 +40,8 @@
       "@type": "FAQPage",
       "mainEntity": [
         { "@type": "Question", "name": "What is JEBAT and how does it fit into my stack?", "acceptedAnswer": { "@type": "Answer", "text": "A sovereign AI command layer between your applications and LLM providers. It decouples agent logic from model vendors, manages persistent memory via Ghost DB, dispatches tools over MCP, and enforces approval-gated security on every write." } },
-        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, deploy, run agents as versioned artifacts. Archetypes: reflex (ReAct reasoning loop), flow (workspace-driven), lattice (schema-typed tools). Deploy targets are allowlist-gated in agentix.yaml." } },
+        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, eval, deploy, run agents as versioned artifacts. Archetypes: reflex (ReAct reasoning loop), flow (workspace-driven), lattice (schema-typed tools). Fourteen specialist doctrines (security-audit, osint-recon, code-reviewer, marketing-strategist, ads-manager and more) ship ready to deploy — jebat agentix ask routes a bare objective to the right one. Deploy targets are allowlist-gated in agentix.yaml." } },
+        { "@type": "Question", "name": "How are agent runs kept bounded and auditable?", "acceptedAnswer": { "@type": "Answer", "text": "Every reflex run declares a budget (max tokens, wall clock) - the loop stops and summarizes when either is hit, and budgets below the per-iteration floor are refused at spawn. Tool allowlists and the workspace jail are enforced by the harness. Each run is persisted with its task, manifest snapshot, tool-call log and conversation, and can be continued later with run --resume." } },
         { "@type": "Question", "name": "Can I reuse MCP servers from omp, opencode, or Claude Code?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. jebat config import reads the other CLI's config, normalizes transports, timeouts and env templates, and merges with collision-safe skipping and automatic backups. Preview first with --dry-run." } },
         { "@type": "Question", "name": "Can JEBAT run 100% air-gapped?", "acceptedAnswer": { "@type": "Answer", "text": "Yes - local llama.cpp or Ollama inference with zero outbound calls. Cloud providers are opt-in per route. The whole stack runs on your hardware with no telemetry." } }
       ]
@@ -455,7 +456,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
         <span class="badge b-pucuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Zero Telemetry</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Key-Gated Control Plane</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Agentix Lifecycle</span>
-        <span class="badge b-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 17 Agent Roles</span>
+        <span class="badge b-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 14 Specialist Doctrines</span>
       </div>
       <div class="cta-row">
         <a class="btn btn-primary" href="#deploy"><span>Deploy JEBAT</span>
@@ -502,9 +503,9 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
 
   <div class="wrap">
     <div class="stats" role="list" aria-label="Verified platform facts">
-      <div class="stat s1" role="listitem"><b>118</b><span>MCP TOOLS · SAFETY-TIERED</span></div>
+      <div class="stat s1" role="listitem"><b>128</b><span>MCP TOOLS · SAFETY-TIERED</span></div>
       <div class="stat s2" role="listitem"><b>6</b><span>GHOST DB MEMORY TYPES</span></div>
-      <div class="stat s3" role="listitem"><b>3</b><span>AGENTIX TEMPLATES</span></div>
+      <div class="stat s3" role="listitem"><b>14</b><span>SPECIALIST DOCTRINES</span></div>
       <div class="stat s4" role="listitem"><b>0</b><span>TELEMETRY · AIR-GAP READY</span></div>
     </div>
   </div>
@@ -678,7 +679,7 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
     <div class="split">
       <div class="panel">
         <h3>Agentix: solutions, not scripts</h3>
-        <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name.</p>
+        <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Eval it against golden tasks. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name, resume by run-id.</p>
         <div class="code-wrap">
           <button class="code-copy" onclick="copySnippet('agentix-snippet',this)">Copy</button>
           <div class="code" id="agentix-snippet"><span class="dim">$</span> jebat config import -s omp --dry-run
@@ -691,7 +692,10 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
 <span class="ok">✓ created lattice solution</span>
 <span class="dim">$</span> jebat agentix build ./usher
 <span class="ok">✓ built usher v0.1.0 sha:85c718ae</span>
-<span class="dim">$</span> jebat agentix run usher "close ticket 4128"</div>
+<span class="dim">$</span> jebat agentix run usher "close ticket 4128"
+<span class="dim">$</span> jebat agentix ask "audit the auth flow for SSRF"
+<span class="ok">  routed to: security-audit (reflex) · also matched: osint-recon(0.18)</span>
+<span class="dim">$</span> jebat agentix run usher --resume 20261005-161542-usher-9f21 "now write the fix"</div>
         </div>
       </div>
       <div>
@@ -705,6 +709,49 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
           <h3 style="font-size:1rem">Preview-first, always</h3>
           <p style="font-size:13.5px">Dry-run prints the converted YAML without touching disk. <span class="mono">--only</span> narrows to named servers, <span class="mono">--overwrite</span> replaces deliberately.</p>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 02b / AGENTIX SPECIALISTS -->
+<section class="section" id="specialists" style="padding-top:var(--jc-s5)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">AGENTIX SPECIALISTS</span>
+      <h2>Spawn a specialist by typing.</h2>
+      <p>Fourteen ready doctrines ship with the CLI — each declares its own tool allowlist, workspace jail, and compute budget. <span class="mono">jebat agentix ask</span> routes a bare objective to the right one; no folder, no wizard.</p>
+    </div>
+    <div class="chips" style="justify-content:center;padding:0 0 var(--jc-s3)">
+      <span class="jchip">security-audit</span><span class="jchip">osint-recon</span><span class="jchip">code-reviewer</span><span class="jchip">test-writer</span><span class="jchip">doc-writer</span><span class="jchip">data-analyst</span><span class="jchip">marketing-strategist</span><span class="jchip">ads-manager</span><span class="jchip">seo-auditor</span><span class="jchip">incident-responder</span><span class="jchip">release-manager</span><span class="jchip">contract-reviewer</span><span class="jchip">support-triage</span><span class="jchip">competitor-watch</span>
+    </div>
+    <div class="panel" style="max-width:860px;margin:0 auto var(--jc-s3)">
+      <h3>The whole loop, typed</h3>
+      <div class="code-wrap">
+        <button class="code-copy" onclick="copySnippet('specialist-snippet',this)">Copy</button>
+        <div class="code" id="specialist-snippet"><span class="dim">$</span> jebat agentix create release-check --from release-manager
+<span class="ok">✓ created reflex solution from specialist 'release-manager'</span>
+<span class="dim">$</span> jebat agentix eval release-check
+<span class="ok">  ok   structural · ok doctrine · ok allowlist (3 tools ≤ 10)</span>
+<span class="dim">$</span> jebat agentix deploy release-check --target local
+<span class="dim">$</span> jebat agentix ask "build ship notes for 8.3.0"
+<span class="ok">  routed to: release-check (reflex)</span>
+<span class="dim">$</span> jebat agentix run release-check --resume 20261005-161542-release-check-9f21 "add the deploy checklist"</div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="fstep">
+          <h3 style="font-size:1rem">Bounded by construction</h3>
+          <p style="font-size:13.5px">Every run declares <span class="mono">budget.tokens</span> and <span class="mono">budget.wall_clock</span>. The ReAct loop stops and summarizes when either is hit; budgets below the 64-token-per-iteration floor are refused at spawn — fail fast, not mid-task.</p>
+        </div>
+        <div class="fstep">
+          <h3 style="font-size:1rem">Permissioned, not prompted</h3>
+          <p style="font-size:13.5px">Tool allowlists (capped at 10 — enforced by <span class="mono">agentix eval</span>) and the workspace jail run in the harness before anything executes. Denied calls never touch the filesystem.</p>
+        </div>
+        <div class="fstep">
+          <h3 style="font-size:1rem">Every run resumable — and portable</h3>
+        <p style="font-size:13.5px">Each run persists its brief, manifest snapshot, tool-call log, and conversation under <span class="mono">~/.jebat/agentix/runs/</span>; <span class="mono">--resume</span> continues it. <span class="mono">agentix export</span> ships any solution as a Claude Code subagent or Agent Skill.</p>
       </div>
     </div>
   </div>
