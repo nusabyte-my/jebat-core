@@ -232,16 +232,18 @@ jobs:
       - name: Restart PM2 processes on staging
         run: |
           ssh root@72.62.255.206 "cd /var/www/jebat-core && \
-            pm2 restart jebat-api 2>/dev/null || \
-            pm2 start \"python -m uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2\" --name jebat-api && \
+            pm2 restart jebat-api jebat-webui jebat-mcp --update-env && \
             pm2 save && \
             echo '✅ PM2 processes restarted on staging'"
+        # Never recreate a missing pm2 entry from CI: pm2 start with bare `python`
+        # crash-loops (no python on pm2's PATH) and the wrong port. If jebat-api is
+        # missing on .206, restore it from pm2 dump / deploy scripts instead.
 
       - name: Verify staging health
         run: |
           HEALTHY=false
           for i in 1 2 3 4 5; do
-            if ssh root@72.62.255.206 "curl -sf http://localhost:8080/health"; then
+            if ssh root@72.62.255.206 "curl -sf http://localhost:8000/health"; then
               HEALTHY=true
               break
             fi
@@ -288,19 +290,18 @@ jobs:
             if [ -f requirements.prod.txt ]; then pip install -r requirements.prod.txt --quiet; else pip install -r requirements.txt --quiet; fi && \
             echo '✅ Dependencies updated on production'"
 
-      - name: Restart PM2 processes on production
+      - name: Production runtime note (.65 is ingress-only)
         run: |
-          ssh root@72.62.254.65 "cd /var/www/jebat-core && \
-            pm2 restart jebat-api 2>/dev/null || \
-            pm2 start \"python -m uvicorn main:app --host 0.0.0.0 --port 8080 --workers 4\" --name jebat-api && \
-            pm2 save && \
-            echo '✅ PM2 processes restarted on production'"
+          echo ".65 is the ingress gateway + deploy-webhook host and intentionally runs NO jebat API."
+          echo "Port 8080 on .65 is Stalwart production mail; the API mainframe is 72.62.255.206."
+          echo "The real deploy lifecycle is: push -> .65 deploy-webhook -> auto-deploy.sh -> .206."
+          echo "Never pm2 start jebat-api here: bare 'python' is not on PATH and :8080 is taken."
 
       - name: Verify production health
         run: |
           HEALTHY=false
           for i in 1 2 3 4 5; do
-            if ssh root@72.62.254.65 "curl -sf http://localhost:8080/health"; then
+            if curl -sf https://jebat.online/webui/ > /dev/null; then
               HEALTHY=true
               break
             fi
