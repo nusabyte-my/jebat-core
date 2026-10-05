@@ -1,0 +1,22 @@
+name: security-audit
+version: 1.0.0
+description: >
+  Audits a web app or repo for exploitable vulnerabilities (OWASP Top 10:2025, auth flows, secrets, access control). Use proactively when the user mentions pentest, security review, audit, or is this safe.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 16
+llm_tools:
+  - read_file
+  - search_files
+  - terminal
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

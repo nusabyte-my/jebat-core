@@ -1,0 +1,22 @@
+name: osint-recon
+version: 1.0.0
+description: >
+  Passive reconnaissance and attack-surface mapping from a domain, company, or name (subdomains, certs, exposures, public footprint). Use for recon, OSINT, attack surface, or footprinting.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 14
+llm_tools:
+  - terminal
+  - read_file
+  - write_file
+  - list_dir
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

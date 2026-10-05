@@ -93,6 +93,22 @@ def make_jailed_executor(manifest: Dict, sol: Path):
     return jailed
 
 
+def parse_wall_clock(value) -> Optional[float]:
+    """'30s' | '10m' | '1h' | int-seconds -> seconds. None if absent/invalid."""
+    import re
+
+    if value is None:
+        return None
+    if isinstance(value, (int, float)) and value > 0:
+        return float(value)
+    match = re.fullmatch(r"(\d+)\s*(s|m|h)?", str(value).strip().lower())
+    if not match:
+        return None
+    amount = int(match.group(1))
+    unit = match.group(2) or "s"
+    return float(amount * {"s": 1, "m": 60, "h": 3600}[unit])
+
+
 def run_with_agent_loop(
     sol: Path,
     task: str,
@@ -108,6 +124,8 @@ def run_with_agent_loop(
     Returns (final_answer, info) where info carries provider/model/tool-call
     count for the CLI footer.
     """
+    import time
+
     from jebat_cli_new import agent as agent_module
     from jebat_cli_new.agent import AgentLoop
     from jebat_cli_new.providers import ProviderRegistry
@@ -120,6 +138,13 @@ def run_with_agent_loop(
     provider_name = provider or manifest.get("provider") or "ollama"
     model_name = model or manifest.get("model") or "qwen2.5-coder:7b"
 
+    budget = manifest.get("budget") if isinstance(manifest.get("budget"), dict) else {}
+    budget_tokens = budget.get("tokens")
+    deadline_ts = None
+    wall = parse_wall_clock(budget.get("wall_clock"))
+    if wall is not None:
+        deadline_ts = time.time() + wall
+
     loop = AgentLoop(
         registry=registry,
         default_provider=provider_name,
@@ -127,6 +152,8 @@ def run_with_agent_loop(
         yolo=yolo,
         style="openmanus" if manifest.get("template") == "reflex" else "jebat",
         verbose=verbose,
+        budget_tokens=int(budget_tokens) if budget_tokens else None,
+        deadline=deadline_ts,
     )
     loop.max_iterations = max_iterations or int(manifest.get("max_iterations") or 12)
     doctrine = read_doctrine(sol)

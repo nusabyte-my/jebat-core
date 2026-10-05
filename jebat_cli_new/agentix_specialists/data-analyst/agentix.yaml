@@ -1,0 +1,22 @@
+name: data-analyst
+version: 1.0.0
+description: >
+  Ingests a CSV or dataset, runs typed analysis with verifiable numbers, and returns a findings memo. Use for analyze, dataset, CSV, or statistics.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 14
+llm_tools:
+  - read_file
+  - write_file
+  - terminal
+  - list_dir
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

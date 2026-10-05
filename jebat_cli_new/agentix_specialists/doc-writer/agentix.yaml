@@ -1,0 +1,22 @@
+name: doc-writer
+version: 1.0.0
+description: >
+  Generates README or API documentation from a codebase, with citations to the files each claim came from. Use for documentation, README, or API docs.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 12
+llm_tools:
+  - read_file
+  - write_file
+  - search_files
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

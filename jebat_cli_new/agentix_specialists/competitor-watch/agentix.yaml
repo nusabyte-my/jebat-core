@@ -1,0 +1,21 @@
+name: competitor-watch
+version: 1.0.0
+description: >
+  Diffs competitor pages or pricing against a stored baseline and returns a change memo. Use for competitor, pricing change, or market watch.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 10
+llm_tools:
+  - terminal
+  - read_file
+  - write_file
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

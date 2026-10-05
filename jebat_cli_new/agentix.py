@@ -213,6 +213,19 @@ def _scaffold(name: str, template: str, target: Path) -> Path:
         (tools / "__init__.py").write_text("", encoding="utf-8")
         (tools / "example.py").write_text(_ATOMIC_TOOL.format(tool="example"), encoding="utf-8")
         (sol / "agent.py").write_text(_ATOMIC_AGENT.format(name=name), encoding="utf-8")
+        golden = sol / "golden"
+        golden.mkdir()
+        (golden / "hello.json").write_text(
+            json.dumps(
+                {
+                    "task": "hello world",
+                    "checks": [{"type": "contains", "value": "example"}],
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
     else:
         shutil.rmtree(sol, ignore_errors=True)
         raise ValueError(f"unknown template: {template} (use reflex|flow|lattice)")
@@ -241,7 +254,9 @@ def _validate(sol: Path) -> List[str]:
     except Exception as exc:  # noqa: BLE001 — report, don't crash the CLI
         return [str(exc)]
     entry = sol / str(mf.get("entrypoint", "agent.py"))
-    if not entry.exists():
+    if mf.get("runtime", "code") == "llm":
+        pass  # llm runtime executes doctrine via the AgentLoop — no entrypoint to check
+    elif not entry.exists():
         errors.append(f"entrypoint not found: {entry}")
     elif entry.suffix == ".py":
         import py_compile
@@ -407,6 +422,44 @@ def _route(objective: str) -> tuple[Path, Dict[str, Any]]:
     return best[1], best[2]
 
 
+SPECIALISTS_DIR = Path(__file__).resolve().parent / "agentix_specialists"
+
+
+def _scaffold_from_specialist(spec: str, name: str, target: Path) -> Path:
+    """Copy a specialist template into a new solution, renamed to `name`."""
+    src = SPECIALISTS_DIR / spec
+    if not (src / MANIFEST_NAME).is_file():
+        known = sorted(p.name for p in SPECIALISTS_DIR.iterdir() if (p / MANIFEST_NAME).is_file()) if SPECIALISTS_DIR.is_dir() else []
+        raise SystemExit(
+            f"unknown specialist {spec!r}"
+            + (f" — available: {', '.join(known)}" if known else " (catalog missing)")
+        )
+    sol = target / name
+    if sol.exists():
+        raise FileExistsError(f"solution already exists: {sol}")
+    shutil.copytree(src, sol)
+    mf = _load_manifest(sol)
+    mf["name"] = name
+    (sol / MANIFEST_NAME).write_text(yaml.safe_dump(mf, sort_keys=False), encoding="utf-8")
+    return sol
+
+
+def _list_specialists() -> str:
+    if not SPECIALISTS_DIR.is_dir():
+        return "specialist catalog missing"
+    lines = ["Specialist templates (jebat agentix create NAME --from SPEC):"]
+    for path in sorted(SPECIALISTS_DIR.iterdir()):
+        if not (path / MANIFEST_NAME).is_file():
+            continue
+        try:
+            mf = _load_manifest(path)
+            desc = str(mf.get("description", "")).split(". ")[0]
+            lines.append(f"  {mf['name']:22s} {desc[:90]}")
+        except Exception:  # noqa: BLE001 — skip unreadable entries
+            continue
+    return "\n".join(lines)
+
+
 def _resolve_solution(path_or_name: str) -> Path:
     """Accept a solution directory OR a registry name."""
     p = Path(path_or_name)
@@ -483,9 +536,12 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    create = sub.add_parser("create", help="Scaffold a new solution")
+    create = sub.add_parser("create", help="Scaffold a new solution (from an archetype or a specialist)")
     create.add_argument("name")
-    create.add_argument("--template", "-t", default="reflex", choices=["reflex", "flow", "lattice"])
+    create.add_argument("--template", "-t", default="reflex", choices=["reflex", "flow", "lattice"],
+                        help="archetype (ignored when --from is used)")
+    create.add_argument("--from", dest="from_spec", default=None,
+                        help="scaffold from a specialist template (see: jebat agentix templates)")
     create.add_argument("--dir", default=".", help="target directory (default: cwd)")
 
     build = sub.add_parser("build", help="Validate + build (writes .agentix/build.json)")
@@ -498,6 +554,18 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
 
     status = sub.add_parser("status", help="Show solution/registry status")
     status.add_argument("path", nargs="?", help="optional solution directory")
+
+    evalp = sub.add_parser("eval", help="Structural checks + golden tasks for a solution")
+    evalp.add_argument("path")
+    evalp.add_argument("--live", action="store_true",
+                       help="execute llm-runtime golden tasks against the real provider")
+
+    export = sub.add_parser("export", help="Export a solution to another harness format")
+    export.add_argument("path")
+    export.add_argument("--format", dest="fmt", choices=["claude-subagent", "skill"], default="claude-subagent")
+    export.add_argument("--out", default=None, help="output directory (default: ./agentix-export)")
+
+    sub.add_parser("templates", help="List the specialist template catalog")
 
     run = sub.add_parser("run", help="Execute a built solution: run PATH_OR_NAME \"task text\"")
     run.add_argument("solution", help="solution directory or registry name")
@@ -517,9 +585,33 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
     ns = parser.parse_args(list(tokens))
     try:
         if ns.command == "create":
+            if ns.from_spec:
+                sol = _scaffold_from_specialist(ns.from_spec, ns.name, Path(ns.dir).resolve())
+                mf = _load_manifest(sol)
+                cprint(f"✓ created {mf['template']} solution from specialist {ns.from_spec!r}: {sol}", C.GREEN)
+                print(f"  next: jebat agentix build {sol} && jebat agentix eval {sol}")
+                return 0
             sol = _scaffold(ns.name, ns.template, Path(ns.dir).resolve())
             cprint(f"✓ created {ns.template} solution: {sol}", C.GREEN)
             print(f"  next: jebat agentix build {sol}")
+            return 0
+        if ns.command == "templates":
+            print(_list_specialists())
+            return 0
+        if ns.command == "eval":
+            from jebat_cli_new.agentix_ops import evaluate_solution
+
+            lines, failures = evaluate_solution(Path(ns.path).resolve(), live=ns.live)
+            print("\n".join(lines))
+            return 1 if failures else 0
+        if ns.command == "export":
+            from jebat_cli_new.agentix_ops import export_solution
+
+            out = export_solution(
+                Path(ns.path).resolve(), ns.fmt,
+                Path(ns.out).expanduser() if ns.out else None,
+            )
+            cprint(f"✓ exported {ns.fmt} → {out}", C.GREEN)
             return 0
         if ns.command == "build":
             info = _build(Path(ns.path).resolve())

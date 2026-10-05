@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-v8.3.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-hardened%20%2B%20audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-327%20passing-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-343%20passing-10b981?style=flat-square)
 ![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.2-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![Jev](https://img.shields.io/badge/Jev-advisor%20shipped-10b981?style=flat-square)
@@ -371,11 +371,16 @@ POST /webui/api/runtime         Runtime control
 | Command | Description |
 |---------|-------------|
 | `jebat agentix create NAME -t reflex\|flow\|lattice` | Scaffold an agent solution (ReAct loop / workspace-driven / schema-driven tools) |
+| `jebat agentix create NAME --from security-audit` | Scaffold from a specialist template — 14 ready doctrines (audit, recon, review, marketing, ads, SEO, ...); list: `jebat agentix templates` |
 | `jebat agentix build PATH` | Validate + compile + content-addressed build manifest (`.agentix/build.json`) |
+| `jebat agentix eval PATH [--live]` | Structural checks + golden tasks (`golden/*.json`); llm-runtime tasks run against the real provider only with `--live` |
 | `jebat agentix deploy PATH --target local\|mcp\|vps` | Ship it: local registry, ready-to-paste MCP config, or scp to VPS — gated by `deploy.allow` in `agentix.yaml` |
 | `jebat agentix run NAME\|PATH "task"` | Spawn the agent: `runtime: llm` solutions run the shared ReAct loop with the solution's doctrine, tool allowlist and workspace jail; code solutions execute `run(task, ctx.tools)` |
 | `jebat agentix ask "objective"` | Type only an objective — routes to the best deployed solution by name + description |
+| `jebat agentix export PATH --format claude-subagent\|skill` | Ship the solution to other harnesses (Claude Code subagents, Agent Skills) |
 | `jebat agentix status [PATH]` | Solution state + deployed registry |
+
+Specialists declare their own budgets (`budget.tokens`, `budget.wall_clock`) — the loop stops and summarizes when either is exhausted.
 
 
 ### Configuration & Memory

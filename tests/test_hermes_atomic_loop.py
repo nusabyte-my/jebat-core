@@ -70,8 +70,10 @@ class MockProvider:
         return CompletionResponse(text=text, model="mock", provider="mock", tokens_used=10, latency_ms=1)
 
 
-def test_multiturn_react_loop():
-    registry = ProviderRegistry()
+def test_multiturn_react_loop(tmp_path):
+    # register() persists to disk — isolate to tmp so the real
+    # ~/.jebat/jebat-cli-providers.json is never polluted.
+    registry = ProviderRegistry(path=str(tmp_path / "providers.json"))
     responses = [
         '<thought>Listing dir</thought><tool_call>{"tool": "list_dir", "args": {"path": "."}}</tool_call>',
         '<thought>Reading file</thought><tool_call>{"tool": "read_file", "args": {"path": "pyproject.toml", "limit": 2}}</tool_call>',

@@ -1,0 +1,22 @@
+name: seo-auditor
+version: 1.0.0
+description: >
+  Audits technical SEO and AI-era visibility for a site (crawlability, schema, AI-citation readiness, crawler access policy). Use for SEO audit, rankings, or AI search visibility.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 12
+llm_tools:
+  - read_file
+  - write_file
+  - terminal
+  - list_dir
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

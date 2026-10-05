@@ -1,0 +1,21 @@
+name: release-manager
+version: 1.0.0
+description: >
+  Builds a changelog, release notes, and a deploy checklist from git history and the working tree. Use for release, changelog, or ship notes.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 10
+llm_tools:
+  - terminal
+  - read_file
+  - write_file
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

@@ -1,0 +1,22 @@
+name: incident-responder
+version: 1.0.0
+description: >
+  Triages an incident: timeline, blast radius, severity, comms draft. Use for incident, outage, or something is on fire.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 14
+llm_tools:
+  - read_file
+  - search_files
+  - terminal
+  - write_file
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

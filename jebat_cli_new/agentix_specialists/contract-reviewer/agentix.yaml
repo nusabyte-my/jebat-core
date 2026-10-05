@@ -1,0 +1,21 @@
+name: contract-reviewer
+version: 1.0.0
+description: >
+  Clause-level risk review of a document against the stated playbook, with quoted evidence. Use for contract review, agreement, or terms.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 10
+llm_tools:
+  - read_file
+  - search_files
+  - write_file
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

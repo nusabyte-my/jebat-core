@@ -202,7 +202,8 @@ class AgentLoop:
     def __init__(self, registry: ProviderRegistry, default_provider: str = "ollama",
                   model: str = "qwen2.5-coder:7b", yolo: bool = False,
                  auto_commit: bool = False, style: str = "jebat", context_window: int = 16384,
-                 verbose: bool = False, system_prompt_extra: str = ""):
+                 verbose: bool = False, system_prompt_extra: str = "",
+                 budget_tokens: Optional[int] = None, deadline: Optional[float] = None):
         self.registry = registry
         self.default_provider = default_provider
         self.model = model
@@ -214,6 +215,8 @@ class AgentLoop:
         self.context_window = context_window
         self.verbose = verbose
         self.system_prompt_extra = system_prompt_extra
+        self.budget_tokens = budget_tokens
+        self.deadline = deadline
 
     def _render_history(self, limit: int = 8) -> str:
         return "\n".join(
@@ -308,7 +311,15 @@ class AgentLoop:
         def _step_progress(stage: str, frac: float) -> None:
             _notify_progress(frac, f"iteration {iteration + 1}/{max_iters}: {stage}")
 
+        budget_exhausted = False
         while iteration < self.max_iterations:
+            # Hard budget gates (agentix): cumulative tokens and wall clock.
+            if self.budget_tokens is not None and total_tokens >= self.budget_tokens:
+                budget_exhausted = True
+                break
+            if self.deadline is not None and time.time() >= self.deadline:
+                budget_exhausted = True
+                break
             _step_progress("reasoning", iteration / max_iters)
             resp = self._call_provider(
                 working_conversation,
@@ -376,7 +387,7 @@ class AgentLoop:
             iteration += 1
 
         # Synthesis pass if loop exhausted max_iterations without explicit FINAL_ANSWER
-        if iteration >= self.max_iterations and not final_answer and all_tool_actions:
+        if (iteration >= self.max_iterations or budget_exhausted) and not final_answer and all_tool_actions:
             wrap_prompt = (
                 f"{working_conversation}\n\n"
                 "You have reached the maximum step limit. Summarize your findings and provide your FINAL_ANSWER:"

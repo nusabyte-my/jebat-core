@@ -1,0 +1,21 @@
+name: support-triage
+version: 1.0.0
+description: >
+  Classifies and routes a support inbox or ticket dump, drafts replies, and surfaces the top recurring issues. Use for triage, tickets, or support queue.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 12
+llm_tools:
+  - read_file
+  - write_file
+  - list_dir
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp
