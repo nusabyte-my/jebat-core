@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-v8.3.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-hardened%20%2B%20audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-354%20passing-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-367%20passing-10b981?style=flat-square)
 ![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.2-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![Jev](https://img.shields.io/badge/Jev-advisor%20shipped-10b981?style=flat-square)
@@ -383,6 +383,8 @@ POST /webui/api/runtime         Runtime control
 | `jebat agentix runs` | List recent runs (ids for `--resume`) |
 | `jebat agentix doctor [--fix]` | Health-check: dangling registry entries, stale builds, budget sanity, doctrine drift |
 | `jebat agentix export PATH --format claude-subagent\|skill` | Ship the solution to other harnesses (Claude Code subagents, Agent Skills) |
+| `jebat agentix team run TEAM "objective"` | Run a declared specialist pipeline — file-based handoff through a shared jailed workspace, qa-verifier between legs, human gates, team-level budget |
+| `jebat agentix teams` | List shipped + user team pipelines (go-to-market, security-review, product-release) |
 | `jebat agentix status [PATH]` | Solution state + deployed registry (runtime + stale flags) |
 
 Specialists declare their own budgets (`budget.tokens`, `budget.wall_clock`) — the loop stops and summarizes when either is exhausted.

@@ -1,0 +1,15 @@
+team: security-review
+description: >
+  Chained security desk: passive recon, exploitability-ranked audit, the
+  agent-layer audit (MCP/LLM OWASP 2025), dependency supply chain, and a
+  consolidated report. Documents only — no probing without authorization.
+budget:
+  tokens: 1200000
+  wall_clock: 2h
+pipeline:
+  - osint-recon
+  - security-audit
+  - mcp-auditor
+  - dependency-auditor
+  - doc-writer
+spawns: [osint-recon, security-audit, mcp-auditor, dependency-auditor, doc-writer]

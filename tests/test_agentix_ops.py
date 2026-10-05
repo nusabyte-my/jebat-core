@@ -218,6 +218,8 @@ def test_specialist_catalog_complete():
         "doc-writer", "data-analyst", "marketing-strategist", "ads-manager",
         "seo-auditor", "incident-responder", "release-manager",
         "contract-reviewer", "support-triage", "competitor-watch",
+        "copy-writer", "email-lifecycle", "dependency-auditor", "mcp-auditor",
+        "uptime-sentinel", "ops-reporter", "unit-economist", "ui-critic",
     }
     actual = {p.name for p in SPECIALISTS_DIR.iterdir() if (p / "agentix.yaml").is_file()}
     assert actual == expected

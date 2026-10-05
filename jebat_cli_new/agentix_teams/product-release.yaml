@@ -1,0 +1,16 @@
+team: product-release
+description: >
+  Review, test, release notes, and docs — the ship lane. Deploy itself
+  stays human: this team produces the checklist, you pull the trigger.
+budget:
+  tokens: 900000
+  wall_clock: 2h
+pipeline:
+  - code-reviewer
+  - test-writer
+  - release-manager
+  - doc-writer
+spawns: [code-reviewer, test-writer, release-manager, doc-writer]
+gates:
+  - after: doc-writer
+    type: human

@@ -65,9 +65,12 @@ def _inside(root: Path, target: Path) -> bool:
         return False
 
 
-def make_jailed_executor(manifest: Dict, sol: Path):
+def make_jailed_executor(manifest: Dict, sol: Path, workspace_override: Optional[Path] = None):
     """Wrap execute_tool with the allowlist + optional workspace jail.
 
+    workspace_override: team runs redirect a jailed solution's file tools to
+    the shared team workspace (only applies when the manifest sets
+    llm_workspace — repo-touching agents keep host access).
     Returns a callable(name, args, yolo) -> str matching
     jebat_cli_new.tools.execute_tool's signature.
     """
@@ -77,7 +80,7 @@ def make_jailed_executor(manifest: Dict, sol: Path):
     workspace: Optional[Path] = None
     ws_rel = manifest.get("llm_workspace")
     if ws_rel:
-        workspace = (sol / str(ws_rel)).resolve()
+        workspace = (workspace_override if workspace_override else (sol / str(ws_rel))).resolve()
         workspace.mkdir(parents=True, exist_ok=True)
 
     def jailed(name: str, args: Dict, yolo: bool = False) -> str:
@@ -165,10 +168,11 @@ def _record_run(
     step,
     messages,
     resumed_from: Optional[str],
+    record_dir: Optional[Path] = None,
 ) -> str:
-    """Persist a run to the run registry. Returns the run id."""
+    """Persist a run to the run registry (or a team leg dir). Returns the run id."""
     run_id = f"{time.strftime('%Y%m%d-%H%M%S')}-{manifest['name']}-{uuid.uuid4().hex[:4]}"
-    run_path = runs_dir() / run_id
+    run_path = (record_dir if record_dir else runs_dir()) / run_id
     run_path.mkdir(parents=True, exist_ok=True)
 
     brief = {
@@ -234,12 +238,16 @@ def run_with_agent_loop(
     max_iterations: Optional[int] = None,
     registry=None,
     resume_from: Optional[str] = None,
+    workspace_override: Optional[Path] = None,
+    record_dir: Optional[Path] = None,
 ) -> Tuple[str, Dict]:
     """Spawn the shared AgentLoop for a doctrine solution and run `task`.
 
     resume_from: run id — loads that run's conversation, then continues it
     with `task`. The new (accumulated) conversation is persisted under a
     fresh run id with resumed_from set.
+    workspace_override: team shared workspace for jailed solutions.
+    record_dir: team leg directory (default: the global run registry).
 
     Returns (final_answer, info) where info carries provider/model/tool-call
     count and the run id for the CLI footer.
@@ -299,7 +307,7 @@ def run_with_agent_loop(
             f"# Solution doctrine ({manifest['name']}, template: {manifest['template']})\n{doctrine}"
         )
 
-    jailed = make_jailed_executor(manifest, sol)
+    jailed = make_jailed_executor(manifest, sol, workspace_override=workspace_override)
     original = agent_module.execute_tool
     agent_module.execute_tool = jailed
     try:
@@ -309,7 +317,7 @@ def run_with_agent_loop(
 
     run_id = _record_run(
         sol, manifest, task, provider_name, model_name, step,
-        messages=loop.messages, resumed_from=resume_from,
+        messages=loop.messages, resumed_from=resume_from, record_dir=record_dir,
     )
     info = {
         "provider": step.response.provider,

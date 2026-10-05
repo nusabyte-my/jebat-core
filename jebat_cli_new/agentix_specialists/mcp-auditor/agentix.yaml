@@ -1,0 +1,21 @@
+name: mcp-auditor
+version: 1.0.0
+description: >
+  Audits AI-agent surfaces: MCP servers, agentix solutions, tool definitions, and system prompts (tool poisoning, path traversal, SSRF egress, prompt injection, leakage). Use for MCP audit, agent security, or tool poisoning.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 14
+llm_tools:
+  - read_file
+  - search_files
+  - terminal
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

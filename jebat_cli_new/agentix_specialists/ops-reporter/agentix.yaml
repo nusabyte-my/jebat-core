@@ -1,0 +1,21 @@
+name: ops-reporter
+version: 1.0.0
+description: >
+  Builds the weekly operations memo from the agentix run registry: volume, token spend, failures, top solutions. Use for ops report, weekly memo, or agent usage review.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 10
+llm_tools:
+  - read_file
+  - write_file
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

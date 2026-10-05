@@ -449,6 +449,36 @@ SPECIALISTS_DIR = Path(__file__).resolve().parent / "agentix_specialists"
 PROVIDER_ERROR_PREFIX = "[JEBAT provider error:"
 
 
+def _team_command(ns) -> int:
+    from jebat_cli_new.agentix_team import TeamError, load_team, run_team
+
+    objective = " ".join(ns.objective) if isinstance(ns.objective, list) else str(ns.objective)
+    if objective == "-":
+        objective = sys.stdin.read().strip()
+    if not objective:
+        print("agentix team: empty objective", file=sys.stderr)
+        return 1
+
+    team_path = Path(ns.team)
+    if not team_path.is_file():
+        user = Path.home() / ".jebat" / "agentix" / "teams" / f"{ns.team}.yaml"
+        shipped = SPECIALISTS_DIR.parent / "agentix_teams" / f"{ns.team}.yaml"
+        team_path = user if user.is_file() else shipped
+    try:
+        team = load_team(team_path)
+        code, report, _run_id = run_team(
+            team, objective,
+            yolo=ns.yolo or ns.auto,  # --auto implies unattended legs
+            provider=ns.provider, model=ns.model,
+            resume_team_id=ns.resume_team, approve=ns.approve or ns.auto,
+        )
+    except TeamError as exc:
+        print(f"agentix team: {exc}", file=sys.stderr)
+        return 1
+    print(report)
+    return code
+
+
 def _oneshot(ns) -> int:
     """Ephemeral agent: scaffold into a temp dir, run, discard.
 
@@ -710,6 +740,21 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
 
     sub.add_parser("runs", help="List recent runs (ids usable with run --resume)")
 
+    team = sub.add_parser("team", help="Run a declared specialist pipeline")
+    team_sub = team.add_subparsers(dest="team_command", required=True)
+    team_run = team_sub.add_parser("run", help="Run (or resume) a team pipeline")
+    team_run.add_argument("team", help="Team name, or path to a team .yaml")
+    team_run.add_argument("objective", nargs="+", help="Objective for the team ('-' reads stdin)")
+    team_run.add_argument("--provider", default=None)
+    team_run.add_argument("--model", default=None)
+    team_run.add_argument("--yolo", action="store_true", help="Skip safety confirmations on every leg")
+    team_run.add_argument("--auto", action="store_true", help="Skip human gates (explicit)")
+    team_run.add_argument("--resume-team", dest="resume_team", default=None, metavar="TEAM_RUN_ID",
+                          help="Resume a gate-paused team run (list: runs dir / jebat agentix runs)")
+    team_run.add_argument("--approve", action="store_true", help="Approve the pending gate on resume")
+
+    sub.add_parser("teams", help="List shipped + user team pipelines")
+
     ns = parser.parse_args(list(tokens))
     try:
         if ns.command == "create":
@@ -792,6 +837,13 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
             if result and result.startswith(PROVIDER_ERROR_PREFIX):
                 print("agentix: provider call failed — see error above", file=sys.stderr)
                 return 1
+            return 0
+        if ns.command == "team":
+            return _team_command(ns)
+        if ns.command == "teams":
+            from jebat_cli_new.agentix_team import list_teams
+
+            print(list_teams())
             return 0
         if ns.command == "doctor":
             from jebat_cli_new.agentix_ops import doctor

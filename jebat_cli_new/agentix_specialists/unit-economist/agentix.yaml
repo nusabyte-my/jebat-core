@@ -1,0 +1,22 @@
+name: unit-economist
+version: 1.0.0
+description: >
+  Computes unit economics (pricing, margin, CPA, LTV math) from the account's own numbers with shown formulas. Use for unit economics, pricing, margin, or LTV.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 12
+llm_tools:
+  - read_file
+  - write_file
+  - terminal
+  - list_dir
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

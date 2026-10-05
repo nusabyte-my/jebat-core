@@ -1,0 +1,21 @@
+name: uptime-sentinel
+version: 1.0.0
+description: >
+  Runs scheduled health checks against endpoints, diffs against a stored baseline, and flags regressions. Use for uptime check, health check, or is it down.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 10
+llm_tools:
+  - terminal
+  - read_file
+  - write_file
+llm_workspace: workspace
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

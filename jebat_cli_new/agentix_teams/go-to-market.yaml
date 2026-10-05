@@ -1,0 +1,16 @@
+team: go-to-market
+description: >
+  Positioning, copy, SEO readiness, and a plan-only ads plan. Human gate
+  after the ads plan: spend happens outside the agency, on your sign-off.
+budget:
+  tokens: 900000
+  wall_clock: 2h
+pipeline:
+  - marketing-strategist
+  - copy-writer
+  - seo-auditor
+  - ads-manager
+spawns: [marketing-strategist, copy-writer, seo-auditor, ads-manager]
+gates:
+  - after: ads-manager
+    type: human

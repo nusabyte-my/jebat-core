@@ -1,0 +1,21 @@
+name: ui-critic
+version: 1.0.0
+description: >
+  Critiques a UI implementation against the anti-slop bar (hierarchy, 8 interaction states, mobile widths, roman headers, restraint). Use for UI review, design critique, or is this UI any good.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 10
+llm_tools:
+  - read_file
+  - search_files
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp
