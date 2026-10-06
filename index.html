@@ -40,7 +40,7 @@
       "@type": "FAQPage",
       "mainEntity": [
         { "@type": "Question", "name": "What is JEBAT and how does it fit into my stack?", "acceptedAnswer": { "@type": "Answer", "text": "A sovereign AI command layer between your applications and LLM providers. It decouples agent logic from model vendors, manages persistent memory via Ghost DB, dispatches tools over MCP, and enforces approval-gated security on every write." } },
-        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, eval, deploy, run agents as versioned artifacts. Archetypes: reflex (ReAct reasoning loop), flow (workspace-driven), lattice (schema-typed tools). Fourteen specialist doctrines (security-audit, osint-recon, code-reviewer, marketing-strategist, ads-manager and more) ship ready to deploy — jebat agentix ask routes a bare objective to the right one. Deploy targets are allowlist-gated in agentix.yaml." } },
+        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, eval, deploy, run agents as versioned artifacts. Archetypes: reflex (ReAct reasoning loop), flow (workspace-driven), lattice (schema-typed tools). Twenty-two specialist doctrines (security-audit, osint-recon, code-reviewer, mcp-auditor, marketing-strategist, ads-manager and more) ship ready to deploy — jebat agentix ask routes a bare objective to the right one. Deploy targets are allowlist-gated in agentix.yaml." } },
         { "@type": "Question", "name": "Can the specialists work as a team?", "acceptedAnswer": { "@type": "Answer", "text": "Yes - three teams ship in the box (security-review, go-to-market, product-release). A team is a declared pipeline: legs run in order, hand off through a shared jailed workspace, a verifier checks each leg against its doctrine before handoff, human gates pause where money or shipping is involved, and the whole desk runs under one team-level budget." } },
         { "@type": "Question", "name": "How are agent runs kept bounded and auditable?", "acceptedAnswer": { "@type": "Answer", "text": "Every reflex run declares a budget (max tokens, wall clock) - the loop stops and summarizes when either is hit, and budgets below the per-iteration floor are refused at spawn. Tool allowlists and the workspace jail are enforced by the harness. Each run is persisted with its task, manifest snapshot, tool-call log and conversation, and can be continued later with run --resume." } },
         { "@type": "Question", "name": "Can I reuse MCP servers from omp, opencode, or Claude Code?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. jebat config import reads the other CLI's config, normalizes transports, timeouts and env templates, and merges with collision-safe skipping and automatic backups. Preview first with --dry-run." } },
@@ -119,7 +119,7 @@ a{color:inherit;text-decoration:none}
 .mlink{display:block;padding:13px 4px;border-bottom:1px solid var(--jc-line);font-weight:500;color:var(--jc-ink)}
 .mlink:last-child{border-bottom:none}
 .mlink:hover{color:var(--jc-copper)}
-#mnav.open{display:block}
+#mnav{display:none}#mnav.open{display:block}
 @media(max-width:900px){.nav-links{display:none}.burger{display:block}}
 
 /* ── HERO ── */
@@ -437,11 +437,11 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
       <li><a href="/webui/" target="_blank" rel="noopener">WebUI</a></li>
     </ul>
     <a class="nav-cta" href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">Get JEBAT</a>
-    <button class="burger" aria-label="Menu" onclick="document.getElementById('mnav').classList.toggle('open')">
+    <button class="burger" aria-label="Menu">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
   </div>
-  <div id="mnav" style="display:none" class="wrap">
+  <div id="mnav" class="wrap">
     <a href="#platform" class="mlink">Platform</a><a href="#workbench" class="mlink">Workbench</a><a href="#mcp" class="mlink">MCP</a><a href="#mcp-deploy" class="mlink">MCP Deploy</a><a href="#compare" class="mlink">Compare</a><a href="#deploy" class="mlink">Deploy</a><a href="#faq" class="mlink">FAQ</a><a href="/webui/" target="_blank" rel="noopener" class="mlink">WebUI ↗</a><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="mlink">GitHub ↗</a>
   </div>
 </nav>
@@ -452,7 +452,7 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
     <div>
       <span class="eyebrow"><span class="pulse"></span> RELEASE v8.3.0 — SECURITY HARDENED</span>
       <h1>Keep <span class="grad">Command.</span><br/>Own the Stack.</h1>
-      <p class="hero-lead">A sovereign AI command layer between your apps and any model — <strong>118 MCP tools</strong> behind explicit safety tiers, persistent Ghost DB memory, and a CLI that builds, ships, and runs agent solutions. Never ship a write you did not approve.</p>
+      <p class="hero-lead">A sovereign AI command layer between your apps and any model — <strong>128 MCP tools</strong> behind explicit safety tiers, persistent Ghost DB memory, and a CLI that builds, ships, and runs agent solutions. Never ship a write you did not approve.</p>
       <div class="badges">
         <span class="badge b-pucuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Zero Telemetry</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Key-Gated Control Plane</span>
@@ -489,13 +489,13 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
         <div class="chips" style="padding:14px 16px 0">
           <button class="jchip on" onclick="runCLI('status',this)">jebat status</button>
           <button class="jchip" onclick="runCLI('agentix',this)">agentix status</button>
-          <button class="jchip" onclick="runCLI('mcp',this)">mcp list</button>
-          <button class="jchip" onclick="runCLI('audit',this)">agi audit</button>
-          <button class="jchip" onclick="runCLI('dream',this)">autoMimpi</button>
+          <button class="jchip" onclick="runCLI('mcp',this)">tools list</button>
+          <button class="jchip" onclick="runCLI('audit',this)">jebat doctor</button>
+          <button class="jchip" onclick="runCLI('dream',this)">agentix runs</button>
         </div>
         <div class="term-body" id="hero-cli-output">> $ jebat status
 ✓ JEBAT Core v8.3.0 Operational — Security Hardened
-> Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]
+> Model Route: llama.cpp (local runtime)
 > Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated
 > MCP Protocol Bus: tool registry available · jebat://metrics/tools live</div>
       </div>
@@ -549,7 +549,7 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
     <div class="sec-head">
       <span class="kicker">PLATFORM</span>
       <h2>The model should not own your architecture.</h2>
-      <p>Every tool call routes through an approval boundary. Switch between local llama.cpp, Claude, or GPT while preserving the same 118 annotated tools, Ghost DB traces, and policy gates.</p>
+      <p>Every tool call routes through an approval boundary. Switch between local llama.cpp, Claude, or GPT while preserving the same 128 annotated tools, Ghost DB traces, and policy gates.</p>
     </div>
     <div class="cards">
       <div class="card c1">
@@ -610,18 +610,18 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
       <tr>
         <td><span class="pill pill-auto">AUTO</span></td>
         <td>Executes immediately, no interaction. Every call still passes the allowlist filter and lands in the metrics ring.</td>
-        <td class="ex">file reads · search_files · memory queries · git status/log · advisor_classify</td>
+        <td class="ex">file reads · file_search · memory queries · git status/log · advisor_classify</td>
         <td class="mono">default</td>
       </tr>
       <tr>
         <td><span class="pill pill-confirm">CONFIRM</span></td>
-        <td>Pauses for interactive approval — prompt shows tool, tier, and truncated args. In the REPL, staged approval means one prompt per stage per session; <span class="mono">write_file</span> additionally renders a diff preview card.</td>
+        <td>Pauses for interactive approval — prompt shows tool, tier, and truncated args. In the REPL, staged approval means one prompt per stage per session; <span class="mono">file_write</span> additionally renders a diff preview card.</td>
         <td class="ex">file_patch · git commit · docker · package installs · agent_execute</td>
         <td class="mono">answer Y, or a = always this session</td>
       </tr>
       <tr>
         <td><span class="pill pill-danger">DANGEROUS</span></td>
-        <td>Hard-gated: pattern-matched on arguments (recursive deletes, disk writes, fork bombs) and rejected with a reason string. Only unlocked by launching the session with elevated safety — yolo alone lifts <em>prompts</em>, not the classification.</td>
+        <td>Hard-gated: pattern-matched on arguments (recursive deletes, disk writes, fork bombs) and rejected with a reason string. Unlocked by launching with elevated safety — <span class="mono">--yolo</span> or <span class="mono">--safety dangerous</span> puts the session in DANGEROUS mode and auto-approves every tier.</td>
         <td class="ex">rm -rf / · mkfs · dd to block devices · fork bombs · sudo rm</td>
         <td class="mono">--yolo or --safety dangerous at launch</td>
       </tr>
@@ -810,7 +810,7 @@ leg 1/5: osint-recon
     <div class="sec-head">
       <span class="kicker">MCP DEPLOY</span>
       <h2>Wire JEBAT into your IDE in 60 seconds.</h2>
-      <p>Run the MCP server four ways — stdio for IDEs, Docker for isolation, npx for zero-install, or the remote streamable-HTTP endpoint. Every path lands the same 118-tool bus behind your approval gates.</p>
+      <p>Run the MCP server four ways — stdio for IDEs, Docker for isolation, npx for zero-install, or the remote streamable-HTTP endpoint. Every path lands the same 128-tool bus behind your approval gates.</p>
     </div>
 
     <div class="split" style="align-items:stretch">
@@ -849,13 +849,13 @@ jebat mcp ide-config
           </table>
         </div>
         <p style="margin-top:14px;font-size:13.5px;color:var(--jc-slate)">
-          The install script provisions Python, a venv, the <span class="mono" style="color:var(--jc-copper)">jebat</span> launcher, and the MCP entrypoint — no sudo, everything in <span class="mono">~/.local</span>. 118 tools register on connect; write-tier tools stop at your approval gate.
+          Requires Python 3.11+ already on your system. The install script provisions a venv, the <span class="mono" style="color:var(--jc-copper)">jebat</span> launcher, and the MCP entrypoint — no sudo, everything in <span class="mono">~/.local</span>. 128 tools register on connect; write-tier tools stop at your approval gate.
         </p>
         <div class="tradeoffs" id="install-tradeoffs">
           <div class="topt" data-for="cli"><b>When to pick stdio</b><p>Fastest path, no network hop, process lifetime tied to the IDE. Best for single-dev workstations. Requires the venv on the same machine as the IDE.</p></div>
           <div class="topt" data-for="ide" style="display:none"><b>When to pick ide-config</b><p>You already have JEBAT installed and just want the JSON. <span class="mono">jebat mcp ide-config</span> prints vendor-exact shapes — VS Code wants <span class="mono">mcp.servers</span>, Cursor wants <span class="mono">mcpServers</span>; hand-editing gets this wrong.</p></div>
           <div class="topt" data-for="docker" style="display:none"><b>When to pick Docker</b><p>Isolation and pinning: the container freezes its own deps, the healthcheck uses a finite TCP probe because <span class="mono">GET /mcp</span> is long-lived SSE. Costs a network hop to the IDE via docker exec.</p></div>
-          <div class="topt" data-for="npx" style="display:none"><b>When to pick npx</b><p>No clone, no repo checkout — the launcher downloads and bootstraps Python on first run. Slightly slower first start; afterwards identical to CLI. Great for trying JEBAT before committing.</p></div>
+          <div class="topt" data-for="npx" style="display:none"><b>When to pick npx</b><p>No clone, no repo checkout — the launcher downloads the JEBAT installer on first run (Python 3.11+ must already be installed). Slightly slower first start; afterwards identical to CLI. Great for trying JEBAT before committing.</p></div>
           <div class="topt" data-for="remote" style="display:none"><b>When to pick Remote HTTP</b><p>One server, many clients: teammates share a key-gated bus behind TLS. The API key is mandatory — the transport rejects unauthenticated calls with a timing-safe compare. Stateless: no sticky sessions needed.</p></div>
         </div>
       </div>
@@ -865,7 +865,7 @@ jebat mcp ide-config
           <button class="jchip on" onclick="switchIde('cursor',this)">Cursor</button>
           <button class="jchip" onclick="switchIde('vscode',this)">VS Code</button>
           <button class="jchip" onclick="switchIde('windsurf',this)">Windsurf</button>
-          <button class="jchip" onclick="switchIde('remote',this)">HTTP</button>
+          <button class="jchip" onclick="switchIde('http-remote',this)">HTTP</button>
         </div>
         <div class="code-wrap" style="flex:1">
           <button class="code-copy" onclick="copySnippet('ide-json',this)">Copy</button>
@@ -896,7 +896,7 @@ jebat mcp ide-config
           <span class="term-live"><span class="pulse"></span> SIMULATION</span>
         </div>
         <div class="term-body" style="min-height:190px">> initialize  →  protocol 2026-07-28 negotiated
-> tools/list  →  118 tools · paginated terse mode · ~2.0k tokens total
+> tools/list  →  128 tools · paginated terse mode · ~2.0k tokens total
 > resources/list  →  jebat://workflow · jebat://metrics/tools · skill:// · wiki://
 > notifications/advisorReady  →  proactive health suggestions enabled
 <span style="color:#8FD3B8">✓ GOVERNED BUS ONLINE — writes will pause at your approval gate</span></div>
@@ -1045,7 +1045,7 @@ jebat mcp ide-config
         <div style="margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           <a class="btn btn-primary" href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener"><span>Install JEBAT now</span>
             <svg class="arr" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-          <a class="btn btn-ghost" href="https://nusabyte.my/jebat" target="_blank" rel="noopener" style="background:transparent;color:#F0EADF;border-color:rgba(240,234,223,.25)">Talk to NusaByte</a>
+          <a class="btn btn-ghost" href="https://nusabyte.my/" target="_blank" rel="noopener" style="background:transparent;color:#F0EADF;border-color:rgba(240,234,223,.25)">Talk to NusaByte</a>
         </div>
       </div>
     </div>
@@ -1068,6 +1068,10 @@ jebat mcp ide-config
         <div class="a"><p>Yes. <span class="mono">jebat config import</span> reads the other CLI's config, normalizes transports/timeouts/env templates, and merges with collision-safe skipping plus automatic backups. Preview first with <span class="mono">--dry-run</span>.</p></div></div>
       <div class="qa"><button onclick="toggleQA(this)"><span>Can JEBAT run 100% air-gapped?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
         <div class="a"><p>Yes — local llama.cpp or Ollama inference with zero outbound calls. Cloud providers are opt-in per route. The whole stack runs on your hardware with no telemetry.</p></div></div>
+      <div class="qa"><button onclick="toggleQA(this)"><span>Can the specialists work as a team?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
+        <div class="a"><p>Yes — three teams ship in the box (<strong>security-review</strong>, <strong>go-to-market</strong>, <strong>product-release</strong>). A team is a declared pipeline: legs run in order, hand off through a shared jailed workspace, a verifier checks each leg against its doctrine before handoff, human gates pause where money or shipping is involved, and the whole desk runs under one team-level budget.</p></div></div>
+      <div class="qa"><button onclick="toggleQA(this)"><span>How are agent runs kept bounded and auditable?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
+        <div class="a"><p>Every reflex run declares a budget (max tokens, wall clock) — the loop stops and summarizes when either is hit, and budgets below the per-iteration floor are refused at spawn. Tool allowlists and the workspace jail are enforced by the harness. Each run is persisted with its task, manifest snapshot, tool-call log, and conversation, and can be continued later with <span class="mono">run --resume</span>.</p></div></div>
     </div>
   </div>
 </section>
@@ -1083,7 +1087,7 @@ jebat mcp ide-config
       <a href="docs.html">Docs</a>
       <a href="/webui/" target="_blank" rel="noopener">WebUI</a>
       <a href="#workbench">Workbench</a>
-      <a href="https://nusabyte.my/jebat" target="_blank" rel="noopener">NusaByte</a>
+      <a href="https://nusabyte.my/" target="_blank" rel="noopener">NusaByte</a>
     </div>
     <span class="mono">🗡️ JEBAT — Because warriors remember everything that matters.</span>
   </div>
@@ -1099,7 +1103,7 @@ function runHeroCLI(type) {
   if (type === 'status') {
     box.innerHTML = `> $ jebat status<br/>
 <span style="color: var(--jc-pucuk-ink)">✓ JEBAT Core v8.3.0 Operational — Security Hardened</span><br/>
-> Model Route: llama.cpp (local runtime) [LATENCY: RUNTIME-MEASURED]<br/>
+> Model Route: llama.cpp (local runtime)<br/>
 > Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated<br/>
 > MCP Protocol Bus: tool registry available · jebat://metrics/tools live`;
   } else if (type === 'agentix') {
@@ -1115,25 +1119,24 @@ function runHeroCLI(type) {
 > Vulnerability check: 0 critical, 0 high.<br/>
 <span style="color: var(--jc-pucuk-ink)">✓ Security Audit Passed. Airgap boundaries active.</span>`;
   } else if (type === 'mcp') {
-    box.innerHTML = `> $ jebat mcp list<br/>
-<span style="color: var(--jc-copper)">[MCP Protocol Bus · Streamable-HTTP :8100]</span><br/>
-> Discovered: <strong>118 Registered Tools</strong><br/>
+    box.innerHTML = `> $ jebat tools list<br/>
+<span style="color: var(--jc-copper)">MCP Protocol Bus · stdio + streamable-HTTP]</span><br/>
+> Discovered: <strong>128 registered tools</strong><br/>
 > Ghost DB: 14 tools (ghost.sql, ghost.create, ghost.checkpoint)<br/>
 > Design & Copy: design_preflight, ui_critique, copy_audit<br/>
 <span style="color: var(--jc-pucuk-ink)">✓ Streamable HTTP & stdio transports operational.</span>`;
   } else if (type === 'audit') {
-    box.innerHTML = `> $ jebat agi audit --all<br/>
-<span style="color: var(--jc-copper)">[Autonomous Reflexion Gates Active]</span><br/>
-> Build Gate: AST parse validated (0 syntax errors)<br/>
-> Hallmark Design Gate: 6-axis critique — philosophy · hierarchy · execution · specificity · restraint · variety<br/>
-> Pawang Jualan Copy Gate: [Action Verb] + [What They Get] enforced<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ Multi-domain quality sign-off confirmed.</span>`;
+    box.innerHTML = `> $ jebat doctor<br/>
+<span style="color: var(--jc-copper)">[Agentix health check]</span><br/>
+> ok   structural (manifest, tools, deploy.allow) · ok doctrine · ok allowlist (≤ 10)<br/>
+> ok   budget floor · no dangling registry entries<br/>
+<span style="color: var(--jc-pucuk-ink)">✓ doctor: healthy</span>`;
   } else if (type === 'dream') {
-    box.innerHTML = `> $ jebat autoMimpi dream<br/>
-<span style="color: var(--jc-copper)">[Nightly Memory Sleep Consolidation · 04:00 MYT]</span><br/>
-> Consolidation pass complete — traces scored, decayed and pruned<br/>
-> Patterns extracted | Embeddings synced to Ghost DB (HNSW, cosine)<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ "Errors are the Grid's way of showing where the wall is."</span>`;
+    box.innerHTML = `> $ jebat agentix runs<br/>
+<span style="color: var(--jc-copper)">[Run registry · every llm run recorded]</span><br/>
+> 20261005-173347-code-reviewer-ff4b  code-reviewer   reflex<br/>
+> 20261005-173407-test-writer-819e    test-writer     reflex<br/>
+<span style="color: var(--jc-pucuk-ink)">✓ ids usable with run --resume</span>`;
   } else if (type === 'memory') {
     box.innerHTML = `> $ jebat memory search "NusaByte"<br/>
 <span style="color: var(--jc-copper)">[Ghost DB Hybrid Retrieval · BM25 + vector, cosine]</span><br/>
@@ -1196,7 +1199,7 @@ npx @nusabyte/jebat mcp serve --transport stdio
 npm install -g @nusabyte/jebat
 jebat mcp serve
 
-# Requirements: Node >= 18 (Python 3.11+ is provisioned automatically)`,
+# Requirements: Node >= 18 and Python 3.11+ already installed`,
   remote: `# Remote streamable-HTTP — team-shared, key-gated
 {
   "mcpServers": {
