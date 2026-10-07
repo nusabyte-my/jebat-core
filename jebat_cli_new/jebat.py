@@ -4314,6 +4314,12 @@ def main():
     if ns.handled:
         return 0
 
+    # RPC modes own stdio: stdout is the protocol channel.
+    if ns.mode in ("rpc", "rpc-ui"):
+        from jebat_cli_new.rpc import run_rpc
+
+        return run_rpc(ns)
+
     # A bare prompt or an explicit one-shot is handled before subcommand
     # dispatch so `jebat -p "..."`, `--mode json` and `jebat "..."` all work.
     prompt_words = list(ns.prompt or [])

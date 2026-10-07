@@ -28,7 +28,7 @@ SUBCOMMANDS = (
     "status", "webui", "tool", "tools", "init",
 )
 
-MODES = ("text", "json")
+MODES = ("text", "json", "rpc", "rpc-ui")
 
 THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh", "max", "auto")
 
@@ -371,7 +371,7 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
         value = getattr(ns, f"role_{role}", None)
         if value:
             ns.role_models[role] = value
-    ns.quiet = bool(ns.quiet or ns.mode == "json")
+    ns.quiet = bool(ns.quiet or ns.mode in ("json", "rpc", "rpc-ui"))
     if ns.quiet:
         # Keep stdout machine-clean: no ANSI, no spinner, no banner.
         from jebat_cli_new.theme import C
