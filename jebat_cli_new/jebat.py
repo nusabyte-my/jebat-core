@@ -561,6 +561,16 @@ THINK_QUOTES = [
 SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
 
+class _NullSpinner:
+    """No-op spinner for --quiet / --mode json (keeps stdout machine-clean)."""
+
+    def start(self, *args, **kwargs):
+        return None
+
+    def stop(self):
+        return None
+
+
 class ThinkingSpinner:
     def __init__(self):
         self._stop = threading.Event()
@@ -4194,30 +4204,100 @@ def _list_models_for_provider(provider_cfg):
 # CLI
 # ═══════════════════════════════════════════════════════════════════
 
+def _run_one_shot(ns, registry, taskdb, skills, prompt, cfg):
+    """Non-interactive run: print (text) or emit JSON, never drop into REPL."""
+    import time as _time
+
+    from jebat_cli_new.cli import emit_json
+
+    agent = Agent(
+        registry, taskdb, skills,
+        yolo=ns.yolo, verbose=ns.verbose,
+        plan_first=ns.plan, auto_commit=ns.auto_commit, ghost_mode=ns.ghost,
+    )
+    if getattr(ns, "quiet", False):
+        agent.spinner = _NullSpinner()
+    if ns.thinking:
+        agent.thinking_level = ns.thinking
+    if ns.keep_skills:
+        agent.active_skill_names = ns.keep_skills
+    if ns.role_models:
+        agent.role_models = ns.role_models
+
+    if ns.mode != "json" and not getattr(ns, "quiet", False):
+        cfg_kind = cfg.kind if cfg else "none"
+        cfg_model = ns.model or (cfg.model if cfg else "none")
+        show_setup(cfg_kind, cfg_model, cfg.api_base if cfg else "", "Running")
+
+    started = _time.time()
+    try:
+        step = agent.step(prompt, provider=ns.provider, model=ns.model)
+    except Exception as exc:  # surface provider/tool failures as data, not a traceback
+        if ns.mode == "json":
+            emit_json({"prompt": prompt, "error": str(exc), "status": "error"})
+        else:
+            print(f"  {C.RED}Error: {exc}{C.RESET}", file=sys.stderr)
+        return 1
+
+    elapsed = _time.time() - started
+    model_str = step.response.model or ns.model or (cfg.model if cfg else "unknown")
+    provider_str = cfg.kind if cfg else "none"
+
+    if ns.mode == "json":
+        emit_json({
+            "prompt": prompt,
+            "response": step.response.text,
+            "provider": provider_str,
+            "model": model_str,
+            "tokens": step.tokens,
+            "latency_ms": step.latency_ms,
+            "elapsed_s": round(elapsed, 2),
+            "tools": step.tool_actions,
+            "iterations": getattr(agent, "iterations", 0),
+            "cost_usd": estimate_cost(model_str, step.tokens),
+            "status": "ok",
+        })
+        return 0
+
+    cprint()
+    _print_answer(step.response.text)
+    bottom_bar(provider_str, model_str, tokens=step.tokens,
+               tool_count=len(step.tool_actions), elapsed_s=elapsed,
+               cost_usd=estimate_cost(model_str, step.tokens))
+    return 0
+
+
 def main():
     """CLI entry point — default to REPL."""
-    args = sys.argv[1:]
+    from jebat_cli_new import cli as cli_mod
 
-    # CQ-9: Session continuation flags
-    continue_last = False
-    resume_session = None
-    filtered_args = []
-    session_mode = not args or args[0] in ("repl", "-c", "--continue", "-s", "--session")
-    i = 0
-    while i < len(args):
-        if session_mode and args[i] in ("-c", "--continue"):
-            continue_last = True
-        elif session_mode and args[i] in ("-s", "--session"):
-            if i + 1 < len(args):
-                resume_session = args[i + 1]
-                i += 1
-            else:
-                print("--session requires a session ID", file=sys.stderr)
-                return 2
-        else:
-            filtered_args.append(args[i])
-        i += 1
-    args = filtered_args
+    ns, args = cli_mod.parse(sys.argv[1:])
+    if ns.handled:
+        return 0
+
+    # A bare prompt or an explicit one-shot is handled before subcommand
+    # dispatch so `jebat -p "..."`, `--mode json` and `jebat "..."` all work.
+    prompt_words = list(ns.prompt or [])
+    if prompt_words and ns.command in (None, "repl"):
+        registry = ProviderRegistry()
+        taskdb = TaskDB()
+        skills = SkillManager()
+        ns.provider, ns.model = cli_mod.ensure_provider(registry, ns.provider, ns.model)
+        cfg = registry.configs.get(ns.provider) if ns.provider else registry.get_active()
+        if not getattr(ns, "quiet", False):
+            banner()
+        return _run_one_shot(ns, registry, taskdb, skills, " ".join(prompt_words), cfg)
+    if not prompt_words and ns.command is None and ns.mode == "json":
+        from jebat_cli_new.cli import emit_json
+
+        emit_json({"error": "--mode json needs a prompt", "status": "error"})
+        return 2
+
+    # CQ-9: Session continuation flags (parser already normalized -c / -s)
+    continue_last = bool(ns.continue_last)
+    resume_session = ns.session if isinstance(ns.session, str) else None
+    if ns.session is True:
+        continue_last = True
 
     # Advertised as a thinking session — tool-less chat is the honest
     # implementation; never let these words fall through to the LLM prompt.
