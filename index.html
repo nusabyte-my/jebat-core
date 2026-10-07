@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V4 · JEBAT Creative
+<!-- Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V4 · JEBAT original bone / copper / green
      Existing section routes retained; real CLI captures, scoped learning, accessible controls. -->
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JEBAT — Keep Command | Sovereign AI Command Layer</title>
 <meta name="description" content="Run private AI agents with your choice of models, persistent memory, MCP tools and governed execution. Self-host JEBAT or deploy it with NusaByte." />
-<meta name="theme-color" content="#FFFFFF" />
+<meta name="theme-color" content="#F7F4EE" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="JEBAT" />
 <meta property="og:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
@@ -92,11 +92,17 @@
       <div class="cta-row">
         <a class="btn btn-primary" href="#mcp-deploy"><span>Install JEBAT</span>
           <svg class="arr" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-        <a class="btn btn-ghost" href="#learning">Explore the learning loop</a>
+        <a class="btn btn-ghost" href="#project-audit">See a project-audit example</a>
       </div>
+      <nav class="setup-chooser" aria-label="Choose your JEBAT setup">
+        <a href="#install-tab-cli"><strong>Try locally</strong><span>Install on this machine</span></a>
+        <a href="#install-tab-ide"><strong>Already installed?</strong><span>Connect your IDE</span></a>
+        <a href="#install-tab-remote"><strong>Use a server</strong><span>Connect with your API key</span></a>
+      </nav>
       <div class="install"><span class="dollar" aria-hidden="true">$</span><code>jebat learning advise</code>
-        <button type="button" onclick="copyCommand('jebat learning advise',this)" aria-label="Copy learning advisor command"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="copy-button" type="button" onclick="copyCommand('jebat learning advise',this)" aria-label="Copy learning advisor command" aria-describedby="copy-feedback-hero" data-feedback="copy-feedback-hero"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="copy-label">Copy</span></button>
       </div>
+      <p class="copy-feedback" id="copy-feedback-hero"></p>
     </div>
 
     <div>
@@ -138,6 +144,30 @@ JEBAT v8.3.0
     </div>
   </div>
 </header>
+
+<section class="section audit-example" id="project-audit" aria-labelledby="audit-title">
+  <div class="wrap split">
+    <div>
+      <h2 id="audit-title">Audit a project before changing it.</h2>
+      <p class="audit-intro">Taking over an unfamiliar repository? Start with a scoped checklist for its entrypoints, approval boundaries, and release path.</p>
+      <ol class="audit-steps">
+        <li><strong>Render the playbook.</strong> Use the command shown here from your project directory.</li>
+        <li><strong>Gather evidence.</strong> Follow the checklist in your IDE or CLI. Record reproduction steps and tested versus untested coverage.</li>
+        <li><strong>Choose the smallest verified fix.</strong> Review the ranked findings before authorizing changes or deployment.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="code-wrap">
+        <button class="code-copy copy-button" type="button" onclick="copySnippet('audit-command',this)" aria-label="Copy project-audit playbook command" aria-describedby="copy-feedback-audit audit-limit" data-feedback="copy-feedback-audit"><span class="copy-label">Copy</span></button>
+        <pre class="code" id="audit-command"># From your project directory: print the audit checklist
+jebat workflow show workflow-audit --task "Audit this project" --scope .</pre>
+      </div>
+      <p class="copy-feedback" id="copy-feedback-audit"></p>
+      <p class="learning-footnote" id="audit-limit">This command prints guidance. It does not inspect your files, call a model, start an agent, or deploy. Any later agent execution requires a configured provider and your chosen permissions.</p>
+      <a class="inline-link audit-link" href="#install-tab-cli">Install JEBAT to try this command</a>
+    </div>
+  </div>
+</section>
 
 <section class="news-strip" aria-label="Release changes">
   <div class="wrap">
@@ -209,8 +239,10 @@ JEBAT v8.3.0
 </section>
 
 <div class="wrap" style="padding-top:var(--jc-s4)">
-<div class="tier-ref">
-  <div class="tref-head mono">SAFETY TIERS — ENFORCED IN <span style="color:var(--jc-copper)">jebat/core/agent_loop.py</span> BEFORE ANY TOOL EXECUTES</div>
+<details class="tier-ref technical-details" id="safety-details" open>
+  <summary>Technical details: tool safety tiers</summary>
+  <div class="technical-content">
+  <div class="tref-head mono">IMPLEMENTATION: <span style="color:var(--jc-accent-strong)">jebat/core/agent_loop.py</span></div>
   <table class="tref-table">
     <thead><tr><th>Tier</th><th>Enforcement</th><th>Examples</th><th>Unlock</th></tr></thead>
     <tbody>
@@ -236,18 +268,19 @@ JEBAT v8.3.0
   </table>
   <p class="tref-note">Classification uses declared tiers and argument patterns; it is not a complete security sandbox. MCP CONFIRM/DANGEROUS calls return approval metadata without execution. Review elevated modes before enabling unattended writes.</p>
 </div>
+</details>
 </div>
 
 <section class="section" id="memory">
   <div class="wrap">
     <div class="sec-head"><h2>Keep the context. Know its limits.</h2><p>Memory traces remain JSON-backed. Optional embedding and Ghost DB configuration supports vector retrieval; the learning KB uses SQLite full-text search without a model call.</p></div>
     <div class="mem-grid">
-      <div class="mem" style="--mc:var(--jc-violet)"><b>Episodic</b><p>Recorded events and failures, with timestamps and supporting context.</p></div>
-      <div class="mem" style="--mc:var(--jc-emerald)"><b>Semantic</b><p>Durable facts about a project: stack, commands, decisions, and constraints.</p></div>
-      <div class="mem" style="--mc:var(--jc-pink)"><b>Procedural</b><p>Stored procedures and approaches that can inform the next task.</p></div>
-      <div class="mem" style="--mc:var(--jc-cyan)"><b>Working</b><p>Short-lived task context with bounded working-memory capacity.</p></div>
-      <div class="mem" style="--mc:var(--jc-amber)"><b>Emotional</b><p>A typed record for emotional context—not a claim that the system has feelings.</p></div>
-      <div class="mem" style="--mc:var(--jc-deep)"><b>Prospective</b><p>Future intentions. Storing one does not schedule or authorize its execution.</p></div>
+      <div class="mem" style="--mc:var(--jc-copper)"><b>Episodic</b><p>Recorded events and failures, with timestamps and supporting context.</p></div>
+      <div class="mem" style="--mc:var(--jc-pucuk)"><b>Semantic</b><p>Durable facts about a project: stack, commands, decisions, and constraints.</p></div>
+      <div class="mem" style="--mc:var(--jc-bara)"><b>Procedural</b><p>Stored procedures and approaches that can inform the next task.</p></div>
+      <div class="mem" style="--mc:var(--jc-copper)"><b>Working</b><p>Short-lived task context with bounded working-memory capacity.</p></div>
+      <div class="mem" style="--mc:var(--jc-pucuk)"><b>Emotional</b><p>A typed record for emotional context—not a claim that the system has feelings.</p></div>
+      <div class="mem" style="--mc:var(--jc-ink)"><b>Prospective</b><p>Future intentions. Storing one does not schedule or authorize its execution.</p></div>
     </div>
   </div>
 </section>
@@ -260,10 +293,11 @@ JEBAT v8.3.0
       <article class="card c2"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 12 2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg></span><h3>Inspect the reason behind advice.</h3><p>Recommendations cite memory IDs and timestamps. Retention is not presented as a task-success score.</p></article>
       <article class="card c3"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><h3>Find the history. Record your review.</h3><p>Search dream reports and advice in SQLite. Helpful, unhelpful, or dismissed feedback changes visibility—not permissions.</p></article>
     </div>
-    <div class="code-wrap"><button class="code-copy" type="button" onclick="copySnippet('learning-commands',this)">Copy</button><pre class="code" id="learning-commands">jebat learning analyze
+    <div class="code-wrap"><button class="code-copy copy-button" type="button" onclick="copySnippet('learning-commands',this)" aria-label="Copy learning commands" aria-describedby="copy-feedback-learning" data-feedback="copy-feedback-learning"><span class="copy-label">Copy</span></button><pre class="code" id="learning-commands">jebat learning analyze
 jebat learning advise --focus terminal --limit 5
 jebat learning dream
 jebat learning search "AutoMimpi" --kind dream</pre></div>
+    <p class="copy-feedback" id="copy-feedback-learning"></p>
     <p class="learning-footnote">Real commands—not simulated results. No model call or delegated agent is required for learning advice. Legacy facts without root metadata need review; shared JSON memory is not a cross-process transactional store. <a class="inline-link" href="https://github.com/nusabyte-my/jebat-core/blob/main/docs/JEBAT_WORKFLOWS.md#learning-advisor-and-kb">Read the operating limits</a>.</p>
   </div>
 </section>
@@ -300,7 +334,7 @@ jebat learning search "AutoMimpi" --kind dream</pre></div>
         <h3>Agentix: solutions, not scripts</h3>
         <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Eval it against golden tasks. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name, resume by run-id.</p>
         <div class="code-wrap">
-          <button class="code-copy" onclick="copySnippet('agentix-snippet',this)">Copy</button>
+          <button class="code-copy copy-button" type="button" onclick="copySnippet('agentix-snippet',this)" aria-label="Copy workflow commands" aria-describedby="copy-feedback-workflow" data-feedback="copy-feedback-workflow"><span class="copy-label">Copy</span></button>
           <pre class="code" id="agentix-snippet"># Inspect the workflows shipped with this checkout
 jebat workflow list
 
@@ -310,6 +344,7 @@ jebat workflow show workflow-audit --task "Audit this project" --scope .
 # Preview importing an existing MCP configuration
 jebat config import -s omp --dry-run</pre>
         </div>
+        <p class="copy-feedback" id="copy-feedback-workflow"></p>
       </div>
       <div>
         <div class="sec-head" style="margin-bottom:16px">
@@ -324,6 +359,17 @@ jebat config import -s omp --dry-run</pre>
         </div>
       </div>
     </div>
+        <div class="matrix">
+          <h3 id="archetype-title" style="margin-bottom:16px">Pick your archetype</h3>
+          <table aria-labelledby="archetype-title">
+            <thead><tr><th>Your task looks like</th><th>Scaffold</th><th>Why it fits</th></tr></thead>
+            <tbody>
+              <tr><td>A reasoning-heavy task with tool branching</td><td class="mono cu">reflex</td><td>Bounded ReAct loop: think → act → reflect per step</td></tr>
+              <tr><td>A folder of files that IS the workflow</td><td class="mono cu">flow</td><td>Agent reads/edits plan.md + workspace — zero orchestration code</td></tr>
+              <tr><td>Typed API capabilities to expose</td><td class="mono cu">lattice</td><td>Every tool ships a JSON schema; the agent only orchestrates</td></tr>
+            </tbody>
+          </table>
+        </div>
   </div>
 </section>
 
@@ -342,7 +388,7 @@ jebat config import -s omp --dry-run</pre>
     <div class="panel" style="max-width:860px;margin:0 auto var(--jc-s3)">
       <h3>The whole loop, typed</h3>
       <div class="code-wrap">
-        <button class="code-copy" onclick="copySnippet('specialist-snippet',this)">Copy</button>
+        <button class="code-copy copy-button" type="button" onclick="copySnippet('specialist-snippet',this)" aria-label="Copy specialist commands" aria-describedby="copy-feedback-specialist" data-feedback="copy-feedback-specialist"><span class="copy-label">Copy</span></button>
         <pre class="code" id="specialist-snippet"># Discover the current catalog without running a model
 jebat agentix templates
 jebat agentix teams
@@ -354,6 +400,7 @@ jebat agentix eval release-check
 # Inspect recorded runs before choosing one to resume
 jebat agentix runs</pre>
       </div>
+      <p class="copy-feedback" id="copy-feedback-specialist"></p>
     </div>
     <div class="flow">
       <div class="fstep">
@@ -426,15 +473,22 @@ jebat agentix runs</pre>
     <div class="split" style="align-items:stretch">
       <div class="panel">
         <div class="chips" role="tablist" aria-label="MCP deployment methods">
-          <button class="jchip on" role="tab" aria-selected="true" onclick="switchInstall('cli',this)">CLI (stdio)</button>
-          <button class="jchip" role="tab" aria-selected="false" onclick="switchInstall('ide',this)">IDE config</button>
-          <button class="jchip" role="tab" aria-selected="false" onclick="switchInstall('docker',this)">Docker</button>
-          <button class="jchip" role="tab" aria-selected="false" onclick="switchInstall('npx',this)">npx</button>
-          <button class="jchip" role="tab" aria-selected="false" onclick="switchInstall('remote',this)">Remote HTTP</button>
+          <button class="jchip on" id="install-tab-cli" data-install-method="cli" role="tab" aria-selected="true" onclick="switchInstall('cli',this)">CLI (stdio)</button>
+          <button class="jchip" id="install-tab-ide" data-install-method="ide" role="tab" aria-selected="false" onclick="switchInstall('ide',this)">IDE config</button>
+          <button class="jchip" id="install-tab-docker" data-install-method="docker" role="tab" aria-selected="false" onclick="switchInstall('docker',this)">Docker</button>
+          <button class="jchip" id="install-tab-npx" data-install-method="npx" role="tab" aria-selected="false" onclick="switchInstall('npx',this)">npx</button>
+          <button class="jchip" id="install-tab-remote" data-install-method="remote" role="tab" aria-selected="false" onclick="switchInstall('remote',this)">Remote HTTP</button>
+        </div>
+        <div class="tradeoffs" id="install-tradeoffs" aria-live="polite" aria-atomic="true">
+          <div class="topt" data-for="cli"><b>Try locally: install on this machine</b><p><strong>Requires:</strong> Python 3.11+ with venv support, Git, curl, and Bash on Linux, macOS, or WSL. The installer downloads dependencies and may provision local inference; review the script before running it. Your IDE must be able to launch the installed <code>jebat</code> command.</p></div>
+          <div class="topt" data-for="ide" hidden><b>Already installed: connect your IDE</b><p><strong>Requires:</strong> JEBAT installed with Python 3.11+ on the IDE’s machine and an MCP-capable IDE. Print the configuration for your client with <code>jebat mcp ide-config</code>. This option does not install JEBAT or configure a model provider.</p></div>
+          <div class="topt" data-for="docker" hidden><b>Run a configured container</b><p><strong>Requires:</strong> Docker Engine with Compose, a JEBAT checkout, <code>.env.production</code> with a server API key, and the external network and data volume declared in the Compose file. Review the rendered configuration before starting services; keep the port private or put authenticated access behind TLS.</p></div>
+          <div class="topt" data-for="npx" hidden><b>Try locally: use the npm launcher</b><p><strong>Requires:</strong> Node.js 18+ with npm/npx and Python 3.11+. First use may download the installer and dependencies; review the package and meet the installer’s platform prerequisites before granting tool access. No repository clone is needed before invoking the launcher.</p></div>
+          <div class="topt" data-for="remote" hidden><b>Use a server: connect to Remote HTTP</b><p><strong>Requires:</strong> A running MCP endpoint over HTTPS, the server API key from your administrator, and an IDE that supports HTTP MCP. No local Python installation is needed for this connection. Use the authentication header your gateway requires—<code>Authorization: Bearer</code> or <code>X-API-Key</code>—and restrict server access. Never paste real keys into shared examples.</p></div>
         </div>
 
         <div class="code-wrap">
-          <button class="code-copy" onclick="copySnippet('install-cmd',this)">Copy</button>
+          <button class="code-copy copy-button" type="button" onclick="copySnippet('install-cmd',this)" aria-label="Copy selected installation instructions" aria-describedby="install-tradeoffs copy-feedback-install" data-feedback="copy-feedback-install"><span class="copy-label">Copy</span></button>
           <pre class="code" id="install-cmd"># Download and inspect the installer before running it
 curl -fsSL https://jebat.online/install.sh -o install-jebat.sh
 less install-jebat.sh
@@ -446,39 +500,29 @@ jebat mcp ide-config
 # Inspect available workflows
 jebat workflow list</pre>
         </div>
+        <p class="copy-feedback" id="copy-feedback-install"></p>
+        <div class="setup-checkpoint">
+          <h3>Check the setup before running agents.</h3>
+          <div class="code-wrap" id="verify-command-wrap">
+            <button class="code-copy copy-button" type="button" onclick="copySnippet('verify-command',this)" aria-label="Copy local setup checks" aria-describedby="verify-local-note copy-feedback-verify" data-feedback="copy-feedback-verify"><span class="copy-label">Copy</span></button>
+            <pre class="code" id="verify-command">jebat doctor
+jebat mcp ide-config</pre>
+          </div>
+          <p class="copy-feedback" id="copy-feedback-verify"></p>
+          <p class="learning-footnote" id="verify-local-note"><code>jebat doctor</code> checks the local Agentix registry, builds, and budgets—not model or network connectivity. <code>jebat mcp ide-config</code> prints templates; it does not connect your IDE. Paste the matching configuration, enable the server in your IDE, and confirm it can list tools before running agents.</p>
+          <p class="learning-footnote" id="verify-http-note" hidden>For the container or remote server, configure its endpoint and required authentication header in your IDE. Enable the server and confirm that authenticated tool discovery succeeds. Invalid credentials should be rejected. A listening port or printed configuration alone does not prove the MCP connection works.</p>
+        </div>
 
-        <div class="matrix">
-          <div class="mono" style="font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin-bottom:12px">PICK YOUR ARCHETYPE</div>
-          <table>
-            <thead><tr><th>Your task looks like</th><th>Scaffold</th><th>Why it fits</th></tr></thead>
-            <tbody>
-              <tr><td>A reasoning-heavy task with tool branching</td><td class="mono cu">reflex</td><td>Bounded ReAct loop: think → act → reflect per step</td></tr>
-              <tr><td>A folder of files that IS the workflow</td><td class="mono cu">flow</td><td>Agent reads/edits plan.md + workspace — zero orchestration code</td></tr>
-              <tr><td>Typed API capabilities to expose</td><td class="mono cu">lattice</td><td>Every tool ships a JSON schema; the agent only orchestrates</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p style="margin-top:14px;font-size:13.5px;color:var(--jc-slate)">
-          Python 3.11+ must already be installed. The installer provisions a virtual environment and launchers. Review its commands and your provider configuration before running agents.
-        </p>
-        <div class="tradeoffs" id="install-tradeoffs">
-          <div class="topt" data-for="cli"><b>When to pick stdio</b><p>Fastest path, no network hop, process lifetime tied to the IDE. Best for single-dev workstations. Requires the venv on the same machine as the IDE.</p></div>
-          <div class="topt" data-for="ide" style="display:none"><b>When to pick ide-config</b><p>You already have JEBAT installed and just want the JSON. <span class="mono">jebat mcp ide-config</span> prints vendor-exact shapes — VS Code wants <span class="mono">mcp.servers</span>, Cursor wants <span class="mono">mcpServers</span>; hand-editing gets this wrong.</p></div>
-          <div class="topt" data-for="docker" style="display:none"><b>When to pick Docker</b><p>Isolation and pinning: the container freezes its own deps, the healthcheck uses a finite TCP probe because <span class="mono">GET /mcp</span> is long-lived SSE. Costs a network hop to the IDE via docker exec.</p></div>
-          <div class="topt" data-for="npx" style="display:none"><b>When to pick npx</b><p>No clone, no repo checkout — the launcher downloads the JEBAT installer on first run (Python 3.11+ must already be installed). Slightly slower first start; afterwards identical to CLI. Great for trying JEBAT before committing.</p></div>
-          <div class="topt" data-for="remote" style="display:none"><b>When to pick Remote HTTP</b><p>Use an authenticated endpoint behind TLS. Set a server API key and restrict network access before exposing it. An endpoint returning 401 requires authentication; it is not proof the application is healthy.</p></div>
-        </div>
       </div>
 
       <div class="panel" style="display:flex;flex-direction:column">
-        <div class="chips" style="margin-bottom:12px">
+        <div class="chips" role="group" aria-label="IDE configuration client" style="margin-bottom:12px">
           <button class="jchip on" onclick="switchIde('cursor',this)">Cursor</button>
           <button class="jchip" onclick="switchIde('vscode',this)">VS Code</button>
           <button class="jchip" onclick="switchIde('windsurf',this)">Windsurf</button>
-          <button class="jchip" onclick="switchIde('http-remote',this)">HTTP</button>
         </div>
         <div class="code-wrap" style="flex:1">
-          <button class="code-copy" onclick="copySnippet('ide-json',this)">Copy</button>
+          <button class="code-copy copy-button" type="button" onclick="copySnippet('ide-json',this)" aria-label="Copy selected IDE configuration" aria-describedby="copy-feedback-ide" data-feedback="copy-feedback-ide"><span class="copy-label">Copy</span></button>
           <div class="code" id="ide-json" style="min-height:230px">{
   "mcpServers": {
     "jebat": {
@@ -493,7 +537,8 @@ jebat workflow list</pre>
   }
 }</div>
         </div>
-        <p style="margin-top:12px;font-size:12.5px;color:var(--jc-slate)">Paste into <span class="mono">.cursor/mcp.json</span> / <span class="mono">.vscode/mcp.json</span> — or print any of the six with <span class="mono" style="color:var(--jc-copper)">jebat mcp ide-config</span>.</p>
+        <p class="copy-feedback" id="copy-feedback-ide"></p>
+        <p class="learning-footnote" id="ide-config-note" aria-live="polite">Cursor · Local stdio. Paste into your IDE’s MCP configuration. Printed JSON does not prove a connection.</p>
       </div>
     </div>
 
@@ -509,6 +554,9 @@ jebat workflow list</pre>
       <h2>Providers are a routing table, not an architecture decision.</h2>
       <p>Every provider implements one interface; the router tries them in priority order and your tools, memory, and approvals are untouched by the switch.</p>
     </div>
+    <details class="technical-details" id="routing-details" open>
+      <summary>Technical details: model routing and context budgets</summary>
+      <div class="technical-content">
     <div class="route-grid">
       <div class="route-card">
         <h4>Failover chain</h4>
@@ -527,6 +575,8 @@ jebat workflow list</pre>
         <p>Token usage is recorded per provider and per call (<span class="mono">token_usage.py</span>) — the WebUI surfaces spend, and local routes report cost as unmetered instead of hiding it.</p>
       </div>
     </div>
+      </div>
+    </details>
   </div>
 </section>
 
@@ -539,6 +589,9 @@ jebat workflow list</pre>
       <p>Implemented in <span class="mono" style="color:var(--jc-copper)">EnhancedMemorySystem.retrieve()</span> — every filter, weight, and fallback below is in the shipped code, not aspirational.</p>
     </div>
 
+    <details class="technical-details" id="retrieval-details" open>
+      <summary>Technical details: memory retrieval, scoring, and decay</summary>
+      <div class="technical-content">
     <div class="ret-grid">
       <div class="ret-col">
         <div class="ret-title mono">QUERY PIPELINE</div>
@@ -572,6 +625,8 @@ jebat workflow list</pre>
         </div>
       </div>
     </div>
+      </div>
+    </details>
   </div>
 </section>
 

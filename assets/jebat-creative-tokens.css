@@ -1,30 +1,32 @@
-/* Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V4 · JEBAT Creative */
+/* JEBAT original Malam / Tembaga / Pucuk palette; accessible action shades. */
 @font-face{font-family:'Space Grotesk';src:url('fonts/space-grotesk.woff2') format('woff2');font-weight:300 700;font-style:normal;font-display:swap}
 @font-face{font-family:'Inter';src:url('fonts/inter.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Geist Mono';src:url('fonts/geist-mono.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 :root{
   color-scheme:light;
-  --jc-paper:#FFFFFF;--jc-card:#FFFFFF;--jc-ink:#1A0B2E;--jc-slate:#62556F;
-  --jc-violet:#7C3AED;--jc-deep:#4C1D95;--jc-pink:#BE185D;--jc-emerald:#047857;
-  --jc-cyan:#0E7490;--jc-amber:#92400E;--jc-error:#B91C1C;
-  --jc-line:#DDD3EC;--jc-soft:#F6F2FC;--jc-dark:#0A0118;
-  --jc-on-dark:#F7F2FF;--jc-dark-muted:#D8C6EE;--jc-dark-line:#49365E;
-  --jc-neon:#A3E635;--jc-neon-cyan:#22D3EE;--jc-dark-accent:#F0ABFC;
-  --jc-glass:rgba(255,255,255,.62);--jc-glass-dark:rgba(255,255,255,.08);
-  --jc-orb-violet:rgba(124,58,237,.28);--jc-orb-pink:rgba(236,72,153,.18);
+  --jc-paper:#F7F4EE;--jc-card:#FFFFFF;--jc-ink:#141816;--jc-slate:#5B6560;
+  --jc-copper:#C97A40;--jc-copper-hover:#B26832;--jc-bara:#D58A4A;
+  --jc-accent:#985524;--jc-accent-strong:#78421D;--jc-bara-ink:#8B4D21;
+  --jc-pucuk:#2F6F55;--jc-pucuk-ink:#245744;--jc-error:#B3261E;
+  --jc-line:#DCD9D1;--jc-soft:#F0EADF;--jc-dark:#080A09;
+  --jc-on-dark:#F0EADF;--jc-dark-muted:#B8C1BA;--jc-dark-line:#66736B;
+  --jc-success-on-dark:#8FD3B8;--jc-error-on-dark:#FFAB9E;--jc-dark-accent:#E1A06F;
+  --jc-glass:rgba(247,244,238,.78);--jc-glass-dark:rgba(240,234,223,.08);
+  --jc-orb-copper:rgba(201,122,64,.28);--jc-orb-green:rgba(47,111,85,.18);
   --jc-display:'Space Grotesk',sans-serif;--jc-body:'Inter',sans-serif;--jc-mono:'Geist Mono',monospace;
-  --jc-rad:16px;--jc-rad-sm:8px;--jc-pill:999px;
+  --jc-rad:16px;--jc-rad-sm:8px;--jc-button-radius:12px;--jc-pill:999px;
   --jc-s1:8px;--jc-s2:16px;--jc-s3:24px;--jc-s4:32px;--jc-s5:48px;--jc-s6:64px;--jc-s7:96px;
-  --jc-max:1160px;--jc-ease:cubic-bezier(.22,.61,.36,1);--jc-dur:180ms;
-  --jc-grad:linear-gradient(110deg,#7C3AED 0%,#7C3AED 55%,#4C1D95 55%,#4C1D95 100%);
-  --jc-stripe:linear-gradient(180deg,#7C3AED 0%,#7C3AED 55%,#EC4899 55%,#EC4899 100%);
-  --jc-sh-copper:0 20px 40px -16px rgba(124,58,237,.28);
-  --jc-sh-pucuk:0 20px 40px -16px rgba(4,120,87,.23);
-  --jc-sh-ink:0 16px 38px -20px rgba(76,29,149,.22);
-  /* Existing component token names retain their roles; the public palette is Creative. */
-  --jc-copper:var(--jc-violet);--jc-copper-hover:var(--jc-deep);--jc-bara:var(--jc-pink);
-  --jc-pucuk:var(--jc-emerald);--jc-pucuk-ink:var(--jc-emerald);
-  --jc-copper-soft:#F3ECFD;--jc-copper-glow:#C4A5F8;--jc-pucuk-soft:#ECFDF5;
+  --jc-max:1160px;--jc-ease:cubic-bezier(.22,.61,.36,1);--jc-dur:140ms;
+  --jc-action:hsl(25 62% 37%);--jc-action-hover:hsl(25 62% 29%);--jc-action-active:hsl(25 62% 23%);
+  --jc-action-label:var(--jc-card);--jc-control-line:#858E86;
+  --jc-neutral-hover:#EBE7DE;--jc-neutral-active:#DFD9CD;
+  --jc-dark-hover:#29322D;--jc-dark-active:#333D37;
+  --jc-grad:linear-gradient(135deg,var(--jc-action),var(--jc-accent-strong));
+  --jc-stripe:linear-gradient(180deg,var(--jc-copper) 0%,var(--jc-copper) 55%,var(--jc-pucuk) 55%,var(--jc-pucuk) 100%);
+  --jc-sh-copper:0 20px 40px -16px rgba(201,122,64,.28);
+  --jc-sh-pucuk:0 20px 40px -16px rgba(47,111,85,.23);
+  --jc-sh-ink:0 16px 38px -20px rgba(20,24,22,.18);
+  --jc-copper-soft:rgba(201,122,64,.10);--jc-copper-glow:rgba(201,122,64,.30);--jc-pucuk-soft:rgba(47,111,85,.10);
   --jebat-malam:var(--jc-dark);--jebat-besi:var(--jc-ink);--jebat-tulang:var(--jc-on-dark);
-  --jebat-tembaga:var(--jc-violet);--jebat-bara:var(--jc-pink);--jebat-keluli:var(--jc-dark-muted);--jebat-pucuk:var(--jc-emerald);
+  --jebat-tembaga:var(--jc-copper);--jebat-bara:var(--jc-bara);--jebat-keluli:var(--jc-dark-muted);--jebat-pucuk:var(--jc-pucuk);
 }
