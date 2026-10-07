@@ -1,8 +1,6 @@
-# MCP ↔ CLI/IDE Improvement Audit — COMPLETED
+# MCP / CLI / IDE Improvement Audit — Historical
 
-## Status: 26/26 COMPLETE
-
-All improvements implemented and verified across 3 parallel agents.
+The original batch reported 26/26 complete. Counts and outcomes below describe that batch, not current readiness. Current operating guidance, corrected lifecycle behavior, quick wins, and verification: [JEBAT operating workflows](JEBAT_WORKFLOWS.md).
 
 ---
 

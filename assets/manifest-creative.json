@@ -1,13 +1,13 @@
 {
   "name": "JEBAT — Sovereign AI Platform",
   "short_name": "JEBAT",
-  "description": "Sovereign AI command layer — 118 MCP tools, Ghost DB memory, Agentix lifecycle",
+  "description": "Self-hosted agent runtime, project learning evidence, SQLite knowledge history, and MCP tools",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F7F4EE",
-  "theme_color": "#F7F4EE",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "icons": [
     { "src": "/assets/favicon-32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "/assets/jebat-app-icon.png", "sizes": "192x192", "type": "image/png" },

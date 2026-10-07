@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import json
 import os
+import asyncio
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -28,6 +30,8 @@ from jebat.features.memory import (
     AutoMimpi,
     SelfLearn,
 )
+from jebat.features.memory.automimpi import project_traces
+from jebat.features.memory.learning_advisor import LearningAdvisor, redact_learning_text
 
 MEMORY_BASE_DIR = Path.home() / ".jebat" / "memory"
 
@@ -59,15 +63,7 @@ def _project_name() -> str:
 def _get_memory() -> EnhancedMemorySystem:
     global _memory
     if _memory is None:
-        ghost_client = None
-        try:
-            from jebat.features.ghost_db.client import GhostDBClient
-            ghost_client = GhostDBClient()
-        except Exception:
-            pass
-        _memory = EnhancedMemorySystem(storage_path=MEMORY_BASE_DIR, ghost_client=ghost_client)
-        # Load any existing cross-session traces
-        _memory._load()
+        _memory = EnhancedMemorySystem(storage_path=MEMORY_BASE_DIR)
     return _memory
 
 def _get_automimpi() -> AutoMimpi:
@@ -82,6 +78,12 @@ def _get_selflearn() -> SelfLearn:
     if _selflearn is None:
         _selflearn = SelfLearn(_get_memory())
     return _selflearn
+
+
+def _get_learning_advisor() -> LearningAdvisor:
+    from jebat.features.wiki.wiki_rag import _get_store
+
+    return LearningAdvisor(_get_memory(), _get_store(), str(Path.cwd().resolve()))
 
 
 def _project_context_filter() -> str:
@@ -147,52 +149,32 @@ def _mirror_dream_state_to_workspace() -> Optional[str]:
                 "recent session activity into durable knowledge.",
 )
 async def mimpi_dream(force: bool = False) -> dict[str, Any]:
-    """Run a full dream cycle over project memory."""
+    """Consolidate the active project's evidence and persist its report in the KB."""
     engine = _get_automimpi()
-    mirror_path: Optional[str] = None
+    root = str(Path.cwd().resolve())
     try:
-        report = await engine.dream(force=force)
-        _get_memory()._save()
-        # Mirror to the workspace bootstrap file — same success contract as
-        # the engine's own state save: a dream that doesn't flush its
-        # counters to BOTH files never happened as far as bootstrap cares.
-        mirror_path = _mirror_dream_state_to_workspace()
-    except Exception as e:
-        return {"status": "error", "error": f"{type(e).__name__}: {e}"}
-
-    suggestions = []
-    for s in report.suggestions:
-        suggestions.append({
-            "urgency": s.urgency.value,
-            "type": s.suggestion_type.value,
-            "title": s.title,
-            "reason": s.reason,
-            "action": s.action,
-        })
-
-    profile = report.profile
-    return {
-        "status": "ok",
-        "date": report.date,
-        "memories_processed": report.memories_processed,
-        "patterns_extracted": report.patterns_extracted,
-        "generalizations_created": report.generalizations_created,
-        "memories_pruned": report.memories_pruned,
-        "laksamana_quote": report.laksamana_quote,
-        "dream_state_mirror": mirror_path,
-        "profile": {
-            "skill_level": profile.skill_level,
-            "weak_areas": profile.weak_areas,
-            "strong_areas": profile.strong_areas,
-            "knowledge_gaps": profile.knowledge_gaps,
-            "recommended_focus": profile.recommended_focus,
-            "learning_velocity": round(profile.learning_velocity, 3),
-            "consolidation_health": round(profile.consolidation_health, 3),
-            "pattern_count": profile.pattern_count,
-            "strategy_success_rates": profile.strategy_success_rates,
-        },
-        "suggestions": suggestions,
-    }
+        advisor = _get_learning_advisor()
+        previous = await asyncio.to_thread(advisor.kb.search_learning, root, "", "dream", 1)
+        if previous["records"]:
+            from datetime import datetime, timezone
+            last = datetime.fromtimestamp(previous["records"][0]["created_at"], timezone.utc)
+            engine._last_scope_dream[(_project_name(), root)] = last
+        report = await engine.dream(force=force, project=_project_name(), project_root=root)
+    except Exception as exc:
+        return {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+    payload = asdict(report)
+    for suggestion in payload["suggestions"]:
+        suggestion["type"] = suggestion.pop("suggestion_type").value
+        suggestion["urgency"] = suggestion["urgency"].value
+    payload.update(status="ok" if report.status == "completed" else "skipped", project=_project_name(), project_root=root)
+    if report.status == "completed":
+        try:
+            payload["kb_record_id"] = await asyncio.to_thread(advisor.record_dream, report, engine.dream_count)
+            payload["dream_state_mirror"] = _mirror_dream_state_to_workspace()
+        except Exception as exc:
+            # Consolidation already committed: do not report it as rolled back.
+            payload.update(status="partial", persistence_error=f"{type(exc).__name__}: {exc}")
+    return payload
 
 
 # ── mimpi_status ────────────────────────────────────────────────────────
@@ -212,7 +194,8 @@ async def mimpi_status() -> dict[str, Any]:
     """Get autoMimpi status."""
     engine = _get_automimpi()
     try:
-        return {"status": "ok", **engine.get_status()}
+        return {"status": "ok", **engine.get_status(), "counter_scope": "shared memory store", "project_root": str(Path.cwd().resolve()),
+                "kb": await learning_kb_status()}
     except Exception as e:
         return {"status": "error", "error": f"{type(e).__name__}: {e}"}
 
@@ -242,14 +225,15 @@ async def selflearn_analyze(include_project: bool = True) -> dict[str, Any]:
     engine = _get_selflearn()
     memory = _get_memory()
     try:
-        analysis = engine.analyze()
+        analysis = engine.analyze(_project_name(), str(Path.cwd().resolve()))
     except Exception as e:
         return {"status": "error", "error": f"{type(e).__name__}: {e}"}
 
-    result = {
+    result: Dict[str, Any] = {
         "status": "ok",
         "project": _project_name(),
         "analysis": analysis,
+        "project_root": str(Path.cwd().resolve()),
     }
     if include_project:
         project_facts = _recall_project_facts(memory)
@@ -295,17 +279,25 @@ async def selflearn_analyze(include_project: bool = True) -> dict[str, Any]:
 )
 async def project_remember(fact: str, category: str = "other", importance: float = 0.5) -> dict[str, Any]:
     """Store a project context fact as a tagged semantic memory."""
+    import math
+    if not isinstance(fact, str) or not fact.strip() or len(fact) > 16000:
+        raise ValueError("fact must contain 1 to 16000 characters")
+    if not isinstance(category, str) or not category.strip() or len(category) > 128:
+        raise ValueError("category must be a bounded non-empty string")
+    if isinstance(importance, bool) or not isinstance(importance, (int, float)) or not math.isfinite(importance) or not 0 <= importance <= 1:
+        raise ValueError("importance must be a finite value from 0 to 1")
+    fact = redact_learning_text(fact)
     memory = _get_memory()
     project = _project_name()
     tags = {PROJECT_TAG, f"project:{project}", f"category:{category}"}
     try:
         trace = await memory.encode(
+            context={"project_root": str(Path.cwd().resolve())},
             content=f"[{project}][{category}] {fact}",
             memory_type=MemoryType.SEMANTIC,
             tags=tags,
             importance=importance,
         )
-        memory._save()
         return {
             "status": "stored",
             "memory_id": trace.trace_id,
@@ -367,18 +359,20 @@ async def project_recall(category: str = "all", query: str = "", limit: int = 20
     return {
         "status": "ok",
         "project": _project_name(),
+        "project_root": str(Path.cwd().resolve()),
         "count": len(facts[:limit]),
         "facts": facts[:limit],
     }
 
 
 def _recall_project_facts(memory: EnhancedMemorySystem) -> List[Dict[str, Any]]:
-    """Extract project-tagged traces as plain dicts."""
+    """Extract only traces explicitly tagged for the active server project."""
     import re
     _prefix_re = re.compile(r"^\[([^\]]+)\]\[([^\]]+)\]\s*(.*)$")
     facts = []
-    for trace in memory.traces.values():
-        if PROJECT_TAG not in trace.tags:
+    project_tag = f"project:{_project_name()}"
+    for trace in project_traces(memory, _project_name(), str(Path.cwd().resolve())):
+        if PROJECT_TAG not in trace.tags or project_tag not in trace.tags:
             continue
         content = trace.content
         category = "other"
@@ -419,14 +413,9 @@ def _recall_project_facts(memory: EnhancedMemorySystem) -> List[Dict[str, Any]]:
 async def project_forget(memory_id: str) -> dict[str, Any]:
     """Delete a project memory by ID."""
     memory = _get_memory()
-    if memory_id in memory.traces:
-        del memory.traces[memory_id]
-        # Clean up index maps
-        for tid_set in memory.traces_by_type.values():
-            tid_set.discard(memory_id)
-        for tid_set in memory.traces_by_tag.values():
-            tid_set.discard(memory_id)
-        memory._save()
+    allowed = {t.trace_id for t in project_traces(memory, _project_name(), str(Path.cwd().resolve())) if PROJECT_TAG in t.tags}
+    if memory_id in allowed:
+        memory.forget(memory_id)
         return {"status": "deleted", "memory_id": memory_id}
     return {"status": "not_found", "memory_id": memory_id}
 
@@ -458,10 +447,10 @@ async def adapt_environment() -> dict[str, Any]:
     # Self-learning recommendations
     engine = _get_selflearn()
     try:
-        analysis = engine.analyze()
+        analysis = engine.analyze(project, str(Path.cwd().resolve()))
         recommendations = analysis.get("recommendations", [])
-    except Exception:
-        recommendations = []
+    except Exception as exc:
+        return {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
 
     return {
         "status": "ok",
@@ -471,8 +460,8 @@ async def adapt_environment() -> dict[str, Any]:
         "learning_recommendations": recommendations,
         "advice": [
             f"Project context learned: {len(facts)} facts across {len(by_cat)} categories.",
-            f"Call mimpi_dream periodically to consolidate session learnings.",
-            f"Call project_recall at session start to restore project memory.",
+            "Call mimpi_dream periodically to consolidate session learnings.",
+            "Call project_recall at session start to restore project memory.",
         ],
     }
 
@@ -492,25 +481,20 @@ async def adapt_environment() -> dict[str, Any]:
     },
 )
 async def selflearn_tool_guidance(tool_name: str) -> dict[str, Any]:
-    sl = _get_selflearn()
-    analysis = sl.analyze()
-    skills = analysis.get("skill_assessment", {})
-    # Find relevant skill info
-    relevant = {}
-    for domain, info in skills.items():
-        if tool_name.lower() in domain.lower() or domain.lower() in tool_name.lower():
-            relevant[domain] = info
-    # Get related memories
-    mem = _get_memory()
-    related_traces = [t for t in mem.traces.values() if tool_name.lower() in t.content.lower() or any(tool_name.lower() in tag.lower() for tag in t.tags)]
-    return {
-        "tool": tool_name,
-        "skill_match": relevant,
-        "confidence": max((info.get("avg_strength", 0) for info in relevant.values()), default=0),
-        "related_memories": len(related_traces),
-        "recommendation": "confident" if any(info.get("avg_strength", 0) > 0.7 for info in relevant.values()) else "verify_results" if related_traces else "new_territory",
-        "velocity": analysis.get("learning_velocity", {}),
-    }
+    if not isinstance(tool_name, str) or not tool_name.strip():
+        raise ValueError("tool_name must be a non-empty string")
+    project, root = _project_name(), str(Path.cwd().resolve())
+    analysis = _get_selflearn().analyze(project, root)
+    needle = tool_name.casefold()
+    relevant = {name: info for name, info in analysis["skill_assessment"].items() if needle in name.casefold() or name.casefold() in needle}
+    related = [t for t in project_traces(_get_memory(), project, root) if needle in t.content.casefold() or any(needle in tag.casefold() for tag in t.tags)]
+    failures = [t for t in related if "failure" in t.tags]
+    return {"tool": tool_name, "project_root": root, "skill_match": relevant,
+            "confidence": None, "confidence_basis": "No verified task-outcome probability is available",
+            "related_memories": len(related), "evidence_ids": [t.trace_id for t in related[:10]],
+            "recorded_failures": len(failures),
+            "recommendation": "review_prerequisites" if len(failures) >= 3 else "verify_results" if related else "new_territory",
+            "velocity": analysis["learning_velocity"]}
 
 
 # ── mimpi_record_failure ────────────────────────────────────────────────
@@ -530,25 +514,16 @@ async def selflearn_tool_guidance(tool_name: str) -> dict[str, Any]:
     },
 )
 async def mimpi_record_failure(tool_name: str, error: str, context: str = "") -> dict[str, Any]:
-    mem = _get_memory()
-    from jebat.features.memory import MemoryType
-    # Store the failure
-    trace = mem.store(
-        content=f"Tool {tool_name} failed: {error}. Context: {context}",
-        memory_type=MemoryType.EPISODIC,
-        tags=["failure", tool_name, "pattern-watch"],
-        confidence=0.8,
-    )
-    # Count similar failures
-    similar = [t for t in mem.traces.values() if "failure" in t.tags and tool_name in t.tags]
-    result = {
-        "recorded": True,
-        "memory_id": trace.trace_id,
-        "similar_failures": len(similar),
-    }
+    import re
+    if not isinstance(tool_name, str) or not re.fullmatch(r"[\w.:-]{1,128}", tool_name):
+        raise ValueError("tool_name must be a bounded tool identifier")
+    if not isinstance(error, str) or not error.strip() or not isinstance(context, str):
+        raise ValueError("error must be non-empty and context must be text")
+    project, root = _project_name(), str(Path.cwd().resolve())
+    trace, similar = _get_automimpi().record_failure(tool_name, error, context, project, root)
+    result = {"recorded": True, "memory_id": trace.trace_id, "similar_failures": len(similar), "project_root": root}
     if len(similar) >= 3:
-        result["warning"] = f"Recurring failure pattern: {tool_name} has failed {len(similar)} times"
-        result["suggestion"] = f"Consider alternative approach or verify {tool_name} prerequisites before calling"
+        result["warning"] = f"Review {tool_name} prerequisites: {len(similar)} recorded failures"
     return result
 
 
@@ -568,29 +543,67 @@ async def mimpi_record_failure(tool_name: str, error: str, context: str = "") ->
         "required": ["summary"],
     },
 )
-async def session_learning_commit(summary: str, key_facts: list = None, session_id: str = "") -> dict[str, Any]:
-    mem = _get_memory()
-    from jebat.features.memory import MemoryType
-    stored = []
-    # Store session summary
-    t = mem.store(
-        content=f"Session summary: {summary}",
-        memory_type=MemoryType.EPISODIC,
-        tags=["session", "summary", _project_name()] + ([session_id] if session_id else []),
-        confidence=0.7,
+async def session_learning_commit(summary: str, key_facts: Optional[List[str]] = None, session_id: str = "") -> dict[str, Any]:
+    if not isinstance(summary, str) or not summary.strip() or len(summary) > 16000:
+        raise ValueError("summary must contain 1 to 16000 characters")
+    if not isinstance(session_id, str) or len(session_id) > 256:
+        raise ValueError("session_id must be a string of at most 256 characters")
+    if key_facts is not None and (not isinstance(key_facts, list) or len(key_facts) > 50 or not all(isinstance(fact, str) and fact.strip() and len(fact) <= 16000 for fact in key_facts)):
+        raise ValueError("key_facts must contain at most 50 non-empty strings of at most 16000 characters")
+    ids = _get_automimpi().commit_session_learning(
+        redact_learning_text(summary), [redact_learning_text(fact) for fact in key_facts or []],
+        session_id, _project_name(), str(Path.cwd().resolve()),
     )
-    stored.append(t.trace_id)
-    # Store individual facts
-    for fact in (key_facts or []):
-        t = mem.store(
-            content=fact,
-            memory_type=MemoryType.SEMANTIC,
-            tags=["session", "fact", _project_name()] + ([session_id] if session_id else []),
-            confidence=0.8,
-        )
-        stored.append(t.trace_id)
-    return {
-        "committed": len(stored),
-        "memory_ids": stored,
-        "project": _project_name(),
-    }
+    return {"committed": len(ids), "memory_ids": ids, "project": _project_name()}
+
+
+@register_tool(
+    "learning_advisor",
+    description="Generate project-scoped, evidence-cited learning recommendations and retain them in the KB; no model call or action execution.",
+    schema={"type": "object", "properties": {
+        "focus": {"type": "string", "maxLength": 500, "description": "Optional tool or domain filter"},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 20, "default": 5},
+    }},
+    safety_tier="auto", timeout=30,
+)
+async def learning_advisor(focus: str = "", limit: int = 5) -> dict[str, Any]:
+    advisor = _get_learning_advisor()
+    return await asyncio.to_thread(advisor.advise, focus, limit)
+
+
+@register_tool(
+    "learning_feedback",
+    description="Record explicit helpful, unhelpful, or dismissed feedback for advice in this project, with supporting evidence; does not modify source facts.",
+    schema={"type": "object", "properties": {
+        "record_id": {"type": "string"},
+        "outcome": {"type": "string", "enum": ["helpful", "unhelpful", "dismissed"]},
+        "evidence": {"type": "string", "minLength": 1, "maxLength": 4000},
+    }, "required": ["record_id", "outcome", "evidence"]},
+    safety_tier="confirm", timeout=10,
+)
+async def learning_feedback(record_id: str, outcome: str, evidence: str) -> dict[str, Any]:
+    return await asyncio.to_thread(_get_learning_advisor().feedback, record_id, outcome, evidence)
+
+
+@register_tool(
+    "learning_kb_search",
+    description="Search persisted AutoMimpi reports and learning advice in the active project's KB database using literal full-text terms.",
+    schema={"type": "object", "properties": {
+        "query": {"type": "string", "maxLength": 2000},
+        "kind": {"type": "string", "enum": ["", "dream", "advice"], "default": ""},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10},
+    }}, safety_tier="auto", timeout=15,
+)
+async def learning_kb_search(query: str = "", kind: str = "", limit: int = 10) -> dict[str, Any]:
+    advisor = _get_learning_advisor()
+    return await asyncio.to_thread(advisor.kb.search_learning, advisor.project_root, query, kind, limit)
+
+
+@register_tool(
+    "learning_kb_status",
+    description="Show persisted project-scoped dream/advice counts and explicit feedback counts from the existing KB database.",
+    schema={"type": "object", "properties": {}}, safety_tier="auto", timeout=10,
+)
+async def learning_kb_status() -> dict[str, Any]:
+    advisor = _get_learning_advisor()
+    return await asyncio.to_thread(advisor.kb.learning_status, advisor.project_root)

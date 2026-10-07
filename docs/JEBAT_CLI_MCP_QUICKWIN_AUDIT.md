@@ -1,6 +1,8 @@
 # JEBAT CLI + MCP Quickwin Audit
 
-## Status: 18/18 COMPLETE
+## Historical implementation snapshot
+
+The original batch reported 18/18 complete. This is not current runtime proof; later checks found resume and prompt-boundary defects. Current findings, fixes, and verification: [JEBAT operating workflows](JEBAT_WORKFLOWS.md).
 
 Audit inspired by Jev (TypeSafe AI System One) integration context.
 See `docs/JEV_CONTEXT.md` for curated Jev reference, `routers/advisor.py` for Jev-style advisor endpoints.

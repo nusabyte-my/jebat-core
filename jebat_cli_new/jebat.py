@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse, collections, json, os, random, re, sqlite3, sys, textwrap, threading, time, types, urllib.request, urllib.error
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 from jebat_cli_new import __version__
@@ -836,7 +836,7 @@ class TaskDB:
         return cur.fetchall()
 
     def save_session(self, messages):
-        path = SESSIONS_DIR / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
         serializable = [{"role": m.role, "content": m.content} for m in messages]
         path.write_text(json.dumps(serializable, indent=2, ensure_ascii=False), encoding="utf-8")
         return str(path)
@@ -1150,7 +1150,7 @@ def _compact_messages(agent, messages: list) -> list:
 
 def _fork_session(messages) -> str:
     """Copy current messages to a new session file, return path."""
-    path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}_fork.json"
+    path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_fork.json"
     serializable = [{
         "role": m.role if hasattr(m, 'role') else m.get('role', ''),
         "content": m.content if hasattr(m, 'content') else m.get('content', '')
@@ -1816,42 +1816,39 @@ def _save_dream_state(state):
 def _auto_mimpi_check(taskdb):
     state = _load_dream_state()
     state["sessions_since_dream"] = state.get("sessions_since_dream", 0) + 1
-    if state["sessions_since_dream"] >= 5:
-        _run_dream(taskdb)
-        state["sessions_since_dream"] = 0
-        state["last_dream"] = datetime.now().isoformat()
-        state["dream_count"] = state.get("dream_count", 0) + 1
+    # Only the engine records successful dreams; a failed cycle stays due.
     _save_dream_state(state)
+    if state["sessions_since_dream"] < 5:
+        return
+    last = state.get("last_dream")
+    if last:
+        try:
+            last_at = datetime.fromisoformat(last.replace("Z", "+00:00"))
+        except ValueError:
+            cprint("Dream timestamp invalid; use /dream after reviewing the canonical state.")
+            return
+        if last_at.tzinfo is None:
+            last_at = last_at.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) - last_at < timedelta(hours=24):
+            return
+    _run_dream(taskdb)
 
 
 def _run_dream(taskdb):
-    """Run real AutoMimpi dream cycle."""
-    try:
-        from jebat.features.memory import EnhancedMemorySystem
-        from jebat.features.memory.automimpi import AutoMimpi
-        import asyncio
-        mem = EnhancedMemorySystem()
-        engine = AutoMimpi(mem)
-        report = asyncio.run(engine.dream(force=True))
-        # Keep the workspace mirror in step: it is a view of the canonical state,
-        # and the CLI is a dream path the tool-side mirror never saw.
-        try:
-            from jebat.tools.automimpi_tools import _mirror_dream_state_to_workspace
+    """Use the same scoped consolidation and KB persistence as MCP."""
+    import asyncio
+    from jebat.tools.automimpi_tools import mimpi_dream
 
-            _mirror_dream_state_to_workspace()
-        except Exception:
-            pass
-        _double_box("Mimpi (autoDream)",
-            f"Processed: {report.memories_processed} memories\n"
-            f"Patterns: {report.patterns_extracted} extracted\n"
-            f"Pruned: {report.memories_pruned} weak memories\n"
-            f"Suggestions: {len(report.suggestions or [])}\n"
-            f"\n{report.laksamana_quote or ''}")
-        # Show top suggestions
-        for s in (report.suggestions or [])[:3]:
-            cprint(f"  {C.YELLOW}💡{C.RESET} {s.title}: {C.DIM}{s.reason}{C.RESET}")
-    except Exception as e:
-        _double_box("Mimpi", f"Dream cycle failed: {e}")
+    try:
+        result = asyncio.run(mimpi_dream(force=True))
+        if result["status"] not in {"ok", "skipped"}:
+            _double_box("Mimpi", json.dumps(result, ensure_ascii=False))
+            return
+        _double_box("Mimpi", f"Status: {result['status']}\nProcessed: {result['memories_processed']}\n"
+                    f"Patterns: {result['patterns_extracted']}\nPruned: {result['memories_pruned']}\n"
+                    f"KB record: {result.get('kb_record_id', 'none (skipped)')}")
+    except Exception as exc:
+        _double_box("Mimpi", f"Dream cycle failed: {exc}")
 
 # ═══════════════════════════════════════════════════════════════════
 # PROVIDER REGISTRY
@@ -3041,7 +3038,7 @@ def _show_command_picker():
 def _save_session_history(messages, taskdb):
     """Save conversation to disk."""
     if messages:
-        path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        path = SESSIONS_DIR / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.json"
         serializable = [{"role": m.role, "content": m.content} for m in messages]
         path.write_text(json.dumps(serializable, indent=2, ensure_ascii=False), encoding="utf-8")
         try:
@@ -3055,10 +3052,7 @@ def _save_session_history(messages, taskdb):
                     break
             if not topic_summary:
                 topic_summary = f"{len(messages)} messages"
-            try:
-                memory_store(f"Session {session_id}: discussed {topic_summary}", tags=["session", session_id])
-            except TypeError:
-                memory_store(f"session:{session_id}", f"discussed {topic_summary}")
+            memory_store(f"session:{session_id}", f"discussed {topic_summary}")
         except Exception:
             pass
 
@@ -3118,70 +3112,31 @@ def _print_categorized_help():
     cprint(f"  {C.DIM}Tip: Type {C.NEON_GREEN}/{C.RESET}{C.DIM} to see all commands{C.RESET}")
     print()
 
-def repl(registry, taskdb, skills):
-    """Interactive REPL with all features."""
+def repl(registry, taskdb, skills, agent=None):
+    """Interactive REPL, preserving an existing agent's conversation when supplied."""
     global _DETAIL_MODE
     cfg = registry.get_active()
-    agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
+    if agent is None:
+        agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
     show_thinking = False  # CQ-11: thinking block visibility
 
     # Auto-mimpi check
     _auto_mimpi_check(taskdb)
 
-    # Advisor startup panel (A2 + D1)
+    # Same evidence-backed advisor as MCP; no model or delegated agent is started.
     try:
-        from jebat.features.memory import EnhancedMemorySystem
-        from jebat.features.memory.automimpi import AutoMimpi, SelfLearn
+        from jebat.tools.automimpi_tools import _get_learning_advisor, _get_selflearn
 
-        mem = EnhancedMemorySystem()
-        traces = list(mem.traces.values())
-        engine = AutoMimpi(mem)
-        selflearn = SelfLearn(mem)
-
-        profile = engine._build_learning_profile()
-        dream_state = _load_dream_state()
-
-        # 7-day velocity sparkline
-        now = datetime.now(timezone.utc)
-        daily_counts = [0] * 7
-        for t in traces:
-            days_ago = (now - t.created_at).days
-            if 0 <= days_ago < 7:
-                daily_counts[6 - days_ago] += 1
-        spark = sparkline(daily_counts)
-
-        health_val = profile.consolidation_health * 10
-        health_bar = '█' * min(10, max(0, int(health_val))) + '░' * max(0, 10 - min(10, max(0, int(health_val))))
-        vel_day = profile.learning_velocity * 24
-        spark_str = f" {spark}" if spark else ""
-
-        advisor_lines = []
-        advisor_lines.append(f"  {C.BOLD}Health:{C.RESET} {health_bar} {health_val:.1f}/10   {C.BOLD}Velocity:{C.RESET} {vel_day:.1f}/day{spark_str}")
-
-        if profile.weak_areas:
-            w_area = profile.weak_areas[0]
-            w_strengths = [t.calculate_current_strength() for t in traces if w_area in t.tags]
-            w_pct = (sum(w_strengths) / len(w_strengths)) if w_strengths else 0.28
-            advisor_lines.append(f"  {C.YELLOW}⚠{C.RESET}  {C.YELLOW}Strengthen:{C.RESET} {w_area} ({w_pct:.0%} strength)")
-        elif profile.knowledge_gaps:
-            advisor_lines.append(f"  {C.YELLOW}⚠{C.RESET}  {C.YELLOW}Knowledge gap:{C.RESET} {profile.knowledge_gaps[0]}")
-
-        if profile.strong_areas:
-            s_area = profile.strong_areas[0]
-            s_strengths = [t.calculate_current_strength() for t in traces if s_area in t.tags]
-            s_pct = (sum(s_strengths) / len(s_strengths)) if s_strengths else 0.92
-            advisor_lines.append(f"  {C.GREEN}✓{C.RESET}  {C.GREEN}Strong:{C.RESET} {s_area} ({s_pct:.0%})")
-
-        pat_cnt = profile.pattern_count or len(getattr(mem, "extracted_patterns", []))
-        if pat_cnt > 0:
-            advisor_lines.append(f"  {C.YELLOW}💡{C.RESET} {pat_cnt} pattern{'s' if pat_cnt != 1 else ''} detected — run /dream to consolidate")
-        else:
-            since = dream_state.get("sessions_since_dream", 0)
-            advisor_lines.append(f"  {C.YELLOW}💡{C.RESET} {since} session{'s' if since != 1 else ''} since last dream — run /dream to consolidate")
-
-        panel("Advisor", "\n".join(advisor_lines), width=60)
-    except Exception:
-        pass
+        root = str(Path.cwd().resolve())
+        analysis = _get_selflearn().analyze(Path.cwd().name, root)
+        advice = _get_learning_advisor().advise(limit=3, analysis=analysis)
+        lines = [f"Project: {root}",
+                 f"Evidence: {advice['memory_count']} memories; retention {analysis['retention_health']['avg_strength']:.0%}",
+                 "Retention is not a task-success probability."]
+        lines.extend(f"{item['priority']}: {item['message']} [{item['record_id'][:12]}]" for item in advice["recommendations"])
+        panel("Learning Advisor", "\n".join(lines), width=60)
+    except Exception as exc:
+        cprint(f"Learning advisor unavailable: {exc}")
 
     print()
     cprint(f"  {C.DIM}Type / for commands, /help for list, Ctrl+C to cancel{C.RESET}")
@@ -3542,9 +3497,15 @@ def repl(registry, taskdb, skills):
                 if not arg:
                     cprint(f"  {C.DIM}Usage: /commit <message>{C.RESET}")
                 else:
-                    tool_terminal("git add -A")
-                    r = execute_tool("terminal", {"command": f'git commit -m "{arg}"'})
-                    panel("Git Commit", r)
+                    import subprocess
+                    try:
+                        staged = subprocess.run(["git", "add", "-A"], capture_output=True, text=True)
+                        result = staged if staged.returncode else subprocess.run(
+                            ["git", "commit", "-m", arg], capture_output=True, text=True
+                        )
+                        panel("Git Commit", result.stdout + result.stderr)
+                    except OSError as exc:
+                        panel("Git Commit", f"Commit failed: {exc}")
 
             elif cmd == "/skill":
                 if not arg:
@@ -3680,7 +3641,7 @@ def repl(registry, taskdb, skills):
                         for t in traces[:10]:
                             strength = t.calculate_current_strength()
                             bar = '█' * int(strength * 5) + '░' * (5 - int(strength * 5))
-                            lines.append(f"  {bar} {C.CYAN}{t.content[:60]}{C.RESET} {C.DIM}[{', '.join(t.tags[:3])}]{C.RESET}")
+                            lines.append(f"  {bar} {C.CYAN}{t.content[:60]}{C.RESET} {C.DIM}[{', '.join(sorted(t.tags)[:3])}]{C.RESET}")
                         panel(f"Recall ({len(traces)} found)", "\n".join(lines))
                 except Exception as e:
                     cprint(f"  {C.RED}Memory error: {e}{C.RESET}")
@@ -4234,14 +4195,18 @@ def main():
     continue_last = False
     resume_session = None
     filtered_args = []
+    session_mode = not args or args[0] in ("repl", "-c", "--continue", "-s", "--session")
     i = 0
     while i < len(args):
-        if args[i] in ("-c", "--continue"):
+        if session_mode and args[i] in ("-c", "--continue"):
             continue_last = True
-        elif args[i] in ("-s", "--session"):
+        elif session_mode and args[i] in ("-s", "--session"):
             if i + 1 < len(args):
                 resume_session = args[i + 1]
                 i += 1
+            else:
+                print("--session requires a session ID", file=sys.stderr)
+                return 2
         else:
             filtered_args.append(args[i])
         i += 1
@@ -4252,8 +4217,8 @@ def main():
     if args and args[0] == "think":
         args[0] = "chat"
 
-    if not args:
-        # No args → start interactive REPL directly
+    if not args or args[0] == "repl":
+        # Both entrypoints share the same session restoration path.
         registry = ProviderRegistry()
         taskdb = TaskDB()
         skills = SkillManager()
@@ -4267,6 +4232,7 @@ def main():
             show_setup("none", "none", "none", "No provider")
 
         # CQ-9: Auto-load session if requested
+        agent = None
         if continue_last or resume_session:
             agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
             if resume_session:
@@ -4277,8 +4243,11 @@ def main():
             if loaded:
                 agent.messages = loaded
                 cprint(f"  {C.GREEN}✓{C.RESET} Resumed {len(loaded)} messages from previous session")
+            else:
+                print("No readable saved session matched; nothing resumed.", file=sys.stderr)
+                return 1
 
-        repl(registry, taskdb, skills)
+        repl(registry, taskdb, skills, agent=agent)
         return
 
     if args[0] in ("-h", "--help", "help"):
@@ -4290,6 +4259,11 @@ def main():
         print(f"    chat [message]   Chat mode (no tools)")
         print("    mcp serve         Start MCP server for IDE integration")
         print("    mcp ide-config    Print IDE MCP config templates")
+        print("    workflow list     List opt-in operator playbooks")
+        print("    workflow show     Render guidance without running agents")
+        print("    learning          Analyze, dream, advise, search KB, and record feedback")
+        print("    status / doctor   Inspect local state / Agentix registry")
+        print("    agentix           Solution catalog, runs, teams, and validation")
         print(f"    provider list       List providers")
         print(f"    provider add        Connect new provider (wizard)")
         print(f"    provider remove     Remove a provider")
@@ -4317,6 +4291,16 @@ def main():
         print(f"    jebat chat \"What is Python?\"          # Chat mode")
         print(f"    jebat provider add openai --id work")
         return
+
+    if args[0] == "learning":
+        from jebat_cli_new.learning_command import run_learning_command
+
+        return run_learning_command(args[1:])
+
+    if args[0] == "workflow":
+        from jebat_cli_new.workflow_command import run_workflow_command
+
+        return run_workflow_command(args[1:])
 
     if args[0] == "mcp":
         # Dispatch before ProviderRegistry/TaskDB/SkillManager construction:
@@ -4403,14 +4387,14 @@ def main():
             if sys.stdin.isatty():
                 print()
                 cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
-                repl(registry, taskdb, skills)
+                repl(registry, taskdb, skills, agent=agent)
             return
-            # REPL mode
-            banner()
-            cfg = registry.get_active()
-            if cfg:
-                show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
-            repl(registry, taskdb, skills)
+        # No one-shot prompt: start the coding REPL.
+        banner()
+        cfg = registry.get_active()
+        if cfg:
+            show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
+        repl(registry, taskdb, skills)
 
     elif args[0] == "chat":
         from jebat_cli_new.cli_args import parse_chat_options
@@ -4480,27 +4464,6 @@ def main():
                 print(f"  {C.DIM}Usage: jebat provider [list|use|add|remove|test] [kind]{C.RESET}")
         repl(registry, taskdb, skills)
 
-    elif args[0] == "repl":
-        # Word-dispatch for the advertised `jebat repl` (README Quick Start).
-        # Same behavior as no-args, including -c/-s session resume.
-        banner()
-        cfg = registry.get_active()
-        if cfg:
-            show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
-        else:
-            show_setup("none", "none", "none", "No provider")
-        if continue_last or resume_session:
-            agent = Agent(registry, taskdb, skills, verbose=False, plan_first=False)
-            if resume_session:
-                loaded = _load_session_by_id(resume_session)
-            else:
-                sessions = sorted(SESSIONS_DIR.glob("session_*.json"), reverse=True)
-                loaded = _load_session_by_id(sessions[0].stem) if sessions else []
-            if loaded:
-                agent.messages = loaded
-                cprint(f"  {C.GREEN}✓{C.RESET} Resumed {len(loaded)} messages from previous session")
-        repl(registry, taskdb, skills)
-
     elif args[0] == "doctor":
         # Health check: agentix registry/builds/budgets + doctrine drift.
         from jebat_cli_new.agentix_ops import doctor as agentix_doctor
@@ -4563,7 +4526,7 @@ def main():
         bottom_bar(cfg.kind if cfg else "unknown", model_str, tokens=step.tokens, tool_count=len(step.tool_actions), elapsed_s=0, cost_usd=cost)
         print()
         cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
-        repl(registry, taskdb, skills)
+        repl(registry, taskdb, skills, agent=agent)
 
 
 if __name__ == "__main__":

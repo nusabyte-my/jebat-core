@@ -171,7 +171,7 @@ jobs:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: [unit, integration, coverage]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@v4
 
@@ -203,7 +203,7 @@ jobs:
     needs: build
     # Deploys are owned by the push -> deploy-webhook -> auto-deploy chain.
     # CI deploys only on manual dispatch to avoid racing the webhook.
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     environment:
       name: staging
       url: https://staging.jebat.online
@@ -218,13 +218,14 @@ jobs:
       - name: Add VPS to known_hosts
         run: ssh-keyscan 72.62.255.206 >> ~/.ssh/known_hosts
 
-      - name: Pull latest code on staging VPS
+      - name: Deploy tested revision on mainframe VPS
         run: |
           echo "Deploying commit ${{ github.sha }} to staging (72.62.255.206)"
           ssh root@72.62.255.206 "cd /var/www/jebat-core && \
-            git fetch origin main && \
-            git reset --hard origin/main && \
-            echo '✅ Code updated on staging'"
+            git fetch origin '${{ github.sha }}' && \
+            git reset --hard '${{ github.sha }}' && \
+            test \$(git rev-parse HEAD) = '${{ github.sha }}' && \
+            echo 'Code revision verified on mainframe'"
 
       - name: Install dependencies on staging
         run: |
@@ -264,7 +265,7 @@ jobs:
     name: Deploy to Production (.65)
     runs-on: ubuntu-latest
     needs: deploy-staging
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     environment:
       name: production
       url: https://jebat.online
@@ -279,13 +280,14 @@ jobs:
       - name: Add VPS to known_hosts
         run: ssh-keyscan 72.62.254.65 >> ~/.ssh/known_hosts
 
-      - name: Pull latest code on production VPS
+      - name: Sync tested revision on ingress VPS
         run: |
           echo "Deploying commit ${{ github.sha }} to production (72.62.254.65)"
           ssh root@72.62.254.65 "cd /var/www/jebat-core && \
-            git fetch origin main && \
-            git reset --hard origin/main && \
-            echo '✅ Code updated on production'"
+            git fetch origin '${{ github.sha }}' && \
+            git reset --hard '${{ github.sha }}' && \
+            test \$(git rev-parse HEAD) = '${{ github.sha }}' && \
+            echo 'Code revision verified on ingress'"
 
       - name: Install dependencies on production
         run: |

@@ -1,0 +1,161 @@
+/* Recorded product evidence and local UI controls; no agent execution. */
+'use strict';
+
+const INSTALL_CMDS = {
+  cli: document.getElementById('install-cmd').textContent,
+  ide: '# Print the templates, then copy the section for your IDE\njebat mcp ide-config\n\n# Start a local stdio server through the IDE configuration\n# command: jebat\n# args: ["mcp", "serve", "--transport", "stdio"]',
+  docker: '# From a configured checkout: review external networks, volumes, and env_file first\ndocker compose -f infra/vps/vps/docker-compose.mcp.yml config\n\n# Start only after providing the required environment and credentials\ndocker compose -f infra/vps/vps/docker-compose.mcp.yml up -d\n\n# Inspect the actual health result; no success is assumed\ndocker inspect --format \'{{.State.Health.Status}}\' jebat-mcp',
+  npx: '# Requires Node.js and Python 3.11+ already installed\nnpx @nusabyte/jebat mcp serve --transport stdio\n\n# The launcher may download dependencies on first use.\n# Review the package and configuration before granting tool access.',
+  remote: '# Example: replace the endpoint and key with your own configuration\n{\n  "mcpServers": {\n    "jebat": {\n      "type": "http",\n      "url": "https://your-jebat-host.example/mcp",\n      "headers": { "X-API-Key": "YOUR_API_KEY" }\n    }\n  }\n}\n\n# Require TLS, a server key, and restricted network access.'
+};
+const LOCAL_SERVER = { command: 'jebat', args: ['mcp', 'serve', '--transport', 'stdio'] };
+const IDE_JSONS = {
+  cursor: { mcpServers: { jebat: LOCAL_SERVER } },
+  vscode: { servers: { jebat: { type: 'stdio', ...LOCAL_SERVER } } },
+  windsurf: { mcpServers: { jebat: LOCAL_SERVER } },
+  'http-remote': { mcpServers: { jebat: { type: 'http', url: 'https://your-jebat-host.example/mcp', headers: { 'X-API-Key': 'YOUR_API_KEY' } } } }
+};
+
+function selectButton(button, group, attribute) {
+  group.querySelectorAll('button').forEach(item => {
+    const selected = item === button;
+    item.classList.toggle('on', selected);
+    item.setAttribute(attribute, String(selected));
+    if (attribute === 'aria-selected') item.tabIndex = selected ? 0 : -1;
+  });
+}
+
+function switchInstall(method, button) {
+  if (!Object.hasOwn(INSTALL_CMDS, method)) return;
+  selectButton(button, button.parentElement, 'aria-selected');
+  const panel = document.getElementById('install-cmd');
+  panel.textContent = INSTALL_CMDS[method];
+  panel.setAttribute('aria-labelledby', button.id);
+  document.querySelectorAll('#install-tradeoffs .topt').forEach(item => {
+    item.hidden = item.dataset.for !== method;
+    item.style.removeProperty('display');
+  });
+}
+
+function switchIde(ide, button) {
+  if (!Object.hasOwn(IDE_JSONS, ide)) return;
+  selectButton(button, button.parentElement, 'aria-pressed');
+  document.getElementById('ide-json').textContent = JSON.stringify(IDE_JSONS[ide], null, 2);
+}
+
+async function copyCommand(text, button) {
+  if (button.disabled) return;
+  const status = document.getElementById('copy-status');
+  const original = button.innerHTML;
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  button.dataset.state = 'loading';
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+    await navigator.clipboard.writeText(text);
+    button.dataset.state = 'success';
+    status.textContent = 'Copied to clipboard.';
+    if (!button.querySelector('svg')) button.textContent = 'Copied';
+  } catch {
+    button.dataset.state = 'error';
+    status.textContent = 'Copy was blocked. Select the command text and copy it manually, or retry.';
+    if (!button.querySelector('svg')) button.textContent = 'Retry copy';
+  } finally {
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+    window.setTimeout(() => { button.innerHTML = original; delete button.dataset.state; }, 2200);
+  }
+}
+
+function copySnippet(id, button) {
+  const source = document.getElementById(id);
+  if (source) return copyCommand(source.textContent.trim(), button);
+}
+
+let captures;
+let loadingCapture = false;
+async function showCapture(button) {
+  if (loadingCapture) return;
+  const output = document.getElementById('hero-cli-output');
+  const controls = [...document.querySelectorAll('[data-capture]')];
+  loadingCapture = true;
+  controls.forEach(control => { control.disabled = true; });
+  button.setAttribute('aria-busy', 'true');
+  output.setAttribute('aria-busy', 'true');
+  try {
+    if (!captures) {
+      const response = await fetch('assets/jebat-cli-captures.json');
+      if (!response.ok) throw new Error('Capture unavailable');
+      const payload = await response.json();
+      if (!payload.commands || typeof payload.commands !== 'object') throw new Error('Invalid capture');
+      captures = payload.commands;
+    }
+    const capture = captures[button.dataset.capture];
+    if (!capture || typeof capture.command !== 'string' || typeof capture.output !== 'string') throw new Error('Missing capture');
+    output.textContent = '$ ' + capture.command + '\n' + capture.output;
+    selectButton(button, button.parentElement, 'aria-pressed');
+    button.dataset.state = 'success';
+  } catch {
+    output.textContent = 'Recorded output could not be loaded. Select a command again to retry. No command was executed.';
+    button.dataset.state = 'error';
+    captures = undefined;
+  } finally {
+    controls.forEach(control => { control.disabled = false; });
+    button.removeAttribute('aria-busy');
+    output.removeAttribute('aria-busy');
+    loadingCapture = false;
+  }
+}
+
+document.querySelectorAll('[data-capture]').forEach(button => button.addEventListener('click', () => showCapture(button)));
+const installTabs = [...document.querySelectorAll('[role="tab"]')];
+const installPanel = document.getElementById('install-cmd');
+installPanel.setAttribute('role', 'tabpanel');
+installPanel.tabIndex = 0;
+installTabs.forEach((button, index) => {
+  button.id = 'install-tab-' + index;
+  button.setAttribute('aria-controls', 'install-cmd');
+  button.tabIndex = index === 0 ? 0 : -1;
+  button.addEventListener('keydown', event => {
+    let next;
+    if (event.key === 'ArrowRight') next = (index + 1) % installTabs.length;
+    if (event.key === 'ArrowLeft') next = (index + installTabs.length - 1) % installTabs.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = installTabs.length - 1;
+    if (next === undefined) return;
+    event.preventDefault();
+    installTabs[next].focus();
+    installTabs[next].click();
+  });
+});
+installPanel.setAttribute('aria-labelledby', installTabs[0].id);
+document.querySelectorAll('button[onclick^="switchIde"]').forEach(button => button.setAttribute('aria-pressed', String(button.classList.contains('on'))));
+
+const navigation = document.querySelector('.nav');
+const burger = document.querySelector('.burger');
+const mobileNavigation = document.getElementById('mnav');
+function setNavigation(open) {
+  mobileNavigation.classList.toggle('open', open);
+  burger.setAttribute('aria-expanded', String(open));
+  burger.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+}
+burger.addEventListener('click', () => setNavigation(burger.getAttribute('aria-expanded') !== 'true'));
+mobileNavigation.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setNavigation(false)));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') { setNavigation(false); burger.focus(); }
+});
+const desktop = matchMedia('(min-width:901px)');
+desktop.addEventListener('change', event => { if (event.matches) setNavigation(false); });
+addEventListener('scroll', () => navigation.classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+document.querySelectorAll('svg').forEach(icon => { icon.setAttribute('aria-hidden', 'true'); icon.setAttribute('focusable', 'false'); });
+document.querySelectorAll('a[target="_blank"]').forEach(link => {
+  link.setAttribute('aria-label', link.textContent.trim() + ' (opens in a new tab)');
+});
+// FAQ schema comes from the visible native disclosure content, preventing copy drift.
+const faqSchema = document.createElement('script');
+faqSchema.type = 'application/ld+json';
+faqSchema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity:
+  [...document.querySelectorAll('.faq details')].map(item => ({ '@type': 'Question', name: item.querySelector('summary').textContent, acceptedAnswer: { '@type': 'Answer', text: item.querySelector('.a').textContent.trim() } }))
+});
+document.head.appendChild(faqSchema);

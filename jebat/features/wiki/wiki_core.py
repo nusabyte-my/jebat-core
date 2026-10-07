@@ -12,6 +12,9 @@ Features:
 """
 
 import re
+import hashlib
+import json
+from contextlib import closing
 import sqlite3
 import sys
 import time
@@ -103,6 +106,46 @@ class WikiStore:
                 title TEXT NOT NULL DEFAULT '',
                 deleted_at REAL NOT NULL
             )
+        """)
+        # Additive migration: learning evidence shares the existing KB database.
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS learning_records (
+                id INTEGER PRIMARY KEY,
+                record_id TEXT NOT NULL UNIQUE,
+                project_root TEXT NOT NULL,
+                kind TEXT NOT NULL CHECK(kind IN ('dream', 'advice')),
+                source_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                evidence_json TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                UNIQUE(project_root, kind, source_id)
+            );
+            CREATE INDEX IF NOT EXISTS learning_records_scope
+                ON learning_records(project_root, kind, updated_at DESC);
+            CREATE VIRTUAL TABLE IF NOT EXISTS learning_fts USING fts5(
+                title, content, content='learning_records', content_rowid='id'
+            );
+            CREATE TRIGGER IF NOT EXISTS learning_ai AFTER INSERT ON learning_records BEGIN
+                INSERT INTO learning_fts(rowid, title, content) VALUES(new.id, new.title, new.content);
+            END;
+            CREATE TRIGGER IF NOT EXISTS learning_ad AFTER DELETE ON learning_records BEGIN
+                INSERT INTO learning_fts(learning_fts, rowid, title, content)
+                    VALUES('delete', old.id, old.title, old.content);
+            END;
+            CREATE TRIGGER IF NOT EXISTS learning_au AFTER UPDATE ON learning_records BEGIN
+                INSERT INTO learning_fts(learning_fts, rowid, title, content)
+                    VALUES('delete', old.id, old.title, old.content);
+                INSERT INTO learning_fts(rowid, title, content) VALUES(new.id, new.title, new.content);
+            END;
+            CREATE TABLE IF NOT EXISTS learning_feedback (
+                record_id TEXT PRIMARY KEY REFERENCES learning_records(record_id) ON DELETE CASCADE,
+                outcome TEXT NOT NULL CHECK(outcome IN ('helpful', 'unhelpful', 'dismissed')),
+                evidence TEXT NOT NULL,
+                updated_at REAL NOT NULL
+            );
         """)
         conn.commit()
         conn.close()
@@ -502,3 +545,109 @@ class WikiStore:
             } if last_row else None,
             "backlink_count": backlink_count[0],
         }
+
+    @staticmethod
+    def _learning_root(project_root: str) -> str:
+        if not isinstance(project_root, str) or not project_root.strip():
+            raise ValueError("project_root must be a non-empty path")
+        return str(Path(project_root).resolve())
+
+    def record_learning(self, project_root: str, kind: str, source_id: str,
+                        title: str, content: str, payload: dict, evidence_ids: list[str]) -> str:
+        """Idempotent evidence write, including its full-text index, in one transaction."""
+        root = self._learning_root(project_root)
+        if kind not in {"dream", "advice"}:
+            raise ValueError("Unknown learning record kind")
+        if not all(isinstance(value, str) and value.strip() for value in (source_id, title, content)):
+            raise ValueError("Learning source, title, and content must be non-empty strings")
+        if not isinstance(payload, dict) or not isinstance(evidence_ids, list) or not all(isinstance(value, str) for value in evidence_ids):
+            raise ValueError("Learning payload/evidence must be an object and string list")
+        payload_json = json.dumps(payload, ensure_ascii=False, sort_keys=True, allow_nan=False)
+        evidence_json = json.dumps(sorted(set(evidence_ids)), ensure_ascii=False)
+        if len(content) > 100000 or len(payload_json) > 250000 or len(evidence_json) > 100000:
+            raise ValueError("Learning record exceeds storage bounds")
+        record_id = hashlib.sha256(json.dumps([root, kind, source_id]).encode()).hexdigest()
+        now = time.time()
+        with closing(self._get_conn()) as conn, conn:
+            conn.execute("""
+                INSERT INTO learning_records
+                    (record_id, project_root, kind, source_id, title, content, payload_json, evidence_json, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(project_root, kind, source_id) DO UPDATE SET
+                    title=excluded.title, content=excluded.content, payload_json=excluded.payload_json,
+                    evidence_json=excluded.evidence_json, updated_at=excluded.updated_at
+                WHERE learning_records.title != excluded.title OR learning_records.content != excluded.content
+                    OR learning_records.payload_json != excluded.payload_json OR learning_records.evidence_json != excluded.evidence_json
+            """, (record_id, root, kind, source_id, title, content, payload_json, evidence_json, now, now))
+        return record_id
+
+    def search_learning(self, project_root: str, query: str = "", kind: str = "", limit: int = 10) -> dict[str, Any]:
+        """Literal-token full-text search, always confined to one canonical root."""
+        root = self._learning_root(project_root)
+        if not isinstance(query, str) or len(query) > 2000 or kind not in {"", "dream", "advice"}:
+            raise ValueError("Invalid learning search query or kind")
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 50:
+            raise ValueError("limit must be an integer from 1 to 50")
+        terms = re.findall(r"\w+", query, flags=re.UNICODE)[:12]
+        if query.strip() and not terms:
+            return {"project_root": root, "records": [], "count": 0}
+        where = ["r.project_root = ?"]
+        args: list[Any] = [root]
+        join = ""
+        if terms:
+            join = "JOIN learning_fts ON learning_fts.rowid = r.id"
+            where.append("learning_fts MATCH ?")
+            args.append(" AND ".join('"' + term + '"' for term in terms))
+        if kind:
+            where.append("r.kind = ?")
+            args.append(kind)
+        args.append(limit)
+        with closing(self._get_conn()) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(f"""
+                SELECT r.record_id, r.kind, r.title, r.content, r.payload_json, r.evidence_json,
+                       r.created_at, r.updated_at, f.outcome, f.evidence AS feedback_evidence
+                FROM learning_records r {join}
+                LEFT JOIN learning_feedback f ON f.record_id = r.record_id
+                WHERE {' AND '.join(where)}
+                ORDER BY {'learning_fts.rank,' if terms else ''} r.updated_at DESC, r.record_id LIMIT ?
+            """, args).fetchall()
+        records = []
+        for row in rows:
+            record = dict(row)
+            record["payload"] = json.loads(record.pop("payload_json"))
+            record["evidence_ids"] = json.loads(record.pop("evidence_json"))
+            records.append(record)
+        return {"project_root": root, "records": records, "count": len(records)}
+
+    def learning_feedback(self, project_root: str, record_id: str, outcome: str, evidence: str) -> dict[str, Any]:
+        """Explicit reviewer feedback, not an inferred task-success probability."""
+        root = self._learning_root(project_root)
+        if outcome not in {"helpful", "unhelpful", "dismissed"}:
+            raise ValueError("outcome must be helpful, unhelpful, or dismissed")
+        if not isinstance(evidence, str) or not evidence.strip() or len(evidence) > 4000:
+            raise ValueError("Feedback requires non-empty evidence of at most 4000 characters")
+        with closing(self._get_conn()) as conn, conn:
+            record = conn.execute("SELECT kind FROM learning_records WHERE record_id = ? AND project_root = ?", (record_id, root)).fetchone()
+            if record is None or record[0] != "advice":
+                raise ValueError("Advice record not found in this project")
+            conn.execute("""INSERT INTO learning_feedback(record_id, outcome, evidence, updated_at)
+                VALUES (?, ?, ?, ?) ON CONFLICT(record_id) DO UPDATE SET
+                outcome=excluded.outcome, evidence=excluded.evidence, updated_at=excluded.updated_at
+            """, (record_id, outcome, evidence.strip(), time.time()))
+        return {"record_id": record_id, "outcome": outcome, "project_root": root}
+
+    def learning_status(self, project_root: str) -> dict[str, Any]:
+        root = self._learning_root(project_root)
+        with closing(self._get_conn()) as conn:
+            counts = dict(conn.execute("SELECT kind, count(*) FROM learning_records WHERE project_root = ? GROUP BY kind", (root,)))
+            feedback = dict(conn.execute("""SELECT f.outcome, count(*) FROM learning_feedback f
+                JOIN learning_records r ON r.record_id=f.record_id WHERE r.project_root=? GROUP BY f.outcome""", (root,)))
+        return {"project_root": root, "database": str(self._db_path), "records_by_kind": counts,
+                "feedback_counts": feedback, "feedback_basis": "explicit reviewer judgments, not measured task success"}
+
+    def advice_feedback(self, project_root: str) -> dict[str, str]:
+        root = self._learning_root(project_root)
+        with closing(self._get_conn()) as conn:
+            return dict(conn.execute("""SELECT f.record_id, f.outcome FROM learning_feedback f
+                JOIN learning_records r ON r.record_id=f.record_id WHERE r.project_root=?""", (root,)))

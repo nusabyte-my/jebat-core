@@ -1,0 +1,22 @@
+{
+  "captured_on": "2026-10-07",
+  "environment": "Disposable local workspace; no providers, deployments or user sessions configured. Recorded output, not a live terminal.",
+  "commands": {
+    "status": {
+      "command": "jebat status",
+      "output": "JEBAT v8.3.0\n  providers    0 configured · active: (none)\n  agentix      0 deployed solutions · 0 recorded runs\n  sessions     0 saved"
+    },
+    "workflow": {
+      "command": "jebat workflow list",
+      "output": "plan-act-verify-remember: Deliver a governed change from scope through runtime proof and durable memory.\nworkflow-audit: Audit the complete operating path with evidence, gaps, and ranked fixes.\nquickwin-triage: Rank evidence-backed improvements by user impact, risk, and change size.\nspec-to-ship: Turn a feature request into observable acceptance and a verified vertical slice.\nrelease-readiness: Prepare a release with isolated verification, explicit deployment, and rollback gates.\nincident-response: Diagnose an incident, contain safely, and verify recovery without destroying evidence.\ndependency-upgrade: Upgrade a scoped dependency against current primary documentation and real compatibility checks.\nautomation-readiness: Review an existing scheduled workflow for safe repeated execution before enabling it.\nsession-handoff: Produce a compact continuation record backed by actual state and evidence."
+    },
+    "learning": {
+      "command": "jebat learning --help",
+      "output": "usage: jebat learning [-h] {analyze,dream,advise,status,search,feedback} ...\n\nProject-scoped AutoMimpi, SelfLearn, advisor, and KB commands.\n\npositional arguments:\n  {analyze,dream,advise,status,search,feedback}\n    analyze             Analyze active project evidence\n    dream               Consolidate active project evidence and persist a KB\n                        report\n    advise              Generate cited, deterministic advice; no model calls\n    status              Show dream and project KB status\n    search              Search project learning records\n    feedback            Record an explicit reviewer decision\n\noptions:\n  -h, --help            show this help message and exit"
+    },
+    "teams": {
+      "command": "jebat agentix teams",
+      "output": "Teams (jebat agentix team run NAME \"objective\"):\n  go-to-market       marketing-strategist -> copy-writer -> seo-auditor -> ads-manager  [gate after ads-manager]\n  product-release    code-reviewer -> test-writer -> release-manager -> doc-writer  [gate after doc-writer]\n  security-review    osint-recon -> security-audit -> mcp-auditor -> dependency-auditor -> doc-writer"
+    }
+  }
+}

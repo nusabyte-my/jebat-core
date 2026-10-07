@@ -350,14 +350,17 @@ POST /webui/api/runtime         Runtime control
 
 | Command | Description |
 |---------|-------------|
-| `jebat repl` | **Interactive REPL** — streaming, tools, staged approvals, `/status` card, `/resume` picker, `@file` expansion |
-| `jebat chat "prompt"` | One-shot chat with tool calling |
+| `jebat repl` | Interactive REPL; resume with `jebat --continue` or `jebat repl --session ID` |
+| `jebat chat "prompt"` | One-shot chat without tools |
 | `jebat agent "task"` | Run one-shot agent with tool-calling |
 | `jebat code "prompt"` | Generate code from description |
 | `jebat webui` | Launch Stealth-Dark WebUI |
-| `jebat status` | System health & provider status |
-| `jebat doctor` | Diagnose environment issues |
+| `jebat status` | Local provider, run, and session inventory; not a live health probe |
+| `jebat doctor` | Agentix registry/build/budget checks; not remote API or MCP health |
 | `jebat init` | First-run provider setup (REPL `/init` = workspace scan → `AGENTS.md`) |
+| `jebat workflow list [--json]` | List nine opt-in operator playbooks without model calls |
+| `jebat workflow show NAME --task "objective" --scope .` | Render shared CLI/MCP guidance; does not execute agents or tools |
+| `jebat learning analyze\|advise\|dream\|status\|search\|feedback` | Scoped AutoMimpi/SelfLearn, cited advisor proposals, persistent KB reports, explicit reviewer feedback; no model calls |
 
 ### Workspace & Config Import
 
@@ -366,12 +369,15 @@ POST /webui/api/runtime         Runtime control
 | `jebat capture` (alias `agents`) | Repo scan → generate `AGENTS.md` (backs up existing; stack, layout, entrypoints, tests) |
 | `jebat config import -s omp\|opencode\|claude` | Import MCP server config from another CLI — normalizes transports/timeouts/env templates; `--dry-run`, `--only`, `--overwrite`; auto-backup |
 
+Current lifecycle, audit findings, quick wins, and isolated verification: [Operating workflows](docs/JEBAT_WORKFLOWS.md).
+Main-agent execution is the default. Necessary subagents must use the exact same provider/model, with no fallback substitution.
+
 ### Agentix — Solution Lifecycle
 
 | Command | Description |
 |---------|-------------|
 | `jebat agentix create NAME -t reflex\|flow\|lattice` | Scaffold an agent solution (ReAct loop / workspace-driven / schema-driven tools) |
-| `jebat agentix create NAME --from security-audit` | Scaffold from a specialist template — 14 ready doctrines (audit, recon, review, marketing, ads, SEO, ...); list: `jebat agentix templates` |
+| `jebat agentix create NAME --from security-audit` | Create from a shipped specialist doctrine; discover the current catalog with `jebat agentix templates` |
 | `jebat agentix build PATH` | Validate + compile + content-addressed build manifest (`.agentix/build.json`) |
 | `jebat agentix eval PATH [--live]` | Structural checks + golden tasks (`golden/*.json`); llm-runtime tasks run against the real provider only with `--live` |
 | `jebat agentix deploy PATH --target local\|mcp\|vps` | Ship it: local registry, ready-to-paste MCP config, or scp to VPS — gated by `deploy.allow` in `agentix.yaml` |
@@ -398,6 +404,8 @@ Specialists declare their own budgets (`budget.tokens`, `budget.wall_clock`) —
 | `jebat memory store\|search\|stats` | 6-type eternal memory with Ghost DB vector search |
 | `jebat llm providers\|config\|auth` | LLM provider management |
 | `jebat llm best-provider` | Auto-detect best available provider |
+
+Learning lifecycle and isolated checks: [Learning advisor and KB](docs/JEBAT_WORKFLOWS.md#learning-advisor-and-kb). Advice and dream history reuse the existing SQLite/FTS5 wiki database; trace memory remains JSON-backed. No production migration or automatic deployment.
 
 ### File & Tools
 

@@ -228,8 +228,17 @@ async def test_tools_allowlist_trims_tools_list(
 
 
 @pytest.mark.anyio
-async def test_skills_are_listed_and_readable_as_skill_resources() -> None:
-    """Every SKILL.md is exposed as skill://<store>/<name> and readable back."""
+async def test_skills_are_listed_and_readable_as_skill_resources(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Configured skill content round-trips without depending on the user's home."""
+    skill = tmp_path / "tokguru" / "sample" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    content = "---\nname: sample\ndescription: Isolated resource\n---\nRead the requested file.\n"
+    skill.write_text(content, encoding="utf-8")
+    monkeypatch.setenv("JEBAT_SKILLS_DIR", str(skill.parent.parent))
+    monkeypatch.setattr(mcp_resources, "_SKILL_INDEX", None)
+    monkeypatch.setattr(mcp_resources, "_SKILL_INDEX_AT", 0.0)
     server = MCPServer()
     await server.handle_request(
         {
@@ -251,28 +260,26 @@ async def test_skills_are_listed_and_readable_as_skill_resources() -> None:
         for item in resources["result"]["resources"]
         if item["uri"].startswith("skill://")
     )
-    assert skill_uris, "expected at least one skill:// resource"
-    assert any(uri.startswith("skill://tokguru/") for uri in skill_uris)
+    assert "skill://tokguru/sample" in skill_uris
 
     templates = {t["uriTemplate"] for t in resources["result"]["resourceTemplates"]}
     assert "skill://{path}" in templates
 
-    # Read the first skill back — content must be the raw SKILL.md.
+    # Read the configured fixture, not whichever private skill sorts first.
     read = json.loads(
         await server.handle_request(
             {
                 "jsonrpc": "2.0",
                 "id": 3,
                 "method": "resources/read",
-                "params": {"uri": skill_uris[0]},
+                "params": {"uri": "skill://tokguru/sample"},
             }
         )
         or "{}"
     )
     contents = read["result"]["contents"]
     assert contents and contents[0]["mimeType"] == "text/markdown"
-    assert contents[0]["text"].startswith("---")
-    assert "name:" in contents[0]["text"]
+    assert contents[0]["text"] == content
 
     # Unknown skill URIs report a readable error, not an empty result.
     missing = json.loads(

@@ -1,6 +1,6 @@
 ---
 name: selflearn
-description: IDE skill for JEBAT's SelfLearn + autoMimpi system — remembers project context across sessions (stack, commands, conventions, gotchas) and adapts behavior to the environment. Use at the start of a session to restore project memory, when learning something new about the project, at the end of meaningful work to consolidate, and when the user asks about what has been learned or how to adapt.
+description: Use for JEBAT project recall, AutoMimpi consolidation, SelfLearn evidence analysis, learning-advisor recommendations, reviewer feedback, and searchable learning KB history. Restores project facts without treating memory retention as task competence.
 ---
 
 # SelfLearn — Remember & Adapt
@@ -9,11 +9,14 @@ JEBAT's adaptive learning loop for the IDE. Makes the assistant remember durable
 
 ## Core Loop
 
-```
-Session start  → project_recall()  → restore context
-During work    → project_remember() → capture durable facts
-Periodically   → mimpi_dream()     → consolidate + suggestions
-On request     → selflearn_analyze() / adapt_environment() → status & adaptation
+```text
+Session start: project_recall; compare project_root with the actual workspace.
+During work: project_remember for verified facts; mimpi_record_failure for actual failures.
+Handoff: session_learning_commit for a summary and durable key facts.
+Review: selflearn_analyze, then learning_advisor for evidence-cited proposals.
+Consolidate: mimpi_dream; completed reports are persisted in the existing KB.
+Feedback: learning_feedback with explicit reviewer outcome and supporting evidence.
+Recall history: learning_kb_search; inspect storage with learning_kb_status.
 ```
 
 ## When to Use
@@ -22,10 +25,12 @@ On request     → selflearn_analyze() / adapt_environment() → status & adapta
 |---|---|---|
 | Session starts, or project directory changed | `project_recall` | Restore remembered stack, commands, conventions, gotchas |
 | You discover something durable (build cmd, convention, env quirk, gotcha, goal) | `project_remember` | Persist it across sessions — no re-discovery next time |
-| Meaningful work completed / user asks "what did we learn" | `mimpi_dream` | Consolidate traces, extract patterns, get suggestions |
-| User asks to adapt / "how should we work here" | `adapt_environment` | Combine project facts + learning recommendations |
-| User asks about progress / gaps / skills | `selflearn_analyze` | Skill levels, knowledge gaps, retention health |
-| A stored fact is wrong or stale | `project_forget` | Remove it (then re-remember the corrected fact) |
+| Meaningful work completed / user asks "what did we learn" | `session_learning_commit`, then `mimpi_dream` when appropriate | Persist facts, consolidate selected project evidence, retain a report |
+| User asks to adapt / "how should we work here" | `learning_advisor` / `adapt_environment` | Evidence-backed proposals, not autonomous actions |
+| User asks about progress / gaps / skills | `selflearn_analyze` | Memory coverage, retention, clock anomalies; not a task-success score |
+| User reviews advice | `learning_feedback` | Record helpful/unhelpful/dismissed with evidence; never infer approval |
+| User asks about previous learning | `learning_kb_search` | Project-scoped full-text search of persisted dreams/advice |
+| A stored fact is wrong | `project_forget` after approval | Delete only the reviewed fact; age alone is not proof it is false |
 
 ## What to Remember
 
@@ -47,15 +52,13 @@ project_remember(fact="React 19 + Vite app; build with `npm run build`",
 
 ## Dream Cycle (mimpi_dream)
 
-Run `mimpi_dream` after a meaningful block of work or when the user asks about learning. It:
+`mimpi_dream` consolidates only the active server project's matching traces. It strengthens eligible memories, prunes weak ones, creates content patterns/generalizations, and stores a scoped report in SQLite. Source identities prevent duplicate generalizations on repeated runs.
 
-1. Consolidates memories (strengthen important, prune weak)
-2. Extracts patterns from recent activity
-3. Builds a learning profile (skill level, weak/strong areas, gaps)
-4. Produces up to 5 prioritized suggestions with an urgency rating
-5. Returns a Laksamana quote (JEBAT's voice)
-
-Use the suggestions to steer the next work block.
+- `force=false` respects the consolidation interval; a recent project dream is skipped, including after restart when its KB report exists.
+- `force=true` deliberately bypasses that interval. CLI startup additionally requires five sessions and a 24-hour shared-state gate; `/dream` is an explicit manual action.
+- `status=partial` means consolidation committed but KB/mirror persistence failed. Do not repeat destructive consolidation blindly or claim it rolled back.
+- Advice contains source IDs/timestamps. Review actual evidence before acting. Feedback changes recommendation visibility, never source confidence or permissions.
+- Main agent only by default. This advisor is deterministic: no model call or subagent. Necessary external subagents must use the exact main-agent model.
 
 ## Behavioral Rules
 
@@ -64,15 +67,20 @@ Use the suggestions to steer the next work block.
 - **Category discipline** — use the exact category enum: stack/command/convention/environment/gotcha/goal/other.
 - **Importance calibration** — 0.7+ for stack/commands/gotchas (survive pruning), ~0.5 for conventions, <0.5 for trivia.
 - **Never store secrets** — store *where* a secret lives (e.g. "API key in `.env`"), never the secret value.
-- **Adapt, don't repeat** — when `selflearn_analyze` shows a failing pattern (strategy_success_rates), change approach rather than retrying the same tactic.
+- **Adapt from evidence** — repeated recorded failures justify checking prerequisites, not inventing a failure probability. Helpful/unhelpful feedback is a reviewer judgment, not measured task success.
 
 ## Data Location
 
-Memories persist at `~/.jebat/memory/traces.json` — cross-session, per-machine. Project facts are tagged `project` + `project:<name>`, so one server serves multiple projects without cross-contamination.
+Memory traces remain in `~/.jebat/memory/traces.json`. New project writes carry `project:<name>` plus `context.project_root`; explicitly rooted traces from another checkout are excluded. Legacy name-only traces remain visible with a `legacy_unbound_count` caveat; do not silently retag them.
+
+Dream/advice records and reviewer feedback use the existing `~/.jebat/wiki/index.db`, or `JEBAT_WIKI_DIR/index.db`. SQLite tables: `learning_records`, `learning_feedback`, and FTS5 `learning_fts`. Queries and feedback are scoped to the canonical project root. No new database service, vector model, or autogenerated wiki pages.
+
+Use `jebat learning analyze|dream|advise|status|search|feedback` for the same lifecycle locally. See `docs/JEBAT_WORKFLOWS.md#learning-advisor-and-kb` for commands, guarantees, and limits.
 
 ## Tool Implementation
 
-Tools live in `jebat/tools/automimpi_tools.py`, registered via `@register_tool` and
-exposed by the MCP server (`jebat/features/mcp/mcp_server.py`). The engine is
-`jebat/features/memory/automimpi.py` (`AutoMimpi` dream cycle + `SelfLearn` analysis),
-backed by `EnhancedMemorySystem` persisting to `~/.jebat/memory/traces.json`.
+Tools: `jebat/tools/automimpi_tools.py`. Engine: `jebat/features/memory/automimpi.py`.
+Advisor: `jebat/features/memory/learning_advisor.py`. KB: `jebat/features/wiki/wiki_core.py`.
+CLI: `jebat_cli_new/learning_command.py`. MCP resources: `jebat://learning/profile`, `jebat://learning/advisor`, `jebat://kb/learning`.
+
+Verification: `python scripts/check_learning.py` exercises temporary memory/SQLite, real CLI/MCP, project isolation, feedback, restarts, and failure paths without model calls. Always isolate both HOME and USERPROFILE on Windows; never use production memory for tests.

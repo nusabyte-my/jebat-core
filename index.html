@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Hallmark · pre-emit critique: P4 H4 E5 S5 R4 V4 — jebat-creative light DNA, locked Malam/Tembaga palette
-     Macrostructure: Workbench · genre: modern-minimal · theme: custom-locked (paper #F7F4EE / copper #C97A40 / pucuk #2F6F55)
-     gates: tokens-only · no invented proof · 2+1 fonts · no italic headers · rainbow ≤1 hue per element · real terminal output -->
+<!-- Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V4 · JEBAT Creative
+     Existing section routes retained; real CLI captures, scoped learning, accessible controls. -->
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JEBAT — Keep Command | Sovereign AI Command Layer</title>
 <meta name="description" content="Run private AI agents with your choice of models, persistent memory, MCP tools and governed execution. Self-host JEBAT or deploy it with NusaByte." />
-<meta name="theme-color" content="#F7F4EE" />
+<meta name="theme-color" content="#FFFFFF" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="JEBAT" />
 <meta property="og:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
-<meta property="og:description" content="128 MCP tools behind explicit safety tiers, Ghost DB persistent memory, and an Agentix lifecycle that builds, ships, and runs agent teams. Self-hosted or air-gapped." />
+<meta property="og:description" content="Run agents on your stack. Keep project-scoped memory, inspect learning evidence, and connect tools through MCP with explicit safety tiers." />
 <meta property="og:url" content="https://jebat.online/" />
 <meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
-<meta name="twitter:description" content="128 MCP tools behind explicit safety tiers, Ghost DB persistent memory, and an Agentix lifecycle that builds, ships, and runs agent teams." />
+<meta name="twitter:description" content="Run agents on your stack. Project-scoped memory, evidence-backed learning advice, and MCP tools with explicit safety tiers." />
 <meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
 <link rel="manifest" href="assets/manifest-creative.json" />
 <script type="application/ld+json">
@@ -35,394 +34,22 @@
       "license": "https://opensource.org/licenses/MIT",
       "offers": { "@type": "Offer", "price": "0.00", "priceCurrency": "USD" },
       "author": { "@type": "Organization", "name": "NusaByte", "url": "https://nusabyte.my" }
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        { "@type": "Question", "name": "What is JEBAT and how does it fit into my stack?", "acceptedAnswer": { "@type": "Answer", "text": "A sovereign AI command layer between your applications and LLM providers. It decouples agent logic from model vendors, manages persistent memory via Ghost DB, dispatches tools over MCP, and enforces approval-gated security on every write." } },
-        { "@type": "Question", "name": "What is Agentix and which archetype should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Agentix is the solution lifecycle: scaffold, build, eval, deploy, run agents as versioned artifacts. Archetypes: reflex (ReAct reasoning loop), flow (workspace-driven), lattice (schema-typed tools). Twenty-two specialist doctrines (security-audit, osint-recon, code-reviewer, mcp-auditor, marketing-strategist, ads-manager and more) ship ready to deploy — jebat agentix ask routes a bare objective to the right one. Deploy targets are allowlist-gated in agentix.yaml." } },
-        { "@type": "Question", "name": "Can the specialists work as a team?", "acceptedAnswer": { "@type": "Answer", "text": "Yes - three teams ship in the box (security-review, go-to-market, product-release). A team is a declared pipeline: legs run in order, hand off through a shared jailed workspace, a verifier checks each leg against its doctrine before handoff, human gates pause where money or shipping is involved, and the whole desk runs under one team-level budget." } },
-        { "@type": "Question", "name": "How are agent runs kept bounded and auditable?", "acceptedAnswer": { "@type": "Answer", "text": "Every reflex run declares a budget (max tokens, wall clock) - the loop stops and summarizes when either is hit, and budgets below the per-iteration floor are refused at spawn. Tool allowlists and the workspace jail are enforced by the harness. Each run is persisted with its task, manifest snapshot, tool-call log and conversation, and can be continued later with run --resume." } },
-        { "@type": "Question", "name": "Can I reuse MCP servers from omp, opencode, or Claude Code?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. jebat config import reads the other CLI's config, normalizes transports, timeouts and env templates, and merges with collision-safe skipping and automatic backups. Preview first with --dry-run." } },
-        { "@type": "Question", "name": "Can JEBAT run 100% air-gapped?", "acceptedAnswer": { "@type": "Answer", "text": "Yes - local llama.cpp or Ollama inference with zero outbound calls. Cloud providers are opt-in per route. The whole stack runs on your hardware with no telemetry." } }
-      ]
     }
   ]
 }
 </script>
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 <link rel="apple-touch-icon" href="assets/jebat-app-icon.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<style>
-:root{
-  /* ── LOCKED BRAND (from index.html :root — do not edit) ── */
-  --jebat-malam:#080A09; --jebat-besi:#141816; --jebat-tulang:#F0EADF;
-  --jebat-tembaga:#C97A40; --jebat-bara:#D58A4A; --jebat-keluli:#99A39E; --jebat-pucuk:#2F6F55;
-  /* ── jc light-mode canvas (jebat-creative DNA, brand hues) ── */
-  --jc-paper:#F7F4EE;            /* warm bone paper — derived from Tulang */
-  --jc-card:#FFFFFF;
-  --jc-ink:#141816;              /* Besi as text ink */
-  --jc-slate:#5B6560;            /* softened Keluli for body on light */
-  --jc-line:rgba(20,24,22,.10);
-  --jc-copper:#C97A40; --jc-copper-hover:#B26832;
-  --jc-bara:#D58A4A; --jc-pucuk:#2F6F55; --jc-pucuk-ink:#245744;
-  --jc-copper-soft:rgba(201,122,64,.10); --jc-copper-glow:rgba(201,122,64,.22);
-  --jc-pucuk-soft:rgba(47,111,85,.10);
-  /* harsh gradient (jebat-creative): copper → hard stop → pucuk */
-  --jc-grad:linear-gradient(135deg,#B26832 0%,#C97A40 48%,#D58A4A 100%);
-  --jc-grad-text:linear-gradient(92deg,#B26832 0%,#C97A40 40%,#D58A4A 100%);
-  /* shadows tinted by hue */
-  --jc-sh-copper:0 20px 40px -14px rgba(201,122,64,.30);
-  --jc-sh-pucuk:0 20px 40px -14px rgba(47,111,85,.26);
-  --jc-sh-ink:0 12px 28px -12px rgba(20,24,22,.14);
-  /* motion */
-  --jc-ease:cubic-bezier(.22,.61,.36,1);
-  --jc-dur:.18s;
-  /* type */
-  --jc-display:'Space Grotesk',sans-serif; --jc-body:'Inter',sans-serif; --jc-mono:'IBM Plex Mono',monospace;
-  --jc-rad:16px; --jc-rad-sm:10px;
-  /* spacing (4pt) */
-  --jc-s1:8px; --jc-s2:16px; --jc-s3:24px; --jc-s4:32px; --jc-s5:48px; --jc-s6:64px; --jc-s7:96px;
-  --jc-max:1160px;
-}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
-html{scroll-behavior:smooth;overflow-x:clip}
-body{font-family:var(--jc-body);color:var(--jc-ink);background:var(--jc-paper);overflow-x:clip;line-height:1.6}
-img{max-width:100%;height:auto}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:var(--jc-max);margin:0 auto;padding:0 var(--jc-s3)}
-.mono{font-family:var(--jc-mono)}
-
-/* ── NAV ── */
-.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(247,244,238,.78);border-bottom:1px solid var(--jc-line);transition:box-shadow .25s var(--jc-ease)}
-.nav.scrolled{box-shadow:0 8px 24px -12px rgba(20,24,22,.18)}
-.nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--jc-display);font-weight:700;letter-spacing:.02em}
-/* Logo plinth: the mark is cream+copper — it needs a Malam-dark chip to read on light paper */
-.brand-logo{display:inline-flex;align-items:center;justify-content:center;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:14px;padding:8px 12px;box-shadow:0 2px 8px -2px rgba(20,24,22,.10)}
-.brand-logo img{width:56px;height:auto;display:block}
-.brand small{font-family:var(--jc-mono);font-size:9px;color:var(--jc-copper);border:1px solid var(--jc-copper-glow);padding:2px 6px;border-radius:999px;letter-spacing:.5px}
-.nav-links{display:flex;gap:var(--jc-s3);list-style:none;font-size:14px;font-weight:500}
-.nav-links a{color:var(--jc-slate);padding:6px 2px;border-bottom:2px solid transparent;transition:color var(--jc-dur) var(--jc-ease),border-color var(--jc-dur) var(--jc-ease)}
-.nav-links a:hover{color:var(--jc-ink)}
-.nav-links a.active{color:var(--jc-ink);border-bottom-color:var(--jc-copper)}
-.nav-links a:focus-visible{outline:2px solid var(--jc-copper);outline-offset:3px;border-radius:4px}
-.nav-cta{background:var(--jc-ink);color:#fff;padding:9px 18px;border-radius:999px;font-size:13.5px;font-weight:600;position:relative;overflow:hidden;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease),background var(--jc-dur) var(--jc-ease)}
-.nav-cta::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(201,122,64,.28),transparent);transform:skewX(-20deg);transition:left .5s var(--jc-ease);pointer-events:none}
-.nav-cta:hover{transform:translateY(-1px);box-shadow:var(--jc-sh-ink);background:#202723}
-.nav-cta:hover::after{left:130%}
-.nav-cta:active{transform:translateY(0)}
-.nav-cta:focus-visible{outline:2px solid var(--jc-copper);outline-offset:3px}
-.burger{display:none;background:none;border:1px solid var(--jc-line);border-radius:10px;padding:8px 10px;cursor:pointer}
-.mlink{display:block;padding:13px 4px;border-bottom:1px solid var(--jc-line);font-weight:500;color:var(--jc-ink)}
-.mlink:last-child{border-bottom:none}
-.mlink:hover{color:var(--jc-copper)}
-#mnav{display:none}#mnav.open{display:block}
-@media(max-width:900px){.nav-links{display:none}.burger{display:block}}
-
-/* ── HERO ── */
-.hero{position:relative;padding:var(--jc-s7) 0 var(--jc-s6);overflow:hidden}
-.orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none}
-.orb-a{width:480px;height:480px;background:rgba(201,122,64,.34);top:-140px;right:-120px}
-.orb-b{width:420px;height:420px;background:rgba(47,111,85,.22);bottom:-160px;left:-140px}
-.dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(20,24,22,.10) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 30%,transparent 75%);pointer-events:none}
-.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:var(--jc-s5);align-items:center;z-index:1}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--jc-mono);font-size:11px;letter-spacing:.14em;color:var(--jc-pucuk-ink);background:var(--jc-pucuk-soft);border:1px solid rgba(47,111,85,.25);padding:6px 12px;border-radius:999px}
-.eyebrow .pulse{width:7px;height:7px;border-radius:50%;background:var(--jc-pucuk);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-h1{font-family:var(--jc-display);font-weight:700;font-size:clamp(2.6rem,6vw,4.4rem);line-height:1.02;letter-spacing:-.02em;margin:var(--jc-s3) 0}
-h1 .grad{background:var(--jc-grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-lead{font-size:1.125rem;color:var(--jc-slate);max-width:34rem}
-.hero-lead strong{color:var(--jc-ink)}
-.badges{display:flex;flex-wrap:wrap;gap:10px;margin:var(--jc-s3) 0}
-.badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--jc-mono);font-size:11px;padding:7px 13px;border-radius:999px;background:var(--jc-card);border:1px solid var(--jc-line);box-shadow:0 1px 2px rgba(20,24,22,.04)}
-.badge svg{width:13px;height:13px}
-.badge.b-copper svg{color:var(--jc-copper)} .badge.b-pucuk svg{color:var(--jc-pucuk)} .badge.b-ink svg{color:var(--jc-ink)}
-.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:var(--jc-s3)}
-.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:999px;font-weight:600;font-size:14.5px;position:relative;overflow:hidden;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease)}
-.btn:active{transform:translateY(1px) scale(.99)}
-.btn:focus-visible{outline:2px solid var(--jc-copper);outline-offset:3px}
-.btn .arr{transition:transform var(--jc-dur) var(--jc-ease)}
-.btn:hover .arr{transform:translateX(4px)}
-/* shine sweep — one pass per hover, clipped by the pill */
-.btn::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .5s var(--jc-ease);pointer-events:none}
-.btn:hover::after{left:130%}
-.btn-primary{background:var(--jc-grad);color:#fff;box-shadow:var(--jc-sh-copper)}
-.btn-primary:hover{transform:translateY(-2px);animation:pulse-glow 2.2s var(--jc-ease) infinite}
-@keyframes pulse-glow{0%,100%{box-shadow:0 26px 48px -14px rgba(201,122,64,.45)}50%{box-shadow:0 26px 54px -10px rgba(201,122,64,.62)}}
-.btn-ghost{background:var(--jc-card);border:1px solid var(--jc-line);color:var(--jc-ink)}
-.btn-ghost::after{background:linear-gradient(105deg,transparent,rgba(201,122,64,.12),transparent)}
-.btn-ghost:hover{transform:translateY(-2px);box-shadow:var(--jc-sh-ink);border-color:rgba(201,122,64,.45)}
-.install{display:inline-flex;align-items:center;gap:10px;font-family:var(--jc-mono);font-size:12.5px;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:12px;padding:11px 14px;box-shadow:0 1px 3px rgba(20,24,22,.05)}
-.install .dollar{color:var(--jc-copper);font-weight:600}
-.install button{background:none;border:none;cursor:pointer;color:var(--jc-slate);display:inline-flex;padding:4px;border-radius:6px}
-.install button:hover{color:var(--jc-copper);background:var(--jc-copper-soft)}
-.install button:focus-visible{outline:2px solid var(--jc-copper)}
-
-/* stat band — real numbers only */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--jc-line);border-radius:var(--jc-rad);background:var(--jc-card);box-shadow:var(--jc-sh-ink);overflow:hidden;margin-top:var(--jc-s5)}
-.stat{padding:var(--jc-s3);border-right:1px solid var(--jc-line)}
-.stat:last-child{border-right:none}
-.stat b{display:block;font-family:var(--jc-display);font-size:1.65rem;font-weight:700;letter-spacing:-.01em}
-.stat.s1 b{color:var(--jc-copper)}.stat.s2 b{color:var(--jc-pucuk)}.stat.s3 b{color:var(--jc-ink)}.stat.s4 b{color:var(--jc-bara)}
-.stat span{font-family:var(--jc-mono);font-size:10.5px;letter-spacing:.1em;color:var(--jc-slate)}
-
-/* ── NEWS STRIP ── */
-.news-strip{padding:var(--jc-s4) 0;border-top:1px solid var(--jc-line);border-bottom:1px solid var(--jc-line);background:linear-gradient(180deg,rgba(201,122,64,.04),transparent)}
-.news-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:var(--jc-s2);flex-wrap:wrap}
-.news-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--jc-mono);font-size:10.5px;letter-spacing:.14em;color:var(--jc-copper)}
-.news-kicker .pulse{width:6px;height:6px;border-radius:50%;background:var(--jc-pucuk);animation:pulse 2s infinite}
-.news-date{font-size:10px;color:var(--jc-slate)}
-.news-row{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
-.news-card{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:14px;padding:16px 18px;transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease),border-color var(--jc-dur) var(--jc-ease)}
-.news-card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 3px 3px 0}
-.news-card.nc-copper{--nc:var(--jc-copper)} .news-card.nc-pucuk{--nc:var(--jc-pucuk)} .news-card.nc-bara{--nc:var(--jc-bara)}
-.news-card::before{background:var(--nc)}
-.news-card:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px rgba(20,24,22,.16);border-color:var(--nc)}
-.news-card .nc-src{font-size:9.5px;letter-spacing:.12em;color:var(--nc);text-transform:uppercase}
-.news-card .nc-title{font-family:var(--jc-display);font-size:.92rem;font-weight:600;color:var(--jc-ink);line-height:1.4}
-.news-card .nc-arr{margin-top:auto;align-self:flex-end;color:var(--nc);font-family:var(--jc-mono);transition:transform var(--jc-dur) var(--jc-ease)}
-.news-card:hover .nc-arr{transform:translateX(4px)}
-@media(max-width:1024px){.news-row{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.news-row{grid-template-columns:1fr}}
-
-/* ── SECTION SCAFFOLD ── */
-.section{padding:var(--jc-s7) 0}
-.sec-head{max-width:640px;margin-bottom:var(--jc-s5)}
-.kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--jc-mono);font-size:11px;letter-spacing:.14em;color:var(--jc-copper);margin-bottom:12px}
-.kicker::before{content:"";width:22px;height:3px;border-radius:2px;background:var(--jc-grad)}
-h2{font-family:var(--jc-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.1;letter-spacing:-.015em}
-.sec-head p{color:var(--jc-slate);margin-top:12px}
-
-/* cards — 3-up, one hue each */
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
-.cards.cols4{grid-template-columns:repeat(4,1fr)}
-@media(max-width:900px){.cards.cols4{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.cards.cols4{grid-template-columns:1fr}}
-.card{position:relative;background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);transition:transform var(--jc-dur) var(--jc-ease),box-shadow var(--jc-dur) var(--jc-ease)}
-.card:hover{transform:translateY(-3px)}
-.card .stripe{position:absolute;left:0;top:20px;bottom:20px;width:5px;border-radius:0 4px 4px 0}
-.card.c1 .stripe{background:var(--jc-copper)} .card.c1:hover{box-shadow:var(--jc-sh-copper)}
-.card.c2 .stripe{background:var(--jc-pucuk)} .card.c2:hover{box-shadow:var(--jc-sh-pucuk)}
-.card.c3 .stripe{background:var(--jc-ink)} .card.c3:hover{box-shadow:var(--jc-sh-ink)}
-.chip{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;margin-bottom:var(--jc-s2)}
-.card.c1 .chip{background:var(--jc-copper-soft);color:var(--jc-copper)}
-.card.c2 .chip{background:var(--jc-pucuk-soft);color:var(--jc-pucuk)}
-.card.c3 .chip{background:rgba(20,24,22,.06);color:var(--jc-ink)}
-.chip svg{width:20px;height:20px}
-.card h3{font-family:var(--jc-display);font-size:1.15rem;font-weight:700;margin-bottom:8px}
-.card p{font-size:14.5px;color:var(--jc-slate)}
-
-/* ── TIER REFERENCE ── */
-.tier-ref{margin-top:var(--jc-s4);background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);box-shadow:var(--jc-sh-ink)}
-.tref-head{font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin-bottom:var(--jc-s2)}
-.tref-table{width:100%;border-collapse:collapse}
-.tref-table th{font-family:var(--jc-mono);font-size:10px;letter-spacing:.12em;text-align:left;color:var(--jc-slate);padding:8px 12px;border-bottom:2px solid var(--jc-line)}
-.tref-table td{padding:12px;border-top:1px solid var(--jc-line);font-size:12.5px;color:var(--jc-slate);vertical-align:top;line-height:1.6}
-.tref-table tr:hover td{background:rgba(20,24,22,.02)}
-.tref-table td.ex{font-family:var(--jc-mono);font-size:11px;color:var(--jc-ink)}
-.tref-table td.mono{color:var(--jc-copper);font-weight:500;white-space:nowrap}
-.pill{display:inline-block;font-family:var(--jc-mono);font-size:10px;font-weight:600;letter-spacing:.08em;padding:3px 10px;border-radius:999px;white-space:nowrap}
-.pill-auto{background:rgba(47,111,85,.12);color:var(--jc-pucuk-ink);border:1px solid rgba(47,111,85,.3)}
-.pill-confirm{background:var(--jc-copper-soft);color:var(--jc-copper);border:1px solid var(--jc-copper-glow)}
-.pill-danger{background:rgba(179,38,30,.08);color:#B3261E;border:1px solid rgba(179,38,30,.3)}
-.tref-note{margin-top:var(--jc-s2);font-size:12px;color:var(--jc-slate);border-left:3px solid var(--jc-copper);padding-left:12px;line-height:1.7}
-.tref-note .mono{font-size:11px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
-@media(max-width:768px){.tref-table,.tref-table tbody,.tref-table tr,.tref-table td{display:block;width:100%}.tref-table thead{display:none}.tref-table tr{border-bottom:1px solid var(--jc-line);padding-bottom:10px;margin-bottom:10px}.tref-table td.mono{white-space:normal}}
-
-/* ── MEMORY GRID ── */
-.mem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
-.mem{background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);border-top:3px solid var(--mc,var(--jc-copper))}
-.mem b{font-family:var(--jc-display);font-size:1rem;display:block;margin-bottom:6px}
-.mem p{font-size:13px;color:var(--jc-slate);line-height:1.65}
-@media(max-width:1024px){.mem-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.mem-grid{grid-template-columns:1fr}}
-
-/* ── AGENTIX MATRIX ── */
-.matrix{margin-top:var(--jc-s3)}
-.matrix table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:12px;overflow:hidden;box-shadow:var(--jc-sh-ink)}
-.matrix th{background:var(--jc-ink);color:#fff;font-family:var(--jc-mono);font-size:10.5px;letter-spacing:.1em;text-align:left;padding:10px 14px;font-weight:500}
-.matrix td{padding:11px 14px;font-size:13px;border-top:1px solid var(--jc-line);color:var(--jc-slate)}
-.matrix td.mono{color:var(--jc-copper);font-weight:600;font-size:12.5px}
-.matrix td:first-child{color:var(--jc-ink);font-weight:500}
-.matrix tr:hover td{background:var(--jc-copper-soft)}
-
-/* ── ROUTING CARDS ── */
-.route-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--jc-s3)}
-.route-card{background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);border-left:4px solid var(--jc-copper)}
-.route-card:nth-child(2n){border-left-color:var(--jc-pucuk)}
-.route-card h4{font-family:var(--jc-display);font-size:1rem;margin-bottom:8px}
-.route-card p{font-size:13px;color:var(--jc-slate);line-height:1.7}
-.route-card .mono{font-size:11.5px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
-@media(max-width:768px){.route-grid{grid-template-columns:1fr}}
-
-/* ── RETRIEVAL (deep dive) ── */
-.ret-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:var(--jc-s5);align-items:start}
-.ret-title{font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin-bottom:var(--jc-s2)}
-.rstep{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--jc-line);align-items:flex-start}
-.rstep:last-child{border-bottom:none}
-.rnum{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:999px;background:var(--jc-ink);color:#fff;font-family:var(--jc-mono);font-size:12px;font-weight:600;flex-shrink:0}
-.rstep:nth-child(3) .rnum{background:var(--jc-copper)}
-.rstep:nth-child(4) .rnum{background:var(--jc-bara)}
-.rstep:nth-child(5) .rnum{background:var(--jc-pucuk)}
-.rstep b{font-family:var(--jc-display);font-size:.95rem;display:block;margin-bottom:3px}
-.rstep p{font-size:13px;color:var(--jc-slate);line-height:1.65}
-.formula{background:var(--jebat-malam);border-radius:12px;padding:18px 20px;display:grid;gap:8px;box-shadow:var(--jc-sh-ink)}
-.formula .fx{font-family:var(--jc-mono);font-size:13px;color:#E1A06F;letter-spacing:.01em}
-.formula .fx sup{font-size:9px}
-.formula .fsub{font-family:var(--jc-mono);font-size:10.5px;color:#99A39E}
-.ret-p{font-size:13px;color:var(--jc-slate);line-height:1.7;margin-top:12px}
-.wt-table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:12px;overflow:hidden;box-shadow:var(--jc-sh-ink);margin-top:6px}
-.wt-table th{font-family:var(--jc-mono);font-size:10px;letter-spacing:.1em;text-align:left;background:var(--jc-ink);color:#fff;padding:9px 14px;font-weight:500}
-.wt-table td{padding:10px 14px;font-size:12.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate)}
-.wt-table td.mono{color:var(--jc-ink);font-weight:600}
-.wt-table tbody tr:hover td{background:var(--jc-copper-soft)}
-.retp{margin-top:20px;border-left:3px solid var(--jc-pucuk);padding-left:14px;font-size:13px;color:var(--jc-slate);line-height:1.7}
-@media(max-width:1024px){.ret-grid{grid-template-columns:1fr}}
-
-/* ── HONEST COMPARISON ── */
-.cmp table{width:100%;border-collapse:collapse;background:var(--jc-card);border-radius:16px;overflow:hidden;box-shadow:var(--jc-sh-ink);border:1px solid var(--jc-line)}
-.cmp th{background:var(--jc-ink);color:#fff;text-align:left;padding:12px 16px;font-family:var(--jc-display);font-size:.9rem;font-weight:600}
-.cmp th:last-child{background:linear-gradient(135deg,#B26832,#D58A4A)}
-.cmp td{padding:12px 16px;font-size:13.5px;border-top:1px solid var(--jc-line);color:var(--jc-slate);vertical-align:top;line-height:1.6}
-.cmp td:first-child{color:var(--jc-ink);font-weight:600;width:22%}
-/* JEBAT column highlight — soft copper wash + border rails */
-.cmp td:nth-child(3){background:rgba(201,122,64,.05);border-left:1px solid rgba(201,122,64,.18);border-right:1px solid rgba(201,122,64,.18)}
-.cmp tbody tr:last-child td:nth-child(3){border-bottom:1px solid rgba(201,122,64,.18)}
-.cmp tbody tr:hover td{background:rgba(201,122,64,.04)}
-.cmp tbody tr:hover td:nth-child(3){background:rgba(201,122,64,.10)}
-.cmp td.good{color:var(--jc-ink)}
-.cmp td.good::before{content:"✓ ";color:var(--jc-pucuk);font-weight:700}
-.cmp td.bad::before{content:"— ";color:var(--jc-copper);font-weight:700}
-.cmp-verdict{margin-top:14px;font-size:12.5px;color:var(--jc-slate);border-left:3px solid var(--jc-pucuk);padding-left:12px;line-height:1.7}
-.cmp-verdict b{color:var(--jc-ink)}
-@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}.cmp td:nth-child(3){border-left:none;border-right:none}}
-
-
-.cmp td:nth-child(3){background:rgba(201,122,64,.05);border-left:1px solid rgba(201,122,64,.18);border-right:1px solid rgba(201,122,64,.18)}
-.cmp tbody tr:last-child td:nth-child(3){border-bottom:1px solid rgba(201,122,64,.18)}
-.cmp tbody tr:hover td{background:rgba(201,122,64,.04)}
-.cmp tbody tr:hover td:nth-child(3){background:rgba(201,122,64,.10)}
-@media(max-width:768px){.cmp table,.cmp tbody,.cmp tr,.cmp td{display:block;width:100%}.cmp thead{display:none}.cmp tr{border-bottom:1px solid var(--jc-line);padding:8px 0}.cmp td{border:none}.cmp td:nth-child(3){border-left:none;border-right:none}}
-/* ── TRADEOFF NOTES ── */
-.tradeoffs{margin-top:var(--jc-s2)}
-.topt{border-left:3px solid var(--jc-copper);background:var(--jc-copper-soft);border-radius:0 10px 10px 0;padding:12px 14px;animation:fadein .25s var(--jc-ease)}
-@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
-.topt b{font-family:var(--jc-display);font-size:.88rem;display:block;margin-bottom:4px;color:var(--jc-ink)}
-.topt p{font-size:12.5px;color:var(--jc-slate);line-height:1.65}
-.topt .mono{font-size:11px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
-
-/* ── FLOW (how it works) ── */
-.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3)}
-.fstep{background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);position:relative;overflow:hidden}
-.fstep::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--fc,var(--jc-copper))}
-.fstep .fn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--fc,var(--jc-copper)) 12%,transparent);color:var(--fc,var(--jc-copper));font-family:var(--jc-mono);font-size:12px;font-weight:600;margin-bottom:10px}
-.fstep b{display:block;font-family:var(--jc-display);font-size:.98rem;margin-bottom:6px}
-.fstep p{font-size:13px;color:var(--jc-slate);line-height:1.65}
-.fstep .mono{font-size:11.5px;color:var(--jc-ink);background:rgba(20,24,22,.05);padding:1px 5px;border-radius:4px}
-@media(max-width:1024px){.flow{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.flow{grid-template-columns:1fr}}
-
-/* ── LOGO SHOWCASE (hero) ── */
-.logo-showcase{position:relative;display:flex;align-items:center;gap:var(--jc-s3);background:var(--jc-card);border:1px solid var(--jc-line);border-radius:20px;padding:var(--jc-s3);box-shadow:var(--jc-sh-ink);margin-bottom:var(--jc-s3);overflow:hidden}
-.logo-glow{position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(201,122,64,.20);filter:blur(70px);right:-60px;top:-80px;pointer-events:none}
-.logo-chip-dark{position:relative;display:inline-flex;align-items:center;justify-content:center;background:var(--jebat-malam);border-radius:20px;padding:18px 26px;box-shadow:inset 0 0 0 1px rgba(201,122,64,.4),0 14px 34px -10px rgba(201,122,64,.45);flex-shrink:0}
-.logo-chip-dark img{width:150px;height:auto;display:block}
-.logo-caption b{display:block;font-family:var(--jc-display);font-size:1.05rem;font-weight:700}
-.logo-caption span{font-family:var(--jc-mono);font-size:10.5px;letter-spacing:.12em;color:var(--jc-slate)}
-
-/* ── TERMINAL (real output, no fake logs) ── */
-.term{background:var(--jebat-malam);border-radius:var(--jc-rad);overflow:hidden;box-shadow:0 30px 60px -20px rgba(8,10,9,.5)}
-.term-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(240,234,223,.08)}
-.term-dot{width:11px;height:11px;border-radius:50%}
-.term-dot.r{background:#E5484D}.term-dot.y{background:#F5A623}.term-dot.g{background:#46A758}
-.term-title{font-family:var(--jc-mono);font-size:11px;color:#99A39E;letter-spacing:.08em;margin-left:6px}
-.term-live{margin-left:auto;font-family:var(--jc-mono);font-size:10px;color:#8FD3B8;display:inline-flex;align-items:center;gap:6px}
-.term-live .pulse{width:6px;height:6px;border-radius:50%;background:#46A758;animation:pulse 2s infinite}
-.term-body{padding:var(--jc-s3);font-family:var(--jc-mono);font-size:12.5px;line-height:1.85;color:#C9D1CB;min-height:220px;white-space:pre-wrap;word-break:break-word}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--jc-s2)}
-.jchip{font-family:var(--jc-mono);font-size:11.5px;padding:7px 13px;border-radius:999px;border:1px solid var(--jc-line);background:var(--jc-card);cursor:pointer;transition:all var(--jc-dur) var(--jc-ease)}
-.jchip:hover{border-color:var(--jc-copper);color:var(--jc-copper);transform:translateY(-1px)}
-.jchip:focus-visible{outline:2px solid var(--jc-copper);outline-offset:2px}
-.jchip.on{background:var(--jc-ink);color:#fff;border-color:var(--jc-ink)}
-
-/* ── SPLIT (workbench) ── */
-.split{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--jc-s4);align-items:start}
-.split .panel{background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad);padding:var(--jc-s3);box-shadow:var(--jc-sh-ink)}
-.split h3{font-family:var(--jc-display);font-size:1.3rem;font-weight:700;margin-bottom:10px}
-.split p{font-size:14.5px;color:var(--jc-slate);margin-bottom:var(--jc-s2)}
-.code{background:var(--jebat-malam);border-radius:12px;padding:var(--jc-s2);font-family:var(--jc-mono);font-size:12px;line-height:1.8;color:#C9D1CB;overflow-x:auto;white-space:pre}
-.code .ok{color:#8FD3B8}.code .dim{color:#7A847E}.code .cu{color:#E1A06F}
-.code-wrap{position:relative}
-.code-copy{position:absolute;top:10px;right:10px;font-family:var(--jc-mono);font-size:10.5px;background:rgba(240,234,223,.08);color:#C9D1CB;border:1px solid rgba(240,234,223,.15);border-radius:8px;padding:5px 10px;cursor:pointer}
-.code-copy:hover{background:rgba(240,234,223,.16)}
-.code-copy:focus-visible{outline:2px solid var(--jc-copper)}
-
-/* ── DEPLOY BAND (harsh gradient) ── */
-.band{background:var(--jebat-malam);border-radius:20px;padding:var(--jc-s6) var(--jc-s5);position:relative;overflow:hidden}
-.band .orb-c{position:absolute;width:420px;height:420px;border-radius:50%;background:rgba(201,122,64,.28);filter:blur(80px);top:-160px;right:-100px}
-.band .orb-d{position:absolute;width:360px;height:360px;border-radius:50%;background:rgba(47,111,85,.24);filter:blur(80px);bottom:-160px;left:-80px}
-.band-in{position:relative;z-index:1;text-align:center}
-.band h2{color:#F0EADF}
-.band p{color:#99A39E;max-width:520px;margin:12px auto var(--jc-s4)}
-.band .grad-bar{height:6px;width:180px;margin:0 auto var(--jc-s4);border-radius:3px;background:var(--jc-grad)}
-.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--jc-s3);text-align:left}
-.tier{background:rgba(240,234,223,.04);border:1px solid rgba(240,234,223,.12);border-radius:var(--jc-rad);padding:var(--jc-s3);backdrop-filter:blur(8px)}
-.tier.hot{border:1.5px solid var(--jc-copper);background:rgba(201,122,64,.08);position:relative}
-.tier .pop{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--jc-mono);font-size:9.5px;letter-spacing:.12em;background:var(--jebat-malam);color:var(--jc-bara);border:1px solid rgba(201,122,64,.5);padding:4px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 6px 16px -6px rgba(201,122,64,.45)}
-.tier h4{font-family:var(--jc-display);font-size:1.05rem;color:#F0EADF;margin-bottom:4px}
-.tier .t-sub{font-family:var(--jc-mono);font-size:10px;color:#99A39E;letter-spacing:.1em;margin-bottom:var(--jc-s2);display:block}
-.tier ul{list-style:none;display:grid;gap:9px}
-.tier li{display:flex;gap:9px;font-size:13.5px;color:#C9D1CB;align-items:flex-start}
-.tier li svg{width:15px;height:15px;flex-shrink:0;margin-top:2px}
-.tier.t1 li svg{color:var(--jc-copper)} .tier.t2 li svg{color:#8FD3B8} .tier.t3 li svg{color:var(--jc-bara)}
-
-/* ── FAQ ── */
-.faq{max-width:760px;margin:0 auto}
-.qa{background:var(--jc-card);border:1px solid var(--jc-line);border-radius:var(--jc-rad-sm);margin-bottom:12px;overflow:hidden}
-.qa button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;background:none;border:none;padding:18px 20px;font-family:var(--jc-display);font-weight:600;font-size:15px;cursor:pointer;text-align:left;color:var(--jc-ink)}
-.qa button:focus-visible{outline:2px solid var(--jc-copper);outline-offset:-2px}
-.qa .ind{transition:transform .25s var(--jc-ease);color:var(--jc-copper);flex-shrink:0}
-.qa.open .ind{transform:rotate(45deg)}
-.qa .a{max-height:0;overflow:hidden;transition:max-height .3s var(--jc-ease)}
-.qa .a p{padding:0 20px 18px;color:var(--jc-slate);font-size:14px}
-.qa .a .mono{font-size:12.5px;color:var(--jc-copper)}
-
-/* ── FOOTER ── */
-footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
-.foot{display:flex;justify-content:space-between;align-items:center;gap:var(--jc-s3);flex-wrap:wrap}
-.foot-links{display:flex;gap:var(--jc-s3);font-size:13px;color:var(--jc-slate)}
-.foot-links a:hover{color:var(--jc-copper)}
-.foot .mono{font-size:11px;color:var(--jc-slate)}
-
-/* logo band */
-.logo-band{display:flex;align-items:center;gap:14px;justify-content:center;padding:var(--jc-s5) 0 var(--jc-s2)}
-.logo-band img{width:64px;height:auto}
-
-@media(max-width:1024px){
-  .hero-grid{grid-template-columns:1fr;gap:var(--jc-s4)}
-  .cards{grid-template-columns:1fr 1fr}
-  .split{grid-template-columns:1fr}
-  .tiers{grid-template-columns:1fr;max-width:460px;margin:0 auto}
-  .stats{grid-template-columns:1fr 1fr}
-  .stat:nth-child(2){border-right:none}
-  .stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid var(--jc-line)}
-}
-@media(max-width:640px){
-  .cards{grid-template-columns:1fr}
-  .section{padding:var(--jc-s6) 0}
-  .band{padding:var(--jc-s5) var(--jc-s3)}
-}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-}
-</style>
+<link rel="preload" href="assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="assets/jebat-creative-tokens.css" />
+<link rel="stylesheet" href="assets/jebat-landing.css" />
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div id="copy-status" class="sr-only" role="status" aria-live="polite"></div>
 
-<nav class="nav">
+<nav class="nav" aria-label="Primary navigation">
   <div class="wrap nav-in">
     <a class="brand" href="#">
       <span class="brand-logo"><picture><source type="image/webp" srcset="assets/Jebat-Transparent-ink.webp"><img src="assets/Jebat-Transparent-ink.png" alt="JEBAT logo" width="88" height="59"></picture></span>
@@ -431,44 +58,45 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
     <ul class="nav-links">
       <li><a href="#platform">Platform</a></li>
       <li><a href="#workbench">Workbench</a></li>
+      <li><a href="#learning">Learning</a></li>
       <li><a href="#mcp">MCP</a></li>
       <li><a href="#deploy">Deploy</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li><a href="/webui/" target="_blank" rel="noopener">WebUI</a></li>
     </ul>
-    <a class="nav-cta" href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">Get JEBAT</a>
-    <button class="burger" aria-label="Menu">
+    <a class="nav-cta" href="#mcp-deploy">Install JEBAT</a>
+    <button class="burger" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="mnav">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
   </div>
   <div id="mnav" class="wrap">
     <a href="#platform" class="mlink">Platform</a><a href="#workbench" class="mlink">Workbench</a><a href="#mcp" class="mlink">MCP</a><a href="#mcp-deploy" class="mlink">MCP Deploy</a><a href="#compare" class="mlink">Compare</a><a href="#deploy" class="mlink">Deploy</a><a href="#faq" class="mlink">FAQ</a><a href="/webui/" target="_blank" rel="noopener" class="mlink">WebUI ↗</a><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="mlink">GitHub ↗</a>
+    <a href="#learning" class="mlink">Learning</a>
   </div>
 </nav>
 
+<main id="main" tabindex="-1">
 <header class="hero">
   <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="dots"></div>
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow"><span class="pulse"></span> RELEASE v8.3.0 — SECURITY HARDENED</span>
-      <h1>Keep <span class="grad">Command.</span><br/>Own the Stack.</h1>
-      <p class="hero-lead">A sovereign AI command layer between your apps and any model — <strong>128 MCP tools</strong> behind explicit safety tiers, persistent Ghost DB memory, and a CLI that builds, ships, and runs agent solutions. Never ship a write you did not approve.</p>
+      <span class="eyebrow">JEBAT v8.3.0 · Self-hosted agent runtime</span>
+      <h1>Keep <span class="grad">Command.</span><br/>Keep the Context.</h1>
+      <p class="hero-lead">Run agents with your choice of model. Keep project knowledge, inspect the evidence behind learning advice, and control which tools can act.</p>
       <div class="badges">
-        <span class="badge b-pucuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Zero Telemetry</span>
+        <span class="badge b-pucuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Your infrastructure</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Key-Gated Control Plane</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Agentix Lifecycle</span>
         <span class="badge b-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 22 Specialist Doctrines</span>
       </div>
       <div class="cta-row">
-        <a class="btn btn-primary" href="#deploy"><span>Deploy JEBAT</span>
+        <a class="btn btn-primary" href="#mcp-deploy"><span>Install JEBAT</span>
           <svg class="arr" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-        <a class="btn btn-ghost" href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.72-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12v3.14c0 .3.21.67.8.55A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
-          Star on GitHub</a>
+        <a class="btn btn-ghost" href="#learning">Explore the learning loop</a>
       </div>
-      <span class="install"><span class="dollar">$</span> curl -fsSL https://jebat.online/install.sh | bash
-        <button onclick="copyPill(this)" aria-label="Copy install command"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-      </span>
+      <div class="install"><span class="dollar" aria-hidden="true">$</span><code>jebat learning advise</code>
+        <button type="button" onclick="copyCommand('jebat learning advise',this)" aria-label="Copy learning advisor command"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </div>
     </div>
 
     <div>
@@ -476,71 +104,50 @@ footer{border-top:1px solid var(--jc-line);padding:var(--jc-s5) 0 var(--jc-s4)}
         <span class="logo-glow"></span>
         <span class="logo-chip-dark"><picture><source type="image/webp" srcset="assets/Jebat-Transparent.webp"><img src="assets/Jebat-Transparent.png" alt="JEBAT sovereign mark" width="200" height="133"></picture></span>
         <div class="logo-caption">
-          <b>Hang Jebat</b>
-          <span>Loyal · Powerful · Unforgettable</span>
+          <b>Your stack. Your evidence.</b>
+          <span>CLI · MCP · AutoMimpi · Learning KB</span>
         </div>
       </div>
       <div class="term">
         <div class="term-head">
-          <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
-          <span class="term-title">JEBAT CLI — LIVE SIMULATION</span>
-          <span class="term-live"><span class="pulse"></span> ONLINE</span>
+          <span class="term-title">RECORDED CLI OUTPUT</span>
+          <span class="term-live">LOCAL CAPTURE · 07 OCT 2026</span>
         </div>
-        <div class="chips" style="padding:14px 16px 0">
-          <button class="jchip on" onclick="runCLI('status',this)">jebat status</button>
-          <button class="jchip" onclick="runCLI('agentix',this)">agentix status</button>
-          <button class="jchip" onclick="runCLI('mcp',this)">tools list</button>
-          <button class="jchip" onclick="runCLI('audit',this)">jebat doctor</button>
-          <button class="jchip" onclick="runCLI('dream',this)">agentix runs</button>
+        <div class="chips" role="group" aria-label="Recorded command examples">
+          <button class="jchip on" type="button" aria-pressed="true" data-capture="status">Status</button>
+          <button class="jchip" type="button" aria-pressed="false" data-capture="learning">Learning</button>
+          <button class="jchip" type="button" aria-pressed="false" data-capture="workflow">Workflows</button>
+          <button class="jchip" type="button" aria-pressed="false" data-capture="teams">Teams</button>
         </div>
-        <div class="term-body" id="hero-cli-output">> $ jebat status
-✓ JEBAT Core v8.3.0 Operational — Security Hardened
-> Model Route: llama.cpp (local runtime)
-> Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated
-> MCP Protocol Bus: tool registry available · jebat://metrics/tools live</div>
+        <pre class="term-body" id="hero-cli-output" aria-live="polite">$ jebat status
+JEBAT v8.3.0
+  providers    0 configured · active: (none)
+  agentix      0 deployed solutions · 0 recorded runs
+  sessions     0 saved</pre>
+        <p class="demo-note">Recorded in a disposable workspace. These controls display captured output; they do not run commands or report production health.</p>
       </div>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="stats" role="list" aria-label="Verified platform facts">
-      <div class="stat s1" role="listitem"><b>128</b><span>MCP TOOLS · SAFETY-TIERED</span></div>
-      <div class="stat s2" role="listitem"><b>6</b><span>GHOST DB MEMORY TYPES</span></div>
-      <div class="stat s3" role="listitem"><b>22</b><span>SPECIALIST DOCTRINES · 3 TEAMS</span></div>
-      <div class="stat s4" role="listitem"><b>0</b><span>TELEMETRY · AIR-GAP READY</span></div>
+    <div class="stats" role="list" aria-label="Shipped product capabilities">
+      <div class="stat s1" role="listitem"><b>9</b><span>OPT-IN WORKFLOW PLAYBOOKS</span></div>
+      <div class="stat s2" role="listitem"><b>Scoped</b><span>PROJECT LEARNING EVIDENCE</span></div>
+      <div class="stat s3" role="listitem"><b>SQLite</b><span>SEARCHABLE ADVICE &amp; DREAMS</span></div>
+      <div class="stat s4" role="listitem"><b>No model call</b><span>DETERMINISTIC LEARNING ADVISOR</span></div>
     </div>
   </div>
 </header>
 
-<!-- NEWS STRIP — LATEST AI IMPROVEMENTS (agent-fed) -->
-<section class="news-strip" aria-label="Latest AI news">
+<section class="news-strip" aria-label="Release changes">
   <div class="wrap">
-    <div class="news-head">
-      <span class="news-kicker"><span class="pulse"></span> WIRE — AI IMPROVEMENTS</span>
-      <span class="news-date mono">updated 2026-10-01 · via jebat news agent</span>
+    <div class="news-head"><span class="news-kicker">A learning loop you can inspect.</span><span class="news-date mono">Release update · 07 October 2026</span></div>
+    <div class="news-row">
+      <a class="news-card" href="#learning"><span class="nc-src mono">AutoMimpi</span><span class="nc-title">Keep consolidation inside the project.</span><span class="nc-arr">See the learning loop</span></a>
+      <a class="news-card" href="#learning"><span class="nc-src mono">Advisor + KB</span><span class="nc-title">Trace advice to evidence. Record your review.</span><span class="nc-arr">Inspect the commands</span></a>
+      <a class="news-card" href="#workbench"><span class="nc-src mono">Workflow playbooks</span><span class="nc-title">Start with a scoped plan—not another agent.</span><span class="nc-arr">Explore the workbench</span></a>
     </div>
-    <div class="news-row" id="news-row"></div>
   </div>
-</section>
-
-<script>
-/* Agent-fed news strip: server-side JSON snapshot baked in (no network at
- * view time), re-rendered live if news.json is served alongside. */
-const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campaign", "link": "https://openai.com/index/disrupting-a-coordinated-model-distillation-campaign", "source": "OpenAI", "date": "Wed, 30 Sep 2026 10:30:00 GMT", "summary": "Learn how OpenAI disrupted a campaign to extract protected model reasoning and is strengthening defenses against adversarial distillation."}, {"title": "Helping small businesses put AI to work", "link": "https://openai.com/index/helping-small-businesses-put-ai-to-work", "source": "OpenAI", "date": "Wed, 30 Sep 2026 10:00:00 GMT", "summary": "OpenAI is partnering with America’s SBDC to expand hands-on AI training and local support for small businesses, alongside a new report on how small teams are using AI."}, {"title": "Quoting Anthropic Frontier Red Team", "link": "https://simonwillison.net/2026/Sep/29/anthropic-frontier-red-team/", "source": "Simon Willison", "date": "2026-09-29T22:20:28+00:00", "summary": "We evaluate several models on 100 tasks from the [internal Binary Exploitation benchmark] (selected at random), and find that GLM-5.3 develops full control flow hijacks in 4% of the trials; Claude Mythos Preview did so i"}];
-(function renderNews(){
-  const row = document.getElementById('news-row');
-  NEWS_ITEMS.forEach((n, i) => {
-    const hue = ['copper','pucuk','bara'][i % 3];
-    const a = document.createElement('a');
-    a.className = 'news-card nc-' + hue;
-    a.href = n.link; a.target = '_blank'; a.rel = 'noopener';
-    a.innerHTML = `<span class="nc-src mono">${n.source}</span>
-                   <span class="nc-title">${n.title}</span>
-                   <span class="nc-arr">→</span>`;
-    row.appendChild(a);
-  });
-})();
-</script>
 </section>
 
 <!-- 01 / PLATFORM -->
@@ -549,7 +156,7 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
     <div class="sec-head">
       <span class="kicker">PLATFORM</span>
       <h2>The model should not own your architecture.</h2>
-      <p>Every tool call routes through an approval boundary. Switch between local llama.cpp, Claude, or GPT while preserving the same 128 annotated tools, Ghost DB traces, and policy gates.</p>
+      <p>Choose local inference or a configured cloud provider. Keep the same workspace, tool registry, and project knowledge instead of rebuilding your workflow around a vendor.</p>
     </div>
     <div class="cards">
       <div class="card c1">
@@ -562,16 +169,16 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
         <span class="stripe"></span>
         <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
         <h3>Governed by default</h3>
-        <p>Safety tiers on every tool: read-only runs free, writes confirm once per stage, destructive ops gate hard. Staged approvals, one prompt per session.</p>
+        <p>Registered tools declare AUTO, CONFIRM, or DANGEROUS tiers. Review the operation and scope before approving. Automation settings can bypass prompts—configure them deliberately.</p>
       </div>
       <div class="card c3">
         <span class="stripe"></span>
         <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg></span>
         <h3>Memory that persists</h3>
-        <p>Ghost DB keeps six memory types — episodic, semantic, procedural — with hybrid BM25 + vector retrieval and nightly autoMimpi consolidation.</p>
+        <p>Project traces stay on disk. AutoMimpi consolidates scoped evidence; SQLite keeps searchable dream reports, advisor recommendations, and your review decisions.</p>
       </div>
     </div>
-    <div class="mono" style="font-size:10.5px;letter-spacing:.14em;color:var(--jc-slate);margin:var(--jc-s4) 0 12px">PRODUCT SURFACES — BUILT INTO THE <a href="/webui/" target="_blank" rel="noopener" style="color:var(--jc-copper);border-bottom:1px solid var(--jc-copper-glow)">WEBUI</a></span></div>
+    <p class="learning-footnote">Additional product surfaces are available in the <a class="inline-link" href="/webui/">WebUI</a>; integrations require their own configuration and credentials.</p>
     <div class="cards cols4">
       <div class="card c1">
         <span class="stripe"></span>
@@ -583,7 +190,7 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
         <span class="stripe"></span>
         <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
         <h3>Keris</h3>
-        <p>Sentinel security — autonomous pentest scans, CVE lookup, header and TLS audits.</p>
+        <p>Security tools for authorized assessments: CVE lookup, header checks, TLS inspection, and scoped scans.</p>
       </div>
       <div class="card c3">
         <span class="stripe"></span>
@@ -627,26 +234,37 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
       </tr>
     </tbody>
   </table>
-  <p class="tref-note">Classification is pattern-based, evaluates <em>arguments</em> (not just tool names), and is queryable: <span class="mono">jebat safety classify "rm -rf /tmp/x" → DANGEROUS</span>. MCP clients receive the same verdict as structuredContent before anything executes.</p>
+  <p class="tref-note">Classification uses declared tiers and argument patterns; it is not a complete security sandbox. MCP CONFIRM/DANGEROUS calls return approval metadata without execution. Review elevated modes before enabling unattended writes.</p>
 </div>
 </div>
 
-<!-- 01A / GHOST DB MEMORY TYPES -->
-<section class="section" id="memory" style="padding-top:var(--jc-s5)">
+<section class="section" id="memory">
   <div class="wrap">
-    <div class="sec-head">
-      <span class="kicker">GHOST DB</span>
-      <h2>Six memory types. One retrieval path.</h2>
-      <p>Memories are typed at write time and fused at read time — hybrid BM25 + vector (HNSW, cosine) returns ranked hits with per-result confidence. The nightly autoMimpi daemon decays, prunes, and consolidates.</p>
-    </div>
+    <div class="sec-head"><h2>Keep the context. Know its limits.</h2><p>Memory traces remain JSON-backed. Optional embedding and Ghost DB configuration supports vector retrieval; the learning KB uses SQLite full-text search without a model call.</p></div>
     <div class="mem-grid">
-      <div class="mem" style="--mc:var(--jc-copper)"><b>Episodic</b><p>What happened, when. Interaction traces with timestamps — the "we tried this in March" layer.</p></div>
-      <div class="mem" style="--mc:var(--jc-pucuk)"><b>Semantic</b><p>Facts and their relations. Project stack, conventions, invariants — embedded for meaning-match.</p></div>
-      <div class="mem" style="--mc:var(--jc-bara)"><b>Procedural</b><p>How things get done here. Build commands, deploy runbooks, the steps that worked.</p></div>
-      <div class="mem" style="--mc:var(--jc-copper)"><b>Working</b><p>The current task's scratchpad. Scoped to the session, promoted on milestones.</p></div>
-      <div class="mem" style="--mc:var(--jc-pucuk)"><b>Strategic</b><p>Goals and constraints that outlive tasks. The reason behind the what.</p></div>
-      <div class="mem" style="--mc:var(--jc-ink)"><b>Pattern</b><p>Extracted by autoMimpi: recurring error→fix pairs, surfaced before you repeat them.</p></div>
+      <div class="mem" style="--mc:var(--jc-violet)"><b>Episodic</b><p>Recorded events and failures, with timestamps and supporting context.</p></div>
+      <div class="mem" style="--mc:var(--jc-emerald)"><b>Semantic</b><p>Durable facts about a project: stack, commands, decisions, and constraints.</p></div>
+      <div class="mem" style="--mc:var(--jc-pink)"><b>Procedural</b><p>Stored procedures and approaches that can inform the next task.</p></div>
+      <div class="mem" style="--mc:var(--jc-cyan)"><b>Working</b><p>Short-lived task context with bounded working-memory capacity.</p></div>
+      <div class="mem" style="--mc:var(--jc-amber)"><b>Emotional</b><p>A typed record for emotional context—not a claim that the system has feelings.</p></div>
+      <div class="mem" style="--mc:var(--jc-deep)"><b>Prospective</b><p>Future intentions. Storing one does not schedule or authorize its execution.</p></div>
     </div>
+  </div>
+</section>
+
+<section class="section learning-section" id="learning">
+  <div class="wrap">
+    <div class="sec-head"><h2>Let the evidence teach.<br/>Keep the decision yours.</h2><p>AutoMimpi, SelfLearn, and the learning advisor share one project-scoped loop. Inspect what was learned, why advice appears, and what your review changed.</p></div>
+    <div class="cards">
+      <article class="card c1"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg></span><h3>Consolidate without duplicate lessons.</h3><p>Scoped dream cycles respect cooldowns. Repeated source evidence does not create another copy of the same generalization.</p></article>
+      <article class="card c2"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 12 2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg></span><h3>Inspect the reason behind advice.</h3><p>Recommendations cite memory IDs and timestamps. Retention is not presented as a task-success score.</p></article>
+      <article class="card c3"><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><h3>Find the history. Record your review.</h3><p>Search dream reports and advice in SQLite. Helpful, unhelpful, or dismissed feedback changes visibility—not permissions.</p></article>
+    </div>
+    <div class="code-wrap"><button class="code-copy" type="button" onclick="copySnippet('learning-commands',this)">Copy</button><pre class="code" id="learning-commands">jebat learning analyze
+jebat learning advise --focus terminal --limit 5
+jebat learning dream
+jebat learning search "AutoMimpi" --kind dream</pre></div>
+    <p class="learning-footnote">Real commands—not simulated results. No model call or delegated agent is required for learning advice. Legacy facts without root metadata need review; shared JSON memory is not a cross-process transactional store. <a class="inline-link" href="https://github.com/nusabyte-my/jebat-core/blob/main/docs/JEBAT_WORKFLOWS.md#learning-advisor-and-kb">Read the operating limits</a>.</p>
   </div>
 </section>
 
@@ -659,10 +277,10 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
       <p>No magic — a deterministic pipeline. Every request your IDE sends walks the same six steps, and each one is observable in the metrics resource.</p>
     </div>
     <div class="flow">
-      <div class="fstep" style="--fc:var(--jc-copper)"><span class="fn">1</span><b>IDE dispatch</b><p>Your client sends a JSON-RPC <span class="mono">tools/call</span> over stdio or streamable-HTTP. Auth first: <span class="mono">X-API-Key</span> compared timing-safe.</p></div>
+      <div class="fstep"><span class="fn">1</span><b>IDE dispatch</b><p>Your client sends JSON-RPC over a local stdio process or configured HTTP transport. Authenticate remote access and restrict the server's network exposure.</p></div>
       <div class="fstep" style="--fc:var(--jc-copper)"><span class="fn">2</span><b>Allowlist + tier</b><p><span class="mono">JEBAT_MCP_TOOLS_ALLOW</span> filters the registry; the tool's declared <span class="mono">safety_tier</span> decides the next move — auto, confirm, or refuse.</p></div>
       <div class="fstep" style="--fc:var(--jc-bara)"><span class="fn">3</span><b>Approval gate</b><p><span class="mono">confirm</span>/<span class="mono">dangerous</span> calls return <span class="mono">approval_required</span> with the exact arguments — approve in the CLI, retry. Nothing executes silently.</p></div>
-      <div class="fstep" style="--fc:var(--jc-pucuk)"><span class="fn">4</span><b>Deadline dispatch</b><p>The call runs under its declared timeout (async, thread-offloaded where the OS blocks). Hung tools die at the deadline with a structured <span class="mono">isError</span>.</p></div>
+      <div class="fstep"><span class="fn">4</span><b>Deadline dispatch</b><p>A tool call has a declared timeout and structured errors. A timeout ends the wait; it cannot guarantee termination of an underlying OS process or thread.</p></div>
       <div class="fstep" style="--fc:var(--jc-pucuk)"><span class="fn">5</span><b>Progress + result</b><p>Long tools stream <span class="mono">notifications/progress</span> (agent loop iterations report fractional progress). Results cap at size limits; full output spills to <span class="mono">jebat://artifact</span>.</p></div>
       <div class="fstep" style="--fc:var(--jc-ink)"><span class="fn">6</span><b>Metrics recorded</b><p>Call count, error count, and latency land in per-tool rings — query live via <span class="mono">resources/read: jebat://metrics/tools</span>.</p></div>
     </div>
@@ -670,7 +288,7 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
 </section>
 
 <!-- 02 / WORKBENCH -->
-<section class="section" id="workbench" style="background:linear-gradient(180deg,rgba(201,122,64,.05),transparent 30%);border-top:1px solid var(--jc-line)">
+<section class="section" id="workbench" style="border-top:1px solid var(--jc-line)">
   <div class="wrap">
     <div class="sec-head">
       <span class="kicker">WORKBENCH</span>
@@ -683,20 +301,14 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
         <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Eval it against golden tasks. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name, resume by run-id.</p>
         <div class="code-wrap">
           <button class="code-copy" onclick="copySnippet('agentix-snippet',this)">Copy</button>
-          <div class="code" id="agentix-snippet"><span class="dim">$</span> jebat config import -s omp --dry-run
-<span class="ok">┌─ import from omp (mcp.json)</span>
-│  ✓ stitch      http   https://stitch.googleapis.com/mcp
-│  ✓ hostinger   stdio  npx.cmd --package=hostinger-api-mcp
-<span class="ok">└─ timeouts ms→s · {env:VAR}→${VAR} · collisions skipped</span>
+          <pre class="code" id="agentix-snippet"># Inspect the workflows shipped with this checkout
+jebat workflow list
 
-<span class="dim">$</span> jebat agentix create usher -t lattice
-<span class="ok">✓ created lattice solution</span>
-<span class="dim">$</span> jebat agentix build ./usher
-<span class="ok">✓ built usher v0.1.0 sha:85c718ae</span>
-<span class="dim">$</span> jebat agentix run usher "close ticket 4128"
-<span class="dim">$</span> jebat agentix ask "audit the auth flow for SSRF"
-<span class="ok">  routed to: security-audit (reflex) · also matched: osint-recon(0.18)</span>
-<span class="dim">$</span> jebat agentix run usher --resume 20261005-161542-usher-9f21 "now write the fix"</div>
+# Render a scoped plan; this does not start an agent
+jebat workflow show workflow-audit --task "Audit this project" --scope .
+
+# Preview importing an existing MCP configuration
+jebat config import -s omp --dry-run</pre>
         </div>
       </div>
       <div>
@@ -721,8 +333,8 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
   <div class="wrap">
     <div class="sec-head">
       <span class="kicker">AGENTIX SPECIALISTS</span>
-      <h2>Spawn a specialist by typing.</h2>
-      <p>Twenty-two ready doctrines ship with the CLI — each declares its own tool allowlist, workspace jail, and compute budget. <span class="mono">jebat agentix ask</span> routes a bare objective to the right one; no folder, no wizard.</p>
+      <h2>Bring a specialist when the task needs one.</h2>
+      <p>Specialist doctrines declare tools, workspace scope, and run budgets. Keep a single agent for straightforward work. Agentix solutions and teams are explicit execution choices—not a requirement for the learning advisor.</p>
     </div>
     <div class="chips" style="justify-content:center;padding:0 0 var(--jc-s2)">
       <span class="jchip">security-audit</span><span class="jchip">osint-recon</span><span class="jchip">code-reviewer</span><span class="jchip">test-writer</span><span class="jchip">doc-writer</span><span class="jchip">data-analyst</span><span class="jchip">marketing-strategist</span><span class="jchip">ads-manager</span><span class="jchip">seo-auditor</span><span class="jchip">incident-responder</span><span class="jchip">release-manager</span><span class="jchip">contract-reviewer</span><span class="jchip">support-triage</span><span class="jchip">competitor-watch</span><span class="jchip">copy-writer</span><span class="jchip">dependency-auditor</span><span class="jchip">email-lifecycle</span><span class="jchip">mcp-auditor</span><span class="jchip">ops-reporter</span><span class="jchip">ui-critic</span><span class="jchip">unit-economist</span><span class="jchip">uptime-sentinel</span>
@@ -731,18 +343,16 @@ const NEWS_ITEMS = [{"title": "Disrupting a coordinated model-distillation campa
       <h3>The whole loop, typed</h3>
       <div class="code-wrap">
         <button class="code-copy" onclick="copySnippet('specialist-snippet',this)">Copy</button>
-        <div class="code" id="specialist-snippet"><span class="dim">$</span> jebat agentix create release-check --from release-manager
-<span class="ok">✓ created reflex solution from specialist 'release-manager'</span>
-<span class="dim">$</span> jebat agentix eval release-check
-<span class="ok">  ok   structural · ok doctrine · ok allowlist (3 tools ≤ 10)</span>
-<span class="dim">$</span> jebat agentix deploy release-check --target local
-<span class="dim">$</span> jebat agentix ask "build ship notes for 8.3.0"
-<span class="ok">  routed to: release-check (reflex)</span>
-<span class="dim">$</span> jebat agentix run release-check --resume 20261005-161542-release-check-9f21 "add the deploy checklist"
-<span class="dim">$</span> jebat agentix team run security-review "map the attack surface of acme.test"
-<span class="ok">team security-review · 5 legs · workspace .../20261005-...-team-security-review/workspace</span>
-leg 1/5: osint-recon
-<span class="ok">  ok  osint-recon · 3517 tokens · run 20261005-173347-osint-recon-ff4b</span></div>
+        <pre class="code" id="specialist-snippet"># Discover the current catalog without running a model
+jebat agentix templates
+jebat agentix teams
+
+# Create and validate a local solution
+jebat agentix create release-check --from release-manager
+jebat agentix eval release-check
+
+# Inspect recorded runs before choosing one to resume
+jebat agentix runs</pre>
       </div>
     </div>
     <div class="flow">
@@ -755,13 +365,13 @@ leg 1/5: osint-recon
           <p style="font-size:13.5px">Tool allowlists (capped at 10 — enforced by <span class="mono">agentix eval</span>) and the workspace jail run in the harness before anything executes. Denied calls never touch the filesystem.</p>
         </div>
         <div class="fstep">
-          <h3 style="font-size:1rem">Every run resumable — and portable</h3>
-        <p style="font-size:13.5px">Each run persists its brief, manifest snapshot, tool-call log, and conversation under <span class="mono">~/.jebat/agentix/runs/</span>; <span class="mono">--resume</span> continues it. <span class="mono">agentix export</span> ships any solution as a Claude Code subagent or Agent Skill.</p>
+          <h3>Keep a continuation record.</h3>
+        <p style="font-size:13.5px">Completed runs retain a brief, manifest snapshot, tool-call log, and conversation. Resume a recorded run by ID. This is not a guarantee that an interrupted process saved every action.</p>
       </div>
     </div>
     <div class="panel" style="margin-top:var(--jc-s3)">
-      <h3>Or hire the whole desk at once</h3>
-      <p>Three teams ship in the box — declared pipelines with file-based handoff, a verifier between legs that blocks bad handoffs, human approval gates where money or shipping is involved, and one team-level budget on the receipt.</p>
+      <h3>Declared teams, explicit handoffs.</h3>
+      <p>Three team manifests ship with the CLI. Legs share workspace files, declared artifact checks guard handoff, and human gates apply where configured. File existence is not a substitute for reviewing its contents.</p>
       <div class="wt-table" style="border:1px solid var(--jc-line);border-radius:12px;overflow:hidden">
         <table style="width:100%;border-collapse:collapse">
           <tr style="border-bottom:1px solid var(--jc-line)"><td style="padding:10px 14px;font-weight:600">security-review</td><td style="padding:10px 14px;color:var(--jc-slate)">osint-recon → security-audit → mcp-auditor → dependency-auditor → doc-writer</td></tr>
@@ -779,7 +389,7 @@ leg 1/5: osint-recon
     <div class="sec-head">
       <span class="kicker">MCP BUS</span>
       <h2>Ask JEBAT. Watch the tools act.</h2>
-      <p>Streamable HTTP + stdio transports, paginated terse mode cutting context overhead by ~90%, proactive advisor on connect, and per-call execution deadlines on every tool.</p>
+      <p>Connect through stdio or configured HTTP transports. Discover tools, request full schemas when needed, and inspect project learning advice through MCP resources.</p>
     </div>
     <div class="cards">
       <div class="card c2">
@@ -798,19 +408,19 @@ leg 1/5: osint-recon
         <span class="stripe"></span>
         <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
         <h3>Deadlines on everything</h3>
-        <p>Every tools/call runs under its declared timeout. A hung tool returns a structured error — the IDE never wedges.</p>
+        <p>Declared execution limits return structured errors when exceeded. Use process isolation where hard termination of side effects is required.</p>
       </div>
     </div>
   </div>
 </section>
 
 <!-- 03B / MCP DEPLOY -->
-<section class="section" id="mcp-deploy" style="background:linear-gradient(180deg,transparent 40%,rgba(47,111,85,.05));border-top:1px solid var(--jc-line)">
+<section class="section" id="mcp-deploy" style="border-top:1px solid var(--jc-line)">
   <div class="wrap">
     <div class="sec-head">
       <span class="kicker">MCP DEPLOY</span>
-      <h2>Wire JEBAT into your IDE in 60 seconds.</h2>
-      <p>Run the MCP server four ways — stdio for IDEs, Docker for isolation, npx for zero-install, or the remote streamable-HTTP endpoint. Every path lands the same 128-tool bus behind your approval gates.</p>
+      <h2>Connect your IDE. Keep your workflow.</h2>
+      <p>Use a local stdio process, a container, the npm launcher, or your authenticated HTTP endpoint. Tool availability depends on the installed capabilities and allowlist.</p>
     </div>
 
     <div class="split" style="align-items:stretch">
@@ -825,16 +435,16 @@ leg 1/5: osint-recon
 
         <div class="code-wrap">
           <button class="code-copy" onclick="copySnippet('install-cmd',this)">Copy</button>
-          <div class="code" id="install-cmd"><span class="cu"># 1 — one-line install (CLI + MCP server)</span>
-curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
+          <pre class="code" id="install-cmd"># Download and inspect the installer before running it
+curl -fsSL https://jebat.online/install.sh -o install-jebat.sh
+less install-jebat.sh
+bash install-jebat.sh --mcp
 
-<span class="cu"># 2 — verify the server greets you</span>
-jebat mcp serve --transport stdio
-<span class="ok">✓ JEBAT MCP Server v8.3.0 on stdio — protocol 2026-07-28</span>
-
-<span class="cu"># 3 — point your IDE at it (Cursor / VS Code / Windsurf)</span>
+# Print the configuration for your IDE
 jebat mcp ide-config
-<span class="dim"># prints the exact JSON for .cursor/mcp.json etc.</span></div>
+
+# Inspect available workflows
+jebat workflow list</pre>
         </div>
 
         <div class="matrix">
@@ -849,14 +459,14 @@ jebat mcp ide-config
           </table>
         </div>
         <p style="margin-top:14px;font-size:13.5px;color:var(--jc-slate)">
-          Requires Python 3.11+ already on your system. The install script provisions a venv, the <span class="mono" style="color:var(--jc-copper)">jebat</span> launcher, and the MCP entrypoint — no sudo, everything in <span class="mono">~/.local</span>. 128 tools register on connect; write-tier tools stop at your approval gate.
+          Python 3.11+ must already be installed. The installer provisions a virtual environment and launchers. Review its commands and your provider configuration before running agents.
         </p>
         <div class="tradeoffs" id="install-tradeoffs">
           <div class="topt" data-for="cli"><b>When to pick stdio</b><p>Fastest path, no network hop, process lifetime tied to the IDE. Best for single-dev workstations. Requires the venv on the same machine as the IDE.</p></div>
           <div class="topt" data-for="ide" style="display:none"><b>When to pick ide-config</b><p>You already have JEBAT installed and just want the JSON. <span class="mono">jebat mcp ide-config</span> prints vendor-exact shapes — VS Code wants <span class="mono">mcp.servers</span>, Cursor wants <span class="mono">mcpServers</span>; hand-editing gets this wrong.</p></div>
           <div class="topt" data-for="docker" style="display:none"><b>When to pick Docker</b><p>Isolation and pinning: the container freezes its own deps, the healthcheck uses a finite TCP probe because <span class="mono">GET /mcp</span> is long-lived SSE. Costs a network hop to the IDE via docker exec.</p></div>
           <div class="topt" data-for="npx" style="display:none"><b>When to pick npx</b><p>No clone, no repo checkout — the launcher downloads the JEBAT installer on first run (Python 3.11+ must already be installed). Slightly slower first start; afterwards identical to CLI. Great for trying JEBAT before committing.</p></div>
-          <div class="topt" data-for="remote" style="display:none"><b>When to pick Remote HTTP</b><p>One server, many clients: teammates share a key-gated bus behind TLS. The API key is mandatory — the transport rejects unauthenticated calls with a timing-safe compare. Stateless: no sticky sessions needed.</p></div>
+          <div class="topt" data-for="remote" style="display:none"><b>When to pick Remote HTTP</b><p>Use an authenticated endpoint behind TLS. Set a server API key and restrict network access before exposing it. An endpoint returning 401 requires authentication; it is not proof the application is healthy.</p></div>
         </div>
       </div>
 
@@ -887,21 +497,7 @@ jebat mcp ide-config
       </div>
     </div>
 
-    <!-- simulated first-run handshake -->
-    <div style="margin-top:var(--jc-s4)">
-      <div class="term">
-        <div class="term-head">
-          <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
-          <span class="term-title">FIRST CONNECT — WHAT YOUR IDE SEES</span>
-          <span class="term-live"><span class="pulse"></span> SIMULATION</span>
-        </div>
-        <div class="term-body" style="min-height:190px">> initialize  →  protocol 2026-07-28 negotiated
-> tools/list  →  128 tools · paginated terse mode · ~2.0k tokens total
-> resources/list  →  jebat://workflow · jebat://metrics/tools · skill:// · wiki://
-> notifications/advisorReady  →  proactive health suggestions enabled
-<span style="color:#8FD3B8">✓ GOVERNED BUS ONLINE — writes will pause at your approval gate</span></div>
-      </div>
-    </div>
+    <p class="learning-footnote">Installation snippets are commands/configuration examples, not evidence of a live connection. Check your server response, authentication, and project root before relying on it.</p>
   </div>
 </section>
 
@@ -923,8 +519,8 @@ jebat mcp ide-config
         <p>Input is budgeted against the model's real context window (<span class="mono">input_token_budget()</span>) — prompts are truncated to tokens, not characters, so a 4k local model and a 128k cloud model both get valid input.</p>
       </div>
       <div class="route-card">
-        <h4>NineRouter integration</h4>
-        <p>Already running a local LLM proxy? JEBAT speaks <span class="mono">ninerouter://</span> natively — point it at your existing gateway and keep one endpoint for every model.</p>
+        <h4>Your existing model gateway</h4>
+        <p>Use a supported provider or compatible API endpoint. Verify authentication, available model IDs, and context limits before starting a run.</p>
       </div>
       <div class="route-card">
         <h4>Per-call cost visibility</h4>
@@ -947,7 +543,7 @@ jebat mcp ide-config
       <div class="ret-col">
         <div class="ret-title mono">QUERY PIPELINE</div>
         <div class="rstep"><span class="rnum">1</span><div><b>Filter, before scoring</b><p>Candidates must pass every gate first: memory type, minimum strength, tag intersection, context match, time range. Cheap filters run before any embedding work.</p></div></div>
-        <div class="rstep"><span class="rnum">2</span><div><b>Ghost DB vector search</b><p>If Ghost DB + embeddings are configured, the query embeds once and HNSW-indexed similarity (cosine) pulls top-K × 3 candidates. No Ghost DB? N-gram text similarity takes over — degraded, never broken.</p></div></div>
+        <div class="rstep"><span class="rnum">2</span><div><b>Optional vector retrieval</b><p>When embeddings and the Ghost client are configured, retrieval can rank vector matches. Otherwise it uses local text similarity; neither path proves that a recalled fact is still correct.</p></div></div>
         <div class="rstep"><span class="rnum">3</span><div><b>Weighted score</b><p>Vector path: <span class="mono">similarity×0.6 + strength×0.3 + activation×0.1</span>. N-gram path: <span class="mono">strength×0.6 + activation×0.3 + similarity×0.1</span> — recency and usage dominate when embeddings are unavailable.</p></div></div>
         <div class="rstep"><span class="rnum">4</span><div><b>Linked traces ride along</b><p>Results pull their linked traces (<span class="mono">include_linked</span>) so a decision arrives with its evidence — one query, full context chain.</p></div></div>
         <div class="rstep"><span class="rnum">5</span><div><b>Bounded injection</b><p>Recalled context enters the prompt under the same token budget as your task. Memory enriches; it never crowds out.</p></div></div>
@@ -959,7 +555,7 @@ jebat mcp ide-config
           <span class="fx">strength(t) = strength₀ · e<sup>−decay·Δt</sup> · (1 + reinforcement·0.5)</span>
           <span class="fsub">reinforcement = min(1, access_count·0.1 + consolidation_count·0.2)</span>
         </div>
-        <p class="ret-p">Memories follow a modified Ebbinghaus forgetting curve. Access frequency and consolidation events raise the reinforcement factor, slowing decay — a memory you keep using survives, one you ignore fades below the 0.3 floor and drops out of retrieval entirely.</p>
+        <p class="ret-p">Memory strength changes with access, consolidation, and time. Retrieval can filter weak traces. This is a retention heuristic—not verification that a statement is true.</p>
 
         <div class="ret-title mono" style="margin-top:24px">TWO SCORE WEIGHT PROFILES</div>
         <table class="wt-table">
@@ -969,10 +565,10 @@ jebat mcp ide-config
             <tr><td class="mono">n-gram fallback</td><td class="mono">0.1</td><td class="mono">0.6</td><td class="mono">0.3</td></tr>
           </tbody>
         </table>
-        <p class="ret-p">The flip is deliberate: raw text similarity is noisy, so the fallback leans on proven trust (strength) and recent usefulness (activation) instead of pretending substring match means relevance.</p>
+        <p class="ret-p">The text fallback weights retained strength and activation more heavily than text overlap. Check the source, timestamp, and project scope before acting on a recalled result.</p>
 
         <div class="retp">
-          <span class="mono" style="color:var(--jc-copper)">automimpi</span> consolidates nightly: traces are re-scored, decayed, pruned, and recurring error→fix pairs are promoted to Pattern memory — the retrieval stack gets smarter while you sleep, not while you wait.
+          <span class="mono">AutoMimpi</span> consolidates selected project evidence when invoked or scheduled. The learning advisor cites source IDs; reviewer feedback remains separate from source confidence.
         </div>
       </div>
     </div>
@@ -984,23 +580,21 @@ jebat mcp ide-config
   <div class="wrap">
     <div class="sec-head">
       <span class="kicker">HONEST COMPARISON</span>
-      <h2>Hosted agent platforms vs JEBAT.</h2>
-      <p>Facts only — you know your threat model better than we do. Where JEBAT isn't the answer, we say so.</p>
+      <h2>Choose the operating responsibility.</h2>
+      <p>Self-hosting gives you control and gives you work. Compare the actual contract, provider settings, and recovery requirements—not a generic promise of sovereignty.</p>
     </div>
     <div class="cmp">
       <table>
         <thead><tr><th>Dimension</th><th>Typical hosted agent SaaS</th><th>JEBAT self-hosted</th></tr></thead>
         <tbody>
-          <tr><td>Data residency</td><td>Vendor's cloud (their region, their policy)</td><td class="good">Your disks, your region, air-gap capable</td></tr>
-          <tr><td>Model lock-in</td><td class="bad">Provider's roadmap decides</td><td class="good">Swap llama.cpp / Ollama / Claude / GPT per route</td></tr>
-          <tr><td>Telemetry</td><td class="bad">Vendor-defined analytics</td><td class="good">Zero — verified by the air-gap requirement itself</td></tr>
-          <tr><td>Tool governance</td><td>Varies; usually prompt-level</td><td class="good">Tiered at the registry: auto / confirm / dangerous, enforced pre-execution</td></tr>
-          <tr><td>Setup effort</td><td class="good">Minutes — sign up and go</td><td>Minutes to install, hours to harden (we ship the runbooks)</td></tr>
-          <tr><td>Cost shape</td><td>Per-seat subscription + usage</td><td class="good">Hardware + unmetered local inference</td></tr>
-          <tr><td>Best fit</td><td class="good">Fast prototyping, no-ops teams</td><td class="good">Regulated data, enterprise control, long-lived agents</td></tr>
+          <tr><td>Data location</td><td data-label="Hosted">Depends on the vendor's regions and contract.</td><td data-label="JEBAT">You choose the host; configured external tools and cloud models can still send data out.</td></tr>
+          <tr><td>Model choice</td><td data-label="Hosted">Depends on the platform's supported providers.</td><td data-label="JEBAT">Configure supported local or cloud providers and review fallback routes.</td></tr>
+          <tr><td>Operations</td><td data-label="Hosted">The vendor operates its service.</td><td data-label="JEBAT">You own patching, backups, credentials, network controls, and recovery.</td></tr>
+          <tr><td>Tool governance</td><td data-label="Hosted">Check the product's actual permission model.</td><td data-label="JEBAT">Registered safety tiers and allowlists; elevated modes can bypass prompts.</td></tr>
+          <tr><td>Costs</td><td data-label="Hosted">Compare subscription, usage, and support terms.</td><td data-label="JEBAT">Open-source software; infrastructure, provider usage, and support remain your costs.</td></tr>
         </tbody>
       </table>
-      <p class="cmp-verdict"><b>Verdict heuristic:</b> if your data can leave your network without a contract, hosted platforms win on time-to-value — use them. If it can't — healthcare, legal, finance, client-NDA work — self-hosting isn't paranoia, it's the requirement. JEBAT exists for the second column.</p>
+      <p class="cmp-verdict">Choose JEBAT when retaining control over infrastructure and workflow is worth operating the stack. Self-hosting alone does not establish regulatory compliance.</p>
     </div>
   </div>
 </section>
@@ -1019,18 +613,18 @@ jebat mcp ide-config
           <div class="tier t1">
             <h4>Local</h4><span class="t-sub">LAPTOP / WORKSTATION</span>
             <ul>
-              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Air-gapped inference, 100% offline</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Local inference with downloaded models</li>
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Ollama + llama.cpp unified stack</li>
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> One-line install script</li>
             </ul>
           </div>
           <div class="tier t2 hot">
-            <span class="pop">MOST DEPLOYED</span>
+            <span class="pop">PRIVATE INFRASTRUCTURE</span>
             <h4>Private VPS</h4><span class="t-sub">YOUR HARDWARE · YOUR CLOUD</span>
             <ul>
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Docker Compose production stack</li>
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Key-gated API + WebUI + MCP</li>
-              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Nginx TLS, tunnels, zero telemetry</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Configure TLS and network access</li>
             </ul>
           </div>
           <div class="tier t3">
@@ -1038,14 +632,14 @@ jebat mcp ide-config
             <ul>
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Custom MCP tools & hardening</li>
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Model infrastructure & fine-tuning</li>
-              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 managed operations</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Support scope agreed in your proposal</li>
             </ul>
           </div>
         </div>
         <div style="margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <a class="btn btn-primary" href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener"><span>Install JEBAT now</span>
+          <a class="btn btn-primary" href="#mcp-deploy"><span>Install JEBAT</span>
             <svg class="arr" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-          <a class="btn btn-ghost" href="https://nusabyte.my/" target="_blank" rel="noopener" style="background:transparent;color:#F0EADF;border-color:rgba(240,234,223,.25)">Talk to NusaByte</a>
+          <a class="btn btn-ghost" href="https://nusabyte.my/contact">Discuss your deployment</a>
         </div>
       </div>
     </div>
@@ -1060,22 +654,17 @@ jebat mcp ide-config
       <h2>Asked before you ask.</h2>
     </div>
     <div class="faq">
-      <div class="qa"><button onclick="toggleQA(this)"><span>What is JEBAT and how does it fit into my stack?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>A sovereign AI command layer between your applications and LLM providers. It decouples agent logic from model vendors, manages persistent memory via Ghost DB, dispatches tools over MCP, and enforces approval-gated security on every write.</p></div></div>
-      <div class="qa"><button onclick="toggleQA(this)"><span>What is Agentix and which archetype should I pick?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>Agentix is the solution lifecycle: scaffold, build, deploy, run agents as versioned artifacts. Pick <strong>reflex</strong> for ReAct reasoning loops, <strong>flow</strong> for folder-driven workspaces, <strong>lattice</strong> for schema-typed tools. Deploy targets are allowlist-gated in <span class="mono">agentix.yaml</span>.</p></div></div>
-      <div class="qa"><button onclick="toggleQA(this)"><span>Can I reuse MCP servers from omp, opencode, or Claude Code?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>Yes. <span class="mono">jebat config import</span> reads the other CLI's config, normalizes transports/timeouts/env templates, and merges with collision-safe skipping plus automatic backups. Preview first with <span class="mono">--dry-run</span>.</p></div></div>
-      <div class="qa"><button onclick="toggleQA(this)"><span>Can JEBAT run 100% air-gapped?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>Yes — local llama.cpp or Ollama inference with zero outbound calls. Cloud providers are opt-in per route. The whole stack runs on your hardware with no telemetry.</p></div></div>
-      <div class="qa"><button onclick="toggleQA(this)"><span>Can the specialists work as a team?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>Yes — three teams ship in the box (<strong>security-review</strong>, <strong>go-to-market</strong>, <strong>product-release</strong>). A team is a declared pipeline: legs run in order, hand off through a shared jailed workspace, a verifier checks each leg against its doctrine before handoff, human gates pause where money or shipping is involved, and the whole desk runs under one team-level budget.</p></div></div>
-      <div class="qa"><button onclick="toggleQA(this)"><span>How are agent runs kept bounded and auditable?</span><span class="ind"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span></button>
-        <div class="a"><p>Every reflex run declares a budget (max tokens, wall clock) — the loop stops and summarizes when either is hit, and budgets below the per-iteration floor are refused at spawn. Tool allowlists and the workspace jail are enforced by the harness. Each run is persisted with its task, manifest snapshot, tool-call log, and conversation, and can be continued later with <span class="mono">run --resume</span>.</p></div></div>
+      <details class="qa"><summary>What is JEBAT and how does it fit into my stack?</summary><div class="a"><p>JEBAT is a self-hosted agent runtime and MCP tool server. Use its CLI or connect an IDE, configure your providers, and retain project memory on your infrastructure. Registered tool tiers govern actions; elevated modes must be configured deliberately.</p></div></details>
+      <details class="qa"><summary>Does the learning advisor call a model?</summary><div class="a"><p>No. It analyzes recorded project evidence deterministically and cites supporting memory IDs and timestamps. Advice and your feedback are stored in SQLite. Retention is not presented as measured task competence.</p></div></details>
+      <details class="qa"><summary>What does AutoMimpi change?</summary><div class="a"><p>It consolidates selected project traces, extracts patterns and generalizations, and prunes weak memories. It respects a cooldown unless forced. A partial result means consolidation committed but a report or mirror failed to persist; inspect that error before retrying.</p></div></details>
+      <details class="qa"><summary>Can I reuse an existing MCP configuration?</summary><div class="a"><p>Yes. <code>jebat config import</code> supports omp, opencode, and Claude configuration formats. Preview with <code>--dry-run</code>; existing entries are skipped unless overwrite is explicitly selected.</p></div></details>
+      <details class="qa"><summary>Can I operate without cloud models?</summary><div class="a"><p>Yes, after installing dependencies and local model files. Choose a local provider and disable network-dependent integrations. Verify outbound traffic and credential settings before treating a deployment as air-gapped.</p></div></details>
+      <details class="qa"><summary>Do I need agent teams to use the learning tools?</summary><div class="a"><p>No. Learning analysis, advice, and KB search do not spawn agents. Agentix teams are an optional, explicit execution path with declared members, budgets, and configured human gates.</p></div></details>
     </div>
   </div>
 </section>
 
+</main>
 <footer>
   <div class="wrap foot">
     <a class="brand" href="#" style="font-size:14px">
@@ -1088,175 +677,14 @@ jebat mcp ide-config
       <a href="/webui/" target="_blank" rel="noopener">WebUI</a>
       <a href="#workbench">Workbench</a>
       <a href="https://nusabyte.my/" target="_blank" rel="noopener">NusaByte</a>
+      <a href="https://nusabyte.my/legal/privacy">Privacy policy</a>
+      <a href="https://nusabyte.my/legal/terms">Service terms</a>
+      <a href="https://github.com/nusabyte-my/jebat-core/blob/main/LICENSE">Software license</a>
     </div>
-    <span class="mono">🗡️ JEBAT — Because warriors remember everything that matters.</span>
+    <span class="mono">JEBAT by NusaByte · Keep command. Keep the context.</span>
   </div>
 </footer>
 
-<script>
-function playClickSound(){ if (window.__jebatAudio===false) return; try{ const C=window.AudioContext||window.webkitAudioContext; if(!C) return; window.__jebatAC=window.__jebatAC||new C(); const ac=window.__jebatAC; const o=ac.createOscillator(), g=ac.createGain(); o.type='square'; o.frequency.value=880; g.gain.value=0.02; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+0.03);}catch(e){}
-}
-
-function runHeroCLI(type) {
-  playClickSound();
-  const box = document.getElementById('hero-cli-output');
-  if (type === 'status') {
-    box.innerHTML = `> $ jebat status<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ JEBAT Core v8.3.0 Operational — Security Hardened</span><br/>
-> Model Route: llama.cpp (local runtime)<br/>
-> Ghost DB Vector Store: Connected | WebUI + MCP API: Key-Gated<br/>
-> MCP Protocol Bus: tool registry available · jebat://metrics/tools live`;
-  } else if (type === 'agentix') {
-    box.innerHTML = `> $ jebat agentix status<br/>
-<span style="color: var(--jc-copper)">[Agentix Solution Registry]</span><br/>
-> deploy-usher   v0.1.0  lattice   sha:85c718ae → deployed<br/>
-> research-hive  v0.1.0  reflex   sha:d87e474c → built<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ create → build → deploy → run. Archetypes: reflex · flow · lattice.</span>`;
-  } else if (type === 'pentest') {
-    box.innerHTML = `> $ jebat agent "Pentest localhost"<br/>
-<span style="color: var(--jc-copper)">[Hulubalang Security Agent Dispatched]</span><br/>
-> Port scan: 80, 443, 8081 open.<br/>
-> Vulnerability check: 0 critical, 0 high.<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ Security Audit Passed. Airgap boundaries active.</span>`;
-  } else if (type === 'mcp') {
-    box.innerHTML = `> $ jebat tools list<br/>
-<span style="color: var(--jc-copper)">MCP Protocol Bus · stdio + streamable-HTTP]</span><br/>
-> Discovered: <strong>128 registered tools</strong><br/>
-> Ghost DB: 14 tools (ghost.sql, ghost.create, ghost.checkpoint)<br/>
-> Design & Copy: design_preflight, ui_critique, copy_audit<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ Streamable HTTP & stdio transports operational.</span>`;
-  } else if (type === 'audit') {
-    box.innerHTML = `> $ jebat doctor<br/>
-<span style="color: var(--jc-copper)">[Agentix health check]</span><br/>
-> ok   structural (manifest, tools, deploy.allow) · ok doctrine · ok allowlist (≤ 10)<br/>
-> ok   budget floor · no dangling registry entries<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ doctor: healthy</span>`;
-  } else if (type === 'dream') {
-    box.innerHTML = `> $ jebat agentix runs<br/>
-<span style="color: var(--jc-copper)">[Run registry · every llm run recorded]</span><br/>
-> 20261005-173347-code-reviewer-ff4b  code-reviewer   reflex<br/>
-> 20261005-173407-test-writer-819e    test-writer     reflex<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ ids usable with run --resume</span>`;
-  } else if (type === 'memory') {
-    box.innerHTML = `> $ jebat memory search "NusaByte"<br/>
-<span style="color: var(--jc-copper)">[Ghost DB Hybrid Retrieval · BM25 + vector, cosine]</span><br/>
-> Query embedded → matched against the memory collection<br/>
-> Ranked hits returned with a per-result confidence score<br/>
-<span style="color: var(--jc-pucuk-ink)">✓ Context retrieved from the persistent store.</span>`;
-  }
-}
-
-</script>
-<script>
-function runCLI(type, btn){
-  document.querySelectorAll('.jchip').forEach(c=>c.classList.remove('on'));
-  if(btn) btn.classList.add('on');
-  runHeroCLI(type);
-}
-function copyPill(btn){
-  navigator.clipboard.writeText('curl -fsSL https://jebat.online/install.sh | bash').then(()=>{
-    btn.style.color='var(--jc-pucuk)'; setTimeout(()=>btn.style.color='',1500);
-  });
-}
-function copySnippet(id, btn){
-  const code=document.getElementById(id).innerText;
-  navigator.clipboard.writeText(code).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1600);});
-}
-const INSTALL_CMDS = {
-  cli: `# 1 — one-line install (CLI + MCP server)
-curl -fsSL https://jebat.online/install.sh | bash -s -- --mcp
-
-# 2 — verify the server greets you
-jebat mcp serve --transport stdio
-✓ JEBAT MCP Server v8.3.0 on stdio — protocol 2026-07-28
-
-# 3 — point your IDE at it (Cursor / VS Code / Windsurf)
-jebat mcp ide-config
-# prints the exact JSON for .cursor/mcp.json etc.`,
-  ide: `# Print the ready-to-paste config for any IDE
-jebat mcp ide-config          # all six: vscode, cursor, windsurf,
-                              # jetbrains, http-remote, vscode-insider
-
-# Or write one straight into place (Cursor):
-jebat mcp ide-config > .cursor/mcp.json
-
-# Remote HTTP transport for shared/team servers:
-#   "url": "https://jebat.online/api/mcp",
-#   "headers": { "X-API-Key": "<your key>" }`,
-  docker: `# Isolated MCP container (from the repo root)
-docker compose -f infra/vps/vps/docker-compose.mcp.yml up -d
-
-# healthcheck: finite TCP probe (GET /mcp is long-lived SSE)
-docker inspect --format '{{.State.Health.Status}}' jebat-mcp
-✓ healthy
-
-# Point the IDE at the container:
-#   "command": "docker", "args": ["exec", "-i", "jebat-mcp", "python", "jebat-mcp"]`,
-  npx: `# Zero-install — the npm launcher bootstraps the Python core on first run
-npx @nusabyte/jebat mcp serve --transport stdio
-
-# or globally:
-npm install -g @nusabyte/jebat
-jebat mcp serve
-
-# Requirements: Node >= 18 and Python 3.11+ already installed`,
-  remote: `# Remote streamable-HTTP — team-shared, key-gated
-{
-  "mcpServers": {
-    "jebat-remote": {
-      "type": "http",
-      "url": "https://jebat.online/api/mcp",
-      "headers": { "X-API-Key": "<your JEBAT_API_KEY>" }
-    }
-  }
-}
-
-# Server-side: docker compose + Traefik TLS, CORS locked to your origin`,
-};
-
-const IDE_JSONS = {"vscode": "{\n  \"mcp\": {\n    \"servers\": {\n      \"jebat\": {\n        \"command\": \"jebat\",\n        \"args\": [\n          \"mcp\",\n          \"serve\",\n          \"--transport\",\n          \"stdio\"\n        ]\n      }\n    }\n  }\n}", "cursor": "{\n  \"mcpServers\": {\n    \"jebat\": {\n      \"command\": \"jebat\",\n      \"args\": [\n        \"mcp\",\n        \"serve\",\n        \"--transport\",\n        \"stdio\"\n      ]\n    }\n  }\n}", "windsurf": "{\n  \"mcpServers\": {\n    \"jebat\": {\n      \"command\": \"jebat\",\n      \"args\": [\n        \"mcp\",\n        \"serve\",\n        \"--transport\",\n        \"stdio\"\n      ]\n    }\n  }\n}", "http-remote": "{\n  \"mcpServers\": {\n    \"jebat\": {\n      \"url\": \"http://127.0.0.1:8099/message\",\n      \"transport\": \"http\"\n    }\n  }\n}"};
-
-function switchInstall(method, btn){
-  document.querySelectorAll('#mcp-deploy .chips .jchip[role="tab"]').forEach(c=>c.classList.remove('on'));
-  if(btn) btn.classList.add('on');
-  document.getElementById('install-cmd').textContent = INSTALL_CMDS[method];
-  document.querySelectorAll('#install-tradeoffs .topt').forEach(o=>{
-    o.style.display = o.dataset.for === method ? '' : 'none';
-  });
-}
-function switchIde(ide, btn){
-  btn.parentElement.querySelectorAll('.jchip').forEach(c=>c.classList.remove('on'));
-  btn.classList.add('on');
-  document.getElementById('ide-json').textContent = IDE_JSONS[ide];
-}
-
-// ── nav behavior: scroll-spy + shadow + burger ──
-(function(){
-  const nav = document.querySelector('.nav');
-  const links = [...document.querySelectorAll('.nav-links a')];
-  const map = {};
-  links.forEach(l => { const id = l.getAttribute('href').slice(1); map[id] = l; });
-  const spy = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting && map[e.target.id]) {
-        links.forEach(l => l.classList.remove('active'));
-        map[e.target.id].classList.add('active');
-      }
-    });
-  }, { rootMargin: '-40% 0px -55% 0px' });
-  Object.keys(map).forEach(id => { const el = document.getElementById(id); if (el) spy.observe(el); });
-  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
-  const burger = document.querySelector('.burger');
-  const mnav = document.getElementById('mnav');
-  if (burger) burger.addEventListener('click', () => mnav.classList.toggle('open'));
-  if (mnav) mnav.querySelectorAll('.mlink').forEach(a => a.addEventListener('click', () => mnav.classList.remove('open')));
-})();
-
-function toggleQA(btn){
-  const qa=btn.parentElement, a=qa.querySelector('.a'), open=qa.classList.contains('open');
-  document.querySelectorAll('.qa.open').forEach(o=>{o.classList.remove('open');o.querySelector('.a').style.maxHeight='0';});
-  if(!open){qa.classList.add('open');a.style.maxHeight=a.scrollHeight+'px';}
-}
-</script>
+<script src="assets/jebat-landing.js" defer></script>
 </body>
 </html>

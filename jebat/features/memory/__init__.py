@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import hashlib
 import os
 import random
 import uuid
@@ -140,8 +141,8 @@ class MemoryTrace:
         if self.strength <= 0:
             return 0.0
         
-        days_since_access = (datetime.now(timezone.utc) - self.last_accessed).total_seconds() / 86400
-        days_since_creation = (datetime.now(timezone.utc) - self.created_at).total_seconds() / 86400
+        accessed = self.last_accessed.replace(tzinfo=timezone.utc) if self.last_accessed.tzinfo is None else self.last_accessed
+        days_since_access = max(0.0, (datetime.now(timezone.utc) - accessed).total_seconds() / 86400)
         
         # Ebbinghaus forgetting curve with modifications
         # Strength = initial * e^(-decay * time) * reinforcement_factor
@@ -165,7 +166,8 @@ class MemoryTrace:
         if self.calculate_current_strength() < 0.3:
             return False
         if self.last_consolidated:
-            days = (datetime.now(timezone.utc) - self.last_consolidated).total_seconds() / 86400
+            consolidated = self.last_consolidated.replace(tzinfo=timezone.utc) if self.last_consolidated.tzinfo is None else self.last_consolidated
+            days = (datetime.now(timezone.utc) - consolidated).total_seconds() / 86400
             if days < 1:
                 return False
         return True
@@ -549,15 +551,11 @@ class EnhancedMemorySystem:
 
         return results[:query.max_results]
 
-    async def consolidate(self, force: bool = False) -> ConsolidationResult:
-        """Run memory consolidation process"""
+    async def consolidate(self, force: bool = False, trace_ids: Optional[Set[str]] = None) -> ConsolidationResult:
+        """Consolidate selected evidence without crossing project boundaries."""
         result = ConsolidationResult()
-        
-        # 1. Identify traces needing consolidation
-        to_consolidate = []
-        for trace in self.traces.values():
-            if trace.should_consolidate() or force:
-                to_consolidate.append(trace)
+        traces = [t for t in self.traces.values() if trace_ids is None or t.trace_id in trace_ids]
+        to_consolidate = [t for t in traces if force or t.should_consolidate()]
 
         # 2. Strengthen important memories
         #
@@ -579,24 +577,25 @@ class EnhancedMemorySystem:
                 result.strengthened_count += 1
             result.consolidated_count += 1
 
+        # Cluster only surviving evidence; a pruned trace cannot support new knowledge.
+        pruned = self._prune_weak_memories(trace_ids)
+        result.pruned_count = pruned
+        traces = [trace for trace in traces if trace.trace_id in self.traces]
         # 3. Pattern extraction
-        patterns = await self._extract_patterns()
+        patterns = await self._extract_patterns(traces)
         result.patterns_extracted = len(patterns)
 
         # 4. Generalization
-        generalizations = await self._extract_generalizations()
+        generalizations = await self._extract_generalizations(traces)
         result.generalized_concepts = generalizations
 
-        # 3. Prune weak memories
-        pruned = self._prune_weak_memories()
-        result.pruned_count = pruned
 
         # Save changes
-        self._save()
+        self._save(force=bool(pruned))
         
         return result
 
-    async def _extract_patterns(self) -> List[str]:
+    async def _extract_patterns(self, traces: Optional[List[MemoryTrace]] = None) -> List[str]:
         """Extract recurring themes by clustering trace CONTENT.
 
         The previous implementation required `jaccard(intersection of ALL word
@@ -617,7 +616,8 @@ class EnhancedMemorySystem:
         so they can label a cluster but must not define one.
         """
         patterns: List[str] = []
-        traces = list(self.traces.values())
+        known_sources = {tuple(sorted(p.get("traces", []))) for p in self.extracted_patterns.values()}
+        traces = list(self.traces.values()) if traces is None else traces
         if len(traces) < self.pattern_min_occurrences:
             return patterns
 
@@ -628,13 +628,19 @@ class EnhancedMemorySystem:
             pattern = self._extract_pattern(label, cluster)
             if not pattern:
                 continue
+            ids = sorted(t.trace_id for t in cluster)
+            key = "pattern_" + hashlib.sha256("\0".join(ids).encode()).hexdigest()[:24]
+            if tuple(ids) in known_sources:
+                continue
             patterns.append(pattern)
-            self.extracted_patterns[pattern] = {
+            self.extracted_patterns[key] = {
+                "description": pattern,
                 "tag": label,
                 "count": len(cluster),
-                "traces": [t.trace_id for t in cluster],
+                "traces": ids,
                 "extracted_at": datetime.now(timezone.utc).isoformat(),
             }
+            known_sources.add(tuple(ids))
             for t in cluster:
                 t.pattern_extracted = True
 
@@ -645,9 +651,23 @@ class EnhancedMemorySystem:
         n = len(traces)
         threshold = self.pattern_similarity_threshold
         adj: Dict[int, Set[int]] = defaultdict(set)
+        # Compute each text's n-grams once, not once per comparison.
+        grams = []
+        scopes = []
+        for trace in traces:
+            text = trace.content.lower()
+            grams.append({text[i:i + 3] for i in range(len(text) - 2)})
+            scopes.append((trace.context.get("project_root"), tuple(sorted(t for t in trace.tags if t.startswith("project:")))))
+
+        def similarity(i: int, j: int) -> float:
+            if scopes[i] != scopes[j] or not grams[i] or not grams[j]:
+                return 0.0
+            intersection = len(grams[i] & grams[j])
+            return intersection / (len(grams[i]) + len(grams[j]) - intersection)
+
         for i in range(n):
             for j in range(i + 1, n):
-                if self._similarity(traces[i].content, traces[j].content) >= threshold:
+                if similarity(i, j) >= threshold:
                     adj[i].add(j)
                     adj[j].add(i)
 
@@ -677,10 +697,7 @@ class EnhancedMemorySystem:
                         component.remove(member)
                         changed = True
                         break
-                    mean = sum(
-                        self._similarity(traces[member].content, traces[o].content)
-                        for o in others
-                    ) / len(others)
+                    mean = sum(similarity(member, other) for other in others) / len(others)
                     if mean < threshold:
                         component.remove(member)
                         changed = True
@@ -755,9 +772,10 @@ class EnhancedMemorySystem:
         themes = ", ".join(shared[:5]) if shared else "content cluster"
         return f"Pattern: {tag} - recurring themes: {themes}"
 
-    async def _extract_generalizations(self) -> List[str]:
+    async def _extract_generalizations(self, traces: Optional[List[MemoryTrace]] = None) -> List[str]:
         """Extract generalizations from specific memories"""
         generalizations = []
+        known_sources = {tuple(sorted(g.get("source_traces", []))) for g in self.generalizations.values()}
 
         # Group by CONTENT similarity, not by an exact tag-tuple key.
         # The old key was `tuple(sorted(tags))[:3]`, which is an identity
@@ -766,15 +784,17 @@ class EnhancedMemorySystem:
         # all collapse into one "untagged" group where intersection is empty.
         # Either way no group ever reached the size threshold with shared
         # subject matter.
-        episodic = [t for t in self.traces.values() if t.memory_type == MemoryType.EPISODIC]
+        traces = list(self.traces.values()) if traces is None else traces
+        episodic = [t for t in traces if t.memory_type == MemoryType.EPISODIC]
         if len(episodic) < 3:
             return generalizations
 
         for cluster in self._cluster_similar(episodic):
             gen = self._create_generalization(cluster)
-            if gen:
+            if gen and tuple(gen["source_traces"]) not in known_sources:
                 self.generalizations[gen["id"]] = gen
                 generalizations.append(gen["concept"])
+                known_sources.add(tuple(gen["source_traces"]))
 
         return generalizations
 
@@ -807,27 +827,39 @@ class EnhancedMemorySystem:
                 return None
             concept_tags = [label]
 
-        gen_id = f"gen_{uuid.uuid4().hex[:8]}"
+        source_ids = sorted(t.trace_id for t in traces)
+        gen_id = "gen_" + hashlib.sha256("\0".join(source_ids).encode()).hexdigest()[:24]
         return {
             "id": gen_id,
             "concept": f"Generalized: {', '.join(concept_tags[:3])}",
-            "source_traces": [t.trace_id for t in traces],
+            "source_traces": source_ids,
             "confidence": min(1.0, len(traces) * 0.15),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    def _prune_weak_memories(self) -> int:
+    def _prune_weak_memories(self, trace_ids: Optional[Set[str]] = None) -> int:
         """Remove memories below threshold"""
         pruned = 0
         to_remove = []
 
         for trace_id, trace in self.traces.items():
+            if trace_ids is not None and trace_id not in trace_ids:
+                continue
             if trace.calculate_current_strength() < self.min_strength_threshold:
                 to_remove.append(trace_id)
 
         for trace_id in to_remove:
             self._remove_trace(trace_id)
             pruned += 1
+        if to_remove:
+            removed = set(to_remove)
+            self.working_memory = deque((tid for tid in self.working_memory if tid not in removed), maxlen=self.working_memory_capacity)
+            for trace in self.traces.values():
+                trace.linked_traces.difference_update(removed)
+                if trace.source_trace in removed:
+                    trace.source_trace = None
+            self.extracted_patterns = {key: value for key, value in self.extracted_patterns.items() if not removed.intersection(value.get("traces", []))}
+            self.generalizations = {key: value for key, value in self.generalizations.items() if not removed.intersection(value.get("source_traces", []))}
 
         return pruned
 
@@ -886,10 +918,7 @@ class EnhancedMemorySystem:
 
     def _text_similarity(self, text1: str, text2: str) -> float:
         """Simple text similarity with n-gram fallback"""
-        if self.embedding_fn:
-            # Use embeddings if available
-            return 0.0  # Handled elsewhere
-        
+        # Text clustering remains available even when vector retrieval is configured.
         # Character n-gram similarity (better than word overlap for partial matches)
         def get_ngrams(text: str, n: int = 3) -> Set[str]:
             text = text.lower()

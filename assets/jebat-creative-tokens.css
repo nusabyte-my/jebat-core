@@ -1,0 +1,30 @@
+/* Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V4 · JEBAT Creative */
+@font-face{font-family:'Space Grotesk';src:url('fonts/space-grotesk.woff2') format('woff2');font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:'Inter';src:url('fonts/inter.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Geist Mono';src:url('fonts/geist-mono.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  color-scheme:light;
+  --jc-paper:#FFFFFF;--jc-card:#FFFFFF;--jc-ink:#1A0B2E;--jc-slate:#62556F;
+  --jc-violet:#7C3AED;--jc-deep:#4C1D95;--jc-pink:#BE185D;--jc-emerald:#047857;
+  --jc-cyan:#0E7490;--jc-amber:#92400E;--jc-error:#B91C1C;
+  --jc-line:#DDD3EC;--jc-soft:#F6F2FC;--jc-dark:#0A0118;
+  --jc-on-dark:#F7F2FF;--jc-dark-muted:#D8C6EE;--jc-dark-line:#49365E;
+  --jc-neon:#A3E635;--jc-neon-cyan:#22D3EE;--jc-dark-accent:#F0ABFC;
+  --jc-glass:rgba(255,255,255,.62);--jc-glass-dark:rgba(255,255,255,.08);
+  --jc-orb-violet:rgba(124,58,237,.28);--jc-orb-pink:rgba(236,72,153,.18);
+  --jc-display:'Space Grotesk',sans-serif;--jc-body:'Inter',sans-serif;--jc-mono:'Geist Mono',monospace;
+  --jc-rad:16px;--jc-rad-sm:8px;--jc-pill:999px;
+  --jc-s1:8px;--jc-s2:16px;--jc-s3:24px;--jc-s4:32px;--jc-s5:48px;--jc-s6:64px;--jc-s7:96px;
+  --jc-max:1160px;--jc-ease:cubic-bezier(.22,.61,.36,1);--jc-dur:180ms;
+  --jc-grad:linear-gradient(110deg,#7C3AED 0%,#7C3AED 55%,#4C1D95 55%,#4C1D95 100%);
+  --jc-stripe:linear-gradient(180deg,#7C3AED 0%,#7C3AED 55%,#EC4899 55%,#EC4899 100%);
+  --jc-sh-copper:0 20px 40px -16px rgba(124,58,237,.28);
+  --jc-sh-pucuk:0 20px 40px -16px rgba(4,120,87,.23);
+  --jc-sh-ink:0 16px 38px -20px rgba(76,29,149,.22);
+  /* Existing component token names retain their roles; the public palette is Creative. */
+  --jc-copper:var(--jc-violet);--jc-copper-hover:var(--jc-deep);--jc-bara:var(--jc-pink);
+  --jc-pucuk:var(--jc-emerald);--jc-pucuk-ink:var(--jc-emerald);
+  --jc-copper-soft:#F3ECFD;--jc-copper-glow:#C4A5F8;--jc-pucuk-soft:#ECFDF5;
+  --jebat-malam:var(--jc-dark);--jebat-besi:var(--jc-ink);--jebat-tulang:var(--jc-on-dark);
+  --jebat-tembaga:var(--jc-violet);--jebat-bara:var(--jc-pink);--jebat-keluli:var(--jc-dark-muted);--jebat-pucuk:var(--jc-emerald);
+}

@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -36,6 +37,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from jebat.tools import TOOL_REGISTRY, ToolDef, call_tool, classify_tool_call
+from .mcp_prompts import PromptInputError
 
 logger = logging.getLogger(__name__)
 
@@ -457,6 +459,8 @@ class MCPServer:
         try:
             result = await handler(params)
             return make_response(request_id, result)
+        except PromptInputError as e:
+            return make_error(request_id, MCPError.INVALID_PARAMS, str(e))
         except Exception as e:
             logger.error(f"Handler error for {method}: {e}\n{traceback.format_exc()}")
             return make_error(request_id, MCPError.INTERNAL_ERROR,
@@ -510,60 +514,25 @@ class MCPServer:
         }
 
     async def _send_advisor_notification(self) -> None:
-        """Lazily create AutoMimpi + SelfLearn, build profile, generate suggestions, send notifications/advisorReady."""
+        """Send project-scoped evidence and persistent advice without model inference."""
         try:
-            from jebat.features.memory import EnhancedMemorySystem
-            from jebat.features.memory.automimpi import AutoMimpi, SelfLearn, create_automimpi, create_selflearn
+            from jebat.tools.automimpi_tools import _get_automimpi, _get_selflearn, _get_learning_advisor
 
-            try:
-                from jebat.tools.automimpi_tools import _get_automimpi, _get_selflearn, _get_memory
-                automimpi = _get_automimpi()
-                selflearn = _get_selflearn()
-                memory = _get_memory()
-            except Exception:
-                memory = EnhancedMemorySystem()
-                memory._load()
-                automimpi = create_automimpi(memory)
-                selflearn = create_selflearn(memory)
-
-            profile = automimpi._build_learning_profile()
-            suggestions = automimpi._generate_suggestions(profile)
-
-            top_3 = []
-            for s in suggestions[:3]:
-                top_3.append({
-                    "type": s.suggestion_type.value if hasattr(s.suggestion_type, "value") else str(s.suggestion_type),
-                    "title": s.title,
-                    "reason": s.reason,
-                    "urgency": s.urgency.value if hasattr(s.urgency, "value") else str(s.urgency),
-                    "action": s.action,
-                })
-
-            stale_count = 0
-            traces = list(memory.traces.values()) if hasattr(memory, "traces") else []
-            for t in traces:
-                try:
-                    if t.calculate_current_strength() < 0.3:
-                        stale_count += 1
-                except Exception:
-                    pass
-
-            last_dream = automimpi.last_dream_at.isoformat() if automimpi.last_dream_at else None
-            health_score = getattr(profile, "consolidation_health", 0.5)
-
-            payload = {
-                "jsonrpc": JSONRPC_VERSION,
-                "method": "notifications/advisorReady",
-                "params": {
-                    "healthScore": health_score,
-                    "suggestions": top_3,
-                    "staleMemories": stale_count,
-                    "lastDream": last_dream,
-                },
-            }
-            self._pending_notifications.append(payload)
-        except Exception as e:
-            logger.warning(f"Error in _send_advisor_notification: {e}")
+            root = str(Path.cwd().resolve())
+            analysis = _get_selflearn().analyze(Path.cwd().name, root)
+            advisor = _get_learning_advisor()
+            advice = await asyncio.to_thread(advisor.advise, "", 3, analysis)
+            engine = _get_automimpi()
+            self._pending_notifications.append({
+                "jsonrpc": JSONRPC_VERSION, "method": "notifications/advisorReady",
+                "params": {"project_root": root, "healthScore": analysis["retention_health"]["avg_strength"],
+                           "metricBasis": analysis["metric_basis"], "suggestions": advice["recommendations"],
+                           "staleMemories": analysis["evidence"]["stale"]["count"],
+                           "lastDream": engine.last_dream_at.isoformat() if engine.last_dream_at else None,
+                           "kb": advice["kb"]},
+            })
+        except Exception as exc:
+            logger.warning("Learning advisor unavailable: %s", exc)
 
     def _ensure_tools_loaded(self) -> None:
         """Import all JEBAT tool modules to populate TOOL_REGISTRY.
@@ -891,6 +860,10 @@ class MCPServer:
                 "description": "Summary of memory count by type, strongest/weakest memories, patterns, and knowledge gaps.",
                 "mimeType": "application/json",
             },
+            {"uri": "jebat://learning/advisor", "name": "Project learning advisor",
+             "description": "Evidence-cited recommendations and explicit reviewer feedback; no model calls.", "mimeType": "application/json"},
+            {"uri": "jebat://kb/learning", "name": "Project learning KB",
+             "description": "Recent project-scoped dream and advice records from SQLite FTS5.", "mimeType": "application/json"},
             {
                 "uri": "jebat://errors/recent",
                 "name": "Recent tool execution errors",
@@ -989,14 +962,9 @@ class MCPServer:
             return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": f"Error: Artifact not found or expired: {artifact_id}"}]}
 
         if uri == "jebat://workflow":
-            text = """# JEBAT workflow
+            from jebat.workflows import workflow_resource
 
-1. Plan: state intent, scope, constraints, and risk.
-2. Approve: classify each action as AUTO, CONFIRM, or DANGEROUS.
-3. Execute: call the smallest tool set needed.
-4. Verify: check the observable result, not internal assumptions.
-5. Remember: store durable project facts without secrets.
-"""
+            text = workflow_resource()
             return {"contents": [{"uri": uri, "mimeType": "text/markdown", "text": text}]}
 
         if uri == "jebat://tools":
@@ -1014,19 +982,26 @@ class MCPServer:
                 from jebat.tools.automimpi_tools import _get_memory, _recall_project_facts
                 memory = _get_memory()
                 facts = _recall_project_facts(memory)
-                payload = {"project": Path(os.getcwd()).name, "total": len(facts), "facts": facts}
+                payload = {"project": Path(os.getcwd()).name, "project_root": str(Path.cwd().resolve()), "total": len(facts), "facts": facts}
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": mcp_json(payload)}]}
             except Exception as e:
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
 
+        if uri in {"jebat://learning/advisor", "jebat://kb/learning"}:
+            from jebat.tools.automimpi_tools import learning_advisor, learning_kb_search
+
+            payload = await learning_advisor() if uri.endswith("advisor") else await learning_kb_search()
+            return {"contents": [{"uri": uri, "mimeType": "application/json", "text": mcp_json(payload)}]}
+
         if uri == "jebat://memory/dream":
             try:
-                from jebat.tools.automimpi_tools import _get_automimpi
+                from jebat.tools.automimpi_tools import _get_automimpi, _get_selflearn, learning_kb_search
                 from jebat.features.memory.automimpi import DREAM_QUOTES
                 engine = _get_automimpi()
                 status = engine.get_status()
-                profile = engine._build_learning_profile()
-                suggestions = engine._generate_suggestions(profile)
+                analysis = _get_selflearn().analyze(Path.cwd().name, str(Path.cwd().resolve()))
+                profile = engine._build_learning_profile(analysis)
+                suggestions = engine._generate_suggestions(profile, analysis)
 
                 quote_idx = (engine.dream_count + len(getattr(engine.memory, "traces", {}))) % len(DREAM_QUOTES)
                 laksamana_quote = DREAM_QUOTES[quote_idx]
@@ -1064,6 +1039,8 @@ class MCPServer:
                     "profile": profile_dict,
                     "suggestions": suggestions_list,
                     "laksamana_quote": laksamana_quote,
+                    "analysis": analysis,
+                    "persisted_reports": await learning_kb_search(kind="dream", limit=1),
                 }
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": mcp_json(report_data)}]}
             except Exception as e:
@@ -1073,7 +1050,7 @@ class MCPServer:
             try:
                 from jebat.tools.automimpi_tools import _get_selflearn
                 selflearn = _get_selflearn()
-                analysis = selflearn.analyze()
+                analysis = selflearn.analyze(Path.cwd().name, str(Path.cwd().resolve()))
                 if "velocity" not in analysis and "learning_velocity" in analysis:
                     analysis["velocity"] = analysis["learning_velocity"]
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": mcp_json(analysis)}]}
@@ -1082,11 +1059,14 @@ class MCPServer:
 
         if uri == "jebat://kb/summary":
             try:
-                from jebat.tools.automimpi_tools import _get_memory, _get_automimpi
+                from jebat.tools.automimpi_tools import _get_memory, _get_automimpi, _get_selflearn, learning_kb_status
+                from jebat.features.memory.automimpi import project_traces
                 memory = _get_memory()
                 automimpi = _get_automimpi()
 
-                traces = list(memory.traces.values()) if hasattr(memory, "traces") else []
+                root = str(Path.cwd().resolve())
+                traces = project_traces(memory, Path.cwd().name, root)
+                analysis = _get_selflearn().analyze(Path.cwd().name, root)
 
                 by_type: Dict[str, int] = {}
                 for t in traces:
@@ -1123,9 +1103,9 @@ class MCPServer:
                     for t in sorted_by_strength[-5:]
                 ] if traces else []
 
-                pattern_count = len(getattr(memory, "extracted_patterns", []))
+                pattern_count = analysis["pattern_count"]
 
-                profile = automimpi._build_learning_profile()
+                profile = automimpi._build_learning_profile(analysis)
                 knowledge_gaps = getattr(profile, "knowledge_gaps", [])
 
                 summary = {
@@ -1135,13 +1115,15 @@ class MCPServer:
                     "top_5_weakest": top_5_weakest,
                     "pattern_count": pattern_count,
                     "knowledge_gaps": list(knowledge_gaps),
+                    "project_root": root,
+                    "learning_database": await learning_kb_status(),
                 }
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": mcp_json(summary)}]}
             except Exception as e:
                 return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"error": str(e)})}]}
 
         if uri == "jebat://errors/recent":
-            recent = _RECENT_ERRORS[-10:]
+            recent = list(_RECENT_ERRORS)[-10:]
             return {"contents": [{"uri": uri, "mimeType": "application/json", "text": mcp_json(recent)}]}
 
         if uri == "jebat://analytics/tools":
@@ -1448,7 +1430,10 @@ class MCPServer:
                          f"{self.host}:{self.http_port}\n")
 
         server_instance = self
-        sse_connections: List = []
+        from .mcp_transport import ProgressManager
+
+        notifications: asyncio.Queue = asyncio.Queue()
+        self._progress_manager = ProgressManager(notification_queue=notifications)
 
         def check_auth(request) -> Optional[Response]:
             expected_key = os.getenv("JEBAT_API_KEY", "")
@@ -1484,6 +1469,7 @@ class MCPServer:
                                     status_code=400)
 
             response = await server_instance.handle_request(body)
+            server_instance._flush_pending_notifications()
             if response is None:
                 # Notification — no response
                 return Response(status_code=204)
@@ -1494,13 +1480,16 @@ class MCPServer:
             auth_err = check_auth(request)
             if auth_err:
                 return auth_err
-            async with sse_starlette.EventSourceResponse(request) as event_generator:
-                sse_connections.append(event_generator)
-                try:
-                    async for event in event_generator:
-                        pass  # Keep connection alive
-                finally:
-                    sse_connections.remove(event_generator)
+            async def events():
+                yield {"event": "endpoint", "data": "/message"}
+                while True:
+                    try:
+                        notification = await asyncio.wait_for(notifications.get(), timeout=30)
+                        yield {"event": "message", "data": json.dumps(notification)}
+                    except asyncio.TimeoutError:
+                        yield {"event": "ping", "data": ""}
+
+            return sse_starlette.EventSourceResponse(events())
 
         routes = [
             Route("/message", endpoint=handle_message, methods=["POST"]),

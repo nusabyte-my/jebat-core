@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ class WorkflowEngine:
         Returns:
             WorkflowDefinition
         """
-        workflow_id = f"wf_{name.lower().replace(' ', '_')}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        workflow_id = f"wf_{name.lower().replace(' ', '_')}_{uuid4().hex}"
 
         workflow = WorkflowDefinition(
             id=workflow_id,
@@ -150,6 +151,11 @@ class WorkflowEngine:
         """
         if workflow_id not in self.workflows:
             raise ValueError(f"Workflow not found: {workflow_id}")
+        workflow = self.workflows[workflow_id]
+        if workflow.status == WorkflowStatus.RUNNING:
+            raise ValueError("Cannot edit a running workflow")
+        if task_id in workflow.tasks:
+            raise ValueError(f"Duplicate task ID: {task_id}")
 
         task = WorkflowTask(
             id=task_id,
@@ -184,11 +190,19 @@ class WorkflowEngine:
             return {"error": "Workflow not found"}
 
         workflow = self.workflows[workflow_id]
+        if workflow.status == WorkflowStatus.RUNNING:
+            return {"error": "Workflow is already running"}
+        for task in workflow.tasks.values():
+            task.status = TaskStatus.PENDING
+            task.result = None
+            task.error = None
+            task.started_at = None
+            task.completed_at = None
         workflow.status = WorkflowStatus.RUNNING
 
-        context = context or {}
+        context = dict(context) if context is not None else {}
 
-        execution_id = f"exec_{workflow_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        execution_id = f"exec_{workflow_id}_{uuid4().hex}"
 
         self.executions[execution_id] = {
             "workflow_id": workflow_id,
@@ -202,20 +216,19 @@ class WorkflowEngine:
         # Execute tasks in dependency order
         completed_tasks = set()
         failed_tasks = set()
+        skipped_tasks = set()
 
-        while len(completed_tasks) + len(failed_tasks) < len(workflow.tasks):
+        while len(completed_tasks) + len(failed_tasks) + len(skipped_tasks) < len(workflow.tasks):
             # Find ready tasks (all dependencies met)
             ready_tasks = self._get_ready_tasks(
                 workflow,
                 completed_tasks,
                 failed_tasks,
             )
+            skipped_tasks = {t.id for t in workflow.tasks.values() if t.status == TaskStatus.SKIPPED}
 
             if not ready_tasks:
-                if failed_tasks:
-                    break
-                # Deadlock detection
-                pending = set(workflow.tasks.keys()) - completed_tasks - failed_tasks
+                pending = set(workflow.tasks) - completed_tasks - failed_tasks - skipped_tasks
                 if pending:
                     logger.error(f"Deadlock detected: {pending}")
                     for task_id in pending:
@@ -232,12 +245,20 @@ class WorkflowEngine:
                 task.started_at = datetime.now()
                 tasks_to_run.append(self._execute_task(task, context))
 
-            results = await asyncio.gather(*tasks_to_run, return_exceptions=True)
+            try:
+                results = await asyncio.gather(*tasks_to_run, return_exceptions=True)
+            except asyncio.CancelledError:
+                for task in workflow.tasks.values():
+                    if task.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
+                        task.status = TaskStatus.CANCELLED
+                        task.completed_at = datetime.now()
+                workflow.status = WorkflowStatus.FAILED
+                raise
 
             for task, result in zip(ready_tasks, results):
                 task.completed_at = datetime.now()
 
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     task.status = TaskStatus.FAILED
                     task.error = str(result)
                     failed_tasks.add(task.id)
@@ -261,6 +282,7 @@ class WorkflowEngine:
             "workflow_id": workflow_id,
             "completed_tasks": len(completed_tasks),
             "failed_tasks": len(failed_tasks),
+            "skipped_tasks": len(skipped_tasks),
             "results": self.executions[execution_id]["task_results"],
             "duration": (
                 datetime.now() - self.executions[execution_id]["start_time"]
@@ -275,6 +297,15 @@ class WorkflowEngine:
     ) -> List[WorkflowTask]:
         """Get tasks ready to execute."""
         ready = []
+        blocked = set(failed)
+        while True:
+            downstream = {
+                task.id for task in workflow.tasks.values()
+                if task.id not in blocked and any(dep in blocked for dep in task.dependencies)
+            }
+            if not downstream:
+                break
+            blocked.update(downstream)
 
         for task in workflow.tasks.values():
             if task.id in completed or task.id in failed:
@@ -284,7 +315,7 @@ class WorkflowEngine:
 
             # Check dependencies
             deps_met = all(dep in completed for dep in task.dependencies)
-            deps_failed = any(dep in failed for dep in task.dependencies)
+            deps_failed = task.id in blocked
 
             if deps_failed:
                 task.status = TaskStatus.SKIPPED
@@ -305,21 +336,22 @@ class WorkflowEngine:
             return None
 
         # Resolve dependencies from context, only if the callable accepts kwargs
+        kwargs = dict(task.kwargs)
         if _func_accepts_kwargs(task.func):
             for dep in task.dependencies:
                 if dep in context:
-                    task.kwargs[f"_{dep}_result"] = context[dep]
+                    kwargs[f"_{dep}_result"] = context[dep]
 
         # Execute with timeout
         try:
             if inspect.iscoroutinefunction(task.func):
                 result = await asyncio.wait_for(
-                    task.func(**task.kwargs),
+                    task.func(**kwargs),
                     timeout=task.timeout,
                 )
             else:
                 result = await asyncio.wait_for(
-                    asyncio.to_thread(task.func, **task.kwargs),
+                    asyncio.to_thread(task.func, **kwargs),
                     timeout=task.timeout,
                 )
 

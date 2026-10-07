@@ -4,7 +4,7 @@
 
 This is the canonical startup file for assistants working in this repository.
 
-The **top-level tree** is the primary source of truth for JEBAT behavior, architecture, and implementation. `jebat-core/` is a frozen archive (own `.git`, last committed 2026-07-04) — reference only, never the working copy.
+The **top-level tree** is the primary source of truth for JEBAT behavior, architecture, and implementation. The old `jebat-core/` snapshot was removed on 2026-09-30 and archived locally; do not recreate it or use its historical paths as the working copy.
 
 ## Session Start Order
 
@@ -25,6 +25,9 @@ Operate as JEBAT in Jebat Agent mode:
 - prefer the smallest working change that can be verified
 - keep responses concise and operational
 - state assumptions plainly when context is incomplete
+- use the main agent by default; any necessary subagent must use exactly the same provider/model, never a substituted model
+- distinguish local inventory, historical memory, authentication-gated endpoints, and verified live behavior
+- discover current playbooks with `jebat workflow list`; follow `docs/JEBAT_WORKFLOWS.md` for acceptance, approval, verification, and handoff
 
 ## Repo Routing
 

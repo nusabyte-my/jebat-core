@@ -87,11 +87,22 @@ When connected via MCP, JEBAT exposes the tools registered by the installed work
 
 | Surface | URI / name | Purpose |
 |---------|------------|---------|
-| Resource | `jebat://workflow` | Plan → approve → execute → verify → remember guidance |
+| Resource | `jebat://workflow` | Shared operating policy and nine opt-in playbooks |
 | Resource | `jebat://tools` | Current tool names, safety tiers, and timeouts |
 | Prompt | `plan-act-verify-remember` | Reusable governed task workflow for IDE agents |
+| Prompts | `workflow-audit`, `quickwin-triage`, `spec-to-ship` | Evidence-backed audit, ranked improvements, verified feature delivery |
+| Prompts | `release-readiness`, `incident-response`, `dependency-upgrade` | Release gates, incident recovery, version-aware migration |
+| Prompts | `automation-readiness`, `session-handoff` | Safe repeat execution and grounded continuation |
+| Resources | `jebat://learning/profile`, `jebat://learning/advisor`, `jebat://kb/learning` | Project-scoped retention analysis, cited advice, and persistent dream/advice history |
+
+Playbooks accept required string `task` and optional string `scope`. They render guidance only: no agent spawn, schedule activation, or deployment. CLI equivalent: `jebat workflow show NAME --task "objective" --scope .`.
+Invalid prompt names/arguments return `-32602`; terse discovery retains optional arguments. `project-onboard` is confined to the server workspace. Project recall reports `project_root`: compare it with the IDE workspace before using its facts.
+See [Operating workflows](docs/JEBAT_WORKFLOWS.md) for verification and known limits.
 
 Write-capable tool calls return machine-readable `approval_required` metadata before execution. The IDE can show the exact tool, arguments, and safety tier; approval remains explicit in JEBAT CLI.
+
+Learning tools: `learning_advisor(focus, limit)`, `learning_kb_search(query, kind, limit)`, `learning_kb_status()`, and CONFIRM-gated `learning_feedback(record_id, outcome, evidence)`. Feedback outcomes are `helpful`, `unhelpful`, or `dismissed`; they are reviewer judgments, not task-success probabilities. Advice creation persists only local KB records, never executes the proposed action or calls a model. `mimpi_dream` reports `partial` when consolidation committed but report/mirror persistence failed.
+See [Learning advisor and KB](docs/JEBAT_WORKFLOWS.md#learning-advisor-and-kb) for exact commands, storage, and shared-JSON concurrency limits.
 
 ## Transport Options
 
