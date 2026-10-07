@@ -10,6 +10,7 @@ app = FastAPI(title="WA Hybrid Router", version="1.0.0")
 
 META_URL = os.getenv("META_URL", "http://wa-meta:8084")
 BAILEYS_URL = os.getenv("BAILEYS_URL", "http://wa-baileys:8085")
+BOT_URL = os.getenv("BOT_URL", "http://wa-bot:8086")
 DEFAULT_BACKEND = os.getenv("DEFAULT_BACKEND", "meta")
 FALLBACK_ENABLED = os.getenv("FALLBACK_ENABLED", "true").lower() == "true"
 
@@ -24,9 +25,10 @@ async def health():
 
 @app.get("/api/v1/admin/overview")
 async def overview():
-    """Return status of both backends."""
+    """Return status of backends and bot."""
     meta_ok = False
     baileys_ok = False
+    bot_ok = False
     
     try:
         async with httpx.AsyncClient(timeout=5) as client:
@@ -41,10 +43,18 @@ async def overview():
             baileys_ok = r.status_code == 200
     except:
         pass
+
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{BOT_URL}/health")
+            bot_ok = r.status_code == 200
+    except:
+        pass
     
     return {
         "meta": "online" if meta_ok else "offline",
         "baileys": "online" if baileys_ok else "offline",
+        "bot": "online" if bot_ok else "offline",
         "default_backend": DEFAULT_BACKEND,
         "fallback_enabled": FALLBACK_ENABLED
     }
@@ -99,6 +109,56 @@ async def _try_baileys(body: dict) -> dict:
         logger.error(f"Baileys error: {e}")
         return {"success": False, "backend": "baileys", "error": str(e)}
 
+
+
+@app.post("/api/v1/send-document")
+async def send_document(request: Request):
+    """Route document to Meta, fallback to Baileys on failure."""
+    body = await request.json()
+    tenant = body.get("tenant", {})
+    backend = tenant.get("backend", DEFAULT_BACKEND)
+    
+    # Try primary backend
+    if backend == "meta":
+        result = await _try_meta_document(body)
+        if result.get("success") or not FALLBACK_ENABLED:
+            return result
+        # Fallback to Baileys
+        logger.warning("Meta document failed, falling back to Baileys")
+        return await _try_baileys_document(body)
+    else:
+        result = await _try_baileys_document(body)
+        if result.get("success") or not FALLBACK_ENABLED:
+            return result
+        # Fallback to Meta
+        logger.warning("Baileys document failed, falling back to Meta")
+        return await _try_meta_document(body)
+
+
+async def _try_meta_document(body: dict) -> dict:
+    """Send document via Meta API."""
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.post(f"{META_URL}/api/v1/send-document", json=body)
+            result = r.json()
+            result["backend"] = "meta"
+            return result
+    except Exception as e:
+        logger.error(f"Meta document error: {e}")
+        return {"success": False, "backend": "meta", "error": str(e)}
+
+
+async def _try_baileys_document(body: dict) -> dict:
+    """Send document via Baileys."""
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.post(f"{BAILEYS_URL}/api/v1/send-document", json=body)
+            result = r.json()
+            result["backend"] = "baileys"
+            return result
+    except Exception as e:
+        logger.error(f"Baileys document error: {e}")
+        return {"success": False, "backend": "baileys", "error": str(e)}
 
 @app.post("/api/v1/tenants/{tenant_id}")
 async def manage_tenant(tenant_id: str, request: Request):

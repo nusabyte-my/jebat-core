@@ -16,6 +16,7 @@ services:
     environment:
       - META_URL=http://wa-meta:8084
       - BAILEYS_URL=http://wa-baileys:8085
+      - BOT_URL=http://wa-bot:8086
       - DEFAULT_BACKEND=meta
       - FALLBACK_ENABLED=true
       - LOG_LEVEL=info
@@ -40,6 +41,7 @@ services:
       - "8084"
     environment:
       - PORT=8084
+      - BOT_URL=http://wa-bot:8086
       - LOG_LEVEL=info
     volumes:
       - ./wa-meta/logs:/app/logs
@@ -62,6 +64,7 @@ services:
     environment:
       - PORT=8085
       - LOG_LEVEL=info
+      - BOT_URL=http://wa-bot:8086
       - BAILEYS_PRINT_QR=true
     volumes:
       - baileys-sessions:/app/sessions
@@ -74,9 +77,32 @@ services:
       timeout: 10s
       retries: 3
 
+
+  wa-bot:
+    build: ./wa-bot
+    container_name: wa-bot
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      - PORT=8086
+      - ADMIN_TOKEN=${WA_BOT_ADMIN_TOKEN:-dev-admin-token}
+      - BOT_DB_PATH=/data/wa-bot.db
+    volumes:
+      - wa-bot-data:/data
+    networks:
+      - wa-net
+    depends_on:
+      - wa-router
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 networks:
   wa-net:
     driver: bridge
 
 volumes:
   baileys-sessions:
+  wa-bot-data:
