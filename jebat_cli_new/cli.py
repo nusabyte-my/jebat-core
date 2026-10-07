@@ -265,6 +265,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p.add_argument("--export", metavar="PATH",
                    help="Write the run as a markdown transcript to PATH and exit")
+    p.add_argument("-e", "--extension", action="append", default=[],
+                   help="Load an extension file or dir (repeatable)")
+    p.add_argument("--no-extensions", dest="no_extensions", action="store_true",
+                   help="Disable extension discovery")
+    p.add_argument("--hook", action="append", default=[],
+                   help="Load a hook/extension file (repeatable)")
     p.add_argument("--version", action="store_true", help="Print version and exit")
     p.add_argument("--set-role", metavar="ROLE=MODEL",
                    help="Persist a model role to config.yaml and exit")
@@ -343,6 +349,14 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
     ns.keep_skills = filter_skills(
         ns.skill_patterns.split(",") if ns.skill_patterns else None, ns.no_skills
     )
+
+    # Extensions/hooks: load before anything can dispatch a slash command.
+    ns.extension_summary = ""
+    if not ns.no_extensions:
+        from jebat_cli_new import extensions as ext
+
+        ext.discover(list(ns.extension) + list(ns.hook))
+        ns.extension_summary = ext.summary()
 
     provider, model = resolve_role(ns.role, ns.model)
     if ns.provider:

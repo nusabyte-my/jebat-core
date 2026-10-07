@@ -327,6 +327,10 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
         yolo: If True, skip safety confirmations
     """
     if name not in HANDLERS:
+        from jebat_cli_new import extensions as ext
+
+        if ext.has_tool(name):
+            return ext.run_tool(name, arguments)
         from jebat_cli_new.tool_bridge import execute_shared_tool
 
         return execute_shared_tool(name, arguments, yolo=yolo)
@@ -334,6 +338,10 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
     handler = HANDLERS.get(name)
     if not handler:
         return f"Unknown tool: {name}"
+
+    from jebat_cli_new import extensions as _ext
+
+    arguments = _ext.before_tool(name, arguments)
 
     # Atomic Agents-style schema validation
     if name in TOOL_SCHEMAS:
@@ -379,4 +387,4 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
                 if verdict == "no":
                     return "File write blocked by user (preview declined)"
     
-    return handler(arguments)
+    return _ext.after_tool(name, arguments, handler(arguments))

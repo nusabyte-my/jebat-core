@@ -2965,6 +2965,17 @@ COMMANDS = [
 ]
 
 
+def _all_commands():
+    """Built-in slash commands plus any contributed by loaded extensions."""
+    try:
+        from jebat_cli_new import extensions as ext
+
+        extra = [c for c in ext.command_entries() if c[0] not in {n for n, _ in COMMANDS}]
+    except Exception:
+        extra = []
+    return list(COMMANDS) + extra
+
+
 def _fuzzy_match(query, text):
     """Check if query chars appear in text in order (case-insensitive)."""
     query = query.lower().strip("/")
@@ -2979,7 +2990,7 @@ def _fuzzy_match(query, text):
 def _show_matches(query):
     """Show commands matching fuzzy query."""
     matches = []
-    for cmd, desc in COMMANDS:
+    for cmd, desc in _all_commands():
         if _fuzzy_match(query, cmd):
             matches.append((cmd, desc))
     if not matches:
@@ -3003,8 +3014,9 @@ def _interactive_command_picker():
     # Number selection
     try:
         idx = int(choice) - 1
-        if 0 <= idx < len(COMMANDS):
-            return COMMANDS[idx][0], ""
+        commands = _all_commands()
+        if 0 <= idx < len(commands):
+            return commands[idx][0], ""
     except ValueError:
         pass
     # Fuzzy match
@@ -3103,7 +3115,7 @@ def sparkline(values):
 
 def _print_categorized_help():
     """Print categorized help with icons and colors."""
-    cmd_map = {cmd: desc for cmd, desc in COMMANDS}
+    cmd_map = {cmd: desc for cmd, desc in _all_commands()}
     sections = [
         ("⚡ Session",      ["/clear", "/exit", "/banner", "/version", "/fork", "/continue"]),
         ("🔌 Providers",    ["/provider", "/model", "/providers", "/health", "/ping"]),
@@ -3205,6 +3217,17 @@ def repl(registry, taskdb, skills, agent=None):
             parts = prompt.split(maxsplit=1)
             cmd = parts[0].lower()
             arg = parts[1] if len(parts) > 1 else ""
+
+            # Extension commands take precedence over the built-in chain, so a
+            # loaded extension can override a built-in and an unknown /cmd is
+            # never forwarded to the LLM as a prompt.
+            from jebat_cli_new import extensions as _ext
+
+            if _ext.has_command(cmd):
+                result = _ext.run_command(cmd, arg, agent)
+                if result:
+                    cprint(f"  {result}")
+                continue
 
             if cmd in ("/exit", "/quit", "/q"):
                 if agent.messages:
@@ -3856,6 +3879,10 @@ def repl(registry, taskdb, skills, agent=None):
                     tokens = int(parts[1]) if len(parts) > 1 else 1000
                     cost = estimate_cost(model, tokens)
                     cprint(f"  {C.GREEN}Estimated cost for {model} ({tokens:,} tokens): {format_cost(cost)}{C.RESET}")
+            else:
+                # Unrecognized slash command — don't ship it to the LLM.
+                cprint(f"  {C.RED}Unknown command: {cmd}{C.RESET}")
+                _show_matches(cmd)
             continue
 
         # /editor fell through — prompt already set
