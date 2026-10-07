@@ -4243,6 +4243,18 @@ def _run_one_shot(ns, registry, taskdb, skills, prompt, cfg):
     model_str = step.response.model or ns.model or (cfg.model if cfg else "unknown")
     provider_str = cfg.kind if cfg else "none"
 
+    if getattr(ns, "export", None):
+        from jebat_cli_new.cli import write_export
+
+        out = write_export(ns.export, prompt, step.response.text,
+                           provider_str, model_str, step.tool_actions)
+        if ns.mode == "json":
+            emit_json({"prompt": prompt, "response": step.response.text,
+                       "export": str(out), "status": "ok"})
+        else:
+            cprint(f"  {C.GREEN}Exported:{C.RESET} {out}")
+        return 0
+
     if ns.mode == "json":
         emit_json({
             "prompt": prompt,

@@ -235,6 +235,8 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument(flag, dest=f"role_{role}",
                        help=f"Model for the '{role}' role")
 
+    p.add_argument("--role", choices=ROLE_NAMES,
+                   help="Use a named role's model for this run (see `roles` in config.yaml)")
     p.add_argument("--profile", help="Isolated profile for auth, sessions and caches")
     p.add_argument("--cwd", help="Working directory to start in")
 
@@ -261,6 +263,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--auto-commit", "-a", dest="auto_commit", action="store_true",
                    help="Git commit after file changes")
 
+    p.add_argument("--export", metavar="PATH",
+                   help="Write the run as a markdown transcript to PATH and exit")
     p.add_argument("--version", action="store_true", help="Print version and exit")
     p.add_argument("--set-role", metavar="ROLE=MODEL",
                    help="Persist a model role to config.yaml and exit")
@@ -340,7 +344,7 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
         ns.skill_patterns.split(",") if ns.skill_patterns else None, ns.no_skills
     )
 
-    provider, model = resolve_role(None, ns.model)
+    provider, model = resolve_role(ns.role, ns.model)
     if ns.provider:
         provider = ns.provider
     ns.provider, ns.model = provider, model
@@ -353,7 +357,6 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
         value = getattr(ns, f"role_{role}", None)
         if value:
             ns.role_models[role] = value
-    ns.role = None
     ns.quiet = bool(ns.quiet or ns.mode == "json")
     if ns.quiet:
         # Keep stdout machine-clean: no ANSI, no spinner, no banner.
@@ -400,6 +403,30 @@ def one_shot_requested(ns: argparse.Namespace) -> bool:
     if ns.print_mode or ns.mode == "json":
         return True
     return not sys.stdin.isatty()
+
+
+def write_export(path: str, prompt: str, response: str,
+                 provider: str = "", model: str = "", tools=None) -> "Path":
+    """Write a one-shot run as a markdown transcript. Returns the written path."""
+    from datetime import datetime
+    from pathlib import Path as _Path
+
+    out = _Path(path).expanduser()
+    if out.is_dir():
+        out = out / f"jebat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().isoformat(timespec="seconds")
+    lines = [
+        "# JEBAT Run Export", "",
+        f"- when: {stamp}",
+        f"- provider: {provider or '-'}",
+        f"- model: {model or '-'}",
+    ]
+    if tools:
+        lines.append(f"- tools: {', '.join(tools)}")
+    lines += ["", "## Prompt", "", prompt, "", "## JEBAT", "", response, ""]
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
 
 
 def emit_json(payload: Dict[str, Any]) -> None:
