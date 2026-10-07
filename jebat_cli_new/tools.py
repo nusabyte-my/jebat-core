@@ -254,13 +254,118 @@ def handle_list_dir(args: Dict[str, Any]) -> str:
         return f"Error listing {path}: {e}"
 
 
+def _lsp_path(args):
+    from pathlib import Path as _P
+    raw = args.get("path") or ""
+    return _P(raw).expanduser() if raw else None
+
+
+def handle_lsp_definition(args):
+    from jebat_cli_new import lsp
+    path = _lsp_path(args)
+    if not path or not path.exists():
+        return f"Error: file not found: {args.get('path')}"
+    client, err = lsp.get_client(path)
+    if not client:
+        return f"Error: {err}"
+    res = client.definition(path, int(args.get("line", 1)), int(args.get("column", 1)))
+    return lsp.format_locations(res)
+
+
+def handle_lsp_references(args):
+    from jebat_cli_new import lsp
+    path = _lsp_path(args)
+    if not path or not path.exists():
+        return f"Error: file not found: {args.get('path')}"
+    client, err = lsp.get_client(path)
+    if not client:
+        return f"Error: {err}"
+    res = client.references(path, int(args.get("line", 1)), int(args.get("column", 1)))
+    return lsp.format_locations(res)
+
+
+def handle_lsp_hover(args):
+    from jebat_cli_new import lsp
+    path = _lsp_path(args)
+    if not path or not path.exists():
+        return f"Error: file not found: {args.get('path')}"
+    client, err = lsp.get_client(path)
+    if not client:
+        return f"Error: {err}"
+    res = client.hover(path, int(args.get("line", 1)), int(args.get("column", 1)))
+    if not res or not res.get("contents"):
+        return "no result"
+    contents = res["contents"]
+    return contents if isinstance(contents, str) else contents.get("value", str(contents))
+
+
+def handle_lsp_diagnostics(args):
+    from jebat_cli_new import lsp
+    path = _lsp_path(args)
+    if not path or not path.exists():
+        return f"Error: file not found: {args.get('path')}"
+    client, err = lsp.get_client(path)
+    if not client:
+        return f"Error: {err}"
+    diags = client.diagnostics(path)
+    if not diags:
+        return "no diagnostics"
+    sev = {1: "error", 2: "warning", 3: "info", 4: "hint"}
+    out = []
+    for d in diags[:40]:
+        rng = (d.get("range") or {}).get("start", {})
+        out.append(f"  {sev.get(d.get('severity'), '?')} "
+                   f"{rng.get('line', 0) + 1}:{rng.get('character', 0) + 1} "
+                   f"{d.get('message', '')}")
+    return "\n".join(out)
+
+
 HANDLERS: Dict[str, Callable[[Dict[str, Any]], str]] = {
     "read_file": handle_read_file,
     "write_file": handle_write_file,
     "search_files": handle_search_files,
     "terminal": handle_terminal,
     "list_dir": handle_list_dir,
+    "lsp_definition": handle_lsp_definition,
+    "lsp_references": handle_lsp_references,
+    "lsp_hover": handle_lsp_hover,
+    "lsp_diagnostics": handle_lsp_diagnostics,
 }
+
+
+_LSP_PARAMS = {
+    "type": "object",
+    "properties": {
+        "path": {"type": "string", "description": "File path"},
+        "line": {"type": "integer", "description": "1-indexed line", "default": 1},
+        "column": {"type": "integer", "description": "1-indexed column", "default": 1},
+    },
+    "required": ["path"],
+}
+
+TOOL_DEFINITIONS.extend([
+    {
+        "name": "lsp_definition",
+        "description": "Find where the symbol at a position is defined (language server).",
+        "parameters": _LSP_PARAMS,
+    },
+    {
+        "name": "lsp_references",
+        "description": "Find all references to the symbol at a position (language server).",
+        "parameters": _LSP_PARAMS,
+    },
+    {
+        "name": "lsp_hover",
+        "description": "Get type/documentation info for the symbol at a position.",
+        "parameters": _LSP_PARAMS,
+    },
+    {
+        "name": "lsp_diagnostics",
+        "description": "Report errors and warnings for a file from its language server.",
+        "parameters": {"type": "object", "properties": {"path": _LSP_PARAMS["properties"]["path"]},
+                       "required": ["path"]},
+    },
+])
 
 
 def _add_shared_registry_tools() -> None:
