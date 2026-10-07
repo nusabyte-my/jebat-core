@@ -28,7 +28,7 @@
 - Terse technical style; drop filler. Security warnings / irreversible actions / multi-step ops get full sentences.
 - Match his energy. Progress updates short. Assumptions stated explicitly.
 - If something changed: what + how to verify. If verification impossible: say so directly.
-- Execution preference (2026-10-07): main agent only by default; if a subagent is necessary, use exactly the main agent's model. Never substitute another model.
+- Execution preference (2026-10-07): use the main agent only by default; if a subagent is necessary, use exactly the main agent's model. Never substitute another model.
 
 ---
 
