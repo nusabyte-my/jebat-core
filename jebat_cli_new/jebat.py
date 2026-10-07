@@ -1865,6 +1865,7 @@ class ProviderConfig:
     auth_method: str = "key"
     auth_ref: Optional[str] = None
     active: bool = False
+    meta: Dict[str, Any] = field(default_factory=dict)
 
 
 class ProviderRegistry:
@@ -1879,8 +1880,14 @@ class ProviderRegistry:
                 data = json.loads(PROVIDER_FILE.read_text(encoding="utf-8"))
                 if isinstance(data, list):
                     data = {item.get("id", str(i)): item for i, item in enumerate(data) if isinstance(item, dict)}
+                elif isinstance(data, dict) and "providers" in data:
+                    # v7.2 hybrid format: {"active": "id", "providers": [...]}
+                    data = {item.get("id", str(i)): item for i, item in enumerate(data["providers"]) if isinstance(item, dict)}
                 for key, cfg in data.items():
-                    self.configs[key] = ProviderConfig(**cfg)
+                    if not isinstance(cfg, dict):
+                        continue
+                    known = {f for f in ProviderConfig.__dataclass_fields__}
+                    self.configs[key] = ProviderConfig(**{k: v for k, v in cfg.items() if k in known})
                     if cfg.get("active"):
                         self.active_id = key
             except Exception:
