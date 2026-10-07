@@ -49,7 +49,7 @@
       refresh.disabled = true;
       refresh.textContent = 'Refreshing';
       try {
-        const response = await fetch('/webui/api/integrations/overview');
+        const response = await API.request('/webui/api/integrations/overview');
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || 'Overview request failed');
 

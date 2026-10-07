@@ -1,12 +1,12 @@
-/* JEBAT WebUI service worker — v8.2.1-agentix
+/* JEBAT WebUI service worker — v8.3.0-auth
  * Strategy:
  *   - HTML shell (/webui/): network-first, cache fallback (offline shell)
  *   - Static assets (/webui/static/): stale-while-revalidate
  *   - API + WS + health: network-only (never cache auth'd/dynamic responses)
  * Version-bumped CACHE_NAME triggers clean activation of old caches.
  */
-const CACHE_NAME = 'jebat-v8.2.1-agentix';
-const SHELL_CACHE = 'jebat-shell-v8.2.1-agentix';
+const CACHE_NAME = 'jebat-v8.3.0-auth';
+const SHELL_CACHE = 'jebat-shell-v8.3.0-auth';
 const PRECACHE = [
   '/webui/static/css/stealth.css',
   '/webui/static/favicon-32.png',

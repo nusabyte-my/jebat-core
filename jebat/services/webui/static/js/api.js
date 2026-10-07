@@ -1,20 +1,30 @@
 /* ── JEBAT API Client ──
  * Shared fetch wrapper. Every page loads this.
  */
+// One-time migration: keep an existing credential only in this tab's session.
+try {
+  const legacy = localStorage.getItem('jebat_api_key') || localStorage.getItem('api_key');
+  if (legacy && !sessionStorage.getItem('jebat_api_key')) sessionStorage.setItem('jebat_api_key', legacy);
+  localStorage.removeItem('jebat_api_key');
+  localStorage.removeItem('api_key');
+} catch (_) { /* Storage may be disabled; the current tab can still authenticate. */ }
+
 const API = {
   base: '/webui/api',
   timeout: 15000,
+  key: '',
 
   getKey() {
-    return localStorage.getItem('jebat_api_key') || localStorage.getItem('api_key') || '';
+    try { return this.key || sessionStorage.getItem('jebat_api_key') || ''; }
+    catch (_) { return this.key; }
   },
 
   setKey(key) {
-    if (key) {
-      localStorage.setItem('jebat_api_key', key);
-    } else {
-      localStorage.removeItem('jebat_api_key');
-    }
+    this.key = key || '';
+    try {
+      if (this.key) sessionStorage.setItem('jebat_api_key', this.key);
+      else sessionStorage.removeItem('jebat_api_key');
+    } catch (_) { /* In-memory authentication remains available. */ }
   },
 
   getWsUrl(userId) {
@@ -24,25 +34,38 @@ const API = {
     return `${proto}//${window.location.host}/webui/ws/${encodeURIComponent(userId || 'default')}${query}`;
   },
 
+  async request(path, opts = {}) {
+    const url = new URL(path, window.location.href);
+    if (url.origin !== window.location.origin || !(/^\/(?:api|v1)\//.test(url.pathname) || url.pathname.startsWith('/webui/api/'))) {
+      throw new Error('API requests must use a same-origin JEBAT API route.');
+    }
+    const headers = new Headers(opts.headers);
+    const key = this.getKey();
+    if (key && !headers.has('X-API-Key') && !headers.has('Authorization')) headers.set('X-API-Key', key);
+    const response = await fetch(url.href, { ...opts, headers, redirect: 'error' });
+    if (!response.ok) {
+      const payload = await response.clone().json().catch(() => ({}));
+      const error = new Error(payload.detail || payload.message || payload.error || `Request failed (${response.status})`);
+      error.status = response.status;
+      if (response.status === 401 || (response.status === 403 && payload.error === 'forbidden')) {
+        window.dispatchEvent(new CustomEvent('jebat-auth-required', { detail: { status: response.status } }));
+      }
+      throw error;
+    }
+    return response;
+  },
+
   async fetch(path, opts = {}) {
     const url = `${this.base}${path}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeout);
     const headers = { ...opts.headers };
     if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-    const key = this.getKey();
-    if (key && !headers['X-API-Key'] && !headers['Authorization'] && !headers['authorization']) {
-      headers['X-API-Key'] = key;
-    }
+    // request() owns same-origin credential injection and authentication errors.
 
     try {
-      const res = await fetch(url, { ...opts, headers, signal: controller.signal });
+      const res = await this.request(url, { ...opts, headers, signal: controller.signal });
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const error = new Error(payload.detail || payload.message || payload.error || `Request failed (${res.status})`);
-        error.status = res.status;
-        throw error;
-      }
       return payload;
     } catch (error) {
       if (error.name === 'AbortError') {
@@ -88,9 +111,9 @@ async function updateConnectionStatus() {
     const componentCount = Object.keys(data.components || {}).length;
     dot.className = 'topbar-status-dot';
     text.textContent = `${componentCount} systems ready`;
-  } catch (_) {
+  } catch (error) {
     dot.className = 'topbar-status-dot error';
-    text.textContent = 'Reconnecting';
+    text.textContent = error.status === 401 || error.status === 403 ? 'Authentication required' : 'Connection unavailable';
   }
 }
 
@@ -104,7 +127,7 @@ async function updateStealChip() {
   const chip = document.getElementById('steal-chip');
   if (!chip) return;
   try {
-    const res = await fetch('/api/system/metrics', { cache: 'no-store' });
+    const res = await API.request('/api/system/metrics', { cache: 'no-store' });
     const m = await res.json();
     const steal = Number(m.cpu_steal_percent || 0);
     if (steal >= 12) {

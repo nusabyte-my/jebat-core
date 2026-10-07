@@ -19,7 +19,7 @@
 <script>
   async function loadSkills() {
     try {
-      const res = await fetch('/api/skills');
+      const res = await API.request('/api/skills');
       const data = await res.json();
       const grid = document.getElementById('skills-grid');
       if (!data.skills || data.skills.length === 0) {

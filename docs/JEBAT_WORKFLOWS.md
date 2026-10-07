@@ -185,6 +185,19 @@ py -3.12 -m pytest -q tests/test_orchestration_workflow_engine.py tests/test_dre
 Use disposable home variables for memory-writing tests. Remote MCP, live model execution, production deployment, and hosted CI execution were not verified. CI edits are local workflow configuration, not evidence of a successful release.
 Language-server checks are clean for the shared catalog, workflow command, DAG engine, and smoke script. Existing CLI/MCP/memory modules still report legacy typing/import diagnostics outside these fixes; no whole-repository type-clean claim.
 
+## WebUI authentication boundary
+
+Post-deployment verification found the standalone WebUI launcher serving API routes without authentication because it had not loaded `.env` before constructing the middleware. The main API and MCP were separately protected. The launcher now loads the shared environment configuration first and uses the canonical APIKeyMiddleware only; the obsolete open compatibility fallback is removed.
+
+- Process environment takes precedence, then `~/.jebat/secrets.env`, then missing values from workspace `.env`. A provider-only secret file no longer masks the workspace API key. `JEBAT_ENV=production` without `JEBAT_API_KEY` fails closed.
+- The shell remains public. Data endpoints require the server API key. Use **Server access** to validate that key through a read-only request. This is a server key, not an LLM-provider credential.
+- Browser keys are kept in the tab's `sessionStorage` or in memory when storage is unavailable. Existing localStorage keys migrate once and are removed from persistent localStorage. **Forget key** clears this tab's key and displayed page data.
+- All WebUI API callers, including streaming chat, use the shared same-origin request boundary. Cross-origin destinations and redirects are rejected; rejected mutations are never automatically replayed after authentication.
+- Missing `psutil` returns `503 metrics_unavailable`; the dashboard clears stale numbers and shows an unavailable state instead of zeroes or NaN uptime.
+- Verification: `python scripts/check_webui_auth.py` exercised the real launcher with disposable HOME/USERPROFILE and `.env`, protected-route 401/403/200 behavior, query-key rejection, environment precedence, and fail-closed production startup. Browser verified rejected/valid keys, tab-only storage, key removal, focus return, 44px controls and 320/375/414/768/1280px dialog layouts. Focused auth/provider/WebUI/MCP suite: **45 passed**.
+
+The API-key model is still administrator-level shared access, not per-user RBAC. Protect browser sessions and never paste keys into logs, screenshots, issue reports, or URLs. Learning operations remain CLI/MCP surfaces; no new learning dashboard is implied.
+
 ## Current primary reference
 
 MCP 2026-07-28 [prompt contract and error handling](https://modelcontextprotocol.io/specification/2026-07-28/server/prompts) and [schema](https://modelcontextprotocol.io/specification/2026-07-28/schema), consulted 2026-10-07. Keep prompts user-selected; validate inputs; return `-32602` for invalid names/arguments. No protocol downgrade or speculative transport rewrite.

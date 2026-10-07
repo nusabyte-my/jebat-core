@@ -90,7 +90,7 @@ async function runAGIAudit() {
   btn.textContent = 'Evaluating…';
   
   try {
-    const res = await fetch('/webui/api/audit', {
+    const res = await API.request('/webui/api/audit', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ markup: markup, copy_text: copyText })

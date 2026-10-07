@@ -157,9 +157,43 @@
       .stat-value, h1, h2, h3 { color: black !important; }
       a { color: #0066cc !important; }
     }
+    /* Authentication is a blocking task; use native dialog focus management. */
+    .access-dialog{margin:auto;width:min(480px,calc(100% - 32px));padding:24px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-card);color:var(--text-primary);box-shadow:var(--shadow-lg)}
+    .access-dialog::backdrop{background:var(--bg-ink);opacity:.8}
+    .access-dialog h2{font-family:var(--font-display);font-size:22px;margin-bottom:12px}
+    .access-dialog p{color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:16px}
+    .access-dialog label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
+    .access-dialog input{width:100%;min-width:0;min-height:44px;font-size:16px;margin-bottom:8px}
+    .access-dialog .access-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+    .access-dialog .btn{min-height:44px;font-size:14px}
+    .access-dialog .btn-primary{background:var(--text-primary);color:var(--bg-card);border-color:var(--text-primary)}
+    .access-dialog .btn-primary:hover{background:var(--text-secondary);border-color:var(--text-secondary)}
+    .access-dialog .btn-primary .spinner{border-color:currentColor;border-right-color:transparent}
+    .access-dialog :focus-visible{outline:2px solid var(--text-primary);outline-offset:3px}
+    .access-dialog [role="alert"]{color:var(--red);margin:8px 0 0}
+    .access-dialog [aria-busy="true"] .spinner{display:inline-block;margin-right:8px}
+    .access-dialog .spinner{display:none;vertical-align:middle}
+    .access-dialog button:disabled{opacity:.4;cursor:not-allowed}
+    .access-trigger{min-height:44px;white-space:nowrap}
+    @media(max-width:640px){.access-dialog{margin:auto 0 0;width:100%;max-width:none;border-radius:var(--radius-lg) var(--radius-lg) 0 0}.topbar-right .access-trigger{display:inline-flex!important}.topbar-status{display:none}.topbar-left .badge{display:none}}
+    @media(prefers-reduced-motion:reduce){.access-dialog .spinner{animation:none}}
   </style>
 </head>
 <body>
+  <dialog class="access-dialog" id="access-dialog" aria-labelledby="access-title" aria-describedby="access-help">
+    <form id="access-form">
+      <h2 id="access-title">Connect to this JEBAT server</h2>
+      <p id="access-help">Use the server API key supplied by your administrator—not a model-provider key. It stays in this tab's session and is sent only to this server.</p>
+      <label for="access-key">Server API key</label>
+      <input class="input" id="access-key" type="password" required maxlength="4096" autocomplete="off" spellcheck="false" aria-describedby="access-help access-error" />
+      <p id="access-error" role="alert" hidden></p>
+      <div class="access-actions">
+        <button class="btn btn-primary" id="access-submit" type="submit" disabled><span class="spinner" aria-hidden="true"></span><span id="access-submit-label">Connect this tab</span></button>
+        <button class="btn" id="access-cancel" type="button">Cancel</button>
+        <button class="btn" id="access-forget" type="button">Forget key</button>
+      </div>
+    </form>
+  </dialog>
   <!-- Progress Bar -->
   <div class="progress-bar" id="progress-bar"></div>
 
@@ -369,6 +403,7 @@
         <button class="btn btn-sm" onclick="showShortcuts()" title="Shortcuts (?)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg></button>
         <span class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">☾</span>
         <button class="i18n-toggle" onclick="toggleLang()" id="lang-btn" title="Toggle language">EN</button>
+        <button class="btn access-trigger" type="button" id="access-open">Server access</button>
         <span class="infra-chip" id="steal-chip" hidden title="Host CPU steal — time the hypervisor takes from this VM. High steal slows local inference."></span>
         <div class="topbar-status">
           <span class="topbar-status-dot" id="status-dot"></span>
@@ -391,6 +426,7 @@
     <span style="margin-left:auto" id="bottom-page">dashboard</span>
   </div>
 
+  <script src="/webui/static/js/access.js"></script>
   <script src="/webui/static/js/api.js"></script>
   <script>
     // ═══════════════════════════════════════════════════

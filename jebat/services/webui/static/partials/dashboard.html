@@ -89,10 +89,13 @@ async function refreshDashboard() {
   // Guard: bail if this page is no longer mounted (interval fired after navigation)
   if (!document.getElementById('m-cpu')) return;
   try {
-    const r = await fetch('/api/system/metrics');
+    const r = await API.request('/api/system/metrics');
     const m = await r.json();
     const el = id => document.getElementById(id);
     if (!el('m-cpu')) return;
+    if (![m.cpu_percent, m.memory?.percent, m.disk?.percent, m.uptime_seconds].every(Number.isFinite)) {
+      throw new Error('System metrics are incomplete.');
+    }
     el('m-cpu').textContent = m.cpu_percent + '%';
     el('m-mem').textContent = m.memory.percent + '%';
     el('m-disk').textContent = m.disk.percent + '%';
@@ -115,7 +118,7 @@ async function refreshDashboard() {
     ];
     document.getElementById('system-info').innerHTML = info.map(i => '<div style="margin-bottom:4px">• ' + i + '</div>').join('');
 
-    const hr = await fetch('/api/keris/history');
+    const hr = await API.request('/api/keris/history');
     const hist = await hr.json();
     const scans = (hist.scans || []).slice(0, 5);
     if (scans.length === 0) {
@@ -127,6 +130,18 @@ async function refreshDashboard() {
     }
   } catch (e) {
     console.error('Dashboard refresh failed:', e);
+    for (const id of ['m-cpu', 'm-mem', 'm-disk', 'm-uptime']) {
+      const metric = document.getElementById(id);
+      if (metric) metric.textContent = '—';
+    }
+    for (const id of ['m-cpu-bar', 'm-mem-bar', 'm-disk-bar']) {
+      const bar = document.getElementById(id);
+      if (bar) bar.style.width = '0%';
+    }
+    for (const id of ['system-info', 'recent-scans']) {
+      const target = document.getElementById(id);
+      if (target) target.textContent = e.status === 401 || e.status === 403 ? 'Connect with your server API key to load this data.' : 'Data unavailable. Use Refresh to retry.';
+    }
   }
 }
 

@@ -98,7 +98,7 @@ Submit a task to generate an execution brief.</div>
       plan.textContent = 'reflex> Planning: ' + objective + '\n\nDispatching to the JEBAT chat runtime...';
 
       try {
-        const response = await fetch('/webui/api/chat', {
+        const response = await API.request('/webui/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: 'webui-reflex', message: objective, thinking_mode: 'deliberate', preset: 'default' }),

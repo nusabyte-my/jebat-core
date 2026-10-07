@@ -42,7 +42,7 @@
 <script>
 async function loadChannels() {
   try {
-    const r = await fetch('/api/nexus/channels');
+    const r = await API.request('/api/nexus/channels');
     const data = await r.json();
     const channels = data.channels || [];
     const grid = document.getElementById('channel-grid');
@@ -70,7 +70,7 @@ async function loadChannels() {
 
 async function loadStats() {
   try {
-    const r = await fetch('/api/nexus/stats');
+    const r = await API.request('/api/nexus/stats');
     const s = await r.json();
     if (s.error) return;
     document.getElementById('nexus-stats').innerHTML = [
@@ -87,7 +87,7 @@ async function sendMessage() {
   if (!channel || !content) { toast('Select a channel and enter a message', 'error'); return; }
 
   try {
-    const r = await fetch('/api/nexus/send', {
+    const r = await API.request('/api/nexus/send', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({channel_id: channel, content})
@@ -111,7 +111,7 @@ async function broadcastMessage() {
   if (!await confirm('Broadcast', 'Send this message to ALL channels?')) return;
 
   try {
-    const r = await fetch('/api/nexus/broadcast', {
+    const r = await API.request('/api/nexus/broadcast', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({content})

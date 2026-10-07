@@ -11,42 +11,20 @@ _secrets_loaded = False
 
 
 def _ensure_secrets_loaded() -> None:
-    """Load ~/.jebat/secrets.env into os.environ once per process.
+    """Load missing values from the user secret store, then workspace .env.
 
-    Called automatically by get_provider_secret and list_provider_auth_status,
-    so any code that checks provider keys automatically picks up secrets.env.
-    Also safe to call explicitly (idempotent).
+    Explicit environment wins; a provider-only secrets file must not hide the
+    workspace's API authentication configuration.
     """
     global _secrets_loaded
     if _secrets_loaded:
         return
+    from dotenv import load_dotenv
+
+    for path in (Path.home() / ".jebat" / "secrets.env", Path.cwd() / ".env"):
+        if path.is_file():
+            load_dotenv(path, override=False, encoding="utf-8")
     _secrets_loaded = True
-
-    candidates = [
-        Path.home() / ".jebat" / "secrets.env",
-        Path.cwd() / ".env",
-    ]
-    env_path = None
-    for p in candidates:
-        if p.exists():
-            env_path = p
-            break
-    if env_path is None:
-        return
-
-    try:
-        with open(env_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, value = line.partition("=")
-                key = key.strip()
-                value = value.strip().strip("'\"")
-                if key and value and key not in os.environ:
-                    os.environ[key] = value
-    except Exception:
-        pass
 
 
 # ── Provider auth store (webui / container paths) ──────────────────────────

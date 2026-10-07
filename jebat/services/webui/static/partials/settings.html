@@ -103,7 +103,7 @@ function selectProvider(provider) {
 
 async function loadConfig() {
   try {
-    const r = await fetch('/webui/api/status');
+    const r = await API.request('/webui/api/status');
     const data = await r.json();
     const provider = data.provider || 'unknown';
     const model = data.model || 'unknown';

@@ -8,7 +8,6 @@ Usage:
 """
 
 import argparse
-import hmac
 import logging
 import os
 import sys
@@ -26,30 +25,12 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-try:
-    from jebat.api.auth import APIKeyMiddleware
-    from jebat.api.safety import require_action_confirmation
-except ModuleNotFoundError:
-    class APIKeyMiddleware(BaseHTTPMiddleware):
-        """Compatibility middleware for pre-v8.2.1 runtime images."""
+from jebat.llm.auth import _ensure_secrets_loaded
 
-        async def dispatch(self, request: Request, call_next):
-            path = request.url.path
-            api_key_env = os.getenv("JEBAT_API_KEY", "")
-            if not api_key_env:
-                return await call_next(request)
-            if not (path.startswith("/api/") or path.startswith("/webui/api/") or path.startswith("/webui/ws/") or path.startswith("/v1/")):
-                return await call_next(request)
-            key = request.headers.get("x-api-key") or request.query_params.get("api_key")
-            auth_h = request.headers.get("authorization", "")
-            if auth_h.lower().startswith("bearer "):
-                key = auth_h[7:].strip()
-            if not key or not hmac.compare_digest(key.encode(), api_key_env.encode()):
-                return JSONResponse({"error": "unauthorized"}, status_code=401)
-            return await call_next(request)
+_ensure_secrets_loaded()
 
-    def require_action_confirmation(*_args, **_kwargs):
-        return None
+from jebat.api.auth import APIKeyMiddleware
+from jebat.api.safety import require_action_confirmation
 from jebat.services.webui.webui_server import webui_router, _mount_static, STATIC_DIR
 from jebat.monitoring.dashboard_api import DashboardAPI
 
@@ -317,7 +298,7 @@ async def system_metrics():
             "pid": os.getpid(),
         }
     except ImportError:
-        return {"cpu_percent": 0, "memory": {"total_gb": 0, "used_gb": 0, "percent": 0}, "disk": {"total_gb": 0, "used_gb": 0, "percent": 0}, "note": "psutil not installed"}
+        return JSONResponse(status_code=503, content={"error": "metrics_unavailable", "message": "System metrics require psutil on the server."})
 
 
 # ═══════════════════════════════════════════════════════════════

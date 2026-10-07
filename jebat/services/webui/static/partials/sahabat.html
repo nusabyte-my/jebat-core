@@ -81,7 +81,7 @@
   function sahabatSetStatus(message) { sahabatStatus.textContent = message; }
   function sahabatOutput(id, text) { const output = document.getElementById(id); output.textContent = text; output.hidden = false; }
   async function sahabatRequest(url, options = {}) {
-    const response = await fetch(url, options);
+    const response = await API.request(url, options);
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || data.error || 'Request failed');
     return data;

@@ -59,7 +59,7 @@ async function runScan() {
   logActivity('KERIS', 'Scan started: ' + target + ' [' + profile + ']');
 
   try {
-    const r = await fetch('/api/keris/scan', {
+    const r = await API.request('/api/keris/scan', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({target, profile})
@@ -82,7 +82,7 @@ async function runScan() {
 
 async function loadHistory() {
   try {
-    const r = await fetch('/api/keris/history');
+    const r = await API.request('/api/keris/history');
     const data = await r.json();
     const scans = (data.scans || []).slice(0, 10);
     const el = document.getElementById('scan-history');
