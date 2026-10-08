@@ -2598,6 +2598,12 @@ class Agent:
                 ghost_mode=self.ghost_mode, response_preview=final_answer[:200]
             )
 
+        # Keep the session transcript on the agent. Without this self.messages
+        # stays empty forever and session save, /history, /resume and the
+        # tool-count in _auto_memory all silently do nothing.
+        self.messages.append(AgentMessage(role="user", content=task))
+        self.messages.append(AgentMessage(role="assistant", content=final_answer))
+
         return AgentStep(
             prompt=task,
             response=CompletionResponse(text=final_answer, model=model_str, provider=cfg.kind if cfg else "",
@@ -3141,7 +3147,7 @@ def _print_categorized_help():
     cprint(f"  {C.DIM}Tip: Type {C.NEON_GREEN}/{C.RESET}{C.DIM} to see all commands{C.RESET}")
     print()
 
-def repl(registry, taskdb, skills, agent=None):
+def repl(registry, taskdb, skills, agent=None, persist_session=True):
     """Interactive REPL, preserving an existing agent's conversation when supplied."""
     global _DETAIL_MODE
     cfg = registry.get_active()
@@ -3151,6 +3157,14 @@ def repl(registry, taskdb, skills, agent=None):
 
     # Auto-mimpi check
     _auto_mimpi_check(taskdb)
+
+    # Extensions may want to run once the agent exists.
+    try:
+        from jebat_cli_new import extensions as _ext
+
+        _ext.start(agent)
+    except Exception:
+        pass
 
     # Same evidence-backed advisor as MCP; no model or delegated agent is started.
     try:
@@ -3230,7 +3244,7 @@ def repl(registry, taskdb, skills, agent=None):
                 continue
 
             if cmd in ("/exit", "/quit", "/q"):
-                if agent.messages:
+                if agent.messages and persist_session:
                     _save_session_history(agent.messages, taskdb)
                 cprint(f"\n  {C.DIM}Goodbye. 👋{C.RESET}\n")
                 break
@@ -4379,7 +4393,8 @@ def main():
                 print("No readable saved session matched; nothing resumed.", file=sys.stderr)
                 return 1
 
-        repl(registry, taskdb, skills, agent=agent)
+        repl(registry, taskdb, skills, agent=agent,
+             persist_session=not ns.no_session)
         return
 
     if args[0] in ("-h", "--help", "help"):
@@ -4519,14 +4534,15 @@ def main():
             if sys.stdin.isatty():
                 print()
                 cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
-                repl(registry, taskdb, skills, agent=agent)
+                repl(registry, taskdb, skills, agent=agent,
+             persist_session=not ns.no_session)
             return
         # No one-shot prompt: start the coding REPL.
         banner()
         cfg = registry.get_active()
         if cfg:
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
-        repl(registry, taskdb, skills)
+        repl(registry, taskdb, skills, persist_session=not ns.no_session)
 
     elif args[0] == "chat":
         from jebat_cli_new.cli_args import parse_chat_options
@@ -4594,7 +4610,7 @@ def main():
                 print(f"  {C.GREEN}Switched to:{C.RESET} {sub}")
             else:
                 print(f"  {C.DIM}Usage: jebat provider [list|use|add|remove|test] [kind]{C.RESET}")
-        repl(registry, taskdb, skills)
+        repl(registry, taskdb, skills, persist_session=not ns.no_session)
 
     elif args[0] == "doctor":
         # Health check: agentix registry/builds/budgets + doctrine drift.
@@ -4658,7 +4674,8 @@ def main():
         bottom_bar(cfg.kind if cfg else "unknown", model_str, tokens=step.tokens, tool_count=len(step.tool_actions), elapsed_s=0, cost_usd=cost)
         print()
         cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
-        repl(registry, taskdb, skills, agent=agent)
+        repl(registry, taskdb, skills, agent=agent,
+             persist_session=not ns.no_session)
 
 
 if __name__ == "__main__":

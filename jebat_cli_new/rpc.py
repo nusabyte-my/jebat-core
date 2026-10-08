@@ -45,12 +45,16 @@ def _log(text: str) -> None:
 
 
 class RPCServer:
+    # Only these are dispatchable. Built per instance so bound methods resolve.
+    _METHOD_NAMES = ("initialize", "prompt", "tool", "models", "skills", "tools")
+
     def __init__(self, ns) -> None:
         self.ns = ns
         self.registry = None
         self.taskdb = None
         self.skills = None
         self.agent = None
+        self._METHODS = {name: getattr(self, name) for name in self._METHOD_NAMES}
 
     # ── lazy singletons ─────────────────────────────────────────────────────
 
@@ -142,10 +146,10 @@ class RPCServer:
             return None  # notification
         if method == "shutdown":
             return {"stop": True}
-        fn = getattr(self, method, None) if isinstance(method, str) else None
-        if method and method.startswith("_"):
-            fn = None
-        if not callable(fn):
+        # Allowlist, not getattr: `serve` would block the loop and `handle`
+        # would recurse. Only protocol methods are dispatchable.
+        fn = self._METHODS.get(method) if isinstance(method, str) else None
+        if fn is None:
             _error(msg_id, -32601, f"unknown method: {method}")
             return None
         try:

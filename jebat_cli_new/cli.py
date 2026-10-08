@@ -223,8 +223,6 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Output mode (default: text)")
     p.add_argument("--quiet", action="store_true",
                    help="Suppress banner, spinner and setup panels")
-    p.add_argument("--no-stream", dest="no_stream", action="store_true",
-                   help="Disable token streaming")
 
     p.add_argument("--provider", help="Override provider for this run")
     p.add_argument("--model", help="Override model for this run")
@@ -345,6 +343,11 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
         filter_tools([])
     elif ns.tools:
         filter_tools(ns.tools.split(","))
+    if not ns.no_extensions:
+        from jebat_cli_new import extensions as _ext
+
+        _ext.set_tool_allowlist([] if ns.no_tools else
+                                (ns.tools.split(",") if ns.tools else None))
 
     ns.keep_skills = filter_skills(
         ns.skill_patterns.split(",") if ns.skill_patterns else None, ns.no_skills

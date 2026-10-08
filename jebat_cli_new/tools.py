@@ -435,7 +435,10 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
         from jebat_cli_new import extensions as ext
 
         if ext.has_tool(name):
-            return ext.run_tool(name, arguments)
+            # Extension tools get the same before/after wrapping as built-ins,
+            # otherwise a hook silently skips them.
+            ext_args = ext.before_tool(name, arguments)
+            return ext.after_tool(name, ext_args, ext.run_tool(name, ext_args))
         from jebat_cli_new.tool_bridge import execute_shared_tool
 
         return execute_shared_tool(name, arguments, yolo=yolo)

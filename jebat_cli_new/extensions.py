@@ -40,6 +40,8 @@ _AFTER: List[Callable] = []
 _START: List[Callable] = []
 LOADED: List[str] = []
 ERRORS: List[str] = []
+# When set, only these tool names survive (from --tools). None = no filter.
+_TOOL_ALLOWLIST: Optional[set] = None
 
 
 class ExtensionAPI:
@@ -54,6 +56,8 @@ class ExtensionAPI:
         COMMANDS[name] = (handler, help or f"extension: {self.source}")
 
     def tool(self, name: str, handler: Callable) -> None:
+        if _TOOL_ALLOWLIST is not None and name not in _TOOL_ALLOWLIST:
+            return
         TOOLS[name] = handler
 
     def before_tool(self, fn: Callable) -> None:
@@ -134,7 +138,19 @@ def run_command(name: str, arg: str, ctx: Any) -> Optional[str]:
         return f"extension {name} failed: {type(exc).__name__}: {exc}"
 
 
+def set_tool_allowlist(names) -> None:
+    """Apply --tools to extension tools too, not just built-ins."""
+    global _TOOL_ALLOWLIST
+    _TOOL_ALLOWLIST = set(names) if names is not None else None
+    if _TOOL_ALLOWLIST is not None:
+        for name in list(TOOLS):
+            if name not in _TOOL_ALLOWLIST:
+                TOOLS.pop(name, None)
+
+
 def has_tool(name: str) -> bool:
+    if _TOOL_ALLOWLIST is not None and name not in _TOOL_ALLOWLIST:
+        return False
     return name in TOOLS
 
 
