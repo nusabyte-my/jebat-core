@@ -127,18 +127,17 @@ PANEL_THEMES = {
 }
 
 
-def box(title: str, text: str, width: int = 72, theme: str = "default"):
-    """Box with colored border and optional shadow."""
-    border_color, dim_color = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
+def box(title, text, width=72, theme="default"):
+    """Box with colored border. Every line is exactly `width` columns."""
+    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
     w = width
-    top = f"{border_color}╭── {C.BOLD}{title}{C.RESET}{border_color} " + "─" * max(1, w - len(_clean(title)) - 6) + f"╮{C.RESET}"
-    bottom = f"{border_color}╰" + "─" * (w - 1) + f"╯{C.RESET}"
-    print(top)
+    inner = w - 2
+    label = f"── {_clean(title)} "
+    print(f"{border_color}╭{label}" + "─" * max(0, inner - len(label)) + f"╮{C.RESET}")
     for line in text.split("\n"):
-        clean_line = _clean(line)
-        pad = max(0, w - 2 - len(clean_line))
+        pad = max(0, inner - 1 - len(_clean(line)))
         print(f"{border_color}│{C.RESET} {line}{' ' * pad}{border_color}│{C.RESET}")
-    print(bottom)
+    print(f"{border_color}╰" + "─" * inner + f"╯{C.RESET}")
 
 
 def panel(title: str, text: str, width: int = 72, theme: str = "default"):
@@ -146,39 +145,35 @@ def panel(title: str, text: str, width: int = 72, theme: str = "default"):
     box(title, text, width, theme)
 
 
-def _double_box(title: str, text: str, width: int = 72, theme: str = "default"):
-    """Double-bordered box for emphasis."""
-    border_color, dim_color = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
-    w = width
-    # Top double border
-    print(f"{border_color}╔{'═' * (w - 2)}╗{C.RESET}")
-    inner = f"  {C.BOLD}{title}{C.RESET}"
-    pad_title = max(0, w - 2 - len(_clean(inner)))
-    print(f"{border_color}║{C.RESET} {inner}{' ' * pad_title} {border_color}║{C.RESET}")
-    print(f"{border_color}╠{'═' * (w - 2)}╣{C.RESET}")
-    for line in text.split("\n"):
-        clean_line = _clean(line)
-        pad = max(0, w - 2 - len(clean_line))
-        print(f"{border_color}║{C.RESET} {line}{' ' * pad} {border_color}║{C.RESET}")
-    print(f"{border_color}╚{'═' * (w - 2)}╝{C.RESET}")
-
-
-def _info_panel(title: str, items: List[Tuple[str, Any]], width: int = 72, theme: str = "info"):
-    """Panel with labeled key-value items."""
+def _double_box(title, text, width=72, theme="default"):
+    """Double-bordered box. Every line is exactly `width` columns."""
     border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
     w = width
-    print(f"{border_color}╭── {C.BOLD}{title}{C.RESET}{border_color} " + "─" * max(1, w - len(_clean(title)) - 6) + f"╮{C.RESET}")
-    for label, value in items:
-        clean_label = f"{C.CYAN}{label}{C.RESET}"
-        clean_value = str(value)
-        pad_label = 14 - len(label)
-        if pad_label < 1:
-            pad_label = 1
-        line = f"  {clean_label}{' ' * pad_label}{clean_value}"
-        clean_len = len(label) + pad_label + len(clean_value) + 2
-        pad = max(0, w - clean_len - 2)
-        print(f"{border_color}│{C.RESET} {line}{' ' * pad}{border_color}│{C.RESET}")
-    print(f"{border_color}╰" + "─" * (w - 1) + f"╯{C.RESET}")
+    inner = w - 2
+    print(f"{border_color}╔{'═' * inner}╗{C.RESET}")
+    label = f"  {_clean(title)}"
+    print(f"{border_color}║{C.RESET}{label}{' ' * max(0, inner - len(label))}{border_color}║{C.RESET}")
+    print(f"{border_color}╠{'═' * inner}╣{C.RESET}")
+    for line in text.split("\n"):
+        pad = max(0, inner - 1 - len(_clean(line)))
+        print(f"{border_color}║{C.RESET} {line}{' ' * pad}{border_color}║{C.RESET}")
+    print(f"{border_color}╚{'═' * inner}╝{C.RESET}")
+
+
+def _info_panel(title, items, width=72, theme="info"):
+    """Panel of key/value rows. Every line is exactly `width` columns."""
+    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
+    w = width
+    inner = w - 2
+    label = f"── {_clean(title)} "
+    print(f"{border_color}╭{label}" + "─" * max(0, inner - len(label)) + f"╮{C.RESET}")
+    for item_label, value in items:
+        pad_label = max(1, 14 - len(str(item_label)))
+        plain = f"  {item_label}{' ' * pad_label}{value}"
+        pad = max(0, inner - len(plain))
+        line = f"  {C.CYAN}{item_label}{C.RESET}{' ' * pad_label}{value}"
+        print(f"{border_color}│{C.RESET}{line}{' ' * pad}{border_color}│{C.RESET}")
+    print(f"{border_color}╰" + "─" * inner + f"╯{C.RESET}")
 
 
 # ─── Formatting Helpers ──────────────────────────────────────────

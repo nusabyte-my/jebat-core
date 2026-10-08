@@ -354,9 +354,23 @@ class C:
     TEXT_MUTED = "\033[38;5;240m"
 
 
+# Honour NO_COLOR and non-tty stdout; without this, piping the CLI emits raw
+# escape codes instead of readable text.
+_COLOR = (
+    os.environ.get("NO_COLOR") is None
+    and os.environ.get("TERM") != "dumb"
+    and hasattr(sys.stdout, "isatty")
+    and sys.stdout.isatty()
+)
+
+_ANSI_RE = re.compile(r"\[[0-9;]*m")
+
+
 def cprint(*args, **kwargs):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if not _COLOR:
+        args = tuple(_ANSI_RE.sub("", a) if isinstance(a, str) else a for a in args)
     print(*args, **kwargs)
 
 
@@ -396,10 +410,51 @@ def _gradient(text, c1, c2):
 
 JEBAT_VERSION = __version__
 
-def banner():
-    """JEBAT banner — clean and clear."""
+# JEBAT wordmark — ANSI Shadow. Six rows, 38 cols.
+_WORDMARK = (
+    "██╗ ███████╗██████╗  █████╗ ████████╗",
+    "██║ ██╔════╝██╔══██╗██╔══██╗╚══██╔══╝",
+    "██║ █████╗  ██████╔╝███████║   ██║   ",
+    "██║ ██╔══╝  ██╔══██╗██╔══██║   ██║   ",
+    "██║ ███████╗██████╔╝██║  ██║   ██║   ",
+    "╚═╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝   ╚═╝   ",
+)
+
+# Stealth-Dark Tactical: cyan at the top fading to purple at the base.
+_MARK_TOP = (0, 255, 255)
+_MARK_BOTTOM = (175, 135, 255)
+
+
+def _lerp256(c1, c2, t):
+    """Interpolate two RGB tuples into a 256-colour escape."""
+    r = int(c1[0] + (c2[0] - c1[0]) * t)
+    g = int(c1[1] + (c2[1] - c1[1]) * t)
+    b = int(c1[2] + (c2[2] - c1[2]) * t)
+    return 16 + int(r / 255 * 5) * 36 + int(g / 255 * 5) * 6 + int(b / 255 * 5)
+
+
+def banner(subtitle=None):
+    """JEBAT banner — wordmark, tagline and live endpoint line.
+
+    Falls back to plain text when colour is off, so piped output stays clean.
+    """
     print()
-    cprint(f"  {C.NEON_CYAN}{C.BOLD}JEBAT{C.RESET}  {C.NEON_PURPLE}⚔️{C.RESET}  {C.DIM}unified coding agent{C.RESET}  {C.DIM}v{JEBAT_VERSION}{C.RESET}")
+    if not _COLOR:
+        for row in _WORDMARK:
+            print("  " + row)
+    else:
+        last = len(_WORDMARK) - 1
+        for i, row in enumerate(_WORDMARK):
+            col = _lerp256(_MARK_TOP, _MARK_BOTTOM, i / last)
+            print(f"  [38;5;{col}m[1m{row}[0m")
+
+    rule = f"{C.BORDER}┄┄┄{C.RESET} " if _COLOR else "--- "
+    tail = f"{C.NEON_PURPLE}⚔{C.RESET}  " if _COLOR else ""
+    dim, reset = (C.DIM, C.RESET) if _COLOR else ("", "")
+    print()
+    print(f"  {rule}{tail}{dim}unified coding agent{reset}  {dim}v{JEBAT_VERSION}{reset}")
+    if subtitle:
+        print(f"  {dim}{subtitle}{reset}")
     print()
 
 
@@ -428,18 +483,43 @@ PANEL_THEMES = {
 }
 
 
+def _wrap(text: str, width: int) -> List[str]:
+    """Hard-wrap to `width` columns, breaking long tokens rather than overflowing."""
+    out: List[str] = []
+    for raw in text.split("\n"):
+        if len(_clean(raw)) <= width:
+            out.append(raw)
+            continue
+        line = ""
+        for word in raw.split(" "):
+            while len(word) > width:
+                if line:
+                    out.append(line)
+                    line = ""
+                out.append(word[:width])
+                word = word[width:]
+            if not line:
+                line = word
+            elif len(line) + 1 + len(word) <= width:
+                line += " " + word
+            else:
+                out.append(line)
+                line = word
+        out.append(line)
+    return out
+
+
 def box(title, text, width=72, theme="default"):
-    """Box with colored border and optional shadow."""
-    border_color, dim_color = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
+    """Box with colored border. Every line is exactly `width` columns."""
+    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
     w = width
-    top = f"{border_color}╭── {C.BOLD}{title}{C.RESET}{border_color} " + "─" * max(1, w - len(_clean(title)) - 6) + f"╮{C.RESET}"
-    bottom = f"{border_color}╰" + "─" * (w - 1) + f"╯{C.RESET}"
-    print(top)
-    for line in text.split("\n"):
-        clean_line = _clean(line)
-        pad = max(0, w - 2 - len(clean_line))
-        print(f"{border_color}│{C.RESET} {line}{' ' * pad}{border_color}│{C.RESET}")
-    print(bottom)
+    inner = w - 2
+    label = f"── {_clean(title)} "
+    cprint(f"{border_color}╭{label}" + "─" * max(0, inner - len(label)) + f"╮{C.RESET}")
+    for line in _wrap(text, inner - 1):
+        pad = max(0, inner - 1 - len(_clean(line)))
+        cprint(f"{border_color}│{C.RESET} {line}{' ' * pad}{border_color}│{C.RESET}")
+    cprint(f"{border_color}╰" + "─" * inner + f"╯{C.RESET}")
 
 
 def panel(title, text, width=72, theme="default"):
@@ -448,38 +528,39 @@ def panel(title, text, width=72, theme="default"):
 
 
 def _double_box(title, text, width=72, theme="default"):
-    """Double-bordered box for emphasis."""
-    border_color, dim_color = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
+    """Double-bordered box. Every line is exactly `width` columns."""
+    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
     w = width
-    # Top double border
-    print(f"{border_color}╔{'═' * (w - 2)}╗{C.RESET}")
-    inner = f"  {C.BOLD}{title}{C.RESET}"
-    pad_title = max(0, w - 2 - len(_clean(inner)))
-    print(f"{border_color}║{C.RESET} {inner}{' ' * pad_title} {border_color}║{C.RESET}")
-    print(f"{border_color}╠{'═' * (w - 2)}╣{C.RESET}")
+    inner = w - 2
+    cprint(f"{border_color}╔{'═' * inner}╗{C.RESET}")
+    label = f"  {_clean(title)}"
+    cprint(f"{border_color}║{C.RESET}{label}{' ' * max(0, inner - len(label))}{border_color}║{C.RESET}")
+    cprint(f"{border_color}╠{'═' * inner}╣{C.RESET}")
     for line in text.split("\n"):
-        clean_line = _clean(line)
-        pad = max(0, w - 2 - len(clean_line))
-        print(f"{border_color}║{C.RESET} {line}{' ' * pad} {border_color}║{C.RESET}")
-    print(f"{border_color}╚{'═' * (w - 2)}╝{C.RESET}")
+        pad = max(0, inner - 1 - len(_clean(line)))
+        cprint(f"{border_color}║{C.RESET} {line}{' ' * pad}{border_color}║{C.RESET}")
+    cprint(f"{border_color}╚{'═' * inner}╝{C.RESET}")
 
 
 def _info_panel(title, items, width=72, theme="info"):
-    """Panel with labeled key-value items."""
+    """Panel of key/value rows. Every line is exactly `width` columns."""
     border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
-    w = width
-    print(f"{border_color}╭── {C.BOLD}{title}{C.RESET}{border_color} " + "─" * max(1, w - len(_clean(title)) - 6) + f"╮{C.RESET}")
-    for label, value in items:
-        clean_label = f"{C.CYAN}{label}{C.RESET}"
-        clean_value = str(value)
-        pad_label = 14 - len(label)
-        if pad_label < 1:
-            pad_label = 1
-        line = f"  {clean_label}{' ' * pad_label}{clean_value}"
-        clean_len = len(label) + pad_label + len(clean_value) + 2
-        pad = max(0, w - clean_len - 2)
-        print(f"{border_color}│{C.RESET} {line}{' ' * pad}{border_color}│{C.RESET}")
-    print(f"{border_color}╰" + "─" * (w - 1) + f"╯{C.RESET}")
+    inner = width - 2
+    label = f"── {_clean(title)} "
+    cprint(f"{border_color}╭{label}" + "─" * max(0, inner - len(label)) + f"╮{C.RESET}")
+    for item_label, value in items:
+        pad_label = max(1, 14 - len(str(item_label)))
+        plain = f"  {item_label}{' ' * pad_label}{value}"
+        for i, chunk in enumerate(_wrap(plain, inner)):
+            pad = max(0, inner - len(chunk))
+            if i == 0:
+                body = f"  {C.CYAN}{item_label}{C.RESET}{' ' * pad_label}{value}"
+                body = body if len(chunk) == len(plain) else body[:0] + chunk
+                pad = max(0, inner - len(plain))
+            else:
+                body = chunk
+            cprint(f"{border_color}│{C.RESET}{body}{' ' * pad}{border_color}│{C.RESET}")
+    cprint(f"{border_color}╰" + "─" * inner + f"╯{C.RESET}")
 
 
 # ═══════════════════════════════════════════════════════════════════
