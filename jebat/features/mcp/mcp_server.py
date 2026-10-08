@@ -498,9 +498,14 @@ class MCPServer:
             "experimental": self.capabilities.experimental,
         }
 
-        # Queue advisorReady notification to be sent after initialize response
+        # Queue the advisorReady notification off the handshake critical path.
+        # Awaiting it here kept `initialize` from ever returning when the client
+        # spawned us with a piped stdin (the lazy automimpi/numpy import chain
+        # blocks under an anonymous pipe), which timed out every stdio MCP client
+        # (OMP/OpenCode 30s). The notification is queued and flushed with the
+        # next message.
         try:
-            await self._send_advisor_notification()
+            asyncio.get_running_loop().create_task(self._send_advisor_notification())
         except Exception as e:
             logger.warning(f"Failed to prepare advisor notification: {e}")
 
