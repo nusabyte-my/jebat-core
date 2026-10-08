@@ -343,6 +343,14 @@ from jebat_cli_new.theme import (  # noqa: E402
 from jebat_cli_new.theme import _clean  # noqa: E402
 
 JEBAT_VERSION = __version__
+
+# One-shot runs (-p / --mode json / piped) must be scriptable: stdout carries
+# only the answer, so every banner, panel, spinner and status bar is chrome.
+STDOUT_IS_PAYLOAD = False
+# Chrome is only ever shown to a human at a terminal. Keyed on stdout, the
+# standard rule (git, ripgrep): a redirected stdout means scripted use.
+CHROME_IS_TTY = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+SPINNER_IS_TTY = CHROME_IS_TTY and hasattr(sys.stderr, "isatty") and sys.stderr.isatty()
 _BANNER_STYLE = "auto"
 
 def _banner_for(cfg=None, registry=None):
@@ -379,6 +387,8 @@ def format_cost(usd):
 
 def bottom_bar(provider, model, tokens=0, iter_count=0, tool_count=0, elapsed_s=0.0, cost_usd=0.0):
     """Upgraded status bar with neon accents and visual hierarchy."""
+    if STDOUT_IS_PAYLOAD:
+        return
     ctx_max = 200000
     pct = min(100, int(tokens / ctx_max * 100)) if tokens else 0
     filled = pct // 5
@@ -462,6 +472,8 @@ class ThinkingSpinner:
         self._start_time = 0
 
     def start(self, msg="Thinking"):
+        if not SPINNER_IS_TTY:
+            return
         self._stop.clear()
         self._msg = msg
         self._start_time = time.time()
@@ -472,8 +484,8 @@ class ThinkingSpinner:
         self._stop.set()
         if self._thread:
             self._thread.join(timeout=1.0)
-        sys.stdout.write("\r" + " " * 80 + "\r")
-        sys.stdout.flush()
+        sys.stderr.write("\r" + " " * 80 + "\r")
+        sys.stderr.flush()
 
     def _run(self):
         i = 0
@@ -497,8 +509,8 @@ class ThinkingSpinner:
             max_quote = 40
             quote_display = quote[:max_quote] + "..." if len(quote) > max_quote else quote
             text = f"\r  {C.CYAN}⏳{C.RESET} {self._msg}... {C.DIM}[{bar}] {pct}% {time_str}{C.RESET}  {C.DIM}{quote_display}{C.RESET}"
-            sys.stdout.write(text)
-            sys.stdout.flush()
+            sys.stderr.write(text)
+            sys.stderr.flush()
             i += 1
             time.sleep(0.3)
 
@@ -510,6 +522,10 @@ class ThinkingSpinner:
 def _print_answer(text):
     """Print answer with markdown-style formatting, no box."""
     if not text:
+        return
+    if STDOUT_IS_PAYLOAD:
+        # Piped one-shot: the answer is the payload, emit it verbatim.
+        print(text)
         return
     lines = text.split("\n")
     in_code_block = False
@@ -4134,12 +4150,16 @@ def _run_one_shot(ns, registry, taskdb, skills, prompt, cfg):
 
     from jebat_cli_new.cli import emit_json
 
+    # stdout is the payload for the whole run: banner, panel, spinner and
+    # status bar are chrome and must never land in a pipe.
+    global STDOUT_IS_PAYLOAD
+    STDOUT_IS_PAYLOAD = True
     agent = Agent(
         registry, taskdb, skills,
         yolo=ns.yolo, verbose=ns.verbose,
         plan_first=ns.plan, auto_commit=ns.auto_commit, ghost_mode=ns.ghost,
     )
-    if getattr(ns, "quiet", False):
+    if getattr(ns, "quiet", False) or not SPINNER_IS_TTY:
         agent.spinner = _NullSpinner()
     if ns.thinking:
         agent.thinking_level = ns.thinking
@@ -4148,7 +4168,7 @@ def _run_one_shot(ns, registry, taskdb, skills, prompt, cfg):
     if ns.role_models:
         agent.role_models = ns.role_models
 
-    if ns.mode != "json" and not getattr(ns, "quiet", False):
+    if ns.mode != "json" and not getattr(ns, "quiet", False) and CHROME_IS_TTY:
         cfg_kind = cfg.kind if cfg else "none"
         cfg_model = ns.model or (cfg.model if cfg else "none")
         show_setup(cfg_kind, cfg_model, cfg.api_base if cfg else "", "Running")
@@ -4195,7 +4215,8 @@ def _run_one_shot(ns, registry, taskdb, skills, prompt, cfg):
         })
         return 0
 
-    cprint()
+    if not STDOUT_IS_PAYLOAD:
+        cprint()
     _print_answer(step.response.text)
     bottom_bar(provider_str, model_str, tokens=step.tokens,
                tool_count=len(step.tool_actions), elapsed_s=elapsed,
@@ -4233,7 +4254,7 @@ def main():
         skills = SkillManager()
         ns.provider, ns.model = cli_mod.ensure_provider(registry, ns.provider, ns.model)
         cfg = registry.configs.get(ns.provider) if ns.provider else registry.get_active()
-        if not getattr(ns, "quiet", False):
+        if not getattr(ns, "quiet", False) and CHROME_IS_TTY:
             _banner_for(cfg)
         return _run_one_shot(ns, registry, taskdb, skills, " ".join(prompt_words), cfg)
     if not prompt_words and ns.command is None and ns.mode == "json":
@@ -4399,10 +4420,13 @@ def main():
                 plan_first=code_options.plan,
             )
 
+            global STDOUT_IS_PAYLOAD
+            STDOUT_IS_PAYLOAD = True
             cfg = registry.get_active()
-            _banner_for(cfg)
-            if cfg:
-                show_setup(cfg.kind, cfg.model, cfg.api_base, "Running")
+            if CHROME_IS_TTY:
+                _banner_for(cfg)
+                if cfg:
+                    show_setup(cfg.kind, cfg.model, cfg.api_base, "Running")
 
             start_time = time.time()
             step = agent.step(
@@ -4413,15 +4437,18 @@ def main():
             elapsed = time.time() - start_time
 
             # Answer — clean markdown style
-            cprint()
+            if not STDOUT_IS_PAYLOAD:
+                cprint()
             _print_answer(step.response.text)
 
             model_str = cfg.model if cfg else "unknown"
             cost = estimate_cost(model_str, step.tokens)
             bottom_bar(cfg.kind if cfg else "unknown", model_str, tokens=step.tokens, tool_count=len(step.tool_actions), elapsed_s=elapsed, cost_usd=cost)
 
-            # Drop into REPL after one-shot only if running in an interactive terminal
-            if sys.stdin.isatty():
+            # Drop into REPL after one-shot only if BOTH ends are terminals.
+            # stdout being redirected means the user wanted the answer, not a session.
+            if CHROME_IS_TTY and sys.stdin.isatty():
+                STDOUT_IS_PAYLOAD = False
                 print()
                 cprint(f"  {C.DIM}Continuing in REPL. Type /exit to quit.{C.RESET}")
                 repl(registry, taskdb, skills, agent=agent,
@@ -4445,13 +4472,20 @@ def main():
         prompt = " ".join(chat_options.prompt_parts)
         agent = Agent(registry, taskdb, skills)
 
+        STDOUT_IS_PAYLOAD = bool(prompt) and not CHROME_IS_TTY
         cfg = registry.get_active()
-        _banner_for(cfg)
-        if cfg:
-            show_setup(cfg.kind, cfg.model, cfg.api_base, "Chat")
+        if CHROME_IS_TTY:
+            _banner_for(cfg)
+            if cfg:
+                show_setup(cfg.kind, cfg.model, cfg.api_base, "Chat")
 
         if prompt:
-            cprint(f"\n  {agent.chat(prompt, provider=chat_options.provider, model=chat_options.model)}\n")
+            answer = agent.chat(prompt, provider=chat_options.provider,
+                                model=chat_options.model)
+            if STDOUT_IS_PAYLOAD:
+                print(answer)
+            else:
+                cprint(f"\n  {answer}\n")
             return
 
         # Interactive chat

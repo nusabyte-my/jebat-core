@@ -508,8 +508,8 @@ class ThinkingSpinner:
                 pass
             self._live = None
         else:
-            sys.stdout.write("\r" + " " * 80 + "\r")
-            sys.stdout.flush()
+            sys.stderr.write("\r" + " " * 80 + "\r")
+            sys.stderr.flush()
 
     def _frame_text(self) -> str:
         elapsed = time.time() - self._start_time
