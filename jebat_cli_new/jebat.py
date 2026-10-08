@@ -322,245 +322,47 @@ def _format_model_row(idx, model, current_model=None):
 
 # ═══════════════════════════════════════════════════════════════════
 # ANSI COLORS
-# ═══════════════════════════════════════════════════════════════════
-
-class C:
-    RESET    = "\033[0m"
-    BOLD     = "\033[1m"
-    DIM      = "\033[2m"
-    ITALIC   = "\033[3m"
-    UNDERL   = "\033[4m"
-    CYAN     = "\033[36m"
-    MAGENTA  = "\033[35m"
-    GREEN    = "\033[32m"
-    YELLOW   = "\033[33m"
-    RED      = "\033[31m"
-    GRAY     = "\033[90m"
-    WHITE    = "\033[97m"
-    BLUE     = "\033[34m"
-    BG_DARK  = "\033[48;5;235m"
-    BG_CYAN  = "\033[48;5;30m"
-    # Neon accents (256-color)
-    NEON_CYAN  = "\033[38;5;51m"
-    NEON_PURPLE = "\033[38;5;141m"
-    NEON_AMBER = "\033[38;5;214m"
-    NEON_GREEN = "\033[38;5;46m"
-    NEON_PINK  = "\033[38;5;205m"
-    # Surface colors
-    SURFACE    = "\033[48;5;236m"
-    SURFACE2   = "\033[48;5;234m"
-    BORDER     = "\033[38;5;238m"
-    TEXT_DIM   = "\033[38;5;245m"
-    TEXT_MUTED = "\033[38;5;240m"
-
-
-# Honour NO_COLOR and non-tty stdout; without this, piping the CLI emits raw
-# escape codes instead of readable text.
-_COLOR = (
-    os.environ.get("NO_COLOR") is None
-    and os.environ.get("TERM") != "dumb"
-    and hasattr(sys.stdout, "isatty")
-    and sys.stdout.isatty()
+# Visual primitives live in theme.py — one palette, one set of boxes.
+# They used to be duplicated here, which is how the borders drifted out of
+# alignment and how NO_COLOR got ignored in one copy but not the other.
+from jebat_cli_new.theme import (  # noqa: E402
+    C,
+    PANEL_THEMES,
+    USE_COLOR as _COLOR,
+    _double_box,
+    _gradient,
+    _info_panel,
+    _pad,
+    _wrap,
+    banner,
+    box,
+    cprint,
+    panel,
+    show_setup,
 )
-
-_ANSI_RE = re.compile(r"\[[0-9;]*m")
-
-
-def cprint(*args, **kwargs):
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    if not _COLOR:
-        args = tuple(_ANSI_RE.sub("", a) if isinstance(a, str) else a for a in args)
-    print(*args, **kwargs)
-
-
-def _clean(s: str) -> str:
-    """Strip ANSI escape codes for width calculation."""
-    return re.sub(r'\033\[[0-9;]*m', '', s)
-
-
-def _pad(s: str, width: int) -> str:
-    """Pad string to width, accounting for ANSI codes."""
-    clean_len = len(_clean(s))
-    return s + " " * max(0, width - clean_len)
-
-
-# ═══════════════════════════════════════════════════════════════════
-# GRADIENT + BANNER
-# ═══════════════════════════════════════════════════════════════════
-
-def _gradient(text, c1, c2):
-    """Apply 256-color gradient across text."""
-    def _to256(r, g, b):
-        return 16 + int(r / 255 * 5) * 36 + int(g / 255 * 5) * 6 + int(b / 255 * 5)
-    out = ""
-    n = max(1, len(text) - 1)
-    for i, ch in enumerate(text):
-        if ch == " ":
-            out += ch
-            continue
-        t = i / n
-        r = int(c1[0] + (c2[0] - c1[0]) * t)
-        g = int(c1[1] + (c2[1] - c1[1]) * t)
-        b = int(c1[2] + (c2[2] - c1[2]) * t)
-        out += f"\033[38;5;{_to256(r, g, b)}m{ch}"
-    out += "\033[0m"
-    return out
-
+from jebat_cli_new.theme import _clean  # noqa: E402
 
 JEBAT_VERSION = __version__
+_BANNER_STYLE = "auto"
 
-# JEBAT wordmark — ANSI Shadow. Six rows, 38 cols.
-_WORDMARK = (
-    "██╗ ███████╗██████╗  █████╗ ████████╗",
-    "██║ ██╔════╝██╔══██╗██╔══██╗╚══██╔══╝",
-    "██║ █████╗  ██████╔╝███████║   ██║   ",
-    "██║ ██╔══╝  ██╔══██╗██╔══██║   ██║   ",
-    "██║ ███████╗██████╔╝██║  ██║   ██║   ",
-    "╚═╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝   ╚═╝   ",
-)
-
-# Stealth-Dark Tactical: cyan at the top fading to purple at the base.
-_MARK_TOP = (0, 255, 255)
-_MARK_BOTTOM = (175, 135, 255)
-
-
-def _lerp256(c1, c2, t):
-    """Interpolate two RGB tuples into a 256-colour escape."""
-    r = int(c1[0] + (c2[0] - c1[0]) * t)
-    g = int(c1[1] + (c2[1] - c1[1]) * t)
-    b = int(c1[2] + (c2[2] - c1[2]) * t)
-    return 16 + int(r / 255 * 5) * 36 + int(g / 255 * 5) * 6 + int(b / 255 * 5)
+def _banner_for(cfg=None, registry=None):
+    """Banner with the live provider/model line, honouring --banner."""
+    style = globals().get("_BANNER_STYLE", "auto")
+    if style == "none":
+        return
+    subtitle = None
+    try:
+        if cfg is None and registry is not None:
+            cfg = registry.get_active()
+        if cfg is not None:
+            host = getattr(cfg, "api_base", "") or ""
+            host = host.split("//")[-1].split("/")[0]
+            subtitle = f"{cfg.model}" + (f" · {host}" if host else "")
+    except Exception:
+        subtitle = None
+    banner(subtitle=subtitle, version=JEBAT_VERSION, style=style)
 
 
-def banner(subtitle=None):
-    """JEBAT banner — wordmark, tagline and live endpoint line.
-
-    Falls back to plain text when colour is off, so piped output stays clean.
-    """
-    print()
-    if not _COLOR:
-        for row in _WORDMARK:
-            print("  " + row)
-    else:
-        last = len(_WORDMARK) - 1
-        for i, row in enumerate(_WORDMARK):
-            col = _lerp256(_MARK_TOP, _MARK_BOTTOM, i / last)
-            print(f"  [38;5;{col}m[1m{row}[0m")
-
-    rule = f"{C.BORDER}┄┄┄{C.RESET} " if _COLOR else "--- "
-    tail = f"{C.NEON_PURPLE}⚔{C.RESET}  " if _COLOR else ""
-    dim, reset = (C.DIM, C.RESET) if _COLOR else ("", "")
-    print()
-    print(f"  {rule}{tail}{dim}unified coding agent{reset}  {dim}v{JEBAT_VERSION}{reset}")
-    if subtitle:
-        print(f"  {dim}{subtitle}{reset}")
-    print()
-
-
-def show_setup(provider_name, model, endpoint, status="Ready"):
-    """Show setup panel with provider info."""
-    _double_box("Setup", f"Provider  {provider_name}\nModel     {model}\nEndpoint  {endpoint}\n● {status} — type /help to begin")
-
-
-def show_setup(provider_name, model, endpoint, status="Ready"):
-    """Show setup panel with provider info."""
-    _double_box("Setup", f"Provider  {provider_name}\nModel     {model}\nEndpoint  {endpoint}\n● {status} — type /help to begin")
-
-
-# ═══════════════════════════════════════════════════════════════════
-# PANELS (upgraded with shadows, color themes, and types)
-# ═══════════════════════════════════════════════════════════════════
-
-PANEL_THEMES = {
-    "default": (C.CYAN, C.DIM),        # cyan border
-    "success": (C.GREEN, C.DIM),        # green border
-    "warning": (C.YELLOW, C.DIM),       # yellow border
-    "error":   (C.RED, C.DIM),          # red border
-    "info":    (C.NEON_CYAN, C.DIM),    # neon cyan
-    "special": (C.NEON_PURPLE, C.DIM),  # purple
-    "accent":  (C.NEON_AMBER, C.DIM),   # amber
-}
-
-
-def _wrap(text: str, width: int) -> List[str]:
-    """Hard-wrap to `width` columns, breaking long tokens rather than overflowing."""
-    out: List[str] = []
-    for raw in text.split("\n"):
-        if len(_clean(raw)) <= width:
-            out.append(raw)
-            continue
-        line = ""
-        for word in raw.split(" "):
-            while len(word) > width:
-                if line:
-                    out.append(line)
-                    line = ""
-                out.append(word[:width])
-                word = word[width:]
-            if not line:
-                line = word
-            elif len(line) + 1 + len(word) <= width:
-                line += " " + word
-            else:
-                out.append(line)
-                line = word
-        out.append(line)
-    return out
-
-
-def box(title, text, width=72, theme="default"):
-    """Box with colored border. Every line is exactly `width` columns."""
-    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
-    w = width
-    inner = w - 2
-    label = f"── {_clean(title)} "
-    cprint(f"{border_color}╭{label}" + "─" * max(0, inner - len(label)) + f"╮{C.RESET}")
-    for line in _wrap(text, inner - 1):
-        pad = max(0, inner - 1 - len(_clean(line)))
-        cprint(f"{border_color}│{C.RESET} {line}{' ' * pad}{border_color}│{C.RESET}")
-    cprint(f"{border_color}╰" + "─" * inner + f"╯{C.RESET}")
-
-
-def panel(title, text, width=72, theme="default"):
-    """Alias for box with title."""
-    box(title, text, width, theme)
-
-
-def _double_box(title, text, width=72, theme="default"):
-    """Double-bordered box. Every line is exactly `width` columns."""
-    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
-    w = width
-    inner = w - 2
-    cprint(f"{border_color}╔{'═' * inner}╗{C.RESET}")
-    label = f"  {_clean(title)}"
-    cprint(f"{border_color}║{C.RESET}{label}{' ' * max(0, inner - len(label))}{border_color}║{C.RESET}")
-    cprint(f"{border_color}╠{'═' * inner}╣{C.RESET}")
-    for line in text.split("\n"):
-        pad = max(0, inner - 1 - len(_clean(line)))
-        cprint(f"{border_color}║{C.RESET} {line}{' ' * pad}{border_color}║{C.RESET}")
-    cprint(f"{border_color}╚{'═' * inner}╝{C.RESET}")
-
-
-def _info_panel(title, items, width=72, theme="info"):
-    """Panel of key/value rows. Every line is exactly `width` columns."""
-    border_color, _ = PANEL_THEMES.get(theme, PANEL_THEMES["default"])
-    inner = width - 2
-    label = f"── {_clean(title)} "
-    cprint(f"{border_color}╭{label}" + "─" * max(0, inner - len(label)) + f"╮{C.RESET}")
-    for item_label, value in items:
-        pad_label = max(1, 14 - len(str(item_label)))
-        plain = f"  {item_label}{' ' * pad_label}{value}"
-        for i, chunk in enumerate(_wrap(plain, inner)):
-            pad = max(0, inner - len(chunk))
-            if i == 0:
-                body = f"  {C.CYAN}{item_label}{C.RESET}{' ' * pad_label}{value}"
-                body = body if len(chunk) == len(plain) else body[:0] + chunk
-                pad = max(0, inner - len(plain))
-            else:
-                body = chunk
-            cprint(f"{border_color}│{C.RESET}{body}{' ' * pad}{border_color}│{C.RESET}")
-    cprint(f"{border_color}╰" + "─" * inner + f"╯{C.RESET}")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -3883,7 +3685,7 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
                 cprint(f"  {C.GREEN}Exported:{C.RESET} {out}")
 
             elif cmd == "/banner":
-                banner()
+                _banner_for(registry=registry)
 
             elif cmd == "/version":
                 cprint(f"  JEBAT v{VERSION}")
@@ -4409,6 +4211,13 @@ def main():
     if ns.handled:
         return 0
 
+    # Banner style is process-wide; quiet/json/rpc never show art.
+    global _BANNER_STYLE
+    if getattr(ns, "quiet", False):
+        _BANNER_STYLE = "none"
+    else:
+        _BANNER_STYLE = getattr(ns, "banner", "auto")
+
     # RPC modes own stdio: stdout is the protocol channel.
     if ns.mode in ("rpc", "rpc-ui"):
         from jebat_cli_new.rpc import run_rpc
@@ -4425,7 +4234,7 @@ def main():
         ns.provider, ns.model = cli_mod.ensure_provider(registry, ns.provider, ns.model)
         cfg = registry.configs.get(ns.provider) if ns.provider else registry.get_active()
         if not getattr(ns, "quiet", False):
-            banner()
+            _banner_for(cfg)
         return _run_one_shot(ns, registry, taskdb, skills, " ".join(prompt_words), cfg)
     if not prompt_words and ns.command is None and ns.mode == "json":
         from jebat_cli_new.cli import emit_json
@@ -4451,8 +4260,8 @@ def main():
         skills = SkillManager()
 
         # Show banner
-        banner()
         cfg = registry.get_active()
+        _banner_for(cfg)
         if cfg:
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
         else:
@@ -4479,7 +4288,7 @@ def main():
         return
 
     if args[0] in ("-h", "--help", "help"):
-        banner()
+        _banner_for(registry=registry)
         print(f"  {C.BOLD}Usage:{C.RESET} jebat [command] [options] [prompt...]")
         print()
         print(f"  {C.CYAN}Commands:{C.RESET}")
@@ -4590,8 +4399,8 @@ def main():
                 plan_first=code_options.plan,
             )
 
-            banner()
             cfg = registry.get_active()
+            _banner_for(cfg)
             if cfg:
                 show_setup(cfg.kind, cfg.model, cfg.api_base, "Running")
 
@@ -4619,8 +4428,8 @@ def main():
              persist_session=not ns.no_session)
             return
         # No one-shot prompt: start the coding REPL.
-        banner()
         cfg = registry.get_active()
+        _banner_for(cfg)
         if cfg:
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Ready")
         repl(registry, taskdb, skills, persist_session=not ns.no_session)
@@ -4636,8 +4445,8 @@ def main():
         prompt = " ".join(chat_options.prompt_parts)
         agent = Agent(registry, taskdb, skills)
 
-        banner()
         cfg = registry.get_active()
+        _banner_for(cfg)
         if cfg:
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Chat")
 
@@ -4743,8 +4552,8 @@ def main():
         # Unknown command — treat as one-shot prompt
         prompt = " ".join(args)
         agent = Agent(registry, taskdb, skills)
-        banner()
         cfg = registry.get_active()
+        _banner_for(cfg)
         if cfg:
             show_setup(cfg.kind, cfg.model, cfg.api_base, "Running")
         step = agent.step(prompt)

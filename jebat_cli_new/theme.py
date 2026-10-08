@@ -74,11 +74,156 @@ class C:
     TEXT_MUTED  = "\033[38;5;240m"
 
 
+
+# ─── Colour Gate ─────────────────────────────────────────────────
+
+# Alias so callers can use either name.
+_COLOR = USE_COLOR
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+
+# ─── Wrapping ────────────────────────────────────────────────────
+
+def _wrap(text: str, width: int) -> List[str]:
+    """Hard-wrap to `width` columns, breaking long tokens rather than overflowing."""
+    out: List[str] = []
+    for raw in str(text).split("\n"):
+        if len(_clean(raw)) <= width:
+            out.append(raw)
+            continue
+        line = ""
+        for word in raw.split(" "):
+            while len(word) > width:
+                if line:
+                    out.append(line)
+                    line = ""
+                out.append(word[:width])
+                word = word[width:]
+            if not line:
+                line = word
+            elif len(line) + 1 + len(word) <= width:
+                line += " " + word
+            else:
+                out.append(line)
+                line = word
+        out.append(line)
+    return out
+
+
+# ─── Wordmark + Banner ───────────────────────────────────────────
+
+# JEBAT wordmark — ANSI Shadow. Six rows, 38 cols.
+_WORDMARK = (
+    "██╗ ███████╗██████╗  █████╗ ████████╗",
+    "██║ ██╔════╝██╔══██╗██╔══██╗╚══██╔══╝",
+    "██║ █████╗  ██████╔╝███████║   ██║   ",
+    "██║ ██╔══╝  ██╔══██╗██╔══██║   ██║   ",
+    "██║ ███████╗██████╔╝██║  ██║   ██║   ",
+    "╚═╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝   ╚═╝   ",
+)
+
+# Stealth-Dark Tactical: cyan at the top fading to purple at the base.
+_MARK_TOP = (0, 255, 255)
+_MARK_BOTTOM = (175, 135, 255)
+
+# Widest row plus its two-space gutter.
+WORDMARK_WIDTH = 40
+
+
+def _lerp256(c1, c2, t):
+    """Interpolate two RGB tuples into a 256-colour escape code."""
+    r = int(c1[0] + (c2[0] - c1[0]) * t)
+    g = int(c1[1] + (c2[1] - c1[1]) * t)
+    b = int(c1[2] + (c2[2] - c1[2]) * t)
+    return 16 + int(r / 255 * 5) * 36 + int(g / 255 * 5) * 6 + int(b / 255 * 5)
+
+
+def _terminal_width(default: int = 80) -> int:
+    try:
+        return os.get_terminal_size().columns
+    except OSError:
+        return default
+
+
+
+def boot_animation(rows=None, steps: int = 6, delay: float = 0.04) -> None:
+    """Sweep a highlight band across the wordmark once.
+
+    No-op when colour is off or stdout is not a terminal, so piped and JSON
+    output never sees cursor movement.
+    """
+    if not USE_COLOR or not (hasattr(sys.stdout, "isatty") and sys.stdout.isatty()):
+        return
+    rows = rows or _WORDMARK
+    width = max(len(r) for r in rows)
+    last = max(1, len(rows) - 1)
+    esc, nl = chr(27), chr(10)
+    try:
+        for step in range(steps):
+            head = int((width + 10) * step / steps)
+            sys.stdout.write(esc + f"[{len(rows)}A")
+            for r_i, row in enumerate(rows):
+                base = _lerp256(_MARK_TOP, _MARK_BOTTOM, r_i / last)
+                buf = []
+                for i, ch in enumerate(row):
+                    if ch == " ":
+                        buf.append(ch)
+                    elif head <= i < head + 10:
+                        buf.append(esc + "[38;5;231m" + esc + "[1m" + ch)
+                    else:
+                        buf.append(esc + f"[38;5;{base}m" + ch)
+                sys.stdout.write("  " + "".join(buf) + esc + "[0m" + nl)
+            sys.stdout.flush()
+            time.sleep(delay)
+        sys.stdout.write(esc + f"[{len(rows)}A")
+    except Exception:
+        return
+
+
+def banner(subtitle=None, version=None, style: str = "auto", animate: bool = False):
+    """JEBAT banner — wordmark, tagline and optional live-state subtitle.
+
+    style: "art" always, "plain" never, "auto" picks by terminal width and
+    colour support. Piped output stays plain so logs stay readable.
+    """
+    art = style == "art" or (style == "auto" and USE_COLOR
+                             and _terminal_width() >= WORDMARK_WIDTH)
+    print()
+    if art:
+        if animate:
+            boot_animation()
+        last = len(_WORDMARK) - 1
+        for i, row in enumerate(_WORDMARK):
+            col = _lerp256(_MARK_TOP, _MARK_BOTTOM, i / last)
+            print(f"  \033[38;5;{col}m\033[1m{row}\033[0m")
+    else:
+        print(f"  {C.NEON_CYAN}{C.BOLD}JEBAT{C.RESET}" if USE_COLOR else "  JEBAT")
+
+    dim, reset = (C.DIM, C.RESET) if USE_COLOR else ("", "")
+    rule = f"{C.BORDER}┄┄┄{C.RESET} " if USE_COLOR else "--- "
+    tail = f"{C.NEON_PURPLE}⚔{C.RESET}  " if USE_COLOR else ""
+    ver = f"  {dim}v{version}{reset}" if version else ""
+    print()
+    print(f"  {rule}{tail}{dim}unified coding agent{reset}{ver}")
+    if subtitle:
+        print(f"  {dim}{subtitle}{reset}")
+    print()
+
+
+def show_setup(provider_name, model, endpoint, status="Ready"):
+    """Setup panel with provider info."""
+    _double_box("Setup",
+                f"Provider  {provider_name}\nModel     {model}\n"
+                f"Endpoint  {endpoint}\n● {status} — type /help to begin")
+
 # ─── Utility Functions ───────────────────────────────────────────
 
 def cprint(*args, **kwargs):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if not USE_COLOR:
+        args = tuple(re.sub(r"\033\[[0-9;]*m", "", a) if isinstance(a, str) else a
+                     for a in args)
     print(*args, **kwargs)
 
 

@@ -261,6 +261,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--auto-commit", "-a", dest="auto_commit", action="store_true",
                    help="Git commit after file changes")
 
+    p.add_argument("--banner", choices=("auto", "art", "plain", "none"),
+                   default="auto",
+                   help="Banner style: auto (by terminal), art, plain, or none")
     p.add_argument("--export", metavar="PATH",
                    help="Write the run as a markdown transcript to PATH and exit")
     p.add_argument("-e", "--extension", action="append", default=[],
