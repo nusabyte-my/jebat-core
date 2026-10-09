@@ -125,7 +125,7 @@ async function showCapture(button) {
   controls.forEach(control => { delete control.dataset.state; });
   try {
     if (!captures) {
-      const response = await fetch('assets/jebat-cli-captures.json');
+      const response = await fetch('assets/jebat-cli-captures.json?v=0fd02c7c');
       if (!response.ok) throw new Error('Capture unavailable');
       const payload = await response.json();
       if (!payload.commands || typeof payload.commands !== 'object') throw new Error('Invalid capture');

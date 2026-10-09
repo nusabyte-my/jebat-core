@@ -311,6 +311,8 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
         body = reordered[1:]
         global_flags = 0
         while global_flags < len(body) and body[global_flags].startswith("-"):
+            if body[global_flags] in ("-h", "--help"):
+                break  # help belongs to the subcommand, not the global parser
             global_flags += 1
         ns = parser.parse_args([subcommand] + body[:global_flags])
         ns.extra_tokens = list(body[global_flags:])

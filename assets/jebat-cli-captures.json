@@ -1,10 +1,10 @@
 {
-  "captured_on": "2026-10-07",
+  "captured_on": "2026-10-09",
   "environment": "Disposable local workspace; no providers, deployments or user sessions configured. Recorded output, not a live terminal.",
   "commands": {
     "status": {
       "command": "jebat status",
-      "output": "JEBAT v8.3.0\n  providers    0 configured · active: (none)\n  agentix      0 deployed solutions · 0 recorded runs\n  sessions     0 saved"
+      "output": "JEBAT v8.4.0\n  providers    0 configured · active: (none)\n  agentix      0 deployed solutions · 0 recorded runs\n  sessions     0 saved"
     },
     "workflow": {
       "command": "jebat workflow list",

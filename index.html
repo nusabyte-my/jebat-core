@@ -28,7 +28,7 @@
       "name": "JEBAT",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Linux, Windows, macOS",
-      "softwareVersion": "8.3.0",
+      "softwareVersion": "8.4.0",
       "description": "Sovereign AI command layer for model orchestration, persistent memory, MCP tool integration, and enterprise governance.",
       "url": "https://jebat.online",
       "license": "https://opensource.org/licenses/MIT",
@@ -53,7 +53,7 @@
   <div class="wrap nav-in">
     <a class="brand" href="#">
       <span class="brand-logo"><picture><source type="image/webp" srcset="assets/Jebat-Transparent-ink.webp"><img src="assets/Jebat-Transparent-ink.png" alt="JEBAT logo" width="88" height="59"></picture></span>
-      <small>v8.3.0</small>
+      <small>v8.4.0</small>
     </a>
     <ul class="nav-links">
       <li><a href="#platform">Platform</a></li>
@@ -80,14 +80,14 @@
   <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="dots"></div>
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow">JEBAT v8.3.0 · Self-hosted agent runtime</span>
+      <span class="eyebrow">JEBAT v8.4.0 · Self-hosted agent runtime</span>
       <h1>Keep <span class="grad">Command.</span><br/>Keep the Context.</h1>
       <p class="hero-lead">Run agents with your choice of model. Keep project knowledge, inspect the evidence behind learning advice, and control which tools can act.</p>
       <div class="badges">
         <span class="badge b-pucuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Your infrastructure</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Key-Gated Control Plane</span>
         <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Agentix Lifecycle</span>
-        <span class="badge b-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 22 Specialist Doctrines</span>
+        <span class="badge b-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 24 Specialist Doctrines</span>
       </div>
       <div class="cta-row">
         <a class="btn btn-primary" href="#mcp-deploy"><span>Install JEBAT</span>
@@ -117,7 +117,7 @@
       <div class="term">
         <div class="term-head">
           <span class="term-title">RECORDED CLI OUTPUT</span>
-          <span class="term-live">LOCAL CAPTURE · 07 OCT 2026</span>
+          <span class="term-live">LOCAL CAPTURE · 09 OCT 2026</span>
         </div>
         <div class="chips" role="group" aria-label="Recorded command examples">
           <button class="jchip on" type="button" aria-pressed="true" data-capture="status">Status</button>
@@ -126,7 +126,7 @@
           <button class="jchip" type="button" aria-pressed="false" data-capture="teams">Teams</button>
         </div>
         <pre class="term-body" id="hero-cli-output" aria-live="polite">$ jebat status
-JEBAT v8.3.0
+JEBAT v8.4.0
   providers    0 configured · active: (none)
   agentix      0 deployed solutions · 0 recorded runs
   sessions     0 saved</pre>
@@ -332,7 +332,7 @@ jebat learning search "AutoMimpi" --kind dream</pre></div>
     <div class="split">
       <div class="panel">
         <h3>Agentix: solutions, not scripts</h3>
-        <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Eval it against golden tasks. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name, resume by run-id.</p>
+        <p>Scaffold with <strong>reflex</strong> (ReAct loop), <strong>flow</strong> (workspace-driven), or <strong>lattice</strong> (schema-typed tools) — three archetypes, one artifact format. Build into a SHA-stamped artifact. Eval it against golden tasks. Deploy against an allowlist — local registry, IDE-ready MCP config, or VPS. Run by name, resume by run-id. Or let the foundry write one: <span class="mono">jebat agentix auto "&lt;objective&gt;"</span> drafts a new doctrine through the same build gates, and <span class="mono">jebat agentix from-mcp &lt;server&gt;</span> wraps a configured MCP server into a solution that drives it via <span class="mono">mcp_describe</span> and <span class="mono">mcp_call</span>.</p>
         <div class="code-wrap">
           <button class="code-copy copy-button" type="button" onclick="copySnippet('agentix-snippet',this)" aria-label="Copy workflow commands" aria-describedby="copy-feedback-workflow" data-feedback="copy-feedback-workflow"><span class="copy-label">Copy</span></button>
           <pre class="code" id="agentix-snippet"># Inspect the workflows shipped with this checkout
@@ -383,7 +383,7 @@ jebat config import -s omp --dry-run</pre>
       <p>Specialist doctrines declare tools, workspace scope, and run budgets. Keep a single agent for straightforward work. Agentix solutions and teams are explicit execution choices—not a requirement for the learning advisor.</p>
     </div>
     <div class="chips" style="justify-content:center;padding:0 0 var(--jc-s2)">
-      <span class="jchip">security-audit</span><span class="jchip">osint-recon</span><span class="jchip">code-reviewer</span><span class="jchip">test-writer</span><span class="jchip">doc-writer</span><span class="jchip">data-analyst</span><span class="jchip">marketing-strategist</span><span class="jchip">ads-manager</span><span class="jchip">seo-auditor</span><span class="jchip">incident-responder</span><span class="jchip">release-manager</span><span class="jchip">contract-reviewer</span><span class="jchip">support-triage</span><span class="jchip">competitor-watch</span><span class="jchip">copy-writer</span><span class="jchip">dependency-auditor</span><span class="jchip">email-lifecycle</span><span class="jchip">mcp-auditor</span><span class="jchip">ops-reporter</span><span class="jchip">ui-critic</span><span class="jchip">unit-economist</span><span class="jchip">uptime-sentinel</span>
+      <span class="jchip">security-audit</span><span class="jchip">osint-recon</span><span class="jchip">code-reviewer</span><span class="jchip">test-writer</span><span class="jchip">doc-writer</span><span class="jchip">data-analyst</span><span class="jchip">marketing-strategist</span><span class="jchip">ads-manager</span><span class="jchip">seo-auditor</span><span class="jchip">incident-responder</span><span class="jchip">release-manager</span><span class="jchip">contract-reviewer</span><span class="jchip">support-triage</span><span class="jchip">competitor-watch</span><span class="jchip">copy-writer</span><span class="jchip">dependency-auditor</span><span class="jchip">email-lifecycle</span><span class="jchip">mcp-auditor</span><span class="jchip">ops-reporter</span><span class="jchip">ui-critic</span><span class="jchip">unit-economist</span><span class="jchip">uptime-sentinel</span><span class="jchip">reverse-engineer</span><span class="jchip">nusabyte-fleet</span>
     </div>
     <div class="panel" style="max-width:860px;margin:0 auto var(--jc-s3)">
       <h3>The whole loop, typed</h3>
@@ -392,6 +392,10 @@ jebat config import -s omp --dry-run</pre>
         <pre class="code" id="specialist-snippet"># Discover the current catalog without running a model
 jebat agentix templates
 jebat agentix teams
+
+# Draft a solution from an objective — or wrap an MCP server
+jebat agentix auto "triage supplier emails into a daily memo" --name supplier-triage
+jebat agentix from-mcp rea --name rea-ops
 
 # Create and validate a local solution
 jebat agentix create release-check --from release-manager
@@ -436,7 +440,7 @@ jebat agentix runs</pre>
     <div class="sec-head">
       <span class="kicker">MCP BUS</span>
       <h2>Ask JEBAT. Watch the tools act.</h2>
-      <p>Connect through stdio or configured HTTP transports. Discover tools, request full schemas when needed, and inspect project learning advice through MCP resources.</p>
+      <p>Connect through stdio or configured HTTP transports. Discover tools, request full schemas when needed, and inspect project learning advice through MCP resources. The bus also carries the agentix foundry — <span class="mono">agentix_list</span>, <span class="mono">agentix_create</span>, <span class="mono">agentix_deploy</span>, <span class="mono">agentix_from_mcp</span> — and the NusaByte fleet task bus: <span class="mono">fleet_agents</span>, <span class="mono">fleet_tasks</span>, <span class="mono">fleet_dispatch</span>.</p>
     </div>
     <div class="cards">
       <div class="card c2">
@@ -740,6 +744,6 @@ jebat mcp ide-config</pre>
   </div>
 </footer>
 
-<script src="assets/jebat-landing.js?v=45a7ebc7" defer></script>
+<script src="assets/jebat-landing.js?v=3c2631e3" defer></script>
 </body>
 </html>

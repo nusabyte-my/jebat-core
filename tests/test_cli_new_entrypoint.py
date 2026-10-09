@@ -49,3 +49,7 @@ def test_subcommand_flags_survive_as_residual() -> None:
     ns, residual = cli.parse(["--no-extensions", "--yolo", "agentix", "run", "x", "--verbose"])
     assert ns.yolo is True
     assert residual == ["agentix", "run", "x", "--verbose"]
+
+    # `--help` after a subcommand belongs to the subcommand.
+    _, residual = cli.parse(["--no-extensions", "learning", "--help"])
+    assert residual == ["learning", "--help"]

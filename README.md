@@ -1,6 +1,6 @@
-# JEBAT v8.3.0 — Sovereign Agent OS & Agent Workstation
+# JEBAT v8.4.0 — Sovereign Agent OS & Agent Workstation
 
-![Version](https://img.shields.io/badge/version-v8.3.0--stable-10b981?style=flat-square)
+![Version](https://img.shields.io/badge/version-v8.4.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-hardened%20%2B%20audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-367%20passing-10b981?style=flat-square)
@@ -678,7 +678,7 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v8.3.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v8.4.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
 | **LLM Provider Routing** | **17 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
