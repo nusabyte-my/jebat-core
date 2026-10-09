@@ -262,9 +262,16 @@ def run_with_agent_loop(
     if registry is None:
         registry = ProviderRegistry()
 
-    # Resolution order: CLI flag → manifest → AgentLoop's own defaults.
+    # Resolution order: CLI flag → manifest → the selected provider's own
+    # configured model → AgentLoop defaults. A bare ollama default must never
+    # follow a different provider (rootsys etc. answer 400 for qwen).
     provider_name = provider or manifest.get("provider") or "ollama"
-    model_name = model or manifest.get("model") or "qwen2.5-coder:7b"
+    model_name = (
+        model
+        or manifest.get("model")
+        or getattr(registry.configs.get(provider_name), "model", None)
+        or "qwen2.5-coder:7b"
+    )
 
     budget = manifest.get("budget") if isinstance(manifest.get("budget"), dict) else {}
     budget_tokens = budget.get("tokens")

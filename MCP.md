@@ -215,8 +215,15 @@ paste-ready config that serves one built Agentix solution as `agentix_run` +
 `agentix_status` tools (`python -m jebat_cli_new.agentix_mcp_server --solution <name>`).
 
 The JEBAT tool surface itself exposes the solution foundry to connected clients:
-`agentix_list`, `agentix_create` (specialist copy or objective auto-draft), and
-`agentix_deploy` (local registry or MCP config); the NusaByte fleet task bus adds
+`agentix_list`, `agentix_create` (specialist copy or objective auto-draft),
+`agentix_deploy` (local registry or MCP config), and `agentix_from_mcp` (draft a
+solution from a configured MCP server); the NusaByte fleet task bus adds
 `fleet_agents`, `fleet_tasks`, and `fleet_dispatch` (route work to the
-nusabyte-hermes specialists over `bus/tasks/`). See `docs/AGENTIC-SOLUTIONS.md`
-for the landscape and the nusabyte.bot architecture this feeds.
+nusabyte-hermes specialists over `bus/tasks/`).
+
+CLI-side bridge: `jebat agentix from-mcp <server>` wraps any server registered under
+`mcp:` in `~/.jebat/config.yaml` (override `JEBAT_MCP_CONFIG`) into a solution whose
+ReAct loop calls it through `mcp_describe` / `mcp_call`; a server entry may set
+`require_approval: true` to gate every call behind the CLI confirmation. See
+`docs/AGENTIC-SOLUTIONS.md` for the landscape and the nusabyte.bot architecture
+this feeds.

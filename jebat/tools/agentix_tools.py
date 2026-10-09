@@ -228,3 +228,63 @@ async def agentix_deploy(solution: str, target: str = "local") -> Dict[str, Any]
         return await asyncio.to_thread(_run)
     except (Exception, SystemExit) as exc:
         return {"error": str(exc)}
+
+
+@register_tool(
+    "agentix_from_mcp",
+    schema={
+        "type": "object",
+        "properties": {
+            "server": {
+                "type": "string",
+                "description": "MCP server name from ~/.jebat/config.yaml (empty = list configured servers).",
+            },
+            "name": {"type": "string", "description": "Override the drafted solution name (kebab-case)."},
+            "dir": {"type": "string", "description": "Target directory for the solution folder (default: cwd)."},
+            "deploy": {
+                "type": "string",
+                "enum": ["none", "local", "mcp"],
+                "default": "none",
+                "description": "'local' registers the built solution; 'mcp' returns the paste-ready MCP client config.",
+            },
+            "provider": {"type": "string", "description": "Optional provider override for the drafting call."},
+            "model": {"type": "string", "description": "Optional model override for the drafting call."},
+        },
+        "required": [],
+    },
+    safety_tier="confirm",
+    timeout=420,
+    description="Draft an Agentix solution FROM a configured MCP server: introspect its tool "
+                "catalog, LLM-write a doctrine around the exact tools (mcp_describe/mcp_call "
+                "enter the allowlist), build it. Empty `server` lists configured servers.",
+)
+async def agentix_from_mcp(
+    server: str = "",
+    name: str = "",
+    dir: str = ".",
+    deploy: str = "none",
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Generate a governed solution from a configured MCP server."""
+
+    def _run() -> Dict[str, Any]:
+        from jebat_cli_new import mcp_bridge
+
+        if not str(server or "").strip():
+            return {"servers": mcp_bridge.list_servers()}
+        from jebat_cli_new.agentix_mcp import from_mcp
+
+        return from_mcp(
+            str(server),
+            name=str(name) or None,
+            target_dir=Path(dir or ".").resolve(),
+            deploy=str(deploy or "none"),
+            provider=provider,
+            model=model,
+        )
+
+    try:
+        return await asyncio.to_thread(_run)
+    except (Exception, SystemExit) as exc:
+        return {"error": str(exc)}

@@ -694,6 +694,17 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
     auto.add_argument("--provider", default=None, help="Override provider for the drafting call")
     auto.add_argument("--model", default=None, help="Override model for the drafting call")
 
+    fmc = sub.add_parser("from-mcp", help="Draft a solution from a configured MCP server (introspect + LLM), build it")
+    fmc.add_argument("server", nargs="?", help="MCP server name from ~/.jebat/config.yaml ('--list' shows them)")
+    fmc.add_argument("--list", dest="list_servers", action="store_true",
+                     help="List configured MCP servers and exit")
+    fmc.add_argument("--name", default=None, help="Override the drafted solution name (kebab-case)")
+    fmc.add_argument("--dir", default=".", help="target directory (default: cwd)")
+    fmc.add_argument("--deploy", choices=["none", "local", "mcp"], default="none",
+                     help="deploy after build ('mcp' prints the paste-ready client config)")
+    fmc.add_argument("--provider", default=None, help="Override provider for the drafting call")
+    fmc.add_argument("--model", default=None, help="Override model for the drafting call")
+
     build = sub.add_parser("build", help="Validate + build (writes .agentix/build.json)")
     build.add_argument("path")
 
@@ -802,6 +813,48 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
                 f"✓ drafted {spec['name']}"
                 + (f" [jailed]" if spec["jailed"] else "")
                 + f" — {spec['max_iterations']} iters, tools: {', '.join(spec['tools'])}",
+                C.GREEN,
+            )
+            print(f"  solution: {outcome['path']}")
+            print(f"  built: sha:{info['manifest_sha256']}")
+            if outcome.get("deploy"):
+                print(outcome["deploy"])
+            print(f'  next: jebat agentix eval "{outcome["path"]}"  |  run "{outcome["path"]}" "<task>"')
+            return 0
+        if ns.command == "from-mcp":
+            from jebat_cli_new import mcp_bridge
+
+            if ns.list_servers or not ns.server:
+                servers = mcp_bridge.list_servers()
+                if not servers:
+                    print("no MCP servers configured (~/.jebat/config.yaml `mcp:` section)", file=sys.stderr)
+                    return 1
+                for srv in servers:
+                    state = "on " if srv["enabled"] else "off"
+                    target = srv.get("url") or srv.get("command") or "?"
+                    print(f"  {state} {srv['name']:24s} {srv['transport']:8s} {str(target)[:80]}")
+                print('  create one: jebat agentix from-mcp <server> [--name N] [--deploy local|mcp]')
+                return 0
+
+            from jebat_cli_new.agentix_auto import AgentixAutoError
+            from jebat_cli_new.agentix_mcp import from_mcp
+
+            try:
+                outcome = from_mcp(
+                    ns.server,
+                    name=ns.name,
+                    target_dir=Path(ns.dir).resolve(),
+                    deploy=ns.deploy,
+                    provider=ns.provider,
+                    model=ns.model,
+                )
+            except AgentixAutoError as exc:
+                print(f"agentix from-mcp: {exc}", file=sys.stderr)
+                return 1
+            spec, info = outcome["spec"], outcome["build"]
+            cprint(
+                f"✓ drafted {spec['name']} from MCP server {outcome['mcp']['server']!r} "
+                f"({outcome['mcp']['tool_count']} tools)",
                 C.GREEN,
             )
             print(f"  solution: {outcome['path']}")

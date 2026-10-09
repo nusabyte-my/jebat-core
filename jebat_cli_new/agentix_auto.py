@@ -23,7 +23,15 @@ import yaml
 
 from jebat_cli_new.agentix import _build, _deploy_local, _deploy_mcp
 
-ALLOWED_TOOLS = ("read_file", "search_files", "terminal", "write_file", "list_dir")
+ALLOWED_TOOLS = (
+    "read_file",
+    "search_files",
+    "terminal",
+    "write_file",
+    "list_dir",
+    "mcp_describe",
+    "mcp_call",
+)
 DEFAULT_TOOLS = ("read_file", "search_files", "terminal", "write_file", "list_dir")
 NAME_RE = re.compile(r"^[a-z][a-z0-9-]{2,31}$")
 MIN_DOCTRINE_LEN = 120
@@ -195,12 +203,28 @@ def draft_spec(
     model: Optional[str] = None,
 ) -> Dict[str, Any]:
     """One provider call: objective -> drafted spec dict (raw, unnormalized)."""
-    from jebat_cli_new.models import CompletionRequest
-    from jebat_cli_new.providers import ProviderRegistry
-
     objective = " ".join(str(objective or "").split())
     if not objective:
         raise AgentixAutoError("objective is empty")
+    prompt = _SYSTEM + "\n\n" + _INSTRUCTIONS.replace("{objective}", objective)
+    return complete_json(prompt, provider=provider, model=model)
+
+
+def complete_json(
+    prompt: str,
+    *,
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+    temperature: float = 0.3,
+) -> Dict[str, Any]:
+    """One provider call that must return a JSON object (fences tolerated).
+
+    Shared by the objective foundry (`agentix auto`) and the MCP foundry
+    (`agentix from-mcp`). Provider resolution mirrors the CLI: explicit
+    argument -> the registry's active entry.
+    """
+    from jebat_cli_new.models import CompletionRequest
+    from jebat_cli_new.providers import ProviderRegistry
 
     registry = ProviderRegistry()
     provider_id = provider or _default_provider_id(registry)
@@ -214,14 +238,13 @@ def draft_spec(
         raise AgentixAutoError(f"provider {provider_id!r} is not configured — known: {known}")
     model_id = model or getattr(registry.configs.get(provider_id), "model", None) or ""
 
-    prompt = _SYSTEM + "\n\n" + _INSTRUCTIONS.replace("{objective}", objective)
     try:
         response = impl.complete(
             CompletionRequest(
                 provider=provider_id,
-                model=model_id or "",
+                model=model_id,
                 prompt=prompt,
-                temperature=0.3,
+                temperature=temperature,
                 max_tokens=DRAFT_MAX_TOKENS,
             )
         )

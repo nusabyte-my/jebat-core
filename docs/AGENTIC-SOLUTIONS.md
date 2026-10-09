@@ -116,6 +116,23 @@ skills and MCP servers.
    intact). MCP tools: `fleet_agents` (registry — 24 agents with codenames),
    `fleet_tasks` (queue counts/backlog), `fleet_dispatch` (write a brief; confirm tier).
    Root override: `NUSABYTE_FLEET_ROOT`.
+8. **MCP as agent solutions** — any configured MCP server becomes an instrument:
+   - `mcp_describe` / `mcp_call` native loop tools (`jebat_cli_new/mcp_bridge.py`), config
+     from `~/.jebat/config.yaml` (`mcp:` section, override `JEBAT_MCP_CONFIG`); optional
+     per-server `require_approval: true` gate; one-shot session per operation on the
+     shared transports (`jebat.features.mcp.mcp_client`).
+   - `jebat agentix from-mcp <server>` (`agentix_mcp.py`): introspects the server's tool
+     catalog, LLM-drafts a solution around the exact tools, forces
+     `mcp_describe`/`mcp_call` into the allowlist, stores `mcp-snapshot.json` for diffing,
+     builds; `--list` shows configured servers. MCP tool surface: `agentix_from_mcp`.
+   - Transport fix: the stdio reader's default 64 KiB stream limit killed the reader on
+     large catalogs (REA's 138-tool `tools/list` ≈ 1 MB single line) and every request
+     then burned its full timeout — raised to 32 MiB, pending requests now fail fast on
+     reader death.
+   - Live receipts: REA introspected (138 tools, protocol `2025-11-25`); sequential-thinking
+     called directly; `seq-ops` solution drafted+built+eval'd, then drove the server through
+     the ReAct loop — 3 tool calls, self-corrected a `-32602` argument-nesting error from the
+     MCP error feedback, reported the server's exact returned text.
 
 Usage sketch:
 

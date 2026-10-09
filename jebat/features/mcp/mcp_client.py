@@ -165,6 +165,11 @@ class StdioTransport:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env=env,
+            # Default StreamReader limit (64 KiB) cannot hold one-line JSON-RPC
+            # responses from large MCP catalogs (REA's tools/list alone is
+            # ~1 MB); readline() would raise LimitOverrunError and kill the
+            # reader, timeouting every request. 32 MiB is ample headroom.
+            limit=32 * 1024 * 1024,
         )
 
         # Start background reader to dispatch responses
@@ -276,6 +281,12 @@ class StdioTransport:
             pass
         except Exception as e:
             logger.error(f"Error reading from '{self.config.name}': {e}")
+            # The reader is dead: fail every pending request now instead of
+            # letting each one burn its full timeout.
+            for fut in self._pending.values():
+                if not fut.done():
+                    fut.set_exception(MCPError(-1, f"reader failed: {e}"))
+            self._pending.clear()
 
     async def _drain_stderr(self) -> None:
         """Drain stderr to prevent subprocess blocking."""

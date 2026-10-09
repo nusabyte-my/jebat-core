@@ -44,12 +44,24 @@ class ListDirInput(BaseModel):
     pattern: str = Field(default="*", description="Glob filter pattern")
 
 
+class MCPDescribeInput(BaseModel):
+    server: str = Field(..., description="MCP server name from ~/.jebat/config.yaml")
+
+
+class MCPCallInput(BaseModel):
+    server: str = Field(..., description="MCP server name from ~/.jebat/config.yaml")
+    tool: str = Field(..., description="Tool name on that server (see mcp_describe)")
+    arguments: Dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+
+
 TOOL_SCHEMAS: Dict[str, type[BaseModel]] = {
     "read_file": ReadFileInput,
     "write_file": WriteFileInput,
     "search_files": SearchFilesInput,
     "terminal": TerminalInput,
     "list_dir": ListDirInput,
+    "mcp_describe": MCPDescribeInput,
+    "mcp_call": MCPCallInput,
 }
 
 
@@ -382,6 +394,69 @@ def _add_shared_registry_tools() -> None:
 _add_shared_registry_tools()
 
 
+# ── MCP bridge tools (configured servers from ~/.jebat/config.yaml) ─────────
+
+def handle_mcp_describe(args: Dict[str, Any]) -> str:
+    from jebat_cli_new import mcp_bridge
+
+    return mcp_bridge.handle_mcp_describe(args)
+
+
+def handle_mcp_call(args: Dict[str, Any]) -> str:
+    from jebat_cli_new import mcp_bridge
+
+    return mcp_bridge.handle_mcp_call(args)
+
+
+HANDLERS["mcp_describe"] = handle_mcp_describe
+HANDLERS["mcp_call"] = handle_mcp_call
+
+TOOL_DEFINITIONS.extend([
+    {
+        "name": "mcp_describe",
+        "description": (
+            "List the tools exposed by a configured MCP server (name, description, "
+            "required parameters, read-only hint). Use before mcp_call when a tool's "
+            "arguments are unclear."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "server": {
+                    "type": "string",
+                    "description": "MCP server name from ~/.jebat/config.yaml",
+                },
+            },
+            "required": ["server"],
+        },
+    },
+    {
+        "name": "mcp_call",
+        "description": (
+            "Call a tool on a configured MCP server: mcp_call(server, tool, arguments). "
+            "Prefer the server's tools over ad-hoc shell when the task matches them; "
+            "never invent tool names (see mcp_describe)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "server": {"type": "string", "description": "MCP server name"},
+                "tool": {
+                    "type": "string",
+                    "description": "Tool name on that server (see mcp_describe)",
+                },
+                "arguments": {
+                    "type": "object",
+                    "description": "Tool arguments as a JSON object",
+                    "default": {},
+                },
+            },
+            "required": ["server", "tool"],
+        },
+    },
+])
+
+
 def _preview_write_card(path: str, content: str, width: int = 78) -> str:
     """Build a preview card for an impending file write."""
     from jebat_cli_new.theme import C, render_diff
@@ -463,7 +538,14 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
     
     # Safety checks for dangerous operations
     if not yolo:
-        from jebat_cli_new.safety import is_dangerous_command, is_dangerous_file, confirm_action, classify_command_action
+        from jebat_cli_new.safety import (
+            _remember_stage,
+            _stage_approved,
+            classify_command_action,
+            confirm_action,
+            is_dangerous_command,
+            is_dangerous_file,
+        )
 
         if name == "terminal":
             cmd = arguments.get("command", "")
@@ -480,7 +562,7 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
                 ):
                     return f"Command blocked by safety: staged approval denied for '{stage}'"
             _remember_stage(stage, cmd)
-        
+
         if name == "write_file":
             path = arguments.get("path", "")
             dangerous, reason = is_dangerous_file(path)
@@ -494,5 +576,26 @@ def execute_tool(name: str, arguments: Dict[str, Any], yolo: bool = False) -> st
                 verdict = prompt_tool_approval("write_file", preview)
                 if verdict == "no":
                     return "File write blocked by user (preview declined)"
-    
+
+        if name == "mcp_call":
+            # Servers opt into a per-call gate with `require_approval: true` in
+            # their ~/.jebat/config.yaml entry; read-only servers run free.
+            from jebat_cli_new import mcp_bridge
+
+            if (
+                mcp_bridge.server_requires_approval(str(arguments.get("server", "")))
+                and "mcp_call" not in _ALWAYS_APPROVED
+            ):
+                preview = json.dumps(
+                    {
+                        "server": arguments.get("server"),
+                        "tool": arguments.get("tool"),
+                        "arguments": arguments.get("arguments", {}),
+                    },
+                    ensure_ascii=False,
+                )[:400]
+                verdict = prompt_tool_approval("mcp_call", preview)
+                if verdict == "no":
+                    return "MCP call blocked by user (server requires approval)"
+
     return _ext.after_tool(name, arguments, handler(arguments))
