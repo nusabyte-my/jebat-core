@@ -571,6 +571,10 @@ class MCPServer:
             ("ghost", "jebat.features.ghost.ghost_tools"),
             # Autonomous multi-turn ReAct agent harness
             ("agent_exec", "jebat.tools.agent_tools"),
+            # Agentix solution foundry (list / create / auto-draft / deploy)
+            ("agentix_tools", "jebat.tools.agentix_tools"),
+            # NusaByte fleet task bus (agents / tasks / dispatch)
+            ("fleet_tools", "jebat.tools.fleet_tools"),
             # Design & UI/UX (Pawang Estetika)
             ("design_tools", "jebat.tools.design_tools"),
             ("design_reference", "jebat.tools.design_reference_tools"),

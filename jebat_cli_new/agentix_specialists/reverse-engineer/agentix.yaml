@@ -1,0 +1,23 @@
+name: reverse-engineer
+version: 1.0.0
+description: >
+  Reverse engineers native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA (evidence-backed feature teardown, version diffs, decompilation, reconstruction guidance). Use for reverse engineering, decompile, disassemble, understand this app/binary, or how does X work internally.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 16
+llm_tools:
+  - read_file
+  - search_files
+  - terminal
+  - write_file
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp

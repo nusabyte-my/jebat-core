@@ -201,3 +201,22 @@ JEBAT MCP operates as an active sovereign harness rather than a passive tool ser
 ### Authentication errors
 1. Keep remote MCP behind an authenticated reverse proxy.
 2. Configure provider credentials only on the server that needs them.
+
+## Downstream MCP Servers (workspace pattern)
+
+Workspace configs register external MCP servers alongside JEBAT:
+
+| Server | Registered in | Purpose |
+|---|---|---|
+| `rea` | `.vscode/mcp.json`, `.cursor/mcp.json`, `.agents/mcp.json` | REA (Reverse Engineer Anything) — `npx -y rea-agents@6.1.0 mcp`. Version-pinned; update deliberately (REA pins registrations to the setup version). |
+
+Per-solution MCP servers: `jebat agentix deploy <solution> --target mcp` prints a
+paste-ready config that serves one built Agentix solution as `agentix_run` +
+`agentix_status` tools (`python -m jebat_cli_new.agentix_mcp_server --solution <name>`).
+
+The JEBAT tool surface itself exposes the solution foundry to connected clients:
+`agentix_list`, `agentix_create` (specialist copy or objective auto-draft), and
+`agentix_deploy` (local registry or MCP config); the NusaByte fleet task bus adds
+`fleet_agents`, `fleet_tasks`, and `fleet_dispatch` (route work to the
+nusabyte-hermes specialists over `bus/tasks/`). See `docs/AGENTIC-SOLUTIONS.md`
+for the landscape and the nusabyte.bot architecture this feeds.

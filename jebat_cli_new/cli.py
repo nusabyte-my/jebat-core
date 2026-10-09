@@ -208,9 +208,12 @@ def filter_skills(patterns: Optional[Sequence[str]], disabled: bool) -> List[str
 # ── Parser ──────────────────────────────────────────────────────────────────
 
 def build_parser() -> argparse.ArgumentParser:
+    from jebat_cli_new import __version__ as _cli_version
+
     p = argparse.ArgumentParser(
         prog="jebat",
         description="JEBAT — unified coding agent. One tool, all providers.",
+        epilog=f"JEBAT v{_cli_version}",
         add_help=True,
     )
     p.add_argument("command", nargs="?", default=None,
@@ -299,7 +302,21 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
     residual is empty when the new surface fully handled the invocation.
     """
     parser = build_parser()
-    ns = parser.parse_args(_reorder(tokens))
+    reordered = _reorder(tokens)
+    subcommand = reordered[0] if reordered and reordered[0] in SUBCOMMANDS else None
+    if subcommand is not None:
+        # A subcommand invocation owns everything after the word, including its
+        # own flags (`mcp serve --transport stdio`, `agentix auto --name X`).
+        # Leading flags the reorder scan stepped over stay global.
+        body = reordered[1:]
+        global_flags = 0
+        while global_flags < len(body) and body[global_flags].startswith("-"):
+            global_flags += 1
+        ns = parser.parse_args([subcommand] + body[:global_flags])
+        ns.extra_tokens = list(body[global_flags:])
+    else:
+        ns = parser.parse_args(reordered)
+        ns.extra_tokens = []
     ns.handled = False
 
     # `command` is nargs="?" so a bare prompt lands there. Anything that is not
@@ -391,6 +408,7 @@ def parse(tokens: Sequence[str]) -> Tuple[Optional[argparse.Namespace], List[str
 
 def _residual(ns: argparse.Namespace) -> List[str]:
     """Rebuild the legacy token list for the subcommands `main` owns."""
+    extras = list(getattr(ns, "extra_tokens", []) or [])
     cmd = ns.command
     rest = list(ns.prompt or [])
     if cmd is None:
@@ -399,7 +417,7 @@ def _residual(ns: argparse.Namespace) -> List[str]:
         cmd = "chat"
     if cmd in ("provider", "model", "mcp", "config", "agentix", "learning",
                "workflow", "tool", "tools", "init", "doctor", "status", "webui"):
-        return [cmd] + rest
+        return [cmd] + rest + extras
     if cmd in ("repl",):
         return []
     if cmd in ("code", "agent", "chat"):
@@ -414,8 +432,8 @@ def _residual(ns: argparse.Namespace) -> List[str]:
             out += ["--provider", ns.provider]
         if ns.model:
             out += ["--model", ns.model]
-        return out + rest
-    return [cmd] + rest
+        return out + rest + extras
+    return [cmd] + rest + extras
 
 
 def one_shot_requested(ns: argparse.Namespace) -> bool:

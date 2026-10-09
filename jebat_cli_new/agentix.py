@@ -685,6 +685,15 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
                         help="scaffold from a specialist template (see: jebat agentix templates)")
     create.add_argument("--dir", default=".", help="target directory (default: cwd)")
 
+    auto = sub.add_parser("auto", help="Draft a NEW solution from an objective (LLM), build it, optionally deploy")
+    auto.add_argument("objective", nargs="+", help="What the solution should do ('-' reads stdin)")
+    auto.add_argument("--name", default=None, help="Override the drafted solution name (kebab-case)")
+    auto.add_argument("--dir", default=".", help="target directory (default: cwd)")
+    auto.add_argument("--deploy", choices=["none", "local", "mcp"], default="none",
+                      help="deploy after build ('mcp' prints the paste-ready client config)")
+    auto.add_argument("--provider", default=None, help="Override provider for the drafting call")
+    auto.add_argument("--model", default=None, help="Override model for the drafting call")
+
     build = sub.add_parser("build", help="Validate + build (writes .agentix/build.json)")
     build.add_argument("path")
 
@@ -767,6 +776,39 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
             sol = _scaffold(ns.name, ns.template, Path(ns.dir).resolve())
             cprint(f"✓ created {ns.template} solution: {sol}", C.GREEN)
             print(f"  next: jebat agentix build {sol}")
+            return 0
+        if ns.command == "auto":
+            from jebat_cli_new.agentix_auto import AgentixAutoError, auto_create
+
+            words = list(ns.objective)
+            objective = sys.stdin.read().strip() if words == ["-"] else " ".join(words)
+            if not objective:
+                print("agentix auto: empty objective", file=sys.stderr)
+                return 1
+            try:
+                outcome = auto_create(
+                    objective,
+                    name=ns.name,
+                    target_dir=Path(ns.dir).resolve(),
+                    deploy=ns.deploy,
+                    provider=ns.provider,
+                    model=ns.model,
+                )
+            except AgentixAutoError as exc:
+                print(f"agentix auto: {exc}", file=sys.stderr)
+                return 1
+            spec, info = outcome["spec"], outcome["build"]
+            cprint(
+                f"✓ drafted {spec['name']}"
+                + (f" [jailed]" if spec["jailed"] else "")
+                + f" — {spec['max_iterations']} iters, tools: {', '.join(spec['tools'])}",
+                C.GREEN,
+            )
+            print(f"  solution: {outcome['path']}")
+            print(f"  built: sha:{info['manifest_sha256']}")
+            if outcome.get("deploy"):
+                print(outcome["deploy"])
+            print(f'  next: jebat agentix eval "{outcome["path"]}"  |  run "{outcome["path"]}" "<task>"')
             return 0
         if ns.command == "templates":
             print(_list_specialists())

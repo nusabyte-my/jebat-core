@@ -14,7 +14,7 @@ import jebat_cli_new.jebat as cli
 def _run_main(monkeypatch, argv, **stubs):
     """Run cli.main() with sys.argv set and heavy collaborators stubbed."""
     monkeypatch.setattr(sys, "argv", ["jebat"] + argv)
-    monkeypatch.setattr(cli, "banner", lambda: None)
+    monkeypatch.setattr(cli, "banner", lambda *a, **k: None)
     monkeypatch.setattr(cli, "show_setup", lambda *a, **k: None)
 
     class BoomAgent:

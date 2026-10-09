@@ -1,0 +1,23 @@
+name: nusabyte-fleet
+version: 1.0.0
+description: >
+  Routes NusaByte fleet work onto the agentix task bus (nusabyte-hermes): picks the right specialist from the 24-agent registry (codenames), writes TASK-YYYY-MM-DD-NNN briefs into bus queues with approval gates intact. Use for fleet, route this to an agent, nusabyte-hermes, dispatch to finance/hr/ads/admin/bizops, or what agent handles this.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 12
+llm_tools:
+  - read_file
+  - search_files
+  - terminal
+  - write_file
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp
