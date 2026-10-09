@@ -142,6 +142,8 @@ jebat agentix auto "triage inbound supplier emails into a daily action memo" \
 jebat agentix run supplier-triage "run against inbox-export.md"
 jebat agentix eval <path>                  # structural + golden gates
 jebat agentix deploy <path> --target mcp   # per-solution MCP server config
+jebat agentix from-mcp --list              # configured MCP servers
+jebat agentix from-mcp rea --name rea-ops  # wrap an MCP server as a solution
 ```
 
 ---
