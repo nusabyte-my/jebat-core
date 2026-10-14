@@ -26,6 +26,12 @@ This file is the root memory index for the workspace.
 
 ## Session Notes
 
+- 2026-10-14: **Landing update shipped live (`573d020`) — image-scraper surfaced, MCP prompts on the bus**:
+  1. **Copy**: `index.html` news strip → `Update · 14 October 2026`; third card is now `image-scraper` ("Download galleries and product images — anti-detect, filtered, deduped." → `#platform`); MCP BUS section lists `prompts/list` + `prompts/get` (optional arguments, placeholder defaults); `jebat-creative.html` first-connect mock gains a `prompts/list` line.
+  2. **Same push**: `feat(skills): bundle image-scraper` (`a61cca8`) + `fix(mcp): prompts/get optional args` (`463f9fd`) + `docs(memory): dream #111` (`7741f8f`).
+  3. **Deploy**: push → webhook auto-deploy on .65 (`scripts/auto-deploy.sh`): site pages + assets copied to `/var/www/jebat.online`, changed files propagated to .206 with PM2 reloads. Live-verified headless (local + live): new strip card/prompts copy present, zero console errors, no horizontal overflow at 375/1280.
+  4. **Note**: `jebat-creative.html` is the design twin — NOT in the deployed page set (`index/docs/install/PITCH_DECK`); root `landing.html` is a stale v8.3.0 relic (pre-`559c43f` swap), not served.
+
 - 2026-10-14: **`image-scraper` Skill Integrated into `D:\jebat`**:
   1. **Skill Added**: Added modern `image-scraper` skill into `D:/jebat/skills/image-scraper/` and `D:/jebat/jebat-tokguru/skills/workflow/image-scraper/`.
   2. **Architecture**: Synthesizes ergonomics of `sananth12/ImageScraper` (format/size/dimension filtering, `--dump-urls`, `--filename-pattern`, concurrency) with `edwardtay/awesome-scrapers` scraping landscape (stealth headers, Scrapling anti-bot Turnstile bypass, Playwright infinite scroll / JS hydration, responsive `srcset` max-resolution resolution, SHA-256 deduplication, and `gallery-dl` routing).
