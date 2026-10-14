@@ -26,6 +26,10 @@ This file is the root memory index for the workspace.
 
 ## Session Notes
 
+- 2026-10-14: **`image-scraper` Skill Integrated into `D:\jebat`**:
+  1. **Skill Added**: Added modern `image-scraper` skill into `D:/jebat/skills/image-scraper/` and `D:/jebat/jebat-tokguru/skills/workflow/image-scraper/`.
+  2. **Architecture**: Synthesizes ergonomics of `sananth12/ImageScraper` (format/size/dimension filtering, `--dump-urls`, `--filename-pattern`, concurrency) with `edwardtay/awesome-scrapers` scraping landscape (stealth headers, Scrapling anti-bot Turnstile bypass, Playwright infinite scroll / JS hydration, responsive `srcset` max-resolution resolution, SHA-256 deduplication, and `gallery-dl` routing).
+  3. **Verification**: Executed standalone CLI and Python async module; verified clean import and help output in `D:\jebat`.
 - 2026-10-09: **Erawan-QSys Unassigned Pay & Start Top-Queue Placement, Cart Hold Persistence & Membership Ledger Profile Access** (commit `824403e`, deployed live to prod V2 Hostinger VPS `2a02:4780:5e:20bd::1`):
   1. **Unassigned Pay & Start Top-Queue Placement**: Starting Pay & Start on a brown (unassigned) block keeps `masseurId: null` in PostgreSQL on the booking item (`wasUnassigned: true`). On the Gantt chart, captured unassigned blocks (yellow) dynamically place on the **top next available therapist** (Rank 1 / lowest commission), locking that top slot for the active cart session while uncaptured brown advance blocks continue to float from the bottom row up.
   2. **Selective Unmark & Cart Hold Persistence**: Fixed partial checkouts (`captureCheckout`, `captureMultiGuest`, `onCapture`) which previously called `clearAllCaptured()` unconditionally and made remaining unchecked cart sessions revert to black on the Gantt timeline. Replaced with `unmarkCaptured(paidBookingItemIds)`. Unchecked cart sessions remain Yellow and continue to lock floor capacity.
