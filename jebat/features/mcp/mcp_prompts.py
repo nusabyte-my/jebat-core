@@ -26,7 +26,7 @@ def prompts_list(terse: bool = False) -> Dict:
             "name": "hallmark-design-audit",
             "description": "Audit UI markup against Hallmark 6-axis anti-slop gates and 8-state interaction rules.",
             "arguments": [
-                {"name": "markup", "description": "UI component markup or code", "required": True},
+                {"name": "markup", "description": "UI component markup or code", "required": False},
                 {"name": "component_type", "description": "Type of component (button, card, hero, pricing)", "required": False},
             ],
         },
@@ -34,7 +34,7 @@ def prompts_list(terse: bool = False) -> Dict:
             "name": "sales-copy-review",
             "description": "Mandatory copywriting conversion review: strip AI buzzwords and transform generic CTAs.",
             "arguments": [
-                {"name": "copy", "description": "Sales or marketing text to audit", "required": True},
+                {"name": "copy", "description": "Sales or marketing text to audit", "required": False},
                 {"name": "benefit", "description": "Specific tangible benefit the customer achieves", "required": False},
             ],
         },
@@ -56,7 +56,7 @@ def prompts_list(terse: bool = False) -> Dict:
             "name": "debug-this",
             "description": "Structured 5-step debugging workflow for diagnosing and fixing errors.",
             "arguments": [
-                {"name": "error_message", "description": "The error message or traceback to debug", "required": True},
+                {"name": "error_message", "description": "The error message or traceback to debug", "required": False},
                 {"name": "file", "description": "File or module where the error occurred", "required": False},
                 {"name": "context", "description": "Additional context, reproducer, or logs", "required": False},
             ],
@@ -67,7 +67,7 @@ def prompts_list(terse: bool = False) -> Dict:
             "name": name,
             "description": description,
             "arguments": [
-                {"name": "task", "description": "Objective to address", "required": True},
+                {"name": "task", "description": "Objective to address", "required": False},
                 {"name": "scope", "description": "Workspace, files, or service in scope", "required": False},
             ],
         }
@@ -92,29 +92,39 @@ def prompts_get(params: Dict) -> Dict:
     catalog = {prompt["name"]: prompt for prompt in prompts_list()["prompts"]}
     if not isinstance(name, str) or name not in catalog:
         raise PromptInputError(f"Unknown prompt: {name}")
-    arguments = params.get("arguments", {})
-    if not isinstance(arguments, dict):
+    raw_arguments = params.get("arguments")
+    if raw_arguments is None:
+        raw_arguments = {}
+    if not isinstance(raw_arguments, dict):
         raise PromptInputError("Prompt arguments must be an object of strings")
     specs = {arg["name"]: arg for arg in catalog[name].get("arguments", [])}
-    for key, value in arguments.items():
-        if key not in specs or not isinstance(value, str):
+    arguments: Dict[str, str] = {}
+    for key, value in raw_arguments.items():
+        if key.startswith("_"):
+            continue
+        if key not in specs:
+            raise PromptInputError(f"Invalid prompt argument: {key}")
+        if value is None:
+            arguments[key] = ""
+        elif isinstance(value, str):
+            arguments[key] = value
+        else:
             raise PromptInputError(f"Invalid prompt argument: {key}")
     for key, spec in specs.items():
         if spec.get("required") and not arguments.get(key, "").strip():
             raise PromptInputError(f"Missing required prompt argument: {key}")
 
     if name in WORKFLOWS:
-        scope = arguments.get("scope", "the current workspace")
-        if not scope.strip():
-            raise PromptInputError("scope must be a non-empty string")
+        task = arguments.get("task", "").strip() or "[Describe the objective or task to plan, act, verify, and remember]"
+        scope = arguments.get("scope", "").strip() or "the current workspace"
         return {
             "description": WORKFLOWS[name][0],
-            "messages": [{"role": "user", "content": {"type": "text", "text": render_workflow(name, arguments["task"], scope)}}],
+            "messages": [{"role": "user", "content": {"type": "text", "text": render_workflow(name, task, scope)}}],
         }
 
     if name == "hallmark-design-audit":
-        markup = arguments.get("markup", "")
-        c_type = arguments.get("component_type", "generic")
+        markup = arguments.get("markup", "").strip() or "[Paste the UI component markup or code to audit here]"
+        c_type = arguments.get("component_type", "").strip() or "generic"
         text = (
             f"Audit this {c_type} markup against Hallmark standards:\n\n{markup}\n\n"
             "Evaluate against:\n"
@@ -129,8 +139,8 @@ def prompts_get(params: Dict) -> Dict:
         }
 
     if name == "sales-copy-review":
-        copy = arguments.get("copy", "")
-        benefit = arguments.get("benefit", "clear value proposition")
+        copy = arguments.get("copy", "").strip() or "[Paste the sales or marketing copy to review here]"
+        benefit = arguments.get("benefit", "").strip() or "clear value proposition"
         text = (
             f"Perform a sales copywriting review on this text:\n\n{copy}\n\n"
             f"Target Benefit: {benefit}\n\n"
@@ -223,9 +233,9 @@ def prompts_get(params: Dict) -> Dict:
         }
 
     if name == "debug-this":
-        error_message = arguments.get("error_message", "")
-        file_path = arguments.get("file", "unknown")
-        context = arguments.get("context", "")
+        error_message = arguments.get("error_message", "").strip() or "[Paste the error message or traceback to debug here]"
+        file_path = arguments.get("file", "").strip() or "unknown"
+        context = arguments.get("context", "").strip()
 
         text = (
             f"Debug the following error:\n\n"
