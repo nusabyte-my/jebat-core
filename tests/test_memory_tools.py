@@ -79,6 +79,37 @@ async def test_search_reaches_enhanced_only_records(store):
 
 
 @pytest.mark.asyncio
+async def test_search_finds_shared_traces_without_user_id(store):
+    """Project/session facts carry no user_id and must still be searchable."""
+    enhanced = store._get_enhanced_memory()
+    await enhanced.encode(
+        "BaanIyaraQPOS receipt parity commit 4c32409",
+        context={"project_root": "D:\\Jebat"},
+    )
+
+    result = await memory_tools.memory_search("BaanIyaraQPOS")
+
+    assert result["status"] == "ok"
+    assert result["count"] == 1
+    assert "BaanIyaraQPOS" in result["results"][0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_search_still_excludes_foreign_user_scope(store):
+    """A trace explicitly scoped to another user must not leak."""
+    enhanced = store._get_enhanced_memory()
+    await enhanced.encode(
+        "Scoped note for someone else",
+        context={"user_id": "another-user"},
+    )
+
+    result = await memory_tools.memory_search("Scoped note")
+
+    assert result["status"] == "ok"
+    assert result["count"] == 0
+
+
+@pytest.mark.asyncio
 async def test_forget_clears_both_stores_and_persists(store, tmp_path):
     stored = await memory_tools.memory_store("Temporary fact to forget")
     enhanced = store._get_enhanced_memory()

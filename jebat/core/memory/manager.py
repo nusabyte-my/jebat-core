@@ -243,10 +243,42 @@ class MemoryManager:
             enhanced = self._get_enhanced_memory()
             if enhanced:
                 try:
-                    traces = await enhanced.retrieve(query, limit=limit - len(results))
+                    # `memory_search` is documented as keyword search, but the
+                    # enhanced scorer's n-gram similarity is tiny for a short
+                    # identifier inside a long fact ("BaanIyaraQPOS" scored 0.09
+                    # against the 0.2 threshold). Match literals first, then merge
+                    # semantic results, deduped by trace id and content.
+                    query_lower = query.lower()
+                    keyword_hits = [
+                        trace
+                        for trace in enhanced.traces.values()
+                        if query_lower in trace.content.lower()
+                        or any(query_lower in tag.lower() for tag in trace.tags)
+                    ]
+                    keyword_hits.sort(
+                        key=lambda trace: (
+                            trace.calculate_current_strength(),
+                            trace.last_accessed.timestamp() if trace.last_accessed else 0,
+                        ),
+                        reverse=True,
+                    )
+                    try:
+                        semantic_hits = await enhanced.retrieve(query, limit=limit)
+                    except Exception:
+                        semantic_hits = []
+
+                    seen_ids = {m.memory_id for m in results}
                     seen = {m.content for m in results}
-                    for trace in traces:
-                        if trace.context.get("user_id") != user_id:
+                    for trace in [*keyword_hits, *semantic_hits]:
+                        if len(results) >= limit:
+                            break
+                        if trace.trace_id in seen_ids:
+                            continue
+                        # Scoped user memories stay isolated, but shared traces
+                        # written by project_remember/session_learning_commit
+                        # carry no user_id and must remain searchable.
+                        trace_user = trace.context.get("user_id")
+                        if trace_user is not None and trace_user != user_id:
                             continue
                         if trace.content in seen:
                             continue
@@ -272,9 +304,8 @@ class MemoryManager:
                             created_at=trace.created_at,
                         )
                         results.append(mem)
+                        seen_ids.add(trace.trace_id)
                         seen.add(trace.content)
-                        if len(results) >= limit:
-                            break
                 except Exception:
                     # Never silent: swallowing here hid a total failure of the
                     # enhanced recall branch (see the HeatScore note above).

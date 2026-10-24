@@ -350,12 +350,23 @@ async def project_recall(category: str = "all", query: str = "", limit: int = 20
     if category != "all":
         facts = [f for f in facts if f["category"] == category]
 
-    # Filter by keyword
+    # Filter by keyword. Match every query token instead of the exact phrase so
+    # "canonical receipt" finds a fact that says "canonical document ... receipt".
     if query:
         q = query.lower()
-        facts = [f for f in facts if q in f["content"].lower() or q in f["category"]]
+        tokens = [token for token in q.split() if token]
+        facts = [
+            f for f in facts
+            if (tokens and all(token in f["content"].lower() for token in tokens))
+            or q in f["category"].lower()
+        ]
 
-    facts.sort(key=lambda f: f["strength"], reverse=True)
+    # Newest evidence first when strength ties; otherwise limit cut off the
+    # facts written in the current session.
+    facts.sort(
+        key=lambda f: (f["strength"], f["last_accessed"] or ""),
+        reverse=True,
+    )
     return {
         "status": "ok",
         "project": _project_name(),
