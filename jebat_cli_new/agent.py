@@ -478,6 +478,20 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+def _looks_like_tool_call(text: str) -> bool:
+    """Heuristic: does the text intend to be a tool call?
+
+    True when it contains a tool-call marker or a recognisable
+    `tool_name(...)` / `tool_name key="value"` shape, even if the parser
+    could not decode the arguments.
+    """
+    if not text:
+        return False
+    if "tool_call" in text or "arg_key" in text or "arg_value" in text:
+        return True
+    return bool(re.search(r"\b(read_file|write_file|search_files|terminal|list_dir)\b", text))
+
+
 def _parse_tool_calls(text: str) -> List[dict]:
     """Extract tool calls from Hermes XML, markdown JSON, or raw JSON lines."""
     calls: List[dict] = []
@@ -716,6 +730,22 @@ class AgentLoop:
 
             tool_calls = _parse_tool_calls(last_text)
             if not tool_calls:
+                # The model may have produced a tool call in a shape the
+                # parser does not recognise. Do NOT silently end the run:
+                # ask the model to restate the call in the documented form.
+                # Dropping it here ends the task with the raw text as the
+                # "final answer" — a half-finished audit.
+                if _looks_like_tool_call(last_text) and iteration + 1 < self.max_iterations:
+                    working_conversation = (
+                        f"{working_conversation}\n\n"
+                        f"ASSISTANT:\n{last_text}\n\n"
+                        "Your tool call was not understood. Restate it as exactly one "
+                        "of these, with no extra text:\n"
+                        '<tool_call>\n{"tool": "tool_name", "args": {"param": "value"}}\n</tool_call>\n'
+                        "or output FINAL_ANSWER: <your complete answer>"
+                    )
+                    iteration += 1
+                    continue
                 # Model finished turn without further tool calls
                 break
 
@@ -760,6 +790,25 @@ class AgentLoop:
                 "Continue with your next step using <thought> and <tool_call>, or output FINAL_ANSWER:"
             )
             iteration += 1
+
+        # A turn that ended without a FINAL_ANSWER and without any tool
+        # call leaves `last_text` holding raw model prose (often a
+        # half-written tool call). Synthesise an answer from what was done
+        # rather than returning that prose as if it were the conclusion.
+        if not final_answer and not all_tool_actions and last_text.strip():
+            wrap_prompt = (
+                f"{working_conversation}\n\n"
+                "You did not complete the task. Provide your FINAL_ANSWER now, "
+                "citing only what you verified, and state explicitly what you could "
+                "not check."
+            )
+            wrap_resp = self._call_provider(wrap_prompt, provider_name, model_name, temperature=0.2)
+            total_tokens += wrap_resp.tokens_used
+            last_text = wrap_resp.text
+            if "FINAL_ANSWER:" in last_text:
+                final_answer = last_text.split("FINAL_ANSWER:", 1)[1].strip()
+            else:
+                final_answer = last_text
 
         # Synthesis pass if loop exhausted max_iterations without explicit FINAL_ANSWER
         if (iteration >= self.max_iterations or budget_exhausted) and not final_answer and all_tool_actions:
