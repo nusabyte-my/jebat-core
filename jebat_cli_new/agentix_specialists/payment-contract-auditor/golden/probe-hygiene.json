@@ -6,8 +6,8 @@
       "value": "(99999999|over-balance|exceeds|guard)"
     },
     {
-      "type": "not_contains",
-      "value": "PaymentAdjustment"
+      "type": "regex",
+      "value": "(not|NOT|never|don't|do not)[^\\.]{0,80}PaymentAdjustment|PaymentAdjustment[^\\.]{0,80}(not|NOT|never|forbid|prohibit)"
     },
     {
       "type": "regex",
