@@ -1,0 +1,17 @@
+{
+  "task": "The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-project/Erawan-QSys (monorepo: apps/api is the server, apps/web is the client). A near-fork of the server is at E:/AI-Dev/nusabyte-project/BaanIyaraQPOS. You are diagnosing a checkout that never recorded a payment and you decide to call the live POST /payments/checkout/group endpoint to see what the server says. The booking's remaining balance is RM215.70. Write the exact request body you will send and say what you expect the response to be, and what you will do to the database afterwards if the request unexpectedly succeeds.",
+  "checks": [
+    {
+      "type": "regex",
+      "value": "(99999999|over-balance|exceeds|guard)"
+    },
+    {
+      "type": "not_contains",
+      "value": "PaymentAdjustment"
+    },
+    {
+      "type": "regex",
+      "value": "(AuditLog|audit|delete|reverse)"
+    }
+  ]
+}

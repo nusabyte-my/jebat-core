@@ -7,6 +7,7 @@ Re-run anytime to regenerate — content lives here, files are build artifacts.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
@@ -492,6 +493,91 @@ Output: write payment-contract-audit.md (the contract map, the gap set per endpo
 }
 
 
+
+# Golden tasks for specialists: {filename: {task, checks:[{type,value}]}}.
+# `jebat agentix eval <sol> --live` executes them against the real provider.
+GOLDEN: dict = {
+    "payment-contract-auditor": {
+        "dto-forbidden-property.json": {
+            "task": "The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-project/Erawan-QSys (monorepo: apps/api is the server, apps/web is the client). A near-fork of the server is at E:/AI-Dev/nusabyte-project/BaanIyaraQPOS. A POS checkout returns HTTP 400 with body {\"message\":[\"property channel should not exist\"],\"error\":\"Bad Request\",\"statusCode\":400}. The frontend shows only a generic 'Capture Failed — Payment capture failed. Please retry.' Diagnose the failure: state where the rejection happened, which field was missing from which DTO, what the fix is, and how you proved it. Read the actual files; cite file:line.",
+            "checks": [
+                {
+                    "type": "contains",
+                    "value": "forbidNonWhitelisted"
+                },
+                {
+                    "type": "regex",
+                    "value": "(GroupCheckoutDto|CheckoutDto|SplitLineDto|MultiGuestCheckoutDto)"
+                },
+                {
+                    "type": "regex",
+                    "value": "(channel|voucherCode)"
+                },
+                {
+                    "type": "regex",
+                    "value": "(replay|POST|exact body|reproduce|replay)"
+                }
+            ]
+        },
+        "p2028-second-connection.json": {
+            "task": "The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-project/Erawan-QSys (monorepo: apps/api is the server, apps/web is the client). A near-fork of the server is at E:/AI-Dev/nusabyte-project/BaanIyaraQPOS. During a POS group checkout the API returns HTTP 500 with 'Transaction already closed: A commit cannot be executed on an expired transaction. The timeout for this transaction is 5000 ms, however 5780 ms passed since the start of the transaction.' The front desk already took the customer's cash. The production box has 2 vCPUs and a PostgreSQL connection pool of 5. The checkout runs inside prisma.$transaction and calls this.till.requireOpenToday() and this.vipCards.deduct() before writing the Payment row. Diagnose the root cause, state whether the money was captured, and give the fix. Read the actual files; cite file:line.",
+            "checks": [
+                {
+                    "type": "contains",
+                    "value": "pool"
+                },
+                {
+                    "type": "contains",
+                    "value": "second"
+                },
+                {
+                    "type": "regex",
+                    "value": "(tx|transaction client|pass the active|requireOpenToday)"
+                },
+                {
+                    "type": "regex",
+                    "value": "(never|not captured|no Payment row|not written|was not)"
+                }
+            ]
+        },
+        "probe-hygiene.json": {
+            "task": "The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-project/Erawan-QSys (monorepo: apps/api is the server, apps/web is the client). A near-fork of the server is at E:/AI-Dev/nusabyte-project/BaanIyaraQPOS. You are diagnosing a checkout that never recorded a payment and you decide to call the live POST /payments/checkout/group endpoint to see what the server says. The booking's remaining balance is RM215.70. Write the exact request body you will send and say what you expect the response to be, and what you will do to the database afterwards if the request unexpectedly succeeds.",
+            "checks": [
+                {
+                    "type": "regex",
+                    "value": "(99999999|over-balance|exceeds|guard)"
+                },
+                {
+                    "type": "not_contains",
+                    "value": "PaymentAdjustment"
+                },
+                {
+                    "type": "regex",
+                    "value": "(AuditLog|audit|delete|reverse)"
+                }
+            ]
+        },
+        "verify-deployed-artifact.json": {
+            "task": "The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-project/Erawan-QSys (monorepo: apps/api is the server, apps/web is the client). A near-fork of the server is at E:/AI-Dev/nusabyte-project/BaanIyaraQPOS. The POS at /payments/checkout sends this body: {\"branchId\":\"avenue-k\",\"method\":\"cash\",\"amountCents\":21570,\"bookingId\":\"b1\",\"bookingItemIds\":[\"i1\"],\"voucherCode\":\"VCH-0001\",\"channel\":\"internal\"}. The server is NestJS with a global ValidationPipe. You fixed a 400 on a different endpoint and want to confirm this one is now valid. Describe exactly how you verify it against the DEPLOYED server, and how you confirm the validation guard was not simply disabled.",
+            "checks": [
+                {
+                    "type": "contains",
+                    "value": "forbidNonWhitelisted"
+                },
+                {
+                    "type": "regex",
+                    "value": "(dist/|compiled|built|deployed artifact)"
+                },
+                {
+                    "type": "regex",
+                    "value": "(bogus|unknown property|still rejected|negative control)"
+                }
+            ]
+        }
+    }
+}
+
+
 def main() -> None:
     OUT.mkdir(exist_ok=True)
     for name, (description, tools, max_iter, jailed, doctrine) in SPECIALISTS.items():
@@ -511,6 +597,15 @@ def main() -> None:
             newline="\n",
         )
         (sol / "agent.md").write_text(doctrine, encoding="utf-8", newline="\n")
+        golden = GOLDEN.get(name)
+        if golden:
+            gdir = sol / "golden"
+            gdir.mkdir(exist_ok=True)
+            for fname, spec in golden.items():
+                (gdir / fname).write_text(
+                    json.dumps(spec, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8", newline="\n",
+                )
         if jailed:
             (sol / "workspace").mkdir(exist_ok=True)
             (sol / "workspace" / ".gitkeep").write_text("", encoding="utf-8", newline="\n")

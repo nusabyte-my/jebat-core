@@ -1,0 +1,21 @@
+{
+  "task": "The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-project/Erawan-QSys (monorepo: apps/api is the server, apps/web is the client). A near-fork of the server is at E:/AI-Dev/nusabyte-project/BaanIyaraQPOS. A POS checkout returns HTTP 400 with body {\"message\":[\"property channel should not exist\"],\"error\":\"Bad Request\",\"statusCode\":400}. The frontend shows only a generic 'Capture Failed — Payment capture failed. Please retry.' Diagnose the failure: state where the rejection happened, which field was missing from which DTO, what the fix is, and how you proved it. Read the actual files; cite file:line.",
+  "checks": [
+    {
+      "type": "contains",
+      "value": "forbidNonWhitelisted"
+    },
+    {
+      "type": "regex",
+      "value": "(GroupCheckoutDto|CheckoutDto|SplitLineDto|MultiGuestCheckoutDto)"
+    },
+    {
+      "type": "regex",
+      "value": "(channel|voucherCode)"
+    },
+    {
+      "type": "regex",
+      "value": "(replay|POST|exact body|reproduce|replay)"
+    }
+  ]
+}

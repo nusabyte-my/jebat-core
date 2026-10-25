@@ -195,6 +195,59 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
         parsed = ast.literal_eval(candidate)
         return parsed if isinstance(parsed, dict) else None
     except (ValueError, SyntaxError):
+        pass
+    return _repair_json_quotes(candidate)
+
+
+def _repair_json_quotes(text: str) -> Optional[Dict[str, Any]]:
+    """Parse JSON whose string values contain UNESCAPED inner quotes.
+
+    A model asked to emit a shell command inside a JSON argument often
+    writes the inner quotes raw:
+
+        {"tool": "terminal", "args": {"command": "grep -n "ValidationPipe" file"}}
+
+    which is invalid JSON. Recover it by re-quoting the inner quotes: walk
+    the string, and inside a value, escape any quote that is not the value's
+    own terminator (the one followed by a structural character).
+    """
+    out: List[str] = []
+    in_string = False
+    escape = False
+    for i, ch in enumerate(text):
+        if escape:
+            out.append(ch)
+            escape = False
+            continue
+        if ch == "\\":
+            out.append(ch)
+            escape = True
+            continue
+        if ch == '"':
+            if not in_string:
+                in_string = True
+                out.append(ch)
+                continue
+            # Inside a string: this quote ends the value only if the next
+            # non-space character is a structural one.
+            j = i + 1
+            while j < len(text) and text[j] in " \t\r\n":
+                j += 1
+            nxt = text[j] if j < len(text) else ""
+            if nxt in (",", "}", "]", ":"):
+                in_string = False
+                out.append(ch)
+            else:
+                out.append('\\"')
+            continue
+        out.append(ch)
+        if not in_string and ch in "{[":
+            pass
+    candidate = "".join(out)
+    try:
+        parsed = json.loads(candidate)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
         return None
 
 
@@ -392,6 +445,20 @@ def _parse_tool_calls(text: str) -> List[dict]:
 
     # 1. Hermes <tool_call> tags
     xml_matches = re.findall(r"<tool_call>(.*?)</tool_call>", text, flags=re.DOTALL | re.IGNORECASE)
+    # A body that starts with `{` is a JSON tool call. The non-greedy regex
+    # stops at the FIRST `</`, which truncates a command containing `</` (e.g.
+    # `--include=*.ts` is fine, but a path or regex can contain it). When
+    # the body opens with `{`, take the BALANCED object from the ORIGINAL
+    # text instead of the regex capture.
+    for m in re.finditer(r"<tool_call>\s*(\{)", text, flags=re.IGNORECASE):
+        start = m.start(1)
+        parsed = _coerce_json(text[start:])
+        if parsed:
+            normalized = _normalize_tool_call(parsed)
+            if normalized:
+                calls.append(normalized)
+    if calls:
+        return calls
     for match in xml_matches:
         cleaned = match.strip()
         try:
