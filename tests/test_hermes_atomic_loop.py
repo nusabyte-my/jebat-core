@@ -149,6 +149,27 @@ def test_parse_pseudo_tool_call_multi_key_arg_block():
     assert "args" not in calls[0]["args"]
 
 
+def test_parse_name_key_value_shape():
+    # Some models emit the arguments as bare `key="value"` pairs after the
+    # tool name, with no braces. Observed live 2026-10-25.
+    xml_text = '<tool_call>list_dir path="." pattern="*.ts"</tool_call>'
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "list_dir"
+    assert calls[0]["args"]["path"] == "."
+    assert calls[0]["args"]["pattern"] == "*.ts"
+
+
+def test_parse_strips_stray_non_ascii_glyphs():
+    # rootsys/glm-5.3 sometimes injects a pair of CJK characters where a
+    # quote should be: `list_dir 之争path="..."`.
+    xml_text = '<tool_call>list_dir 之争path="E:/x"</tool_call>'
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "list_dir"
+    assert calls[0]["args"]["path"] == "E:/x"
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"

@@ -251,6 +251,39 @@ def _repair_json_quotes(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _strip_token_noise(text: str) -> str:
+    """Remove stray non-ASCII glyphs the model sometimes emits mid-token.
+
+    Observed with rootsys/glm-5.3: `list_dir 之争path="..."` — a pair of
+    CJK characters injected where a quote or colon should be. They carry no
+    meaning for a tool call, so drop them.
+    """
+    return "".join(ch for ch in text if ord(ch) < 128 or ch in "\u2018\u2019\u201c\u201d")
+
+
+def _parse_name_key_pairs(text: str) -> Optional[Dict[str, Any]]:
+    """Parse the `name key="value" key2="value2"` shape.
+
+    Some models emit the arguments as a bare sequence of `key="value"`
+    pairs after the tool name, with no braces:
+        list_dir path="." pattern="*.ts"
+    """
+    pairs: Dict[str, Any] = {}
+    for m in re.finditer(
+        r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(".*?"|\'.*?\'|\{.*?\}|\[[^\]]*\]|[-0-9.]+|[A-Za-z_][A-Za-z0-9_]*)',
+        text, flags=re.DOTALL,
+    ):
+        key, raw = m.group(1), m.group(2)
+        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'":
+            pairs[key] = raw[1:-1]
+        else:
+            try:
+                pairs[key] = json.loads(raw)
+            except json.JSONDecodeError:
+                pairs[key] = raw
+    return pairs or None
+
+
 def _parse_arg_key_pairs(block: str) -> Dict[str, Any]:
     """Extract every `"key": value` pair from an `<arg_key>` block.
 
@@ -312,6 +345,7 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
     text = re.sub(
         r"</?(?!arg_key\b|arg_value\b)[A-Za-z_][A-Za-z0-9_]*>", " ", body
     ).strip()
+    text = _strip_token_noise(text)
     if not text or text.startswith("{"):
         return None
 
@@ -406,6 +440,13 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
                 except json.JSONDecodeError:
                     args = {"input": _unquote(inner)}
         return {"tool": name, "args": args}
+
+    # ── Shape E2: tool_name key="value" key2="value2"
+    m1 = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s+(.*)$", text, flags=re.DOTALL)
+    if m1:
+        pairs = _parse_name_key_pairs(m1.group(2))
+        if pairs:
+            return {"tool": m1.group(1), "args": pairs}
 
     # ── Shape E: tool_name followed by a JSON object (possibly on the next
     # line), e.g. `terminal\n{"args": "pwd; ls -la"}`. The object's "args"
