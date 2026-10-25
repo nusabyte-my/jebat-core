@@ -196,6 +196,22 @@ def test_parse_json_body_with_escaped_backslash():
     assert calls[0]["args"]["pattern"] == "this\\.prisma\\."
 
 
+def test_placeholder_answer_is_rejected():
+    # The retry prompt offers `FINAL_ANSWER: <your complete answer>` as the
+    # documented form. A model that copies the placeholder literally must
+    # not be accepted as the run's answer — the run then ends with it.
+    from jebat_cli_new.agent import _is_placeholder_answer
+
+    assert _is_placeholder_answer("<your complete answer>")
+    assert _is_placeholder_answer("<your answer>")
+    assert _is_placeholder_answer("<YOUR COMPLETE ANSWER>")
+    assert _is_placeholder_answer("") is True
+    assert _is_placeholder_answer(None) is True
+    # A real answer is not a placeholder.
+    assert not _is_placeholder_answer("The DTO is CheckoutDto")
+    assert not _is_placeholder_answer("FINAL_ANSWER")
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"

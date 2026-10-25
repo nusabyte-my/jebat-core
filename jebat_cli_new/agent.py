@@ -511,6 +511,34 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+_PLACEHOLDER_ANSWERS = {
+    "<your complete answer>",
+    "<your answer>",
+    "<answer>",
+    "<complete answer>",
+    "<your final answer>",
+    "n/a",
+    "none",
+    "todo",
+}
+
+
+def _is_placeholder_answer(text: Optional[str]) -> bool:
+    """True when the model echoed a template placeholder instead of answering.
+
+    The retry prompt offers `FINAL_ANSWER: <your complete answer>` as the
+    documented form. A model that copies the placeholder literally produces a
+    22-character "answer" that is not one — and the run then ends with it.
+    """
+    if not text:
+        return True
+    stripped = text.strip().strip("`").strip()
+    if stripped.lower() in _PLACEHOLDER_ANSWERS:
+        return True
+    # A bare angle-bracket placeholder, e.g. "<your complete answer>".
+    return bool(re.fullmatch(r"<[^>]{0,60}>", stripped))
+
+
 def _looks_like_tool_call(text: str) -> bool:
     """Heuristic: does the text intend to be a tool call?
 
@@ -857,7 +885,8 @@ class AgentLoop:
             total_tokens += wrap_resp.tokens_used
             last_text = wrap_resp.text
             if "FINAL_ANSWER:" in last_text:
-                final_answer = last_text.split("FINAL_ANSWER:", 1)[1].strip()
+                candidate = last_text.split("FINAL_ANSWER:", 1)[1].strip()
+                final_answer = None if _is_placeholder_answer(candidate) else candidate
             else:
                 final_answer = last_text
 
@@ -871,7 +900,8 @@ class AgentLoop:
             total_tokens += wrap_resp.tokens_used
             last_text = wrap_resp.text
             if "FINAL_ANSWER:" in last_text:
-                final_answer = last_text.split("FINAL_ANSWER:", 1)[1].strip()
+                candidate = last_text.split("FINAL_ANSWER:", 1)[1].strip()
+                final_answer = None if _is_placeholder_answer(candidate) else candidate
             else:
                 final_answer = last_text
 
