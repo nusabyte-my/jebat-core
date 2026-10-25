@@ -122,9 +122,24 @@ def _normalize_tool_call(obj: Any) -> Optional[Dict[str, Any]]:
 
 
 def _unquote(value: str) -> str:
+    """Strip surrounding quotes, a trailing `}`, and trailing emoji/decorations.
+
+    A mangled value can arrive as `"pwd && ls -la"}🏁` — quoted, with a
+    leftover closing brace and a trailing emoji. Take the quoted span when
+    there is one, then drop a trailing brace.
+    """
     v = value.strip()
-    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
-        return v[1:-1]
+    if len(v) >= 2 and v[0] == '"' and v[-1] != '"':
+        # Quoted span that runs into trailing junk: close it at the last
+        # quote inside the string.
+        end = v.rfind('"')
+        if end > 0:
+            v = v[1:end]
+    elif len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        v = v[1:-1]
+    v = v.rstrip()
+    if v.endswith("}"):
+        v = v[:-1].rstrip()
     return v
 
 
@@ -183,6 +198,20 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _split_key_value(value: str) -> tuple:
+    """Split a mangled `key: payload` / `key": payload` string.
+
+    Models emit the key and the payload in one blob when the XML is
+    broken, e.g. `args": "pwd && ls -la"}`. Returns (key, payload) with the
+    key normalised (quotes and a trailing colon removed); the key is None
+    when the value carries no key prefix.
+    """
+    m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*[\"']?\s*:\s*(.*)$", value, flags=re.DOTALL)
+    if not m:
+        return None, value
+    return m.group(1), m.group(2)
+
+
 def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
     # Strip stray XML close/open tags the model may leave inside the body
     # (e.g. a trailing `</arg_value>` with no matching open).
@@ -210,8 +239,12 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
             else:
                 args = {key: _unquote(_strip_trailing_brace(value))}
         elif value:
-            parsed = _coerce_json(value)
-            args = parsed if parsed is not None else {"input": _unquote(_strip_trailing_brace(value))}
+            vkey, vpayload = _split_key_value(value)
+            parsed = _coerce_json(vpayload)
+            if parsed is not None:
+                args = parsed
+            else:
+                args = {"input": _unquote(_strip_trailing_brace(vpayload))}
         return {"tool": name, "args": args}
 
     # ── Shape B: tool_name<arg_key>KEY<arg_value>VALUE</arg_value>
@@ -232,17 +265,14 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
             else:
                 args = {key: _unquote(_strip_trailing_brace(value))}
         elif value:
-            km = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*[\"']?\s*:\s*(.*)$",
-                          value, flags=re.DOTALL)
-            if km and km.group(1) != "args":
-                parsed = _coerce_json(km.group(2))
-                if parsed is not None:
-                    args = parsed
-                else:
-                    args = {km.group(1): _unquote(_strip_trailing_brace(km.group(2)))}
+            vkey, vpayload = _split_key_value(value)
+            parsed = _coerce_json(vpayload)
+            if parsed is not None:
+                args = parsed
+            elif vkey and vkey != "args":
+                args = {vkey: _unquote(_strip_trailing_brace(vpayload))}
             else:
-                parsed = _coerce_json(value)
-                args = parsed if parsed is not None else {"input": _unquote(_strip_trailing_brace(value))}
+                args = {"input": _unquote(_strip_trailing_brace(vpayload))}
         return {"tool": name, "args": args}
 
     # ── Shape C: tool_name(args: {..}) / tool_name({..}) / tool_name("v")
