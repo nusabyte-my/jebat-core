@@ -795,7 +795,10 @@ class AgentLoop:
         # call leaves `last_text` holding raw model prose (often a
         # half-written tool call). Synthesise an answer from what was done
         # rather than returning that prose as if it were the conclusion.
-        if not final_answer and not all_tool_actions and last_text.strip():
+        if (not final_answer and not all_tool_actions and last_text.strip()
+                # A provider error is not an unfinished task — it is a
+                # failure. Let it propagate so the caller reports it.
+                and not last_text.startswith("[JEBAT provider error:")):
             wrap_prompt = (
                 f"{working_conversation}\n\n"
                 "You did not complete the task. Provide your FINAL_ANSWER now, "
