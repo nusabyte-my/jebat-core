@@ -129,7 +129,6 @@ def _unquote(value: str) -> str:
 
 
 def _strip_trailing_brace(value: str) -> str:
-    """Drop a stray trailing `}` left over from a mangled value."""
     v = value.rstrip()
     if v.endswith("}"):
         v = v[:-1].rstrip()
@@ -137,7 +136,6 @@ def _strip_trailing_brace(value: str) -> str:
 
 
 def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
-    """Parse a JSON object, tolerating single-quoted keys (Python-style)."""
     text = text.strip()
     if not text:
         return None
@@ -145,12 +143,38 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
     if start < 0:
         return None
     candidate = text[start:]
+    # json.loads rejects trailing data, and a model may leave a stray
+    # `</arg_value>` (or any other text) after the closing brace. Take the
+    # BALANCED object only.
+    depth = 0
+    end = -1
+    in_str = False
+    escape = False
+    for i, ch in enumerate(candidate):
+        if in_str:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    if end > 0:
+        candidate = candidate[:end]
     try:
         parsed = json.loads(candidate)
         return parsed if isinstance(parsed, dict) else None
     except json.JSONDecodeError:
         pass
-    # Retry as a Python literal: {'command': "ls"}
     try:
         import ast
         parsed = ast.literal_eval(candidate)
@@ -159,12 +183,12 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
-    return _coerce_json(text)
-
-
 def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
-    text = body.strip()
+    # Strip stray XML close/open tags the model may leave inside the body
+    # (e.g. a trailing `</arg_value>` with no matching open).
+    text = re.sub(
+        r"</?(?!arg_key\b|arg_value\b)[A-Za-z_][A-Za-z0-9_]*>", " ", body
+    ).strip()
     if not text or text.startswith("{"):
         return None
 
@@ -243,31 +267,34 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
                     args = {"input": _unquote(inner)}
         return {"tool": name, "args": args}
 
-    # ── Shape D: tool_name {..}
-    m2 = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(\{.*\})\s*$", text, flags=re.DOTALL)
-    if m2:
-        parsed = _coerce_json(m2.group(2))
-        if parsed is not None:
-            return {"tool": m2.group(1), "args": parsed}
-
-    # ── Shape E: a bare tool name, optionally followed by an object.
-    m3 = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(.*)$", text, flags=re.DOTALL)
+    # ── Shape E: tool_name followed by a JSON object (possibly on the next
+    # line), e.g. `terminal\n{"args": "pwd; ls -la"}`. The object's "args"
+    # value may itself be a JSON STRING holding the real payload.
+    m3 = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(\{.*)?$", text, flags=re.DOTALL)
     if m3:
-        name, rest = m3.group(1), m3.group(2).strip()
-        parsed = _coerce_json(rest) if rest else None
-        if parsed is not None:
-            return {"tool": name, "args": parsed}
+        name = m3.group(1)
+        rest = (m3.group(2) or "").strip()
         if not rest:
+            # A bare name is still a usable call — the tool reports its own
+            # missing-argument error, which beats dropping the call entirely.
             return {"tool": name, "args": {}}
+        if rest:
+            parsed = _coerce_json(rest)
+            if parsed is not None:
+                # {"args": "pwd; ls -la"} — the args value is a command
+                # string, not a mapping. Unwrap it into the payload.
+                inner = parsed.get("args")
+                if isinstance(inner, str):
+                    nested = _coerce_json(inner)
+                    if nested is not None:
+                        return {"tool": name, "args": nested}
+                    return {"tool": name, "args": {"input": inner}}
+                if isinstance(inner, dict):
+                    return {"tool": name, "args": inner}
+                return {"tool": name, "args": parsed}
+        return None
 
     return None
-
-
-def _unquote(value: str) -> str:
-    v = value.strip()
-    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
-        return v[1:-1]
-    return v
 
 
 def _parse_tool_calls(text: str) -> List[dict]:

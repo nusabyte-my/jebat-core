@@ -116,6 +116,25 @@ def test_parse_pseudo_tool_call_python_dict_literal():
     assert calls[0]["args"]["command"] == "ls"
 
 
+def test_parse_pseudo_tool_call_args_string_shape():
+    # A third rootsys shape: the name, then a JSON object on the next line
+    # whose "args" value is a plain command STRING rather than a mapping.
+    xml_text = '<tool_call>terminal\n{"args": "pwd; ls -la"}</arg_value></tool_call>'
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "terminal"
+    assert calls[0]["args"]["input"] == "pwd; ls -la"
+
+
+def test_parse_pseudo_tool_call_trailing_xml_after_object():
+    # Stray XML close tags after the payload must not defeat the JSON read.
+    xml_text = '<tool_call>terminal\n{"args": {"command": "pwd"}}</arg_value></tool_call>'
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "terminal"
+    assert calls[0]["args"]["command"] == "pwd"
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"
