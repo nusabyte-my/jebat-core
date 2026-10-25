@@ -7,7 +7,7 @@
     },
     {
       "type": "regex",
-      "value": "(GroupCheckoutDto|CheckoutDto|SplitLineDto|MultiGuestCheckoutDto)"
+      "value": "(CheckoutDto|GroupCheckoutDto|SplitLineDto|MultiGuestCheckoutDto|SplitCheckoutDto)"
     },
     {
       "type": "regex",

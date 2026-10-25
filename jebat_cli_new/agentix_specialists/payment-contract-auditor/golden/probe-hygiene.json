@@ -7,7 +7,7 @@
     },
     {
       "type": "regex",
-      "value": "(not|NOT|never|don't|do not)[^\\.]{0,80}PaymentAdjustment|PaymentAdjustment[^\\.]{0,80}(not|NOT|never|forbid|prohibit)"
+      "value": "(not|NOT|never|NEVER|do not)[^.]{0,80}PaymentAdjustment|PaymentAdjustment[^.]{0,80}(not|NOT|never|NEVER|forbid|prohibit)"
     },
     {
       "type": "regex",
