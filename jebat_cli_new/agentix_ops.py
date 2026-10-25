@@ -87,8 +87,14 @@ def apply_checks(answer: str, checks: List[Dict[str, Any]]) -> List[Tuple[Dict[s
 
 # ── Eval ────────────────────────────────────────────────────────────
 
-def evaluate_solution(sol: Path, live: bool = False) -> Tuple[List[str], int]:
-    """Run structural checks + golden tasks. Returns (lines, failure_count)."""
+def evaluate_solution(sol: Path, live: bool = False, provider: Optional[str] = None,
+                      model: Optional[str] = None) -> Tuple[List[str], int]:
+    """Run structural checks + golden tasks. Returns (lines, failure_count).
+
+    `provider`/`model` override the manifest for the golden-task run — needed
+    when the manifest pins a provider that is unreachable on this box (a
+    default of `ollama` with no local server, for instance).
+    """
     lines: List[str] = []
     failures = 0
 
@@ -141,7 +147,8 @@ def evaluate_solution(sol: Path, live: bool = False) -> Tuple[List[str], int]:
         try:
             from jebat_cli_new.agentix import _run_solution
 
-            answer, _info = _run_solution(sol, task_spec["task"], yolo=True)
+            answer, _info = _run_solution(sol, task_spec["task"], yolo=True,
+                                         provider=provider, model=model)
         except (Exception, SystemExit) as exc:  # noqa: BLE001 — a crashing task IS a failing task
             lines.append(f"  FAIL golden/{label}: run raised {exc}")
             failures += 1

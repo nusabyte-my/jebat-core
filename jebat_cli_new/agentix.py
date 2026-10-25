@@ -720,6 +720,11 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
     evalp.add_argument("path")
     evalp.add_argument("--live", action="store_true",
                        help="execute llm-runtime golden tasks against the real provider")
+    evalp.add_argument("--provider", default=None,
+                       help="Override provider for the golden-task run (llm runtime). "
+                            "Use when the manifest pins a provider that is unreachable.")
+    evalp.add_argument("--model", default=None,
+                       help="Override model for the golden-task run (llm runtime)")
 
     export = sub.add_parser("export", help="Export a solution to another harness format")
     export.add_argument("path")
@@ -869,7 +874,12 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
         if ns.command == "eval":
             from jebat_cli_new.agentix_ops import evaluate_solution
 
-            lines, failures = evaluate_solution(Path(ns.path).resolve(), live=ns.live)
+            lines, failures = evaluate_solution(
+                Path(ns.path).resolve(),
+                live=ns.live,
+                provider=ns.provider,
+                model=ns.model,
+            )
             print("\n".join(lines))
             return 1 if failures else 0
         if ns.command == "export":
