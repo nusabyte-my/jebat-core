@@ -121,58 +121,153 @@ def _normalize_tool_call(obj: Any) -> Optional[Dict[str, Any]]:
     return {"tool": tool_name.strip(), "args": args}
 
 
+def _unquote(value: str) -> str:
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]
+    return v
+
+
+def _strip_trailing_brace(value: str) -> str:
+    """Drop a stray trailing `}` left over from a mangled value."""
+    v = value.rstrip()
+    if v.endswith("}"):
+        v = v[:-1].rstrip()
+    return v
+
+
+def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
+    """Parse a JSON object, tolerating single-quoted keys (Python-style)."""
+    text = text.strip()
+    if not text:
+        return None
+    start = text.find("{")
+    if start < 0:
+        return None
+    candidate = text[start:]
+    try:
+        parsed = json.loads(candidate)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        pass
+    # Retry as a Python literal: {'command': "ls"}
+    try:
+        import ast
+        parsed = ast.literal_eval(candidate)
+        return parsed if isinstance(parsed, dict) else None
+    except (ValueError, SyntaxError):
+        return None
+
+
+def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
+    return _coerce_json(text)
+
+
 def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
-    """Parse the `tool_name(args: {...})` pseudo-call shape.
-
-    Some models emit a call as `terminal(command, args: {"command": "ls"})`
-    instead of the documented `{"tool": "terminal", "args": {...}}` JSON.
-    The JSON parser rejects that body, and the call is then silently dropped —
-    the agent loop sees no tool calls, treats the text as the final answer and
-    stops after one turn with no work done.
-
-    Accepted shapes:
-        tool_name(args: {..})
-        tool_name({..})
-        tool_name("positional", args: {..})
-    """
     text = body.strip()
     if not text or text.startswith("{"):
         return None
-    m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)\s*$", text, flags=re.DOTALL)
-    if not m:
-        return None
-    name, inner = m.group(1), m.group(2).strip()
-    if not name:
-        return None
 
-    # The `args:` object is the payload; anything before it is positional.
-    am = re.search(r"args\s*:\s*(\{.*\})\s*$", inner, flags=re.DOTALL)
-    args: Dict[str, Any] = {}
-    if am:
-        try:
-            parsed = json.loads(am.group(1))
-            if isinstance(parsed, dict):
+    # ── Shape A: tool_name<arg_key>KEY</arg_key><arg_value>VALUE</arg_value>
+    ka = re.search(
+        r"^([A-Za-z_][A-Za-z0-9_]*)\s*<arg_key>\s*(.*?)\s*</arg_key>\s*"
+        r"(?:<arg_value>)?\s*(.*?)\s*(?:</arg_value>)?\s*$",
+        text, flags=re.DOTALL | re.IGNORECASE,
+    )
+    if ka:
+        name = ka.group(1)
+        key = ka.group(2).strip().rstrip(":").strip("'\"")
+        value = ka.group(3).strip()
+        args: Dict[str, Any] = {}
+        if key:
+            parsed = _coerce_json(value)
+            if parsed is not None:
                 args = parsed
-        except json.JSONDecodeError:
-            args = {}
-    else:
-        # `tool_name({...})` — the object is the whole payload.
-        om = re.search(r"(\{.*\})\s*$", inner, flags=re.DOTALL)
-        if om:
-            try:
-                parsed = json.loads(om.group(1))
-                if isinstance(parsed, dict):
-                    args = parsed
-            except json.JSONDecodeError:
-                return None
-        elif inner:
-            # `tool_name("value")` — map a lone positional to `input`.
-            try:
-                args = {"input": json.loads(inner)}
-            except json.JSONDecodeError:
-                args = {"input": inner}
+            else:
+                args = {key: _unquote(_strip_trailing_brace(value))}
+        elif value:
+            parsed = _coerce_json(value)
+            args = parsed if parsed is not None else {"input": _unquote(_strip_trailing_brace(value))}
+        return {"tool": name, "args": args}
 
-    return {"tool": name, "args": args}
+    # ── Shape B: tool_name<arg_key>KEY<arg_value>VALUE</arg_value>
+    kb = re.search(
+        r"^([A-Za-z_][A-Za-z0-9_]*)\s*<arg_key>\s*(.*?)\s*(?:<arg_value>)?\s*"
+        r"(.*?)\s*(?:</arg_value>)?\s*$",
+        text, flags=re.DOTALL | re.IGNORECASE,
+    )
+    if kb:
+        name = kb.group(1)
+        key = kb.group(2).strip().rstrip(":").strip("'\"")
+        value = kb.group(3).strip()
+        args = {}
+        if key:
+            parsed = _coerce_json(value)
+            if parsed is not None:
+                args = parsed
+            else:
+                args = {key: _unquote(_strip_trailing_brace(value))}
+        elif value:
+            km = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*[\"']?\s*:\s*(.*)$",
+                          value, flags=re.DOTALL)
+            if km and km.group(1) != "args":
+                parsed = _coerce_json(km.group(2))
+                if parsed is not None:
+                    args = parsed
+                else:
+                    args = {km.group(1): _unquote(_strip_trailing_brace(km.group(2)))}
+            else:
+                parsed = _coerce_json(value)
+                args = parsed if parsed is not None else {"input": _unquote(_strip_trailing_brace(value))}
+        return {"tool": name, "args": args}
+
+    # ── Shape C: tool_name(args: {..}) / tool_name({..}) / tool_name("v")
+    m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)\s*$", text, flags=re.DOTALL)
+    if m:
+        name, inner = m.group(1), m.group(2).strip()
+        if not name:
+            return None
+        am = re.search(r"args\s*:\s*(\{.*\})\s*$", inner, flags=re.DOTALL)
+        args = {}
+        if am:
+            parsed = _coerce_json(am.group(1))
+            args = parsed if parsed is not None else {}
+        else:
+            parsed = _coerce_json(inner)
+            if parsed is not None:
+                args = parsed
+            elif inner:
+                try:
+                    args = {"input": json.loads(inner)}
+                except json.JSONDecodeError:
+                    args = {"input": _unquote(inner)}
+        return {"tool": name, "args": args}
+
+    # ── Shape D: tool_name {..}
+    m2 = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(\{.*\})\s*$", text, flags=re.DOTALL)
+    if m2:
+        parsed = _coerce_json(m2.group(2))
+        if parsed is not None:
+            return {"tool": m2.group(1), "args": parsed}
+
+    # ── Shape E: a bare tool name, optionally followed by an object.
+    m3 = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(.*)$", text, flags=re.DOTALL)
+    if m3:
+        name, rest = m3.group(1), m3.group(2).strip()
+        parsed = _coerce_json(rest) if rest else None
+        if parsed is not None:
+            return {"tool": name, "args": parsed}
+        if not rest:
+            return {"tool": name, "args": {}}
+
+    return None
+
+
+def _unquote(value: str) -> str:
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]
+    return v
 
 
 def _parse_tool_calls(text: str) -> List[dict]:

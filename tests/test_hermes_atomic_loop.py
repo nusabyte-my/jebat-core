@@ -76,6 +76,46 @@ def test_parse_pseudo_tool_call_positional_string():
     assert calls[0]["args"]["input"] == "main.py"
 
 
+def test_parse_pseudo_tool_call_arg_key_shape():
+    # rootsys/glm-5.3 also emits a malformed XML variant with an <arg_key>
+    # tag and NO closing </arg_key>. Observed live 2026-10-25.
+    xml_text = """
+    <tool_call>terminal<arg_key>args": {"command": "pwd && ls -la"}</arg_value></tool_call>
+    """
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "terminal"
+    assert calls[0]["args"]["command"] == "pwd && ls -la"
+
+
+def test_parse_pseudo_tool_call_arg_key_with_closing_tag():
+    xml_text = """
+    <tool_call>terminal<arg_key>command</arg_key><arg_value>ls</arg_value></tool_call>
+    """
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "terminal"
+    assert calls[0]["args"]["command"] == "ls"
+
+
+def test_parse_pseudo_tool_call_bare_name():
+    # A bare name is still a usable call — the tool reports its own
+    # missing-argument error, which beats dropping the call entirely.
+    xml_text = "<tool_call>list_dir</tool_call>"
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "list_dir"
+    assert calls[0]["args"] == {}
+
+
+def test_parse_pseudo_tool_call_python_dict_literal():
+    xml_text = """<tool_call>shell_exec {'command': "ls"}</tool_call>"""
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "shell_exec"
+    assert calls[0]["args"]["command"] == "ls"
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"
