@@ -701,6 +701,12 @@ class AgentLoop:
             _notify_progress(frac, f"iteration {iteration + 1}/{max_iters}: {stage}")
 
         budget_exhausted = False
+        # A model can fall into a degenerate loop and emit the same garbled
+        # text over and over (observed with rootsys/glm-5.3 emitting a
+        # repeated import line). Detect a repeated response and stop —
+        # the cost is bounded and the run still synthesises an answer.
+        recent_texts: List[str] = []
+        STALL_LIMIT = 3
         while iteration < self.max_iterations:
             # Hard budget gates (agentix): cumulative tokens and wall clock.
             if self.budget_tokens is not None and total_tokens >= self.budget_tokens:
@@ -727,6 +733,15 @@ class AgentLoop:
             thought = _extract_thought(last_text)
             if thought and self.verbose:
                 TerminalUX.thought_card(thought)
+
+            # Stall detection: the same text three times in a row means the
+            # model is not making progress.
+            recent_texts.append(last_text.strip()[:2000])
+            if len(recent_texts) > STALL_LIMIT:
+                recent_texts.pop(0)
+            if len(recent_texts) >= STALL_LIMIT and len(set(recent_texts)) == 1:
+                budget_exhausted = True
+                break
 
             tool_calls = _parse_tool_calls(last_text)
             if not tool_calls:
