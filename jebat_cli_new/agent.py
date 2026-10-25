@@ -198,6 +198,47 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _parse_arg_key_pairs(block: str) -> Dict[str, Any]:
+    """Extract every `"key": value` pair from an `<arg_key>` block.
+
+    The block can hold SEVERAL keys, e.g.
+
+        command": "find main.ts", "args": {}
+
+    which is a mangled JSON object missing its opening brace. Rebuild it as
+    a real object and parse it.
+    """
+    text = block.strip()
+    if not text:
+        return {}
+    # Close the dangling brace if the block ends with one.
+    candidate = text
+    if candidate.count("{") > candidate.count("}"):
+        candidate += "}"
+    # Prepend the missing opening brace when the block starts mid-object.
+    if candidate.lstrip().startswith('"') and "{" not in candidate.split(":")[0]:
+        candidate = "{" + candidate
+    parsed = _coerce_json(candidate)
+    if parsed:
+        return parsed
+    # Fall back to a regex sweep for "key": value pairs.
+    out: Dict[str, Any] = {}
+    # The FIRST key may be missing its opening quote (the model wrote
+    # `command": "..."` rather than `"command": "..."`), so match the key
+    # with an optional leading quote.
+    for m in re.finditer(r'"?([A-Za-z_][A-Za-z0-9_]*)"?\s*:\s*(".*?"|\{.*?\}|\[[^\]]*\]|[-0-9.]+|[A-Za-z_][A-Za-z0-9_]*)',
+                         text, flags=re.DOTALL):
+        key, raw = m.group(1), m.group(2)
+        if raw.startswith('"') and raw.endswith('"'):
+            out[key] = raw[1:-1]
+        else:
+            try:
+                out[key] = json.loads(raw)
+            except json.JSONDecodeError:
+                out[key] = raw
+    return out
+
+
 def _split_key_value(value: str) -> tuple:
     """Split a mangled `key: payload` / `key": payload` string.
 
@@ -244,7 +285,8 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
             if parsed is not None:
                 args = parsed
             else:
-                args = {"input": _unquote(_strip_trailing_brace(vpayload))}
+                pairs = _parse_arg_key_pairs(vpayload)
+                args = pairs if pairs else {"input": _unquote(_strip_trailing_brace(vpayload))}
         return {"tool": name, "args": args}
 
     # ── Shape B: tool_name<arg_key>KEY<arg_value>VALUE</arg_value>
@@ -265,14 +307,29 @@ def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
             else:
                 args = {key: _unquote(_strip_trailing_brace(value))}
         elif value:
-            vkey, vpayload = _split_key_value(value)
-            parsed = _coerce_json(vpayload)
-            if parsed is not None:
-                args = parsed
-            elif vkey and vkey != "args":
-                args = {vkey: _unquote(_strip_trailing_brace(vpayload))}
+            # The block may hold SEVERAL `"key": value` pairs, e.g.
+            # `command": "find main.ts", "args": {}` — a mangled JSON object
+            # missing its opening brace. Parse the WHOLE value as pairs
+            # first; only fall back to a single key/payload split.
+            pairs = _parse_arg_key_pairs(value)
+            if len(pairs) > 1 or (pairs and "args" not in pairs):
+                # A nested "args" key alongside real parameters is noise —
+                # the tool wants the parameters at the top level.
+                # A nested "args" key alongside real parameters is noise —
+                # the tool wants the parameters at the top level.
+                if isinstance(pairs.get("args"), dict):
+                    args = {k: v for k, v in pairs.items() if k != "args"}
+                else:
+                    args = pairs
             else:
-                args = {"input": _unquote(_strip_trailing_brace(vpayload))}
+                vkey, vpayload = _split_key_value(value)
+                parsed = _coerce_json(vpayload)
+                if parsed is not None:
+                    args = parsed
+                elif vkey and vkey != "args":
+                    args = {vkey: _unquote(_strip_trailing_brace(vpayload))}
+                else:
+                    args = {"input": _unquote(_strip_trailing_brace(vpayload))}
         return {"tool": name, "args": args}
 
     # ── Shape C: tool_name(args: {..}) / tool_name({..}) / tool_name("v")

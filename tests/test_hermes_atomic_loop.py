@@ -135,6 +135,20 @@ def test_parse_pseudo_tool_call_trailing_xml_after_object():
     assert calls[0]["args"]["command"] == "pwd"
 
 
+def test_parse_pseudo_tool_call_multi_key_arg_block():
+    # The <arg_key> block can hold SEVERAL pairs, mangled into a JSON
+    # object missing its opening brace, and the FIRST key can be missing
+    # its opening quote. Observed live 2026-10-25.
+    xml_text = (
+        '<tool_call>terminal<arg_key>command": "find main.ts", "args": {}}</tool_call>'
+    )
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "terminal"
+    assert calls[0]["args"]["command"] == "find main.ts"
+    assert "args" not in calls[0]["args"]
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"
