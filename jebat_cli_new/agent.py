@@ -161,18 +161,27 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
     # json.loads rejects trailing data, and a model may leave a stray
     # `</arg_value>` (or any other text) after the closing brace. Take the
     # BALANCED object only.
+    # Find the balanced closing brace. The scanner must handle a string
+    # containing an ESCAPED backslash (`"this\\.prisma\\."`), where the
+    # escape sequence is `\\` + `.` — a naive "backslash escapes the next
+    # char" walker mis-tracks the string end and never finds the close.
     depth = 0
     end = -1
     in_str = False
-    escape = False
-    for i, ch in enumerate(candidate):
+    i = 0
+    n = len(candidate)
+    while i < n:
+        ch = candidate[i]
         if in_str:
-            if escape:
-                escape = False
-            elif ch == "\\":
-                escape = True
-            elif ch == '"':
+            if ch == "\\" and i + 1 < n and candidate[i + 1] == "\\":
+                i += 2          # an escaped backslash: skip both
+                continue
+            if ch == "\\":
+                i += 2          # any other escape: skip the escaped char
+                continue
+            if ch == '"':
                 in_str = False
+            i += 1
             continue
         if ch == '"':
             in_str = True
@@ -183,13 +192,37 @@ def _coerce_json(text: str) -> Optional[Dict[str, Any]]:
             if depth == 0:
                 end = i + 1
                 break
-    if end > 0:
-        candidate = candidate[:end]
-    try:
-        parsed = json.loads(candidate)
-        return parsed if isinstance(parsed, dict) else None
-    except json.JSONDecodeError:
-        pass
+        i += 1
+    # The model sometimes drops ONE closing brace — the outer object of
+    # {"tool": ..., "args": {...}}. Try the balanced candidate, then the
+    # balanced candidate plus one or two closing braces.
+    for extra in (0, 1, 2):
+        cand = candidate if end <= 0 else candidate[:end]
+        if extra:
+            cand = cand + ("}" * extra)
+        try:
+            parsed = json.loads(cand)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    # Balanced scan found an INNER close only (depth never reached 0 because
+    # the outer brace is missing). Take the whole tail and trim trailing
+    # junk instead.
+    cand = candidate
+    for extra in (1, 2):
+        trimmed = cand.rstrip()
+        # Drop trailing non-JSON text (e.g. "</arg_value>") and close the
+        # object.
+        cut = trimmed.rfind("}")
+        if cut > 0:
+            trimmed = trimmed[:cut + 1]
+        try:
+            parsed = json.loads(trimmed + ("}" * extra))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
     try:
         import ast
         parsed = ast.literal_eval(candidate)

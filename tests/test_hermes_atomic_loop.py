@@ -170,6 +170,32 @@ def test_parse_strips_stray_non_ascii_glyphs():
     assert calls[0]["args"]["path"] == "E:/x"
 
 
+def test_parse_json_body_missing_outer_brace():
+    # The model sometimes drops ONE closing brace — the outer object of
+    # {"tool": ..., "args": {...}}. Observed live 2026-10-25.
+    xml_text = (
+        '<tool_call>\n{"tool": "search_files", "args": {"path": "E:/x", "limit": 60}\n'
+        "</arg_value></tool_call>"
+    )
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "search_files"
+    assert calls[0]["args"]["limit"] == 60
+
+
+def test_parse_json_body_with_escaped_backslash():
+    # A regex argument like "this\\.prisma\\." contains an escaped
+    # backslash, which a naive string scanner mis-tracks.
+    xml_text = (
+        '<tool_call>\n{"tool": "search_files", "args": {"pattern": "this\\\\.prisma\\\\."}}\n'
+        "</arg_value></tool_call>"
+    )
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "search_files"
+    assert calls[0]["args"]["pattern"] == "this\\.prisma\\."
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"
