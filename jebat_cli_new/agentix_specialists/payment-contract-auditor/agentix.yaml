@@ -1,0 +1,23 @@
+name: payment-contract-auditor
+version: 1.0.0
+description: >
+  Audits a POS/payment client's request bodies against the server DTOs and the ValidationPipe config, proving every field the client sends is declared (forbidNonWhitelisted rejects the WHOLE body otherwise), and checks Prisma transaction paths for a second pooled connection inside an interactive transaction (P2028 money-never-captured). Use for payment capture failures, DTO/validation 400s, 'property X should not exist', P2028, transaction already closed, or checkout that never records a sale.
+template: reflex
+runtime: llm
+provider:
+model:
+max_iterations: 16
+llm_tools:
+  - read_file
+  - search_files
+  - terminal
+  - write_file
+  - list_dir
+llm_workspace:             # none: operates on the host repo/target
+budget:
+  tokens: 150000
+  wall_clock: 30m
+deploy:
+  allow:
+    - local
+    - mcp
