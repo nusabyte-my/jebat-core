@@ -121,6 +121,60 @@ def _normalize_tool_call(obj: Any) -> Optional[Dict[str, Any]]:
     return {"tool": tool_name.strip(), "args": args}
 
 
+def _parse_pseudo_tool_call(body: str) -> Optional[Dict[str, Any]]:
+    """Parse the `tool_name(args: {...})` pseudo-call shape.
+
+    Some models emit a call as `terminal(command, args: {"command": "ls"})`
+    instead of the documented `{"tool": "terminal", "args": {...}}` JSON.
+    The JSON parser rejects that body, and the call is then silently dropped —
+    the agent loop sees no tool calls, treats the text as the final answer and
+    stops after one turn with no work done.
+
+    Accepted shapes:
+        tool_name(args: {..})
+        tool_name({..})
+        tool_name("positional", args: {..})
+    """
+    text = body.strip()
+    if not text or text.startswith("{"):
+        return None
+    m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)\s*$", text, flags=re.DOTALL)
+    if not m:
+        return None
+    name, inner = m.group(1), m.group(2).strip()
+    if not name:
+        return None
+
+    # The `args:` object is the payload; anything before it is positional.
+    am = re.search(r"args\s*:\s*(\{.*\})\s*$", inner, flags=re.DOTALL)
+    args: Dict[str, Any] = {}
+    if am:
+        try:
+            parsed = json.loads(am.group(1))
+            if isinstance(parsed, dict):
+                args = parsed
+        except json.JSONDecodeError:
+            args = {}
+    else:
+        # `tool_name({...})` — the object is the whole payload.
+        om = re.search(r"(\{.*\})\s*$", inner, flags=re.DOTALL)
+        if om:
+            try:
+                parsed = json.loads(om.group(1))
+                if isinstance(parsed, dict):
+                    args = parsed
+            except json.JSONDecodeError:
+                return None
+        elif inner:
+            # `tool_name("value")` — map a lone positional to `input`.
+            try:
+                args = {"input": json.loads(inner)}
+            except json.JSONDecodeError:
+                args = {"input": inner}
+
+    return {"tool": name, "args": args}
+
+
 def _parse_tool_calls(text: str) -> List[dict]:
     """Extract tool calls from Hermes XML, markdown JSON, or raw JSON lines."""
     calls: List[dict] = []
@@ -137,7 +191,11 @@ def _parse_tool_calls(text: str) -> List[dict]:
             if normalized:
                 calls.append(normalized)
         except json.JSONDecodeError:
-            pass
+            # Not JSON — the model may have used the `tool_name(args: {...})`
+            # pseudo-call shape. Parse it rather than dropping the call.
+            pseudo = _parse_pseudo_tool_call(cleaned)
+            if pseudo:
+                calls.append(pseudo)
 
     if calls:
         return calls

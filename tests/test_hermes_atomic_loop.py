@@ -34,6 +34,48 @@ def test_parse_openai_hermes_style_keys():
     assert calls[0]["args"]["limit"] == 10
 
 
+def test_parse_pseudo_tool_call_shape():
+    # Some models emit `tool_name(args: {...})` instead of the documented
+    # `{"tool": ..., "args": {...}}` JSON. The JSON parser rejects that body,
+    # so the call used to be dropped silently — the agent loop then saw no
+    # tool calls, treated the text as the final answer and stopped after one
+    # turn with no work done. Seen live with rootsys/glm-5.3 on 2026-10-25.
+    xml_text = """
+    <thought>Find the repo first.</thought>
+    <tool_call>
+    terminal(command, args: {"command": "pwd && ls -la"})
+    </tool_call>
+    """
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "terminal"
+    assert calls[0]["args"]["command"] == "pwd && ls -la"
+
+
+def test_parse_pseudo_tool_call_object_only():
+    xml_text = """
+    <tool_call>
+    list_dir({"path": "."})
+    </tool_call>
+    """
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "list_dir"
+    assert calls[0]["args"]["path"] == "."
+
+
+def test_parse_pseudo_tool_call_positional_string():
+    xml_text = """
+    <tool_call>
+    read_file("main.py")
+    </tool_call>
+    """
+    calls = _parse_tool_calls(xml_text)
+    assert len(calls) == 1
+    assert calls[0]["tool"] == "read_file"
+    assert calls[0]["args"]["input"] == "main.py"
+
+
 def test_extract_thought():
     text = "<thought>Thinking carefully about the problem</thought> Done."
     assert _extract_thought(text) == "Thinking carefully about the problem"
