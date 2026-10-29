@@ -1,0 +1,17 @@
+{
+  "run_id": "20261029-parallel-smoke",
+  "trace_id": "local-recorded-smoke",
+  "provider": "mock-provider",
+  "model": "qwen2.5-coder:7b",
+  "agents": 3,
+  "status": "completed",
+  "recording": "Local Agentix smoke run with a deterministic mock provider; no production target was audited.",
+  "tasks": ["inspect API", "inspect UI", "inspect database"],
+  "workers": [
+    {"worker": 1, "task": "inspect API", "answer": "API complete", "tokens": 10, "status": "completed"},
+    {"worker": 2, "task": "inspect UI", "answer": "UI complete", "tokens": 10, "status": "completed"},
+    {"worker": 3, "task": "inspect database", "answer": "database complete", "tokens": 10, "status": "completed"}
+  ],
+  "tokens": 30,
+  "tool_calls": 0
+}

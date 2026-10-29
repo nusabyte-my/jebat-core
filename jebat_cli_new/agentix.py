@@ -743,6 +743,10 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
     run.add_argument("--verbose", action="store_true", help="Show thought + tool cards")
     run.add_argument("--resume", default=None, metavar="RUN_ID",
                      help="continue a recorded run's conversation (llm runtime; list ids: jebat agentix runs)")
+    run.add_argument("--parallel", type=int, choices=[2, 3], metavar="N",
+                     help="automatically decompose and run N subagents in parallel (same provider/model)")
+    run.add_argument("--write", action="store_true", help="Allow parallel writes in isolated Git worktrees")
+    run.add_argument("--deadline", type=float, metavar="SECONDS", help="Fail the parallel operation after this duration")
 
     ask = sub.add_parser("ask", help="Type only an objective — routes to the best deployed solution")
     ask.add_argument("objective", nargs="+", help="Objective text; matched against solution names + descriptions")
@@ -909,11 +913,23 @@ def run_agentix_command(tokens: Sequence[str]) -> int:
                 print("agentix: empty task (stdin was read because task was '-')", file=sys.stderr)
                 return 1
             sol = _resolve_solution(ns.solution)
-            result, info = _run_solution(
-                sol, task, yolo=ns.yolo, provider=ns.provider,
-                model=ns.model, verbose=ns.verbose, max_iterations=ns.iterations,
-                resume_from=ns.resume,
-            )
+            if ns.parallel and ns.resume:
+                print("agentix: --parallel cannot be combined with --resume", file=sys.stderr)
+                return 1
+            if ns.parallel:
+                from jebat_cli_new.agentix_parallel import run_parallel
+
+                result, info = run_parallel(
+                    sol, task, agents=ns.parallel, yolo=ns.yolo, provider=ns.provider,
+                    model=ns.model, verbose=ns.verbose, max_iterations=ns.iterations,
+                    write=ns.write, deadline_seconds=ns.deadline,
+                )
+            else:
+                result, info = _run_solution(
+                    sol, task, yolo=ns.yolo, provider=ns.provider,
+                    model=ns.model, verbose=ns.verbose, max_iterations=ns.iterations,
+                    resume_from=ns.resume,
+                )
             print(result or "(no answer)")
             if info:
                 print(

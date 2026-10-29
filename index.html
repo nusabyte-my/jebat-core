@@ -5,19 +5,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JEBAT — Keep Command | Sovereign AI Command Layer</title>
-<meta name="description" content="Run private AI agents with your choice of models, persistent memory, MCP tools and governed execution. Self-host JEBAT or deploy it with NusaByte." />
+<title>JEBAT — One Command. Every Thread of Work.</title>
+<meta name="description" content="Split independent work across governed agents, preserve project evidence, and connect your tools through MCP. JEBAT runs on your infrastructure with your chosen models." />
 <meta name="theme-color" content="#F7F4EE" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="JEBAT" />
-<meta property="og:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
+<meta property="og:title" content="JEBAT — One Command. Every Thread of Work." />
 <meta property="og:description" content="Run agents on your stack. Keep project-scoped memory, inspect learning evidence, and connect tools through MCP with explicit safety tiers." />
 <meta property="og:url" content="https://jebat.online/" />
-<meta property="og:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
+<meta property="og:image" content="https://jebat.online/assets/jebat-orchestration-og.png" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="JEBAT — Keep Command | Sovereign AI Command Layer" />
+<meta name="twitter:title" content="JEBAT — One Command. Every Thread of Work." />
 <meta name="twitter:description" content="Run agents on your stack. Project-scoped memory, evidence-backed learning advice, and MCP tools with explicit safety tiers." />
-<meta name="twitter:image" content="https://jebat.online/assets/Jebat-Transparent.png" />
+<meta name="twitter:image" content="https://jebat.online/assets/jebat-orchestration-og.png" />
 <link rel="manifest" href="assets/manifest-creative.json?v=a332ecb3" />
 <script type="application/ld+json">
 {
@@ -28,7 +28,7 @@
       "name": "JEBAT",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Linux, Windows, macOS",
-      "softwareVersion": "8.4.0",
+      "softwareVersion": "8.5.0",
       "description": "Sovereign AI command layer for model orchestration, persistent memory, MCP tool integration, and enterprise governance.",
       "url": "https://jebat.online",
       "license": "https://opensource.org/licenses/MIT",
@@ -44,6 +44,9 @@
 <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="assets/jebat-creative-tokens.css?v=8c3dacda" />
 <link rel="stylesheet" href="assets/jebat-landing.css?v=69b77b9d" />
+<link rel="stylesheet" href="assets/jebat-rehaul.css?v=20261029" />
+<link rel="stylesheet" href="assets/jebat-immersive.css?v=20261030" />
+<link rel="stylesheet" href="assets/jebat-updates.css?v=20261030" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -51,18 +54,18 @@
 
 <nav class="nav" aria-label="Primary navigation">
   <div class="wrap nav-in">
-    <a class="brand" href="#">
+    <a class="brand" href="#command">
       <span class="brand-logo"><picture><source type="image/webp" srcset="assets/Jebat-Transparent-ink.webp"><img src="assets/Jebat-Transparent-ink.png" alt="JEBAT logo" width="88" height="59"></picture></span>
-      <small>v8.4.0</small>
+      <small>v8.5.0</small>
     </a>
     <ul class="nav-links">
-      <li><a href="#platform">Platform</a></li>
-      <li><a href="#workbench">Workbench</a></li>
+      <li><a href="#proof">Proof</a></li>
+      <li><a href="#workbench">Agentix</a></li>
+      <li><a href="http://127.0.0.1:8787/webui/#hermes">Panglima</a></li>
       <li><a href="#learning">Learning</a></li>
       <li><a href="#mcp">MCP</a></li>
       <li><a href="#deploy">Deploy</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="/webui/" target="_blank" rel="noopener">WebUI</a></li>
     </ul>
     <a class="nav-cta" href="#mcp-deploy">Install JEBAT</a>
     <button class="burger" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="mnav">
@@ -70,80 +73,91 @@
     </button>
   </div>
   <div id="mnav" class="wrap">
-    <a href="#platform" class="mlink">Platform</a><a href="#workbench" class="mlink">Workbench</a><a href="#mcp" class="mlink">MCP</a><a href="#mcp-deploy" class="mlink">MCP Deploy</a><a href="#compare" class="mlink">Compare</a><a href="#deploy" class="mlink">Deploy</a><a href="#faq" class="mlink">FAQ</a><a href="/webui/" target="_blank" rel="noopener" class="mlink">WebUI ↗</a><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="mlink">GitHub ↗</a>
+    <a href="#proof" class="mlink">Proof</a><a href="#workbench" class="mlink">Agentix</a><a href="http://127.0.0.1:8787/webui/#hermes" class="mlink">Panglima</a><a href="#mcp" class="mlink">MCP</a><a href="#mcp-deploy" class="mlink">MCP Deploy</a><a href="#compare" class="mlink">Compare</a><a href="#deploy" class="mlink">Deploy</a><a href="#faq" class="mlink">FAQ</a><a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener" class="mlink">GitHub ↗</a>
     <a href="#learning" class="mlink">Learning</a>
   </div>
 </nav>
 
+<div class="experience-dock" id="experience-dock">
+  <div class="experience-track" role="tablist" aria-label="Explore JEBAT">
+    <button class="experience-tab on" role="tab" aria-selected="true" data-experience="command">Command</button>
+    <button class="experience-tab" role="tab" aria-selected="false" data-experience="proof">Evidence</button>
+    <button class="experience-tab" role="tab" aria-selected="false" data-experience="capabilities">Capabilities</button>
+    <button class="experience-tab" role="tab" aria-selected="false" data-experience="setup">Setup</button>
+  </div>
+  <button class="experience-exit" type="button" aria-label="Show full page" title="Show full page">Full page ↗</button>
+</div>
 <main id="main" tabindex="-1">
-<header class="hero">
-  <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="dots"></div>
+<header class="hero" id="command">
   <div class="wrap hero-grid">
-    <div>
-      <span class="eyebrow">JEBAT v8.4.0 · Self-hosted agent runtime</span>
-      <h1>Keep <span class="grad">Command.</span><br/>Keep the Context.</h1>
-      <p class="hero-lead">Run agents with your choice of model. Keep project knowledge, inspect the evidence behind learning advice, and control which tools can act.</p>
-      <div class="badges">
-        <span class="badge b-pucuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Your infrastructure</span>
-        <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Key-Gated Control Plane</span>
-        <span class="badge b-copper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Agentix Lifecycle</span>
-        <span class="badge b-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> 24 Specialist Doctrines</span>
-      </div>
+    <div class="hero-copy">
+      <span class="hero-note">Self-hosted agent runtime · your model, your tools</span>
+      <h1>One command.<br><span>Every thread of work.</span></h1>
+      <p class="hero-lead">JEBAT turns an objective into governed execution: split independent work across agents, keep project evidence, and connect the tools you already use.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="#mcp-deploy"><span>Install JEBAT</span>
-          <svg class="arr" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-        <a class="btn btn-ghost" href="#project-audit">See a project-audit example</a>
+        <a class="btn btn-primary" href="#mcp-deploy">Install the command layer <svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        <a class="text-action" href="#proof">Inspect the recorded workflow <span aria-hidden="true">↓</span></a>
       </div>
-      <nav class="setup-chooser" aria-label="Choose your JEBAT setup">
-        <a href="#install-tab-cli"><strong>Try locally</strong><span>Install on this machine</span></a>
-        <a href="#install-tab-ide"><strong>Already installed?</strong><span>Connect your IDE</span></a>
-        <a href="#install-tab-remote"><strong>Use a server</strong><span>Connect with your API key</span></a>
-      </nav>
-      <div class="install"><span class="dollar" aria-hidden="true">$</span><code>jebat learning advise</code>
-        <button class="copy-button" type="button" onclick="copyCommand('jebat learning advise',this)" aria-label="Copy learning advisor command" aria-describedby="copy-feedback-hero" data-feedback="copy-feedback-hero"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="copy-label">Copy</span></button>
-      </div>
-      <p class="copy-feedback" id="copy-feedback-hero"></p>
+      <p class="hero-assurance">Local or cloud inference · explicit tool permissions · resumable run records</p>
     </div>
 
-    <div>
-      <div class="logo-showcase">
-        <span class="logo-glow"></span>
-        <span class="logo-chip-dark"><picture><source type="image/webp" srcset="assets/Jebat-Transparent.webp"><img src="assets/Jebat-Transparent.png" alt="JEBAT sovereign mark" width="200" height="133"></picture></span>
-        <div class="logo-caption">
-          <b>Your stack. Your evidence.</b>
-          <span>CLI · MCP · AutoMimpi · Learning KB</span>
-        </div>
+    <figure class="orchestration" aria-labelledby="orchestration-caption">
+      <div class="console-topline"><span class="console-status"><i aria-hidden="true"></i> Recorded orchestration</span><canvas id="command-sticker" width="120" height="120" aria-label="Isometric orchestration token"></canvas></div>
+      <div class="command-line"><span aria-hidden="true">$</span><code>jebat agentix run security-audit "audit the application" --parallel 3</code></div>
+      <div class="orchestration-stage" data-stage="workers">
+        <svg class="thread-lines" viewBox="0 0 640 170" preserveAspectRatio="none" aria-hidden="true"><path d="M24 20 C180 20 120 85 280 85 M24 20 C180 20 120 85 280 85 M24 20 C180 20 120 85 280 85"/><path d="M360 85 C500 85 460 85 616 85 M360 85 C500 85 460 85 616 85 M360 85 C500 85 460 85 616 85"/></svg>
+        <div class="agent-node"><span>01</span><strong>Map attack surface</strong><small>read-only investigation</small></div>
+        <div class="agent-node"><span>02</span><strong>Trace tool boundaries</strong><small>MCP + permissions</small></div>
+        <div class="agent-node"><span>03</span><strong>Review evidence</strong><small>tests + residual gaps</small></div>
       </div>
-      <div class="term">
-        <div class="term-head">
-          <span class="term-title">RECORDED CLI OUTPUT</span>
-          <span class="term-live">LOCAL CAPTURE · 09 OCT 2026</span>
-        </div>
-        <div class="chips" role="group" aria-label="Recorded command examples">
-          <button class="jchip on" type="button" aria-pressed="true" data-capture="status">Status</button>
-          <button class="jchip" type="button" aria-pressed="false" data-capture="learning">Learning</button>
-          <button class="jchip" type="button" aria-pressed="false" data-capture="workflow">Workflows</button>
-          <button class="jchip" type="button" aria-pressed="false" data-capture="teams">Teams</button>
-        </div>
-        <pre class="term-body" id="hero-cli-output" aria-live="polite">$ jebat status
-JEBAT v8.4.0
+      <div class="run-result"><span class="result-mark" aria-hidden="true">✓</span><div><strong>One consolidated report</strong><small>Same provider/model · isolated tool policies · recorded run</small></div></div>
+      <div class="run-inspector"><button type="button" id="replay-run">Replay recorded run</button><button type="button" id="inspect-run" aria-expanded="false">Inspect evidence</button></div>
+      <pre class="run-evidence" id="run-evidence" hidden></pre>
+      <figcaption id="orchestration-caption">Recorded local smoke run using a mock provider. Three workers completed concurrently; no production target was audited.</figcaption>
+    </figure>
+  </div>
+</header>
+
+<section class="section proof-section" id="proof" aria-labelledby="proof-title">
+  <div class="wrap split">
+    <div class="proof-copy">
+      <h2 id="proof-title">See the work.<br>Not a staged demo.</h2>
+      <p>Inspect actual recorded CLI output from a disposable workspace. Switch between status, learning, workflow, and team evidence without executing anything on this page.</p>
+      <a class="inline-link" href="#workbench">Explore the Agentix workbench</a>
+    </div>
+    <div class="term">
+      <div class="term-head"><span class="term-title">RECORDED CLI OUTPUT</span><span class="term-live">LOCAL CAPTURE · 09 OCT 2026</span></div>
+      <div class="chips" role="group" aria-label="Recorded command examples">
+        <button class="jchip on" type="button" aria-pressed="true" data-capture="status">Status</button>
+        <button class="jchip" type="button" aria-pressed="false" data-capture="learning">Learning</button>
+        <button class="jchip" type="button" aria-pressed="false" data-capture="workflow">Workflows</button>
+        <button class="jchip" type="button" aria-pressed="false" data-capture="teams">Teams</button>
+      </div>
+      <pre class="term-body" id="hero-cli-output" aria-live="polite">$ jebat status
+JEBAT v8.5.0
   providers    0 configured · active: (none)
   agentix      0 deployed solutions · 0 recorded runs
   sessions     0 saved</pre>
-        <p class="demo-note">Recorded in a disposable workspace. These controls display captured output; they do not run commands or report production health.</p>
-      </div>
+      <p class="demo-note">Recorded output only. These controls do not run commands or report production health.</p>
     </div>
   </div>
+</section>
 
-  <div class="wrap">
-    <div class="stats" role="list" aria-label="Shipped product capabilities">
-      <div class="stat s1" role="listitem"><b>9</b><span>OPT-IN WORKFLOW PLAYBOOKS</span></div>
-      <div class="stat s2" role="listitem"><b>Scoped</b><span>PROJECT LEARNING EVIDENCE</span></div>
-      <div class="stat s3" role="listitem"><b>SQLite</b><span>SEARCHABLE ADVICE &amp; DREAMS</span></div>
-      <div class="stat s4" role="listitem"><b>No model call</b><span>DETERMINISTIC LEARNING ADVISOR</span></div>
+<section class="section craft-section" id="creative" aria-labelledby="creative-title">
+  <div class="wrap craft-grid">
+    <div>
+      <h2 id="creative-title">Tools should fit the work.<br>Not the other way round.</h2>
+      <p>JEBAT Creative routes product interfaces through domain-specific structures: media studios, voice timelines, evidence-led analytics, support conversations, and governed agent work.</p>
+      <a class="inline-link" href="https://github.com/nusabyte-my/jebat-core/tree/main/skills/jebat-creative">Read the creative doctrine</a>
+    </div>
+    <div class="craft-ledger">
+      <div><span>Media</span><strong>Generate → compare → inspect</strong></div>
+      <div><span>Voice</span><strong>Script → cast → timeline</strong></div>
+      <div><span>Analytics</span><strong>Question → evidence → action</strong></div>
+      <div><span>3D</span><strong>Image → model → normalized GLB</strong></div>
     </div>
   </div>
-</header>
+</section>
 
 <section class="section audit-example" id="project-audit" aria-labelledby="audit-title">
   <div class="wrap split">
@@ -169,24 +183,15 @@ jebat workflow show workflow-audit --task "Audit this project" --scope .</pre>
   </div>
 </section>
 
-<section class="news-strip" aria-label="Release changes">
-  <div class="wrap">
-    <div class="news-head"><span class="news-kicker">A learning loop you can inspect.</span><span class="news-date mono">Update · 14 October 2026</span></div>
-    <div class="news-row">
-      <a class="news-card" href="#learning"><span class="nc-src mono">AutoMimpi</span><span class="nc-title">Keep consolidation inside the project.</span><span class="nc-arr">See the learning loop</span></a>
-      <a class="news-card" href="#learning"><span class="nc-src mono">Advisor + KB</span><span class="nc-title">Trace advice to evidence. Record your review.</span><span class="nc-arr">Inspect the commands</span></a>
-      <a class="news-card" href="#platform"><span class="nc-src mono">image-scraper</span><span class="nc-title">Download galleries and product images — anti-detect, filtered, deduped.</span><span class="nc-arr">See the skills browser</span></a>
-    </div>
-  </div>
-</section>
+<!-- Product narrative continues with platform behavior. -->
 
 <!-- 01 / PLATFORM -->
 <section class="section" id="platform">
   <div class="wrap">
     <div class="sec-head">
       <span class="kicker">PLATFORM</span>
-      <h2>The model should not own your architecture.</h2>
-      <p>Choose local inference or a configured cloud provider. Keep the same workspace, tool registry, and project knowledge instead of rebuilding your workflow around a vendor.</p>
+      <h2>Your model changes.<br>Your operating system does not.</h2>
+      <p>Keep the same workspace, tool permissions, run history, and project knowledge while choosing local inference or a configured cloud provider.</p>
     </div>
     <div class="cards">
       <div class="card c1">
@@ -208,7 +213,7 @@ jebat workflow show workflow-audit --task "Audit this project" --scope .</pre>
         <p>Project traces stay on disk. AutoMimpi consolidates scoped evidence; SQLite keeps searchable dream reports, advisor recommendations, and your review decisions.</p>
       </div>
     </div>
-    <p class="learning-footnote">Additional product surfaces are available in the <a class="inline-link" href="/webui/">WebUI</a>; integrations require their own configuration and credentials.</p>
+    <p class="learning-footnote">Additional integrations require their own configuration and credentials.</p>
     <div class="cards cols4">
       <div class="card c1">
         <span class="stripe"></span>
@@ -239,7 +244,7 @@ jebat workflow show workflow-audit --task "Audit this project" --scope .</pre>
 </section>
 
 <div class="wrap" style="padding-top:var(--jc-s4)">
-<details class="tier-ref technical-details" id="safety-details" open>
+<details class="tier-ref technical-details" id="safety-details">
   <summary>Technical details: tool safety tiers</summary>
   <div class="technical-content">
   <div class="tref-head mono">IMPLEMENTATION: <span style="color:var(--jc-accent-strong)">jebat/core/agent_loop.py</span></div>
@@ -382,8 +387,11 @@ jebat config import -s omp --dry-run</pre>
       <h2>Bring a specialist when the task needs one.</h2>
       <p>Specialist doctrines declare tools, workspace scope, and run budgets. Keep a single agent for straightforward work. Agentix solutions and teams are explicit execution choices—not a requirement for the learning advisor.</p>
     </div>
-    <div class="chips" style="justify-content:center;padding:0 0 var(--jc-s2)">
-      <span class="jchip">security-audit</span><span class="jchip">osint-recon</span><span class="jchip">code-reviewer</span><span class="jchip">test-writer</span><span class="jchip">doc-writer</span><span class="jchip">data-analyst</span><span class="jchip">marketing-strategist</span><span class="jchip">ads-manager</span><span class="jchip">seo-auditor</span><span class="jchip">incident-responder</span><span class="jchip">release-manager</span><span class="jchip">contract-reviewer</span><span class="jchip">support-triage</span><span class="jchip">competitor-watch</span><span class="jchip">copy-writer</span><span class="jchip">dependency-auditor</span><span class="jchip">email-lifecycle</span><span class="jchip">mcp-auditor</span><span class="jchip">ops-reporter</span><span class="jchip">ui-critic</span><span class="jchip">unit-economist</span><span class="jchip">uptime-sentinel</span><span class="jchip">reverse-engineer</span><span class="jchip">nusabyte-fleet</span>
+    <div class="chips specialist-catalog" id="specialist-catalog" aria-label="Agentix specialist catalog">
+      <span class="jchip">Loading current catalog…</span>
+    </div>
+    <div class="specialist-detail" id="specialist-detail" aria-live="polite">
+      <strong>27 specialist doctrines</strong><span>Select a specialist to inspect its declared purpose.</span>
     </div>
     <div class="panel" style="max-width:860px;margin:0 auto var(--jc-s3)">
       <h3>The whole loop, typed</h3>
@@ -461,6 +469,30 @@ jebat agentix runs</pre>
         <h3>Deadlines on everything</h3>
         <p>Declared execution limits return structured errors when exceeded. Use process isolation where hard termination of side effects is required.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="section updates-section" id="updates" aria-labelledby="updates-title">
+  <div class="wrap">
+    <div class="updates-heading">
+      <div><span class="release-version">JEBAT 8.5.0</span><h2 id="updates-title">Latest updates</h2></div>
+      <p>New capabilities, with the implementation and verification behind them.</p>
+    </div>
+    <div class="updates-layout">
+      <div class="update-list" role="tablist" aria-label="Latest JEBAT updates">
+        <button class="update-item on" role="tab" aria-selected="true" data-update="parallel"><span>Agentix</span><strong>Parallel orchestration</strong><small>2–3 workers · same model</small></button>
+        <button class="update-item" role="tab" aria-selected="false" data-update="comfy"><span>Local GPU</span><strong>ComfyUI bridge</strong><small>Workstation → VPS MCP</small></button>
+        <button class="update-item" role="tab" aria-selected="false" data-update="security"><span>Security</span><strong>Security-full</strong><small>Agent + MCP threat coverage</small></button>
+        <button class="update-item" role="tab" aria-selected="false" data-update="creative"><span>Creative</span><strong>Design + image-to-3D</strong><small>Domain-specific production</small></button>
+      </div>
+      <article class="update-detail" id="update-detail" aria-live="polite">
+        <span class="update-detail-tag" id="update-detail-tag">Agentix</span>
+        <h3 id="update-detail-title">Split independent work. Keep one model.</h3>
+        <p id="update-detail-copy">Automatically decompose an objective across up to three concurrent workers with exact provider/model inheritance and isolated tool policies.</p>
+        <ul id="update-detail-facts"><li>Read-only parallel default</li><li>Recorded worker runs and consolidated results</li><li>Explicit failure without model substitution</li></ul>
+        <a class="inline-link" id="update-detail-link" href="#workbench">Explore Agentix</a>
+      </article>
     </div>
   </div>
 </section>
@@ -558,7 +590,7 @@ jebat mcp ide-config</pre>
       <h2>Providers are a routing table, not an architecture decision.</h2>
       <p>Every provider implements one interface; the router tries them in priority order and your tools, memory, and approvals are untouched by the switch.</p>
     </div>
-    <details class="technical-details" id="routing-details" open>
+    <details class="technical-details" id="routing-details">
       <summary>Technical details: model routing and context budgets</summary>
       <div class="technical-content">
     <div class="route-grid">
@@ -593,7 +625,7 @@ jebat mcp ide-config</pre>
       <p>Implemented in <span class="mono" style="color:var(--jc-copper)">EnhancedMemorySystem.retrieve()</span> — every filter, weight, and fallback below is in the shipped code, not aspirational.</p>
     </div>
 
-    <details class="technical-details" id="retrieval-details" open>
+    <details class="technical-details" id="retrieval-details">
       <summary>Technical details: memory retrieval, scoring, and decay</summary>
       <div class="technical-content">
     <div class="ret-grid">
@@ -733,7 +765,6 @@ jebat mcp ide-config</pre>
     <div class="foot-links">
       <a href="https://github.com/nusabyte-my/jebat-core" target="_blank" rel="noopener">GitHub</a>
       <a href="docs.html">Docs</a>
-      <a href="/webui/" target="_blank" rel="noopener">WebUI</a>
       <a href="#workbench">Workbench</a>
       <a href="https://nusabyte.my/" target="_blank" rel="noopener">NusaByte</a>
       <a href="https://nusabyte.my/legal/privacy">Privacy policy</a>
@@ -744,6 +775,7 @@ jebat mcp ide-config</pre>
   </div>
 </footer>
 
-<script src="assets/jebat-landing.js?v=3c2631e3" defer></script>
+<script src="assets/jebat-landing.js?v=20261030" defer></script>
+<script type="module" src="assets/jebat-hero-sticker.js"></script>
 </body>
 </html>

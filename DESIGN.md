@@ -1,46 +1,112 @@
-# DESIGN.md
+# DESIGN.md — JEBAT Creative System
 
-## Workspace (top-level tree)
+## Direction
 
-Purpose:
-- Canonical source of truth for the workspace; the top-level tree is what runs and what changes
-- `jebat-core/` (frozen 2026-07-04) was removed on 2026-09-30; its visual direction carries on in the top-level tree
-- Its docs, generated interfaces, and setup experiences define the tone for the rest of the stack
+JEBAT interfaces are **instruments for real work**, not decorative SaaS templates. The artifact—code, media, transcript, document, query result, booking, conversation, recording, or 3D asset—dominates the surface. Structure follows the task.
 
-Visual direction:
-- Terminal-native, black/emerald/cyan identity
-- Strong information hierarchy
-- Premium technical minimalism, not startup landing-page aesthetics
+This is the governing design system for JEBAT product work. `jebat-creative` supplies domain-specific grammar and quality gates; this file supplies shared visual and interaction decisions.
 
-Priority surfaces:
-- setup flows
-- status / doctor / health views
-- memory and vault tooling
-- orchestration and admin panels
+## Principles
 
-Rules:
-- Default to dense, useful layouts
-- Make system state visible
-- Prefer utility and correctness over decorative UI
+1. **Artifact before chrome.** Show the thing being created or controlled.
+2. **One primary action.** Secondary actions remain available without competing for attention.
+3. **Specific, not themed.** Layout, density, copy, and motion come from the product domain.
+4. **One signature interaction.** Spend visual boldness once per surface.
+5. **Honest states.** Never invent metrics, output, screenshots, activity, or customer proof.
+6. **Accessible by construction.** Keyboard, contrast, responsive layout, reduced motion, and recovery are part of the design.
 
-## Public landing — original Malam / Tembaga / Pucuk palette
+## Shape and composition
 
-User-selected restoration (2026-10-07) applies to `index.html`, not the terminal/workspace surfaces above.
-- Bone base `#F7F4EE`; copper `#C97A40`; green `#2F6F55`; near-black evidence panels `#080A09`. Darker copper action/text shades preserve readable contrast.
-- Self-hosted Space Grotesk display, Inter body, Geist Mono code; assets/fonts includes OFL licenses.
-- Hard-stop accent gradients, restrained glass/orbs, one accent per card, visible keyboard focus.
-- Public tokens: `assets/jebat-creative-tokens.css`; layout: `assets/jebat-landing.css`.
-- Command previews use actual recorded output from `assets/jebat-cli-captures.json`, explicitly labelled as captures, never live health.
-- No clipped mobile content; native FAQ disclosures; accessible selected/menu state; copy errors name a recovery path.
-- Shared 12px-radius buttons: minimum 44px targets, visible focus, distinct selected/pressed states, reduced-motion support, and fixed-size loading indicators.
-- Copy controls reserve label/icon space, show persistent inline errors with manual-copy recovery, and cancel old success-reset timers on retry. Snippet buttons have contextual accessible names.
-- Browser verification: 320/375/414/768/1440px; clipboard success and blocked-copy retry; capture failure/recovery; menu Escape and installation-tab arrows. Measured control-label contrast: 5.71:1 minimum among sampled buttons.
-- Hero setup shortcuts target stable installation-tab anchors: `#install-tab-cli`, `#install-tab-ide`, and `#install-tab-remote`. Clicks and bookmarked routes select the existing tab, show its requirements, and move keyboard focus to it.
-- `#project-audit` precedes architecture detail. Its copyable `workflow-audit` example prints a playbook, not fabricated findings or automatic execution.
-- All five deployment methods show method-specific prerequisites above their command/copy control; remote setup distinguishes a server connection from local installation.
-- Quick-win verification: no new content overflow at 320/375/414/768/1440px; hero route selection, bookmarked remote route, keyboard Home/ArrowRight, and native audit-command clipboard copy passed. The actual CLI example printed its scoped playbook successfully.
-- IDE configuration tracks the selected installation method and client: CLI/IDE use `jebat` stdio, npx uses its launcher, Docker uses loopback HTTP on port 8100, and Remote HTTP uses a replaceable HTTPS endpoint. VS Code snippets use the `servers` root; Cursor/Windsurf use `mcpServers`. HTTP examples must be adapted to the gateway's authentication header and existing server key.
-- Local post-install checks print `jebat doctor` and `jebat mcp ide-config` (through npx for that launcher). They check local state and print templates—not a live connection. Docker/remote checkpoints instead require authenticated IDE tool discovery.
-- The archetype matrix belongs to `#workbench`, not installation. Tool tiers, model routing, and retrieval internals use native technical disclosures: collapsed by default at ≤640px, expanded above that breakpoint. Direct links expand the relevant disclosure; without JavaScript all remain open.
-- Setup verification: all 15 installation/client combinations produced matching transports and client roots; checkpoint clipboard copy passed. No content overflow at 320/375/414/768/1440px. Native disclosure keyboard open/close and visible focus passed.
-- Landing stylesheet, script, and manifest URLs carry `?v=` values from the first eight SHA-256 characters of their committed bytes. Update the corresponding URL whenever asset content changes. Release verification found Cloudflare serving prior unversioned assets despite correct files on both VPS hosts; versioned requests returned the committed bytes.
+- Technical, precise, restrained surfaces; avoid generic pill-shaped everything.
+- Radius: controls `6px`, inputs `6px`, cards/panels `10px`, modals `14px`, circular avatars/status only.
+- Group by alignment, spacing, and hairline borders before shadows or cards.
+- No automatic three-card rows, hero/feature/CTA template, decorative numbered sections, or fake application chrome.
+- Expert workflows may be dense; every region must answer a user question or enable an action.
+
+## Semantic color tokens
+
+Use semantic tokens in components; raw palette values belong only in token definitions.
+
+| Token | Value | Use |
+|---|---|---|
+| `--canvas` | `#101112` | Primary work surface |
+| `--surface-1` | `#151719` | Panels and navigation |
+| `--surface-2` | `#1A1D1F` | Raised/active surfaces |
+| `--surface-3` | `#222629` | Hover and selected controls |
+| `--border-subtle` | `rgba(255,255,255,.08)` | Structural separation |
+| `--text-primary` | `#EDEFEF` | Main content |
+| `--text-secondary` | `#A8AEAF` | Supporting content |
+| `--text-muted` | `#7D8486` | Metadata; never disabled text |
+| `--accent` | `#D1FE17` | Primary action, selection, live state |
+| `--accent-ink` | `#141A02` | Text on accent |
+| `--danger` | `#FF8D78` | Error/destructive |
+| `--warning` | `#F3C969` | Warning |
+| `--success` | `#72D6A0` | Confirmed success |
+| `--focus` | `#D1FE17` | Focus-visible ring |
+
+Dark surfaces are appropriate for media, code, and operational tools. Content-heavy reading surfaces may introduce a light semantic theme using the same tokens; do not force dark mode on documents.
+
+## Typography
+
+- **Display/product headings:** `Space Grotesk`, 600; roman only.
+- **Body/interface:** `Inter`, 400/500/600.
+- **Data/code:** `IBM Plex Mono`, 400/500.
+- Use tabular numerals for timing, dimensions, token counts, metrics, and waveforms.
+- Body text ≥14px in dense expert tools and ≥16px for sustained reading.
+- Headings wrap naturally; no italic display type or decorative all-caps eyebrow labels.
+
+## Spacing and layout
+
+Base scale: `4, 8, 12, 16, 24, 32, 48, 64px`.
+
+- Page gutters: 16px mobile, 24px tablet, 32px desktop.
+- Main workspace uses fluid content with bounded readable columns where appropriate.
+- Mobile: primary artifact and action precede secondary panels; sidebars become drawers or reorder.
+- Test at 320, 375, 414, 768px and desktop. No horizontal page scroll.
+
+## Iconography and imagery
+
+- Lucide outline icons, consistent 2px stroke; standard meanings only.
+- Icons supplement recognized controls; do not decorate every label.
+- Real product captures and real artifacts only. AI-generated imagery must not impersonate product UI.
+- Logos follow `logo-design`: original geometry, small-size tests, one-color/reversed tests, and no copied trademark artwork.
+
+## Motion
+
+- Motion communicates capture, playback, progress, causality, or spatial continuity.
+- Standard UI: 140–200ms; complex panel transitions ≤320ms.
+- No ambient motion that competes with the artifact.
+- `prefers-reduced-motion`: remove spatial travel and nonessential transitions; preserve state feedback.
+
+## Interaction states
+
+Every applicable control defines: default, hover, focus-visible, active, disabled, loading, error, success.
+
+- Focus: 2px high-contrast ring with offset; never removed.
+- Loading: preserve control dimensions and expose `aria-busy`.
+- Errors: explain cause and recovery; never apology-only messages.
+- Empty states: direct the next useful action.
+- Touch targets should be at least 44×44px on touch-primary surfaces.
+
+## Domain structures
+
+Use `skills/jebat-creative/references/product-grammar.md`:
+
+- Media: studio canvas + model settings + history/compare.
+- Voice: script + cast + waveform/timeline + playback.
+- Analytics: question + evidence + prioritized action.
+- Workspace: document canvas + semantic navigation.
+- Dictation: voice presence + transcript + privacy state.
+- Projects: work hierarchy + schedule/dependencies.
+- Scheduling: availability + timezone + conflicts + confirmation.
+- Support: conversation queue + dialogue + customer context.
+- Recording: capture + recording state + preview/trim/share.
+- Gaming: gameplay state + spatial readability + input feedback; see `epic.md`.
+
+## 3D assets
+
+Use `skills/image-to-3d`: one source object per generation, neutral reference, normalized scale/origin/grounding, mesh/material checks, and GLB plus preview export. No unreviewed automatic scene placement.
+
+## Delivery gate
+
+No UI is complete until the actual surface is exercised for primary workflow, loading, error/retry, success, keyboard/focus, reduced motion, and required breakpoints. Unexercised checks remain `unknown`.

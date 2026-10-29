@@ -17,6 +17,7 @@ import json
 import hashlib
 import os
 import random
+import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
@@ -324,6 +325,8 @@ class EnhancedMemorySystem:
         self.storage_path = storage_path or Path.home() / ".jebat" / "memory"
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.traces_file = self.storage_path / "traces.json"
+        if not hasattr(EnhancedMemorySystem, "_persistence_lock"):
+            EnhancedMemorySystem._persistence_lock = threading.RLock()
         self.patterns_file = self.storage_path / "patterns.json"
         self.metadata_file = self.storage_path / "metadata.json"
         
@@ -1169,22 +1172,38 @@ class EnhancedMemorySystem:
                     f"refusing to clobber the store. Restore from a .bak and fix _load."
                 )
                 return
-            data = {
-                "traces": {k: v.to_dict() for k, v in self.traces.items()},
-                "patterns": self.extracted_patterns,
-                "generalizations": self.generalizations,
-                "concept_weights": dict(self.concept_weights),
-                "concept_graph": {k: list(v) for k, v in self.concept_graph.items()},
-            }
-            # Atomic write. A crash or a concurrent reader mid-`json.dump` left a
-            # truncated file, which `_load` then rejected — losing the store to a
-            # parse error rather than to data loss. Write a sibling temp file and
-            # `os.replace` (atomic on both POSIX and Windows), matching the
-            # discipline the dream-state writer already uses.
-            tmp = self.traces_file.with_suffix(".json.tmp")
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, default=str, indent=2)
-            os.replace(tmp, self.traces_file)
+            with self._persistence_lock:
+                # Merge traces committed by sibling workers after this instance
+                # loaded. Local state remains authoritative for deliberate deletes.
+                if self.traces_file.exists():
+                    with open(self.traces_file, encoding="utf-8") as f:
+                        persisted = json.load(f).get("traces", {})
+                    for key, raw in persisted.items():
+                        if key not in self.traces:
+                            item = dict(raw)
+                            for field_name in ("created_at", "last_accessed", "last_reinforced", "last_consolidated"):
+                                if item.get(field_name):
+                                    item[field_name] = datetime.fromisoformat(item[field_name])
+                            item["tags"] = set(item.get("tags", []))
+                            item["linked_traces"] = set(item.get("linked_traces", []))
+                            item["memory_type"] = coerce_memory_type(item.get("memory_type"))
+                            known = set(MemoryTrace.__dataclass_fields__)
+                            trace = MemoryTrace(**{k: v for k, v in item.items() if k in known})
+                            self._store_trace(trace)
+                data = {
+                    "traces": {k: v.to_dict() for k, v in self.traces.items()},
+                    "patterns": self.extracted_patterns,
+                    "generalizations": self.generalizations,
+                    "concept_weights": dict(self.concept_weights),
+                    "concept_graph": {k: list(v) for k, v in self.concept_graph.items()},
+                }
+                tmp = self.traces_file.with_name(f".{self.traces_file.name}.{uuid.uuid4().hex}.tmp")
+                try:
+                    with open(tmp, "w", encoding="utf-8") as f:
+                        json.dump(data, f, default=str, indent=2)
+                    os.replace(tmp, self.traces_file)
+                finally:
+                    tmp.unlink(missing_ok=True)
         except Exception as e:
             print(f"Memory save error: {e}")
             raise

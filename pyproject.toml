@@ -1,7 +1,7 @@
 [project]
 name = "jebat"
-version = "8.4.0"
-description = "JEBAT v8.4 — Sovereign Agent OS. Platform Suite (Sahabat, Keris, Pandai, Perisai), Stealth-Dark Tactical WebUI, 25 enterprise features, MCP, pentest engine, 6-type eternal memory with Ghost DB vector search, multi-agent swarms, adaptive context windowing, Catalyst observability"
+version = "8.5.0"
+description = "JEBAT v8.5 — Sovereign Agent OS. Platform Suite (Sahabat, Keris, Pandai, Perisai), Stealth-Dark Tactical WebUI, 25 enterprise features, MCP, pentest engine, 6-type eternal memory with Ghost DB vector search, multi-agent swarms, adaptive context windowing, Catalyst observability"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -25,6 +25,7 @@ dependencies = [
   "cryptography>=42.0.0",
   "email-validator>=2.1.0",
   "mcp>=1.0.0",
+  "jsonschema>=4.23.0",
   "pandas>=2.0.0",
   "streamlit>=1.32.0",
   "torch>=2.2.0,<3.0.0",

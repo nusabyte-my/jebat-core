@@ -213,7 +213,7 @@ function setTechnicalDefaults() {
     if (compactTechnical.matches && details.contains(document.activeElement)) {
       details.querySelector('summary').focus({ preventScroll: true });
     }
-    details.open = !compactTechnical.matches;
+    details.open = compactTechnical.matches ? false : details.open;
   });
   openTechnicalHash();
 }
@@ -232,3 +232,192 @@ faqSchema.textContent = JSON.stringify({ '@context': 'https://schema.org', '@typ
   [...document.querySelectorAll('.faq details')].map(item => ({ '@type': 'Question', name: item.querySelector('summary').textContent, acceptedAnswer: { '@type': 'Answer', text: item.querySelector('.a').textContent.trim() } }))
 });
 document.head.appendChild(faqSchema);
+
+// Recorded run evidence: deterministic local playback, never a live agent.
+const orchestration = document.querySelector('.orchestration');
+const replayButton = document.getElementById('replay-run');
+const inspectButton = document.getElementById('inspect-run');
+const evidencePanel = document.getElementById('run-evidence');
+let runEvidence;
+async function loadRunEvidence() {
+  if (runEvidence) return runEvidence;
+  const response = await fetch('assets/parallel-run.json');
+  if (!response.ok) throw new Error('Recorded run unavailable');
+  runEvidence = await response.json();
+  return runEvidence;
+}
+replayButton?.addEventListener('click', async () => {
+  replayButton.disabled = true;
+  try {
+    await loadRunEvidence();
+    orchestration.classList.remove('is-replaying');
+    void orchestration.offsetWidth;
+    orchestration.classList.add('is-replaying');
+    replayButton.textContent = 'Replay recorded run';
+  } catch {
+    replayButton.textContent = 'Recording unavailable — retry';
+  } finally {
+    replayButton.disabled = false;
+  }
+});
+inspectButton?.addEventListener('click', async () => {
+  inspectButton.disabled = true;
+  try {
+    const data = await loadRunEvidence();
+    const wasHidden = evidencePanel.hidden;
+    evidencePanel.textContent = JSON.stringify(data, null, 2);
+    evidencePanel.hidden = !wasHidden;
+    inspectButton.setAttribute('aria-expanded', String(wasHidden));
+    inspectButton.textContent = wasHidden ? 'Hide evidence' : 'Inspect evidence';
+  } catch {
+    evidencePanel.hidden = false;
+    evidencePanel.textContent = 'Recorded evidence could not be loaded. Retry Inspect evidence.';
+  } finally {
+    inspectButton.disabled = false;
+  }
+});
+
+// Current specialist catalog, generated from Agentix manifests.
+const catalog = document.getElementById('specialist-catalog');
+const specialistDetail = document.getElementById('specialist-detail');
+fetch('assets/agentix-specialists.json').then(response => {
+  if (!response.ok) throw new Error('Catalog unavailable');
+  return response.json();
+}).then(data => {
+  catalog.replaceChildren();
+  data.specialists.forEach((specialist, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'jchip' + (index === 0 ? ' on' : '');
+    button.textContent = specialist.name;
+    button.setAttribute('aria-pressed', String(index === 0));
+    button.addEventListener('click', () => {
+      catalog.querySelectorAll('button').forEach(item => { item.classList.remove('on'); item.setAttribute('aria-pressed', 'false'); });
+      button.classList.add('on');
+      button.setAttribute('aria-pressed', 'true');
+      specialistDetail.replaceChildren();
+      const name = document.createElement('strong'); name.textContent = specialist.name;
+      const description = document.createElement('span'); description.textContent = specialist.description;
+      specialistDetail.append(name, description);
+    });
+    catalog.appendChild(button);
+  });
+}).catch(() => { catalog.textContent = 'Specialist catalog unavailable. Use jebat agentix templates.'; });
+
+// Guided experience: preserve all content, reveal one task-focused view at a time.
+const experienceViews = {
+  command: ['command'],
+  proof: ['proof', 'project-audit'],
+  capabilities: ['creative', 'platform', 'memory', 'learning', 'workbench', 'specialists', 'mcp', 'updates'],
+  setup: ['mcp-deploy', 'deploy', 'faq']
+};
+const experienceTabs = [...document.querySelectorAll('[data-experience]')];
+function selectExperience(name, focus = false) {
+  if (!experienceViews[name]) return;
+  document.body.classList.add('experience-active');
+  document.querySelectorAll('main > header, main > section').forEach(section => {
+    const visible = experienceViews[name].includes(section.id);
+    section.dataset.experienceView = visible ? name : '';
+  });
+  experienceTabs.forEach(tab => {
+    const selected = tab.dataset.experience === name;
+    tab.classList.toggle('on', selected);
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    if (selected && focus) tab.focus();
+  });
+  scrollTo({top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+}
+experienceTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectExperience(tab.dataset.experience));
+  tab.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    const next = experienceTabs[(index + (event.key === 'ArrowRight' ? 1 : experienceTabs.length - 1)) % experienceTabs.length];
+    selectExperience(next.dataset.experience, true);
+  });
+});
+document.querySelector('.experience-exit')?.addEventListener('click', () => {
+  document.body.classList.remove('experience-active');
+  document.querySelectorAll('[data-experience-view]').forEach(section => delete section.dataset.experienceView);
+});
+const experienceRoutes = {
+  command: 'command',
+  proof: 'proof',
+  'project-audit': 'proof',
+  creative: 'capabilities',
+  platform: 'capabilities',
+  memory: 'capabilities',
+  learning: 'capabilities',
+  workbench: 'capabilities',
+  specialists: 'capabilities',
+  mcp: 'capabilities',
+  updates: 'capabilities',
+  'mcp-deploy': 'setup',
+  deploy: 'setup',
+  faq: 'setup'
+};
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', () => {
+    const route = experienceRoutes[link.hash.slice(1)];
+    if (route) selectExperience(route);
+  });
+});
+selectExperience('command');
+
+const UPDATE_CONTENT = {
+  parallel: {
+    tag: 'Agentix', title: 'Split independent work. Keep one model.',
+    copy: 'Automatically decompose an objective across up to three concurrent workers with exact provider/model inheritance and isolated tool policies.',
+    facts: ['Read-only parallel default', 'Recorded worker runs and consolidated results', 'Explicit failure without model substitution'],
+    link: '#workbench', label: 'Explore Agentix'
+  },
+  comfy: {
+    tag: 'Local GPU', title: 'Generate on your GPU. Call from the VPS.',
+    copy: 'ComfyUI runs locally with Juggernaut XL Ragnarok FP8 while an authenticated asynchronous bridge lets JEBAT CLI and MCP on the VPS submit jobs and receive image files.',
+    facts: ['RTX 3060 low-VRAM execution verified', 'VPS → tunnel → workstation generation in 14.4 seconds', 'No public ComfyUI port or router forwarding'],
+    link: 'https://github.com/nusabyte-my/jebat-core/blob/main/docs/COMFYUI_LOCAL_GPU.md', label: 'Read the bridge setup'
+  },
+  security: {
+    tag: 'Security', title: 'Audit the agent layer, not just the app.',
+    copy: 'Security-full combines the complete agent-skills security catalog with a workflow for skill provenance, MCP permissions, prompt injection, memory, and multi-agent trust boundaries.',
+    facts: ['Full upstream catalog preserved', 'Evidence and verification boundaries required', 'No unreviewed scanner or proof-of-concept execution'],
+    link: 'https://github.com/nusabyte-my/jebat-core/tree/main/skills/security-full', label: 'Inspect Security-full'
+  },
+  creative: {
+    tag: 'Creative', title: 'Design for the artifact, then make it real.',
+    copy: 'JEBAT Creative supplies domain-specific interface grammar while image-to-3D turns a source image into a reviewed, normalized textured asset for Blender and game workflows.',
+    facts: ['Nine product-domain references', 'Anti-template and accessibility gates', 'Scale, origin, materials, and GLB review'],
+    link: 'https://github.com/nusabyte-my/jebat-core/tree/main/skills/jebat-creative', label: 'Explore the creative system'
+  }
+};
+const updateButtons = [...document.querySelectorAll('[data-update]')];
+function selectUpdate(key, focus = false) {
+  const content = UPDATE_CONTENT[key];
+  if (!content) return;
+  updateButtons.forEach(button => {
+    const selected = button.dataset.update === key;
+    button.classList.toggle('on', selected);
+    button.setAttribute('aria-selected', String(selected));
+    button.tabIndex = selected ? 0 : -1;
+    if (selected && focus) button.focus();
+  });
+  document.getElementById('update-detail-tag').textContent = content.tag;
+  document.getElementById('update-detail-title').textContent = content.title;
+  document.getElementById('update-detail-copy').textContent = content.copy;
+  const facts = document.getElementById('update-detail-facts');
+  facts.replaceChildren(...content.facts.map(fact => { const li = document.createElement('li'); li.textContent = fact; return li; }));
+  const link = document.getElementById('update-detail-link');
+  link.href = content.link;
+  link.textContent = content.label;
+}
+updateButtons.forEach((button, index) => {
+  button.addEventListener('click', () => selectUpdate(button.dataset.update));
+  button.addEventListener('keydown', event => {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    const forward = ['ArrowDown', 'ArrowRight'].includes(event.key);
+    const next = updateButtons[(index + (forward ? 1 : updateButtons.length - 1)) % updateButtons.length];
+    selectUpdate(next.dataset.update, true);
+  });
+});

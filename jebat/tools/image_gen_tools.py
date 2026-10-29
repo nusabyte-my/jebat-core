@@ -66,9 +66,15 @@ async def image_generate(
     elif provider == "stability":
         result = await _generate_stability(prompt, aspect_ratio, config)
     elif provider == "local":
-        result = await _generate_local_fallback(prompt)
-    else:
-        return {"status": "error", "error": f"Unsupported image provider: {provider}"}
+        if not os.environ.get("JEBAT_COMFYUI_HOST"):
+            return {"status": "error", "error": "JEBAT_COMFYUI_HOST is not configured; no image was generated"}
+        from jebat.features.image_gen.image_gen import generate_image as _gen_image
+        dimensions = {"landscape": (1792, 1024), "square": (1024, 1024), "portrait": (1024, 1792)}
+        width, height = dimensions.get(aspect_ratio, (1024, 1024))
+        generated = await _gen_image(prompt=prompt, backend="comfyui", width=width, height=height)
+        if not generated.success:
+            return {"status": "error", "error": generated.error, "provider": generated.backend}
+        return {"status": "ok", "path": generated.image_path, "url": generated.image_url, "provider": generated.backend, "model": generated.model_used, "size": generated.size, "metadata": generated.metadata}
 
     return result
 

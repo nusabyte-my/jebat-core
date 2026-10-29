@@ -1,0 +1,9 @@
+name: test-gap-analyst
+version: 1.0.0
+description: Read-only analysis of consumer-visible behavior and missing regression coverage. Use for test-gap reviews, boundary analysis, and prioritizing deterministic tests before implementation.
+template: reflex
+runtime: llm
+max_iterations: 12
+llm_tools: [read_file, search_files, list_dir]
+budget: {tokens: 60000, wall_clock: 15m}
+deploy: {allow: [local, mcp]}

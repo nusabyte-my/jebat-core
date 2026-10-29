@@ -1,0 +1,112 @@
+{
+  "specialists": [
+    {
+      "name": "ads-manager",
+      "description": "Audits ad-account structure and tracking (CAPI/EMQ, Consent Mode), and proposes a budget-reallocation plan with expected effects. Use for ad audit, campaign structure, budget plan, or ROAS."
+    },
+    {
+      "name": "code-reviewer",
+      "description": "Reviews code or a diff for correctness, security, and maintainability, returning specific actionable findings. Use for review, code review, or check my changes."
+    },
+    {
+      "name": "codebase-investigator",
+      "description": "Read-only investigation of repository architecture, data flow, dependencies, and runtime behavior. Use for codebase exploration, tracing a feature, and locating implementation evidence."
+    },
+    {
+      "name": "competitor-watch",
+      "description": "Diffs competitor pages or pricing against a stored baseline and returns a change memo. Use for competitor, pricing change, or market watch."
+    },
+    {
+      "name": "contract-reviewer",
+      "description": "Clause-level risk review of a document against the stated playbook, with quoted evidence. Use for contract review, agreement, or terms."
+    },
+    {
+      "name": "copy-writer",
+      "description": "Writes landing-page, email, or ad copy that converts (copywriting gate: specific CTAs, benefits over features, no fabricated stats). Use for copy, landing page words, ad text, or email copy."
+    },
+    {
+      "name": "data-analyst",
+      "description": "Ingests a CSV or dataset, runs typed analysis with verifiable numbers, and returns a findings memo. Use for analyze, dataset, CSV, or statistics."
+    },
+    {
+      "name": "dependency-auditor",
+      "description": "Audits software dependencies and supply-chain surface (SCA, lockfiles, secrets scanning, CI tamper surface). Use for dependency audit, vulnerable packages, or supply chain."
+    },
+    {
+      "name": "doc-writer",
+      "description": "Generates README or API documentation from a codebase, with citations to the files each claim came from. Use for documentation, README, or API docs."
+    },
+    {
+      "name": "email-lifecycle",
+      "description": "Designs deliverability-first email lifecycle flows (welcome, cart, post-purchase, win-back, sunset). Use for email flows, lifecycle, newsletter plan, or deliverability."
+    },
+    {
+      "name": "incident-responder",
+      "description": "Triages an incident: timeline, blast radius, severity, comms draft. Use for incident, outage, or something is on fire."
+    },
+    {
+      "name": "marketing-strategist",
+      "description": "Produces positioning, ICP definition, and a channel plan from a product brief (loops-not-funnels, GEO/AEO aware). Use for positioning, go-to-market, channel plan, or marketing strategy."
+    },
+    {
+      "name": "mcp-auditor",
+      "description": "Audits AI-agent surfaces: MCP servers, agentix solutions, tool definitions, and system prompts (tool poisoning, path traversal, SSRF egress, prompt injection, leakage). Use for MCP audit, agent security, or tool poisoning."
+    },
+    {
+      "name": "nusabyte-fleet",
+      "description": "Routes NusaByte fleet work onto the agentix task bus (nusabyte-hermes): picks the right specialist from the 24-agent registry (codenames), writes TASK-YYYY-MM-DD-NNN briefs into bus queues with approval gates intact. Use for fleet, route this to an agent, nusabyte-hermes, dispatch to finance/hr/ads/admin/bizops, or what agent handles this."
+    },
+    {
+      "name": "ops-reporter",
+      "description": "Builds the weekly operations memo from the agentix run registry: volume, token spend, failures, top solutions. Use for ops report, weekly memo, or agent usage review."
+    },
+    {
+      "name": "osint-recon",
+      "description": "Passive reconnaissance and attack-surface mapping from a domain, company, or name (subdomains, certs, exposures, public footprint). Use for recon, OSINT, attack surface, or footprinting."
+    },
+    {
+      "name": "release-manager",
+      "description": "Builds a changelog, release notes, and a deploy checklist from git history and the working tree. Use for release, changelog, or ship notes."
+    },
+    {
+      "name": "reverse-engineer",
+      "description": "Reverse engineers native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA (evidence-backed feature teardown, version diffs, decompilation, reconstruction guidance). Use for reverse engineering, decompile, disassemble, understand this app/binary, or how does X work internally."
+    },
+    {
+      "name": "security-audit",
+      "description": "Audits a web app or repo for exploitable vulnerabilities (OWASP Top 10:2025, auth flows, secrets, access control). Use proactively when the user mentions pentest, security review, audit, or is this safe."
+    },
+    {
+      "name": "seo-auditor",
+      "description": "Audits technical SEO and AI-era visibility for a site (crawlability, schema, AI-citation readiness, crawler access policy). Use for SEO audit, rankings, or AI search visibility."
+    },
+    {
+      "name": "skill-auditor",
+      "description": "Read-only pre-install security review of Agent Skills and MCP configurations, including instruction poisoning, dangerous capabilities, remote dependencies, and declaration/implementation mismatch."
+    },
+    {
+      "name": "support-triage",
+      "description": "Classifies and routes a support inbox or ticket dump, drafts replies, and surfaces the top recurring issues. Use for triage, tickets, or support queue."
+    },
+    {
+      "name": "test-gap-analyst",
+      "description": "Read-only analysis of consumer-visible behavior and missing regression coverage. Use for test-gap reviews, boundary analysis, and prioritizing deterministic tests before implementation."
+    },
+    {
+      "name": "test-writer",
+      "description": "Writes or extends test suites for a target module and runs them until green. Use when the user asks for tests, coverage, or regression tests."
+    },
+    {
+      "name": "ui-critic",
+      "description": "Critiques a UI implementation against the anti-slop bar (hierarchy, 8 interaction states, mobile widths, roman headers, restraint). Use for UI review, design critique, or is this UI any good."
+    },
+    {
+      "name": "unit-economist",
+      "description": "Computes unit economics (pricing, margin, CPA, LTV math) from the account's own numbers with shown formulas. Use for unit economics, pricing, margin, or LTV."
+    },
+    {
+      "name": "uptime-sentinel",
+      "description": "Runs scheduled health checks against endpoints, diffs against a stored baseline, and flags regressions. Use for uptime check, health check, or is it down."
+    }
+  ]
+}

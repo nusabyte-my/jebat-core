@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PACKAGE_NAME = 'jebat';
-const JEBAT_VERSION = '8.2.2';
+const JEBAT_VERSION = '8.5.0';
 
 // Canonical bootstrap script. The raw GitHub URL ALWAYS serves the script as
 // plaintext, so it is the reliable default for both humans and agents.
@@ -147,11 +147,12 @@ Commands:
   --help            Show this help
 
 Examples:
-  npx jebat repl
-  npx jebat chat "Hello JEBAT"
-  npx jebat agent "Audit all API endpoints in src/services"
-  npx jebat code "Create a REST API"
-  npx jebat webui
+  npx @nusabyte/jebat repl
+  npx @nusabyte/jebat chat "Hello JEBAT"
+  npx @nusabyte/jebat agent "Audit all API endpoints in src/services"
+  npx @nusabyte/jebat code "Create a REST API"
+  npx @nusabyte/jebat webui
+  npx @nusabyte/jebat mcp serve --transport stdio
 
 Installation:
   This wrapper installs the Python package automatically on first run.
@@ -159,8 +160,10 @@ Installation:
   For AI agents / CI, the installer is fully non-interactive (--yes --quiet).
 
 MCP:
-  The npm launcher does not host an MCP server. From a full workspace checkout:
-    python ./jebat-mcp --transport stdio
+  Start the server through the installed CLI:
+    npx @nusabyte/jebat mcp serve --transport stdio
+  Generate IDE configuration:
+    npx @nusabyte/jebat mcp ide-config
   See https://github.com/nusabyte-my/jebat-core/blob/main/MCP.md
 `);
 }

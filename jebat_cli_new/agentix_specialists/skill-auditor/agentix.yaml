@@ -1,0 +1,9 @@
+name: skill-auditor
+version: 1.0.0
+description: Read-only pre-install security review of Agent Skills and MCP configurations, including instruction poisoning, dangerous capabilities, remote dependencies, and declaration/implementation mismatch.
+template: reflex
+runtime: llm
+max_iterations: 16
+llm_tools: [read_file, search_files, list_dir]
+budget: {tokens: 100000, wall_clock: 20m}
+deploy: {allow: [local, mcp]}

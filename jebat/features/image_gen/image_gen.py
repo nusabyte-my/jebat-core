@@ -244,6 +244,44 @@ async def _generate_stability(
 
 # ─── ComfyUI Backend (Local) ──────────────────────────────────────────
 
+async def _generate_comfy_bridge(prompt, config, negative_prompt, width, height, steps, cfg_scale, seed):
+    import base64
+    import httpx
+
+    token = os.environ.get("JEBAT_COMFYUI_BRIDGE_TOKEN", "")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    checkpoint = os.environ.get("JEBAT_COMFYUI_CHECKPOINT")
+    try:
+        timeout = httpx.Timeout(30, read=300)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                f"{config.comfyui_host.rstrip('/')}/jobs",
+                headers=headers,
+                json={"prompt": prompt, "negative_prompt": negative_prompt, "width": width, "height": height, "steps": steps, "cfg_scale": cfg_scale, "checkpoint": checkpoint, "seed": seed},
+            )
+            response.raise_for_status()
+            job = response.json()
+            for _ in range(150):
+                status = await client.get(f"{config.comfyui_host.rstrip('/')}/jobs/{job['job_id']}", headers=headers)
+                status.raise_for_status()
+                job = status.json()
+                if job["status"] == "failed":
+                    return ImageGenResult(success=False, backend="comfyui-bridge", error=job.get("error", "generation failed"))
+                if job["status"] == "completed":
+                    result = await client.get(f"{config.comfyui_host.rstrip('/')}/jobs/{job['job_id']}/result", headers=headers)
+                    result.raise_for_status()
+                    job = result.json()
+                    output = config.output_dir or os.environ.get("JEBAT_IMAGE_DIR", str(Path.home() / ".jebat" / "images"))
+                    Path(output).mkdir(parents=True, exist_ok=True)
+                    path = Path(output) / f"comfyui-{job['job_id']}.png"
+                    path.write_bytes(base64.b64decode(job["image_base64"]))
+                    return ImageGenResult(success=True, image_path=str(path), backend="comfyui-bridge", model_used=job.get("checkpoint", "local"), size=f"{width}x{height}", metadata={"seed": seed, "prompt_id": job.get("prompt_id")})
+                await asyncio.sleep(2)
+            return ImageGenResult(success=False, backend="comfyui-bridge", error="ComfyUI bridge timed out")
+    except Exception as exc:
+        return ImageGenResult(success=False, backend="comfyui-bridge", error=str(exc))
+
+
 async def _generate_comfyui(
     prompt: str,
     config: ImageGenConfig,
@@ -258,6 +296,7 @@ async def _generate_comfyui(
     import urllib.request
 
     host = config.comfyui_host.rstrip("/")
+    bridge_mode = os.environ.get("JEBAT_COMFYUI_BRIDGE", "").lower() in {"1", "true", "yes"}
     actual_seed = seed or struct.unpack("!I", os.urandom(4))[0] % 2**31
 
     # Build ComfyUI workflow JSON (basic txt2img)
@@ -303,6 +342,9 @@ async def _generate_comfyui(
         },
     }
 
+    if bridge_mode:
+        return await _generate_comfy_bridge(prompt, config, negative_prompt, width, height, steps, cfg_scale, actual_seed)
+
     try:
         # Queue the prompt
         payload = json.dumps({"prompt": workflow}).encode("utf-8")
@@ -342,10 +384,19 @@ async def _generate_comfyui(
                         filename = img_info["filename"]
                         subfolder = img_info.get("subfolder", "")
 
-                        # Fetch the actual image
+                        # Fetch and persist the actual image on the JEBAT caller.
                         img_url = f"{host}/view?filename={filename}&subfolder={subfolder}&type=output"
+                        def _download():
+                            with urllib.request.urlopen(img_url, timeout=30) as response:
+                                return response.read()
+                        image_bytes = await asyncio.to_thread(_download)
+                        output = config.output_dir or os.environ.get("JEBAT_IMAGE_DIR", str(Path.home() / ".jebat" / "images"))
+                        Path(output).mkdir(parents=True, exist_ok=True)
+                        image_path = Path(output) / f"comfyui-{prompt_id}.png"
+                        image_path.write_bytes(image_bytes)
                         return ImageGenResult(
                             success=True,
+                            image_path=str(image_path),
                             image_url=img_url,
                             backend="comfyui",
                             model_used="comfyui-local",

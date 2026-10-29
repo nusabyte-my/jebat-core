@@ -653,7 +653,10 @@ class AgentLoop:
                   model: str = "qwen2.5-coder:7b", yolo: bool = False,
                  auto_commit: bool = False, style: str = "jebat", context_window: int = 16384,
                  verbose: bool = False, system_prompt_extra: str = "",
-                 budget_tokens: Optional[int] = None, deadline: Optional[float] = None):
+                 budget_tokens: Optional[int] = None, deadline: Optional[float] = None,
+                 tool_executor=None, cancel_event=None):
+        self.tool_executor = tool_executor or execute_tool
+        self.cancel_event = cancel_event
         self.registry = registry
         self.default_provider = default_provider
         self.model = model
@@ -769,6 +772,9 @@ class AgentLoop:
         recent_texts: List[str] = []
         STALL_LIMIT = 3
         while iteration < self.max_iterations:
+            if self.cancel_event is not None and self.cancel_event.is_set():
+                final_answer = "Operation cancelled by user."
+                break
             # Hard budget gates (agentix): cumulative tokens and wall clock.
             if self.budget_tokens is not None and total_tokens >= self.budget_tokens:
                 budget_exhausted = True
@@ -834,7 +840,7 @@ class AgentLoop:
                 all_tool_actions.append(action_desc)
 
                 t_start = time.time()
-                raw_result = execute_tool(tool_name, tool_args, yolo=self.yolo)
+                raw_result = self.tool_executor(tool_name, tool_args, yolo=self.yolo)
                 lat_ms = (time.time() - t_start) * 1000
                 is_err = raw_result.startswith("[TOOL_SCHEMA_ERROR") or "Error" in raw_result[:20]
 

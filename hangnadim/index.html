@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HangNadim — Agent Workbench</title>
+  <link rel="stylesheet" href="/assets/hangnadim.css">
+  <link rel="stylesheet" href="/assets/hangnadim-builder.css">
+  <link rel="stylesheet" href="/assets/hangnadim-creative.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/hangnadim/"><span class="brand-mark">H</span><strong>HangNadim</strong></a><nav><a href="#workstreams">Workstreams</a><a href="#activity">Activity</a><a href="#artifacts">Artifacts</a></nav><span class="runtime" id="runtime">LOCAL RUNTIME</span></header>
+  <main>
+    <section class="builder-shell" id="builder">
+      <div class="builder-top"><div><p class="eyebrow">HANGNADIM BUILDER</p><h1>Build the thing.</h1><p class="builder-subtitle">Prompt → files → preview → test → ship.</p></div><button id="new-project" class="secondary-button">New project</button></div>
+      <form id="builder-form" class="builder-form"><textarea id="build-goal" required placeholder="Build a focused project status dashboard with one primary action."></textarea><button type="submit" id="build-button">Build project →</button></form>
+      <div id="builder-workspace" class="builder-workspace" hidden>
+        <div class="builder-toolbar"><strong id="project-name">Project</strong><div><select id="builder-model" aria-label="Model route"><option value="">Active model</option></select><button id="visual-edit">Select element</button><button data-view="desktop" class="active">Desktop</button><button data-view="tablet">Tablet</button><button data-view="mobile">Mobile</button><button id="refresh-preview">↻</button><button id="fork-project" class="text-button">Fork</button><button id="share-project" class="text-button">Share</button><button id="implement-project" class="text-button">Implement with agent</button><button id="deploy-project" class="text-button">Deploy preview</button><button id="rollback-project" class="text-button">Rollback</button><a id="export-project" class="text-button">Export ZIP</a></div></div>
+        <div class="builder-grid">
+          <section class="preview-panel"><div class="panel-heading"><h2>Preview</h2><span id="preview-state">Live</span></div><iframe id="preview" title="Project preview" sandbox="allow-scripts"></iframe></section>
+          <section class="editor-panel"><div class="panel-heading"><div id="file-tabs" class="file-tabs"></div><button id="save-file" class="text-button">Save + checkpoint</button></div><textarea id="code-editor" spellcheck="false" aria-label="Project HTML editor"></textarea></section>
+        </div>
+        <div class="build-log" id="build-log" aria-live="polite">Ready to build.</div>
+        <div id="media-artifacts" class="media-artifacts" hidden></div>
+        <div class="builder-bottom"><div><h2>Checkpoints</h2><div id="checkpoint-list"></div></div><div><h2>Builder actions</h2><div class="builder-actions"><button data-action="test">Test preview</button><button data-action="checkpoint">Create checkpoint</button></div></div></div>
+      </div>
+    </section>
+
+    <section class="workbench" id="workstreams">
+      <div class="workspace-main">
+        <form id="goal-form" class="run-goal-form"><label for="goal">Agent objective</label><textarea id="goal" required placeholder="Review this repository's authentication flow and return a prioritized test plan."></textarea><div class="goal-controls"><select id="solution" aria-label="Team"><option value="codebase-investigator">Repository team</option><option value="security-audit">Security team</option><option value="skill-auditor">Skill security team</option><option value="test-gap-analyst">Test strategy team</option><option value="reverse-engineer">Reversal team</option></select><select id="agents" aria-label="Subagents"><option value="3">3 subagents</option><option value="2">2 subagents</option></select><button type="submit" id="start">Start workstream →</button></div></form>
+        <div class="section-heading"><h2 id="view-title">Workstream</h2><div class="run-actions"><span id="view-status">Ready</span><button id="cancel-run" class="text-button" hidden>Cancel run</button><button id="show-artifacts" class="text-button" hidden>Artifacts</button></div></div>
+        <div id="conversation" class="conversation"><article class="message system"><span>HangNadim</span><p>Ready to coordinate a workstream. Subagents use the same selected model and report their own state.</p></article></div>
+        <div id="workers" class="workers"><p class="empty">Start a goal to see subagent activity.</p></div>
+      </div>
+      <aside class="sidebar">
+        <div class="side-heading"><h2>Runs</h2><div class="filters"><button class="active" data-filter="all">All</button><button data-filter="running">Needs you</button><button data-filter="completed">Delivered</button></div></div>
+        <div id="run-list" class="run-list"></div>
+        <div class="side-heading"><h2>Evidence</h2><button id="refresh" class="icon-button" aria-label="Refresh runs">↻</button></div>
+        <pre id="evidence" class="evidence" hidden></pre>
+        <div id="artifacts" class="artifacts" hidden></div>
+      </aside>
+    </section>
+  </main>
+  <script src="/assets/hangnadim.js"></script>
+  <script src="/assets/hangnadim-builder.js"></script>
+</body>
+</html>

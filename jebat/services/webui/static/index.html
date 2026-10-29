@@ -275,7 +275,7 @@
         <img class="sidebar-brand-icon" src="/webui/static/favicon-32.png" alt="J" width="32" height="32" style="border-radius:8px">
         <div>
           <div class="sidebar-brand-text">JEBAT</div>
-          <div class="sidebar-brand-version">v8.3.0</div>
+          <div class="sidebar-brand-version">v8.5.0</div>
         </div>
       </div>
 
@@ -304,6 +304,10 @@
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">Agent Modes</div>
+        <a class="sidebar-link" data-page="hermes" href="#hermes">
+          <span class="sidebar-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="12" cy="21" r="2"/><path d="M6 8l4 3m4 0l4-3M12 15v4"/></svg></span> Panglima
+          <span class="sidebar-link-badge">LIVE</span>
+        </a>
         <a class="sidebar-link" data-page="reflex" href="#reflex">
           <span class="sidebar-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span> Reflex Workspace
           <span class="sidebar-link-badge">RUN</span>
@@ -454,7 +458,7 @@
       { icon: '▦', name: 'Dashboard', desc: 'Platform overview', page: 'dashboard', badge: 'Platform' },
       { icon: '◫', name: 'Chat', desc: 'Universal LLM chat', page: 'chat', badge: 'Platform' },
        { icon: '⚙', name: 'Control Center', desc: 'Runtime, providers, auth', page: 'control', badge: 'System' },
-       { icon: '⚡', name: 'Reflex Workspace', desc: 'Plans, tools, execution, and agent runs', page: 'reflex', badge: 'Agent' },
+       { icon: '⚡', name: 'Panglima Command', desc: 'Outcome-driven multi-agent workstreams', page: 'hermes', badge: 'Agent' },
        { icon: '⇄', name: 'Flow Hub', desc: 'Gateway, channels, MCP, and skill bridge', page: 'flow', badge: 'Integration' },
       { icon: '◉', name: 'Sahabat', desc: 'Conversational AI companion', page: 'sahabat', badge: 'v1.0' },
       { icon: '◇', name: 'Keris', desc: 'Sentinel Security — pentest', page: 'keris', badge: 'v1.0' },
@@ -616,7 +620,7 @@
     // 7. SHELL ROUTER
     // ═══════════════════════════════════════════════════
     const PAGE_TITLES = {
-      dashboard: 'Mission Control', chat: 'Chat', control: 'Control Center',
+      dashboard: 'Mission Control', chat: 'Chat', control: 'Control Center', hermes: 'Panglima — Command Workspace',
       reflex: 'Reflex — Agent Workspace', flow: 'Flow — Integration Hub',
       sahabat: 'Sahabat — Companion', keris: 'Keris — Sentinel Security',
       pandai: 'Pandai — Developer Suite', perisai: 'Perisai — Nexus',

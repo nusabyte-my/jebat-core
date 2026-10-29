@@ -240,6 +240,8 @@ def run_with_agent_loop(
     resume_from: Optional[str] = None,
     workspace_override: Optional[Path] = None,
     record_dir: Optional[Path] = None,
+    tool_executor=None,
+    cancel_event=None,
 ) -> Tuple[str, Dict]:
     """Spawn the shared AgentLoop for a doctrine solution and run `task`.
 
@@ -254,7 +256,6 @@ def run_with_agent_loop(
     """
     import time
 
-    from jebat_cli_new import agent as agent_module
     from jebat_cli_new.agent import AgentLoop, AgentMessage
     from jebat_cli_new.providers import ProviderRegistry
 
@@ -304,6 +305,7 @@ def run_with_agent_loop(
         verbose=verbose,
         budget_tokens=int(budget_tokens) if budget_tokens else None,
         deadline=deadline_ts,
+        cancel_event=cancel_event,
     )
     loop.max_iterations = effective_iterations
     if resumed_messages:
@@ -314,13 +316,9 @@ def run_with_agent_loop(
             f"# Solution doctrine ({manifest['name']}, template: {manifest['template']})\n{doctrine}"
         )
 
-    jailed = make_jailed_executor(manifest, sol, workspace_override=workspace_override)
-    original = agent_module.execute_tool
-    agent_module.execute_tool = jailed
-    try:
-        step = loop.step(task, provider=provider_name, model=model_name)
-    finally:
-        agent_module.execute_tool = original
+    jailed = tool_executor or make_jailed_executor(manifest, sol, workspace_override=workspace_override)
+    loop.tool_executor = jailed
+    step = loop.step(task, provider=provider_name, model=model_name)
 
     run_id = _record_run(
         sol, manifest, task, provider_name, model_name, step,

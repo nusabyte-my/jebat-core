@@ -287,7 +287,7 @@ JSON
   c_ok "MCP server exposes 47 tools over stdio/HTTP/streamable-http"
   c_ok "zero-install public endpoint: https://mcp.jebat.online/mcp"
   c_ok "generate IDE configs:  curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash -s -- --print-mcp-config=cursor"
-  c_ok "start local MCP server: jebat mcp serve --port 8206"
+  c_ok "start local MCP server: jebat mcp serve --transport streamable-http --port 8206"
 fi
 
 if [ "$DO_DESKTOP" -eq 1 ]; then
@@ -333,7 +333,7 @@ echo "    jebat chat 'hello'        # one-shot chat"
 echo "    jebat agent 'task'        # run agent with tool execution"
 echo "    jebat think --mode deep   # Ultra-Think with 7 reasoning modes"
 echo "    jebat mcp serve           # start MCP server (stdio)"
-echo "    jebat mcp serve --port 8206  # start MCP server (HTTP)"
+echo "    jebat mcp serve --transport streamable-http --port 8206  # start MCP server (HTTP)"
 [ "$DO_INFERENCE" -eq 1 ]&& echo "    infra/inference/start.sh  # boot local LLMs (Ollama + llama.cpp)"
 echo
 c_step "IDE integration:"

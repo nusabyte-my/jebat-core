@@ -43,14 +43,15 @@ def _tool_definitions() -> List[Dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "task": {"type": "string", "description": "The task for the agent"},
-                    "yolo": {
-                        "type": "boolean",
-                        "description": "Skip interactive safety confirmations (default false)",
-                        "default": False,
-                    },
+                    "parallel": {"type": "integer", "enum": [2, 3], "description": "Run independent subagents concurrently; read-only unless write=true"},
+                    "write": {"type": "boolean", "default": False, "description": "Allow isolated Git-worktree writes"},
+                    "deadline_seconds": {"type": "number", "exclusiveMinimum": 0},
+                    "run_id": {"type": "string", "description": "Operation id for agentix_status/cancel"},
+                    "cancel": {"type": "boolean", "default": False},
                 },
-                "required": ["task"],
+                "required": [],
             },
+            "outputSchema": {"type": "object"},
         },
         {
             "name": "agentix_status",
@@ -83,16 +84,33 @@ def _call_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
     from jebat_cli_new.agentix_llm import PROVIDER_ERROR_PREFIX
 
     if name == "agentix_status":
-        return {"content": [{"type": "text", "text": json.dumps(_status_payload(), indent=2)}]}
+        payload = _status_payload()
+        return {"content": [{"type": "text", "text": json.dumps(payload, indent=2)}], "structuredContent": payload}
     if name == "agentix_run":
         task = str(arguments.get("task") or "").strip()
+        from jebat_cli_new.agentix_parallel import cancel_operation, operation_status, run_parallel
+
+        if arguments.get("cancel"):
+            payload = cancel_operation(str(arguments.get("run_id") or ""))
+            return {"content": [{"type": "text", "text": json.dumps(payload)}], "structuredContent": payload}
+        if not task and arguments.get("run_id"):
+            payload = operation_status(str(arguments["run_id"]))
+            return {"content": [{"type": "text", "text": json.dumps(payload)}], "structuredContent": payload}
         if not task:
-            raise ValueError("task must be a non-empty string")
+            raise ValueError("task is required unless run_id is supplied")
         sol = _resolve_solution(_SOLUTION or "")
+        parallel = arguments.get("parallel")
+        if parallel:
+            result, payload = run_parallel(
+                sol, task, agents=int(parallel), write=bool(arguments.get("write", False)),
+                deadline_seconds=arguments.get("deadline_seconds"), yolo=bool(arguments.get("yolo", False)),
+            )
+            return {"content": [{"type": "text", "text": result}], "structuredContent": payload}
         result, info = _run_solution(sol, task, yolo=bool(arguments.get("yolo", False)))
         if result and result.startswith(PROVIDER_ERROR_PREFIX):
             return {"content": [{"type": "text", "text": result or ""}], "isError": True}
-        return {"content": [{"type": "text", "text": result or ""}]}
+        payload = {"answer": result, **info}
+        return {"content": [{"type": "text", "text": result or ""}], "structuredContent": payload}
     raise ValueError(f"unknown tool {name!r}")
 
 

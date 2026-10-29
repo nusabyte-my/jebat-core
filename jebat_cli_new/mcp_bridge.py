@@ -145,6 +145,7 @@ class _Session:
         self.cfg = cfg
         self.transport = None
         self.server_info: Dict[str, Any] = {}
+        self.trace_id: Optional[str] = None
 
     async def __aenter__(self) -> "_Session":
         from jebat.features.mcp.mcp_client import (
@@ -215,6 +216,8 @@ async def _describe_async(server: str) -> Dict[str, Any]:
     cfg = _server_config(server)
     async with _Session(cfg) as session:
         result = await session.request("tools/list", {})
+        from jebat_cli_new.mcp_security import check_catalog_integrity
+        integrity = check_catalog_integrity(server, result.get("tools") or [], config_path())
         tools = []
         for tool in result.get("tools") or []:
             if not isinstance(tool, dict):
@@ -240,6 +243,7 @@ async def _describe_async(server: str) -> Dict[str, Any]:
             "protocol": session.server_info.get("protocolVersion"),
             "server_info": session.server_info.get("serverInfo"),
             "tool_count": len(tools),
+            "integrity": integrity,
             "tools": tools,
             "resources": resources,
         }
@@ -248,9 +252,19 @@ async def _describe_async(server: str) -> Dict[str, Any]:
 async def _call_async(server: str, tool: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
     cfg = _server_config(server)
     async with _Session(cfg) as session:
+        from jebat_cli_new.mcp_security import check_catalog_integrity, validate_bearer_binding, validate_structured_content
+        raw = _load_mcp_section()[server]
+        validate_bearer_binding(cfg.headers, issuer=raw.get("oauth_issuer"), audience=raw.get("oauth_audience"))
+        catalog = await session.request("tools/list", {})
+        check_catalog_integrity(server, catalog.get("tools") or [], config_path())
+        definitions = {item.get("name"): item for item in catalog.get("tools") or [] if isinstance(item, dict)}
+        if tool not in definitions:
+            return {"server": server, "tool": tool, "is_error": True, "text": f"unknown tool: {tool}"}
         result = await session.request(
             "tools/call", {"name": tool, "arguments": arguments or {}}
         )
+        if result.get("structuredContent") is not None:
+            validate_structured_content(result["structuredContent"], definitions[tool].get("outputSchema"))
         return {
             "server": server,
             "tool": tool,

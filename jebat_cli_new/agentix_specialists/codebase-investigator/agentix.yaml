@@ -1,0 +1,9 @@
+name: codebase-investigator
+version: 1.0.0
+description: Read-only investigation of repository architecture, data flow, dependencies, and runtime behavior. Use for codebase exploration, tracing a feature, and locating implementation evidence.
+template: reflex
+runtime: llm
+max_iterations: 16
+llm_tools: [read_file, search_files, list_dir]
+budget: {tokens: 80000, wall_clock: 20m}
+deploy: {allow: [local, mcp]}

@@ -382,6 +382,7 @@ Main-agent execution is the default. Necessary subagents must use the exact same
 | `jebat agentix eval PATH [--live]` | Structural checks + golden tasks (`golden/*.json`); llm-runtime tasks run against the real provider only with `--live` |
 | `jebat agentix deploy PATH --target local\|mcp\|vps` | Ship it: local registry, ready-to-paste MCP config, or scp to VPS — gated by `deploy.allow` in `agentix.yaml` |
 | `jebat agentix run NAME\|PATH "task"` | Spawn the agent: `runtime: llm` solutions run the shared ReAct loop with the solution's doctrine, tool allowlist and workspace jail; code solutions execute `run(task, ctx.tools)` |
+| `jebat agentix run NAME\|PATH "task" --parallel 2\|3` | Automatically split the task into independent slices and run up to three subagents concurrently. Planning and every worker inherit the exact selected provider/model; provider failures never trigger model substitution. |
 | `jebat agentix ask "objective"` | Type only an objective — routes to the best deployed solution (top-3 candidates shown when ambiguous) |
 | `jebat agentix run NAME - < task.txt` | Pipe a task via stdin (`-` reads the task) |
 | `jebat agentix run NAME --resume RUN_ID "follow-up"` | Continue a recorded run's conversation (every llm run is recorded) |

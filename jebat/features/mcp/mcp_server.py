@@ -559,6 +559,8 @@ class MCPServer:
             ("cron", "jebat.features.cron"),
             ("wiki", "jebat.features.wiki"),
             ("image_gen", "jebat.features.image_gen"),
+            ("image_gen_tools", "jebat.tools.image_gen_tools"),
+            ("comfyui_tools", "jebat.tools.comfyui_tools"),
             ("pentest", "jebat.features.pentest.pentest_tools"),
             # Memory + learning (project memory, dream cycle, self-learning)
             ("memory", "jebat.tools.memory_tools"),
@@ -578,6 +580,7 @@ class MCPServer:
             # Design & UI/UX (Pawang Estetika)
             ("design_tools", "jebat.tools.design_tools"),
             ("design_reference", "jebat.tools.design_reference_tools"),
+            ("creative_tools", "jebat.tools.creative_tools"),
             # Copywriting & Conversion (Pawang Jualan)
             ("copywriting_tools", "jebat.tools.copywriting_tools"),
             # Voyager-style Dynamic Tool Synthesis

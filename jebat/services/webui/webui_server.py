@@ -74,6 +74,14 @@ class AgentRunPlanRequest(BaseModel):
     conversation_id: Optional[str] = None
 
 
+class HermesRunRequest(BaseModel):
+    objective: str = Field(min_length=1, max_length=4000)
+    solution: str = Field(default="codebase-investigator", max_length=100)
+    agents: int = Field(default=3, ge=2, le=3)
+    provider: Optional[str] = Field(default=None, max_length=100)
+    model: Optional[str] = Field(default=None, max_length=255)
+
+
 class ThinkRequest(BaseModel):
     problem: str
     mode: str = "deliberate"
@@ -1509,6 +1517,91 @@ async def plan_agent_run(payload: AgentRunPlanRequest):
         AGENT_RUNS[run["id"]] = run
         _persist_agent_runs()
     return _agent_run_summary(run)
+
+
+@webui_router.post("/webui/api/hermes/runs")
+async def start_hermes_run(payload: HermesRunRequest):
+    from jebat_cli_new.agentix import _resolve_solution
+    from jebat_cli_new.agentix_parallel import run_parallel
+
+    solution = _resolve_solution(payload.solution)
+    run_id = f"{time.strftime('%Y%m%d-%H%M%S')}-parallel-{payload.solution}-{uuid.uuid4().hex[:4]}"
+    HERMES_WORKSTREAMS[run_id] = {
+        "run_id": run_id, "solution": payload.solution, "objective": payload.objective,
+        "status": "starting", "created_at": _now_iso(), "updated_at": _now_iso(),
+    }
+    run_task = asyncio.create_task(asyncio.to_thread(
+        run_parallel, solution, payload.objective, agents=payload.agents,
+        provider=payload.provider, model=payload.model, write=False, run_id=run_id,
+    ))
+    HERMES_TASKS[run_task] = HERMES_WORKSTREAMS[run_id]
+    run_task.add_done_callback(lambda _task: None)
+    return HERMES_WORKSTREAMS[run_id]
+
+
+@webui_router.get("/webui/api/hermes/runs")
+async def list_hermes_runs():
+    from jebat_cli_new.agentix_llm import runs_dir
+    records = []
+    for path in sorted(runs_dir().glob("*-parallel-*"), reverse=True)[:20]:
+        state_path = path / "state.json"
+        brief_path = path / "brief.json"
+        if not state_path.is_file() or not brief_path.is_file():
+            continue
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        brief = json.loads(brief_path.read_text(encoding="utf-8"))
+        records.append({"run_id": path.name, "solution": brief.get("solution"), "objective": brief.get("objective"), **state})
+    return {"runs": records}
+
+
+@webui_router.get("/webui/api/hermes/runs/{run_id}")
+async def get_hermes_run(run_id: str):
+    from jebat_cli_new.agentix_parallel import operation_dir, operation_status
+    state = operation_status(run_id)
+    result_path = operation_dir(run_id) / "result.json"
+    if result_path.is_file():
+        state["result"] = json.loads(result_path.read_text(encoding="utf-8"))
+    return state
+
+
+@webui_router.get("/webui/api/hermes/runs/{run_id}/events")
+async def hermes_run_events(run_id: str):
+    from jebat_cli_new.agentix_parallel import operation_dir
+
+    async def stream():
+        while True:
+            path = operation_dir(run_id)
+            state_path = path / "state.json"
+            if state_path.is_file():
+                yield f"data: {state_path.read_text(encoding='utf-8')}\n\n"
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                if state.get("status") in {"completed", "failed", "cancelled", "deadline_exceeded"}:
+                    break
+            await asyncio.sleep(0.75)
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@webui_router.post("/webui/api/hermes/runs/{run_id}/cancel")
+async def cancel_hermes_run(run_id: str):
+    from jebat_cli_new.agentix_parallel import cancel_operation
+    return cancel_operation(run_id)
+
+
+@webui_router.get("/webui/api/hermes/runs/{run_id}/artifacts")
+async def hermes_run_artifacts(run_id: str):
+    from jebat_cli_new.agentix_parallel import operation_dir
+    artifacts = []
+    for path in operation_dir(run_id).glob("worker-*.patch"):
+        artifacts.append({"name": path.name, "type": "patch", "content": path.read_text(encoding="utf-8")})
+    result_path = operation_dir(run_id) / "result.md"
+    if result_path.is_file():
+        artifacts.append({"name": "result.md", "type": "markdown", "content": result_path.read_text(encoding="utf-8")})
+    return {"artifacts": artifacts}
+
+
+HERMES_TASKS: Dict[asyncio.Task, Dict[str, Any]] = {}
+HERMES_WORKSTREAMS: Dict[str, Dict[str, Any]] = {}
 
 
 @webui_router.get("/webui/api/agents/status")

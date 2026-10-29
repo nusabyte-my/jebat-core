@@ -1,0 +1,128 @@
+<style>
+.hermes-shell{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:var(--space-lg);min-height:calc(100vh - 150px)}
+.hermes-chat,.hermes-runs{display:flex;flex-direction:column;min-width:0}.hermes-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:var(--space-md)}.hermes-header h1{font-size:24px}.hermes-header p{color:var(--text-muted);font-size:13px}.hermes-badge{font:11px var(--font-mono);color:var(--cyan);border:1px solid var(--border);padding:4px 8px;border-radius:var(--radius-sm)}
+.hermes-messages{flex:1;overflow:auto;padding:var(--space-md);display:flex;flex-direction:column;gap:12px;min-height:280px}.hermes-message{max-width:88%;padding:12px 14px;border-radius:var(--radius-md);line-height:1.6;font-size:14px}.hermes-message.user{align-self:flex-end;background:var(--cyan);color:var(--bg-ink)}.hermes-message.assistant{align-self:flex-start;background:var(--bg-elevated);border:1px solid var(--border)}.hermes-message.system{color:var(--text-muted);font-size:12px;align-self:center;text-align:center}
+.hermes-composer{display:grid;gap:8px;padding:var(--space-md);border-top:1px solid var(--border)}.hermes-composer textarea{min-height:92px;resize:vertical}.hermes-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.hermes-controls select{width:auto;min-width:130px}.hermes-controls .btn{margin-left:auto}
+.hermes-workers{display:grid;gap:8px;margin-top:var(--space-md)}.hermes-worker{padding:12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-card)}.hermes-worker-top{display:flex;justify-content:space-between;gap:8px}.hermes-worker small{display:block;color:var(--text-muted);margin-top:4px}.hermes-worker[data-status="running"]{border-color:var(--cyan)}.hermes-worker[data-status="completed"]{border-color:var(--green)}.hermes-worker[data-status="failed"]{border-color:var(--red)}
+.hermes-run-list{display:grid;gap:6px;margin-top:var(--space-md)}.hermes-run-link{border:1px solid transparent;background:transparent;color:var(--text-secondary);padding:8px;text-align:left;border-radius:var(--radius-sm);cursor:pointer}.hermes-run-link.active,.hermes-run-link:hover{background:var(--bg-elevated);border-color:var(--border)}.hermes-evidence{margin-top:var(--space-md);max-height:340px;overflow:auto;white-space:pre-wrap;font:11px/1.6 var(--font-mono)}
+.hermes-filters{display:flex;gap:4px}.hermes-filters button{border:0;background:transparent;color:var(--text-muted);font-size:11px;padding:4px 6px;cursor:pointer}.hermes-filters button.on{color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
+@media(max-width:900px){.hermes-shell{grid-template-columns:1fr}.hermes-runs{min-height:300px}}
+</style>
+
+<div class="hermes-shell">
+  <section class="hermes-chat card">
+    <div class="hermes-header"><div><h1>Panglima</h1><p>Say the outcome. Your team carries it forward.</p></div><span class="hermes-badge">COMMAND WORKSPACE</span></div>
+    <div class="hermes-messages" id="hermes-messages">
+      <div class="hermes-message system">Panglima uses JEBAT's real Agentix runtime. Choose a specialist and objective; workers inherit the selected model.</div>
+      <div class="hermes-message assistant">Ready. I can investigate code, review security, or coordinate a multi-agent task.</div>
+    </div>
+    <form class="hermes-composer" id="hermes-form">
+      <textarea class="input" id="hermes-objective" required maxlength="4000" placeholder="Example: Map the repository's authentication flow and identify missing tests."></textarea>
+      <div class="hermes-controls">
+        <select class="input" id="hermes-solution" aria-label="Specialist">
+          <option value="codebase-investigator">Codebase investigator</option>
+          <option value="skill-auditor">Skill auditor</option>
+          <option value="security-audit">Security audit</option>
+          <option value="test-gap-analyst">Test-gap analyst</option>
+          <option value="reverse-engineer">Reverse engineer</option>
+        </select>
+        <select class="input" id="hermes-agents" aria-label="Worker count"><option value="3">3 workers</option><option value="2">2 workers</option></select>
+        <button class="btn btn-primary" id="hermes-submit" type="submit">Orchestrate</button>
+      </div>
+    </form>
+  </section>
+  <aside class="hermes-runs card">
+    <div class="card-header"><div class="card-title">Worker activity</div><button class="btn" id="hermes-refresh" type="button">Refresh</button></div>
+    <div id="hermes-current"><p class="text-muted text-sm">No active run. Start an objective to see real worker state.</p></div>
+    <div class="card-header" style="margin-top:var(--space-lg)"><div class="card-title">Run history</div><div class="hermes-filters" role="group" aria-label="Filter runs"><button class="on" data-run-filter="all" type="button">All</button><button data-run-filter="running" type="button">Needs you</button><button data-run-filter="completed" type="button">Delivered</button></div></div>
+    <div class="hermes-run-list" id="hermes-run-list"></div>
+    <pre class="hermes-evidence" id="hermes-evidence" hidden></pre>
+  </aside>
+</div>
+
+<script>
+(() => {
+const hermesMessages = document.getElementById('hermes-messages');
+const hermesCurrent = document.getElementById('hermes-current');
+const hermesRunList = document.getElementById('hermes-run-list');
+const hermesEvidence = document.getElementById('hermes-evidence');
+let hermesSelectedRun = null;
+let hermesPollTimer = null;
+let hermesFilter = 'all';
+let hermesRuns = [];
+
+function hermesMessage(text, role) {
+  const message = document.createElement('div');
+  message.className = `hermes-message ${role}`;
+  message.textContent = text;
+  hermesMessages.appendChild(message);
+  hermesMessages.scrollTop = hermesMessages.scrollHeight;
+  return message;
+}
+function hermesRenderRun(run) {
+  hermesSelectedRun = run.run_id;
+  hermesCurrent.replaceChildren();
+  const summary = document.createElement('p');
+  summary.className = 'text-sm';
+  summary.textContent = `${run.status} · ${run.provider}:${run.model}`;
+  hermesCurrent.appendChild(summary);
+  const workers = document.createElement('div'); workers.className = 'hermes-workers';
+  run.workers.forEach(worker => {
+    const card = document.createElement('div'); card.className = 'hermes-worker'; card.dataset.status = worker.status;
+    const top = document.createElement('div'); top.className = 'hermes-worker-top';
+    const name = document.createElement('strong'); name.textContent = `Worker ${worker.worker}`;
+    const state = document.createElement('span'); state.className = 'badge'; state.textContent = worker.status;
+    top.append(name, state);
+    const task = document.createElement('small'); task.textContent = worker.task;
+    card.append(top, task); workers.appendChild(card);
+  });
+  hermesCurrent.appendChild(workers);
+  if (run.result) {
+    hermesEvidence.hidden = false;
+    hermesEvidence.textContent = JSON.stringify(run.result, null, 2);
+  } else hermesEvidence.hidden = true;
+}
+async function hermesLoadRuns() {
+  const data = await API.get('/hermes/runs');
+  hermesRuns = data.runs;
+  hermesRunList.replaceChildren();
+  data.runs.filter(run => hermesFilter === 'all' || run.status === hermesFilter).forEach(run => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'hermes-run-link';
+    button.textContent = `${run.run_id.slice(0, 15)}… · ${run.status}`;
+    button.addEventListener('click', () => hermesOpenRun(run.run_id));
+    hermesRunList.appendChild(button);
+  });
+  if (hermesSelectedRun) await hermesOpenRun(hermesSelectedRun, false);
+  const active = data.runs.find(run => run.status === 'running');
+  clearTimeout(hermesPollTimer);
+  if (active) hermesPollTimer = setTimeout(hermesLoadRuns, 1500);
+}
+async function hermesOpenRun(id) {
+  const run = await API.get(`/hermes/runs/${encodeURIComponent(id)}`);
+  hermesRenderRun(run);
+}
+document.getElementById('hermes-refresh').addEventListener('click', hermesLoadRuns);
+document.querySelectorAll('[data-run-filter]').forEach(button => button.addEventListener('click', () => {
+  hermesFilter = button.dataset.runFilter;
+  document.querySelectorAll('[data-run-filter]').forEach(item => item.classList.toggle('on', item === button));
+  hermesLoadRuns();
+}));
+document.getElementById('hermes-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const submit = document.getElementById('hermes-submit');
+  const objective = document.getElementById('hermes-objective').value.trim();
+  if (!objective) return;
+  hermesMessage(objective, 'user');
+  const pending = hermesMessage('Decomposing objective and starting workers…', 'assistant');
+  submit.disabled = true;
+  try {
+    const started = await API.post('/hermes/runs', { objective, solution: document.getElementById('hermes-solution').value, agents: Number(document.getElementById('hermes-agents').value) });
+    hermesSelectedRun = started.run_id;
+    pending.textContent = `Workstream ${started.run_id} started. Worker state is live below.`;
+    await hermesLoadRuns();
+  } catch (error) { pending.textContent = `Could not start run: ${error.message}`; }
+  finally { submit.disabled = false; }
+});
+hermesLoadRuns().catch(error => { hermesCurrent.textContent = `Unable to load runs: ${error.message}`; });
+})();
+</script>
