@@ -32,6 +32,7 @@ _ensure_secrets_loaded()
 from jebat.api.auth import APIKeyMiddleware
 from jebat.api.safety import require_action_confirmation
 from jebat.services.webui.webui_server import webui_router, _mount_static, STATIC_DIR
+from jebat.services.webui.builder import router as builder_router
 from jebat.monitoring.dashboard_api import DashboardAPI
 
 # Initialize dashboard API router
@@ -190,6 +191,7 @@ app.add_middleware(AuditMiddleware)
 app.add_middleware(APIKeyMiddleware)
 _mount_static(app)
 app.include_router(webui_router)
+app.include_router(builder_router)
 
 
 @app.on_event("startup")
@@ -230,6 +232,12 @@ def _mount_landing_assets(app: FastAPI):
 
 _mount_landing_assets(app)
 
+from jebat.services.webui.builder import root as builder_root
+(builder_root() / "deployments").mkdir(parents=True, exist_ok=True)
+app.mount("/builder", StaticFiles(directory=str(builder_root()), html=True), name="builder-preview")
+app.mount("/deployments", StaticFiles(directory=str(builder_root() / "deployments"), html=True), name="preview-deployments")
+app.mount("/hangnadim", StaticFiles(directory=str(LANDING_DIR / "hangnadim"), html=True), name="hangnadim")
+
 
 @app.get("/", include_in_schema=False)
 async def landing_page():
@@ -245,7 +253,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "jebat-webui",
-        "version": "8.3.0",
+        "version": "8.5.0",
         "timestamp": time.time(),
         "features": ["rate-limiting", "cors", "csp", "error-pages", "audit-trail", "request-id"],
     }
