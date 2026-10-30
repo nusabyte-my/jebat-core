@@ -236,7 +236,9 @@ from jebat.services.webui.builder import root as builder_root
 (builder_root() / "deployments").mkdir(parents=True, exist_ok=True)
 app.mount("/builder", StaticFiles(directory=str(builder_root()), html=True), name="builder-preview")
 app.mount("/deployments", StaticFiles(directory=str(builder_root() / "deployments"), html=True), name="preview-deployments")
-app.mount("/hangnadim", StaticFiles(directory=str(LANDING_DIR / "hangnadim"), html=True), name="hangnadim")
+# Landing assets live at the repo root, not in the wheel: mount only when present.
+if (LANDING_DIR / "hangnadim").is_dir():
+    app.mount("/hangnadim", StaticFiles(directory=str(LANDING_DIR / "hangnadim"), html=True), name="hangnadim")
 
 
 @app.get("/", include_in_schema=False)

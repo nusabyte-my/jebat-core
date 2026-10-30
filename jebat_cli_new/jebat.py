@@ -4681,8 +4681,8 @@ def main():
         return 0
 
     elif args[0] == "webui":
-        # Serve the main app (webui router included) locally — the same app
-        # the production jebat-webui service runs, on the advertised port.
+        # Serve the installed WebUI app; fall back to the repo-root API app
+        # (main.py) which only exists in a source checkout.
         port = 8787
         for token in args[1:]:
             if token.isdigit():
@@ -4693,8 +4693,15 @@ def main():
         except ImportError:
             print("  webui needs uvicorn: pip install uvicorn", file=sys.stderr)
             return 1
+        target = "jebat.services.webui.launch:app"
+        try:
+            import importlib
+
+            importlib.import_module("jebat.services.webui.launch")
+        except Exception:
+            target = "main:app"
         print(f"  ⚔ JEBAT WebUI → http://127.0.0.1:{port}/webui/")
-        uvicorn.run("main:app", host="127.0.0.1", port=port, log_level="warning")
+        uvicorn.run(target, host="127.0.0.1", port=port, log_level="warning")
         return 0
 
     else:

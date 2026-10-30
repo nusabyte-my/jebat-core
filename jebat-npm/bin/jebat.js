@@ -27,14 +27,6 @@ const INSTALL_SCRIPT_URL = 'https://raw.githubusercontent.com/nusabyte-my/jebat-
 const INSTALL_SCRIPT_URL_ALT = 'https://jebat.online/install.sh';
 
 const IS_WIN = platform() === 'win32';
-const BOOTSTRAP_PYTHON = resolve(
-  process.env.JEBAT_HOME || resolve(os.homedir(), '.local', 'jebat'),
-  'venv',
-  IS_WIN ? 'Scripts/python.exe' : 'bin/python',
-);
-const PYTHON_CMD = fs.existsSync(BOOTSTRAP_PYTHON)
-  ? BOOTSTRAP_PYTHON
-  : (process.env.JEBAT_PYTHON || (IS_WIN ? 'python.exe' : 'python3'));
 
 function log(msg) { console.error(`[jebat] ${msg}`); }
 function error(msg) { console.error(`[jebat] ERROR: ${msg}`); process.exit(1); }
@@ -45,12 +37,19 @@ function hasCommand(cmd) {
   return r.status === 0;
 }
 
+// Return a command vector ([cmd, ...args]) for a working Python 3.11+.
+// Windows PATH often holds a WindowsApps python3 alias that is not
+// executable, so probe by running rather than trusting `where`.
 function findPython() {
-  for (const c of [BOOTSTRAP_PYTHON, process.env.JEBAT_PYTHON, 'python3', 'python', 'py'].filter(Boolean)) {
-    if (c.includes('/') || c.includes('\\')) {
-      if (!fs.existsSync(c)) continue;
-    }
-    const r = spawnSync(c, ['--version'], { stdio: 'pipe' });
+  const candidates = [
+    venvPython(),
+    [process.env.JEBAT_PYTHON],
+    ...(IS_WIN ? [['py', '-3'], ['python'], ['python3']] : [['python3'], ['python']]),
+  ].filter(Boolean);
+  for (const c of candidates) {
+    if (!c[0]) continue;
+    if ((c[0].includes('/') || c[0].includes('\\')) && !fs.existsSync(c[0])) continue;
+    const r = spawnSync(c[0], [...c.slice(1), '-c', 'import sys; raise SystemExit(sys.version_info < (3, 11))'], { stdio: 'pipe' });
     if (r.status === 0) return c;
   }
   return null;
@@ -80,6 +79,16 @@ function fetchText(url) {
   });
 }
 
+// JEBAT_INSTALL_SCRIPT may point at a local file (offline / air-gapped / CI pin).
+function readSource(src) {
+  if (/^https?:\/\//i.test(src)) return fetchText(src);
+  try {
+    return Promise.resolve({ ok: true, isHtml: false, body: fs.readFileSync(src, 'utf8') });
+  } catch {
+    return Promise.resolve({ ok: false, isHtml: false, body: '' });
+  }
+}
+
 // Download the installer and run it with bash (--yes --quiet for agents/CI).
 // Falls back to the alternate URL if the primary returns HTML or fails.
 async function installJebat() {
@@ -93,9 +102,9 @@ async function installJebat() {
   }
 
   const tryUrl = async (url) => {
-    const r = await fetchText(url);
-    if (!r.ok) { warnOnce(`could not fetch ${url}`); return false; }
-    if (r.isHtml) { warnOnce(`${url} returned HTML instead of a script; trying fallback.`); return false; }
+    const r = await readSource(url);
+    if (!r.ok) { warnOnce(`could not fetch ${url}`); return 'download'; }
+    if (r.isHtml) { warnOnce(`${url} returned HTML instead of a script; trying fallback.`); return 'download'; }
     const tmp = resolve(os.tmpdir(), `jebat-install-${Date.now()}.sh`);
     fs.writeFileSync(tmp, r.body, { mode: 0o755 });
     const install = spawnSync('bash', [tmp, '--yes', '--quiet'], {
@@ -103,24 +112,51 @@ async function installJebat() {
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
     });
     fs.unlinkSync(tmp);
-    return install.status === 0;
+    return install.status === 0 ? 'ok' : 'run';
   };
 
-  if (await tryUrl(INSTALL_SCRIPT_URL)) return true;
-  if (await tryUrl(INSTALL_SCRIPT_URL_ALT)) return true;
-  error('Failed to download the JEBAT installer. See https://jebat.online/install.html');
+  // An explicit JEBAT_INSTALL_SCRIPT is authoritative: no remote fallback,
+  // so a local/offline install never silently runs a different script.
+  const pinned = process.env.JEBAT_INSTALL_SCRIPT;
+  const sources = pinned ? [pinned] : [INSTALL_SCRIPT_URL, INSTALL_SCRIPT_URL_ALT];
+  let last = 'download';
+  for (const url of sources) {
+    last = await tryUrl(url);
+    if (last === 'ok') return true;
+  }
+  if (pinned && last === 'download') error(`Could not read JEBAT_INSTALL_SCRIPT: ${pinned}`);
+  if (last === 'run') {
+    error('The installer ran but failed (see its output above). Set JEBAT_PYTHON to a Python 3.11+ binary, or install manually: https://jebat.online/install.html');
+  }
+  error('Failed to download the JEBAT installer (network or CDN). See https://jebat.online/install.html');
   return false;
 }
 
 let _warned = false;
 function warnOnce(msg) { if (!_warned) { _warned = true; console.error(`[jebat] ${msg}`); } }
 
-function runJebat(args) {
-  const pythonArgs = ['-m', 'jebat_cli_new', ...args];
+// The installer provisions its own venv under $JEBAT_HOME; the system
+// interpreter will never import jebat_cli_new, so prefer the venv one.
+function venvPython() {
+  const home = process.env.JEBAT_HOME || resolve(os.homedir(), '.local', 'jebat');
+  const p = IS_WIN
+    ? resolve(home, 'venv', 'Scripts', 'python.exe')
+    : resolve(home, 'venv', 'bin', 'python');
+  return fs.existsSync(p) ? [p] : null;
+}
+
+function hasJebat(py) {
+  // cwd must not satisfy the import: running inside a source checkout would
+  // otherwise look "installed" for an interpreter that has no deps.
+  return spawnSync(py[0], [...py.slice(1), '-c', 'import jebat_cli_new'], { stdio: 'pipe', cwd: os.tmpdir() }).status === 0;
+}
+
+function runJebat(py, args) {
+  const pythonArgs = [...py.slice(1), '-m', 'jebat_cli_new', ...args];
   const isInteractive = args.includes('repl') || args.length === 0;
 
   if (isInteractive && process.stdin.isTTY) {
-    const child = spawn(PYTHON_CMD, pythonArgs, {
+    const child = spawn(py[0], pythonArgs, {
       stdio: 'inherit',
       env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1' },
     });
@@ -129,7 +165,7 @@ function runJebat(args) {
     process.on('SIGINT', () => child.kill('SIGINT'));
     process.on('SIGTERM', () => child.kill('SIGTERM'));
   } else {
-    const result = spawnSync(PYTHON_CMD, pythonArgs, {
+    const result = spawnSync(py[0], pythonArgs, {
       stdio: 'inherit',
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
     });
@@ -140,7 +176,7 @@ function runJebat(args) {
 function printHelp() {
   console.log(`JEBAT v${JEBAT_VERSION} — Sovereign Agent OS & Agent Workstation
 
-Usage: npx jebat [command] [options]
+Usage: npx @nusabyte/jebat [command] [options]
 
 Commands:
   repl              Start interactive REPL (default)
@@ -191,30 +227,31 @@ async function main() {
   }
 
   if (args.includes('load-jebat')) {
-    const result = spawnSync(findPython() || PYTHON_CMD, ['-m', 'jebat_cli_new.load_jebat'], {
+    const py = findPython();
+    if (!py) error('Python 3.11+ not found. Install it from https://python.org and retry.');
+    const result = spawnSync(py[0], [...py.slice(1), '-m', 'jebat_cli_new.load_jebat'], {
       stdio: 'inherit',
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
     });
     process.exit(result.status || 0);
   }
 
-  const py = findPython();
-  if (!py) error('Python 3.11+ not found. Install it from https://python.org and retry.');
+  const system = findPython();
+  const runtime = [venvPython(), system].filter(Boolean).find(hasJebat);
 
-  const check = spawnSync(py, ['-c', 'import jebat_cli_new; print("OK")'], { stdio: 'pipe', encoding: 'utf-8' });
-
-  if (check.status !== 0) {
-    log('JEBAT not found. Installing…');
-    const ok = await installJebat();
-    if (!ok) process.exit(1);
-    const recheckPython = fs.existsSync(BOOTSTRAP_PYTHON) ? BOOTSTRAP_PYTHON : py;
-    const recheck = spawnSync(recheckPython, ['-c', 'import jebat_cli_new; print("OK")'], { stdio: 'pipe', encoding: 'utf-8' });
-    if (recheck.status !== 0) error('JEBAT install did not complete. Check the logs above.');
-  } else {
+  if (runtime) {
     log('JEBAT already installed.');
+    runJebat(runtime, args);
+    return;
   }
 
-  runJebat(args);
+  if (!system) error('Python 3.11+ not found. Install it from https://python.org and retry.');
+  log('JEBAT not found. Installing…');
+  const ok = await installJebat();
+  if (!ok) process.exit(1);
+  const installed = venvPython();
+  if (!installed || !hasJebat(installed)) error('JEBAT install did not complete. Check the logs above.');
+  runJebat(installed, args);
 }
 
 main().catch((err) => error(`Unexpected error: ${err.message}`));

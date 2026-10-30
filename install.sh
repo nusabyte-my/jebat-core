@@ -20,9 +20,28 @@
 #
 set -euo pipefail
 
+# ── platform ─────────────────────────────────────────────────────────
+# Git-bash / MSYS reports MINGW*/MSYS*. There is no usable `python3` there
+# (WindowsApps ships a 0-byte alias that exits "Permission denied"), and
+# venvs use Scripts/ instead of bin/.
+case "$(uname -s 2>/dev/null || echo unknown)" in
+  MINGW*|MSYS*|CYGWIN*) IS_WIN=1 ;;
+  *) IS_WIN=0 ;;
+esac
+
+# Native tools (git, pip) do not accept MSYS paths like /c/Users/...; bash
+# builtins and MSYS binaries do. Convert only at the call site.
+winpath() {
+  if [ "$IS_WIN" -eq 1 ] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    printf '%s' "$1"
+  fi
+}
+
 # ── constants ────────────────────────────────────────────────────────
 JEBAT_VERSION="8.5.0"
-REPO_URL="https://github.com/nusabyte-my/jebat-core.git"
+REPO_URL="${JEBAT_REPO_URL:-https://github.com/nusabyte-my/jebat-core.git}"
 INSTALL_DIR="${JEBAT_HOME:-$HOME/.local/jebat}"
 BIN_DIR="$HOME/.local/bin"
 VENV_DIR="$INSTALL_DIR/venv"
@@ -134,7 +153,16 @@ fi
 # Emit a ready-to-paste MCP config for the requested IDE client and exit.
 # Usage: install.sh --print-mcp-config=cursor   (cursor|vscode|claude|zed|generic)
 if [ -n "$MCP_CONFIG_CLIENT" ]; then
-  PY_BIN="$(command -v python3 || command -v python || echo python3)"
+  PY_BIN="${JEBAT_PYTHON:-}"
+  if [ -z "$PY_BIN" ]; then
+    for c in python3 python; do
+      if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys' >/dev/null 2>&1; then
+        PY_BIN="$(command -v "$c")"
+        break
+      fi
+    done
+  fi
+  if [ -z "$PY_BIN" ]; then PY_BIN="python3"; elif [ "$IS_WIN" -eq 1 ]; then PY_BIN="$(winpath "$PY_BIN")"; fi
   print_mcp_config "$MCP_CONFIG_CLIENT" "$PY_BIN"
   exit 0
 fi
@@ -161,10 +189,20 @@ fi
 
 # ── preflight ─────────────────────────────────────────────────────────
 c_step "preflight checks"
-need_cmd python3
 need_cmd git
-PYV=$(python3 -c 'import sys;print("%d.%d"%sys.version_info[:2])')
-c_ok "python3 $PYV found"
+# Probe instead of trusting PATH: on Windows `python3` may resolve to a
+# non-executable alias, so only accept an interpreter that actually runs.
+PY=()
+for cand in "${JEBAT_PYTHON:-}" "python3" "python" "py -3"; do
+  [ -n "$cand" ] || continue
+  if $cand -c 'import sys; raise SystemExit(sys.version_info < (3, 11))' >/dev/null 2>&1; then
+    PY=($cand)
+    break
+  fi
+done
+[ "${#PY[@]}" -gt 0 ] || { c_fail "python 3.11+ not found (set JEBAT_PYTHON=/path/to/python)"; exit 1; }
+PYV=$(${PY[@]} -c 'import sys;print("%d.%d"%sys.version_info[:2])')
+c_ok "${PY[*]} $PYV found"
 command -v node >/dev/null 2>&1 && c_ok "node $(node -v) found" || c_warn "node not found — DESIGNmd CLI + Desktop need it (npm install -g designmd later)"
 mkdir -p "$BIN_DIR" "$INSTALL_DIR"
 c_ok "install dir: $INSTALL_DIR"
@@ -172,22 +210,34 @@ c_ok "install dir: $INSTALL_DIR"
 # ── clone / update source ──────────────────────────────────────────────
 c_step "fetching JEBAT Core source"
 if [ -d "$INSTALL_DIR/.git" ]; then
-  git -C "$INSTALL_DIR" pull --ff-only >/dev/null 2>&1 && c_ok "updated existing checkout" || c_warn "pull failed; using existing tree"
+  git -C "$(winpath "$INSTALL_DIR")" pull --ff-only >/dev/null 2>&1 && c_ok "updated existing checkout" || c_warn "pull failed; using existing tree"
 else
-  git clone --depth 1 "$REPO_URL" "$INSTALL_DIR" >/dev/null 2>&1 && c_ok "cloned $REPO_URL" || { c_fail "clone failed (network?)"; exit 1; }
+  # Clone beside the target and copy in: a plain `git clone` fails when
+  # INSTALL_DIR already holds a partial install, which would make every
+  # retry of a failed install impossible.
+  TMP_CLONE="$(mktemp -d)/jebat"
+  if git clone --depth 1 "$REPO_URL" "$(winpath "$TMP_CLONE")" >/dev/null 2>&1; then
+    cp -r "$TMP_CLONE/." "$INSTALL_DIR/"
+    rm -rf "$TMP_CLONE"
+    c_ok "cloned $REPO_URL"
+  else
+    rm -rf "$TMP_CLONE"
+    c_fail "clone failed (network?)"
+    exit 1
+  fi
 fi
 
 # ── python venv ───────────────────────────────────────────────────────
 c_step "provisioning Python virtualenv"
-if [ ! -x "$VENV_DIR/bin/python" ]; then
-  python3 -m venv "$VENV_DIR"
+if [ "$IS_WIN" -eq 1 ]; then VPY="$VENV_DIR/Scripts/python.exe"; else VPY="$VENV_DIR/bin/python"; fi
+if [ ! -x "$VPY" ]; then
+  "${PY[@]}" -m venv "$(winpath "$VENV_DIR")"
   c_ok "created venv at $VENV_DIR"
 else
   c_ok "venv already present"
 fi
-# shellcheck disable=SC1091
-source "$VENV_DIR/bin/activate"
-python -m pip install --quiet --upgrade pip
+[ -x "$VPY" ] || { c_fail "venv python missing at $VPY"; exit 1; }
+"$VPY" -m pip install --quiet --upgrade pip
 c_ok "pip upgraded"
 
 # ── install CLI (editable from checkout) ───────────────────────────────
@@ -198,15 +248,21 @@ SRC="$INSTALL_DIR"
 if [ ! -f "$SRC/pyproject.toml" ] && [ -f "$INSTALL_DIR/jebat-core/pyproject.toml" ]; then
   SRC="$INSTALL_DIR/jebat-core"
 fi
-pip install --quiet -e "${SRC}[security,channels]" >/dev/null 2>&1 && c_ok "jebat CLI installed (editable from $SRC + security,channels extras)" || { c_fail "pip install failed"; exit 1; }
+"$VPY" -m pip install --quiet -e "$(winpath "$SRC")[security,channels]" >"$INSTALL_DIR/pip-install.log" 2>&1 && c_ok "jebat CLI installed (editable from $SRC + security,channels extras)" || { c_fail "pip install failed — tail of $INSTALL_DIR/pip-install.log:"; tail -n 15 "$INSTALL_DIR/pip-install.log" | sed 's/^/      /'; exit 1; }
 
 # launcher on PATH
+JEBAT_EXE="$VENV_DIR/bin/jebat"
+if [ "$IS_WIN" -eq 1 ]; then JEBAT_EXE="$VENV_DIR/Scripts/jebat.exe"; fi
 cat > "$BIN_DIR/jebat" <<EOF
 #!/usr/bin/env bash
-exec "$VENV_DIR/bin/jebat" "\$@"
+exec "$JEBAT_EXE" "\$@"
 EOF
 chmod +x "$BIN_DIR/jebat"
 c_ok "launcher: $BIN_DIR/jebat"
+if [ "$IS_WIN" -eq 1 ]; then
+  printf '@echo off\r\n"%s" %%*\r\n' "$(winpath "$JEBAT_EXE")" > "$BIN_DIR/jebat.cmd"
+  c_ok "launcher: $BIN_DIR/jebat.cmd"
+fi
 
 # ── optional IDE auto-pairing ──────────────────────────────────────────
 if [ "$DO_IDE" -eq 1 ]; then
@@ -233,7 +289,7 @@ fi
 
 # ── default inference provider (local unified router) ─────────────────
 c_step "configuring default inference provider (local unified router)"
-python3 - <<PY
+"$VPY" - <<PY
 import json, os
 p = os.path.expanduser("~/.jebat/jebat-cli-providers.json")
 os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -299,7 +355,7 @@ if [ "$DO_MCP" -eq 1 ]; then
   fi
 
   # Write IDE config snippet (local stdio + zero-install public HTTP endpoint)
-  PYTHON_BIN="$(command -v python3)"
+  PYTHON_BIN="$(winpath "$VPY")"
   cat > "$INSTALL_DIR/mcp.ide.json" <<JSON
 {
   "mcpServers": {
