@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JEBAT v8.3 Documentation — Guides, Deployment &amp; API Reference</title>
+<title>JEBAT v8.5 Documentation — Guides, Deployment &amp; API Reference</title>
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="JEBAT" />
 <meta property="og:title" content="JEBAT Documentation" />
@@ -783,20 +783,22 @@ they do not publish a self-awarded score.</p>
 <!-- ═══════════════ GUIDE: MCP ═══════════════ -->
 <section id="guide-mcp">
 <h2>MCP Integration</h2>
-<p>JEBAT is a native Model Context Protocol server. The current build registers
-<strong>118 tools</strong>, <strong>15 resources</strong> and <strong>6 prompts</strong>,
-speaking protocol revision <code>2026-07-28</code> and accepting
-<code>2024-11-05</code>, <code>2025-03-26</code> and <code>2025-06-18</code> from
-older clients.</p>
+<p>JEBAT is a native Model Context Protocol server. The verified v8.5.0 build exposes
+<strong>141 tools</strong> in its default local registry, plus workflow resources and prompts.
+It accepts protocol revisions <code>2024-11-05</code>, <code>2025-03-26</code>,
+<code>2025-06-18</code>, and <code>2026-07-28</code>. Enabled integrations and allowlists
+can change the available tool set.</p>
 
 <div class="info-box note">
-  <strong>ℹ️ 118 registrations, 104 distinct tools.</strong> Fourteen entries are
-  dotted aliases (<code>ghost.sql</code> and its siblings) kept for compatibility
-  with the underscored names. Clients see both; they address the same handlers.
+  <strong>Kiro IDE automatic pairing.</strong> Run <code>npx --yes @nusabyte/jebat mcp pair --ide kiro</code>
+  after the one-time bootstrap. Existing settings and other MCP servers are preserved;
+  existing JSON is backed up before modification.
+  <a href="docs/JEBAT_MCP_KIRO_GUIDE.pdf" target="_blank" rel="noopener">Download the illustrated Kiro guide (PDF)</a>.
 </div>
 
 <h3>Supported clients</h3>
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 24px;">
+  <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Kiro</span>
   <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Cursor</span>
   <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">VS Code</span>
   <span style="padding:8px 16px;background:var(--graphite);border:1px solid var(--border-dim);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Claude Desktop</span>
@@ -810,16 +812,16 @@ older clients.</p>
 <span class="cmd">python /path/to/jebat-core/jebat-mcp</span>
 
 <span class="comment"># Or through the operational CLI</span>
-<span class="cmd">python -m jebat.cli.jebat_cli mcp serve --transport stdio</span>
+<span class="cmd">jebat mcp serve --transport stdio</span>
 
 <span class="comment"># HTTP (Windsurf / JetBrains)</span>
-<span class="cmd">python -m jebat.cli.jebat_cli mcp serve --transport http --port 8099</span>
+<span class="cmd">jebat mcp serve --transport http --port 8099</span>
 
 <span class="comment"># Streamable HTTP (stateless, MCP 2026-07-28)</span>
-<span class="cmd">python -m jebat.cli.jebat_cli mcp serve --transport streamable-http --port 8100</span>
+<span class="cmd">jebat mcp serve --transport streamable-http --port 8100</span>
 
 <span class="comment"># Print paste-ready IDE config</span>
-<span class="cmd">python -m jebat.cli.jebat_cli mcp ide-config</span></pre>
+<span class="cmd">jebat mcp ide-config</span></pre>
 
 <h3>Hosted endpoint</h3>
 <p>NusaByte runs a public MCP endpoint. It is bearer-gated — an unauthenticated
