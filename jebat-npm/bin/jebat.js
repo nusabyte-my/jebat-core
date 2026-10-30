@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PACKAGE_NAME = 'jebat';
-const JEBAT_VERSION = '8.5.0';
+const JEBAT_VERSION = '8.5.1';
 
 // Canonical bootstrap script. The raw GitHub URL ALWAYS serves the script as
 // plaintext, so it is the reliable default for both humans and agents.
@@ -30,6 +30,16 @@ const IS_WIN = platform() === 'win32';
 
 function log(msg) { console.error(`[jebat] ${msg}`); }
 function error(msg) { console.error(`[jebat] ERROR: ${msg}`); process.exit(1); }
+
+// ── progress ─────────────────────────────────────────────────────────────
+// Plain line-per-step output: readable in a TTY, a log file, or agent output.
+function step(n, total, msg) {
+  console.error(`[jebat] ${n}/${total} ${msg}…`);
+  return Date.now();
+}
+function stepDone(t, msg) {
+  console.error(`[jebat]   ✓ ${msg} in ${((Date.now() - t) / 1000).toFixed(1)}s`);
+}
 
 // ── helpers ───────────────────────────────────────────────────────────────
 function hasCommand(cmd) {
@@ -89,9 +99,22 @@ function readSource(src) {
   }
 }
 
+// Fetch JSON; returns null on any failure (offline, 404, bad body).
+function fetchJson(url) {
+  return new Promise((resolve) => {
+    https.get(url, { timeout: 15000 }, (res) => {
+      if (!res.statusCode || res.statusCode >= 400) { res.resume(); return resolve(null); }
+      let body = '';
+      res.on('data', (c) => (body += c));
+      res.on('end', () => { try { resolve(JSON.parse(body)); } catch { resolve(null); } });
+    }).on('error', () => resolve(null)).on('timeout', function () { this.destroy(); resolve(null); });
+  });
+}
+
 // Download the installer and run it with bash (--yes --quiet for agents/CI).
 // Falls back to the alternate URL if the primary returns HTML or fails.
 async function installJebat() {
+  const TOTAL = 3;
   log('Bootstrapping JEBAT via the installer…');
 
   if (!hasCommand('bash')) {
@@ -101,39 +124,83 @@ async function installJebat() {
     error('bash not found. Install bash and retry: npx @nusabyte/jebat repl');
   }
 
-  const tryUrl = async (url) => {
-    const r = await readSource(url);
-    if (!r.ok) { warnOnce(`could not fetch ${url}`); return 'download'; }
-    if (r.isHtml) { warnOnce(`${url} returned HTML instead of a script; trying fallback.`); return 'download'; }
-    const tmp = resolve(os.tmpdir(), `jebat-install-${Date.now()}.sh`);
-    fs.writeFileSync(tmp, r.body, { mode: 0o755 });
-    const install = spawnSync('bash', [tmp, '--yes', '--quiet'], {
-      stdio: 'inherit',
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-    });
-    fs.unlinkSync(tmp);
-    return install.status === 0 ? 'ok' : 'run';
-  };
-
   // An explicit JEBAT_INSTALL_SCRIPT is authoritative: no remote fallback,
   // so a local/offline install never silently runs a different script.
   const pinned = process.env.JEBAT_INSTALL_SCRIPT;
   const sources = pinned ? [pinned] : [INSTALL_SCRIPT_URL, INSTALL_SCRIPT_URL_ALT];
-  let last = 'download';
-  for (const url of sources) {
-    last = await tryUrl(url);
-    if (last === 'ok') return true;
+
+  let t = step(1, TOTAL, 'resolving installer');
+  let body = null;
+  for (const src of sources) {
+    const r = await readSource(src);
+    if (r.ok && !r.isHtml) { body = r.body; stepDone(t, `installer from ${src}`); break; }
+    warnOnce(r.ok ? `${src} returned HTML instead of a script; trying fallback.` : `could not fetch ${src}`);
   }
-  if (pinned && last === 'download') error(`Could not read JEBAT_INSTALL_SCRIPT: ${pinned}`);
-  if (last === 'run') {
+  if (!body) {
+    if (pinned) error(`Could not read JEBAT_INSTALL_SCRIPT: ${pinned}`);
+    error('Failed to download the JEBAT installer (network or CDN). See https://jebat.online/install.html');
+  }
+
+  const tmp = resolve(os.tmpdir(), `jebat-install-${Date.now()}.sh`);
+  fs.writeFileSync(tmp, body, { mode: 0o755 });
+
+  t = step(2, TOTAL, 'running installer (first run downloads the Python package — a few minutes)');
+  const install = spawnSync('bash', [tmp, '--yes', '--quiet'], {
+    stdio: 'inherit',
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+  });
+  fs.unlinkSync(tmp);
+  if (install.status !== 0) {
     error('The installer ran but failed (see its output above). Set JEBAT_PYTHON to a Python 3.11+ binary, or install manually: https://jebat.online/install.html');
   }
-  error('Failed to download the JEBAT installer (network or CDN). See https://jebat.online/install.html');
-  return false;
+  stepDone(t, 'installer finished');
+
+  t = step(3, TOTAL, 'verifying installation');
+  const py = venvPython();
+  if (!py || !hasJebat(py)) error('JEBAT install did not complete. Check the logs above.');
+  stepDone(t, 'jebat_cli_new importable');
+  return true;
 }
 
 let _warned = false;
 function warnOnce(msg) { if (!_warned) { _warned = true; console.error(`[jebat] ${msg}`); } }
+
+// Dependency + version report: launcher freshness, interpreter, outdated pip packages.
+async function checkDeps(py) {
+  const latest = await fetchJson('https://registry.npmjs.org/@nusabyte/jebat/latest');
+  const latestV = latest && latest.version;
+  const cmp = (a, b) => {
+    const pa = String(a).split('.').map(Number);
+    const pb = String(b).split('.').map(Number);
+    for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+    return 0;
+  };
+  const launcherState = !latestV
+    ? 'registry unreachable'
+    : cmp(JEBAT_VERSION, latestV) === 0 ? 'latest'
+    : cmp(JEBAT_VERSION, latestV) > 0 ? `ahead of registry (${latestV} published)`
+    : `→ ${latestV} available (npm i -g @nusabyte/jebat@${latestV})`;
+  console.log(`launcher   ${JEBAT_VERSION}  ${launcherState}`);
+
+  if (!py) {
+    console.log('runtime    not installed — run: npx @nusabyte/jebat');
+    return 1;
+  }
+  const v = spawnSync(py[0], [...py.slice(1), '-c', 'import sys;print(sys.version.split()[0])'], { encoding: 'utf8' });
+  console.log(`runtime    python ${(v.stdout || '').trim()}  (${py.join(' ')})`);
+
+  const r = spawnSync(py[0], [...py.slice(1), '-m', 'pip', 'list', '--outdated', '--format=json', '--disable-pip-version-check'], { encoding: 'utf8', timeout: 120000 });
+  let pkgs = [];
+  try { pkgs = JSON.parse(r.stdout || '[]'); } catch { /* pip unavailable */ }
+  if (r.status !== 0) { console.log('packages   pip unavailable — rerun the installer'); return 1; }
+  if (!pkgs.length) { console.log('packages   up to date'); return 0; }
+
+  console.log(`packages   ${pkgs.length} outdated`);
+  for (const p of pkgs.slice(0, 20)) console.log(`  ${String(p.name).padEnd(24)} ${p.version} → ${p.latest_version}`);
+  if (pkgs.length > 20) console.log(`  … ${pkgs.length - 20} more`);
+  console.log(`update     ${py[0]} -m pip install -U <pkg>   (or: npx @nusabyte/jebat update)`);
+  return 0;
+}
 
 // The installer provisions its own venv under $JEBAT_HOME; the system
 // interpreter will never import jebat_cli_new, so prefer the venv one.
@@ -189,6 +256,8 @@ Commands:
   init              Generate an AGENTS.md workspace capture
   webui             Launch Stealth-Dark WebUI
   status            Local provider, run, and session inventory
+  deps              Check launcher + Python dependency updates
+  update            Re-run the installer to update the CLI
   --version         Show version
   --help            Show this help
 
@@ -224,6 +293,16 @@ async function main() {
   if (args.includes('--version') || args.includes('-v')) {
     console.log(`JEBAT ${JEBAT_VERSION} (npm wrapper)`);
     return;
+  }
+
+  if (args[0] === 'deps' || args.includes('--check-deps')) {
+    const py = venvPython() || findPython();
+    process.exit(await checkDeps(py));
+  }
+
+  if (args[0] === 'update' || args.includes('--update')) {
+    const ok = await installJebat();
+    process.exit(ok ? 0 : 1);
   }
 
   if (args.includes('load-jebat')) {
