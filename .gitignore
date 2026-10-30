@@ -251,3 +251,8 @@ EvolvePlayBoost_Mailbox_Passwords_*.pdf
 /two-heroes-375.png
 .ide-snips.json
 .rehaul-cli.js
+
+# Local reverse-engineering toolchain (Ghidra/JDK downloads; ~1.1GB)
+/.tools/
+/.tmp-js-cfg/
+/.tmp-js-out/
