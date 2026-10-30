@@ -13,12 +13,15 @@
 #   --desktop      CLI + Desktop launcher (Electron app)
 #   --mcp          CLI + MCP server (stdio + IDE config helper)
 #   --all          everything above
+#   --ide          detect supported IDEs and merge local JEBAT MCP config
+#   --ide=kiro     pair a specific IDE (kiro, cursor, vscode, windsurf)
+#   --no-ide       skip IDE detection and configuration (default for CI)
 #   --no-inference skip the local unified inference stack (Ollama/llama.cpp/router/OpenWebUI)
 #
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────
-JEBAT_VERSION="8.2.0"
+JEBAT_VERSION="8.5.0"
 REPO_URL="https://github.com/nusabyte-my/jebat-core.git"
 INSTALL_DIR="${JEBAT_HOME:-$HOME/.local/jebat}"
 BIN_DIR="$HOME/.local/bin"
@@ -30,6 +33,8 @@ DO_CLI=1
 DO_DESKTOP=0
 DO_MCP=0
 DO_INFERENCE=1
+DO_IDE=0
+IDE_CHOICE="auto"
 
 # ── helpers ───────────────────────────────────────────────────────────
 c_banner() { printf '\033[1;35m%s\033[0m\n' "$1"; }
@@ -102,6 +107,9 @@ for a in "$@"; do
     --desktop)    DO_CLI=1; DO_DESKTOP=1 ;;
     --mcp)        DO_CLI=1; DO_MCP=1 ;;
     --all)        DO_CLI=1; DO_DESKTOP=1; DO_MCP=1 ;;
+    --ide)        DO_IDE=1; IDE_CHOICE="auto" ;;
+    --ide=*)      DO_IDE=1; IDE_CHOICE="${a#*=}" ;;
+    --no-ide)     DO_IDE=0 ;;
     --no-inference) DO_INFERENCE=0 ;;
     -y|--yes|--assume-yes) ASSUME_YES=1 ;;
     -q|--quiet)   QUIET=1 ;;
@@ -199,6 +207,29 @@ exec "$VENV_DIR/bin/jebat" "\$@"
 EOF
 chmod +x "$BIN_DIR/jebat"
 c_ok "launcher: $BIN_DIR/jebat"
+
+# ── optional IDE auto-pairing ──────────────────────────────────────────
+if [ "$DO_IDE" -eq 1 ]; then
+  c_step "detecting installed IDEs and configuring JEBAT MCP"
+  IDE_ARGS=(--command "$BIN_DIR/jebat" --arg mcp --arg serve --arg --transport --arg stdio)
+  if [ "$IDE_CHOICE" != "auto" ]; then
+    case "$IDE_CHOICE" in
+      kiro|cursor|vscode|windsurf) IDE_ARGS+=(--ide "$IDE_CHOICE") ;;
+      *) c_fail "unsupported IDE: $IDE_CHOICE (use kiro, cursor, vscode, windsurf, or auto)"; exit 2 ;;
+    esac
+  fi
+  if "$VENV_DIR/bin/python" "$SRC/scripts/install-ide-integration.py" "${IDE_ARGS[@]}"; then
+    c_ok "IDE MCP configuration merged; existing entries preserved and backed up"
+    if [ "$IDE_CHOICE" = "auto" ] || [ "$IDE_CHOICE" = "kiro" ]; then
+      c_ok "Kiro Chat: type # and select JEBAT plan-act-verify-remember"
+    fi
+  else
+    c_fail "IDE pairing failed; no invalid JSON was overwritten. See errors above."
+    exit 1
+  fi
+else
+  c_step "IDE auto-pairing skipped (opt in with --ide or --ide=kiro)"
+fi
 
 # ── default inference provider (local unified router) ─────────────────
 c_step "configuring default inference provider (local unified router)"

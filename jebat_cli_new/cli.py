@@ -244,7 +244,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-c", "--continue", dest="continue_last", nargs="?", const=True,
                    default=False, help="Continue the previous session")
     p.add_argument("-s", "--session", nargs="?", const=True, default=None,
-                   help="Resume a session by id (picker when omitted)")
+                   help="Resume a session by id; without an id, continue the latest session")
 
     p.add_argument("--thinking", choices=THINKING_LEVELS, help="Thinking level")
     p.add_argument("--no-tools", dest="no_tools", action="store_true",

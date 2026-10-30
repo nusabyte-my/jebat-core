@@ -53,3 +53,14 @@ def test_subcommand_flags_survive_as_residual() -> None:
     # `--help` after a subcommand belongs to the subcommand.
     _, residual = cli.parse(["--no-extensions", "learning", "--help"])
     assert residual == ["learning", "--help"]
+
+
+@pytest.mark.unit
+def test_init_dispatches_workspace_capture(tmp_path, monkeypatch) -> None:
+    """`jebat init` is a workspace command, never a prompt sent to inference."""
+    from jebat_cli_new.jebat import main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("sys.argv", ["jebat", "--no-extensions", "init"])
+    assert main() == 0
+    assert (tmp_path / "AGENTS.md").is_file()

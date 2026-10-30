@@ -1,10 +1,10 @@
-# JEBAT v8.4.0 — Sovereign Agent OS & Agent Workstation
+# JEBAT v8.5.0 — Sovereign Agent OS & Agent Workstation
 
-![Version](https://img.shields.io/badge/version-v8.4.0--stable-10b981?style=flat-square)
+![Version](https://img.shields.io/badge/version-v8.5.0--stable-10b981?style=flat-square)
 ![Security](https://img.shields.io/badge/security-hardened%20%2B%20audited-06b6d4?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-71717a?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-367%20passing-10b981?style=flat-square)
-![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.2.2-10b981?style=flat-square)
+![Python](https://img.shields.io/badge/python-%3E%3D3.11-10b981?style=flat-square)
+![npm](https://img.shields.io/badge/npm-%40nusabyte%2Fjebat%408.5.0-10b981?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-native-8b5cf6?style=flat-square)
 ![Jev](https://img.shields.io/badge/Jev-advisor%20shipped-10b981?style=flat-square)
 ![TS SDK](https://img.shields.io/badge/TypeScript%20SDK-1.0.0-3178c6?style=flat-square)
@@ -36,8 +36,8 @@ The public API and WebUI are production services. Configure provider credentials
 ### Option 1: npx (Recommended — Zero Install)
 
 ```bash
-# First run: configure your LLM provider (one-time wizard)
-npx @nusabyte/jebat init
+# First run: configure your LLM provider (interactive wizard)
+npx @nusabyte/jebat provider add
 
 # Interactive REPL
 npx @nusabyte/jebat repl
@@ -59,6 +59,14 @@ bunx @nusabyte/jebat repl
 ```
 
 **Requirements:** Node.js >= 18, Python >= 3.11, pip
+
+**New to the CLI?** Follow the [installation and interactive usage guide](docs/CLI_GUIDE.md).
+To configure supported IDEs automatically, run `jebat mcp pair` after bootstrap,
+or install with `--ide=kiro` for Kiro only. Pairing preserves other MCP servers
+and backs up existing JSON.
+
+In the REPL, type `/` and press Enter for the keyboard-first palette, `/help` for commands,
+`/tool list` for shared tools, and `/resume` to restore a session.
 
 ### Option 2: Global Install (via npm)
 
@@ -345,6 +353,31 @@ POST /webui/api/runtime         Runtime control
 ---
 
 ## Core Commands
+
+### Interactive console
+
+Start with `jebat repl`, then type `/` and press **Enter** to filter and select commands with the
+keyboard. **Up/Down** or **Tab** navigate, **Enter** selects, and **Escape**
+cancels. Commands requiring arguments remain open for completion.
+
+| Input | Purpose |
+|-------|---------|
+| `/help` | Categorized interactive command reference |
+| `/plan` | Toggle plan-before-execution |
+| `/provider`, `/model` | Select provider and model |
+| `/tool list` | Discover shared tools |
+| `/tool call NAME --args '{"key":"value"}'` | Invoke a shared tool with staged approval |
+| `/agents`, `/delegate PROFILE:TASK` | Inspect and use specialist agents |
+| `/swarm TASK` | Auto-orchestrate a task |
+| `/yolo [on\|off]` | Control automatic tool approvals |
+| `/diff`, `/commit MESSAGE` | Inspect and commit changes |
+| `/resume [ID]`, `/fork` | Restore or branch a session |
+| `/compact` | Compact conversation context |
+| `@FILE` | Attach file content |
+| `!COMMAND` | Run a shell command and add its output to context |
+
+See the [complete CLI guide](docs/CLI_GUIDE.md) for installation, keyboard
+controls, examples, automation flags, and upgrades.
 
 ### General
 
@@ -679,7 +712,7 @@ jebat agent "Analyze this codebase for vulnerabilities, performance issues, and 
 
 ## Technical Comparison
 
-| Capability | JEBAT v8.4.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
+| Capability | JEBAT v8.5.0 | Commercial SaaS (Claude/GPT) | Ollama WebUI | LM Studio |
 | :--- | :---: | :---: | :---: | :---: |
 | **Data Residency** | **100% Private / Air-gapped** | Cloud (Third-Party) | Local Only | Local Only |
 | **LLM Provider Routing** | **17 Providers (Failover)** | Single Provider | Ollama Only | Local Only |
@@ -803,6 +836,9 @@ Production audit fixes shipped across API, WebUI, MCP transport, and tools:
 
 ## Documentation
 
+- [CLI installation and usage guide](docs/CLI_GUIDE.md) — Install, interactive palette, workflows, automation, and upgrades
+- [CLI package guide](jebat_cli_new/README.md) — CLI quick reference and development
+- [Load JEBAT startup](docs/LOAD_JEBAT.md) — Context initialization and IDE usage
 - [MCP integration](MCP.md) — Local IDE setup and self-hosted transport
 - [Workstation MCP guide](WORKSTATION_MCP_GUIDE.md) — IDE integration guide
 - [llama.cpp VPS deployment](docs/LLAMACPP_VPS_DEPLOYMENT.md) — Inference runbook

@@ -2875,6 +2875,8 @@ COMMANDS = [
     # Tools
     ("/health",     "Ping all providers"),
     ("/diff",       "Show git diff"),
+    ("/tool",       "List or invoke shared tools"),
+    ("/tools",      "List or invoke shared tools"),
     ("/export",     "Export backup"),
     # Agent
     ("/swarm",      "Auto-orchestrate task"),
@@ -2895,6 +2897,7 @@ COMMANDS = [
     ("/skin",       "Switch UI skin"),
     ("/think",      "Toggle think mode"),
     ("/verbose",    "Toggle verbose output"),
+    ("/yolo",       "Toggle or set automatic tool approvals"),
     ("/compact",    "Summarize and compress conversation context"),
     ("/agentdb",    "Show agent run database"),
     ("/commit",     "Git commit with message"),
@@ -2915,8 +2918,6 @@ COMMANDS = [
     ("/memory+",    "Store memory with tags"),
     ("/recall",     "Search memory by query"),
     # Agent & Swarm
-    ("/agents",     "List agent profiles"),
-    ("/swarm",      "Multi-agent orchestration"),
     ("/delegate",   "Delegate to sub-agent"),
     # Auth
     ("/auth",       "Manage auth tokens"),
@@ -2932,19 +2933,23 @@ COMMANDS = [
     ("/editor",     "Open $EDITOR for multi-line prompt"),
     ("/fork",       "Fork current session into a new branch"),
     ("/continue",   "Continue from last saved session"),
+    ("/resume",     "Select and restore a saved session"),
     ("/thinking",   "Toggle thinking block visibility"),
 ]
 
 
 def _all_commands():
-    """Built-in slash commands plus any contributed by loaded extensions."""
+    """Built-in slash commands plus extensions, with the first entry canonical."""
     try:
         from jebat_cli_new import extensions as ext
 
-        extra = [c for c in ext.command_entries() if c[0] not in {n for n, _ in COMMANDS}]
+        entries = list(COMMANDS) + list(ext.command_entries())
     except Exception:
-        extra = []
-    return list(COMMANDS) + extra
+        entries = list(COMMANDS)
+    unique = {}
+    for name, description in entries:
+        unique.setdefault(name, description)
+    return list(unique.items())
 
 
 def _fuzzy_match(query, text):
@@ -2973,36 +2978,12 @@ def _show_matches(query):
 
 
 def _interactive_command_picker():
-    """Interactive numbered command picker."""
-    _show_command_picker()
-    cprint()
-    try:
-        choice = input(f"  {C.CYAN}❯ Pick command (number or /name):{C.RESET} ").strip()
-    except (EOFError, KeyboardInterrupt):
-        return None, None
-    if not choice:
-        return None, None
-    # Number selection
-    try:
-        idx = int(choice) - 1
-        commands = _all_commands()
-        if 0 <= idx < len(commands):
-            return commands[idx][0], ""
-    except ValueError:
-        pass
-    # Fuzzy match
-    if choice.startswith("/"):
-        _show_matches(choice)
-        # Try exact match first
-        for cmd, _ in COMMANDS:
-            if cmd == choice:
-                return cmd, ""
-        # Return first fuzzy match
-        for cmd, _ in COMMANDS:
-            if _fuzzy_match(choice, cmd):
-                return cmd, ""
-        return None, None
-    return None, None
+    """Select a command; its returned text enters the normal slash dispatcher."""
+    import sys
+
+    from jebat_cli_new.command_palette import choose_command
+
+    return choose_command(_all_commands(), interactive=sys.stdin.isatty() and sys.stdout.isatty())
 
 
 def _show_command_picker():
@@ -3152,6 +3133,7 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
     print()
 
     messages = []
+    queued_prompt = None
 
     while True:
         try:
@@ -3162,7 +3144,10 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
             mode_icon = mode_info.get("icon", "💻")
             mode_color = mode_info.get("color", C.CYAN)
             model_short = cfg.model.split(":")[0] if cfg and ":" in cfg.model else (cfg.model if cfg else "?")
-            prompt = input(f"  {mode_color}{mode_icon}{C.RESET} {C.NEON_CYAN}{model_short}{C.RESET} {C.BORDER}❯{C.RESET} ").strip()
+            if queued_prompt is not None:
+                prompt, queued_prompt = queued_prompt, None
+            else:
+                prompt = input(f"  {mode_color}{mode_icon}{C.RESET} {C.NEON_CYAN}{model_short}{C.RESET} {C.BORDER}❯{C.RESET} ").strip()
         except (EOFError, KeyboardInterrupt):
             # Save session on exit
             if agent.messages:
@@ -3215,13 +3200,17 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
                 break
 
             elif cmd == "/":
-                # Show interactive picker
-                picked_cmd, picked_arg = _interactive_command_picker()
-                if picked_cmd:
-                    cmd = picked_cmd
-                    arg = picked_arg
-                else:
-                    continue
+                # Queue the selected command so its real handler runs on the next pass.
+                picked = _interactive_command_picker()
+                if picked:
+                    picked_cmd, picked_arg = picked
+                    queued_prompt = picked_cmd + (f" {picked_arg}" if picked_arg else "")
+                continue
+
+            elif cmd == "/load-jebat":
+                from jebat_cli_new.load_jebat import load_jebat
+
+                load_jebat()
 
             elif cmd == "/help":
                 _print_categorized_help()
@@ -3253,7 +3242,7 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
                     cprint(f"    {C.CYAN}/provider test{C.RESET}      Test all providers")
                     cprint(f"    {C.CYAN}/provider <id>{C.RESET}      Switch active provider")
                 elif arg.startswith("add"):
-                    kind = arg.split(maxsplit=1)[1].strip() if len(arg.split()) > 2 else ""
+                    kind = arg.split(maxsplit=1)[1].strip() if len(arg.split()) > 1 else ""
                     _interactive_add_provider(registry, kind if kind else None)
                 elif arg.startswith("remove") or arg.startswith("rm"):
                     _interactive_remove_provider(registry)
@@ -3314,6 +3303,18 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
                 agent.verbose = not agent.verbose
                 state = "ON" if agent.verbose else "OFF"
                 cprint(f"  Verbose: {C.CYAN}{state}{C.RESET}")
+
+            elif cmd == "/yolo":
+                setting = arg.strip().lower()
+                if setting in ("on", "off"):
+                    agent.yolo = setting == "on"
+                elif not setting:
+                    agent.yolo = not agent.yolo
+                else:
+                    cprint(f"  {C.DIM}Usage: /yolo [on|off]{C.RESET}")
+                    continue
+                state = "ON — automatic approvals" if agent.yolo else "OFF — staged approvals"
+                cprint(f"  Tool approvals: {C.CYAN}{state}{C.RESET}")
 
             elif cmd == "/compact":
                 if not agent.messages or len(agent.messages) < 4:
@@ -3473,6 +3474,22 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
             elif cmd == "/diff":
                 result = tool_diff_preview(arg if arg else None)
                 panel("Git Diff", result)
+
+            elif cmd in ("/tool", "/tools"):
+                from jebat_cli_new.tool_command import run_tool_command
+
+                import shlex
+
+                try:
+                    tokens = shlex.split(arg) if arg else ["list"]
+                except ValueError as exc:
+                    cprint(f"  {C.RED}Tool command error: {exc}{C.RESET}")
+                    continue
+                if agent.yolo and "--yolo" not in tokens:
+                    tokens.append("--yolo")
+                rc = run_tool_command(tokens)
+                if rc:
+                    cprint(f"  {C.YELLOW}Tool command exited with code {rc}.{C.RESET}")
 
             elif cmd == "/export":
                 output = arg if arg else None
@@ -3800,7 +3817,12 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
                         cprint(f"  {C.RED}Unknown skin: {arg}{C.RESET}")
 
             elif cmd == "/agents":
-                cprint(f"  {C.DIM}No sub-agents currently running.{C.RESET}")
+                lines = [
+                    f"  {C.CYAN}{name}{C.RESET} — {profile.get('description', 'Specialist: ' + ', '.join(profile.get('keywords', [])[:4]))}"
+                    for name, profile in AGENT_PROFILES.items()
+                ]
+                lines.append(f"  {C.DIM}Delegate: /delegate <agent>:<task> · Orchestrate: /swarm <task>{C.RESET}")
+                panel("Available Agents", "\n".join(lines))
 
             elif cmd == "/details":
                 _DETAIL_MODE = not _DETAIL_MODE
@@ -3843,6 +3865,18 @@ def repl(registry, taskdb, skills, agent=None, persist_session=True):
                         cprint(f"  {C.DIM}Could not load latest session.{C.RESET}")
                 else:
                     cprint(f"  {C.DIM}No saved sessions found.{C.RESET}")
+
+            elif cmd == "/resume":
+                from jebat_cli_new.resume import load_by_id, pick
+
+                picked = load_by_id(arg.strip()) if arg.strip() else pick()
+                if picked:
+                    path, saved = picked
+                    agent.messages = [
+                        AgentMessage(role=message["role"], content=message.get("content", ""))
+                        for message in saved
+                    ]
+                    cprint(f"  {C.GREEN}✓{C.RESET} Resumed {path.name} ({len(saved)} messages)")
 
             elif cmd == "/thinking":
                 show_thinking = not show_thinking
@@ -4294,6 +4328,11 @@ def main():
     """CLI entry point — default to REPL."""
     from jebat_cli_new import cli as cli_mod
 
+    if len(sys.argv) > 1 and sys.argv[1] == "load-jebat":
+        from jebat_cli_new.load_jebat import load_jebat
+
+        load_jebat(check_latest=True)
+        return
     ns, args = cli_mod.parse(sys.argv[1:])
     if ns.handled:
         return 0
@@ -4416,8 +4455,13 @@ def main():
         print(f"    jebat provider add openai --id work")
         return
 
+    if args[0] == "load-jebat":
+        from jebat_cli_new.load_jebat import load_jebat
+
+        load_jebat(check_latest=True)
+        return
+
     if args[0] == "learning":
-        from jebat_cli_new.learning_command import run_learning_command
 
         return run_learning_command(args[1:])
 
@@ -4457,6 +4501,11 @@ def main():
     registry = ProviderRegistry()
     taskdb = TaskDB()
     skills = SkillManager()
+
+    if args[0] == "init":
+        from jebat_cli_new.init_cmd import run_init
+
+        return run_init(Path.cwd())
 
     if args[0] in ("tool", "tools"):
         from jebat_cli_new.tool_command import run_tool_command

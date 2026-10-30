@@ -27,7 +27,14 @@ const INSTALL_SCRIPT_URL = 'https://raw.githubusercontent.com/nusabyte-my/jebat-
 const INSTALL_SCRIPT_URL_ALT = 'https://jebat.online/install.sh';
 
 const IS_WIN = platform() === 'win32';
-const PYTHON_CMD = process.env.JEBAT_PYTHON || (IS_WIN ? 'python.exe' : 'python3');
+const BOOTSTRAP_PYTHON = resolve(
+  process.env.JEBAT_HOME || resolve(os.homedir(), '.local', 'jebat'),
+  'venv',
+  IS_WIN ? 'Scripts/python.exe' : 'bin/python',
+);
+const PYTHON_CMD = fs.existsSync(BOOTSTRAP_PYTHON)
+  ? BOOTSTRAP_PYTHON
+  : (process.env.JEBAT_PYTHON || (IS_WIN ? 'python.exe' : 'python3'));
 
 function log(msg) { console.error(`[jebat] ${msg}`); }
 function error(msg) { console.error(`[jebat] ERROR: ${msg}`); process.exit(1); }
@@ -39,7 +46,10 @@ function hasCommand(cmd) {
 }
 
 function findPython() {
-  for (const c of [process.env.JEBAT_PYTHON, 'python3', 'python', 'py'].filter(Boolean)) {
+  for (const c of [BOOTSTRAP_PYTHON, process.env.JEBAT_PYTHON, 'python3', 'python', 'py'].filter(Boolean)) {
+    if (c.includes('/') || c.includes('\\')) {
+      if (!fs.existsSync(c)) continue;
+    }
     const r = spawnSync(c, ['--version'], { stdio: 'pipe' });
     if (r.status === 0) return c;
   }
@@ -134,15 +144,15 @@ Usage: npx jebat [command] [options]
 
 Commands:
   repl              Start interactive REPL (default)
-  chat <prompt>     One-shot chat with tool calling
+  chat <prompt>     One-shot chat
   agent <prompt>    Run one-shot agent task
-  code <prompt>     Generate code from description
+  code <prompt>     Run one-shot coding task
+  provider add      Configure a model provider
+  tool list         List shared tools
+  tool call NAME --args '{"key":"value"}'  Invoke a shared tool
+  init              Generate an AGENTS.md workspace capture
   webui             Launch Stealth-Dark WebUI
-  config show|set   Configuration management
-  file read|write|patch|search|undo|tree  File operations
-  tools list|inspect  List/inspect registered tools
-  memory store|search|stats  Memory operations
-  status            System status
+  status            Local provider, run, and session inventory
   --version         Show version
   --help            Show this help
 
@@ -156,8 +166,8 @@ Examples:
 
 Installation:
   This wrapper installs the Python package automatically on first run.
-  Requires: Python 3.11+ and pip. No sudo required.
-  For AI agents / CI, the installer is fully non-interactive (--yes --quiet).
+  Requires: Python 3.11+, pip, Git, and bash (Git for Windows or WSL on Windows).
+  No sudo required. For AI agents / CI, installation is non-interactive.
 
 MCP:
   Start the server through the installed CLI:
@@ -180,6 +190,14 @@ async function main() {
     return;
   }
 
+  if (args.includes('load-jebat')) {
+    const result = spawnSync(findPython() || PYTHON_CMD, ['-m', 'jebat_cli_new.load_jebat'], {
+      stdio: 'inherit',
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    });
+    process.exit(result.status || 0);
+  }
+
   const py = findPython();
   if (!py) error('Python 3.11+ not found. Install it from https://python.org and retry.');
 
@@ -189,7 +207,8 @@ async function main() {
     log('JEBAT not found. Installing…');
     const ok = await installJebat();
     if (!ok) process.exit(1);
-    const recheck = spawnSync(py, ['-c', 'import jebat_cli_new; print("OK")'], { stdio: 'pipe', encoding: 'utf-8' });
+    const recheckPython = fs.existsSync(BOOTSTRAP_PYTHON) ? BOOTSTRAP_PYTHON : py;
+    const recheck = spawnSync(recheckPython, ['-c', 'import jebat_cli_new; print("OK")'], { stdio: 'pipe', encoding: 'utf-8' });
     if (recheck.status !== 0) error('JEBAT install did not complete. Check the logs above.');
   } else {
     log('JEBAT already installed.');

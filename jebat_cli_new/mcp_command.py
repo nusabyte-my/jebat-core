@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 from typing import Sequence
 
 
@@ -41,6 +42,10 @@ def run_mcp_command(tokens: Sequence[str]) -> int:
 
     sub.add_parser("ide-config", help="Print IDE MCP configuration templates")
 
+    pair = sub.add_parser("pair", help="Detect installed IDEs and merge JEBAT MCP configuration")
+    pair.add_argument("--ide", choices=["auto", "kiro", "cursor", "vscode", "windsurf"], default="auto")
+    pair.add_argument("--list", action="store_true", help="List detected IDEs without changing files")
+
     args = parser.parse_args(list(tokens))
 
     if args.command == "serve":
@@ -62,6 +67,29 @@ def run_mcp_command(tokens: Sequence[str]) -> int:
 
         run_server(transport=args.transport, port=args.port, host=args.host)
         return 0
+
+    if args.command == "pair":
+        from jebat_cli_new.ide_integration import installed_ides, merge_server, IDE_PATHS
+
+        selected = installed_ides() if args.ide == "auto" else [args.ide]
+        if args.list:
+            print("\n".join(selected) if selected else "No supported IDE configuration directories detected.")
+            return 0
+        if not selected:
+            print("No supported IDE configuration directories detected; no files changed.")
+            return 0
+        failures = 0
+        for ide in selected:
+            path = Path.home() / IDE_PATHS[ide][0]
+            try:
+                status = merge_server(path, "jebat", ["mcp", "serve", "--transport", "stdio"])
+                print(f"{ide}: {status} {path}")
+            except (OSError, ValueError) as exc:
+                failures += 1
+                print(f"{ide}: ERROR: {exc}", file=sys.stderr)
+        if not failures:
+            print("Restart or reconnect the IDE. In Kiro Chat, use # → plan-act-verify-remember.")
+        return 1 if failures else 0
 
     if args.command == "ide-config":
         from jebat.features.mcp.mcp_server import print_ide_configs

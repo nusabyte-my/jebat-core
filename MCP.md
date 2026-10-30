@@ -8,6 +8,53 @@ The server negotiates MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06
 
 ## Quick Setup
 
+- **[Kiro IDE pairing guide (PDF)](docs/JEBAT_MCP_KIRO_GUIDE.pdf)** — Easy npx installation, Kiro Chat prompts, tool approvals, and troubleshooting.
+
+### Kiro IDE (automatic pairing)
+
+Bootstrap once, then let JEBAT detect and configure installed IDEs:
+
+```bash
+npx --yes @nusabyte/jebat --version
+npx --yes @nusabyte/jebat mcp pair
+```
+
+Pair only Kiro with `jebat mcp pair --ide kiro`. Inspect detected IDEs without
+writing files using `jebat mcp pair --list`. The command preserves unrelated
+settings and MCP servers, backs up existing JSON, and uses the installed `jebat`
+launcher for stdio. Restart/reconnect Kiro, then type `#` in Kiro Chat and select
+**plan-act-verify-remember**.
+
+The bootstrap installer also supports `--ide` (detect supported IDEs),
+`--ide=kiro` (Kiro only), and `--no-ide` (skip pairing). Non-interactive installs
+do not opt into IDE changes automatically.
+
+### Kiro IDE (manual npx configuration)
+
+Bootstrap once in a terminal:
+
+```bash
+npx --yes @nusabyte/jebat --version
+```
+
+Add to `.kiro/settings/mcp.json` (Command Palette → **Kiro: Open workspace MCP config (JSON)**):
+
+```json
+{
+  "mcpServers": {
+    "jebat": {
+      "command": "npx",
+      "args": ["--yes", "@nusabyte/jebat", "mcp", "serve", "--transport", "stdio"],
+      "disabled": false
+    }
+  }
+}
+```
+
+Save and confirm **jebat** is connected in Kiro → **MCP servers**. In Kiro Chat,
+type `#` and select JEBAT's **plan-act-verify-remember** prompt or another listed
+JEBAT tool/resource. `/load-jebat` is a CLI command, not a native Kiro command.
+
 ### VS Code
 
 Add to `.vscode/mcp.json`:

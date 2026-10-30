@@ -1,239 +1,171 @@
-# JEBAT v8.2.2 — Sovereign Agent OS & Agent Workstation
+# JEBAT v8.5.0 — Agent CLI
 
 [![npm version](https://img.shields.io/npm/v/@nusabyte/jebat?style=flat-square&color=10b981)](https://www.npmjs.com/package/@nusabyte/jebat)
-[![npm downloads](https://img.shields.io/npm/dm/@nusabyte/jebat?style=flat-square&color=06b6d4)](https://www.npmjs.com/package/@nusabyte/jebat)
 [![License](https://img.shields.io/npm/l/@nusabyte/jebat?style=flat-square&color=71717a)](LICENSE)
 [![Node](https://img.shields.io/node/v/@nusabyte/jebat?style=flat-square)](https://nodejs.org)
 
-> **Sovereign execution, private memory, and audited intelligence.**
+`@nusabyte/jebat` is the npm launcher for JEBAT's provider-independent coding
+agent console. It supports interactive command discovery, direct tool execution,
+sessions, multi-agent workflows, and MCP integration.
 
-JEBAT is an **enterprise-grade self-hosted AI platform and agent workstation**. It provides governed local LLM inference, secure cognitive routing, multi-agent swarm orchestration, embedded threat reconnaissance, and eternal memory — all running fully air-gapped on your private network with **zero data leakage**.
+## Requirements
 
-Named after the legendary Malay warrior **Hang Jebat** — loyal, powerful, and unforgettable.
+- Node.js 18 or newer
+- Python 3.11 or newer with `pip`
+- A model provider for inference
 
----
+The launcher bootstraps the supported Python runtime on first use. It does not
+install the unrelated `jebat` package from PyPI.
 
-## 🚀 Quick Start
-
-### Zero-Config Installation (npx / bunx)
+## Install and run
 
 ```bash
-# Run immediately — bootstraps the JEBAT CLI on first run
+# Run without a global launcher installation
+npx @nusabyte/jebat --version
 npx @nusabyte/jebat repl
 
-# Or with bun
-bunx @nusabyte/jebat repl
-
-# One-shot chat
-npx @nusabyte/jebat chat "Explain the memory consolidation algorithm"
-
-# Run agent task
-npx @nusabyte/jebat agent "Audit all API endpoints in src/services"
-```
-
-### Requirements
-
-| Tool | Version | Install |
-|------|---------|---------|
-| **Node.js** | ≥ 18 | [nodejs.org](https://nodejs.org) |
-| **Python** | ≥ 3.11 | [python.org](https://python.org) |
-| **pip** | Latest | Included with Python |
-
----
-
-## 📦 Installation Methods
-
-### Method 1: npx (Recommended — Zero Install)
-```bash
-npx @nusabyte/jebat repl
-```
-- Bootstraps the supported JEBAT CLI on first run
-- Requires Node.js 18+, Python 3.11+, and pip
-- Does not use the unrelated `jebat` package on PyPI
-
-### Method 2: Global Install
-```bash
+# Or install globally
 npm install -g @nusabyte/jebat
-# or
-bun install -g @nusabyte/jebat
+jebat repl
 
+# Bun is also supported
+bunx @nusabyte/jebat repl
+```
+
+Upgrade the global launcher with:
+
+```bash
+npm install -g @nusabyte/jebat@latest
+```
+
+For Linux/macOS bootstrap, source installation, upgrades, and troubleshooting,
+see the [complete CLI guide](https://github.com/nusabyte-my/jebat-core/blob/main/docs/CLI_GUIDE.md).
+
+## First run
+
+```bash
+jebat provider add
 jebat repl
 ```
 
-### Method 3: Source Build (Advanced)
-```bash
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core
-curl -fsSL https://raw.githubusercontent.com/nusabyte-my/jebat-core/main/install.sh | bash   # bootstrap the Python core
-jebat repl
-```
-> The npm package is a thin launcher. On first run it downloads and runs the
-> bootstrap, which provisions Python, the venv, and the `jebat` launcher in
-> `~/.local`. **Do not run `pip install jebat`** — that name is an unrelated
-> PyPI package (a website checker) and is **not** JEBAT. The bootstrap is the
-> only supported install path.
+To generate an `AGENTS.md` workspace capture separately, run `jebat init`.
 
----
+Configure or change inference from the console:
 
-## 🎯 Core Commands
-
-| Command | Description |
-|---------|-------------|
-| `jebat repl` | **Interactive REPL** — streaming, tools, history (primary interface) |
-| `jebat chat "prompt"` | One-shot chat with tool calling |
-| `jebat agent "task"` | Run one-shot agent with tool-calling |
-| `jebat config show\|set\|reset\|edit` | Full configuration management |
-| `jebat file read\|write\|patch\|search\|undo\|tree` | Safe file ops with backups |
-| `jebat tools list\|inspect` | Inspect registered tools |
-| `jebat memory store\|search\|stats` | 5-layer eternal memory |
-| `jebat status` | System health & provider status |
-| `jebat --version` | Show version |
-| `jebat --help` | Show help |
-
----
-
-## 🔧 Configuration
-
-Config file: `~/.jebat/jebat.yaml`
-
-```yaml
-agent:
-  default_model: "qwen2.5-coder:7b"
-  default_provider: "ollama"
-  safety_mode: "confirm"
-  max_iterations: 10
-  stream_tokens: true
-
-llm_providers:
-  ollama_host: "http://localhost:11434"
-  fallback_providers: ["openrouter", "groq", "openai"]
-
-security:
-  enable_guardrails: true
-  audit_log: true
+```text
+/provider add
+/provider
+/model
 ```
 
-### Quick Config Commands
-```bash
-# Show config
-npx @nusabyte/jebat config show
+Provider credentials can be read from an environment variable or JEBAT's auth
+store instead of being embedded in the provider configuration. Prefer environment
+variables in CI and on shared machines.
 
-# Set value
-npx @nusabyte/jebat config set agent.safety_mode confirm
+## Interactive console
 
-# Edit in $EDITOR
-npx @nusabyte/jebat config edit
+Type `/` and press **Enter** to open the command palette. Type to filter, use **Up/Down** or **Tab**
+to select, **Enter** to choose, and **Escape** to cancel. Argument-taking
+commands remain open for completion. Palette selections use the same handlers
+as typed commands.
+
+| Command | Purpose |
+|---------|---------|
+| `/help` | Show interactive command help |
+| `/plan` | Toggle plan-before-execution |
+| `/mode` | List or select operating modes |
+| `/provider`, `/model` | Configure inference |
+| `/tool list` | Discover shared tools |
+| `/agents` | List specialist delegation profiles |
+| `/delegate PROFILE:TASK` | Delegate a focused task |
+| `/swarm TASK` | Auto-orchestrate a task |
+| `/yolo [on\|off]` | Control automatic tool approvals |
+| `/diff` | Inspect repository changes |
+| `/commit MESSAGE` | Create a Git commit |
+| `/resume [ID]` | Select or restore a session |
+| `/fork` | Fork the current session |
+| `/compact` | Compact conversation context |
+| `/exit` | Save when enabled and exit |
+
+Additional input forms:
+
+```text
+@src/main.py explain the entrypoint
+!git status --short
 ```
 
----
+`@FILE` attaches file content. `!COMMAND` runs a shell command and adds its
+output to context. Use `"""` or `/editor` for multi-line input.
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  JEBAT Wrapper (this package)                                │
-│  • Auto-installs Python package via pip                      │
-│  • Forwards CLI arguments                                    │
-│  • Handles stdin/stdout for REPL                             │
-└───────────────────────┬─────────────────────────────────────┘
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│  JEBAT Python Core (via bootstrap — NOT pip install jebat)    │
-│  • ReAct AgentLoop (Think→Act→Observe)                       │
-│  • Ultra-Think (7 reasoning modes)                           │
-│  • Ultra-Loop (autonomous agent)                             │
-│  • 5-Layer Memory (M0→M4 with heat scoring)                  │
-│  • Registered tools and workspace integrations               │
-│  • MCP Client + Server                                       │
-│  • Multi-Agent Swarms (Tukang/Hulubalang/Pawang)             │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔐 Security & Privacy
-
-- **100% Local** — No data leaves your machine
-- **Encrypted Storage** — Fernet (API keys) + Argon2id (passwords)
-- **Audit Logging** — All tool executions tracked
-- **3-Tier Safety** — auto / confirm / dangerous
-- **Sandbox Isolation** — Docker for untrusted code
-- **No Telemetry** — Opt-in only
-
----
-
-## 🤝 MCP Integration
-
-The npm launcher starts the JEBAT CLI. MCP server hosting requires a full JEBAT workspace checkout and the `jebat-mcp` entry point; see the [MCP guide](https://github.com/nusabyte-my/jebat-core/blob/main/MCP.md). Do not rely on an unauthenticated shared public MCP endpoint.
+## Automation
 
 ```bash
-# From a full workspace checkout
-python ./jebat-mcp --transport stdio
+# One-shot coding task
+jebat code "Review the CLI dispatch flow"
 
-# Or self-host HTTP behind an authenticated reverse proxy
-python ./jebat-mcp --transport http --host 127.0.0.1 --port 8099
+# Select a provider and model
+jebat --provider openai --model gpt-4.1 code "Review this repository"
+
+# Plan before execution
+jebat --plan code "Refactor the command dispatcher"
+
+# Resume work
+jebat --continue
+jebat --session SESSION_ID
+
+# Discover and invoke shared tools
+jebat tool list --json
+jebat tool call file_tree --args '{"path":".","depth":1}' --json
 ```
 
----
+Useful options include `--print`, `--mode json`, `--tools`, `--no-tools`,
+`--skills`, `--profile`, `--cwd`, `--no-session`, and `--yolo`. Run
+`jebat --help` for the complete parser surface.
 
-## 🌍 Platform Support
+Keep staged approvals enabled for untrusted repositories and production systems.
+Remote providers receive the prompts and context sent to them; local execution
+does not imply that inference is local.
 
-| OS | Shell | Status |
-|----|-------|--------|
-| macOS | zsh/fish/bash | ✅ Full |
-| Linux | bash/zsh/fish | ✅ Full |
-| Windows | PowerShell/CMD/Git Bash | ✅ Full |
-| WSL2 | bash | ✅ Full |
+## MCP
 
----
-
-## 📚 Documentation
-
-- [Full README](https://github.com/nusabyte-my/jebat-core/blob/main/README.md)
-- [Architecture](https://github.com/nusabyte-my/jebat-core/blob/main/ARCHITECTURE.md)
-- [Quick Reference](https://github.com/nusabyte-my/jebat-core/blob/main/QUICK_REFERENCE.md)
-- [Deployment](https://github.com/nusabyte-my/jebat-core/blob/main/DEPLOYMENT.md)
-- [Roadmap](https://github.com/nusabyte-my/jebat-core/blob/main/ROADMAP.md)
-
----
-
-## 🤝 Contributing
+Automatically detect supported IDEs and merge JEBAT's local MCP registration:
 
 ```bash
-# Clone repo
-git clone https://github.com/nusabyte-my/jebat-core.git
-cd jebat-core/jebat-npm
+npx --yes @nusabyte/jebat mcp pair
 
-# Test locally
-npm link
-jebat repl
+# Kiro only
+npx --yes @nusabyte/jebat mcp pair --ide kiro
+
+# Inspect without changing files
+npx --yes @nusabyte/jebat mcp pair --list
 ```
 
----
+Pairing preserves other settings and MCP servers and backs up existing JSON.
+Restart/reconnect the IDE afterward. In Kiro Chat, type `#` and select
+`plan-act-verify-remember` to load JEBAT's governed workflow.
 
-## 📄 License
+Generate IDE configuration with:
 
-**MIT License** — See [LICENSE](../LICENSE) file.
+```bash
+jebat mcp ide-config
+```
 
-Developed under strict data residency governance by **NusaByte**.\
-Built with ❤️ by **Shaidan Shaari (humm1ngb1rd)**.
+Run the local stdio server with:
 
----
+```bash
+jebat mcp serve --transport stdio
+```
 
-## 🙏 Acknowledgments
+See the [MCP integration guide](https://github.com/nusabyte-my/jebat-core/blob/main/MCP.md)
+for client configuration and self-hosted transport security.
 
-- **Python core:** [jebat-core](https://github.com/nusabyte-my/jebat-core)
-- **Ollama** — Local LLM inference
-- **LangGraph** — Cognitive orchestration
-- **Rich / prompt-toolkit** — Terminal interfaces
-- **Playwright** — Browser automation
+## Documentation
 
----
+- [Installation and CLI usage](https://github.com/nusabyte-my/jebat-core/blob/main/docs/CLI_GUIDE.md)
+- [CLI package guide](https://github.com/nusabyte-my/jebat-core/blob/main/jebat_cli_new/README.md)
+- [Custom providers](https://github.com/nusabyte-my/jebat-core/blob/main/docs/CUSTOM_PROVIDERS.md)
+- [Repository and platform overview](https://github.com/nusabyte-my/jebat-core)
 
-## 🗡️ The JEBAT Way
+## License
 
-> *"Hang Jebat fought with loyalty and honor. JEBAT remembers with precision and purpose."*
-
-**Your AI. Your Data. Your Legacy.**
-
-🗡️ **JEBAT v8.2.2** — *Because warriors remember everything that matters.*
+MIT · NusaByte
