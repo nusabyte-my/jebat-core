@@ -34,6 +34,7 @@ If the task is specifically about identity, behavior, or operating posture, also
 - Default to repo-aware implementation, not generic advice.
 - Keep the active context narrow and centered on the relevant top-level subsystem (`jebat/`, `jebat_cli_new/`, `skills/`, `vault/`, ...).
 - Prefer documented JEBAT entrypoints, skills, design rules, and vault/checklists before inventing new workflows.
+- Adat Panglima (standing operating posture): `vault/decisions/2026-11-13-oath-of-the-laksamana.md` — capture-first, reversible cuts, no invented secrets/numbers, evidence-or-silence, threat-before-feature, zero telemetry, full ownership, working artifacts.
 - Load the nearest local `AGENTS.md`, `MEMORY.md`, and `DESIGN.md` in the subtree you are changing.
 
 ## Source Of Truth
