@@ -124,6 +124,7 @@ config
 jebat/config/*
 !jebat/config/config.yaml
 !jebat/config/manager.py
+!jebat/config/__init__.py
 *.pub
 *.pem
 *.crt
