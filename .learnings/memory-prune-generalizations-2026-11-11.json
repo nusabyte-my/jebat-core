@@ -1,0 +1,528 @@
+{
+  "date": "2026-11-11",
+  "action": "pruned duplicate generalization rows",
+  "reason": "46 rows were 2 distinct concepts. Ids were 8-char random values produced by older code that had no working dedupe, so every dream run re-stamped the same finding. The installed engine already uses a 24-char sha256(source_ids) id plus a known_sources guard, so these will not regenerate from this path.",
+  "backup": "C:\\Users\\shaid\\.jebat\\memory\\traces.genprune-20261111-064540.json.bak",
+  "removed_count": 44,
+  "kept_concepts": [
+    "Generalized: Erawan-QSys, session, summary",
+    "Generalized: failure, pattern-watch, test_tool"
+  ],
+  "removed": [
+    {
+      "id": "gen_e4fe5d0c",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-22T09:52:56.412608+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_7327c821",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-23T05:16:59.080532+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_b04e6286",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-23T14:09:49.557534+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_b3c8ddc1",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-23T16:44:09.083775+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_47914940",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-24T09:07:53.406859+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_cbc5eee3",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-25T10:56:17.882610+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_e072f5bd",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-25T11:28:59.589992+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_b9a3b149",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-25T17:17:26.156957+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_87ec1958",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-26T16:35:30.190686+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_a4a13f7b",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-26T16:49:05.944632+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_11209fb1",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-27T07:59:04.881076+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_d719053b",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-27T11:47:56.831714+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_d3ad3120",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-28T05:35:06.173607+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_52a57118",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-28T06:27:36.155947+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_096a034e",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-28T08:44:43.962159+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_a06fbde5",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-29T19:14:15.388203+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_298ce0ec",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-30T08:28:50.970268+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_3ebd69cd",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-30T16:56:00.420169+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_4fcde6ad",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-09-30T17:19:17.503455+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_616b8dcb",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-01T02:26:23.896077+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_0605d5df",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-01T13:32:18.979714+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_c63c9ef5",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-01T20:29:21.196529+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_d32c0556",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-01T20:44:50.918404+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_367b6963",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-02T11:55:03.830925+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_2194f4f3",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-03T04:49:38.867898+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_aa4a7760",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-03T07:42:47.327051+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_b54a3723",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-05T06:15:31.702997+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_aa148d3e",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-05T06:28:03.559135+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_83b6b670",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-07T10:51:52.916548+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_2625daa6",
+      "concept": "Generalized: failure, pattern-watch, test_tool",
+      "created_at": "2026-10-07T17:04:46.438043+00:00",
+      "confidence": 0.6,
+      "source_traces": [
+        "47ef3651-84ed-4893-bc68-2bf430681b9d",
+        "c3b2caed-2c7d-482a-86a9-377b3584e290",
+        "35f20a4a-41f0-47e6-b2ec-a3f46a38bca8",
+        "c2bd44d0-6ca0-466b-afd4-58bcdd1f0ff3"
+      ]
+    },
+    {
+      "id": "gen_c031a6f4",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-09-30T08:28:50.970268+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_a13a82b7",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-09-30T16:56:00.420169+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_fa8cbcea",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-09-30T17:19:17.503455+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_6b952142",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-01T02:26:23.896077+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_9f5e4ac8",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-01T13:32:18.980716+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_ab975f81",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-01T20:29:21.196529+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_445365da",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-01T20:44:50.918404+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_99985e3a",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-02T11:55:03.830925+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_1a8f04ed",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-03T04:49:38.867898+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_3db4e77c",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-03T07:42:47.327051+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_d6a65809",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-05T06:15:31.702997+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_c4888ba2",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-05T06:28:03.559135+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_17164cb3",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-07T10:51:52.916548+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    },
+    {
+      "id": "gen_9e7ad74b",
+      "concept": "Generalized: Erawan-QSys, session, summary",
+      "created_at": "2026-10-07T17:04:46.438043+00:00",
+      "confidence": 0.44999999999999996,
+      "source_traces": [
+        "4ba4ec17-5f65-4eb7-b3c7-e2c94800e35e",
+        "9f4b2af1-0bcf-4456-8b7c-40edf5c68c08",
+        "2ff8ec38-c2a6-4d3f-8385-d453ba5eb173"
+      ]
+    }
+  ],
+  "reversal": "copy C:\\Users\\shaid\\.jebat\\memory\\traces.genprune-20261111-064540.json.bak over C:\\Users\\shaid\\.jebat\\memory\\traces.json"
+}

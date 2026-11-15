@@ -1,0 +1,48 @@
+{
+  "runAt": "2026-11-11",
+  "scope": "Erawan-QSys memories (306 total; 177 flagged 'stale' = not read in 7d)",
+  "method": "Mechanical revalidation against the live codebase: repo-relative file paths, CONSTANT = value pairs, and identifier presence. Automated only where a claim is machine-checkable.",
+  "verdicts": {
+    "CONFIRMED": 30,
+    "CONTRADICTED_after_manual_review": 0,
+    "UNVERIFIABLE": 274
+  },
+  "falsePositiveExplained": [
+    "2 memories were auto-flagged CONTRADICTED for 'serviceTaxCents not found'. Manual check: the memories state that Payment does NOT have serviceTaxCents — the schema confirms it is absent, so both memories are CORRECT. The matcher did not understand negation. No genuine contradictions remain."
+  ],
+  "independentlyVerifiedClaims": [
+    {
+      "claim": "Payment has no serviceTaxCents column",
+      "result": true,
+      "evidence": "packages/db/prisma/schema.prisma contains no serviceTaxCents"
+    },
+    {
+      "claim": "Assignment and BookingItem have no createdAt/updatedAt",
+      "result": true,
+      "evidence": "neither model declares createdAt or updatedAt; Payment declares createdAt only"
+    },
+    {
+      "claim": "SST rate is 8%",
+      "result": true,
+      "evidence": "detail-discount.ts SST_RATE = 0.08"
+    },
+    {
+      "claim": "FV room surcharge is RM10",
+      "result": true,
+      "evidence": "detail-discount.ts FV_SURCHARGE_CENTS = 1000"
+    },
+    {
+      "claim": "Operating hours start 09:00",
+      "result": true,
+      "evidence": "gantt-constants.ts START_HOUR = 9"
+    }
+  ],
+  "driftFound": {
+    "claim": "AGENTS.md documents working hours as 09:00-22:00",
+    "actual": "apps/web/lib/gantt-constants.ts declares END_HOUR = 23 (and HOURS = END_HOUR - START_HOUR)",
+    "status": "UNRESOLVED - needs owner confirmation whether 23 is intentional or the doc is stale. Do not silently edit either side.",
+    "note": "AGENTS.md separately documents a 22:15 timeline close for the Gantt ruler, which is consistent with END_HOUR=23 plus a drawn margin — so END_HOUR may be the render bound, not the closing time. NOT confirmed either way."
+  },
+  "action_taken": "No memory deleted, pruned, or marked true. 274 memories carry no machine-checkable anchor and are left for human review; being old is not evidence of being wrong.",
+  "opens": "CONTRADICTED count is 0, so the 'revalidate_sources' recommendation can be downgraded for the checkable subset. The 274 unverifiable remain an ongoing curation backlog, not a defect."
+}

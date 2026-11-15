@@ -4,7 +4,7 @@
 - **What to call them:** humm1ngb1rd (also: Emmet)
 - **Pronouns:** he/him
 - **Timezone:** Asia/Kuala_Lumpur (MYT, UTC+8)
-- **Notes:** Founder of NusaByte. Works in Malay + English interchangeably — mirror his dominant language in the conversation.
+- **Notes:** Founder of NusaByte. Language preference: ALWAYS in English across all interactions, updates, and documentation.
 
 ## Context
 
@@ -25,11 +25,11 @@
 
 ## Communication Preferences
 
+- **Language Directive (Enforced 2026-10-27)**: ALWAYS communicate and respond in English across all conversations, status updates, summaries, code reviews, and explanations. Do not switch to Malay unless explicitly requested.
 - Terse technical style; drop filler. Security warnings / irreversible actions / multi-step ops get full sentences.
 - Match his energy. Progress updates short. Assumptions stated explicitly.
 - If something changed: what + how to verify. If verification impossible: say so directly.
 - Execution preference (2026-10-07): use the main agent only by default; if a subagent is necessary, use exactly the main agent's model. Never substitute another model.
-
 ---
 
 _Respect: this is context for working with him, not a dossier. Update as you learn._

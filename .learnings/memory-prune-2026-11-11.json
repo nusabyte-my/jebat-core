@@ -1,0 +1,131 @@
+{
+  "date": "2026-11-11",
+  "action": "pruned failed agent-run transcripts from Erawan memory store",
+  "reason": "15 'Goal:/Tools:/Outcome:' run logs, never retrieved, no checkable anchors; their only substantive claim (0-byte source placeholders) is now false",
+  "backup": "C:\\Users\\shaid\\.jebat\\memory\\traces.prune-20261111-011744.json.bak",
+  "removed_count": 15,
+  "removed": [
+    {
+      "trace_id": "1f5f4bbb-1c2a-451e-b8c7-672fea476014",
+      "content_sha256": "ec5e9b60eb932bcf17b68c29b9502419786474e18a4c7deaa5f268484416807c",
+      "length": 516,
+      "created_at": "2026-10-25T06:49:57.634115+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "5f1ecc0a-7c5e-409f-b8fc-b10f1a4357b6",
+      "content_sha256": "f4d4df593d40f3135e5056f1d1265166e4cca7138e91c10b53d65899c05305f2",
+      "length": 1081,
+      "created_at": "2026-10-25T06:56:15.035905+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "bef506b6-8414-4425-b897-e2c40f5b099c",
+      "content_sha256": "6cde505070991011280a132ffb4a2526663d5b754f995d3da5e4d6430804bc20",
+      "length": 1584,
+      "created_at": "2026-10-25T06:57:19.787213+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "970e85bc-2cdd-4151-a881-7170b3fd8f69",
+      "content_sha256": "3c794cd74907982075b9b3f88bd6c3cba065eeaccacc225c97d6e6ef1dbf487b",
+      "length": 1588,
+      "created_at": "2026-10-25T06:58:26.377925+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][database] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-pr"
+    },
+    {
+      "trace_id": "381128bc-02cb-4cc9-ae67-4c80bf84e3e3",
+      "content_sha256": "6736c4c56ec9606c2dada678ee1ab3ad5a6e607da9fcf0df783657e033af3ae1",
+      "length": 549,
+      "created_at": "2026-10-25T06:58:34.477528+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "792c8470-bc3e-4263-8139-bfee5d9bae86",
+      "content_sha256": "18a304c6bad1daab61ace26ed9236bc538826bb12579b30a8f63f5fa11ea5077",
+      "length": 675,
+      "created_at": "2026-10-25T07:04:24.366843+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "e6a5f64e-08fc-4b01-b2ba-822f6f2be40f",
+      "content_sha256": "7a52b04b74a48d81a75e26f67b08db4be4cfafd1535cfe845b713438344d892e",
+      "length": 549,
+      "created_at": "2026-10-25T07:04:30.536494+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "ab34b0eb-c0e9-44cf-a3ab-7785c10415d2",
+      "content_sha256": "7768204c473d1e315dc176670bcee49090ff268323becd09009aca74cd368d1d",
+      "length": 1211,
+      "created_at": "2026-10-25T07:05:33.021027+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][database] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-pr"
+    },
+    {
+      "trace_id": "94087d16-b414-49c4-b804-35bb8c2f6623",
+      "content_sha256": "c23cdeb90baca308a24f99b5f569c2c0a2662d4509652df917702d082674d9e2",
+      "length": 701,
+      "created_at": "2026-10-25T07:05:43.509898+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "61c27f09-28de-4100-b851-808539d473e0",
+      "content_sha256": "e6e6a7ae9bcac2a87dfcc995b1577e0f79f28ae9f072888b10ae8f07add75650",
+      "length": 1571,
+      "created_at": "2026-10-25T07:08:51.386655+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "34e6ec23-1ff6-4098-aafa-4115856315ec",
+      "content_sha256": "ac61b3e693a49ab1d5b0bc5200113335c55367d0b263830044978125414de3f5",
+      "length": 268,
+      "created_at": "2026-10-25T07:08:56.840428+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "012a9d37-f1d6-4229-88db-bca2868c7e29",
+      "content_sha256": "b34ad67e48ecbc4472a8a48caa0dec7d97b22b406f47eb8590e701eb039c243f",
+      "length": 552,
+      "created_at": "2026-10-25T07:09:04.009306+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][database] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-pr"
+    },
+    {
+      "trace_id": "ec3b59e2-9fae-4e7e-a469-2640ea5907e0",
+      "content_sha256": "7e63551d2ba6f8da87ec3833a60da5d75a36b0326c8ec26719511b18361b7e6f",
+      "length": 1472,
+      "created_at": "2026-10-25T07:10:50.754979+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "cf222ec3-6ba9-4555-879a-3904841a05ac",
+      "content_sha256": "1668eae890e39db94653579bddf7c4dd6cca3cabe497d1e5444b8ed26688246b",
+      "length": 1564,
+      "created_at": "2026-10-25T07:19:52.436567+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    },
+    {
+      "trace_id": "620ab7a3-50db-41d0-af1e-65a90004d8a2",
+      "content_sha256": "beb150415acd628ef6fd738fdcaf049f63c898c90907b2f5ae27a2fead57c1e4",
+      "length": 840,
+      "created_at": "2026-10-25T07:20:42.818328+00:00",
+      "access_count": 0,
+      "preview": "[Erawan-QSys][build] Goal: The NestJS server and the Next.js POS client for this system live in E:/AI-Dev/nusabyte-proje"
+    }
+  ],
+  "refused": [],
+  "reversal": "copy C:\\Users\\shaid\\.jebat\\memory\\traces.prune-20261111-011744.json.bak over C:\\Users\\shaid\\.jebat\\memory\\traces.json"
+}

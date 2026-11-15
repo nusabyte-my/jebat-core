@@ -601,7 +601,7 @@ async def learning_feedback(record_id: str, outcome: str, evidence: str) -> dict
     description="Search persisted AutoMimpi reports and learning advice in the active project's KB database using literal full-text terms.",
     schema={"type": "object", "properties": {
         "query": {"type": "string", "maxLength": 2000},
-        "kind": {"type": "string", "enum": ["", "dream", "advice"], "default": ""},
+        "kind": {"type": "string", "enum": ["", "dream", "advice", "page"], "default": ""},
         "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10},
     }}, safety_tier="auto", timeout=15,
 )

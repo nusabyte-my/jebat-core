@@ -50,6 +50,8 @@ def test_custom_providers_registry_complete():
         "tokerrouter",
         "agent_router",
         "rootsys_cloud",
+        "osiris",
+        "omp",
     }
     for cp in CUSTOM_PROVIDERS.values():
         assert isinstance(cp, CustomProvider)

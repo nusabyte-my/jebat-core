@@ -581,44 +581,111 @@ class WikiStore:
             """, (record_id, root, kind, source_id, title, content, payload_json, evidence_json, now, now))
         return record_id
 
-    def search_learning(self, project_root: str, query: str = "", kind: str = "", limit: int = 10) -> dict[str, Any]:
-        """Literal-token full-text search, always confined to one canonical root."""
+    def search_learning(self, project_root: str, query: str = "", kind: str = "", limit: int = 10,
+                        include_pages: bool = True) -> dict[str, Any]:
+        """Literal-token full-text search, always confined to one canonical root.
+
+        The KB holds two disjoint FTS indexes:
+
+          * ``learning_fts``  — dream reports and advice (machine record IDs)
+          * ``pages_fts``     — wiki pages, which carry the actual substance
+
+        Dream records store only counts ("Processed 208; new patterns 0"), so a
+        search over learning_fts alone cannot answer "what happened with refunds"
+        — the word never appears. ``include_pages`` unions the wiki side in, which
+        makes a project's accumulated knowledge reachable from one command.
+        """
         root = self._learning_root(project_root)
-        if not isinstance(query, str) or len(query) > 2000 or kind not in {"", "dream", "advice"}:
+        if not isinstance(query, str) or len(query) > 2000 or kind not in {"", "dream", "advice", "page"}:
             raise ValueError("Invalid learning search query or kind")
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 50:
             raise ValueError("limit must be an integer from 1 to 50")
         terms = re.findall(r"\w+", query, flags=re.UNICODE)[:12]
         if query.strip() and not terms:
             return {"project_root": root, "records": [], "count": 0}
-        where = ["r.project_root = ?"]
-        args: list[Any] = [root]
-        join = ""
-        if terms:
-            join = "JOIN learning_fts ON learning_fts.rowid = r.id"
-            where.append("learning_fts MATCH ?")
-            args.append(" AND ".join('"' + term + '"' for term in terms))
-        if kind:
-            where.append("r.kind = ?")
-            args.append(kind)
-        args.append(limit)
-        with closing(self._get_conn()) as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute(f"""
-                SELECT r.record_id, r.kind, r.title, r.content, r.payload_json, r.evidence_json,
-                       r.created_at, r.updated_at, f.outcome, f.evidence AS feedback_evidence
-                FROM learning_records r {join}
-                LEFT JOIN learning_feedback f ON f.record_id = r.record_id
-                WHERE {' AND '.join(where)}
-                ORDER BY {'learning_fts.rank,' if terms else ''} r.updated_at DESC, r.record_id LIMIT ?
-            """, args).fetchall()
-        records = []
+
+        # A `page` kind is served entirely by the wiki index.
+        want_pages = include_pages and kind in {"", "page"}
+        want_learning = kind in {"", "dream", "advice"}
+
+        records: list[dict[str, Any]] = []
+
+        if want_learning:
+            where = ["r.project_root = ?"]
+            args: list[Any] = [root]
+            join = ""
+            if terms:
+                join = "JOIN learning_fts ON learning_fts.rowid = r.id"
+                where.append("learning_fts MATCH ?")
+                args.append(" AND ".join('"' + term + '"' for term in terms))
+            if kind:
+                where.append("r.kind = ?")
+                args.append(kind)
+            args.append(limit)
+            with closing(self._get_conn()) as conn:
+                conn.row_factory = sqlite3.Row
+                rows = conn.execute(f"""
+                    SELECT r.record_id, r.kind, r.title, r.content, r.payload_json, r.evidence_json,
+                           r.created_at, r.updated_at, f.outcome, f.evidence AS feedback_evidence
+                    FROM learning_records r {join}
+                    LEFT JOIN learning_feedback f ON f.record_id = r.record_id
+                    WHERE {' AND '.join(where)}
+                    ORDER BY {'learning_fts.rank,' if terms else ''} r.updated_at DESC, r.record_id LIMIT ?
+                """, args).fetchall()
+            for row in rows:
+                record = dict(row)
+                record["payload"] = json.loads(record.pop("payload_json"))
+                record["evidence_ids"] = json.loads(record.pop("evidence_json"))
+                records.append(record)
+
+        if want_pages:
+            records.extend(
+                self._search_pages(root, terms, limit)
+            )
+
+        return {"project_root": root, "records": records[:limit], "count": len(records[:limit])}
+
+    def _search_pages(self, root: str, terms: list[str], limit: int) -> list[dict[str, Any]]:
+        """Wiki pages, scoped to this project.
+
+        ``pages`` carries no project column — every page in this KB belongs to
+        the workspace that owns the database — so scoping is by root equality
+        against the caller's canonical root.
+        """
+        try:
+            with closing(self._get_conn()) as conn:
+                conn.row_factory = sqlite3.Row
+                if terms:
+                    match = " OR ".join('"' + term + '"' for term in terms)
+                    rows = conn.execute("""
+                        SELECT p.title, p.filename, p.size_bytes, p.created_at, p.updated_at,
+                               snippet(pages_fts, 1, '', '', '...', 32) AS snippet
+                        FROM pages_fts
+                        JOIN pages p ON pages_fts.rowid = p.rowid
+                        WHERE pages_fts MATCH ?
+                        ORDER BY pages_fts.rank LIMIT ?
+                    """, (match, limit)).fetchall()
+                else:
+                    rows = conn.execute("""
+                        SELECT title, filename, size_bytes, created_at, updated_at, '' AS snippet
+                        FROM pages ORDER BY updated_at DESC LIMIT ?
+                    """, (limit,)).fetchall()
+        except sqlite3.OperationalError:
+            # Wiki index not present in this KB build — degrade quietly.
+            return []
+        out = []
         for row in rows:
-            record = dict(row)
-            record["payload"] = json.loads(record.pop("payload_json"))
-            record["evidence_ids"] = json.loads(record.pop("evidence_json"))
-            records.append(record)
-        return {"project_root": root, "records": records, "count": len(records)}
+            d = dict(row)
+            d.update({
+                "record_id": f"page:{d['filename']}",
+                "kind": "page",
+                "content": d.get("snippet") or d.get("title") or "",
+                "payload": {"filename": d["filename"], "size_bytes": d["size_bytes"]},
+                "evidence_ids": [],
+                "project_root": root,
+            })
+            out.append(d)
+        return out
 
     def learning_feedback(self, project_root: str, record_id: str, outcome: str, evidence: str) -> dict[str, Any]:
         """Explicit reviewer feedback, not an inferred task-success probability."""
